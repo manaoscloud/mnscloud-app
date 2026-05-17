@@ -1,0 +1,40 @@
+.agent-name,
+.resource-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.agent-name small,
+.resource-cell small {
+  color: var(--muted-color, rgba(255, 255, 255, 0.62));
+  font-size: 0.76rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-token-dialog {
+  max-width: 100%;
+}
+
+.agent-token-dialog p {
+  margin: 0 0 0.75rem;
+}
+
+.agent-token-dialog .token-warning {
+  color: var(--warn-color, #ffb4ab);
+}
+
+.agent-token-dialog pre {
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.75rem;
+  margin: 0;
+  max-height: 45vh;
+  overflow: auto;
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

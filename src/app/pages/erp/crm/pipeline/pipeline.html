@@ -1,0 +1,32 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Sales Pipeline</h1>
+        <p>Overview of your opportunities by stage.</p>
+      </div>
+    </header>
+
+    <div class="pipeline-grid">
+      @for (s of stages; track s) {
+        <div class="stage-card">
+          <div class="stage-header">
+            <mat-icon>flag</mat-icon>
+            <span>{{ s.name }}</span>
+          </div>
+          <div class="stage-body">
+            <div class="metric">
+              <span class="label">Opportunities</span>
+              <span class="value">{{ s.count }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">Total Value</span>
+              <span class="value">{{ s.value }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+  </mat-card>
+</section>

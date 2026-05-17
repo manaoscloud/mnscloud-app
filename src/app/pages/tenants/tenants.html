@@ -1,0 +1,236 @@
+<h2 class="page-title">Tenants</h2>
+<p class="page-subtitle">
+  Manage tenant members and access for this environment.
+</p>
+
+<!-- ================= INVITE BOX ================= -->
+<section class="invite-box">
+  <h3>Invite a Member</h3>
+
+  <form [formGroup]="inviteForm" (ngSubmit)="sendInvite()">
+
+    <div class="invite-grid">
+
+      <!-- Email -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" />
+      </mat-form-field>
+
+      <!-- Role -->
+      <mat-form-field appearance="outline" class="role-field">
+      <mat-label>Access level</mat-label>
+        <mat-select formControlName="role">
+          @for (r of roles; track r) {
+            <mat-option [value]="r">
+              {{ r }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Botão -->
+      <button mat-flat-button color="primary" class="invite-btn" type="submit" [disabled]="!canInvite">
+        @if (!inviting()) {
+          Send Invitation
+        } @else {
+          Sending...
+        }
+
+      </button>
+
+    </div>
+
+    <!-- Mensagens -->
+    @if (inviteError()) {
+      <p class="invite-error">
+        {{ inviteError() }}
+      </p>
+    }
+
+    @if (inviteSuccess()) {
+      <p class="invite-success">
+        {{ inviteSuccess() }}
+      </p>
+    }
+  </form>
+</section>
+
+<!-- ================= MEUS TENANTS ================= -->
+
+<h3 class="section-title">My Tenants</h3>
+
+@if (selfLoading()) {
+  <div class="loading">Loading...</div>
+}
+
+@if (selfError()) {
+  <div class="error-box">
+    {{ selfError() }}
+  </div>
+}
+
+@if (!selfLoading() && selfList().length) {
+  <table>
+    <thead>
+      <tr>
+        <th>Tenant</th>
+        <th>Access level</th>
+        <th>Default</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+  @for (item of selfList(); track item.EnvironmentUUID) {
+        <tr>
+          <td>{{ item.EnvironmentName || '—' }}</td>
+          <td>{{ item.Role }}</td>
+          <td>
+            @if (isDefaultAccess(item)) {
+              <span class="status-pill status-default">Default</span>
+            } @else {
+              <span class="status-pill status-muted">—</span>
+            }
+          </td>
+          <td>
+            @if (!isDefaultAccess(item)) {
+              <button class="btn-secondary" (click)="setDefaultAccess(item.EnvironmentUUID)">
+                Set default
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@if (!selfLoading() && !selfList().length) {
+  <div class="empty-state">
+    No tenants found.
+  </div>
+}
+
+<!-- ================= LISTAGEM DE ACESSOS ================= -->
+
+<h3 class="section-title">Tenant Members</h3>
+
+@if (loading()) {
+  <div class="loading">Loading...</div>
+}
+
+@if (error()) {
+  <div class="error-box">
+    {{ error() }}
+  </div>
+}
+
+@if (!loading() && list().length) {
+  <table>
+    <thead>
+      <tr>
+        <th>Tenant</th>
+        <th>Access level</th>
+        <th>Member status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+  @for (item of list(); track item.UscUUID ?? item.EnvironmentUUID) {
+        <tr>
+          <td>{{ item.EnvironmentName || '—' }}</td>
+          <td>{{ item.Role }}</td>
+          <td>{{ item.Status === 1 ? 'Active' : 'Inactive' }}</td>
+          <td>
+            @if (item.UscUUID && item.Role !== 'OWNER') {
+              <button class="btn-danger" (click)="remove(item.UscUUID)">
+                Remove member
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@if (!loading() && !list().length) {
+  <div class="empty-state">
+    No tenant members found.
+  </div>
+}
+
+<!-- ================= LISTAGEM DE CONVITES ================= -->
+
+<h3 class="section-title section-title--invites">Tenant Invitations</h3>
+
+@if (invitesLoading()) {
+  <div class="loading">Loading...</div>
+}
+
+@if (invitesError()) {
+  <div class="error-box">
+    {{ invitesError() }}
+  </div>
+}
+
+@if (!invitesLoading() && invites().length) {
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Access level</th>
+        <th>Status</th>
+        <th>Invited at</th>
+        <th>Accepted at</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+  @for (inv of invites(); track inv.UsiUUID ?? inv.InviteUUID ?? inv.UsiEmail) {
+        <tr>
+          <td>{{ inv.UsiEmail }}</td>
+          <td>{{ inv.UsiRole }}</td>
+          <td>
+            <span class="status-pill" [class.status-pending]="inv.UsiStatus === 0"
+              [class.status-accepted]="inv.UsiStatus === 1" [class.status-canceled]="inv.UsiStatus === 2">
+              {{
+              inv.UsiStatus === 0
+              ? 'Pending'
+              : inv.UsiStatus === 1
+              ? 'Accepted'
+              : 'Canceled'
+              }}
+            </span>
+          </td>
+          <td>
+            {{ inv.UsiDateCreated | date: 'short' }}
+          </td>
+          <td>
+            {{ inv.UsiDateAccepted ? (inv.UsiDateAccepted | date: 'short') : '—' }}
+          </td>
+          <td class="invite-actions-cell">
+            @if (inv.UsiStatus === 0) {
+              <div class="invite-actions">
+                <button mat-stroked-button color="warn" type="button" (click)="cancelInvite(inv.UsiUUID)">
+                  Cancel invitation
+                </button>
+                <button mat-stroked-button color="primary" type="button" (click)="resendInvite(inv.UsiUUID)">
+                  Resend invitation
+                </button>
+              </div>
+            } @else {
+              <span class="no-actions">—</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@if (!invitesLoading() && !invites().length) {
+  <div class="empty-state">
+    No invitations found.
+  </div>
+}

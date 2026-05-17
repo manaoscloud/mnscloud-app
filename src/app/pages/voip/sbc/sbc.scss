@@ -1,0 +1,12 @@
+.sbc-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.actions-col-cell {
+  white-space: nowrap;
+}
+.selection-count {
+  align-self: center;
+  opacity: 0.8;
+}

@@ -1,0 +1,25 @@
+.phone-input-container {
+    display: flex;
+    width: 100%;
+}
+
+.phone-input-element {
+    border: none;
+    background: transparent;
+    padding: 0;
+    outline: none;
+    font: inherit;
+    width: 100%;
+    color: currentcolor;
+    line-height: 1.4;
+}
+
+.phone-input-element::placeholder {
+    color: var(--mat-sys-color-on-surface-variant);
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+:host.phone-input-floating .phone-input-element::placeholder {
+    opacity: 0.7;
+}

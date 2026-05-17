@@ -1,0 +1,136 @@
+<section class="erp-page" [@fadeIn]>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>GeoMap FTTH</h1>
+        <p>Connect, disconnect and trace the FTTH chain.</p>
+      </div>
+    </header>
+
+    <div class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Operations</h2>
+          <p>Search customers and manage FTTH links.</p>
+        </div>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>Find Customer (ERP)</h3>
+          </div>
+          <form [formGroup]="customerForm" class="form-grid">
+            <mat-form-field appearance="outline" class="span-full">
+              <mat-label>Search by name/document/email</mat-label>
+              <input matInput formControlName="query" />
+            </mat-form-field>
+          </form>
+          <div class="form-actions">
+            <button mat-stroked-button color="primary" (click)="searchCustomers()" [disabled]="searchingCustomers()">
+              Search
+            </button>
+          </div>
+          <div class="panel-content">
+            <mat-list *ngIf="customerResults().length">
+              <mat-list-item *ngFor="let customer of customerResults()">
+                <div class="customer-item">
+                  <div>
+                    <div class="customer-name">{{ customer.Name }}</div>
+                    <div class="customer-meta">
+                      {{ customer.Document || 'No document' }} • {{ customer.Email || 'No email' }}
+                    </div>
+                  </div>
+                  <div class="customer-actions">
+                    <button mat-button color="primary" (click)="useCustomerForTrace(customer)">Use in Trace</button>
+                    <button mat-button color="accent" (click)="useCustomerForConnect(customer)">Use in Connect</button>
+                  </div>
+                </div>
+              </mat-list-item>
+            </mat-list>
+            <div class="empty" *ngIf="customerQuery() && !customerResults().length && !searchingCustomers()">
+              No customers found.
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>Connect</h3>
+          </div>
+          <form [formGroup]="connectForm" class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>From Type</mat-label>
+              <input matInput formControlName="fromType" placeholder="OLT" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>From UUID</mat-label>
+              <input matInput formControlName="fromUUID" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>To Type</mat-label>
+              <input matInput formControlName="toType" placeholder="PON" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>To UUID</mat-label>
+              <input matInput formControlName="toUUID" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-full">
+              <mat-label>Link Type</mat-label>
+              <input matInput formControlName="linkType" />
+            </mat-form-field>
+          </form>
+          <div class="form-actions">
+            <button mat-flat-button color="primary" (click)="connect()" [disabled]="loading()">Connect</button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>Disconnect</h3>
+          </div>
+          <form [formGroup]="disconnectForm" class="form-grid">
+            <mat-form-field appearance="outline" class="span-full">
+              <mat-label>Link UUID</mat-label>
+              <input matInput formControlName="linkUUID" />
+            </mat-form-field>
+          </form>
+          <div class="form-actions">
+            <button mat-stroked-button color="primary" (click)="disconnect()" [disabled]="loading()">Disconnect</button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>Trace Customer</h3>
+          </div>
+          <form [formGroup]="traceForm" class="form-grid">
+            <mat-form-field appearance="outline" class="span-full">
+              <mat-label>Customer UUID</mat-label>
+              <input matInput formControlName="customerUUID" />
+            </mat-form-field>
+          </form>
+          <div class="form-actions">
+            <button mat-stroked-button color="primary" (click)="trace()" [disabled]="loading()">Trace</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-header">
+        <div>
+          <h2>Result</h2>
+          <p>Last response from the FTTH operations.</p>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="error">{{ error() }}</div>
+      }
+      <div class="result-box">
+        <pre>{{ lastResponse() | json }}</pre>
+      </div>
+    </div>
+  </mat-card>
+</section>

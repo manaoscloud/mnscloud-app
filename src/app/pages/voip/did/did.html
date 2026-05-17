@@ -1,0 +1,327 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>DID</h1>
+        <p>Register operator numbers and link them to an operator.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input
+          matInput
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Search DIDs"
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        @if (selectedCount()) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelectedDids()"
+            [disabled]="deletingSelected()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">Apply</button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible DIDs"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleDidSelection(row, $event.checked)"
+              aria-label="Select DID"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Number</th>
+          <td mat-cell *matCellDef="let row">{{ row.VddNumber }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="operator">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Operator</th>
+          <td mat-cell *matCellDef="let row">{{ operatorLabel(row.VoipDidOperatorVdoUUID) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VddStatus === 1"
+              [class.is-inactive]="row.VddStatus !== 1"
+            >
+              {{ row.VddStatus === 1 ? 'active' : 'inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button (click)="editDid(row)" type="button" matTooltip="Edit DID">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="removeDid(row)" matTooltip="Delete DID">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading DIDs...' : 'No DIDs found for "' + (search || 'all') + '"' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[10, 20, 50]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #didFormDialog>
+  <div class="did-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit DID' : 'New DID' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update DID details and save changes.'
+              : 'Add one DID or create a numeric DID range linked to an operator.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form id="didForm" class="form-grid" (ngSubmit)="submit()" [formGroup]="form">
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                    {{ option.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              @if (!editing()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Create mode</mat-label>
+                  <mat-select
+                    formControlName="createMode"
+                    (selectionChange)="onCreateModeChange($event.value)"
+                  >
+                    <mat-option value="single">Single</mat-option>
+                    <mat-option value="range">Range</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              }
+
+              @if (isSingleMode()) {
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Number</mat-label>
+                  <app-phone-input
+                    formControlName="number"
+                    placeholder="5511999999999"
+                  ></app-phone-input>
+                  <mat-icon matSuffix>phone</mat-icon>
+                  <mat-error *ngIf="form.controls.number.hasError('pattern')">
+                    Invalid format. Use digits only.
+                  </mat-error>
+                </mat-form-field>
+              }
+
+              @if (isRangeMode()) {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>DID range</mat-label>
+                  <input
+                    matInput
+                    formControlName="didRange"
+                    placeholder="551140000000-551140000099"
+                  />
+                  <mat-icon matSuffix>linear_scale</mat-icon>
+                  <mat-hint>Creates all DIDs in range. Max 100.</mat-hint>
+                  <mat-error *ngIf="form.controls.didRange.hasError('pattern')">
+                    Use start-end with 8 to 15 digits.
+                  </mat-error>
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline">
+                <mat-label>Operator</mat-label>
+                <mat-select
+                  formControlName="operatorUUID"
+                  (openedChange)="onOperatorOpened($event)"
+                >
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="operatorSearch"
+                        (input)="operatorSearch = $any($event.target).value"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search operator"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (option of filteredOperators; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </form>
+
+            @if (skippedExisting().length || failedBulkItems().length) {
+              <div class="bulk-result-panel">
+                @if (skippedExisting().length) {
+                  <div>
+                    <h3>Skipped existing DIDs</h3>
+                    <ul>
+                      @for (item of skippedExisting(); track item.number) {
+                        <li>{{ item.number }} - {{ item.reason }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+
+                @if (failedBulkItems().length) {
+                  <div>
+                    <h3>Failed DIDs</h3>
+                    <ul>
+                      @for (item of failedBulkItems(); track item.number) {
+                        <li>{{ item.number }} - {{ item.message }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div
+        class="primary-actions save-split-action"
+        [class.is-single-action]="editing() || !isSingleMode()"
+      >
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          form="didForm"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing() && isSingleMode()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="form.invalid || saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNewDid()"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelEdit()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

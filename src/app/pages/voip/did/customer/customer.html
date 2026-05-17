@@ -1,0 +1,363 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>DID Customer</h1>
+        <p>Link customer accounts to existing DIDs.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Customer</mat-label>
+        <mat-select
+          [formControl]="filterForm.controls.customerUUID"
+          (openedChange)="onFilterCustomerOpened($event)"
+        >
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="filterCustomerSearch()"
+                (input)="filterCustomerSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search customer"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          <mat-option value="">All customers</mat-option>
+          @for (option of filteredFilterCustomers(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>DID</mat-label>
+        <mat-select
+          [formControl]="filterForm.controls.didUUID"
+          (openedChange)="onFilterDidOpened($event)"
+        >
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="filterDidSearch()"
+                (input)="filterDidSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search DID"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          <mat-option value="">All DIDs</mat-option>
+          @for (option of filteredFilterDids(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [formControl]="filterForm.controls.status">
+          <mat-option value="">All statuses</mat-option>
+          <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount()) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelectedLinks()"
+            [disabled]="deletingSelected()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button (click)="applyFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearFilters()" type="button">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible DID customer links"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleLinkSelection(row, $event.checked)"
+              aria-label="Select DID customer link"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+          <td mat-cell *matCellDef="let row">{{ customerLabel(row.CustomerCusUUID) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="did">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>DID</th>
+          <td mat-cell *matCellDef="let row">{{ didLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VdcStatus === 1"
+              [class.is-inactive]="row.VdcStatus !== 1"
+            >
+              {{ row.VdcStatus === 1 ? 'active' : 'inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button (click)="startEdit(row)" type="button" matTooltip="Edit link">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                (click)="toggleStatus(row)"
+                type="button"
+                matTooltip="Toggle status"
+              >
+                <mat-icon>{{ row.VdcStatus === 1 ? 'pause_circle' : 'play_circle' }}</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeLink(row)"
+                matTooltip="Delete link"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading links...' : 'No links found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[10, 20, 50]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #didCustomerFormDialog>
+  <div class="did-customer-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit DID Link' : 'New DID Link' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update the customer, DID, and status.'
+              : 'Create a customer-to-DID association.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form
+              id="didCustomerForm"
+              class="form-grid"
+              [formGroup]="linkForm"
+              (ngSubmit)="submitLink()"
+            >
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                    {{ option.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>DID</mat-label>
+                <mat-select formControlName="didUUID" (openedChange)="onLinkDidOpened($event)">
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="linkDidSearch()"
+                        (input)="linkDidSearch.set($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search DID"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (option of filteredLinkDids(); track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Customer</mat-label>
+                <mat-select
+                  formControlName="customerUUID"
+                  (openedChange)="onLinkCustomerOpened($event)"
+                >
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="linkCustomerSearch()"
+                        (input)="linkCustomerSearch.set($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search customer"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (option of filteredLinkCustomers(); track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          form="didCustomerForm"
+          [disabled]="linkForm.invalid || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="linkForm.invalid || saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNewLink()"
+          [disabled]="linkForm.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelCreate()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

@@ -1,0 +1,53 @@
+<div class="recording-dialog">
+  <header class="dialog-header">
+    <div>
+      <h2 mat-dialog-title>{{ data.title || 'Recording' }}</h2>
+      <p>
+        {{
+          data.subtitle ||
+            (data.engine || '-') +
+              ' · ' +
+              (data.pabxName || '-') +
+              ' · ' +
+              formatDate(data.startedAt)
+        }}
+      </p>
+    </div>
+    <button mat-icon-button type="button" aria-label="Close" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="dialog-content">
+    @if (data.showCallSummary !== false) {
+      <div class="call-summary">
+        <span>{{ data.callerNumber || '-' }}</span>
+        <mat-icon>arrow_forward</mat-icon>
+        <span>{{ data.destinationNumber || '-' }}</span>
+      </div>
+    }
+
+    <div class="player-shell">
+      <audio class="recording-player" controls preload="metadata" [src]="data.url"></audio>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" (click)="close()">Close</button>
+    </div>
+    <div class="primary-actions">
+      <a
+        mat-flat-button
+        color="primary"
+        [href]="data.url"
+        [download]="data.filename"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <mat-icon>download</mat-icon>
+        Download
+      </a>
+    </div>
+  </mat-dialog-actions>
+</div>

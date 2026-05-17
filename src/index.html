@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>mnscloud</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Pre-bootstrap theme -->
+  <script>
+    (function () {
+      const key = 'mnscloud-theme';
+      const saved = localStorage.getItem(key);
+      const mode =
+        saved === 'light' || saved === 'dark' || saved === 'system'
+          ? saved
+          : 'system';
+      document.documentElement.dataset.theme = mode;
+    })();
+  </script>
+  <script src="/env.js"></script>
+
+  <!-- Roboto Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Material Icons (Outlined + Rounded + Sharp) -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp" rel="stylesheet" />
+
+  <!-- Fallback: legacy material icons (opcional) -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- CSS Reset para garantir alinhamento perfeito dos ícones -->
+  <style>
+    .material-symbols-outlined,
+    .material-symbols-rounded,
+    .material-symbols-sharp {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
+      vertical-align: middle;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+
+</head>
+
+<body>
+  <app-root></app-root>
+  <noscript>Please enable JavaScript to continue using this application.</noscript>
+</body>
+
+</html>

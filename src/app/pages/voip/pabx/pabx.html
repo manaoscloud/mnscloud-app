@@ -1,0 +1,591 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ pageTitle() }}</h1>
+        <p>{{ pageSubtitle() }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search accounts</mat-label>
+        <input
+          matInput
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Name, server, domain, codecs, status..."
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelectedAccounts()"
+            [disabled]="deletingSelected()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">Apply</button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible PABX accounts"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleAccountSelection(row, $event.checked)"
+              [attr.aria-label]="'Select ' + row.VpaName"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.VpaName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="audioCodecs">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Audio codecs</th>
+          <td mat-cell *matCellDef="let row">{{ row.VpaDefaultAudioCodecs || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="videoCodecs">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Video codecs</th>
+          <td mat-cell *matCellDef="let row">{{ row.VpaDefaultVideoCodecs || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="server">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Server</th>
+          <td mat-cell *matCellDef="let row">
+            {{ serverLabel(row.VoipPabxServerVpsUUID || '', row.ServerName || null) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+          <td mat-cell *matCellDef="let row">
+            {{ customerLabel(row.CustomerCusUUID || '', row.CustomerName || null) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="domain">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
+          <td mat-cell *matCellDef="let row">
+            {{ domainLabel(row.VoipDomainVdmUUID || '', row.DomainName || null) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="dialPlan">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Dial Plan</th>
+          <td mat-cell *matCellDef="let row">
+            {{ dialPlanLabel(row.VoipPabxDialPlanVdpUUID || '', row.DialPlanName || null) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="blacklist">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Blacklist</th>
+          <td mat-cell *matCellDef="let row">
+            {{ blacklistLabel(row.VoipBlacklistVbkUUID || '', row.BlacklistName || null) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VpaIsActive === 1"
+              [class.is-inactive]="row.VpaIsActive !== 1"
+            >
+              {{ row.VpaIsActive === 1 ? 'active' : 'inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="default">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VpaIsDefault === 1"
+              [class.is-inactive]="row.VpaIsDefault !== 1"
+            >
+              {{ row.VpaIsDefault === 1 ? 'yes' : 'no' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                (click)="startEdit(row)"
+                type="button"
+                matTooltip="Edit account"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeAccount(row)"
+                matTooltip="Delete account"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{
+              loading()
+                ? 'Loading accounts...'
+                : 'No accounts found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #pabxFormDialog>
+  <div class="pabx-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit account' : 'New account' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update account behavior and default settings.'
+              : 'Add a PABX account linked to a server.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form id="voipPabxForm" class="form-grid" (ngSubmit)="saveAccount()" [formGroup]="form">
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="isActive">
+                  @for (option of statusOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              @if (!isMaster()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Server</mat-label>
+                  <mat-select
+                    formControlName="serverUUID"
+                    (openedChange)="onServerOpened($event)"
+                    (selectionChange)="selectedServerUUID.set($event.value || '')"
+                  >
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="serverSearch()"
+                          (input)="serverSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search server"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredServerOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Domain</mat-label>
+                  <mat-select formControlName="domainUUID" (openedChange)="onDomainOpened($event)">
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="domainSearch()"
+                          (input)="domainSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search domain"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredDomainOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Customer</mat-label>
+                  <mat-select
+                    formControlName="customerUUID"
+                    (openedChange)="onCustomerOpened($event)"
+                  >
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="customerSearch()"
+                          (input)="customerSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search customer"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredCustomerOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Dial Plan</mat-label>
+                  <mat-select
+                    formControlName="dialPlanUUID"
+                    (openedChange)="onDialPlanOpened($event)"
+                  >
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="dialPlanSearch()"
+                          (input)="dialPlanSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search dial plan"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredDialPlanOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Inbound blacklist</mat-label>
+                  <mat-select
+                    formControlName="blacklistUUID"
+                    (openedChange)="onBlacklistOpened($event)"
+                  >
+                    <mat-option value="">None</mat-option>
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="blacklistSearch()"
+                          (input)="blacklistSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search blacklist"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredBlacklistOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="Account name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Default audio codecs</mat-label>
+                <mat-select formControlName="defaultAudioCodecs" multiple>
+                  @for (codec of audioCodecOptions; track codec) {
+                    <mat-option [value]="codec">{{ codec }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Default video codecs</mat-label>
+                <mat-select formControlName="defaultVideoCodecs" multiple>
+                  @for (codec of videoCodecOptions; track codec) {
+                    <mat-option [value]="codec">{{ codec }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Timezone</mat-label>
+                <input
+                  matInput
+                  formControlName="timezone"
+                  placeholder="Tenant timezone"
+                  autocomplete="off"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Default</mat-label>
+                <mat-select formControlName="isDefault">
+                  @for (option of defaultOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Recording storage</mat-label>
+                <mat-select
+                  formControlName="recordingStorageMode"
+                  (selectionChange)="onRecordingStorageModeChange($event.value)"
+                >
+                  @for (option of recordingStorageModeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              @if (recordingStorageMode() === 'storage') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Storage account</mat-label>
+                  <mat-select
+                    formControlName="storageAccountUUID"
+                    (openedChange)="onStorageAccountOpened($event)"
+                    (selectionChange)="selectedStorageAccountUUID.set($event.value || '')"
+                  >
+                    <mat-option value="">Default storage account</mat-option>
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="storageAccountSearch()"
+                          (input)="storageAccountSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search storage account"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredStorageAccountOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Recording path</mat-label>
+                <input matInput [value]="recordingPathPreview()" readonly />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Media file storage</mat-label>
+                <mat-select
+                  formControlName="mediaStorageMode"
+                  (selectionChange)="onMediaStorageModeChange($event.value)"
+                >
+                  @for (option of recordingStorageModeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              @if (mediaStorageMode() === 'storage') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Media storage account</mat-label>
+                  <mat-select
+                    formControlName="mediaStorageAccountUUID"
+                    (openedChange)="onStorageAccountOpened($event)"
+                    (selectionChange)="selectedMediaStorageAccountUUID.set($event.value || '')"
+                  >
+                    <mat-option value="">Default storage account</mat-option>
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="storageAccountSearch()"
+                          (input)="storageAccountSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search storage account"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredStorageAccountOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline">
+                <mat-label>Media delivery</mat-label>
+                <mat-select formControlName="mediaDeliveryMode">
+                  @for (option of mediaDeliveryModeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          form="voipPabxForm"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="form.invalid || saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNewAccount()"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelEdit()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

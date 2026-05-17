@@ -1,0 +1,237 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Pool IPv4</h1>
+        <p>Manage IPv4 pools and available networks.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="openCreatePoolDialog()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input #searchInput matInput placeholder="Search pools" (input)="onSearchChange($any($event.target).value)" />
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applySearchFilters(searchInput.value)">Apply</button>
+        <button mat-stroked-button type="button" (click)="searchInput.value=''; clearSearchFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="poolDataSource" matSort #poolSort="matSort">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.Ip4Name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <span class="status-pill" [class.inactive]="row.Ip4Status !== 1">{{ statusLabel(row.Ip4Status) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="actions-col">
+              <button mat-icon-button (click)="selectPool(row)" matTooltip="Manage networks"><mat-icon>hub</mat-icon></button>
+              <button mat-icon-button (click)="startEditPool(row)" matTooltip="Edit"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button color="warn" (click)="deletePool(row)" matTooltip="Delete"><mat-icon>delete</mat-icon></button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="poolDisplayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: poolDisplayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="poolDisplayedColumns.length">
+            {{ loading() ? 'Loading IPv4 pools...' : 'No IPv4 pools found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
+
+    @if (selectedPool()) {
+      <section class="form-section">
+        <header class="form-header">
+          <div>
+            <h2>Networks of {{ selectedPool()?.Ip4Name }}</h2>
+            <p>Manage available IPv4 networks for this pool.</p>
+          </div>
+          <button mat-stroked-button color="primary" type="button" (click)="openCreateNetworkDialog()">
+            <mat-icon>add</mat-icon>
+            New Network
+          </button>
+        </header>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table mat-table [dataSource]="networkDataSource" matSort #networkSort="matSort">
+            <ng-container matColumnDef="cidr">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>IP/Mask</th>
+              <td mat-cell *matCellDef="let row">{{ row.I4nCidr }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+              <td mat-cell *matCellDef="let row" class="status-col">
+                <span class="status-pill" [class.inactive]="row.I4nStatus !== 1">{{ statusLabel(row.I4nStatus) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let row">
+                <div class="actions-col">
+                  <button mat-icon-button (click)="startEditNetwork(row)" matTooltip="Edit"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button color="warn" (click)="deleteNetwork(row)" matTooltip="Delete"><mat-icon>delete</mat-icon></button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="networkDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: networkDisplayedColumns"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="networkDisplayedColumns.length">No IPv4 networks found.</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+    }
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </mat-card>
+</section>
+
+<ng-template #poolDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editingPool() ? 'Edit pool' : 'New pool' }}</h2>
+        <p>Set pool name, description and status.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="poolForm" (ngSubmit)="savePool()">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Description</mat-label>
+                <input matInput formControlName="description" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <button mat-flat-button color="primary" type="button" (click)="savePool()" [disabled]="poolForm.invalid || savingPool()">
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      @if (!editingPool()) {
+        <button mat-stroked-button color="primary" type="button" (click)="savePoolAndNew()" [disabled]="poolForm.invalid || savingPool()">
+          Save and new
+        </button>
+      }
+      <button mat-stroked-button type="button" (click)="cancelPoolForm()">Cancel</button>
+      @if (error()) {
+        <span class="error">{{ error() }}</span>
+      }
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #networkDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editingNetwork() ? 'Edit network' : 'New network' }}</h2>
+        <p>Set CIDR, description and status for this pool.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="networkForm" (ngSubmit)="saveNetwork()">
+              <mat-form-field appearance="outline">
+                <mat-label>IP/Mask</mat-label>
+                <input matInput formControlName="cidr" placeholder="198.51.100.0/24" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Description</mat-label>
+                <input matInput formControlName="description" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <button mat-flat-button color="primary" type="button" (click)="saveNetwork()" [disabled]="networkForm.invalid || savingNetwork()">
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      @if (!editingNetwork()) {
+        <button mat-stroked-button color="primary" type="button" (click)="saveNetworkAndNew()" [disabled]="networkForm.invalid || savingNetwork()">
+          Save and new
+        </button>
+      }
+      <button mat-stroked-button type="button" (click)="cancelNetworkForm()">Cancel</button>
+      @if (error()) {
+        <span class="error">{{ error() }}</span>
+      }
+    </mat-dialog-actions>
+  </div>
+</ng-template>

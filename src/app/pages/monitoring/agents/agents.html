@@ -1,0 +1,348 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Agents</h1>
+        <p>Register agents, assign resources, and monitor heartbeat health.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput formControlName="search" placeholder="Name, UUID, host, resource" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="type">
+          @for (option of typeOptions; track option) {
+            <mat-option [value]="option">{{ option || 'All' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          @for (option of statusOptions; track option) {
+            <mat-option [value]="option">{{ option || 'All' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount() > 0) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedAgents()">
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="pagedAgents()" matSort (matSortChange)="onSort($event)">
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible agents"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleSelection(row, $event.checked)"
+              (click)="$event.stopPropagation()"
+              [attr.aria-label]="'Select agent ' + (row.name || row.uuid)"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <span
+              class="status-pill status-chip state-chip"
+              [class.is-active]="row.connectionStatus === 'online'"
+              [class.is-inactive]="row.connectionStatus !== 'online'"
+              [class.chip-success]="row.connectionStatus === 'online'"
+              [class.chip-skipped]="row.connectionStatus !== 'online'"
+            >
+              {{ row.connectionStatus === 'online' ? 'ONLINE' : 'OFFLINE' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="agent-name">
+              <span>{{ row.name || '-' }}</span>
+              <small>{{ row.uuid }}</small>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+          <td mat-cell *matCellDef="let row">{{ row.type || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="resource">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Resource</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="resource-cell">
+              <span>{{ row.resourceLabel || row.resourceUUID || '-' }}</span>
+              <small>{{ row.resourceType || '-' }}</small>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="hostname">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Host</th>
+          <td mat-cell *matCellDef="let row">{{ row.hostname || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="uptime">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Uptime</th>
+          <td mat-cell *matCellDef="let row">{{ formatUptime(row.uptimeSeconds) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="heartbeat">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Heartbeat</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.lastHeartbeatAt ? (row.lastHeartbeatAt | date: 'short') : '-' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="generateInstallCommand(row)"
+                aria-label="Generate install command"
+                matTooltip="Generate install command"
+              >
+                <mat-icon>terminal</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                (click)="deleteAgent(row)"
+                matTooltip="Delete"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading agents...' : 'No agents found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="filteredAgents().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      (page)="onPage($event)"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #agentDialog>
+  <div class="crud-dialog entity-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit agent' : 'New agent' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update the agent identity, capabilities, and assigned resource.'
+              : 'Register the UUID generated by the installed agent.'
+          }}
+        </p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <form class="tab-content form-grid" [formGroup]="form">
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option [value]="1">Active</mat-option>
+                <mat-option [value]="0">Inactive</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" placeholder="e.g. Linux Agent 01" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Agent UUID</mat-label>
+              <input matInput formControlName="agentUUID" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Hostname</mat-label>
+              <input matInput formControlName="hostname" autocomplete="off" />
+            </mat-form-field>
+          </form>
+        </mat-tab>
+
+        <mat-tab label="Assignment">
+          <form class="tab-content form-grid" [formGroup]="form">
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>Capabilities</mat-label>
+              <textarea
+                matInput
+                formControlName="capabilitiesText"
+                rows="7"
+                placeholder="linux.status&#10;security.nftables.manage&#10;security.crowdsec.manage"
+              ></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Resource type</mat-label>
+              <input matInput formControlName="resourceType" placeholder="e.g. voip_pabx_server" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Resource UUID</mat-label>
+              <input matInput formControlName="resourceUUID" autocomplete="off" />
+            </mat-form-field>
+          </form>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          type="button"
+          (click)="closeDialog()"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="form.invalid || saving()"
+          (click)="save(false)"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveMenu"
+            [disabled]="form.invalid || saving()"
+            aria-label="More save actions"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu #saveMenu="matMenu" class="save-more-menu" xPosition="before" yPosition="below">
+        <button
+          mat-menu-item
+          type="button"
+          (click)="save(true)"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #tokenDialog>
+  <div class="agent-token-dialog">
+    <h2 mat-dialog-title>Agent install command</h2>
+    <mat-dialog-content>
+      <p>Run this command on the server where the agent was installed.</p>
+      <p class="token-warning">
+        This token is shown only once. Generating this command again rotates the token and
+        invalidates the previous one.
+      </p>
+      <pre>{{ tokenCommand() }}</pre>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button
+        mat-stroked-button
+        type="button"
+        [cdkCopyToClipboard]="tokenCommand()"
+        (cdkCopyToClipboardCopied)="notifyCommandCopied($event)"
+      >
+        <mat-icon>content_copy</mat-icon>
+        Copy
+      </button>
+      <button mat-flat-button color="primary" mat-dialog-close type="button">Done</button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

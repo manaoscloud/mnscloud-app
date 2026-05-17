@@ -1,0 +1,18 @@
+<div
+  class="phone-input-container"
+  [attr.aria-describedby]="userAriaDescribedBy"
+  (focusin)="onFocusIn()"
+  (focusout)="onFocusOut()"
+>
+  <input
+    class="phone-input-element"
+    [attr.placeholder]="placeholder"
+    [disabled]="disabled"
+    [required]="required"
+    [value]="value"
+    maxlength="15"
+    inputmode="numeric"
+    aria-label="Phone number"
+    (input)="handleInput($event)"
+  />
+</div>

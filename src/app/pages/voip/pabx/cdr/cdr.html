@@ -1,0 +1,147 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>PABX CDR</h1>
+        <p>Unified call detail records from Asterisk and FreeSWITCH.</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>Search</mat-label>
+        <input matInput [(ngModel)]="search" placeholder="Call ID, caller, destination..." />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="status">
+          <mat-option value="">All</mat-option>
+          <mat-option value="answered">Answered</mat-option>
+          <mat-option value="missed">Missed</mat-option>
+          <mat-option value="failed">Failed</mat-option>
+          <mat-option value="busy">Busy</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Direction</mat-label>
+        <mat-select [(ngModel)]="direction">
+          <mat-option value="">All</mat-option>
+          <mat-option value="inbound">Inbound</mat-option>
+          <mat-option value="outbound">Outbound</mat-option>
+          <mat-option value="internal">Internal</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>From</mat-label>
+        <input matInput type="datetime-local" [(ngModel)]="dateFrom" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>To</mat-label>
+        <input matInput type="datetime-local" [(ngModel)]="dateTo" />
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <mat-tab-group class="list-tabs" (selectedIndexChange)="onTabChange($event)">
+      <mat-tab label="All"></mat-tab>
+      <mat-tab label="Asterisk"></mat-tab>
+      <mat-tab label="FreeSWITCH"></mat-tab>
+    </mat-tab-group>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="startedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Started</th>
+          <td mat-cell *matCellDef="let row">{{ formatDate(row.startedAt) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="engine">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Engine</th>
+          <td mat-cell *matCellDef="let row">{{ row.engine }}</td>
+        </ng-container>
+        <ng-container matColumnDef="pabx">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
+          <td mat-cell *matCellDef="let row">{{ row.pabxName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="direction">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Direction</th>
+          <td mat-cell *matCellDef="let row">{{ row.direction }}</td>
+        </ng-container>
+        <ng-container matColumnDef="caller">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Caller</th>
+          <td mat-cell *matCellDef="let row">{{ row.callerNumber }}</td>
+        </ng-container>
+        <ng-container matColumnDef="destination">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Destination</th>
+          <td mat-cell *matCellDef="let row">{{ row.destinationNumber }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip class="status-pill" [ngClass]="statusClass(row.status)">
+              {{ row.status || '-' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="duration">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Duration</th>
+          <td mat-cell *matCellDef="let row">{{ row.durationSeconds || 0 }}s</td>
+        </ng-container>
+        <ng-container matColumnDef="cause">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cause</th>
+          <td mat-cell *matCellDef="let row">{{ row.hangupCause }}</td>
+        </ng-container>
+        <ng-container matColumnDef="recording">
+          <th mat-header-cell *matHeaderCellDef>Recording</th>
+          <td mat-cell *matCellDef="let row">
+            <button
+              mat-icon-button
+              type="button"
+              [disabled]="!hasRecording(row)"
+              [matTooltip]="recordingTooltip(row)"
+              (click)="openRecording(row)"
+              aria-label="Listen call recording"
+            >
+              <mat-icon>{{ hasRecording(row) ? 'play_circle' : 'not_interested' }}</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns().length">
+            {{ loading() ? 'Loading...' : 'No CDR records found' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>

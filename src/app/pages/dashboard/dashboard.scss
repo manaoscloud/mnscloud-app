@@ -1,0 +1,96 @@
+.dashboard-container {
+  padding: 2rem;
+  color: var(--mat-sys-color-on-surface);
+}
+
+/* HEADER */
+.header-block {
+  margin-bottom: 2rem;
+
+  .title {
+    font-weight: 700;
+    color: var(--mat-sys-color-on-surface);
+  }
+
+  .subtitle {
+    margin-top: 0.15rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+/* ============================
+   SUMMARY CARDS GRID
+============================ */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.6rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  padding: 1.5rem !important;
+  border-radius: 1rem;
+
+  background: var(--mat-sys-color-surface-container-highest);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 22px color-mix(in srgb, black 20%, transparent);
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--mat-sys-color-on-surface-variant);
+    margin-bottom: 0.35rem;
+  }
+
+  .card-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--mat-sys-color-on-surface);
+
+    &.success {
+      color: var(--mat-sys-color-primary);
+    }
+  }
+}
+
+/* ============================
+   WELCOME BOX
+============================ */
+.welcome-box {
+  padding: 2rem !important;
+  border-radius: 1rem;
+
+  background: var(--mat-sys-color-surface-container-low);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+
+  .welcome-title {
+    margin-bottom: 0.4rem;
+    color: var(--mat-sys-color-on-surface);
+  }
+
+  .welcome-text {
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .dashboard-container {
+    padding: 1.25rem;
+  }
+
+  .cards {
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.25rem !important;
+  }
+}

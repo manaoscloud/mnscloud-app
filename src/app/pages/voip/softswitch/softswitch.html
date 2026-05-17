@@ -1,0 +1,362 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ pageTitle() }}</h1>
+        <p>{{ pageSubtitle() }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refresh()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input
+          matInput
+          [value]="searchInput"
+          placeholder="Search Softswitch accounts"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelectedAccounts()"
+            [disabled]="deletingSelected()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible Softswitch accounts"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleAccountSelection(row, $event.checked)"
+              [attr.aria-label]="'Select ' + row.VssName"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.VssName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <td mat-cell *matCellDef="let row">{{ providerLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+          <td mat-cell *matCellDef="let row">{{ row.CustomerName || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="domain">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
+          <td mat-cell *matCellDef="let row">{{ row.DomainName || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="server">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Server</th>
+          <td mat-cell *matCellDef="let row">{{ serverLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VssIsActive === 1"
+              [class.is-inactive]="row.VssIsActive !== 1"
+            >
+              {{ row.VssIsActive === 1 ? 'Active' : 'Inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="default">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VssIsDefault === 1"
+              [class.is-inactive]="row.VssIsDefault !== 1"
+            >
+              {{ row.VssIsDefault === 1 ? 'Default' : '-' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                (click)="editAccount(row)"
+                type="button"
+                matTooltip="Edit account"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeAccount(row)"
+                type="button"
+                matTooltip="Delete account"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading accounts...' : 'No accounts registered yet.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[10, 20, 50]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #softswitchFormDialog>
+  <div class="softswitch-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit Softswitch Account' : 'New Softswitch Account' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update provider credentials and defaults.'
+              : 'Add API credentials for a Softswitch.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form id="softswitchForm" class="form-grid" (ngSubmit)="submit()" [formGroup]="form">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="Account name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Provider</mat-label>
+                <mat-select formControlName="providerUUID" (openedChange)="clearSelectSearch('provider', $event)">
+                  <mat-option class="select-search-option">
+                    <input
+                      matInput
+                      class="select-search-field"
+                      placeholder="Search providers"
+                      [value]="providerSearch"
+                      (input)="setSelectSearch('provider', $any($event.target).value)"
+                      (click)="$event.stopPropagation()"
+                    />
+                  </mat-option>
+                  <mat-option *ngFor="let option of filteredProviders()" [value]="option.VspUUID">
+                    {{ option.VspName }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Server</mat-label>
+                <mat-select formControlName="serverUUID" (openedChange)="clearSelectSearch('server', $event)">
+                  <mat-option class="select-search-option">
+                    <input
+                      matInput
+                      class="select-search-field"
+                      placeholder="Search servers"
+                      [value]="serverSearch"
+                      (input)="setSelectSearch('server', $any($event.target).value)"
+                      (click)="$event.stopPropagation()"
+                    />
+                  </mat-option>
+                  <mat-option *ngFor="let option of filteredServers()" [value]="option.VsrUUID">
+                    {{ option.VsrName }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Customer</mat-label>
+                <mat-select formControlName="customerUUID" (openedChange)="clearSelectSearch('customer', $event)">
+                  <mat-option class="select-search-option">
+                    <input
+                      matInput
+                      class="select-search-field"
+                      placeholder="Search customers"
+                      [value]="customerSearch"
+                      (input)="setSelectSearch('customer', $any($event.target).value)"
+                      (click)="$event.stopPropagation()"
+                    />
+                  </mat-option>
+                  <mat-option *ngFor="let option of filteredCustomers()" [value]="option.CustomerUUID">
+                    {{ option.Name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Domain</mat-label>
+                <mat-select formControlName="domainUUID" (openedChange)="clearSelectSearch('domain', $event)">
+                  <mat-option class="select-search-option">
+                    <input
+                      matInput
+                      class="select-search-field"
+                      placeholder="Search domains"
+                      [value]="domainSearch"
+                      (input)="setSelectSearch('domain', $any($event.target).value)"
+                      (click)="$event.stopPropagation()"
+                    />
+                  </mat-option>
+                  <mat-option *ngFor="let option of filteredDomains()" [value]="option.VdmUUID">
+                    {{ option.VdmName }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Base URL</mat-label>
+                <input matInput formControlName="baseUrl" placeholder="https://api.provider.com" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>API Key</mat-label>
+                <input matInput formControlName="apiKey" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>API Secret</mat-label>
+                <input matInput formControlName="apiSecret" />
+              </mat-form-field>
+
+              <div class="toggle-row">
+                <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+                <mat-slide-toggle formControlName="isDefault">Default</mat-slide-toggle>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          form="softswitchForm"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="softswitchSaveMenu"
+            [disabled]="form.invalid || saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #softswitchSaveMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNewAccount()"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelEdit()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

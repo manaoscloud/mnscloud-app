@@ -1,0 +1,50 @@
+import {
+  ApplicationConfig,
+  importProvidersFrom,
+  inject,
+  LOCALE_ID,
+  provideAppInitializer,
+  provideZonelessChangeDetection,
+} from "@angular/core";
+
+import { registerLocaleData } from "@angular/common";
+import localeEn from "@angular/common/locales/en";
+import localeEs from "@angular/common/locales/es";
+import localePt from "@angular/common/locales/pt";
+import { provideRouter } from "@angular/router";
+import { routes } from "./app.routes";
+
+import { provideAnimations } from "@angular/platform-browser/animations";
+
+import { provideHttpClient, withInterceptors } from "@angular/common/http";
+import { TitleStrategy } from "@angular/router";
+import { apiInterceptor } from "./core/interceptors/api.interceptor";
+import { MAT_DATE_LOCALE } from "@angular/material/core";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
+import { I18nService, resolveInitialLanguage } from "./services/i18n.service";
+import { PublicThemeContextService } from "./services/public-theme-context.service";
+import { PublicThemeTitleStrategy } from "./services/public-theme-title.strategy";
+
+registerLocaleData(localeEn);
+registerLocaleData(localeEs);
+registerLocaleData(localePt);
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideZonelessChangeDetection(),
+    provideRouter(routes),
+    provideAnimations(),
+    provideAppInitializer(() => inject(PublicThemeContextService).load()),
+    { provide: TitleStrategy, useClass: PublicThemeTitleStrategy },
+    importProvidersFrom(MatSnackBarModule),
+    provideHttpClient(withInterceptors([apiInterceptor])),
+    {
+      provide: MAT_DATE_LOCALE,
+      useFactory: () => inject(I18nService).language(),
+    },
+    {
+      provide: LOCALE_ID,
+      useFactory: () => resolveInitialLanguage(),
+    },
+  ],
+};

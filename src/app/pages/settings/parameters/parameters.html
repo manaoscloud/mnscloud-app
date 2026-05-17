@@ -1,0 +1,319 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ pageTitle() }}</h1>
+        <p>{{ pageSubtitle() }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (click)="loadItems()"
+          [disabled]="loading() || saving()"
+        >
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+      </div>
+    </header>
+
+    <div class="parameters-form crud-dialog" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <div class="dialog-content">
+        <mat-tab-group class="form-tabs">
+          <mat-tab label="Data">
+            <form class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Default Currency</mat-label>
+                <input
+                  matInput
+                  maxlength="3"
+                  [ngModel]="item().defaultCurrency"
+                  (ngModelChange)="updateItem({ defaultCurrency: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="BRL"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Default Language</mat-label>
+                <input
+                  matInput
+                  [ngModel]="item().defaultLanguage"
+                  (ngModelChange)="updateItem({ defaultLanguage: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="pt-BR"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Default Timezone</mat-label>
+                <input
+                  matInput
+                  [ngModel]="item().defaultTimezone"
+                  (ngModelChange)="updateItem({ defaultTimezone: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="defaultTimezonePlaceholder()"
+                />
+              </mat-form-field>
+
+              <div class="toggle-grid span-4">
+                <mat-slide-toggle
+                  [ngModel]="item().defaultCurrencyIsActive"
+                  (ngModelChange)="updateItem({ defaultCurrencyIsActive: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                >
+                  Default Currency Active
+                </mat-slide-toggle>
+
+                <mat-slide-toggle
+                  [ngModel]="item().defaultLanguageIsActive"
+                  (ngModelChange)="updateItem({ defaultLanguageIsActive: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                >
+                  Default Language Active
+                </mat-slide-toggle>
+
+                <mat-slide-toggle
+                  [ngModel]="item().defaultTimezoneIsActive"
+                  (ngModelChange)="updateItem({ defaultTimezoneIsActive: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                >
+                  Default Timezone Active
+                </mat-slide-toggle>
+              </div>
+            </form>
+          </mat-tab>
+
+          <mat-tab label="Integrations">
+            <form class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>Google Maps Embed API Key</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  [ngModel]="item().googleMapsEmbedApiKey"
+                  (ngModelChange)="updateItem({ googleMapsEmbedApiKey: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="Google Maps Street View embed API key"
+                ></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>Mapbox Token</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  [ngModel]="item().mapboxToken"
+                  (ngModelChange)="updateItem({ mapboxToken: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="Mapbox public token"
+                ></textarea>
+              </mat-form-field>
+
+              <div class="toggle-grid span-4">
+                <mat-slide-toggle
+                  [ngModel]="item().googleMapsEmbedApiKeyIsActive"
+                  (ngModelChange)="updateItem({ googleMapsEmbedApiKeyIsActive: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                >
+                  Google Maps Key Active
+                </mat-slide-toggle>
+
+                <mat-slide-toggle
+                  [ngModel]="item().mapboxTokenIsActive"
+                  (ngModelChange)="updateItem({ mapboxTokenIsActive: $event })"
+                  [ngModelOptions]="{ standalone: true }"
+                >
+                  Mapbox Token Active
+                </mat-slide-toggle>
+              </div>
+            </form>
+          </mat-tab>
+
+          <mat-tab label="VoIP">
+            <mat-tab-group class="nested-tabs">
+              <mat-tab label="SBC">
+                <div class="tab-content empty-tab">No SBC defaults configured yet.</div>
+              </mat-tab>
+              <mat-tab label="Softswitch">
+                <div class="tab-content empty-tab">No softswitch defaults configured yet.</div>
+              </mat-tab>
+              <mat-tab label="PABX">
+                <form class="tab-content form-grid">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Storage - Recording</mat-label>
+                    <mat-select
+                      [ngModel]="item().voipPabxRecordingStorageMode"
+                      (ngModelChange)="updateItem({ voipPabxRecordingStorageMode: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="voipPabxRecordingStoragePlaceholder()"
+                    >
+                      <mat-option value="">Default</mat-option>
+                      <mat-option value="filesystem">Filesystem</mat-option>
+                      <mat-option value="storage">Storage</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>Recording storage account</mat-label>
+                    <mat-select
+                      [ngModel]="item().voipPabxRecordingStorageAccountUUID"
+                      (ngModelChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                      [disabled]="item().voipPabxRecordingStorageMode !== 'storage'"
+                    >
+                      <mat-option value="">Default storage account</mat-option>
+                      @for (account of storageAccounts(); track account.HsaUUID) {
+                        <mat-option [value]="account.HsaUUID">
+                          {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Storage - Media File</mat-label>
+                    <mat-select
+                      [ngModel]="item().voipPabxMediaStorageMode"
+                      (ngModelChange)="updateItem({ voipPabxMediaStorageMode: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="voipPabxMediaStoragePlaceholder()"
+                    >
+                      <mat-option value="">Default</mat-option>
+                      <mat-option value="filesystem">Filesystem</mat-option>
+                      <mat-option value="storage">Storage</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>Media file storage account</mat-label>
+                    <mat-select
+                      [ngModel]="item().voipPabxMediaStorageAccountUUID"
+                      (ngModelChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                      [disabled]="item().voipPabxMediaStorageMode !== 'storage'"
+                    >
+                      <mat-option value="">Default storage account</mat-option>
+                      @for (account of storageAccounts(); track account.HsaUUID) {
+                        <mat-option [value]="account.HsaUUID">
+                          {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Media File - Delivery Mode</mat-label>
+                    <mat-select
+                      [ngModel]="item().voipPabxMediaDeliveryMode"
+                      (ngModelChange)="updateItem({ voipPabxMediaDeliveryMode: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="voipPabxMediaDeliveryPlaceholder()"
+                    >
+                      <mat-option value="">Default</mat-option>
+                      <mat-option value="online">Online</mat-option>
+                      <mat-option value="offline">Offline</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Remote Command Executor</mat-label>
+                    <mat-select
+                      [ngModel]="item().voipPabxRemoteCommandExecutor"
+                      (ngModelChange)="updateItem({ voipPabxRemoteCommandExecutor: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()"
+                    >
+                      <mat-option value="">Default</mat-option>
+                      <mat-option value="agent">Agent</mat-option>
+                      <mat-option value="esl_ami">ESL/AMI</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <div class="toggle-grid span-4">
+                    <mat-slide-toggle
+                      [ngModel]="item().voipPabxRecordingStorageIsActive"
+                      (ngModelChange)="updateItem({ voipPabxRecordingStorageIsActive: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      Recording Storage Active
+                    </mat-slide-toggle>
+                    <mat-slide-toggle
+                      [ngModel]="item().voipPabxMediaStorageIsActive"
+                      (ngModelChange)="updateItem({ voipPabxMediaStorageIsActive: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      Media Storage Active
+                    </mat-slide-toggle>
+                    <mat-slide-toggle
+                      [ngModel]="item().voipPabxMediaDeliveryModeIsActive"
+                      (ngModelChange)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      Media Delivery Active
+                    </mat-slide-toggle>
+                    <mat-slide-toggle
+                      [ngModel]="item().voipPabxRemoteCommandExecutorIsActive"
+                      (ngModelChange)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event })"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      Remote Command Active
+                    </mat-slide-toggle>
+                  </div>
+                </form>
+              </mat-tab>
+            </mat-tab-group>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+
+      <footer class="form-actions">
+        <div class="secondary-actions">
+          <button
+            class="dialog-action-button dialog-action-secondary"
+            mat-stroked-button
+            type="button"
+            (click)="cancelChanges()"
+            [disabled]="!hasChanges() || saving()"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div class="primary-actions">
+          <button
+            class="dialog-action-button save-main-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            (click)="saveAll()"
+            [disabled]="!hasChanges() || saving()"
+          >
+            @if (saving()) {
+              <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+            } @else {
+              <mat-icon>save</mat-icon>
+            }
+            Save
+          </button>
+        </div>
+
+        @if (feedback()) {
+          <p class="form-message error">{{ feedback() }}</p>
+        }
+        @if (success()) {
+          <p class="form-message success">{{ success() }}</p>
+        }
+      </footer>
+    </div>
+  </mat-card>
+</section>

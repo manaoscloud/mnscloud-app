@@ -1,0 +1,4530 @@
+/* =========================================================
+   ANGULAR MATERIAL 20 — CONFIGURAÇÃO DOS TEMAS
+   (A REGRA @use DEVE VIR NO TOPO ABSOLUTO!)
+========================================================= */
+@use '@angular/material' as mat;
+
+/* =========================================================
+   MAPBOX GL + DRAW
+========================================================= */
+@import 'mapbox-gl/dist/mapbox-gl.css';
+@import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
+@import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
+
+/* =========================================================
+   VARIÁVEIS GLOBAIS (LAYOUT + FORM CONTROLS)
+========================================================= */
+
+:root,
+html,
+body {
+  --layout-bar-height: 48px;
+  --layout-bar-padding: 0 1rem;
+
+  /* Form Controls Premium */
+  --form-field-radius: 12px;
+  --form-icon-size: 22px;
+  --form-icon-button: 40px;
+  --form-control-height: 40px;
+  --crud-action-button-width: 120px;
+}
+
+/* =========================================================
+   1) DEFINIÇÃO DOS TEMAS LIGHT / DARK
+========================================================= */
+
+$light-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$cyan-palette,
+      tertiary: mat.$blue-palette,
+    ),
+  )
+);
+
+$dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: mat.$cyan-palette,
+      tertiary: mat.$blue-palette,
+    ),
+  )
+);
+
+/* =========================================================
+   2) MIXIN PARA GERAR AS VARIÁVEIS --mat-sys-*
+========================================================= */
+
+@mixin mnscloud-sys-colors($theme) {
+  --mat-sys-color-surface: #{mat.get-theme-color($theme, surface)};
+  --mat-sys-color-on-surface: #{mat.get-theme-color($theme, on-surface)};
+  --mat-sys-color-surface-container-lowest: #{mat.get-theme-color($theme, surface-container-lowest)};
+  --mat-sys-color-surface-container-low: #{mat.get-theme-color($theme, surface-container-low)};
+  --mat-sys-color-surface-container: #{mat.get-theme-color($theme, surface-container)};
+  --mat-sys-color-surface-container-high: #{mat.get-theme-color($theme, surface-container-high)};
+  --mat-sys-color-surface-container-highest: #{mat.get-theme-color(
+      $theme,
+      surface-container-highest
+    )};
+
+  --mat-sys-color-primary: #{mat.get-theme-color($theme, primary)};
+  --mat-sys-color-on-primary: #{mat.get-theme-color($theme, on-primary)};
+  --mat-sys-color-primary-container: #{mat.get-theme-color($theme, primary-container)};
+  --mat-sys-color-on-primary-container: #{mat.get-theme-color($theme, on-primary-container)};
+
+  --mat-sys-color-outline-variant: #{mat.get-theme-color($theme, outline-variant)};
+  --mat-sys-color-on-surface-variant: #{mat.get-theme-color($theme, on-surface-variant)};
+}
+
+/* =========================================================
+   2.1) MIXIN COM COMPONENTES USADOS
+========================================================= */
+
+@mixin mnscloud-component-themes($theme) {
+  @include mat.button-theme($theme);
+  @include mat.card-theme($theme);
+  @include mat.chips-theme($theme);
+  @include mat.datepicker-theme($theme);
+  @include mat.divider-theme($theme);
+  @include mat.form-field-theme($theme);
+  @include mat.icon-theme($theme);
+  @include mat.input-theme($theme);
+  @include mat.list-theme($theme);
+  @include mat.menu-theme($theme);
+  @include mat.progress-spinner-theme($theme);
+  @include mat.radio-theme($theme);
+  @include mat.select-theme($theme);
+  @include mat.sidenav-theme($theme);
+  @include mat.slide-toggle-theme($theme);
+  @include mat.snack-bar-theme($theme);
+  @include mat.table-theme($theme);
+  @include mat.toolbar-theme($theme);
+}
+
+/* =========================================================
+   3) APLICAR TEMAS
+========================================================= */
+
+@include mat.core();
+
+html[data-theme='light'] {
+  @include mnscloud-component-themes($light-theme);
+  @include mnscloud-sys-colors($light-theme);
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  @include mnscloud-component-themes($dark-theme);
+  @include mnscloud-sys-colors($dark-theme);
+  color-scheme: dark;
+}
+
+html[data-theme='system'] {
+  @media (prefers-color-scheme: light) {
+    @include mnscloud-component-themes($light-theme);
+    @include mnscloud-sys-colors($light-theme);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    @include mnscloud-component-themes($dark-theme);
+    @include mnscloud-sys-colors($dark-theme);
+    color-scheme: dark;
+  }
+}
+
+/* =========================================================
+   4) BASE GLOBAL
+========================================================= */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--mat-sys-color-surface);
+  color: var(--mat-sys-color-on-surface);
+  height: 100%;
+  overflow: hidden;
+}
+
+app-root {
+  display: block;
+  height: 100%;
+}
+
+/* =========================================================
+   5) FORM CONTROLS — PREMIUM MD3 (GLOBAL)
+   (SEGURO – NÃO QUEBRA MDC)
+========================================================= */
+
+mat-form-field {
+  width: 100%;
+  margin-bottom: 1rem;
+
+  /* Suffix alinhado */
+  .mat-mdc-form-field-icon-suffix {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 4px !important;
+  }
+}
+
+/* Botão de ícone dentro de campo (ex: visualizar senha) */
+button[mat-icon-button].mat-mdc-icon-button {
+  width: var(--form-icon-button) !important;
+  height: var(--form-icon-button) !important;
+  padding: 0 !important;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ícones padrão (campos, toolbar, menu, etc.) */
+mat-icon {
+  font-size: var(--form-icon-size) !important;
+  width: var(--form-icon-size) !important;
+  height: var(--form-icon-size) !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Dialog: Global theme alignment */
+.cdk-overlay-container .mat-mdc-dialog-surface {
+  background: var(--mat-sys-color-surface-container-high) !important;
+  color: var(--mat-sys-color-on-surface) !important;
+  border: 1px solid var(--mat-sys-color-outline-variant) !important;
+}
+
+.cdk-overlay-container .mat-mdc-dialog-title {
+  color: var(--mat-sys-color-on-surface) !important;
+  opacity: 1 !important;
+  font-weight: 600;
+}
+
+.cdk-overlay-container .mat-mdc-dialog-content {
+  color: var(--mat-sys-color-on-surface) !important;
+}
+
+.cdk-overlay-pane.voip-pabx-recording-dialog-panel .mat-mdc-dialog-surface {
+  border-radius: 0.75rem !important;
+  box-sizing: border-box;
+  overflow: hidden !important;
+}
+
+.cdk-overlay-pane.voip-pabx-recording-dialog-panel .mat-mdc-dialog-container,
+.cdk-overlay-pane.voip-pabx-recording-dialog-panel .mat-mdc-dialog-content {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.cdk-overlay-pane.voip-pabx-recording-dialog-panel .mat-mdc-dialog-content {
+  margin: 0 !important;
+}
+
+.cdk-overlay-container .mat-mdc-dialog-content p,
+.cdk-overlay-container .mat-mdc-dialog-content .message {
+  color: var(--mat-sys-color-on-surface) !important;
+}
+
+/* Snackbars */
+.snackbar {
+  color: #fff;
+  font-weight: 600;
+  border-radius: 0.6rem;
+}
+
+.snackbar-success {
+  --mdc-snackbar-container-color: #22c55e;
+}
+
+.snackbar-error {
+  --mdc-snackbar-container-color: #ef4444;
+}
+
+.snackbar-warning {
+  --mdc-snackbar-container-color: #f59e0b;
+}
+
+.snackbar-info {
+  --mdc-snackbar-container-color: #3b82f6;
+}
+
+.cdk-overlay-container .mat-mdc-dialog-content .hint {
+  color: var(--mat-sys-color-on-surface-variant) !important;
+}
+
+/* Autocomplete (global) */
+.cdk-overlay-pane .mat-mdc-autocomplete-panel {
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  opacity: 1;
+}
+
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .mat-mdc-option {
+  color: var(--mat-sys-color-on-surface);
+}
+
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .mat-mdc-option:hover,
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .mat-mdc-option.mat-mdc-option-active {
+  background: var(--mat-sys-color-surface-container-low);
+}
+
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .mat-mdc-option.mdc-list-item--selected {
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 20%, transparent);
+  color: var(--mat-sys-color-primary);
+}
+
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .mdc-menu-surface,
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .mdc-menu-surface--open {
+  background: var(--mat-sys-color-surface-container-high);
+  opacity: 1;
+}
+
+/* =========================================================
+   6) BOTÕES GLOBAIS DE SUBMISSÃO
+========================================================= */
+
+button.submit-btn,
+button[type='submit'] {
+  height: 48px;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+}
+
+/* ERP/dialog actions: keep buttons aligned with field density */
+.erp-page button[mat-stroked-button],
+.erp-page button[mat-flat-button],
+.erp-page button[mat-raised-button],
+.cdk-overlay-pane .mat-mdc-dialog-actions button[mat-stroked-button],
+.cdk-overlay-pane .mat-mdc-dialog-actions button[mat-flat-button],
+.cdk-overlay-pane .mat-mdc-dialog-actions button[mat-raised-button] {
+  height: var(--form-control-height) !important;
+  min-height: var(--form-control-height) !important;
+}
+
+/* ERP pages: enforce compact field density globally (tables + inline dialogs/forms) */
+.erp-page mat-form-field,
+.erp-page .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: var(--form-control-height);
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.erp-page .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: var(--form-control-height);
+}
+
+.erp-page .mat-mdc-form-field-infix {
+  min-height: var(--form-control-height) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* Dialog CRUD baseline: enforce compact field density for all dialog forms */
+.cdk-overlay-pane .crud-dialog mat-form-field,
+.cdk-overlay-pane .crud-dialog .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: var(--form-control-height);
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane .crud-dialog .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: var(--form-control-height);
+}
+
+.cdk-overlay-pane .crud-dialog .mat-mdc-form-field-infix {
+  min-height: var(--form-control-height) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* =========================================================
+   CRUD BASELINE GLOBAL (PAGE + TABLE + DIALOG)
+========================================================= */
+
+.erp-page {
+  padding: 1.75rem;
+}
+
+.erp-card {
+  padding: 1.5rem 1.75rem;
+  background: var(--mat-sys-color-surface-container-high) !important;
+  background-color: var(--mat-sys-color-surface-container-high) !important;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 1rem;
+  box-shadow: none !important;
+}
+
+mat-card.erp-card,
+.mat-mdc-card.erp-card {
+  background: var(--mat-sys-color-surface-container-high) !important;
+  background-color: var(--mat-sys-color-surface-container-high) !important;
+  border: 1px solid var(--mat-sys-color-outline-variant) !important;
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+}
+
+.erp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.95rem;
+  }
+}
+
+.header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+
+  button {
+    width: var(--crud-action-button-width);
+    min-width: var(--crud-action-button-width);
+    white-space: nowrap;
+  }
+
+  button mat-icon {
+    margin-right: 0.25rem;
+  }
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.filter-grid .span-4 {
+  grid-column: 1 / -1;
+}
+
+.filter-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-self: end;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-right: 0.25rem;
+}
+
+.filter-actions button {
+  width: var(--crud-action-button-width);
+  min-width: var(--crud-action-button-width);
+  height: var(--form-control-height);
+  line-height: var(--form-control-height);
+  white-space: nowrap;
+
+  mat-icon {
+    margin-right: 0.25rem;
+  }
+}
+
+.filter-actions button[color='warn'] {
+  width: auto;
+}
+
+.selection-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--form-control-height);
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.table-wrapper {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--mat-sys-color-surface-container) !important;
+  background-color: var(--mat-sys-color-surface-container) !important;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.75rem;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+
+  .mat-mdc-header-row {
+    background: var(--mat-sys-color-surface-container-high) !important;
+    background-color: var(--mat-sys-color-surface-container-high) !important;
+  }
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.3rem;
+  }
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+    background-clip: padding-box;
+  }
+
+  .mat-mdc-row:hover {
+    background: var(--mat-sys-color-surface-container-low);
+  }
+}
+
+.table-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container) 70%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  transition: opacity 180ms ease;
+}
+
+.table-wrapper.is-loading {
+  min-height: 240px;
+}
+
+.table-wrapper.is-loading .table-loading {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.table-loading .mat-mdc-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: var(--mat-sys-color-primary);
+}
+
+.mobile-paginator {
+  margin-top: 0.75rem;
+}
+
+.actions-col {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  min-width: 112px;
+}
+
+.actions-col-cell {
+  width: 112px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.status-col {
+  width: 120px;
+  min-width: 120px;
+}
+
+.status-pill {
+  --mdc-chip-container-height: 26px;
+  --mdc-chip-elevated-container-color: transparent;
+  --mdc-chip-label-text-color: var(--mat-sys-color-on-surface-variant);
+  --mdc-chip-outline-color: var(--mat-sys-color-outline-variant);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 92px;
+  height: 26px;
+  padding: 0 0.4rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+mat-chip.status-pill,
+.status-pill.mat-mdc-chip {
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--mat-sys-color-outline-variant) 30%, transparent) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--mat-sys-color-outline-variant) 30%,
+    transparent
+  ) !important;
+}
+
+.status-pill.is-active,
+mat-chip.status-pill.is-active,
+.status-pill.mat-mdc-chip.is-active {
+  --mdc-chip-elevated-container-color: color-mix(
+    in srgb,
+    var(--mat-sys-color-primary) 15%,
+    transparent
+  );
+  --mdc-chip-label-text-color: var(--mat-sys-color-primary);
+  --mdc-chip-outline-color: color-mix(in srgb, var(--mat-sys-color-primary) 35%, transparent);
+
+  border-color: color-mix(in srgb, var(--mat-sys-color-primary) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 15%, transparent) !important;
+  background-color: color-mix(in srgb, var(--mat-sys-color-primary) 15%, transparent) !important;
+  color: var(--mat-sys-color-primary) !important;
+}
+
+.status-pill.is-inactive,
+mat-chip.status-pill.is-inactive,
+.status-pill.mat-mdc-chip.is-inactive {
+  --mdc-chip-elevated-container-color: transparent;
+  --mdc-chip-label-text-color: var(--mat-sys-color-on-surface-variant);
+  --mdc-chip-outline-color: color-mix(
+    in srgb,
+    var(--mat-sys-color-outline-variant) 70%,
+    transparent
+  );
+
+  border-color: color-mix(
+    in srgb,
+    var(--mat-sys-color-outline-variant) 70%,
+    transparent
+  ) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--mat-sys-color-on-surface-variant) !important;
+}
+
+.status-pill .mdc-evolution-chip__cell,
+.status-pill .mdc-evolution-chip__action,
+.status-pill .mdc-evolution-chip__graphic,
+.status-pill .mdc-evolution-chip__text-label,
+.status-pill .mat-mdc-chip-action-label {
+  color: inherit !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Status chip variant based on Activity Log palette.
+   Use with: <span class="status-pill status-chip state-chip chip-success">ACTIVE</span> */
+.status-pill.status-chip {
+  --activity-chip-bg: rgba(148, 163, 184, 0.14);
+  --activity-chip-border: #94a3b8;
+  --activity-chip-color: #e2e8f0;
+
+  min-width: 86px;
+  height: 30px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--activity-chip-border);
+  border-radius: 8px;
+  background: var(--activity-chip-bg);
+  color: var(--activity-chip-color);
+  letter-spacing: 0.02em;
+}
+
+.status-pill.status-chip.chip-success,
+.status-pill.status-chip.is-active {
+  --activity-chip-bg: rgba(34, 197, 94, 0.2);
+  --activity-chip-border: #22c55e;
+  --activity-chip-color: #bbf7d0;
+}
+
+.status-pill.status-chip.chip-queued {
+  --activity-chip-bg: rgba(168, 85, 247, 0.18);
+  --activity-chip-border: #a855f7;
+  --activity-chip-color: #e9d5ff;
+}
+
+.status-pill.status-chip.chip-running {
+  --activity-chip-bg: rgba(59, 130, 246, 0.2);
+  --activity-chip-border: #3b82f6;
+  --activity-chip-color: #bfdbfe;
+}
+
+.status-pill.status-chip.chip-failed {
+  --activity-chip-bg: rgba(239, 68, 68, 0.2);
+  --activity-chip-border: #ef4444;
+  --activity-chip-color: #fecaca;
+}
+
+.status-pill.status-chip.chip-skipped,
+.status-pill.status-chip.is-inactive {
+  --activity-chip-bg: rgba(148, 163, 184, 0.14);
+  --activity-chip-border: #94a3b8;
+  --activity-chip-color: #e2e8f0;
+}
+
+.crud-dialog {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(92vh, 1100px);
+  padding: 1.5rem 1.75rem 1.25rem;
+}
+
+.crud-dialog .dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.9rem;
+  }
+}
+
+.crud-dialog .dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(82vh, 980px);
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.crud-dialog .form-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.crud-dialog .tab-content {
+  padding: 0.65rem 0 0.25rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.form-grid .span-2,
+.span-2 {
+  grid-column: span 2;
+}
+
+.form-grid .span-3,
+.span-3 {
+  grid-column: span 3;
+}
+
+.form-grid .span-4,
+.span-4 {
+  grid-column: span 4;
+}
+
+.crud-dialog .form-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-content: stretch !important;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  width: auto;
+  margin: auto 0 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 88%, transparent);
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(8px);
+}
+
+.crud-dialog .secondary-actions {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1;
+  justify-content: flex-start;
+}
+
+.crud-dialog .primary-actions {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+.crud-dialog .save-split-action {
+  grid-template-columns: minmax(160px, auto) 44px;
+  overflow: hidden;
+  border-radius: 999px;
+
+  .save-main-button {
+    height: 40px;
+    border-radius: 999px 0 0 999px !important;
+  }
+
+  .save-more-button {
+    width: 44px;
+    min-width: 44px !important;
+    height: 40px;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    border-radius: 0 999px 999px 0 !important;
+  }
+
+  &.is-single-action {
+    grid-template-columns: minmax(160px, auto);
+
+    .save-main-button {
+      border-radius: 999px !important;
+    }
+  }
+}
+
+.crud-dialog .form-actions button {
+  min-width: 136px;
+}
+
+@media (min-width: 901px) {
+  .crud-dialog {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 1400px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .form-grid .span-4,
+  .span-4 {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form-grid .span-3,
+  .form-grid .span-4,
+  .span-3,
+  .span-4 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .erp-page {
+    padding: 1rem;
+  }
+
+  .erp-card {
+    padding: 1rem;
+  }
+
+  .erp-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions,
+  .filter-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    grid-column: 1 / -1;
+    padding-right: 0;
+  }
+
+  .mobile-paginator .mat-mdc-paginator-container {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+    justify-content: space-between;
+  }
+
+  .mobile-paginator .mat-mdc-paginator-page-size {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .mobile-paginator .mat-mdc-paginator-range-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .mobile-paginator .mat-mdc-paginator-range-label {
+    white-space: nowrap;
+  }
+
+  .crud-dialog {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 1rem 1rem 0.25rem;
+  }
+
+  .crud-dialog .dialog-content {
+    max-height: none;
+  }
+
+  .crud-dialog .form-tabs {
+    margin-bottom: 0;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid .span-2,
+  .form-grid .span-3,
+  .form-grid .span-4,
+  .span-2,
+  .span-3,
+  .span-4 {
+    grid-column: span 1;
+  }
+
+  .crud-dialog .form-actions {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    padding: 0.75rem 0.5rem 0.65rem !important;
+  }
+
+  .crud-dialog .primary-actions {
+    order: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .crud-dialog .save-split-action.is-single-action {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .crud-dialog .secondary-actions {
+    order: 2;
+    display: block;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .crud-dialog .form-actions button {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  .crud-dialog .save-more-button {
+    width: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .theme-domain-dialog {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(92vh, 1100px);
+  padding: 1.5rem 1.75rem 1.25rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.9rem;
+  }
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(82vh, 980px);
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .form-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .tab-content {
+  padding: 0.65rem 0 0.25rem;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .span-2 {
+  grid-column: span 2;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .span-3 {
+  grid-column: span 3;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .span-4 {
+  grid-column: span 4;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .pill {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  color: var(--mat-sys-color-primary);
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .form-actions {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  justify-content: stretch !important;
+  gap: 0.75rem;
+  margin: auto 0 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  width: auto;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.16);
+
+  .error {
+    grid-column: 1 / -1;
+    color: var(--mat-sys-color-error);
+    font-size: 0.9rem;
+    text-align: right;
+  }
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .secondary-actions {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1;
+  justify-content: flex-start;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .primary-actions {
+  display: grid;
+  grid-template-columns: minmax(160px, auto) 44px;
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .save-split-action {
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 0;
+
+  .save-main-button {
+    height: 40px;
+    border-radius: 999px 0 0 999px !important;
+  }
+
+  .save-more-button {
+    width: 44px;
+    min-width: 44px !important;
+    height: 40px;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    border-radius: 0 999px 999px 0 !important;
+  }
+
+  &.is-single-action .save-main-button {
+    border-radius: 999px !important;
+  }
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .save-split-action.is-single-action {
+  grid-template-columns: minmax(160px, auto);
+}
+
+.cdk-overlay-pane.settings-theme-domain-dialog .form-actions button {
+  min-width: 136px;
+}
+
+@media (min-width: 901px) {
+  .cdk-overlay-pane.settings-theme-domain-dialog .theme-domain-dialog {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 1400px) {
+  .cdk-overlay-pane.settings-theme-domain-dialog .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .span-4 {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1200px) {
+  .cdk-overlay-pane.settings-theme-domain-dialog .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .span-3,
+  .cdk-overlay-pane.settings-theme-domain-dialog .span-4 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane.settings-theme-domain-dialog .theme-domain-dialog {
+    width: 100%;
+    padding: 1rem 1rem 0.25rem;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .dialog-content {
+    max-height: none;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .form-tabs {
+    margin-bottom: 0;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .span-2,
+  .cdk-overlay-pane.settings-theme-domain-dialog .span-4 {
+    grid-column: span 1;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .form-actions {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    padding: 0.75rem 0.5rem 0.65rem !important;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .primary-actions {
+    order: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .save-split-action.is-single-action {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .secondary-actions {
+    order: 2;
+    display: block;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .form-actions .error {
+    order: 3;
+    text-align: left;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .form-actions button {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  .cdk-overlay-pane.settings-theme-domain-dialog .save-more-button {
+    min-width: 44px !important;
+    width: 44px !important;
+  }
+}
+
+/* =========================================================
+   7) TEXTOS DE ERRO GLOBAL
+========================================================= */
+
+.api-error {
+  margin: -0.25rem 0 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mat-sys-color-error);
+}
+
+/* =========================================================
+   8) LINKS PADRÃO
+========================================================= */
+
+.link-row {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+
+  a {
+    color: var(--mat-sys-color-primary);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* =========================================================
+   9) GEOMAP ASSETS — GLOBAL MAPBOX/OVERLAY STYLES
+========================================================= */
+
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-top-left,
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-top-right {
+  top: calc(env(safe-area-inset-top) + 0.25rem);
+}
+
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-top-left {
+  left: calc(env(safe-area-inset-left) + 0.25rem);
+}
+
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-top-right {
+  right: calc(env(safe-area-inset-right) + 0.25rem);
+}
+
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-bottom-left,
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-bottom-right {
+  bottom: calc(env(safe-area-inset-bottom) + 0.25rem);
+}
+
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-bottom-left {
+  left: calc(env(safe-area-inset-left) + 0.25rem);
+}
+
+body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-bottom-right {
+  right: calc(env(safe-area-inset-right) + 0.25rem);
+}
+
+app-isp-geomap-assets .map-container .mapboxgl-canvas,
+app-isp-geomap-assets .map-container .mapboxgl-canvas:active {
+  cursor: crosshair;
+}
+
+app-isp-geomap-assets .geomap-pin {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  background: #0ea5e9;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  border: 2px solid #ffffff;
+  z-index: 2;
+  cursor: pointer;
+}
+
+app-isp-geomap-assets .geomap-pin-icon {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 14px;
+  height: 14px;
+  transform: rotate(45deg);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+}
+
+app-isp-geomap-assets .geomap-pin-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+app-isp-geomap-assets .geomap-pin-saved {
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.34);
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-group {
+  background: var(--mat-sys-color-surface-container-high);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-geocoder {
+  min-width: 300px;
+  width: min(460px, calc(100vw - 130px));
+  max-width: calc(100vw - 130px);
+  border-radius: 24px;
+  overflow: visible;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-geocoder--input {
+  font-size: 0.95rem;
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-top-left .mapboxgl-ctrl-geocoder {
+  margin: 10px 0 0 10px;
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-top-left .mapboxgl-ctrl-group:not(:first-child) {
+  margin-top: 8px;
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-group button {
+  color: var(--mat-sys-color-on-surface);
+}
+
+app-isp-geomap-assets
+  .mapboxgl-ctrl-group
+  button:hover:not(.mapbox-gl-draw_polygon):not(.mapbox-gl-draw_trash) {
+  background-color: color-mix(in srgb, var(--mat-sys-color-primary) 15%, transparent);
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-group button + button,
+app-isp-geomap-assets .geomap-measure-control .mapboxgl-ctrl-icon + .mapboxgl-ctrl-icon {
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_polygon,
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_trash {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent !important;
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_trash[disabled],
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_polygon[disabled],
+app-isp-geomap-assets .geomap-measure-control button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_polygon:hover,
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_polygon:focus-visible,
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_trash:hover,
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_trash:focus-visible,
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_trash.active {
+  background-color: color-mix(in srgb, var(--mat-sys-color-primary) 15%, transparent) !important;
+}
+
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_polygon.active,
+app-isp-geomap-assets .mapboxgl-ctrl-group .mapbox-gl-draw_polygon[data-active='true'],
+app-isp-geomap-assets .geomap-view-control .geomap-fullscreen-toggle[data-fullscreen='true'],
+app-isp-geomap-assets .geomap-view-control .geomap-expand-toggle[data-expanded='true'],
+app-isp-geomap-assets .geomap-measure-control .geomap-measure-toggle[data-active='true'],
+app-isp-geomap-assets .geomap-measure-control .geomap-rectangle-toggle[data-active='true'] {
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 22%, transparent);
+}
+
+.dark-theme
+  app-isp-geomap-assets
+  .mapboxgl-ctrl-group
+  button:not(.geomap-style-toggle):not(.geomap-measure-toggle):not(.geomap-rectangle-toggle):not(
+    .geomap-measure-clear
+  ):not(.geomap-fullscreen-toggle):not(.geomap-expand-toggle) {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .system-theme
+    app-isp-geomap-assets
+    .mapboxgl-ctrl-group
+    button:not(.geomap-style-toggle):not(.geomap-measure-toggle):not(.geomap-rectangle-toggle):not(
+      .geomap-measure-clear
+    ):not(.geomap-fullscreen-toggle):not(.geomap-expand-toggle) {
+    filter: invert(1) hue-rotate(180deg);
+  }
+}
+
+app-isp-geomap-assets .geomap-style-control .geomap-style-toggle,
+app-isp-geomap-assets .geomap-view-control .geomap-fullscreen-toggle,
+app-isp-geomap-assets .geomap-view-control .geomap-expand-toggle {
+  display: grid;
+  place-items: center;
+}
+
+app-isp-geomap-assets .geomap-style-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+app-isp-geomap-assets .geomap-measure-control svg,
+app-isp-geomap-assets .geomap-fullscreen-toggle svg,
+app-isp-geomap-assets .geomap-expand-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+}
+
+.select-search-option {
+  height: auto;
+  cursor: default;
+  padding: 0;
+}
+
+.select-search-option .mat-pseudo-checkbox {
+  display: none;
+}
+
+.select-search-option:hover {
+  background: transparent !important;
+}
+
+.select-search-field {
+  width: 100%;
+  margin: 0.5rem 0 0.25rem;
+  padding: 0 0.75rem;
+  box-sizing: border-box;
+}
+
+.select-search-option .mdc-list-item__primary-text {
+  width: 100%;
+}
+
+.select-search-field .mat-mdc-form-field {
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+
+.select-search-field .mat-mdc-text-field-wrapper,
+.select-search-field .mat-mdc-form-field-infix {
+  width: 100%;
+  max-width: 100%;
+}
+
+app-isp-geomap-assets .mapboxgl-popup.geomap-measure-popup .mapboxgl-popup-content {
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+app-isp-geomap-assets .geomap-asset-popup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-model,
+app-isp-geomap-assets .geomap-asset-popup-project {
+  grid-column: span 2;
+}
+
+app-isp-geomap-assets .geomap-asset-panel {
+  position: absolute;
+  top: 12px;
+  left: 68px;
+  z-index: 2;
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem 0.75rem;
+  width: min(280px, calc(100vw - 24px));
+  max-height: min(76vh, 560px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+app-isp-geomap-assets .geomap-asset-panel .geomap-asset-popup-content {
+  display: grid;
+  gap: 0.45rem;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-close {
+  border: none;
+  background: transparent;
+  color: var(--mat-sys-color-on-surface);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-coords {
+  font-size: 0.78rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+app-isp-geomap-assets .geomap-asset-popup-field {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-field label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+app-isp-geomap-assets .geomap-asset-popup-field input,
+app-isp-geomap-assets .geomap-asset-popup-field select,
+app-isp-geomap-assets .geomap-asset-popup-field textarea {
+  border-radius: 6px;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface);
+  color: var(--mat-sys-color-on-surface);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  min-height: 30px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-field select {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-field textarea {
+  resize: vertical;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-actions {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-actions button {
+  border-radius: 999px;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-actions button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+app-isp-geomap-assets .geomap-asset-popup-actions button:last-child {
+  background: var(--mat-sys-color-primary);
+  color: var(--mat-sys-color-on-primary);
+  border-color: color-mix(in srgb, var(--mat-sys-color-primary) 70%, transparent);
+}
+
+app-isp-geomap-assets .geomap-asset-popup-error {
+  font-size: 0.78rem;
+  color: var(--mat-sys-color-error);
+}
+
+@media (max-width: 768px) {
+  app-isp-geomap-assets .mapboxgl-ctrl-top-left {
+    right: 4.8rem;
+  }
+
+  app-isp-geomap-assets .mapboxgl-ctrl-geocoder {
+    min-width: 0;
+    width: calc(100% - 0.5rem);
+    max-width: calc(100% - 0.5rem);
+  }
+
+  body.geomap-mobile-fullscreen app-isp-geomap-assets .mapboxgl-ctrl-top-left {
+    right: calc(env(safe-area-inset-right) + 4.8rem);
+  }
+
+  app-isp-geomap-assets .geomap-asset-panel {
+    top: 8px;
+    left: 56px;
+    right: 8px;
+    width: auto;
+    max-height: calc(100% - 16px);
+  }
+
+  app-isp-geomap-assets .geomap-asset-popup-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  app-isp-geomap-assets .geomap-asset-popup-model,
+  app-isp-geomap-assets .geomap-asset-popup-project {
+    grid-column: auto;
+  }
+
+  app-isp-geomap-assets .geomap-asset-popup-actions {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* =========================================================
+   10) ERP CUSTOMER DIALOG (GLOBAL OVERLAY ALIGNMENT)
+========================================================= */
+
+.cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.65rem 1.25rem 0.55rem !important;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.65rem 1.25rem 0.55rem !important;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.voip-domain-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.voip-domain-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.voip-domain-form-dialog .mat-mdc-dialog-actions {
+  margin: auto 0.75rem 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  min-height: 0;
+  width: auto;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.crud-form-dialog .mat-mdc-dialog-actions {
+  margin: auto 0 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+}
+
+.cdk-overlay-pane:is(
+    .hosting-vps-provider-dialog,
+    .hosting-vps-plan-dialog,
+    .hosting-vps-instance-dialog,
+    .crud-form-dialog
+  )
+  .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .hosting-vps-provider-dialog,
+    .hosting-vps-plan-dialog,
+    .hosting-vps-instance-dialog,
+    .crud-form-dialog
+  )
+  .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane:is(
+    .hosting-vps-provider-dialog,
+    .hosting-vps-plan-dialog,
+    .hosting-vps-instance-dialog,
+    .crud-form-dialog
+  )
+  .mat-mdc-dialog-actions {
+  margin: auto 0.75rem 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  min-height: 0;
+  width: auto;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.voip-operator-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.voip-operator-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.voip-operator-form-dialog .mat-mdc-dialog-actions {
+  margin: auto 0.75rem 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  min-height: 0;
+  width: auto;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane:is(
+    .voip-domain-form-dialog,
+    .voip-did-form-dialog,
+    .voip-did-customer-form-dialog,
+    .voip-operator-form-dialog,
+    .voip-portability-form-dialog,
+    .voip-sbc-form-dialog,
+    .voip-softswitch-form-dialog,
+    .voip-pabx-form-dialog,
+    .voip-pabx-provider-form-dialog,
+    .voip-pabx-extension-form-dialog,
+    .voip-pabx-routing-dialog,
+    .hosting-vps-provider-dialog,
+    .hosting-vps-plan-dialog,
+    .hosting-vps-instance-dialog,
+    .crud-form-dialog
+  )
+  .form-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-content: stretch !important;
+}
+
+.cdk-overlay-pane:is(
+    .voip-domain-form-dialog,
+    .voip-did-form-dialog,
+    .voip-did-customer-form-dialog,
+    .voip-operator-form-dialog,
+    .voip-portability-form-dialog,
+    .voip-sbc-form-dialog,
+    .voip-softswitch-form-dialog,
+    .voip-pabx-form-dialog,
+    .voip-pabx-provider-form-dialog,
+    .voip-pabx-extension-form-dialog,
+    .voip-pabx-routing-dialog,
+    .hosting-vps-provider-dialog,
+    .hosting-vps-plan-dialog,
+    .hosting-vps-instance-dialog,
+    .crud-form-dialog
+  )
+  .secondary-actions {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
+.cdk-overlay-pane:is(
+    .voip-domain-form-dialog,
+    .voip-did-form-dialog,
+    .voip-did-customer-form-dialog,
+    .voip-operator-form-dialog,
+    .voip-portability-form-dialog,
+    .voip-sbc-form-dialog,
+    .voip-softswitch-form-dialog,
+    .voip-pabx-form-dialog,
+    .voip-pabx-provider-form-dialog,
+    .voip-pabx-extension-form-dialog,
+    .voip-pabx-routing-dialog,
+    .hosting-vps-provider-dialog,
+    .hosting-vps-plan-dialog,
+    .hosting-vps-instance-dialog,
+    .crud-form-dialog
+  )
+  .primary-actions {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.cdk-overlay-pane:is(
+    .voip-domain-form-dialog,
+    .voip-did-form-dialog,
+    .voip-did-customer-form-dialog,
+    .voip-operator-form-dialog,
+    .voip-portability-form-dialog,
+    .voip-sbc-form-dialog,
+    .voip-softswitch-form-dialog,
+    .voip-pabx-form-dialog,
+    .voip-pabx-provider-form-dialog,
+    .voip-pabx-extension-form-dialog,
+    .voip-pabx-routing-dialog,
+    .hosting-vps-provider-dialog,
+    .hosting-vps-plan-dialog,
+    .hosting-vps-instance-dialog,
+    .crud-form-dialog
+  )
+  .form-actions
+  .error {
+  grid-column: 1 / -1;
+}
+
+.mat-mdc-menu-panel.save-more-menu {
+  min-width: 204px;
+  max-width: 204px;
+  border-radius: 0.75rem !important;
+  background: var(--mat-sys-color-surface-container-highest);
+}
+
+.mat-mdc-menu-panel.save-more-menu .mat-mdc-menu-content {
+  padding: 0.35rem;
+}
+
+.mat-mdc-menu-panel.save-more-menu .mat-mdc-menu-item {
+  min-height: 40px;
+  border-radius: 0.55rem;
+  justify-content: center;
+}
+
+.mat-mdc-menu-panel.save-more-menu .mat-mdc-menu-item .mat-icon {
+  margin-right: 0.45rem;
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane.voip-domain-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-did-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-did-customer-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-operator-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-portability-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-sbc-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-softswitch-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.hosting-vps-provider-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.hosting-vps-plan-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.hosting-vps-instance-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.crud-form-dialog .mat-mdc-dialog-actions {
+    margin: auto 0.75rem 0 !important;
+    padding: 0.75rem 0.5rem 0.65rem !important;
+    width: auto;
+  }
+
+  .cdk-overlay-pane.crud-form-dialog .mat-mdc-dialog-actions {
+    margin: auto 0 0 !important;
+  }
+
+  .cdk-overlay-pane:is(
+      .voip-domain-form-dialog,
+      .voip-did-form-dialog,
+      .voip-did-customer-form-dialog,
+      .voip-operator-form-dialog,
+      .voip-portability-form-dialog,
+      .voip-sbc-form-dialog,
+      .voip-softswitch-form-dialog,
+      .voip-pabx-form-dialog,
+      .voip-pabx-provider-form-dialog,
+      .voip-pabx-extension-form-dialog,
+      .voip-pabx-routing-dialog,
+      .hosting-vps-provider-dialog,
+      .hosting-vps-plan-dialog,
+      .hosting-vps-instance-dialog,
+      .crud-form-dialog
+    )
+    .form-actions {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cdk-overlay-pane:is(
+      .voip-domain-form-dialog,
+      .voip-did-form-dialog,
+      .voip-did-customer-form-dialog,
+      .voip-operator-form-dialog,
+      .voip-portability-form-dialog,
+      .voip-sbc-form-dialog,
+      .voip-softswitch-form-dialog,
+      .voip-pabx-form-dialog,
+      .voip-pabx-provider-form-dialog,
+      .voip-pabx-extension-form-dialog,
+      .voip-pabx-routing-dialog,
+      .hosting-vps-provider-dialog,
+      .hosting-vps-plan-dialog,
+      .hosting-vps-instance-dialog,
+      .crud-form-dialog
+    )
+    .primary-actions {
+    order: 1;
+    width: 100%;
+  }
+
+  .cdk-overlay-pane:is(
+      .voip-domain-form-dialog,
+      .voip-did-form-dialog,
+      .voip-did-customer-form-dialog,
+      .voip-operator-form-dialog,
+      .voip-portability-form-dialog,
+      .voip-sbc-form-dialog,
+      .voip-softswitch-form-dialog,
+      .voip-pabx-form-dialog,
+      .voip-pabx-provider-form-dialog,
+      .voip-pabx-extension-form-dialog,
+      .voip-pabx-routing-dialog,
+      .hosting-vps-provider-dialog,
+      .hosting-vps-plan-dialog,
+      .hosting-vps-instance-dialog,
+      .crud-form-dialog
+    )
+    .secondary-actions {
+    order: 2;
+    width: 100%;
+  }
+
+  .mat-mdc-menu-panel.save-more-menu {
+    min-width: min(298px, calc(100vw - 90px));
+    max-width: min(298px, calc(100vw - 90px));
+  }
+
+  .cdk-overlay-pane.voip-domain-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-did-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-did-customer-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-operator-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-portability-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-sbc-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-softswitch-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-pabx-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-pabx-provider-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-pabx-extension-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-pabx-routing-dialog .dialog-action-button,
+  .cdk-overlay-pane.hosting-vps-provider-dialog .dialog-action-button,
+  .cdk-overlay-pane.hosting-vps-plan-dialog .dialog-action-button,
+  .cdk-overlay-pane.hosting-vps-instance-dialog .dialog-action-button,
+  .cdk-overlay-pane.crud-form-dialog .dialog-action-button {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+    padding-inline: 0.75rem !important;
+  }
+
+  .cdk-overlay-pane.voip-domain-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-did-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-did-customer-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-operator-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-portability-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-sbc-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-softswitch-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-pabx-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-pabx-provider-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-pabx-extension-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-pabx-routing-dialog .dialog-action-primary,
+  .cdk-overlay-pane.hosting-vps-provider-dialog .dialog-action-primary,
+  .cdk-overlay-pane.hosting-vps-plan-dialog .dialog-action-primary,
+  .cdk-overlay-pane.hosting-vps-instance-dialog .dialog-action-primary,
+  .cdk-overlay-pane.crud-form-dialog .dialog-action-primary {
+    border-radius: 18px !important;
+  }
+
+  .cdk-overlay-pane.voip-domain-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-domain-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-did-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-did-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-did-customer-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-did-customer-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-operator-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-operator-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-portability-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-portability-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-sbc-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-sbc-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-softswitch-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-softswitch-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-pabx-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-pabx-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-pabx-provider-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-pabx-provider-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-pabx-extension-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-pabx-extension-form-dialog .primary-actions,
+  .cdk-overlay-pane.voip-pabx-routing-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-pabx-routing-dialog .primary-actions,
+  .cdk-overlay-pane.hosting-vps-provider-dialog .secondary-actions,
+  .cdk-overlay-pane.hosting-vps-provider-dialog .primary-actions,
+  .cdk-overlay-pane.hosting-vps-plan-dialog .secondary-actions,
+  .cdk-overlay-pane.hosting-vps-plan-dialog .primary-actions,
+  .cdk-overlay-pane.hosting-vps-instance-dialog .secondary-actions,
+  .cdk-overlay-pane.hosting-vps-instance-dialog .primary-actions,
+  .cdk-overlay-pane.crud-form-dialog .secondary-actions,
+  .cdk-overlay-pane.crud-form-dialog .primary-actions {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+.cdk-overlay-pane.voip-did-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.voip-did-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.voip-did-form-dialog .mat-mdc-dialog-actions {
+  margin: auto 0.75rem 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  min-height: 0;
+  width: auto;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.voip-did-customer-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.voip-did-customer-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.voip-did-customer-form-dialog .mat-mdc-dialog-actions {
+  margin: auto 0.75rem 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  min-height: 0;
+  width: auto;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.voip-portability-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.voip-sbc-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.voip-softswitch-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.voip-portability-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.voip-sbc-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.voip-softswitch-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.voip-portability-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.voip-sbc-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.voip-softswitch-form-dialog .mat-mdc-dialog-actions {
+  margin: auto 0.75rem 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  min-height: 0;
+  width: auto;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-actions {
+  margin: auto 0.75rem 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  min-height: 0;
+  width: auto;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .dialog-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .dialog-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .form-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .form-tabs .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .form-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .form-tabs .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Customer dialog compact form density (desktop) */
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-grid {
+  gap: 0.4rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .company-dialog .form-grid {
+  gap: 0.4rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .tab-content {
+  padding: 0.72rem 0 0 !important;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .company-dialog .tab-content {
+  padding: 0.72rem 0 0 !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-subsection {
+  margin-top: 0.45rem !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-subsection.first-subsection {
+  margin-top: 0 !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .subsection-header {
+  margin-bottom: 0.15rem !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .subsection-header.checkbox-only {
+  justify-content: flex-start !important;
+  min-height: 40px;
+  margin-top: 0;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .checkbox-grid {
+  margin-bottom: 0.2rem !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .subsection-checkbox {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  padding-left: 0;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .location-actions {
+  height: var(--form-icon-button) !important;
+  align-self: start !important;
+  margin: 0 !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .location-actions button {
+  width: var(--form-icon-button) !important;
+  height: var(--form-icon-button) !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .location-spacer {
+  height: var(--form-icon-button) !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-header {
+  margin-bottom: 0.4rem !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-actions {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .company-dialog .form-actions {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog mat-form-field,
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .company-dialog mat-form-field,
+.cdk-overlay-pane.erp-company-form-dialog .company-dialog .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: 40px;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .company-dialog .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: 40px;
+}
+
+.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field-infix {
+  min-height: 40px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.cdk-overlay-pane.erp-company-form-dialog .company-dialog .mat-mdc-form-field-infix {
+  min-height: 40px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog mat-form-field,
+.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog mat-form-field,
+.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog mat-form-field,
+.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog mat-form-field,
+.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: 40px;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field-infix {
+  min-height: 40px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.65rem 1.25rem 0.55rem !important;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+/* Global CRUD footer spacing: symmetric top/bottom and centered controls */
+.cdk-overlay-pane.erp-customer-form-dialog .form-actions,
+.cdk-overlay-pane.erp-company-form-dialog .form-actions,
+.cdk-overlay-pane.erp-supplier-form-dialog .form-actions,
+.cdk-overlay-pane.erp-reseller-form-dialog .form-actions,
+.cdk-overlay-pane.erp-carrier-form-dialog .form-actions,
+.cdk-overlay-pane.erp-complex-form-dialog .form-actions,
+.cdk-overlay-pane.isp-pop-form-dialog .form-actions,
+.cdk-overlay-pane.isp-nas-form-dialog .form-actions,
+.cdk-overlay-pane.isp-olt-form-dialog .form-actions,
+.cdk-overlay-pane.isp-radius-server-form-dialog .form-actions,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .form-actions,
+.cdk-overlay-pane.isp-vendor-form-dialog .form-actions,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .form-actions,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .form-actions,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .form-actions,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-actions {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+  align-items: center !important;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .dialog-content,
+.cdk-overlay-pane.erp-reseller-form-dialog .dialog-content,
+.cdk-overlay-pane.erp-carrier-form-dialog .dialog-content,
+.cdk-overlay-pane.erp-complex-form-dialog .dialog-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .form-tabs,
+.cdk-overlay-pane.erp-reseller-form-dialog .form-tabs,
+.cdk-overlay-pane.erp-carrier-form-dialog .form-tabs,
+.cdk-overlay-pane.erp-complex-form-dialog .form-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.erp-reseller-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.erp-carrier-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.erp-complex-form-dialog .form-tabs .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cdk-overlay-pane.erp-supplier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.erp-reseller-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.erp-carrier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.erp-complex-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane.erp-customer-form-dialog {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin: 0 !important;
+  }
+
+  .cdk-overlay-pane.erp-company-form-dialog,
+  .cdk-overlay-pane.erp-supplier-form-dialog,
+  .cdk-overlay-pane.erp-reseller-form-dialog,
+  .cdk-overlay-pane.erp-carrier-form-dialog,
+  .cdk-overlay-pane.erp-complex-form-dialog {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin: 0 !important;
+  }
+
+  .cdk-overlay-pane.isp-pop-form-dialog,
+  .cdk-overlay-pane.isp-nas-form-dialog,
+  .cdk-overlay-pane.isp-olt-form-dialog,
+  .cdk-overlay-pane.isp-radius-server-form-dialog,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog,
+  .cdk-overlay-pane.isp-vendor-form-dialog,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-container {
+    height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-container {
+    height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .cdk-overlay-pane.isp-pop-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-nas-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-olt-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-radius-server-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-vendor-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog .mat-mdc-dialog-container,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .mat-mdc-dialog-container {
+    max-height: 100dvh;
+  }
+
+  .cdk-overlay-pane.erp-company-form-dialog .company-dialog {
+    height: calc(100dvh - 24px);
+    min-height: calc(100dvh - 24px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.erp-company-form-dialog .dialog-content,
+  .cdk-overlay-pane.erp-company-form-dialog .form-tabs {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .cdk-overlay-pane.erp-company-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cdk-overlay-pane.erp-company-form-dialog .form-actions {
+    margin-top: 0 !important;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog {
+    height: calc(100dvh - 24px);
+    min-height: calc(100dvh - 24px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog,
+  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog,
+  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog,
+  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog {
+    height: calc(100dvh - 24px);
+    min-height: calc(100dvh - 24px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.isp-pop-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-nas-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-olt-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-radius-server-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-vendor-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog .crud-dialog,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .crud-dialog {
+    height: 100dvh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .dialog-content,
+  .cdk-overlay-pane.erp-customer-form-dialog .form-tabs {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog mat-form-field,
+  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field {
+    margin-bottom: 0 !important;
+    --mat-form-field-container-height: 48px;
+    --mat-form-field-container-vertical-padding: 12px;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mdc-text-field--outlined {
+    --mdc-outlined-text-field-container-height: 48px;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field-infix {
+    min-height: 48px !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog mat-form-field,
+  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog mat-form-field,
+  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog mat-form-field,
+  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog mat-form-field,
+  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field {
+    margin-bottom: 0 !important;
+    --mat-form-field-container-height: 48px;
+    --mat-form-field-container-vertical-padding: 12px;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mdc-text-field--outlined {
+    --mdc-outlined-text-field-container-height: 48px;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field-infix {
+    min-height: 48px !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .dialog-content,
+  .cdk-overlay-pane.erp-supplier-form-dialog .form-tabs,
+  .cdk-overlay-pane.erp-reseller-form-dialog .dialog-content,
+  .cdk-overlay-pane.erp-reseller-form-dialog .form-tabs,
+  .cdk-overlay-pane.erp-carrier-form-dialog .dialog-content,
+  .cdk-overlay-pane.erp-carrier-form-dialog .form-tabs,
+  .cdk-overlay-pane.erp-complex-form-dialog .dialog-content,
+  .cdk-overlay-pane.erp-complex-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-pop-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-pop-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-nas-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-nas-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-olt-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-olt-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-radius-server-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-radius-server-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-vendor-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-vendor-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog .form-tabs,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .dialog-content,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-tabs {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.erp-reseller-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.erp-carrier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.erp-complex-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-pop-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-nas-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-olt-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-radius-server-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-vendor-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .form-actions {
+    margin-top: 0 !important;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .form-actions,
+  .cdk-overlay-pane.erp-reseller-form-dialog .form-actions,
+  .cdk-overlay-pane.erp-carrier-form-dialog .form-actions,
+  .cdk-overlay-pane.erp-complex-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-pop-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-nas-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-olt-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-radius-server-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-vendor-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog .form-actions,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-actions {
+    margin-top: 0 !important;
+  }
+
+  .cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-actions {
+    padding: 0.6rem 1rem 0.6rem !important;
+  }
+
+  .cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-actions {
+    padding: 0.6rem 1rem 0.6rem !important;
+  }
+
+  .cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-pop-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-nas-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-olt-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-radius-server-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-pppoe-client-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-vendor-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-vendor-model-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-geomap-project-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-geomap-asset-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .mat-mdc-dialog-actions {
+    padding: 0.6rem 1rem 0.6rem !important;
+  }
+}
+
+.cdk-overlay-pane.isp-pop-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-nas-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-olt-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-radius-server-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-vendor-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .mat-mdc-dialog-surface,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.isp-pop-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-nas-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-olt-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-radius-server-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-vendor-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .mat-mdc-dialog-content,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane.isp-pop-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-nas-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-olt-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-radius-server-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-vendor-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .mat-mdc-dialog-actions,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.9rem 0 0.75rem !important;
+  min-height: 0;
+  width: 100%;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane.isp-pop-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-nas-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-olt-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-radius-server-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-vendor-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .dialog-content,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .dialog-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.isp-pop-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-nas-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-olt-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-radius-server-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-vendor-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .form-tabs,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane.isp-pop-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-nas-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-olt-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-radius-server-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-vendor-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .form-tabs .mat-mdc-tab-header,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-tabs .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cdk-overlay-pane.isp-pop-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-nas-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-olt-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-radius-server-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-pppoe-client-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-vendor-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-vendor-model-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-geomap-project-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-geomap-asset-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
+.cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ISP CRUD dialogs: enforce shared form density + responsive form grid baseline */
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .crud-dialog
+  mat-form-field,
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: var(--form-control-height);
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .crud-dialog
+  .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: var(--form-control-height);
+}
+
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field-infix {
+  min-height: var(--form-control-height) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .form-grid
+  .span-2 {
+  grid-column: span 2;
+}
+
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .form-grid
+  .span-3 {
+  grid-column: span 3;
+}
+
+.cdk-overlay-pane:is(
+    .isp-pop-form-dialog,
+    .isp-nas-form-dialog,
+    .isp-olt-form-dialog,
+    .isp-radius-server-form-dialog,
+    .isp-pppoe-client-form-dialog,
+    .isp-vendor-form-dialog,
+    .isp-vendor-model-form-dialog,
+    .isp-geomap-project-form-dialog,
+    .isp-geomap-asset-form-dialog,
+    .isp-geomap-asset-type-form-dialog
+  )
+  .form-grid
+  .span-4 {
+  grid-column: span 4;
+}
+
+@media (max-width: 1400px) {
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid
+    .span-4 {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1200px) {
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid
+    .span-3,
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid
+    .span-4 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid
+    .span-2,
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid
+    .span-3,
+  .cdk-overlay-pane:is(
+      .isp-pop-form-dialog,
+      .isp-nas-form-dialog,
+      .isp-olt-form-dialog,
+      .isp-radius-server-form-dialog,
+      .isp-pppoe-client-form-dialog,
+      .isp-vendor-form-dialog,
+      .isp-vendor-model-form-dialog,
+      .isp-geomap-project-form-dialog,
+      .isp-geomap-asset-form-dialog,
+      .isp-geomap-asset-type-form-dialog
+    )
+    .form-grid
+    .span-4 {
+    grid-column: span 1;
+  }
+}
+
+/* Pool IP dialogs: dedicated panelClass with same ISP dialog baseline */
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.9rem 0 0.75rem !important;
+  min-height: 0;
+  width: 100%;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-actions {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+  align-items: center !important;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .dialog-content,
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-tabs {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-tabs
+  .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-tabs
+  .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .crud-dialog
+  mat-form-field,
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: var(--form-control-height);
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .crud-dialog
+  .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: var(--form-control-height);
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field-infix {
+  min-height: var(--form-control-height) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-grid
+  .span-2 {
+  grid-column: span 2;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-grid
+  .span-3 {
+  grid-column: span 3;
+}
+
+.cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  )
+  .form-grid
+  .span-4 {
+  grid-column: span 4;
+}
+
+@media (max-width: 1400px) {
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid
+    .span-4 {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1200px) {
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid
+    .span-3,
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid
+    .span-4 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane:is(
+    .isp-fixed-ipv4-form-dialog,
+    .isp-fixed-ipv6-form-dialog,
+    .isp-pool-ipv4-form-dialog,
+    .isp-pool-ipv4-network-form-dialog,
+    .isp-pool-ipv6-form-dialog,
+    .isp-pool-ipv6-network-form-dialog
+  ) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .mat-mdc-dialog-container {
+    max-height: 100dvh;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .crud-dialog {
+    height: 100dvh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .dialog-content,
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-tabs {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-tabs
+    .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid
+    .span-2,
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid
+    .span-3,
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-grid
+    .span-4 {
+    grid-column: span 1;
+  }
+
+  .cdk-overlay-pane:is(
+      .isp-fixed-ipv4-form-dialog,
+      .isp-fixed-ipv6-form-dialog,
+      .isp-pool-ipv4-form-dialog,
+      .isp-pool-ipv4-network-form-dialog,
+      .isp-pool-ipv6-form-dialog,
+      .isp-pool-ipv6-network-form-dialog
+    )
+    .form-actions {
+    margin-top: 0 !important;
+  }
+}
+
+/* ERP Financial dialogs: enforce CRUD density/layout baseline from app.md */
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.6rem 0 !important;
+  min-height: 0;
+  width: 100%;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .form-actions {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+  align-items: center !important;
+}
+
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .dialog-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .form-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .form-tabs
+  .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  )
+  .form-tabs
+  .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Sales CRUD dialogs: layout/density baseline */
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .mat-mdc-dialog-surface {
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .crud-dialog {
+  width: 100%;
+  max-width: 100%;
+  padding: 1.5rem 1.75rem 1.25rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: min(92vh, 1100px);
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .dialog-content,
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .form-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  height: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .form-tabs
+  .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .tab-content {
+  padding: 1rem 0 0.25rem;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .form-header {
+  margin-bottom: 0.5rem !important;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .form-header
+  h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .form-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end !important;
+  gap: 0.75rem;
+  margin: 0;
+  margin-top: auto !important;
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.55rem !important;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .form-actions
+  .error {
+  width: 100%;
+  color: var(--mat-sys-color-error);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.65rem 1.25rem 0.55rem !important;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .crud-dialog
+  mat-form-field,
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: var(--form-control-height);
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .crud-dialog
+  .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: var(--form-control-height);
+}
+
+.cdk-overlay-pane:is(
+    .sale-brand-form-dialog,
+    .sale-category-form-dialog,
+    .sale-stock-type-form-dialog,
+    .sale-stocks-form-dialog,
+    .sale-unit-form-dialog,
+    .sale-product-form-dialog,
+    .sale-quotation-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field-infix {
+  min-height: var(--form-control-height) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane:is(
+      .sale-brand-form-dialog,
+      .sale-category-form-dialog,
+      .sale-stock-type-form-dialog,
+      .sale-stocks-form-dialog,
+      .sale-unit-form-dialog,
+      .sale-product-form-dialog,
+      .sale-quotation-form-dialog
+    )
+    .form-actions {
+    margin-top: 0 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.4rem !important;
+  }
+}
+
+/* Support CRUD dialogs: layout/density baseline */
+.cdk-overlay-pane:is(
+  .support-channel-form-dialog,
+  .support-ticket-channel-form-dialog,
+  .support-team-form-dialog,
+  .support-ticket-form-dialog
+) {
+  display: flex;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .mat-mdc-dialog-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: inherit;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .mdc-dialog__surface,
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .mat-mdc-dialog-surface {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-radius: 1.2rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .crud-dialog {
+  width: 100%;
+  max-width: 100%;
+  padding: 1.5rem 1.75rem 1.25rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .dialog-content,
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .form-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  height: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .tab-content {
+  padding: 1rem 0 0.25rem;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .form-tabs
+  .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .form-tabs
+  .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .form-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end !important;
+  gap: 0.75rem;
+  margin: 0;
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.55rem !important;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .form-actions
+  .error {
+  width: 100%;
+  color: var(--mat-sys-color-error);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .mat-mdc-dialog-actions {
+  margin: 0 !important;
+  padding: 0.65rem 1.25rem 0.55rem !important;
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  flex: 0 0 auto;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .crud-dialog
+  mat-form-field,
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: var(--form-control-height);
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .crud-dialog
+  .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: var(--form-control-height);
+}
+
+.cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  )
+  .crud-dialog
+  .mat-mdc-form-field-infix {
+  min-height: var(--form-control-height) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane:is(
+    .support-channel-form-dialog,
+    .support-ticket-channel-form-dialog,
+    .support-team-form-dialog,
+    .support-ticket-form-dialog
+  ) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .cdk-overlay-pane:is(
+      .support-channel-form-dialog,
+      .support-ticket-channel-form-dialog,
+      .support-team-form-dialog,
+      .support-ticket-form-dialog
+    )
+    .mat-mdc-dialog-container {
+    max-height: 100dvh;
+  }
+
+  .cdk-overlay-pane:is(
+      .support-channel-form-dialog,
+      .support-ticket-channel-form-dialog,
+      .support-team-form-dialog,
+      .support-ticket-form-dialog
+    )
+    .crud-dialog {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane:is(
+      .support-channel-form-dialog,
+      .support-ticket-channel-form-dialog,
+      .support-team-form-dialog,
+      .support-ticket-form-dialog
+    )
+    .form-actions {
+    margin-top: 0 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.4rem !important;
+  }
+}
+
+.cdk-overlay-pane.erp-payable-form-dialog .payable-dialog mat-form-field,
+.cdk-overlay-pane.erp-payable-form-dialog .payable-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog mat-form-field,
+.cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-contract-form-dialog .contract-dialog mat-form-field,
+.cdk-overlay-pane.erp-contract-form-dialog .contract-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog mat-form-field,
+.cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog mat-form-field,
+.cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog mat-form-field,
+.cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog mat-form-field,
+.cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog .mat-mdc-form-field,
+.cdk-overlay-pane.erp-payment-gateway-form-dialog .payment-gateway-dialog mat-form-field,
+.cdk-overlay-pane.erp-payment-gateway-form-dialog .payment-gateway-dialog .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 8px;
+}
+
+.cdk-overlay-pane.erp-payable-form-dialog .payable-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-contract-form-dialog .contract-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog .mdc-text-field--outlined,
+.cdk-overlay-pane.erp-payment-gateway-form-dialog
+  .payment-gateway-dialog
+  .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: 40px;
+}
+
+.cdk-overlay-pane.erp-payable-form-dialog .payable-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-contract-form-dialog .contract-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog .mat-mdc-form-field-infix,
+.cdk-overlay-pane.erp-payment-gateway-form-dialog
+  .payment-gateway-dialog
+  .mat-mdc-form-field-infix {
+  min-height: 40px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane:is(
+    .erp-payable-form-dialog,
+    .erp-receivable-form-dialog,
+    .erp-contract-form-dialog,
+    .erp-invoice-form-dialog,
+    .erp-due-day-form-dialog,
+    .erp-boleto-form-dialog,
+    .erp-payment-method-form-dialog,
+    .erp-payment-gateway-form-dialog
+  ) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .cdk-overlay-pane:is(
+      .erp-payable-form-dialog,
+      .erp-receivable-form-dialog,
+      .erp-contract-form-dialog,
+      .erp-invoice-form-dialog,
+      .erp-due-day-form-dialog,
+      .erp-boleto-form-dialog,
+      .erp-payment-method-form-dialog,
+      .erp-payment-gateway-form-dialog
+    )
+    .mat-mdc-dialog-container {
+    max-height: 100dvh;
+  }
+
+  .cdk-overlay-pane.erp-payable-form-dialog .payable-dialog,
+  .cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog,
+  .cdk-overlay-pane.erp-contract-form-dialog .contract-dialog,
+  .cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog,
+  .cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog,
+  .cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog,
+  .cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog,
+  .cdk-overlay-pane.erp-payment-gateway-form-dialog .payment-gateway-dialog {
+    height: 100dvh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.erp-payable-form-dialog .payable-dialog mat-form-field,
+  .cdk-overlay-pane.erp-payable-form-dialog .payable-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog mat-form-field,
+  .cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-contract-form-dialog .contract-dialog mat-form-field,
+  .cdk-overlay-pane.erp-contract-form-dialog .contract-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog mat-form-field,
+  .cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog mat-form-field,
+  .cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog mat-form-field,
+  .cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog mat-form-field,
+  .cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog .mat-mdc-form-field,
+  .cdk-overlay-pane.erp-payment-gateway-form-dialog .payment-gateway-dialog mat-form-field,
+  .cdk-overlay-pane.erp-payment-gateway-form-dialog .payment-gateway-dialog .mat-mdc-form-field {
+    margin-bottom: 0 !important;
+    --mat-form-field-container-height: 48px;
+    --mat-form-field-container-vertical-padding: 12px;
+  }
+
+  .cdk-overlay-pane.erp-payable-form-dialog .payable-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-contract-form-dialog .contract-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog .mdc-text-field--outlined,
+  .cdk-overlay-pane.erp-payment-gateway-form-dialog
+    .payment-gateway-dialog
+    .mdc-text-field--outlined {
+    --mdc-outlined-text-field-container-height: 48px;
+  }
+
+  .cdk-overlay-pane.erp-payable-form-dialog .payable-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-receivable-form-dialog .receivable-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-contract-form-dialog .contract-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-invoice-form-dialog .invoice-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-due-day-form-dialog .due-day-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-boleto-form-dialog .boleto-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-payment-method-form-dialog .payment-method-dialog .mat-mdc-form-field-infix,
+  .cdk-overlay-pane.erp-payment-gateway-form-dialog
+    .payment-gateway-dialog
+    .mat-mdc-form-field-infix {
+    min-height: 48px !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .cdk-overlay-pane:is(
+      .erp-payable-form-dialog,
+      .erp-receivable-form-dialog,
+      .erp-contract-form-dialog,
+      .erp-invoice-form-dialog,
+      .erp-due-day-form-dialog,
+      .erp-boleto-form-dialog,
+      .erp-payment-method-form-dialog,
+      .erp-payment-gateway-form-dialog
+    )
+    .dialog-content,
+  .cdk-overlay-pane:is(
+      .erp-payable-form-dialog,
+      .erp-receivable-form-dialog,
+      .erp-contract-form-dialog,
+      .erp-invoice-form-dialog,
+      .erp-due-day-form-dialog,
+      .erp-boleto-form-dialog,
+      .erp-payment-method-form-dialog,
+      .erp-payment-gateway-form-dialog
+    )
+    .form-tabs {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .cdk-overlay-pane:is(
+      .erp-payable-form-dialog,
+      .erp-receivable-form-dialog,
+      .erp-contract-form-dialog,
+      .erp-invoice-form-dialog,
+      .erp-due-day-form-dialog,
+      .erp-boleto-form-dialog,
+      .erp-payment-method-form-dialog,
+      .erp-payment-gateway-form-dialog
+    )
+    .form-tabs
+    .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cdk-overlay-pane:is(
+      .erp-payable-form-dialog,
+      .erp-receivable-form-dialog,
+      .erp-contract-form-dialog,
+      .erp-invoice-form-dialog,
+      .erp-due-day-form-dialog,
+      .erp-boleto-form-dialog,
+      .erp-payment-method-form-dialog,
+      .erp-payment-gateway-form-dialog
+    )
+    .form-actions {
+    margin-top: 0 !important;
+  }
+
+  .cdk-overlay-pane:is(
+      .erp-payable-form-dialog,
+      .erp-receivable-form-dialog,
+      .erp-contract-form-dialog,
+      .erp-invoice-form-dialog,
+      .erp-due-day-form-dialog,
+      .erp-boleto-form-dialog,
+      .erp-payment-method-form-dialog,
+      .erp-payment-gateway-form-dialog
+    )
+    .mat-mdc-dialog-actions {
+    padding: 0.6rem 0 !important;
+  }
+}

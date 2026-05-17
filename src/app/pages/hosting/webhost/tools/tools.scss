@@ -1,0 +1,26 @@
+@use '../providers/providers.scss';
+
+.value-cell {
+  max-width: 24rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.password-dialog {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+}
+
+.password-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

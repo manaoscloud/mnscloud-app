@@ -1,0 +1,278 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>SMTP Accounts</h1>
+        <p>Manage sender identities linked to SMTP providers.</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput formControlName="search" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Provider</mat-label>
+        <mat-select formControlName="providerUuid" (openedChange)="resetProviderSearch($event)">
+          <mat-option value="">All</mat-option>
+          <mat-option class="select-search-option" disabled>
+            <input
+              matInput
+              class="select-search-field"
+              placeholder="Search provider"
+              [value]="providerSearch()"
+              (input)="providerSearch.set($any($event.target).value)"
+              (click)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (provider of filteredProviderOptions(); track provider.HspUUID) {
+            <mat-option [value]="provider.HspUUID">{{ provider.HspName }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">All</mat-option>
+          <mat-option value="1">Active</mat-option>
+          <mat-option value="0">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount() > 0) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedAccounts()">
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="pagedAccounts()" matSort (matSortChange)="onSort($event)">
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible SMTP accounts"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleSelection(row, $event.checked)"
+              (click)="$event.stopPropagation()"
+              [attr.aria-label]="'Select account ' + row.HsaName"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.HsaName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <td mat-cell *matCellDef="let row">{{ providerLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="from">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>From Address</th>
+          <td mat-cell *matCellDef="let row">{{ fromLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="default">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="default-col">Default</th>
+          <td mat-cell *matCellDef="let row" class="default-col">
+            @if (row.HsaIsDefault === 1) {
+              <mat-chip class="default-chip">Default</mat-chip>
+            } @else {
+              -
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.HsaIsActive === 1"
+              [class.is-inactive]="row.HsaIsActive !== 1"
+            >
+              {{ statusLabel(row.HsaIsActive) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              @if (canValidate(row)) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="validateAccount(row)"
+                  [disabled]="validatingId() === row.HsaUUID"
+                  matTooltip="Validate"
+                >
+                  <mat-icon>fact_check</mat-icon>
+                </button>
+              }
+              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" type="button" (click)="deleteAccount(row)" matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading SMTP accounts...' : 'No SMTP accounts found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="filteredAccounts().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      (page)="onPage($event)"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #accountDialog>
+  <div class="storage-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit SMTP account' : 'New SMTP account' }}</h2>
+        <p>{{ editing() ? 'Update bucket/container settings.' : 'Create a bucket/container account.' }}</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="form">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Provider</mat-label>
+                <mat-select formControlName="providerUuid" (openedChange)="resetProviderSearch($event)">
+                  <mat-option class="select-search-option" disabled>
+                    <input
+                      matInput
+                      class="select-search-field"
+                      placeholder="Search provider"
+                      [value]="providerSearch()"
+                      (input)="providerSearch.set($any($event.target).value)"
+                      (click)="$event.stopPropagation()"
+                    />
+                  </mat-option>
+                  @for (provider of filteredProviderOptions(); track provider.HspUUID) {
+                    <mat-option [value]="provider.HspUUID">{{ provider.HspName }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="isActive">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <div class="checkbox-wrap">
+                <mat-checkbox formControlName="isDefault">Default account</mat-checkbox>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+        <mat-tab label="Sender">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="form">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Default From Name</mat-label>
+                <input matInput formControlName="defaultFromName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Default From Address</mat-label>
+                <input matInput type="email" formControlName="defaultFromEmail" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
+      </div>
+      <div class="primary-actions" [class.is-single-action]="editing()">
+        @if (!editing()) {
+          <div class="save-split-action">
+            <button mat-flat-button color="primary" type="button" class="save-main-button" [disabled]="saving()" (click)="save(false)">
+              <mat-icon>save</mat-icon>
+              Save
+            </button>
+            <button mat-flat-button color="primary" type="button" class="save-more-button" [matMenuTriggerFor]="saveMenu">
+              <mat-icon>expand_more</mat-icon>
+            </button>
+          </div>
+          <mat-menu #saveMenu="matMenu" xPosition="before" yPosition="below">
+            <button mat-menu-item type="button" (click)="save(true)">Save/New</button>
+          </mat-menu>
+        } @else {
+          <button mat-flat-button color="primary" type="button" class="save-main-button" [disabled]="saving()" (click)="save(false)">
+            <mat-icon>save</mat-icon>
+            Save
+          </button>
+        }
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

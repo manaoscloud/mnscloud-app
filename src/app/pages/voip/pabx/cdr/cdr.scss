@@ -1,0 +1,219 @@
+.erp-page {
+  padding: 1.75rem;
+}
+
+.erp-card {
+  background: var(--mat-sys-color-surface-container-high);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 1rem;
+  padding: 1.5rem 1.75rem;
+}
+
+.erp-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  p {
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.95rem;
+    margin: 0.25rem 0 0;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+
+  button mat-icon {
+    margin-right: 0.25rem;
+  }
+}
+
+.filter-grid {
+  align-items: center;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.filter-grid .span-2 {
+  grid-column: span 2;
+}
+
+.filter-actions {
+  align-items: center;
+  align-self: center;
+  display: flex;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  padding-right: 0.25rem;
+}
+
+.filter-actions button {
+  height: 40px;
+  line-height: 40px;
+  min-width: 96px;
+  white-space: nowrap;
+
+  mat-icon {
+    margin-right: 0.25rem;
+  }
+}
+
+.list-tabs {
+  margin-bottom: 1rem;
+}
+
+.table-wrapper {
+  background: var(--mat-sys-color-surface-container);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  width: 100%;
+
+  table {
+    border-collapse: collapse;
+    min-width: 1040px;
+    table-layout: auto;
+    width: 100%;
+  }
+
+  .mat-mdc-header-row {
+    background: var(--mat-sys-color-surface-container-high);
+  }
+
+  th,
+  td {
+    font-size: 0.9rem;
+    line-height: 1.3rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+    background-clip: padding-box;
+  }
+
+  .mat-mdc-row:hover {
+    background: var(--mat-sys-color-surface-container-low);
+  }
+}
+
+.mat-column-recording {
+  text-align: center;
+  width: 88px;
+
+  button {
+    color: var(--mat-sys-color-primary);
+  }
+
+  button[disabled] {
+    color: var(--mat-sys-color-on-surface-variant);
+    opacity: 0.45;
+  }
+}
+
+.table-loading {
+  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container) 70%, transparent);
+  display: grid;
+  inset: 0;
+  opacity: 0;
+  place-items: center;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 180ms ease;
+  z-index: 1;
+}
+
+.table-wrapper.is-loading {
+  min-height: 240px;
+}
+
+.table-wrapper.is-loading .table-loading {
+  opacity: 1;
+}
+
+.status-pill {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.75rem;
+  gap: 0.35rem;
+  height: 26px;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  min-width: 92px;
+  padding: 0 0.4rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-pill.is-active {
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-color-primary) 35%, transparent);
+  color: var(--mat-sys-color-primary);
+}
+
+.status-pill.is-inactive {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.mobile-paginator {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 1200px) {
+  .filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .erp-page {
+    padding: 1rem;
+  }
+
+  .erp-card {
+    padding: 1rem;
+  }
+
+  .erp-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-grid .span-2 {
+    grid-column: span 1;
+  }
+
+  .filter-actions {
+    justify-content: flex-end;
+  }
+}

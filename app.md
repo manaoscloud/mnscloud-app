@@ -1,0 +1,450 @@
+# APP Patterns
+
+## Routing
+
+- Routes are defined in `app/src/app/app.routes.ts`.
+- ERP routes use `/erp/*` paths.
+
+## Public API Client Boundary
+
+- The Angular app is a public API client. By default it consumes same-origin `/api/v1`, and in
+  standalone/public deployments it may point to any authorized MNSCloud API through
+  `window.MNSCLOUD_APP_CONFIG.apiBaseUrl` loaded from `/env.js`.
+- The app must not contain server-side secrets, provider credentials, database credentials, master
+  keys, private business rules, or hidden API bypasses.
+- Browser-side authorization is UX only. The API remains the source of truth for roles, tenant scope,
+  environment scope, billing, routing ownership, policy decisions, and secret resolution.
+- Tokens stored by the app are user/session tokens obtained after login. Do not add permanent service
+  credentials, storage credentials, signing secrets, or master tokens to frontend code, assets, docs,
+  examples, or build-time environment files.
+- Public examples must use placeholders and must not include customer data, production domains,
+  production IPs, provider account IDs, or private infrastructure topology.
+- Full contract: `docs/public-api-clients.md`.
+
+## Layout
+
+- Main shell and menu are in:
+  - `app/src/app/layout/main-layout/main-layout.ts`
+  - `app/src/app/layout/main-layout/main-layout.html`
+
+## Public Theme Runtime
+
+- The app loads tenant branding at bootstrap through `PublicThemeContextService`.
+- Runtime endpoint: `GET <apiBaseUrl>/public/theme/context`.
+- API base resolution is centralized in `app/src/app/shared/runtime/app-runtime-config.ts`.
+  - Empty or missing `/env.js` config falls back to same-origin `/api/v1`.
+  - `apiBaseUrl` may be configured as an origin (`https://api.example.com`), `/api`, or `/api/v1`;
+    the resolver normalizes it to the v1 API base.
+  - Public standalone builds must use placeholders in `public/env.example.js` and never commit
+    customer domains, private API URLs, tokens, or secrets.
+- The API resolves the domain from the actual request host; the frontend must not hardcode tenant/domain mappings.
+- The service applies public branding before normal authenticated flows:
+  - `PageTitle` updates `document.title`.
+  - `MetaDescription` updates the page meta description.
+  - `FaviconUrl` updates the favicon link.
+  - `PrimaryColor` is exposed as the CSS variable `--tenant-primary-color`.
+- Optional future fields belong in `BrandingConfig` or explicit nullable ThemeDomain columns; do not move runtime branding into `.env`.
+- Do not reintroduce legacy `UrlName`/`Title` frontend model fields; use `Domain` and `PageTitle`.
+
+## ERP CRUD Baseline (Current)
+
+- Baseline page structure:
+  - `.erp-page` -> `.erp-card` -> `.erp-header` -> `.filter-grid` -> `.table-wrapper` -> `.mobile-paginator`
+- List actions:
+  - `Refresh` should call `refreshList()`.
+  - `New` should open the create flow.
+  - `Refresh` and `New` use `mat-stroked-button color="primary"` with icons.
+  - Short header action buttons share the global fixed width from `--crud-action-button-width` so actions in the same group feel visually equal on desktop and mobile.
+- Filter behavior:
+  - Use explicit `Apply` and `Clear` actions.
+  - Button order is mandatory: `Apply` first, `Clear` second.
+  - Filter action icons are mandatory: `Apply` uses `<mat-icon>filter_alt</mat-icon>` and `Clear` uses `<mat-icon>backspace</mat-icon>`.
+  - Placement is mandatory: `filter-actions` must be on its own row (`grid-column: 1 / -1`) right-aligned, never inline at the side of the search input.
+  - Keep `filter-actions` right-aligned, including mobile.
+  - Short filter action buttons (`Apply`, `Clear`) share the global fixed width from `--crud-action-button-width`; longer contextual actions such as `Delete selected` may grow beyond that width.
+  - On mobile (`<=900px`), keep header actions (`Refresh` / `New`) right-aligned as well (`.header-actions { justify-content: flex-end; }` inside mobile media block).
+- List data completeness:
+  - When the API/list procedure supports `search`, `Apply` must reload from the API with the search parameter instead of filtering only the currently loaded table rows.
+  - When the backend procedure has a default limit, the frontend service must pass an explicit `limit` appropriate for the workflow or implement real server-side pagination.
+  - `MatTableDataSource.filter` must not be the only search mechanism for resources where the loaded rows can be an incomplete backend window.
+  - Reference bug: `VoipDid` initially loaded the procedure default of 50 rows, so valid DIDs outside that window could not be found in the app even though they existed in the database.
+- Loading behavior:
+  - Use list loading state + overlay (`.table-loading`) on table wrapper.
+  - Keep minimum visible loading duration around `600ms`.
+- CRUD feedback:
+  - Operational feedback (`success`, `error`, `warning`, `info`) must use `SnackbarService` / app snackbar.
+  - Do not render transient CRUD success/error/warning/info messages inline in pages, tables, dialogs, or form footers.
+  - Inline state blocks are reserved for persistent empty/error states that require page-level action, not save/delete/load notifications.
+- Table behavior:
+  - Standard list pages use `<table mat-table [dataSource]="dataSource" matSort>`, `MatTableDataSource`, `MatPaginator`, and `MatSort`.
+  - Every data column must be sortable with `mat-sort-header`.
+  - `select` and `actions` columns must not be sortable.
+  - If column ids differ from API/model fields, or if displayed values are derived labels, define `sortingDataAccessor` or equivalent explicit sort logic.
+  - Derived sort examples: provider label, plan label, status label, account/domain label, formatted price, region name, size/bundle display, image display.
+  - After `.table-wrapper`, render a real `<mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons>`.
+  - Do not use an empty `.mobile-paginator` placeholder.
+  - If a page uses signals/custom pagination instead of `MatTableDataSource`, it must still provide equivalent `matSort`, `mat-sort-header`, paginator, page reset on sort/filter, and derived-column sorting behavior.
+- Delete behavior:
+  - Use `SlowConfirmDialogComponent` (`panelClass: 'slow-confirm-dialog'`, `disableClose: true`).
+  - Individual row delete remains available even when bulk delete exists.
+
+## Bulk Delete Baseline (Current)
+
+- Use bulk delete by default on every ERP-style CRUD list page.
+- Exception: remove bulk delete only when the resource has a documented explicit reason, and record that exception in the page notes/refactor briefing.
+- Table selection:
+  - Add a leading `select` column with `mat-checkbox`.
+  - Row checkbox toggles one record by UUID.
+  - Header checkbox selects/deselects only the currently visible page/filter result shown in the table.
+  - Do not implement "select all filtered records across every page" unless the backend has an explicit filter-based bulk endpoint.
+- Contextual action:
+  - Show selected count only when selection is non-empty.
+  - Show `Delete selected` next to the count in the dedicated `filter-actions` row.
+  - Keep `Apply` then `Clear` order intact after contextual actions.
+- Confirmation:
+  - Must use `SlowConfirmDialogComponent` with `panelClass: 'slow-confirm-dialog'` and `disableClose: true`.
+  - Message must include selected count and may include up to three record labels.
+- API contract:
+  - Frontend service calls `ApiService.delete('<resource>/bulk', { ids })`.
+  - `ApiService.delete(endpoint, body?)` is the standard helper for DELETE requests with JSON bodies.
+  - Endpoint pattern: `DELETE /api/v1/<resource>/bulk`.
+  - Request body: `{ ids: string[] }`.
+  - Response data: `{ deleted: string[], failed: { <Entity>UUID, message }[] }`.
+- After response:
+  - Remove deleted rows from the local table or reload the list.
+  - Clear deleted UUIDs from selection.
+  - If failures are returned, keep failed UUIDs selected when possible and show a concise error message.
+- Suggested page structure:
+  - component state: `selected<Entity>UUIDs = signal<Set<string>>(new Set())`
+  - table columns: `['select', ...dataColumns, 'actions']`
+  - service method: `removeMany(ids: string[])`
+  - handler method: `removeSelected<Entities>()`
+  - helper methods: selected count, row toggle, visible-row toggle, selection reconciliation after reload
+
+## Searchable Select Baseline (Current)
+
+- Any `mat-select` bound to records from another table/entity (FK-like fields) must be searchable.
+- Mandatory implementation pattern:
+  - first `mat-option` reserved for search input (`select-search-option`)
+  - nested search field class `select-search-field`
+  - filtered options list updated in real time from typed value
+  - reset search text on close using `(openedChange)`
+- Exception: small static enum selects (for example `Active/Inactive`, `Yes/No`) can remain without search.
+
+## System Parameter Defaults
+
+- When a CRUD/page needs the system default currency, do not hardcode `BRL`, `USD`, or a locale-derived currency as the source of truth.
+- Resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`.
+- The resolver must use tenant parameters first and fall back to master parameters when the tenant value is missing, empty, or inactive.
+- Existing record values still win in edit mode; the resolved default is for fallback display when the record has no currency.
+- CRUD forms that use the system default currency must not render a currency field unless the business flow explicitly allows per-record currency override.
+- When the currency is not user-editable, omit it from create/update payloads so the API/DB resolves it from tenant Parameters and then master Parameters.
+- When a business flow does allow per-record currency override, keep API payload currency normalized to uppercase 3-letter ISO-style codes.
+
+## Hosting VPS Image Placement
+
+- VPS provider catalogs must expose image options from the provider catalog, including marketplace/application images when the provider supports them.
+- VPS plans define commercial and capacity defaults only: provider account, region, size/bundle, price, setup fee, capacity metadata, notes, and status.
+- VPS image selection belongs to VPS instances, persisted in `HviConfig.providerImageId`.
+- VPS instance dialogs must use a searchable image `mat-select` backed by the selected plan provider catalog, with a free text fallback when catalog images are unavailable.
+- Existing legacy `HostingVpsPlan.HvpImage` values may be shown only as a backward-compatible fallback for older data; new plan forms must not ask for an image.
+
+## Dialog CRUD Baseline (Current)
+
+- Create/Edit form runs in `MatDialog` (not inline form section).
+- Dialog behavior:
+  - `disableClose: true`
+  - close by `Esc`
+  - when using the shared CRUD dialog helper, pass the `onEscape` callback so `Esc` uses the same cleanup path as `Cancel`
+  - explicit `Cancel` action
+  - support `Save/New` action on create mode to persist and keep dialog open with form reset
+- Dialog structure:
+  - header (`.dialog-header`)
+  - content (`.dialog-content`) with `MatTabGroup`
+  - first tab label must be `Data` by default, because it contains the primary record fields; use another first-tab label only when the domain has a documented, explicit reason.
+  - footer (`.form-actions`) with `Cancel`, `Save`, and create-only `Save/New` in the save split menu
+  - footer must stay fixed at the bottom of dialog (`mat-dialog-actions` cannot move with content length)
+- Action labels:
+  - list create action: `New`
+  - dialog primary action: `Save`
+  - secondary create action: `Save/New`
+
+## File Upload Progress Baseline (Current)
+
+- Any CRUD or execution flow that sends a user-selected file must show explicit upload progress.
+- The shared upload contract lives in `app/src/app/shared/upload/file-upload-progress.ts`.
+  - Use `FileUploadProgress<T>` for upload state.
+  - Use `buildFileUploadViewModel(progress, active)` for UI title, detail, percent label, progress
+    mode, progress value, and busy state.
+  - Use `UploadCancelledError` to distinguish user cancellation from real upload failure.
+  - Use the shared progress factory helpers for initial, failed, and cancelled states.
+- Browser upload services must call `ApiService.postFormWithProgress<T>(endpoint, formData)` instead
+  of the plain `post()` helper.
+- Component contract:
+  - keep `uploading`, `selectedFile`, and `uploadProgress` state
+  - expose a computed view model with `buildFileUploadViewModel()`
+  - keep the active upload subscription cancellable
+  - unsubscribe on user cancellation and reject with `UploadCancelledError`
+  - keep saved metadata when the upload is cancelled or fails, when the API workflow creates
+    metadata before uploading the binary
+- The progress UI must include:
+  - an upload title/state such as `Preparing upload`, `Uploading file`, `Processing uploaded file`,
+    `Upload completed`, `Upload failed`, or `Upload cancelled`
+  - a `mat-progress-bar`
+  - percent when the browser reports total bytes
+  - uploaded bytes and total bytes when available
+  - transfer speed and estimated remaining time when available
+  - `aria-live="polite"` and `aria-busy` while the upload is active or processing
+- If the browser does not expose total bytes, use an indeterminate progress bar and still show the
+  uploaded byte count.
+- While a file upload is active:
+  - disable file selection and save actions
+  - keep the dialog open
+  - convert `Cancel` to `Cancel upload` when cancellation is supported
+  - show `Processing` after the request body finishes and before the API response returns
+  - do not leave the user with only a spinner or a frozen save button
+- On real failure, keep the dialog open, show a snackbar error, and show the inline failed state.
+- On cancellation, keep the dialog open, show the inline cancelled state, and use a warning snackbar
+  instead of a technical failure message.
+- New upload screens must reuse this shared upload contract; do not copy local byte formatting,
+  progress title/detail, cancellation, or ETA logic into the component.
+- Required validation for upload screens:
+  - small file upload
+  - larger file upload with visible progress
+  - cancellation during upload
+  - API/upload failure
+  - metadata save without a selected file, when the feature supports it
+  - successful upload closes or resets the dialog according to the page workflow
+
+## Dialog Action Footer Baseline (Current)
+
+- Use a stable `mat-dialog-actions.form-actions` footer for every CRUD dialog.
+- Use the repository CRUD template (`app/templates/crud`) as the concrete baseline for CRUD dialogs:
+  - dialog root uses `width: 100%`, `max-width: 100%`, `max-height: min(92vh, 1100px)`, desktop `height: 100%`, and padding `1.5rem 1.75rem 1.25rem`
+  - `.dialog-content` uses `flex: 1 1 auto`, `min-height: 0`, `max-height: min(82vh, 980px)`, `overflow: hidden`, and zero Material margin/padding
+  - `.form-tabs` is a flex column with `height: 100%`, `min-height: 0`, and `margin-bottom: 1.25rem`
+  - `.tab-content` starts compactly with `padding: 0.65rem 0 0.25rem`
+  - `.form-actions` uses `margin: auto 0 0`, `padding: 0.85rem 0.75rem 0.75rem`, translucent surface background, `backdrop-filter: blur(8px)`, top border, and top shadow
+  - mobile dialog root uses `padding: 1rem 1rem 0.25rem`, `height: 100%`, and `min-height: 0`; `.dialog-content` removes max-height; `.form-tabs` removes bottom margin
+- Footer actions:
+  - `Cancel` is the secondary action.
+  - `Save` is the primary action.
+  - `Save/New` exists only in create mode and is exposed through a split save button menu, not as a third standalone footer button.
+  - footer must align its left/right edges with the dialog content inset, while keeping internal horizontal padding so buttons do not touch the footer corners; do not add external horizontal margin that makes the footer itself sit inside the form grid corners.
+- Desktop layout (`>900px`):
+  - `Cancel` stays on the left.
+  - `Save` or split `Save` stays on the right.
+  - both action groups must be on the same horizontal row.
+  - when using CSS grid, footer columns must be `minmax(0, 1fr) auto`: the secondary action sits at the start of the flexible left column, and the primary save/split action sits in the fixed right column.
+  - action placement must be enforced by action-group classes (`.secondary-actions` / `.primary-actions`) and must not depend on the order these groups appear in the template.
+  - when using CSS grid, pin both groups to `grid-row: 1` so a `mat-menu` declaration in the template cannot push one action to another row.
+- Mobile layout (`<=900px`):
+  - footer actions stack vertically.
+  - `Save` / split `Save` appears first.
+  - `Cancel` appears below it.
+  - buttons occupy the available footer width and keep the same horizontal margins as the dialog content.
+  - in edit mode, where `Save/New` is hidden, `Save` must be the same width as `Cancel`.
+- Split save button:
+  - use one wrapper such as `.save-split-action`.
+  - inside the wrapper, render the main `Save` button and a narrow arrow button with `[matMenuTriggerFor]`.
+  - remove visual spacing between the two internal buttons (`gap: 0` and cancel Material dialog action margin on the arrow with `margin-left: 0 !important`).
+  - desktop wrapper uses `display: grid`, `grid-template-columns: minmax(160px, auto) 44px`, `border-radius: 999px`, and `overflow: hidden`.
+  - save button height is `40px`; arrow width/height is `44px` by `40px`; footer buttons use `min-width: 136px`.
+  - main button radius: left rounded, right square (`999px 0 0 999px`).
+  - arrow button radius: left square, right rounded (`0 999px 999px 0`).
+  - add only a thin internal divider between `Save` and the arrow.
+  - do not apply generic primary button classes that force full border radius to the main `Save` button inside the split wrapper.
+- Save menu:
+  - use Angular Material `mat-menu` for the `Save/New` action.
+  - label must be `Save/New`.
+  - align the menu below the split button; for right-aligned split buttons, prefer `xPosition="before"` and `yPosition="below"`.
+  - style the `mat-menu` panel in global `styles.scss` because Material renders it in the CDK overlay, outside the component stylesheet.
+  - on mobile, make the menu panel visually extend under the save button instead of opening as a tiny panel under only the arrow.
+- Edit mode:
+  - hide the arrow and `Save/New` menu.
+  - keep the same `Save` command.
+  - restore full rounded radius on `Save`.
+  - on mobile, make `Save` full width like `Cancel`.
+
+## Definition Of Done (Refatoração Completa)
+
+- A task requested as `refatoração completa` is only accepted when ALL items below are met.
+- Layout and list:
+  - use `.erp-page`, `.erp-card`, `.erp-header`, `.filter-grid`, `.table-wrapper`, `.mobile-paginator`
+  - list actions must include `Refresh` and `New`
+  - filters must expose explicit `Apply` and `Clear`
+  - filters must keep mandatory order/placement: `Apply` then `Clear`, in a dedicated right-aligned `filter-actions` row
+  - filter buttons must use the standard icons: `filter_alt` for `Apply` and `backspace` for `Clear`
+  - list loading must use `.table-loading` overlay with minimum `600ms`
+  - delete must use `SlowConfirmDialogComponent` (`panelClass: 'slow-confirm-dialog'`, `disableClose: true`)
+  - bulk delete must be present and follow the `Bulk Delete Baseline (Current)` section unless an explicit documented exception exists
+- Dialog and form:
+  - create/edit must run in `MatDialog` (no inline form)
+  - `disableClose: true`, close by `Esc`, explicit `Cancel`
+  - include `Save/New` in create mode through the dialog save split menu
+  - dialog must follow viewport rules from `Dialog Viewport Rules (Current)` section
+  - dialog footer must follow `Dialog Action Footer Baseline (Current)` for desktop/mobile action placement
+  - dialog content must use compact density baseline from `styles.scss` (no local size inflation)
+- Styling and responsiveness:
+  - use `span.status-pill.status-chip.state-chip` with Activity Log palette classes (`chip-success`, `chip-running`, `chip-queued`, `chip-failed`, `chip-skipped`) plus `is-active`/`is-inactive`
+  - do not use `::ng-deep` for table column alignment; use local classes on `th/td` (for example: `.status-col`, `.actions-col-cell`)
+  - table list styling must follow the ERP baseline: `.erp-card` radius `1rem`, 3-column desktop `.filter-grid`, right-aligned `.filter-actions`, equal-width short action buttons, table header background, cell borders, row hover, and fixed status/actions widths
+  - form grids must follow `4/3/2/1` (`desktop`, `<=1400`, `<=1200`, `<=900`)
+  - on `<=900`, span classes collapse to 1 column
+- Validation:
+  - must pass `npm --prefix app run check:crud -- <component-folder-or-html>` for every CRUD page touched
+  - must pass `npm --prefix app run build`
+  - delivery must explicitly list each changed file and confirm checklist compliance
+
+## CRUD Template Validator
+
+- The global CRUD CSS only applies fully when the component uses the exact template hook classes. A page that is visually similar but misses small hooks is not compliant.
+- For every CRUD creation/refactor, run:
+
+```bash
+npm --prefix app run check:crud -- src/app/pages/<area>/<component>
+```
+
+- The validator checks the required global CSS hooks, including:
+  - `.table-wrapper mat-elevation-z8` with `[class.is-loading]`
+  - `.select-col`, `.status-col`, `.actions-col-header`, `.actions-col-cell`, `.actions-col`
+  - `span.status-pill.status-chip.state-chip` with `is-active`/`is-inactive` and Activity Log palette classes
+  - `matNoDataRow`
+  - `.save-split-action`, `.save-main-button`, `.save-more-button`, and `is-single-action`
+  - `openCrudTemplateDialog`, `SlowConfirmDialogComponent`, visible-row bulk selection, and partial-failure handling
+- A component must not be considered "100% template" until this validator passes and `npm --prefix app run build` passes.
+
+## Non-negotiables (Blockers)
+
+- Consider task incomplete if any one of these occurs:
+  - input density differs from baseline
+  - dialog size/position ignores viewport rules
+  - CRUD kept inline instead of dialog
+  - missing `Apply/Clear`, `Refresh/New`, or loading overlay
+  - `Apply/Clear` order or placement differs from baseline
+  - `confirm()` browser dialog used instead of `SlowConfirmDialogComponent`
+
+## Request Template (recommended)
+
+- `Refatoração completa do(s) componente(s) <nomes>. Aplique 100% o Definition Of Done do app/app.md, sem simplificações. Só finalize após build e checklist de conformidade item a item.`
+
+## Dialog Viewport Rules (Current)
+
+- Desktop:
+  - dialog size is computed from `.page-content` bounds with inner spacing `8px`
+  - fallback if `.page-content` is unavailable:
+    - `width: min(1280px, calc(100vw - 1.5rem))`
+    - `maxWidth: 99vw`
+    - `maxHeight: 95vh`
+  - clamp:
+    - min width `320px`
+    - min maxHeight `420px`
+- Mobile (`<= 900px`):
+  - keep `12px` viewport spacing on all sides
+  - `width: calc(100vw - 24px)`
+  - `maxWidth: calc(100vw - 24px)`
+  - `height: calc(100dvh - 24px)`
+  - `maxHeight: calc(100dvh - 24px)`
+  - position with `top: 12px` and `left: 12px`
+- While open:
+  - observe `.page-content` with `ResizeObserver`
+  - update dialog size/position dynamically
+
+## Generic CRUD Implementation Contract
+
+- This document is the source of truth for frontend CRUD behavior.
+- Do not use any existing page/component as the canonical reference for a refactor or new CRUD page.
+- Existing components may be inspected only to understand local APIs or shared utilities, never to override this contract.
+- If an existing component conflicts with this document, follow this document and update the component toward the generic contract.
+- Do not copy/paste viewport, footer, density, or filter logic from a component without checking every rule in this document.
+- For create/edit dialogs, implement the viewport algorithm directly from `Dialog Viewport Rules (Current)`:
+  - mobile config includes explicit `height` and `maxHeight`
+  - desktop config may include only `maxHeight`
+  - `dialogRef.updateSize(width, height)` must receive `height` when present, otherwise fallback to `maxHeight`
+  - missing this fallback is a blocker because it can collapse the dialog into a top overlay band
+- CRUD-specific features must be derived from the resource requirements:
+  - tabs only when the form has distinct groups of fields
+  - searchable selects only for FK-like dynamic data
+  - shared inputs such as phone fields should use existing shared components when available
+  - maps, copy flows, and auxiliary sections are optional resource features, not global CRUD requirements
+- Visual validation must confirm that the dialog opens as a dialog overlay with visible content, not as an inline form or collapsed top band.
+- Visual validation must confirm footer actions have visible horizontal margin from the dialog edges on desktop and mobile.
+
+## Styling Baseline (Current)
+
+- Global theme variables are in `app/src/styles.scss`.
+- The reusable CRUD visual baseline is global and must live in `app/src/styles.scss`.
+- New/refactored CRUD components must use the baseline classes instead of duplicating the common layout SCSS locally.
+- Component SCSS should be limited to resource-specific details such as unusual column widths, custom visual widgets, or domain-specific helper classes.
+- Layout classes styled globally across CRUD pages:
+  - `.erp-page`, `.erp-card`, `.filter-grid`, `.form-grid`, `.table-wrapper`, `.mobile-paginator`
+- Shared global CRUD classes also include:
+  - `.erp-header`, `.header-actions`, `.filter-actions`, `.table-loading`, `.selection-count`, `.actions-col`, `.actions-col-cell`, `.status-col`, `.status-pill`, `.status-chip`, `.state-chip`, `.crud-dialog`, `.dialog-header`, `.dialog-content`, `.form-tabs`, `.tab-content`, `.form-actions`, `.primary-actions`, `.secondary-actions`, `.save-split-action`, `.span-2`, `.span-3`, `.span-4`
+- Shared CRUD action button sizing:
+  - `--crud-action-button-width` is the global fixed width for short header/filter action buttons.
+  - `.header-actions button` and regular `.filter-actions button` use this width by default on desktop and mobile.
+  - Longer contextual filter actions, such as `Delete selected`, must override to `width: auto` while keeping the same minimum width.
+- Input density is mandatory and must follow compact baseline in `styles.scss`:
+  - page forms (`.erp-page mat-form-field`) and dialog forms (`.cdk-overlay-pane.<panelClass> .crud-dialog mat-form-field`)
+  - keep `--mat-form-field-container-height`, `--mdc-outlined-text-field-container-height`, and `.mat-mdc-form-field-infix` aligned with `var(--form-control-height)`
+  - avoid per-component overrides that increase field height/padding outside this baseline
+- Status badge visual pattern (tables):
+  - use `span.status-pill.status-chip.state-chip` with compact chip size (align using local column class per page)
+  - use the Activity Log palette classes globally:
+    - `chip-success`: successful/active/answered states
+    - `chip-running`: processing/running states
+    - `chip-queued`: queued/pending/default waiting states
+    - `chip-failed`: failed/error/canceled states
+    - `chip-skipped`: inactive/skipped/neutral states
+  - boolean status must keep `is-active` and `is-inactive` bindings alongside the palette class for semantic compatibility
+  - keep uppercase label and compact chip dimensions
+  - do not style column alignment using `::ng-deep .mat-column-status`; use local classes on `th/td` (example: `.status-col`) to avoid style leakage between pages
+- Form grid breakpoints in current baseline:
+  - desktop: 4 columns
+  - `<=1400px`: 3 columns
+  - `<=1200px`: 2 columns
+  - `<=900px`: 1 column
+- On mobile (`<=900px`), span classes should collapse to 1 column.
+- Dialog CRUD form grids must follow the same breakpoint rule (`4/3/2/1`) and span behavior (`.span-2/.span-3/.span-4`) as page forms.
+- Dialog form density/layout standard (mandatory):
+  - vertical spacing: prefer compact form rows (`.form-grid { gap: 0.5rem 0.75rem; margin-bottom: 0.35rem; }`)
+  - tab content top spacing: keep compact (`.tab-content { padding-top: 0.65rem; }`)
+  - avoid `Name` or `Street` full-width by default when 4-column grid is available; use `span-2` unless business context requires full row.
+- Notes/anotações rule:
+  - whenever a CRUD dialog has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent free-text annotation), render it in its own `mat-tab label="Notes"`.
+  - do not place notes fields in `Data`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
+  - the notes field should normally use a full-row textarea (`mat-form-field.span-4`) inside that tab.
+- Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`):
+  - Data tab desktop row pattern:
+    - row 1: `Type`, `Status`, `Name (span-2)`
+    - row 2: `Document (span-2)`, `Email`, `Phone`
+  - Notes tab:
+    - `Notes (span-4)`
+  - Addresses tab desktop row pattern:
+    - row 1: `Zip`, `Country`, `City`, `State`
+    - row 2: `Street (span-2)`, `Number`, `District`
+- CEP/Postal code UX baseline (mandatory when address has `Zip`):
+  - `Zip` input must have a suffix search icon button (`matSuffix`) and also support `Enter` key.
+  - trigger `GET postal-codes/:postalCode` through `ApiService`.
+  - on success, autofill `Street`, `District`, `City`, `State`.
+  - after autofill, focus `Number` field automatically.
+
+## API Access
+
+- Use `ApiService` from `app/src/app/services/api.service.ts`.
+- Use relative endpoints (example: `erp/customers`).
+
+## Maps (Mapbox)
+
+- Token is resolved from system parameters (`MAPBOX_TOKEN`) via API.
+
+## Auth/Guards
+
+- Tenant routes use `environmentGuard`.
+- Master-only routes use `masterGuard`.
+
+## I18n
+
+- Glossary: `app/i18n-glossary.md`
+- Runtime service: `app/src/app/services/i18n.service.ts`
+- DOM translation layer: `app/src/app/services/i18n-dom.service.ts`

@@ -1,0 +1,11 @@
+.table-wrapper {
+  table {
+    min-width: 1080px;
+  }
+}
+
+.form-grid {
+  .start-new-row {
+    grid-column: 1;
+  }
+}

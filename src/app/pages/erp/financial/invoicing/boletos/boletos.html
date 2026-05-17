@@ -1,0 +1,232 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Boletos</h1>
+        <p>Manage boleto issuance and payment status.</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="openCreateDialog()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-4">
+        <mat-label>Search boletos</mat-label>
+        <input
+          matInput
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Title, status, notes"
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearSearchFilters()" type="button">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
+      @if (loading) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Title</th>
+          <td mat-cell *matCellDef="let row">{{ row.Title }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dueDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Due date</th>
+          <td mat-cell *matCellDef="let row">{{ row.DueDate }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount-col">Amount</th>
+          <td mat-cell *matCellDef="let row" class="amount-col">{{ formatAmount(row.Amount) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <span class="status-chip" [class]="statusClass(row.Status)">{{ row.Status }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button matTooltip="Edit" (click)="openEditDialog(row)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                matTooltip="Delete"
+                (click)="deleteBoleto(row.ErpFinInvBoletoUUID)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" colspan="5">
+            {{
+              loading ? 'Loading boletos...' : 'No boletos found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of boletos"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #boletoFormDialog>
+  <div class="crud-dialog boleto-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editingBoleto ? 'Edit boleto' : 'New boleto' }}</h2>
+        <p>
+          {{
+            editingBoleto ? 'Update boleto details and save changes.' : 'Add a new boleto issuance.'
+          }}
+        </p>
+      </div>
+      @if (editingBoleto) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Title</mat-label>
+                <input matInput [(ngModel)]="form.title" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="form.status">
+                  @for (status of statusOptions; track status.value) {
+                    <mat-option [value]="status.value">{{ status.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Due date</mat-label>
+                <input
+                  matInput
+                  [(ngModel)]="form.dueDate"
+                  [matDatepicker]="dueDatePicker"
+                  appDateMask
+                />
+                <mat-datepicker-toggle matSuffix [for]="dueDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #dueDatePicker touchUi></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Amount</mat-label>
+                <input matInput [(ngModel)]="form.amount" type="text" appCurrencyMask />
+                @if (amountPrefix) {
+                  <span matTextPrefix>{{ amountPrefix }}</span>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Customer</mat-label>
+                <mat-select [(ngModel)]="form.customerUUID">
+                  <mat-option value="">No customer</mat-option>
+                  @for (customer of customerOptions; track customer.CustomerUUID) {
+                    <mat-option [value]="customer.CustomerUUID">
+                      {{ customerOptionLabel(customer) }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <div class="gateway-toggle-field">
+                <mat-slide-toggle [(ngModel)]="form.issueAtGateway" [disabled]="!!editingBoleto">
+                  Issue at gateway
+                </mat-slide-toggle>
+              </div>
+
+              @if (form.issueAtGateway) {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Payment gateway</mat-label>
+                  <mat-select [(ngModel)]="form.gatewayAccountUUID">
+                    <mat-option value=""
+                      >Automatic (tenant default, fallback to master default)</mat-option
+                    >
+                    @for (gateway of gatewayOptions; track gateway.EfgUUID) {
+                      <mat-option [value]="gateway.EfgUUID">{{
+                        gatewayOptionLabel(gateway)
+                      }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Notes">
+          <div class="tab-content notes-tab-content">
+            <mat-form-field appearance="outline" class="notes-field">
+              <mat-label>Notes</mat-label>
+              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="saveBoleto()"
+        [disabled]="saving"
+        type="button"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      @if (!editingBoleto) {
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="saveAndNewBoleto()"
+          [disabled]="saving"
+          type="button"
+        >
+          <mat-icon>post_add</mat-icon>
+          Save and new
+        </button>
+      }
+      <button mat-stroked-button (click)="cancelBoletoForm()" type="button">Cancel</button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

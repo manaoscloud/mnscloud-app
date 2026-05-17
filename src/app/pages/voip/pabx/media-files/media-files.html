@@ -1,0 +1,309 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Media Files</h1>
+        <p>Manage PABX prompts, greetings, queue audio, and hold media.</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>Search</mat-label>
+        <input matInput [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <mat-option value="">All</mat-option>
+          <mat-option value="1">Active</mat-option>
+          <mat-option value="0">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleEntitySelection(row, $event.checked)"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="storage">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Storage</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.storageMode }}
+            @if (row.storageAccountName) {
+              · {{ row.storageAccountName }}
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="delivery">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Delivery</th>
+          <td mat-cell *matCellDef="let row">{{ row.deliveryMode }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="file">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>File</th>
+          <td mat-cell *matCellDef="let row">{{ fileLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <span
+              class="status-pill status-chip state-chip"
+              [class.chip-success]="row.enabled === 1"
+              [class.is-active]="row.enabled === 1"
+              [class.chip-skipped]="row.enabled !== 1"
+              [class.is-inactive]="row.enabled !== 1"
+            >
+              {{ row.enabled === 1 ? 'ACTIVE' : 'INACTIVE' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                [disabled]="!canPlay(row)"
+                [matTooltip]="playTooltip(row)"
+                (click)="openAudio(row)"
+                aria-label="Listen media file audio"
+              >
+                <mat-icon>{{ canPlay(row) ? 'play_circle' : 'not_interested' }}</mat-icon>
+              </button>
+              <button mat-icon-button type="button" matTooltip="Edit" (click)="startEdit(row)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                matTooltip="Delete"
+                (click)="deleteItem(row)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading...' : 'No media files found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #formDialog>
+  <div class="crud-dialog entity-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit Media File' : 'New Media File' }}</h2>
+        <p>Media metadata and storage behavior.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <form class="tab-content form-grid" [formGroup]="form">
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="enabled">
+                <mat-option [value]="1">Active</mat-option>
+                <mat-option [value]="0">Inactive</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Storage</mat-label>
+              <mat-select
+                formControlName="storageMode"
+                (selectionChange)="onStorageModeChange($event.value)"
+              >
+                <mat-option value="default">Default</mat-option>
+                <mat-option value="filesystem">Filesystem</mat-option>
+                <mat-option value="storage">Storage</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Delivery</mat-label>
+              <mat-select formControlName="deliveryMode">
+                <mat-option value="default">Default</mat-option>
+                <mat-option value="online">Online</mat-option>
+                <mat-option value="offline">Offline</mat-option>
+              </mat-select>
+            </mat-form-field>
+            @if (storageMode() === 'storage') {
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Storage account</mat-label>
+                <mat-select formControlName="storageAccountUUID">
+                  <mat-option value="">Default storage account</mat-option>
+                  @for (account of storageAccountOptions(); track account.value) {
+                    <mat-option [value]="account.value">{{ account.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+          </form>
+        </mat-tab>
+        <mat-tab label="File">
+          <form class="tab-content form-grid" [formGroup]="form">
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="4"></textarea>
+            </mat-form-field>
+            <label class="file-field span-4">
+              <span>Audio file</span>
+              <input
+                type="file"
+                accept="audio/*,.wav,.mp3,.ogg"
+                [disabled]="saving() || uploading()"
+                (change)="onFileChange($event)"
+              />
+              <strong>{{
+                selectedFile()?.name || editing()?.originalFilename || 'No file selected'
+              }}</strong>
+            </label>
+            @if (uploadProgress()) {
+              <section
+                class="upload-progress-panel span-4"
+                aria-live="polite"
+                [attr.aria-busy]="uploadViewModel().busy"
+              >
+                <div class="upload-progress-header">
+                  <div>
+                    <span>{{ uploadViewModel().title }}</span>
+                    <strong>{{ uploadViewModel().detail }}</strong>
+                  </div>
+                  <b>{{ uploadViewModel().percentLabel }}</b>
+                </div>
+                <mat-progress-bar
+                  [attr.aria-label]="uploadViewModel().title"
+                  [mode]="uploadViewModel().progressMode"
+                  [value]="uploadViewModel().progressValue"
+                ></mat-progress-bar>
+              </section>
+            }
+          </form>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          type="button"
+          (click)="cancelForm()"
+        >
+          {{ uploading() ? 'Cancel upload' : 'Cancel' }}
+        </button>
+      </div>
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="saveItem()"
+          [disabled]="form.invalid || saving() || uploading()"
+        >
+          <mat-icon>save</mat-icon>
+          {{ saveActionLabel() }}
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveMenu"
+            [disabled]="form.invalid || saving() || uploading()"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+          <mat-menu #saveMenu="matMenu" xPosition="before" yPosition="below">
+            <button mat-menu-item type="button" (click)="saveAndNew()">
+              <mat-icon>add</mat-icon>
+              <span>Save/New</span>
+            </button>
+          </mat-menu>
+        }
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

@@ -1,0 +1,129 @@
+<section class="user-profile-page" @fadeIn>
+
+  @if (!loading()) {
+    <mat-card class="profile-card elevation-high">
+      <!-- Cabeçalho (SEM AVATAR) -->
+      <header class="profile-header">
+        <div class="header-text">
+          <h1 class="title mat-headline-small">My Profile</h1>
+          <p class="subtitle mat-body-medium">
+            Manage your personal information and account.
+          </p>
+        </div>
+      </header>
+      <mat-divider></mat-divider>
+      <mat-card-content>
+        <!-- BLOCO: AVATAR EDITOR -->
+        <section class="avatar-section">
+          <div class="avatar-wrapper">
+            <div class="avatar-preview" [class.has-image]="effectiveAvatarDisplayUrl()">
+              @if (effectiveAvatarDisplayUrl()) {
+                <img [src]="effectiveAvatarDisplayUrl()!" alt="Profile avatar" />
+              } @else {
+                <span class="avatar-preview-initial">{{ avatarLetter }}</span>
+              }
+            </div>
+            <div class="avatar-actions">
+              <button mat-stroked-button type="button" (click)="openAvatarFilePicker()"
+                [disabled]="savingAvatar() || loading()">
+                <mat-icon>upload</mat-icon>
+                <span>Upload</span>
+              </button>
+                        <button mat-button type="button" (click)="onCancelAvatarChange()" [disabled]="
+                savingAvatar() ||
+                loading() ||
+                (!avatarPreviewUrl() && !currentAvatarUrl())
+              ">
+                <mat-icon>restart_alt</mat-icon>
+                <span>Reset</span>
+              </button>
+              <button mat-flat-button color="primary" type="button" (click)="onSaveAvatar()"
+                [disabled]="savingAvatarDisabled()">
+                @if (!savingAvatar()) {
+                  Save Picture
+                } @else {
+                  <mat-progress-spinner diameter="20" mode="indeterminate">
+                  </mat-progress-spinner>
+                }
+              </button>
+            </div>
+            <p class="avatar-hint mat-body-small">
+              Supported formats: JPG, PNG, WEBP (max 5MB).
+            </p>
+            <input #avatarInput type="file" class="avatar-file-input" accept="image/*"
+              (change)="onAvatarFileSelected($event)" />
+          </div>
+        </section>
+        <!-- API ERROR -->
+        @if (apiError()) {
+          <div class="api-error">
+            {{ apiError() }}
+          </div>
+        }
+        <form id="profileForm" [formGroup]="profileForm" (ngSubmit)="onSave()" autocomplete="off" novalidate>
+          <!-- GRID PRINCIPAL -->
+          <div class="form-grid">
+            <!-- FIRST NAME -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="firstName" required />
+            </mat-form-field>
+            <!-- LAST NAME -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="lastName" required />
+            </mat-form-field>
+            <!-- EMAIL (READONLY) -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" readonly />
+            </mat-form-field>
+            <!-- PHONE -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone" />
+            </mat-form-field>
+            <!-- DATE BIRTH -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Date of Birth</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="dateBirth" />
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+            <!-- PASSWORD -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>New Password</mat-label>
+              <input matInput type="password" formControlName="newPassword" />
+              <mat-hint>Leave blank to keep current password.</mat-hint>
+            </mat-form-field>
+          </div>
+        </form>
+      </mat-card-content>
+      <mat-divider class="section-divider"></mat-divider>
+      <footer class="profile-footer">
+        <div class="actions">
+          <button mat-stroked-button type="button" (click)="onReset()" [disabled]="saving() || loading()">
+            Reset
+          </button>
+          <button mat-flat-button color="primary" type="submit"
+            [disabled]="saving() || loading() || profileForm.invalid" form="profileForm">
+            @if (!saving()) {
+              Save Changes
+            } @else {
+              <span>Saving...</span>
+            }
+          </button>
+        </div>
+      </footer>
+    </mat-card>
+  } @else {
+    <div class="loading-box">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading your profile...</p>
+    </div>
+  }
+
+
+
+
+</section>

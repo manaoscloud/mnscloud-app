@@ -1,0 +1,1156 @@
+import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { userResolver } from './core/resolvers/user.resolver';
+import { MainLayout } from './layout/main-layout/main-layout';
+import { redirectIfLoggedGuard } from './core/guards/redirectIfLogged.guard';
+import { masterGuard } from './core/guards/master.guard';
+import { environmentGuard } from './core/guards/environment.guard';
+
+export const routes: Routes = [
+  // Raiz → dashboard
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+  // =====================================================
+  // 🔓 PÚBLICAS
+  // =====================================================
+  {
+    path: 'signin',
+    canActivate: [redirectIfLoggedGuard],
+    loadComponent: () => import('./pages/signin/signin').then((m) => m.Signin),
+    title: 'Sign In | mnscloud',
+  },
+  {
+    path: 'signup',
+    loadComponent: () => import('./pages/signup/signup').then((m) => m.Signup),
+    title: 'Sign Up | mnscloud',
+  },
+
+  // Recovery
+  {
+    path: 'auth/forgot-password',
+    loadComponent: () =>
+      import('./pages/forgot-password/forgot-password').then((m) => m.ForgotPasswordComponent),
+    title: 'Forgot Password | mnscloud',
+  },
+  {
+    path: 'auth/reset-password',
+    loadComponent: () =>
+      import('./pages/reset-password/reset-password').then((m) => m.ResetPasswordComponent),
+    title: 'Reset Password | mnscloud',
+  },
+
+  // Invite (público)
+  {
+    path: 'invite/validate',
+    loadComponent: () =>
+      import('./pages/tenants/invite/invite-validate/invite-validate').then(
+        (m) => m.InviteValidatePage,
+      ),
+    title: 'Validate Invitation | mnscloud',
+  },
+  {
+    path: 'invite/accept',
+    loadComponent: () =>
+      import('./pages/tenants/invite/invite-accept/invite-accept').then((m) => m.InviteAcceptPage),
+    title: 'Accept Invitation | mnscloud',
+  },
+
+  // =====================================================
+  // 🔒 PRIVADAS
+  // =====================================================
+  {
+    path: '',
+    component: MainLayout,
+    canActivateChild: [authGuard],
+    children: [
+      {
+        path: '',
+        resolve: { user: userResolver },
+        runGuardsAndResolvers: 'always',
+        children: [
+          // -------------------------
+          // Gerais (não exigem tenant)
+          // -------------------------
+          {
+            path: 'dashboard',
+            loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
+            title: 'Dashboard | mnscloud',
+          },
+          {
+            path: 'user/profile',
+            loadComponent: () =>
+              import('./pages/user/profile/user-profile').then((m) => m.UserProfileComponent),
+            title: 'My Profile | mnscloud',
+          },
+          {
+            path: 'settings',
+            loadComponent: () =>
+              import('./pages/settings/settings').then((m) => m.SettingsComponent),
+            title: 'Settings | mnscloud',
+          },
+          {
+            path: 'settings/themes',
+            loadComponent: () =>
+              import('./pages/settings/themes/themes').then((m) => m.SettingsThemesPage),
+            title: 'Themes | mnscloud',
+          },
+
+          // =================================================
+          // 🔐 TENANT AREA (exige EnvironmentUUID)
+          // =================================================
+          {
+            path: '',
+            canActivateChild: [environmentGuard],
+            children: [
+              // Tenants (tenant)
+              {
+                path: 'settings/tenants',
+                loadComponent: () =>
+                  import('./pages/tenants/tenants').then((m) => m.SettingsTenantsPage),
+                title: 'Tenants | mnscloud',
+              },
+              {
+                path: 'settings/parameters',
+                loadComponent: () =>
+                  import('./pages/settings/parameters/parameters').then(
+                    (m) => m.SettingsParametersPage,
+                  ),
+                title: 'Settings • Parameters | mnscloud',
+                data: { scope: 'tenant' },
+              },
+              {
+                path: 'monitoring/activity-logs',
+                loadComponent: () =>
+                  import('./pages/monitoring/activity-logs/activity').then(
+                    (m) => m.MonitoringActivityLogsPage,
+                  ),
+                title: 'Monitoring • Activity Logs | mnscloud',
+              },
+              {
+                path: 'monitoring/agents',
+                loadComponent: () =>
+                  import('./pages/monitoring/agents/agents').then((m) => m.MonitoringAgentsPage),
+                title: 'Monitoring • Agents | mnscloud',
+              },
+              {
+                path: 'cyber-security',
+                loadComponent: () =>
+                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
+                title: 'Cyber Security | mnscloud',
+              },
+              {
+                path: 'cyber-security/:section',
+                loadComponent: () =>
+                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
+                title: 'Cyber Security | mnscloud',
+              },
+
+              // CRM
+              {
+                path: 'erp/crm/leads',
+                loadComponent: () =>
+                  import('./pages/erp/crm/leads/leads').then((m) => m.CrmLeadsPage),
+                title: 'ERP • CRM • Leads | mnscloud',
+              },
+              {
+                path: 'erp/crm/opportunities',
+                loadComponent: () =>
+                  import('./pages/erp/crm/opportunities/opportunities').then(
+                    (m) => m.CrmOpportunitiesPage,
+                  ),
+                title: 'ERP • CRM • Opportunities | mnscloud',
+              },
+              {
+                path: 'erp/crm/pipeline',
+                loadComponent: () =>
+                  import('./pages/erp/crm/pipeline/pipeline').then((m) => m.CrmPipelinePage),
+                title: 'ERP • CRM • Pipeline | mnscloud',
+              },
+
+              // ERP Entities
+              {
+                path: 'erp/customer',
+                loadComponent: () =>
+                  import('./pages/erp/customer/customer').then((m) => m.ErpCustomerPage),
+                title: 'ERP • Customer | mnscloud',
+              },
+              {
+                path: 'erp/carrier',
+                loadComponent: () =>
+                  import('./pages/erp/carrier/carrier').then((m) => m.ErpCarrierPage),
+                title: 'ERP • Carrier | mnscloud',
+              },
+              {
+                path: 'erp/supplier',
+                loadComponent: () =>
+                  import('./pages/erp/supplier/supplier').then((m) => m.ErpSupplierPage),
+                title: 'ERP • Supplier | mnscloud',
+              },
+              {
+                path: 'erp/reseller',
+                loadComponent: () =>
+                  import('./pages/erp/reseller/reseller').then((m) => m.ErpResellerPage),
+                title: 'ERP • Reseller | mnscloud',
+              },
+
+              // Financeiro
+              {
+                path: 'erp/financial/account/payables',
+                loadComponent: () =>
+                  import('./pages/erp/financial/account/payables/payables').then(
+                    (m) => m.FinancialPayablesPage,
+                  ),
+                title: 'ERP • Financial • Accounts Payable | mnscloud',
+              },
+              {
+                path: 'erp/financial/account/receivables',
+                loadComponent: () =>
+                  import('./pages/erp/financial/account/receivables/receivables').then(
+                    (m) => m.FinancialReceivablesPage,
+                  ),
+                title: 'ERP • Financial • Accounts Receivable | mnscloud',
+              },
+              {
+                path: 'erp/financial/payment-method',
+                loadComponent: () =>
+                  import('./pages/erp/financial/payment/method/payment-method').then(
+                    (m) => m.FinancialPaymentMethodPage,
+                  ),
+                title: 'ERP • Financial • Payment Methods | mnscloud',
+              },
+              {
+                path: 'erp/financial/payment-gateway',
+                loadComponent: () =>
+                  import('./pages/erp/financial/payment/gateway/payment-gateway').then(
+                    (m) => m.FinancialPaymentGatewayPage,
+                  ),
+                title: 'ERP • Financial • Payment Gateways | mnscloud',
+                data: { scope: 'tenant', context: 'financial' },
+              },
+
+              // Invoicing
+              {
+                path: 'erp/financial/invoicing/boletos',
+                loadComponent: () =>
+                  import('./pages/erp/financial/invoicing/boletos/boletos').then(
+                    (m) => m.InvoicingBoletosPage,
+                  ),
+                title: 'ERP • Financial • Invoicing • Boletos | mnscloud',
+              },
+              {
+                path: 'erp/financial/invoicing/invoices',
+                loadComponent: () =>
+                  import('./pages/erp/financial/invoicing/invoices/invoices').then(
+                    (m) => m.InvoicingInvoicesPage,
+                  ),
+                title: 'ERP • Financial • Invoicing • Invoices | mnscloud',
+              },
+              {
+                path: 'erp/financial/invoicing/contracts',
+                loadComponent: () =>
+                  import('./pages/erp/financial/invoicing/contracts/contracts').then(
+                    (m) => m.InvoicingContractsPage,
+                  ),
+                title: 'ERP • Financial • Invoicing • Contracts | mnscloud',
+              },
+              {
+                path: 'erp/financial/invoicing/duedays',
+                loadComponent: () =>
+                  import('./pages/erp/financial/invoicing/duedays/duedays').then(
+                    (m) => m.InvoicingDueDaysPage,
+                  ),
+                title: 'ERP • Financial • Invoicing • Due Days | mnscloud',
+              },
+
+              {
+                path: 'erp/companies',
+                loadComponent: () =>
+                  import('./pages/erp/companies/companies').then((m) => m.ErpCompaniesPage),
+                title: 'ERP • Companies | mnscloud',
+              },
+              {
+                path: 'erp/complex',
+                loadComponent: () =>
+                  import('./pages/erp/complex/complex').then((m) => m.ErpComplexPage),
+                title: 'ERP • Residential Complex | mnscloud',
+              },
+
+              // Estoque
+
+              // Sale
+              {
+                path: 'sale/stock',
+                loadComponent: () =>
+                  import('./pages/sales/stocks/stocks').then((m) => m.SalesStocksPage),
+                title: 'Sale • Stock | mnscloud',
+              },
+              {
+                path: 'sale/stock-type',
+                loadComponent: () =>
+                  import('./pages/sales/stock-type/stock-type').then((m) => m.SaleStockTypePage),
+                title: 'Sale • Stock Type | mnscloud',
+              },
+              {
+                path: 'sale/unit',
+                loadComponent: () => import('./pages/sales/unit/unit').then((m) => m.SaleUnitPage),
+                title: 'Sale • Unit of Measure | mnscloud',
+              },
+              {
+                path: 'sale/brand',
+                loadComponent: () =>
+                  import('./pages/sales/brand/brand').then((m) => m.SaleBrandPage),
+                title: 'Sale • Brand | mnscloud',
+              },
+              {
+                path: 'sale/category',
+                loadComponent: () =>
+                  import('./pages/sales/category/category').then((m) => m.SaleCategoryPage),
+                title: 'Sale • Category | mnscloud',
+              },
+              {
+                path: 'sale/product',
+                loadComponent: () =>
+                  import('./pages/sales/product/product').then((m) => m.SaleProductPage),
+                title: 'Sale • Product | mnscloud',
+              },
+              {
+                path: 'sale/quotation',
+                loadComponent: () =>
+                  import('./pages/sales/quotation/quotation').then((m) => m.SaleQuotationPage),
+                title: 'Sale • Quotation | mnscloud',
+              },
+
+              // Support Channels
+              {
+                path: 'support/tickets',
+                loadComponent: () =>
+                  import('./pages/support/tickets/tickets').then((m) => m.SupportTicketsPage),
+                title: 'Support • Tickets | mnscloud',
+              },
+              {
+                path: 'support/ticket-channels',
+                loadComponent: () =>
+                  import('./pages/support/ticket-channels/ticket-channels').then(
+                    (m) => m.SupportTicketChannelsPage,
+                  ),
+                title: 'Support • Chat Channels | mnscloud',
+              },
+              {
+                path: 'support/teams',
+                loadComponent: () =>
+                  import('./pages/support/teams/teams').then((m) => m.SupportTeamsPage),
+                title: 'Support • Teams | mnscloud',
+              },
+              {
+                path: 'support/channels',
+                loadComponent: () =>
+                  import('./pages/support/channels/channels').then((m) => m.SupportChannelsPage),
+                title: 'Support • Channels | mnscloud',
+              },
+              {
+                path: 'support/attendance',
+                loadComponent: () =>
+                  import('./pages/support/attendance/attendance').then(
+                    (m) => m.SupportAttendancePage,
+                  ),
+                title: 'Support • Attendance | mnscloud',
+              },
+
+              // ISP
+              {
+                path: 'isp/pop',
+                loadComponent: () => import('./pages/isp/pop/pop').then((m) => m.IspPopPage),
+                title: 'ISP • POP | mnscloud',
+              },
+              {
+                path: 'isp/nas',
+                loadComponent: () => import('./pages/isp/nas/nas').then((m) => m.IspNasPage),
+                title: 'ISP • NAS | mnscloud',
+              },
+              {
+                path: 'isp/olt',
+                loadComponent: () => import('./pages/isp/olt/olt').then((m) => m.IspOltPage),
+                title: 'ISP • OLT | mnscloud',
+              },
+              {
+                path: 'isp/vendor',
+                loadComponent: () =>
+                  import('./pages/isp/vendor/vendor').then((m) => m.IspVendorPage),
+                title: 'ISP • IspVendor | mnscloud',
+              },
+              {
+                path: 'isp/vendor-model',
+                loadComponent: () =>
+                  import('./pages/isp/vendor-model/vendor-model').then((m) => m.IspVendorModelPage),
+                title: 'ISP • IspVendor Model | mnscloud',
+              },
+              {
+                path: 'isp/pool-ip/pool-ipv4',
+                loadComponent: () =>
+                  import('./pages/isp/pool-ip/pool-ipv4/pool-ipv4').then((m) => m.IspPoolIpv4Page),
+                title: 'ISP • Pool IPv4 | mnscloud',
+              },
+              {
+                path: 'isp/pool-ip/pool-ipv6',
+                loadComponent: () =>
+                  import('./pages/isp/pool-ip/pool-ipv6/pool-ipv6').then((m) => m.IspPoolIpv6Page),
+                title: 'ISP • Pool IPv6 | mnscloud',
+              },
+              {
+                path: 'isp/pool-ip/fixed-ipv4',
+                loadComponent: () =>
+                  import('./pages/isp/pool-ip/fixed-ipv4/fixed-ipv4').then(
+                    (m) => m.IspFixedIpv4Page,
+                  ),
+                title: 'ISP • Fixed IPv4 | mnscloud',
+              },
+              {
+                path: 'isp/pool-ip/fixed-ipv6',
+                loadComponent: () =>
+                  import('./pages/isp/pool-ip/fixed-ipv6/fixed-ipv6').then(
+                    (m) => m.IspFixedIpv6Page,
+                  ),
+                title: 'ISP • Fixed IPv6 | mnscloud',
+              },
+              {
+                path: 'isp/radius-server',
+                loadComponent: () =>
+                  import('./pages/isp/radius-server/radius-server').then(
+                    (m) => m.IspRadiusServerPage,
+                  ),
+                title: 'ISP • Radius Server | mnscloud',
+              },
+              {
+                path: 'isp/radius-server/pppoe-client',
+                loadComponent: () =>
+                  import('./pages/isp/radius-server/pppoe-client/pppoe-client').then(
+                    (m) => m.PppoeClientPage,
+                  ),
+                title: 'ISP • PPPoE Client | mnscloud',
+              },
+              {
+                path: 'isp/geomap/map',
+                loadComponent: () =>
+                  import('./pages/isp/geomap/assets/assets').then((m) => m.IspGeoMapAssetsPage),
+                title: 'ISP • GeoMap Map | mnscloud',
+              },
+              {
+                path: 'isp/geomap/assets',
+                redirectTo: 'isp/geomap/map',
+                pathMatch: 'full',
+              },
+              {
+                path: 'isp/geomap/asset',
+                loadComponent: () =>
+                  import('./pages/isp/geomap/asset/asset').then((m) => m.IspGeoMapAssetPage),
+                title: 'ISP • GeoMap Asset Models | mnscloud',
+              },
+              {
+                path: 'isp/geomap/asset-type',
+                loadComponent: () =>
+                  import('./pages/isp/geomap/asset-type/asset-type').then(
+                    (m) => m.IspGeoMapAssetTypePage,
+                  ),
+                title: 'ISP • GeoMap Asset Types | mnscloud',
+              },
+              {
+                path: 'isp/geomap/projects',
+                loadComponent: () =>
+                  import('./pages/isp/geomap/projects/projects').then(
+                    (m) => m.IspGeoMapProjectsPage,
+                  ),
+                title: 'ISP • GeoMap Projects | mnscloud',
+              },
+              {
+                path: 'isp/geomap/ftth',
+                loadComponent: () =>
+                  import('./pages/isp/geomap/ftth/ftth').then((m) => m.IspGeoMapFtthPage),
+                title: 'ISP • GeoMap FTTH | mnscloud',
+              },
+              {
+                path: 'isp/geomap/viability',
+                loadComponent: () =>
+                  import('./pages/isp/geomap/viability/viability').then(
+                    (m) => m.IspGeoMapViabilityPage,
+                  ),
+                title: 'ISP • GeoMap Viability | mnscloud',
+              },
+              {
+                path: 'isp/geomap/capacity',
+                loadComponent: () =>
+                  import('./pages/isp/geomap/capacity/capacity').then(
+                    (m) => m.IspGeoMapCapacityPage,
+                  ),
+                title: 'ISP • GeoMap Capacity | mnscloud',
+              },
+
+              // Hosting
+              {
+                path: 'hosting/dns/domains',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/domains/domains').then(
+                    (m) => m.HostingDnsDomainsPage,
+                  ),
+                title: 'Hosting • DNS • Domains | mnscloud',
+              },
+              {
+                path: 'hosting/dns/providers',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/providers/providers').then(
+                    (m) => m.HostingDnsProvidersPage,
+                  ),
+                title: 'Hosting • DNS • Providers | mnscloud',
+              },
+              {
+                path: 'hosting/smtp',
+                title: 'Hosting • SMTP | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/providers/providers').then(
+                        (m) => m.HostingSmtpProvidersPage,
+                      ),
+                    title: 'Hosting • SMTP Providers | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'accounts',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/accounts/accounts').then(
+                        (m) => m.HostingSmtpAccountsPage,
+                      ),
+                    title: 'Hosting • SMTP Accounts | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'routes',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/routes/routes').then(
+                        (m) => m.HostingSmtpRoutesPage,
+                      ),
+                    title: 'Hosting • SMTP Routes | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                ],
+              },
+              {
+                path: 'hosting/storage',
+                title: 'Hosting • Storage | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/providers/providers').then(
+                        (m) => m.HostingStorageProvidersPage,
+                      ),
+                    title: 'Hosting • Storage Providers | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'accounts',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/accounts/accounts').then(
+                        (m) => m.HostingStorageAccountsPage,
+                      ),
+                    title: 'Hosting • Storage Accounts | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                ],
+              },
+              {
+                path: 'hosting/vps',
+                title: 'Hosting • VPS | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'instances' },
+                  {
+                    path: 'instances',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/instances/instances').then(
+                        (m) => m.HostingVpsInstancesPage,
+                      ),
+                    title: 'Hosting • VPS Instances | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'provider',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/provider/provider').then(
+                        (m) => m.HostingVpsProviderPage,
+                      ),
+                    title: 'Hosting • VPS Provider | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'plans',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/plans/plans').then((m) => m.HostingVpsPlansPage),
+                    title: 'Hosting • VPS Plans | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                ],
+              },
+              {
+                path: 'hosting/vps-container',
+                title: 'Hosting • VPS Container | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'instances' },
+                  {
+                    path: 'instances',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps-container/instances/instances').then(
+                        (m) => m.HostingVpsContainerInstancesPage,
+                      ),
+                    title: 'Hosting • VPS Container Instances | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'provider',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps-container/provider/provider').then(
+                        (m) => m.HostingVpsContainerProviderPage,
+                      ),
+                    title: 'Hosting • VPS Container Provider | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'plans',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps-container/plans/plans').then(
+                        (m) => m.HostingVpsContainerPlansPage,
+                      ),
+                    title: 'Hosting • VPS Container Plans | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                ],
+              },
+              {
+                path: 'hosting/webhost',
+                title: 'Hosting • Webhost | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'providers' },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/providers/providers').then(
+                        (m) => m.HostingWebhostProvidersPage,
+                      ),
+                    title: 'Hosting • Webhost • Providers | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'plans',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/plans/plans').then(
+                        (m) => m.HostingWebhostPlansPage,
+                      ),
+                    title: 'Hosting • Webhost • Plans | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'hosts',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/hosts/hosts').then(
+                        (m) => m.HostingWebhostHostsPage,
+                      ),
+                    title: 'Hosting • Webhost • Hosts | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'emails',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/emails/emails').then(
+                        (m) => m.HostingWebhostEmailsPage,
+                      ),
+                    title: 'Hosting • Webhost • Emails | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'databases',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/tools/tools').then(
+                        (m) => m.HostingWebhostToolsPage,
+                      ),
+                    title: 'Hosting • Webhost • Databases | mnscloud',
+                    data: {
+                      scope: 'tenant',
+                      context: 'hosting',
+                      tool: 'databases',
+                    },
+                  },
+                  {
+                    path: 'mailing-lists',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/tools/tools').then(
+                        (m) => m.HostingWebhostToolsPage,
+                      ),
+                    title: 'Hosting • Webhost • Mailing Lists | mnscloud',
+                    data: {
+                      scope: 'tenant',
+                      context: 'hosting',
+                      tool: 'mailing-lists',
+                    },
+                  },
+                  {
+                    path: 'zone-editor',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/tools/tools').then(
+                        (m) => m.HostingWebhostToolsPage,
+                      ),
+                    title: 'Hosting • Webhost • Zone Editor | mnscloud',
+                    data: {
+                      scope: 'tenant',
+                      context: 'hosting',
+                      tool: 'zone-records',
+                    },
+                  },
+                ],
+              },
+
+              // VoIP
+              {
+                path: 'voip/domain',
+                loadComponent: () =>
+                  import('./pages/voip/domain/domain').then((m) => m.VoipDomainPage),
+                title: 'VoIP • Domain | mnscloud',
+              },
+              {
+                path: 'voip/did/operator',
+                loadComponent: () =>
+                  import('./pages/voip/did/operator/operator').then((m) => m.VoipDidOperatorPage),
+                title: 'VoIP • Operator | mnscloud',
+              },
+              {
+                path: 'voip/did',
+                loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
+                title: 'VoIP • DID | mnscloud',
+              },
+              {
+                path: 'voip/did/customer',
+                loadComponent: () =>
+                  import('./pages/voip/did/customer/customer').then((m) => m.VoipDidCustomerPage),
+                title: 'VoIP • DID • Customer | mnscloud',
+              },
+              {
+                path: 'voip/portability',
+                loadComponent: () =>
+                  import('./pages/voip/portability/portability').then((m) => m.VoipPortabilityPage),
+                title: 'VoIP • Portability | mnscloud',
+              },
+              {
+                path: 'voip/sbc',
+                redirectTo: 'voip/sbc/provider',
+                pathMatch: 'full',
+              },
+              ...(['provider', 'server', 'trunk', 'route', 'policy'].map((section) => ({
+                path: `voip/sbc/${section}`,
+                loadComponent: () => import('./pages/voip/sbc/sbc').then((m) => m.VoipSbcPage),
+                title: `VoIP • SBC • ${section} | mnscloud`,
+                data: {
+                  resource:
+                    section === 'provider'
+                      ? 'providers'
+                      : section === 'server'
+                        ? 'servers'
+                        : section === 'trunk'
+                          ? 'trunks'
+                          : section === 'route'
+                            ? 'routes'
+                            : 'policies',
+                },
+              })) as any),
+              {
+                path: 'voip/softswitch',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/softswitch').then((m) => m.VoipSoftswitchPage),
+                title: 'VoIP • Softswitch | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/provider',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/provider/provider').then(
+                    (m) => m.VoipSoftswitchProviderPage,
+                  ),
+                title: 'VoIP • Softswitch • Provider | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/subscriber',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/subscriber/subscriber').then(
+                    (m) => m.VoipSoftswitchSubscriberPage,
+                  ),
+                title: 'VoIP • Softswitch • Subscriber | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/did',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/did/did').then((m) => m.VoipSoftswitchDidPage),
+                title: 'VoIP • Softswitch • DID | mnscloud',
+              },
+              ...(['trunks', 'routes', 'policies', 'rates', 'cdrs'] as const).map((resource) => ({
+                path: `voip/softswitch/${resource}`,
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/resource/resource').then(
+                    (m) => m.VoipSoftswitchResourcePage,
+                  ),
+                title: `VoIP • Softswitch • ${resource} | mnscloud`,
+                data: { resource },
+              })),
+              {
+                path: 'voip/pabx',
+                loadComponent: () => import('./pages/voip/pabx/pabx').then((m) => m.VoipPabxPage),
+                title: 'VoIP • PABX | mnscloud',
+              },
+              {
+                path: 'voip/pabx/extension',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/extension/extension').then(
+                    (m) => m.VoipPabxExtensionPage,
+                  ),
+                title: 'VoIP • PABX • Extension | mnscloud',
+              },
+              {
+                path: 'voip/pabx/blacklist',
+                redirectTo: 'voip/pabx/blacklist/list',
+                pathMatch: 'full',
+              },
+              {
+                path: 'voip/pabx/blacklist/list',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/blacklist/list/list').then(
+                    (m) => m.VoipPabxBlacklistListPage,
+                  ),
+                title: 'VoIP • PABX • Blacklist • List | mnscloud',
+              },
+              {
+                path: 'voip/pabx/blacklist/number',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/blacklist/number/number').then(
+                    (m) => m.VoipPabxBlacklistNumberPage,
+                  ),
+                title: 'VoIP • PABX • Blacklist • Number | mnscloud',
+              },
+              {
+                path: 'voip/pabx/dial-plan',
+                redirectTo: 'voip/pabx/dial-plan/plan',
+                pathMatch: 'full',
+              },
+              {
+                path: 'voip/pabx/dial-plan/plan',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/dial-plan/plan/plan').then(
+                    (m) => m.VoipPabxDialPlanPlanPage,
+                  ),
+                title: 'VoIP • PABX • Dial Plan • Plan | mnscloud',
+              },
+              {
+                path: 'voip/pabx/dial-plan/rules',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/dial-plan/rules/rules').then(
+                    (m) => m.VoipPabxDialPlanRulesPage,
+                  ),
+                title: 'VoIP • PABX • Dial Plan • Rules | mnscloud',
+              },
+              {
+                path: 'voip/pabx/external',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/routing/routing').then((m) => m.VoipPabxRoutingPage),
+                title: 'VoIP • PABX • External | mnscloud',
+                data: { resource: 'external' },
+              },
+              ...(['trunks', 'inbound-routes', 'outbound-routes'] as const).map((resource) => ({
+                path: `voip/pabx/${resource}`,
+                loadComponent: () =>
+                  import('./pages/voip/pabx/trunk-route/trunk-route').then(
+                    (m) => m.VoipPabxTrunkRoutePage,
+                  ),
+                title: `VoIP • PABX • ${resource} | mnscloud`,
+                data: { resource },
+              })),
+              {
+                path: 'voip/pabx/group',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/routing/routing').then((m) => m.VoipPabxRoutingPage),
+                title: 'VoIP • PABX • Group | mnscloud',
+                data: { resource: 'group' },
+              },
+              {
+                path: 'voip/pabx/queue',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/queue/queue').then((m) => m.VoipPabxQueuePage),
+                title: 'VoIP • PABX • Queue | mnscloud',
+              },
+              {
+                path: 'voip/pabx/media-files',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/media-files/media-files').then(
+                    (m) => m.VoipPabxMediaFilesPage,
+                  ),
+                title: 'VoIP • PABX • Media Files | mnscloud',
+              },
+              {
+                path: 'voip/pabx/ivr',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/ivr/ivr').then((m) => m.VoipPabxIvrPage),
+                title: 'VoIP • PABX • IVR | mnscloud',
+              },
+              {
+                path: 'voip/pabx/cdr',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/cdr/cdr').then((m) => m.VoipPabxCdrPage),
+                title: 'VoIP • PABX • CDR | mnscloud',
+              },
+            ],
+          },
+
+          // =================================================
+          // 👑 MASTER AREA
+          // =================================================
+          {
+            path: 'system',
+            canActivate: [masterGuard],
+            children: [
+              {
+                path: 'monitoring/activity-logs',
+                loadComponent: () =>
+                  import('./pages/monitoring/activity-logs/activity').then(
+                    (m) => m.MonitoringActivityLogsPage,
+                  ),
+                title: 'System Monitoring • Activity Logs | mnscloud',
+              },
+              {
+                path: 'monitoring/agents',
+                loadComponent: () =>
+                  import('./pages/monitoring/agents/agents').then((m) => m.MonitoringAgentsPage),
+                title: 'System Monitoring • Agents | mnscloud',
+              },
+              {
+                path: 'softswitch',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/softswitch').then((m) => m.VoipSoftswitchPage),
+                title: 'System Softswitch | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'softswitch/server',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/server/server').then(
+                    (m) => m.VoipSoftswitchServerPage,
+                  ),
+                title: 'System Softswitch Server | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'sbc',
+                redirectTo: 'sbc/server',
+                pathMatch: 'full',
+              },
+              ...(['server'].map((section) => ({
+                path: `sbc/${section}`,
+                loadComponent: () => import('./pages/voip/sbc/sbc').then((m) => m.VoipSbcPage),
+                title: `System SBC • ${section} | mnscloud`,
+                data: { scope: 'master', resource: 'servers' },
+              })) as any),
+              {
+                path: 'pabx',
+                loadComponent: () => import('./pages/voip/pabx/pabx').then((m) => m.VoipPabxPage),
+                title: 'System PABX | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'pabx/server',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/server/server').then((m) => m.VoipPabxServerPage),
+                title: 'System PABX Server | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'hosting/smtp',
+                title: 'System SMTP | mnscloud',
+                data: { scope: 'master', context: 'system' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/providers/providers').then(
+                        (m) => m.HostingSmtpProvidersPage,
+                      ),
+                    title: 'System SMTP Providers | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'accounts',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/accounts/accounts').then(
+                        (m) => m.HostingSmtpAccountsPage,
+                      ),
+                    title: 'System SMTP Accounts | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'routes',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/routes/routes').then(
+                        (m) => m.HostingSmtpRoutesPage,
+                      ),
+                    title: 'System SMTP Routes | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                ],
+              },
+              {
+                path: 'hosting/storage',
+                title: 'System Storage | mnscloud',
+                data: { scope: 'master', context: 'system' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/providers/providers').then(
+                        (m) => m.HostingStorageProvidersPage,
+                      ),
+                    title: 'System Storage Providers | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'accounts',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/accounts/accounts').then(
+                        (m) => m.HostingStorageAccountsPage,
+                      ),
+                    title: 'System Storage Accounts | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                ],
+              },
+              {
+                path: 'payment-gateway',
+                loadComponent: () =>
+                  import('./pages/erp/financial/payment/gateway/payment-gateway').then(
+                    (m) => m.FinancialPaymentGatewayPage,
+                  ),
+                title: 'System Payment Gateways | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
+                path: 'parameters',
+                loadComponent: () =>
+                  import('./pages/settings/parameters/parameters').then(
+                    (m) => m.SettingsParametersPage,
+                  ),
+                title: 'System Parameters | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'vps',
+                title: 'System VPS | mnscloud',
+                data: { scope: 'master', context: 'system' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'instances' },
+                  {
+                    path: 'instances',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/instances/instances').then(
+                        (m) => m.HostingVpsInstancesPage,
+                      ),
+                    title: 'System VPS Instances | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'provider',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/provider/provider').then(
+                        (m) => m.HostingVpsProviderPage,
+                      ),
+                    title: 'System VPS Provider | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'plans',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/plans/plans').then((m) => m.HostingVpsPlansPage),
+                    title: 'System VPS Plans | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                ],
+              },
+              {
+                path: 'vps-container',
+                title: 'System VPS Container | mnscloud',
+                data: { scope: 'master', context: 'system' },
+                children: [
+                  { path: '', pathMatch: 'full', redirectTo: 'instances' },
+                  {
+                    path: 'instances',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps-container/instances/instances').then(
+                        (m) => m.HostingVpsContainerInstancesPage,
+                      ),
+                    title: 'System VPS Container Instances | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'provider',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps-container/provider/provider').then(
+                        (m) => m.HostingVpsContainerProviderPage,
+                      ),
+                    title: 'System VPS Container Provider | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'plans',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps-container/plans/plans').then(
+                        (m) => m.HostingVpsContainerPlansPage,
+                      ),
+                    title: 'System VPS Container Plans | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                ],
+              },
+              {
+                path: 'isp/radius-server',
+                loadComponent: () =>
+                  import('./pages/isp/radius-server/radius-server').then(
+                    (m) => m.IspRadiusServerPage,
+                  ),
+                title: 'System ISP Radius Server | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+            ],
+          },
+
+          // Pós invite
+          {
+            path: 'invite/sent',
+            loadComponent: () =>
+              import('./pages/tenants/invite/invite-sent/invite-sent').then(
+                (m) => m.InviteSentPage,
+              ),
+            title: 'Invitation Sent | mnscloud',
+          },
+        ],
+      },
+    ],
+  },
+
+  // =====================================================
+  // Fallback
+  // =====================================================
+  {
+    path: 'not-found',
+    loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFoundPage),
+    title: 'Not Found | mnscloud',
+  },
+  { path: '**', redirectTo: 'not-found' },
+];

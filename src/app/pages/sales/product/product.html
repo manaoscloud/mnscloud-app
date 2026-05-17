@@ -1,0 +1,454 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Product</h1>
+        <p>Manage products with pricing, attributes, and images.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="openCreateDialog()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline" class="barcode-field">
+        <mat-label>Search</mat-label>
+        <input matInput placeholder="Description" formControlName="search" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Unit</mat-label>
+        <mat-select formControlName="saleUnitUUID" (openedChange)="onFilterUnitOpened($event)">
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="filterUnitSearch"
+                (input)="filterUnitSearch = $any($event.target).value"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search unit"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          <mat-option value="">All</mat-option>
+          @for (item of filteredFilterUnits; track item.uuid) {
+            <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="saleCategoryUUID" (openedChange)="onFilterCategoryOpened($event)">
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="filterCategorySearch"
+                (input)="filterCategorySearch = $any($event.target).value"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search category"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          <mat-option value="">All</mat-option>
+          @for (item of filteredFilterCategories; track item.uuid) {
+            <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Brand</mat-label>
+        <mat-select formControlName="saleBrandUUID" (openedChange)="onFilterBrandOpened($event)">
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="filterBrandSearch"
+                (input)="filterBrandSearch = $any($event.target).value"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search brand"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          <mat-option value="">All</mat-option>
+          @for (item of filteredFilterBrands; track item.uuid) {
+            <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="type">
+          <mat-option value="">All</mat-option>
+          @for (item of productTypes(); track item.value) {
+            <mat-option [value]="item.value">{{ item.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">All</mat-option>
+          <mat-option [value]="1">Active</mat-option>
+          <mat-option [value]="0">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Barcode</mat-label>
+        <input matInput placeholder="Search by barcode" formControlName="barcode" />
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="applyFilters()" type="button">
+          Apply
+        </button>
+        <button mat-stroked-button (click)="clearFilters()" type="button">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="image">
+          <th mat-header-cell *matHeaderCellDef>Image</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="image-cell">
+              <img *ngIf="row.CoverUrl" [src]="row.CoverUrl" alt="product" />
+              <div *ngIf="!row.CoverUrl" class="image-placeholder">
+                <mat-icon>image</mat-icon>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.SprName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
+          <td mat-cell *matCellDef="let row">{{ row.SprDescription }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+          <td mat-cell *matCellDef="let row">{{ typeLabel(row.SprType) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+          <td mat-cell *matCellDef="let row">{{ row.SaleCategoryName || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="brand">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Brand</th>
+          <td mat-cell *matCellDef="let row">{{ row.SaleBrandName || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="unit">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit</th>
+          <td mat-cell *matCellDef="let row">{{ row.SaleUnitName || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+          <td mat-cell *matCellDef="let row">{{ row.SprPrice | number : '1.2-2' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <span class="status-pill" [class.is-active]="row.SprStatus === 1" [class.is-inactive]="row.SprStatus !== 1">
+              {{ statusLabel(row.SprStatus) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button (click)="openEditDialog(row)" type="button" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteProduct(row)" matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading products...' : 'No products found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of products"
+    ></mat-paginator>
+
+  </mat-card>
+</section>
+
+<ng-template #productFormDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit product' : 'New product' }}</h2>
+        <p>Register description, attributes, and pricing.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-section">
+              <form class="form-grid" [formGroup]="productForm" (ngSubmit)="saveProduct()">
+                <mat-form-field appearance="outline">
+                  <mat-label>Type</mat-label>
+                  <mat-select formControlName="type">
+                    @for (item of productTypes(); track item.value) {
+                      <mat-option [value]="item.value">{{ item.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="status">
+                    <mat-option [value]="1">Active</mat-option>
+                    <mat-option [value]="0">Inactive</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Name</mat-label>
+                  <input matInput placeholder="Product name" formControlName="name" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput rows="3" placeholder="Product description" formControlName="description"></textarea>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Unit</mat-label>
+                  <mat-select formControlName="saleUnitUUID" (openedChange)="onUnitOpened($event)">
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="unitSearch"
+                          (input)="unitSearch = $any($event.target).value"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search unit"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (item of filteredUnits; track item.uuid) {
+                      <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Category</mat-label>
+                  <mat-select formControlName="saleCategoryUUID" (openedChange)="onCategoryOpened($event)">
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="categorySearch"
+                          (input)="categorySearch = $any($event.target).value"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search category"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (item of filteredCategories; track item.uuid) {
+                      <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Brand</mat-label>
+                  <mat-select formControlName="saleBrandUUID" (openedChange)="onBrandOpened($event)">
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="brandSearch"
+                          (input)="brandSearch = $any($event.target).value"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search brand"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (item of filteredBrands; track item.uuid) {
+                      <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Tags (CSV)</mat-label>
+                  <input matInput placeholder="tag1, tag2" formControlName="tags" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Barcode</mat-label>
+                  <input matInput placeholder="Optional barcode" formControlName="barcode" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Price</mat-label>
+                  <input matInput type="text" appCurrencyMask formControlName="price" />
+                  @if (amountPrefix) {
+                    <span matTextPrefix>{{ amountPrefix }}</span>
+                  }
+                </mat-form-field>
+              </form>
+
+              <div class="image-section">
+                <div class="image-header">
+                  <h3>Images</h3>
+                  <div class="image-actions">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      [disabled]="!editing()"
+                      (change)="uploadImages($event)"
+                    />
+                  </div>
+                </div>
+
+                <div class="image-grid">
+                  @for (item of images(); track item.SpiUUID) {
+                    <div class="image-card">
+                      <img [src]="item.SpiUrl" alt="product image" />
+                      <div class="image-card-actions">
+                        <button mat-icon-button (click)="setCover(item)" [disabled]="item.SpiIsCover === 1" matTooltip="Set cover">
+                          <mat-icon>star</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="deleteImage(item)" matTooltip="Delete">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                      @if (item.SpiIsCover === 1) {
+                        <span class="cover-badge">Cover</span>
+                      }
+                    </div>
+                  }
+                  @if (!images().length) {
+                    <p class="empty-images">No images uploaded yet.</p>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveProduct()"
+        [disabled]="productForm.invalid || saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      @if (!editing()) {
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="saveAndNew()"
+          [disabled]="productForm.invalid || saving()"
+        >
+          Save and new
+        </button>
+      }
+      <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+      @if (error()) {
+        <span class="error">{{ error() }}</span>
+      }
+    </mat-dialog-actions>
+  </div>
+</ng-template>

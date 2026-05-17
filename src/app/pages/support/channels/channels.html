@@ -1,0 +1,256 @@
+<section class="erp-page">
+
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Chat Channels</h1>
+        <p>Connect official channels to power the customer support chat.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button (click)="refreshList()" [disabled]="loading" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search connections</mat-label>
+        <input matInput [ngModel]="searchInput" (ngModelChange)="onSearchChange($event)" />
+        @if (searchInput) {
+          <button mat-icon-button matSuffix (click)="onSearchChange('')" type="button">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="applySearchFilters()" [disabled]="loading" type="button">
+          Apply
+        </button>
+        <button mat-stroked-button (click)="clearSearchFilters()" [disabled]="loading || (!searchInput && !search)" type="button">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
+      @if (loading) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Provider </th>
+          <td mat-cell *matCellDef="let row"> {{ providerLabel(row.Provider) }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="displayName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Display name </th>
+          <td mat-cell *matCellDef="let row"> {{ row.DisplayName }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip class="status-pill" [class.is-active]="row.Status === 'connected'" [class.is-inactive]="row.Status !== 'connected'">
+              {{ row.Status || 'pending' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="lastSyncAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Last sync </th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.LastSyncAt ? (row.LastSyncAt | date:'short') : '-' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef> Actions </th>
+          <td mat-cell *matCellDef="let row">
+            <div class="actions-col">
+              <button mat-icon-button (click)="startEdit(row)" matTooltip="Edit channel" type="button">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteConnection(row)" matTooltip="Delete channel">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading ? 'Loading...' : 'No connections found for "' + (search || 'all') + '"' }}
+          </td>
+        </tr>
+      </table>
+
+      <mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons aria-label="Select page of channels"></mat-paginator>
+    </div>
+
+  </mat-card>
+
+</section>
+
+<ng-template #channelFormDialog>
+  <div class="customer-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing ? 'Edit connection' : 'New connection' }}</h2>
+        <p>Register official providers. You can add multiple accounts per provider.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Provider</mat-label>
+                <mat-select [(ngModel)]="form.provider" (selectionChange)="onProviderChange()">
+                  @for (item of providers; track item.id) {
+                    <mat-option [value]="item.id">{{ item.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="form.status">
+                  @for (item of statusOptions; track item) {
+                    <mat-option [value]="item">{{ item }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Display name</mat-label>
+                <input matInput [(ngModel)]="form.displayName" />
+              </mat-form-field>
+            </div>
+
+            <div class="provider-grid">
+              @if (form.provider === 'whatsapp-cloud') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Phone number ID</mat-label>
+                  <input matInput [(ngModel)]="form.config['phone_number_id']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Business account ID</mat-label>
+                  <input matInput [(ngModel)]="form.config['business_account_id']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Access token</mat-label>
+                  <input matInput [(ngModel)]="form.config['access_token']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Verify token</mat-label>
+                  <input matInput [(ngModel)]="form.config['verify_token']" />
+                </mat-form-field>
+              }
+
+              @if (form.provider === 'whatsapp-twilio') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Account SID</mat-label>
+                  <input matInput [(ngModel)]="form.config['account_sid']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Auth token</mat-label>
+                  <input matInput [(ngModel)]="form.config['auth_token']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>WhatsApp number</mat-label>
+                  <input matInput [(ngModel)]="form.config['whatsapp_number']" />
+                </mat-form-field>
+              }
+
+              @if (form.provider === 'messenger') {
+                <mat-form-field appearance="outline">
+                  <mat-label>App ID</mat-label>
+                  <input matInput [(ngModel)]="form.config['app_id']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>App secret</mat-label>
+                  <input matInput [(ngModel)]="form.config['app_secret']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Page ID</mat-label>
+                  <input matInput [(ngModel)]="form.config['page_id']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Access token</mat-label>
+                  <input matInput [(ngModel)]="form.config['access_token']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Verify token</mat-label>
+                  <input matInput [(ngModel)]="form.config['verify_token']" />
+                </mat-form-field>
+              }
+
+              @if (form.provider === 'instagram') {
+                <mat-form-field appearance="outline">
+                  <mat-label>App ID</mat-label>
+                  <input matInput [(ngModel)]="form.config['app_id']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>App secret</mat-label>
+                  <input matInput [(ngModel)]="form.config['app_secret']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Instagram user ID</mat-label>
+                  <input matInput [(ngModel)]="form.config['ig_user_id']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Access token</mat-label>
+                  <input matInput [(ngModel)]="form.config['access_token']" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Verify token</mat-label>
+                  <input matInput [(ngModel)]="form.config['verify_token']" />
+                </mat-form-field>
+              }
+
+              @if (form.provider === 'telegram') {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Bot token</mat-label>
+                  <input matInput [(ngModel)]="form.config['bot_token']" />
+                </mat-form-field>
+              }
+
+              @if (form.provider === 'webchat') {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Webchat URL</mat-label>
+                  <input matInput [(ngModel)]="form.config['webchat_url']" />
+                </mat-form-field>
+              }
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions" align="end">
+      <button mat-flat-button color="primary" (click)="saveConnection()" [disabled]="loading" type="button">Save</button>
+      @if (!editing) {
+        <button mat-stroked-button (click)="saveConnection(true)" [disabled]="loading" type="button">Save and new</button>
+      }
+      <button mat-stroked-button (click)="closeFormDialog()" type="button">Cancel</button>
+      @if (error) {
+        <span class="error">{{ error }}</span>
+      }
+    </mat-dialog-actions>
+  </div>
+</ng-template>

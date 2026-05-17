@@ -1,0 +1,211 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Payment Methods</h1>
+        <p>Manage the payment methods available for your financial workflows.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="openCreateDialog()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-4">
+        <mat-label>Search payment methods</mat-label>
+        <input
+          matInput
+          placeholder="Name, code, type..."
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearSearchFilters()" type="button">Clear</button>
+      </div>
+    </div>
+
+    <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading">
+      @if (loading) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.Name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="type-col">Type</th>
+          <td mat-cell *matCellDef="let row" class="type-col">{{ row.Type }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+          <td mat-cell *matCellDef="let row">{{ row.Code || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.Status === 1"
+              [class.is-inactive]="row.Status !== 1"
+            >
+              {{ row.Status === 1 ? 'active' : 'inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                (click)="openEditDialog(row)"
+                type="button"
+                matTooltip="Edit payment method"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="deletePaymentMethod(row.ErpFinPayMethodUUID)"
+                matTooltip="Delete payment method"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{
+              loading
+                ? 'Loading payment methods...'
+                : 'No payment methods found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of payment methods"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #paymentMethodFormDialog>
+  <div class="payment-method-dialog">
+    <div class="form-header">
+      <div>
+        <h2>{{ editingPaymentMethod ? 'Edit payment method' : 'New payment method' }}</h2>
+        <p>
+          {{
+            editingPaymentMethod
+              ? 'Update payment method details and save changes.'
+              : 'Add a new payment method for finance workflows.'
+          }}
+        </p>
+      </div>
+      @if (editingPaymentMethod) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="form.type">
+                  <mat-option value="card">Card</mat-option>
+                  <mat-option value="bank_transfer">Bank transfer</mat-option>
+                  <mat-option value="pix">PIX</mat-option>
+                  <mat-option value="cash">Cash</mat-option>
+                  <mat-option value="boleto">Boleto</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="form.status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="form.name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Code</mat-label>
+                <input matInput [(ngModel)]="form.code" />
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Notes">
+          <div class="tab-content notes-tab-content">
+            <mat-form-field appearance="outline" class="notes-field">
+              <mat-label>Notes</mat-label>
+              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="savePaymentMethod()"
+        [disabled]="saving"
+        type="button"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      @if (!editingPaymentMethod) {
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="saveAndNewPaymentMethod()"
+          [disabled]="saving"
+          type="button"
+        >
+          <mat-icon>post_add</mat-icon>
+          Save and new
+        </button>
+      }
+      <button mat-stroked-button (click)="cancelPaymentMethodForm()" type="button">Cancel</button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

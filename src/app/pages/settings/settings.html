@@ -1,0 +1,57 @@
+<section class="settings-wrapper">
+
+  <mat-card class="settings-card">
+
+    <h1 class="title mat-headline-small">Settings</h1>
+    <p class="subtitle mat-body-medium">Customize your mnscloud experience.</p>
+
+    <!-- APPEARANCE -->
+    <section class="section-block">
+      <h2 class="section-title">
+        <mat-icon>palette</mat-icon>
+        <span>Appearance</span>
+      </h2>
+
+      <p class="section-description">
+        Choose how mnscloud looks on this device.
+      </p>
+
+      <mat-radio-group class="theme-radio-group" [value]="theme()" (change)="setTheme($any($event.value))">
+
+        @for (option of themeOptions; track option) {
+          <mat-radio-button class="theme-radio" [value]="option.value">
+            <div class="theme-option">
+              <mat-icon class="theme-icon">{{ option.icon }}</mat-icon>
+              <div class="theme-text">
+                <div class="theme-label">{{ option.label }}</div>
+                <div class="theme-description">{{ option.description }}</div>
+              </div>
+            </div>
+          </mat-radio-button>
+        }
+
+      </mat-radio-group>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- PROFILE INFO -->
+    <section class="section-block">
+      <h2 class="section-title">
+        <mat-icon>person</mat-icon>
+        <span>Profile & Account</span>
+      </h2>
+
+      <p class="section-description">
+        Manage your personal information and security in the “My Profile” page.
+      </p>
+
+      <p class="hint-text">
+        To change your name, phone, or password, use the
+        <strong>My Profile</strong> option in the top-right menu.
+      </p>
+    </section>
+
+  </mat-card>
+
+</section>

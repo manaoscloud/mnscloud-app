@@ -1,0 +1,686 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Customers</h1>
+        <p>Manage customer records for shared partner workflows.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search customers</mat-label>
+        <input
+          matInput
+          placeholder="Name, email, document..."
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelectedCustomers()"
+            [disabled]="loading"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearSearchFilters()" type="button">Clear</button>
+      </div>
+    </div>
+
+    <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading">
+      @if (loading) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible customers"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleCustomerSelection(row, $event.checked)"
+              [attr.aria-label]="'Select ' + row.Name"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.Name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="type-col">Type</th>
+          <td mat-cell *matCellDef="let row" class="type-col">{{ row.Type }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="complex">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Complex</th>
+          <td mat-cell *matCellDef="let row">{{ complexLabel(row.ComplexUUID) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dueDay">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Due Day</th>
+          <td mat-cell *matCellDef="let row">{{ dueDayLabel(row.DueDayUUID) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="document">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Document</th>
+          <td mat-cell *matCellDef="let row">{{ row.Document || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="email-col">Email</th>
+          <td mat-cell *matCellDef="let row" class="email-col">{{ row.Email || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.Status === 1"
+              [class.is-inactive]="row.Status !== 1"
+            >
+              {{ row.Status === 1 ? 'active' : 'inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                (click)="startEdit(row)"
+                type="button"
+                matTooltip="Edit customer"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="deleteCustomer(row.CustomerUUID)"
+                matTooltip="Delete customer"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{
+              loading
+                ? 'Loading customers...'
+                : 'No customers found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of customers"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #customerFormDialog>
+  <div class="customer-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editingCustomer ? 'Edit customer' : 'New customer' }}</h2>
+        <p>
+          {{
+            editingCustomer
+              ? 'Update customer details and save changes.'
+              : 'Add a new customer to your partners list.'
+          }}
+        </p>
+      </div>
+      @if (editingCustomer) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content data-tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="form.type">
+                  <mat-option value="company">Company</mat-option>
+                  <mat-option value="person">Person</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="form.status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="form.name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Document</mat-label>
+                <input matInput [(ngModel)]="form.document" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Email</mat-label>
+                <input matInput [formControl]="emailControl" placeholder="name@example.com" />
+                <mat-icon matSuffix>mail</mat-icon>
+                @if (emailControl.invalid && (emailControl.dirty || emailControl.touched)) {
+                  <mat-error>{{ emailError() }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" floatLabel="always" class="span-2">
+                <mat-label>Phone</mat-label>
+                <app-phone-input
+                  [(ngModel)]="form.phone"
+                  placeholder="5511999999999"
+                ></app-phone-input>
+                <mat-icon matSuffix>phone</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Addresses">
+          <div class="tab-content addresses-tab-content">
+            <div class="form-subsection first-subsection">
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Main Complex</mat-label>
+                  <mat-select
+                    [(ngModel)]="form.complexUUID"
+                    (selectionChange)="onComplexChange($event.value)"
+                    (openedChange)="onComplexOpened($event)"
+                  >
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [(ngModel)]="complexSearch"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search complex"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    <mat-option value="">None</mat-option>
+                    @for (complex of filteredComplexes; track complex.ComplexUUID) {
+                      <mat-option [value]="complex.ComplexUUID">{{ complex.Name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Main Zip</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressMainZip"
+                    (ngModelChange)="onMainAddressChange()"
+                    (keyup.enter)="searchMainPostalCode()"
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    matTooltip="Search postal code"
+                    [disabled]="searchingMainPostalCode"
+                    (click)="searchMainPostalCode()"
+                  >
+                    <mat-icon>{{ searchingMainPostalCode ? 'hourglass_top' : 'search' }}</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Main Country</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressMainCountry"
+                    (ngModelChange)="onMainAddressChange()"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Main Street</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressMainStreet"
+                    (ngModelChange)="onMainAddressChange()"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Main Number</mat-label>
+                  <input
+                    #mainAddressNumberInput
+                    matInput
+                    [(ngModel)]="form.addressMainNumber"
+                    (ngModelChange)="onMainAddressChange()"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Main District</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressMainDistrict"
+                    (ngModelChange)="onMainAddressChange()"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Main City</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressMainCity"
+                    (ngModelChange)="onMainAddressChange()"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Main State</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressMainState"
+                    (ngModelChange)="onMainAddressChange()"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="form-subsection">
+              <div class="form-grid checkbox-grid">
+                <div class="subsection-checkbox span-4">
+                  <mat-checkbox
+                    [checked]="billingSameAsMain"
+                    (change)="toggleBillingSameAsMain($event.checked)"
+                  >
+                    Billing same as main
+                  </mat-checkbox>
+                </div>
+              </div>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Billing Zip</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressBillingZip"
+                    [disabled]="billingSameAsMain"
+                    (keyup.enter)="searchBillingPostalCode()"
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    matTooltip="Search postal code"
+                    [disabled]="billingSameAsMain || searchingBillingPostalCode"
+                    (click)="searchBillingPostalCode()"
+                  >
+                    <mat-icon>{{
+                      searchingBillingPostalCode ? 'hourglass_top' : 'search'
+                    }}</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Billing Country</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressBillingCountry"
+                    [disabled]="billingSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Billing Street</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressBillingStreet"
+                    [disabled]="billingSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Billing Number</mat-label>
+                  <input
+                    #billingAddressNumberInput
+                    matInput
+                    [(ngModel)]="form.addressBillingNumber"
+                    [disabled]="billingSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Billing District</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressBillingDistrict"
+                    [disabled]="billingSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Billing City</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressBillingCity"
+                    [disabled]="billingSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Billing State</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressBillingState"
+                    [disabled]="billingSameAsMain"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="form-subsection">
+              <div class="form-grid checkbox-grid">
+                <div class="subsection-checkbox span-4">
+                  <mat-checkbox
+                    [checked]="installSameAsMain"
+                    (change)="toggleInstallSameAsMain($event.checked)"
+                  >
+                    Installation same as main
+                  </mat-checkbox>
+                </div>
+              </div>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Installation Zip</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressInstallZip"
+                    [disabled]="installSameAsMain"
+                    (keyup.enter)="searchInstallPostalCode()"
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    matTooltip="Search postal code"
+                    [disabled]="installSameAsMain || searchingInstallPostalCode"
+                    (click)="searchInstallPostalCode()"
+                  >
+                    <mat-icon>{{
+                      searchingInstallPostalCode ? 'hourglass_top' : 'search'
+                    }}</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Installation Country</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressInstallCountry"
+                    [disabled]="installSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Installation Street</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressInstallStreet"
+                    [disabled]="installSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Installation Number</mat-label>
+                  <input
+                    #installAddressNumberInput
+                    matInput
+                    [(ngModel)]="form.addressInstallNumber"
+                    [disabled]="installSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Installation District</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressInstallDistrict"
+                    [disabled]="installSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Installation City</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressInstallCity"
+                    [disabled]="installSameAsMain"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Installation State</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="form.addressInstallState"
+                    [disabled]="installSameAsMain"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="form-subsection">
+              <div class="subsection-header">
+                <h3>Location</h3>
+              </div>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Latitude</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [(ngModel)]="form.lat"
+                    (ngModelChange)="onLatLngChange()"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Longitude</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [(ngModel)]="form.lng"
+                    (ngModelChange)="onLatLngChange()"
+                  />
+                </mat-form-field>
+
+                <div class="location-spacer" aria-hidden="true"></div>
+                <div class="location-actions span-1">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="copyCoordinates()"
+                    matTooltip="Copy coordinates"
+                    matTooltipTouchGestures="auto"
+                    aria-label="Copy coordinates"
+                    title="Copy coordinates"
+                  >
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="toggleMap()"
+                    [matTooltip]="mapVisible ? 'Hide map' : 'Select on map'"
+                    matTooltipTouchGestures="auto"
+                    [attr.aria-label]="mapVisible ? 'Hide map' : 'Select on map'"
+                    [attr.title]="mapVisible ? 'Hide map' : 'Select on map'"
+                  >
+                    <mat-icon>map</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              @if (mapVisible) {
+                <div class="map-wrapper">
+                  <div id="erp-customer-map" class="map-container"></div>
+                  <p class="map-hint">Click the map to set coordinates.</p>
+                </div>
+              }
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Financial">
+          <div class="tab-content financial-tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Due day rule</mat-label>
+                <mat-select [(ngModel)]="form.dueDayUUID" (openedChange)="onDueDayOpened($event)">
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [(ngModel)]="dueDaySearch"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search due day rule"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  <mat-option value="">None</mat-option>
+                  @for (item of filteredDueDays; track item.ErpFinInvDueDayUUID) {
+                    <mat-option [value]="item.ErpFinInvDueDayUUID">
+                      Due {{ item.DueDay }} / Bill {{ item.BillingDay }} ({{
+                        item.ClosedMonth ? 'closed' : 'open'
+                      }})
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Notes">
+          <div class="tab-content notes-tab-content">
+            <mat-form-field appearance="outline" class="notes-field">
+              <mat-label>Notes</mat-label>
+              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button (click)="cancelCustomerForm()" type="button">Cancel</button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editingCustomer">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="saveCustomer()"
+          [disabled]="saving"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editingCustomer) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="saving"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button mat-menu-item type="button" (click)="saveAndNewCustomer()" [disabled]="saving">
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

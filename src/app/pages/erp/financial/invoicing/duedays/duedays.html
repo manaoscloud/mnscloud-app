@@ -1,0 +1,193 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Due Days</h1>
+        <p>Configure due day, billing day and closed month rules.</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="openCreateDialog()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search rules</mat-label>
+        <input
+          matInput
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Name, due day, billing day, status"
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearSearchFilters()" type="button">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
+      @if (loading) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.Name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dueDay">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Due day</th>
+          <td mat-cell *matCellDef="let row">{{ row.DueDay }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="billingDay">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Billing day</th>
+          <td mat-cell *matCellDef="let row">{{ row.BillingDay }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="closedMonth">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Closed month</th>
+          <td mat-cell *matCellDef="let row">{{ closedMonthLabel(row.ClosedMonth) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-chip" [class]="statusClass(row.Status)">{{ row.Status }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="actions-col">
+              <button mat-icon-button matTooltip="Edit" (click)="openEditDialog(row)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                matTooltip="Delete"
+                (click)="deleteDueDay(row.ErpFinInvDueDayUUID)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" colspan="6">
+            {{
+              loading
+                ? 'Loading due day rules...'
+                : 'No rules found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of due days"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #dueDayFormDialog>
+  <div class="due-day-dialog">
+    <div class="form-header">
+      <div>
+        <h2>{{ editingDueDay ? 'Edit due day rule' : 'New due day rule' }}</h2>
+        <p>
+          {{
+            editingDueDay
+              ? 'Update the due day configuration and save changes.'
+              : 'Create a new due day configuration.'
+          }}
+        </p>
+      </div>
+      @if (editingDueDay) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input
+                  matInput
+                  [(ngModel)]="form.name"
+                  maxlength="120"
+                  placeholder="e.g. Monthly default"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Due day</mat-label>
+                <mat-select [(ngModel)]="form.dueDay">
+                  @for (day of daysOfMonth; track day) {
+                    <mat-option [value]="day">{{ day }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Billing day</mat-label>
+                <mat-select [(ngModel)]="form.billingDay">
+                  @for (day of daysOfMonth; track day) {
+                    <mat-option [value]="day">{{ day }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="form.status">
+                  @for (status of statusOptions; track status.value) {
+                    <mat-option [value]="status.value">{{ status.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <div class="checkbox-wrap">
+                <mat-checkbox [(ngModel)]="form.closedMonth">Closed month</mat-checkbox>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="saveDueDay()"
+        [disabled]="saving"
+        type="button"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      <button mat-stroked-button (click)="cancelDueDayForm()" type="button">Cancel</button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

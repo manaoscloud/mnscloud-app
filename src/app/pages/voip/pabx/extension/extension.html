@@ -1,0 +1,605 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ pageTitle() }}</h1>
+        <p>{{ pageSubtitle() }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search extensions</mat-label>
+        <input
+          matInput
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Username, caller ID, PABX, domain..."
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>PABX</mat-label>
+        <mat-select [value]="pabxFilter" (selectionChange)="onPabxFilterChange($event.value)">
+          <mat-option value="">All</mat-option>
+          @for (option of pabxOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusFilter" (selectionChange)="onStatusFilterChange($event.value)">
+          <mat-option value="">All</mat-option>
+          @for (option of statusOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelectedExtensions()"
+            [disabled]="deletingSelected()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible extensions"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleExtensionSelection(row, $event.checked)"
+              [attr.aria-label]="'Select ' + row.VpeUsername"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="username">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Username</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="copy-cell">
+              <span class="username-value">{{ row.VpeUsername }}</span>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="copyValue(row.VpeUsername, 'Username')"
+                matTooltip="Copy username"
+                aria-label="Copy username"
+              >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="password">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Password</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="copy-cell">
+              <span class="password-value">{{ row.VpePassword || '-' }}</span>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="copyValue(row.VpePassword, 'Password')"
+                matTooltip="Copy password"
+                aria-label="Copy password"
+              >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="pabx">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.PabxName || pabxLabel(row.VoipPabxAccountVpaUUID) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="domain">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="copy-cell">
+              <span>{{ domainLabel(row) }}</span>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="copyValue(domainLabel(row), 'Domain')"
+                matTooltip="Copy domain"
+                aria-label="Copy domain"
+              >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="engine">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Engine</th>
+          <td mat-cell *matCellDef="let row">{{ row.VpeEngine || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="recording">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Recording</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VpeRecordCalls !== 0"
+              [class.is-inactive]="row.VpeRecordCalls === 0"
+            >
+              {{ row.VpeRecordCalls !== 0 ? 'enabled' : 'disabled' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.VpeEnabled === 1"
+              [class.is-inactive]="row.VpeEnabled !== 1"
+            >
+              {{ row.VpeEnabled === 1 ? 'active' : 'inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                (click)="startEdit(row)"
+                type="button"
+                matTooltip="Edit extension"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeExtension(row)"
+                matTooltip="Delete extension"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{
+              loading()
+                ? 'Loading extensions...'
+                : 'No extensions found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[10, 20, 50]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #extensionFormDialog>
+  <div class="extension-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit extension' : 'New extension' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update extension configuration.'
+              : 'Create a new extension linked to a PABX account.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <form id="voipPabxExtensionForm" (ngSubmit)="saveExtension()" [formGroup]="form">
+        <mat-tab-group class="form-tabs">
+          <mat-tab label="Data">
+            <div class="tab-content">
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="enabled">
+                    @for (option of statusOptions; track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>PABX</mat-label>
+                  <mat-select
+                    formControlName="pabxUUID"
+                    (selectionChange)="onFormPabxChange($event.value)"
+                    (openedChange)="onFormPabxOpened($event)"
+                  >
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="pabxSearch()"
+                          (input)="pabxSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search PABX"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (option of filteredPabxOptions; track option.value) {
+                      <mat-option
+                        [value]="option.value"
+                        [disabled]="option.disabled"
+                        [matTooltip]="option.disabledReason || ''"
+                      >
+                        {{ option.label }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                @if (!editing()) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Create Mode</mat-label>
+                    <mat-select
+                      formControlName="createMode"
+                      (selectionChange)="onCreateModeChange($event.value)"
+                    >
+                      <mat-option value="single">Single</mat-option>
+                      <mat-option value="range">Range</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                }
+
+                @if (isSingleMode()) {
+                  <mat-form-field appearance="outline" class="start-new-row">
+                    <mat-label>Username</mat-label>
+                    <input matInput formControlName="username" placeholder="1010" />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Password</mat-label>
+                    <input
+                      matInput
+                      formControlName="password"
+                      type="text"
+                      placeholder="{{ editing() ? 'Current password' : 'Generated password' }}"
+                    />
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      (click)="regeneratePassword()"
+                      matTooltip="Generate random password"
+                    >
+                      <mat-icon>refresh</mat-icon>
+                    </button>
+                  </mat-form-field>
+                } @else {
+                  <mat-form-field appearance="outline" class="span-2 start-new-row">
+                    <mat-label>Extension Range</mat-label>
+                    <input matInput formControlName="extensionRange" placeholder="1000-1010" />
+                    <mat-hint>Creates all extensions in range (max 100).</mat-hint>
+                  </mat-form-field>
+                }
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Audio Codecs</mat-label>
+                  <mat-select
+                    formControlName="audioCodecs"
+                    multiple
+                    (openedChange)="onCodecOpened($event)"
+                  >
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="audioCodecSearch()"
+                          (input)="audioCodecSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search audio codec"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (codec of filteredAudioCodecOptions; track codec) {
+                      <mat-option [value]="codec">{{ codec }}</mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>If empty, account default audio codecs will be used.</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Video Codecs</mat-label>
+                  <mat-select
+                    formControlName="videoCodecs"
+                    multiple
+                    (openedChange)="onCodecOpened($event)"
+                  >
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="videoCodecSearch()"
+                          (input)="videoCodecSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search video codec"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (codec of filteredVideoCodecOptions; track codec) {
+                      <mat-option [value]="codec">{{ codec }}</mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>If empty, account default video codecs will be used.</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Context</mat-label>
+                  <input matInput formControlName="context" placeholder="default" />
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Inbound/Outbound">
+            <div class="tab-content">
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Caller ID Name</mat-label>
+                  <input matInput formControlName="callerIdName" placeholder="Agent Name" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Caller ID Number</mat-label>
+                  <input matInput formControlName="callerIdNumber" placeholder="5511999999999" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Outbound CID</mat-label>
+                  <input matInput formControlName="outboundCid" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Call Recording</mat-label>
+                  <mat-select formControlName="recordCalls">
+                    @for (option of recordingOptions; track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Voicemail">
+            <div class="tab-content">
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Voicemail</mat-label>
+                  <mat-select formControlName="vmEnabled">
+                    @for (option of vmOptions; track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Voicemail Password</mat-label>
+                  <input
+                    matInput
+                    formControlName="vmPassword"
+                    maxlength="6"
+                    inputmode="numeric"
+                    placeholder="6 digits"
+                  />
+                  @if (!editing()) {
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      (click)="regenerateVoicemailPassword()"
+                      matTooltip="Regenerate voicemail password"
+                    >
+                      <mat-icon>refresh</mat-icon>
+                    </button>
+                  }
+                  <mat-hint>6 digits only.</mat-hint>
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Advanced">
+            <div class="tab-content">
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="span-4">
+                  <mat-label>Params JSON (optional)</mat-label>
+                  <textarea
+                    matInput
+                    rows="4"
+                    formControlName="paramsJson"
+                    placeholder="{ }"
+                  ></textarea>
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+
+        @if (generatedCredentials().length) {
+          <div class="generated-credentials">
+            <h3>Generated Credentials</h3>
+            <p>Save these credentials now. They are shown here after bulk creation.</p>
+            <div class="credentials-grid">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>Voicemail Password</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    credential of generatedCredentials();
+                    track credential.username + credential.password + credential.vmPassword
+                  ) {
+                    <tr>
+                      <td>{{ credential.username }}</td>
+                      <td>{{ credential.password }}</td>
+                      <td>{{ credential.vmPassword || '-' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div
+        class="primary-actions save-split-action"
+        [class.is-single-action]="editing() || !isSingleMode()"
+      >
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          form="voipPabxExtensionForm"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing() && isSingleMode()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="form.invalid || saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNewExtension()"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelEdit()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

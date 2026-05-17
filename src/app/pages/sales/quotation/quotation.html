@@ -1,0 +1,410 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Quotation</h1>
+        <p>Prepare quotations with customer and line items.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="openCreateDialog()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput placeholder="Number or title" formControlName="search" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">All</mat-option>
+          <mat-option value="draft">Draft</mat-option>
+          <mat-option value="sent">Sent</mat-option>
+          <mat-option value="approved">Approved</mat-option>
+          <mat-option value="rejected">Rejected</mat-option>
+          <mat-option value="canceled">Canceled</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Customer</mat-label>
+        <mat-select formControlName="customerUUID" (openedChange)="onFilterCustomerOpened($event)">
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="filterCustomerSearch"
+                (input)="filterCustomerSearch = $any($event.target).value"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search customer"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          <mat-option value="">All</mat-option>
+          @for (item of filteredFilterCustomers; track item.uuid) {
+            <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="applyFilters()" type="button">
+          Apply
+        </button>
+        <button mat-stroked-button (click)="clearFilters()" type="button">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource">
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef>Number</th>
+          <td mat-cell *matCellDef="let row">{{ row.SqtNumber || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Title</th>
+          <td mat-cell *matCellDef="let row">{{ row.SqtTitle }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef>Customer</th>
+          <td mat-cell *matCellDef="let row">{{ customerLabel(row.CustomerCusUUID) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef>Total</th>
+          <td mat-cell *matCellDef="let row">{{ row.SqtTotal | number : '1.2-2' }} {{ row.SqtCurrency }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row">{{ statusLabel(row.SqtStatus) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="validUntil">
+          <th mat-header-cell *matHeaderCellDef>Valid Until</th>
+          <td mat-cell *matCellDef="let row">{{ row.SqtValidUntil || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="actions-col">
+              <button mat-icon-button (click)="openEditDialog(row)" type="button" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteQuotation(row)" matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading quotations...' : 'No quotations found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="dataSource.data.length"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 25, 50]"
+      showFirstLastButtons
+      aria-label="Select page of quotations"
+    ></mat-paginator>
+
+  </mat-card>
+</section>
+
+<ng-template #quotationFormDialog>
+  <div class="crud-dialog">
+    <div class="form-header">
+      <div>
+        <h2>{{ editing() ? 'Edit quotation' : 'New quotation' }}</h2>
+        <p>Fill out the quotation data before adding items.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-section">
+              <form class="form-grid" [formGroup]="quotationForm" (ngSubmit)="saveQuotation()">
+                <mat-form-field appearance="outline">
+                  <mat-label>Customer</mat-label>
+                  <mat-select formControlName="customerUUID" (openedChange)="onCustomerOpened($event)">
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="customerSearch"
+                          (input)="customerSearch = $any($event.target).value"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search customer"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (item of filteredCustomers; track item.uuid) {
+                      <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Number</mat-label>
+                  <input matInput placeholder="Optional identifier" formControlName="number" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Title</mat-label>
+                  <input matInput placeholder="Quotation title" formControlName="title" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput rows="3" placeholder="Optional description" formControlName="description"></textarea>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Currency</mat-label>
+                  <input matInput placeholder="USD" formControlName="currency" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="status">
+                    <mat-option value="draft">Draft</mat-option>
+                    <mat-option value="sent">Sent</mat-option>
+                    <mat-option value="approved">Approved</mat-option>
+                    <mat-option value="rejected">Rejected</mat-option>
+                    <mat-option value="canceled">Canceled</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Valid Until</mat-label>
+                  <input matInput [matDatepicker]="validUntilPicker" formControlName="validUntil" appDateMask />
+                  <mat-datepicker-toggle matSuffix [for]="validUntilPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #validUntilPicker touchUi></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Notes</mat-label>
+                  <textarea matInput rows="3" placeholder="Internal notes" formControlName="notes"></textarea>
+                </mat-form-field>
+              </form>
+
+              @if (editing()) {
+                <div class="items-section">
+                  <div class="items-header">
+                    <div>
+                      <h3>Quotation items</h3>
+                      <p>Add products and pricing details.</p>
+                    </div>
+                    <div class="summary-grid">
+                      <div>
+                        <span>Subtotal</span>
+                        <strong>{{ itemTotals().subtotal | number : '1.2-2' }}</strong>
+                      </div>
+                      <div>
+                        <span>Discount</span>
+                        <strong>{{ itemTotals().discount | number : '1.2-2' }}</strong>
+                      </div>
+                      <div>
+                        <span>Total</span>
+                        <strong>{{ itemTotals().total | number : '1.2-2' }}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <form class="items-grid" [formGroup]="itemForm" (ngSubmit)="saveItem()">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Product</mat-label>
+                      <mat-select
+                        formControlName="productUUID"
+                        (selectionChange)="syncUnitPrice($event.value)"
+                        (openedChange)="onProductOpened($event)"
+                      >
+                        <mat-option
+                          class="select-search-option"
+                          [value]="null"
+                          (click)="$event.stopPropagation()"
+                          (onSelectionChange)="$event.source.deselect()"
+                        >
+                          <mat-form-field appearance="outline" class="select-search-field">
+                            <input
+                              matInput
+                              [value]="productSearch"
+                              (input)="productSearch = $any($event.target).value"
+                              (click)="$event.stopPropagation()"
+                              (keydown)="$event.stopPropagation()"
+                              placeholder="Search product"
+                              autocomplete="off"
+                            />
+                          </mat-form-field>
+                        </mat-option>
+                        @for (item of filteredProducts; track item.uuid) {
+                          <mat-option [value]="item.uuid">{{ item.label }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Description</mat-label>
+                      <input matInput placeholder="Optional details" formControlName="description" />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Quantity</mat-label>
+                      <input matInput type="number" step="0.01" formControlName="quantity" />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Unit Price</mat-label>
+                      <input matInput type="text" appCurrencyMask formControlName="unitPrice" />
+                      @if (amountPrefix) {
+                        <span matTextPrefix>{{ amountPrefix }}</span>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Discount</mat-label>
+                      <input matInput type="text" appCurrencyMask formControlName="discount" />
+                      @if (amountPrefix) {
+                        <span matTextPrefix>{{ amountPrefix }}</span>
+                      }
+                    </mat-form-field>
+                  </form>
+
+                  <div class="items-actions">
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      (click)="saveItem()"
+                      [disabled]="itemForm.invalid || itemSaving()"
+                    >
+                      <mat-icon>{{ editingItem() ? 'save' : 'add' }}</mat-icon>
+                      {{ editingItem() ? 'Save item' : 'Add item' }}
+                    </button>
+                    @if (editingItem()) {
+                      <button mat-stroked-button type="button" (click)="cancelItemEdit()">Cancel</button>
+                    }
+                  </div>
+
+                  <div class="table-wrapper mat-elevation-z8">
+                    <table mat-table [dataSource]="items()">
+                      <ng-container matColumnDef="product">
+                        <th mat-header-cell *matHeaderCellDef>Product</th>
+                        <td mat-cell *matCellDef="let row">{{ productLabel(row.SaleProductSprUUID) }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="quantity">
+                        <th mat-header-cell *matHeaderCellDef>Qty</th>
+                        <td mat-cell *matCellDef="let row">{{ row.SqiQuantity | number : '1.2-2' }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="unitPrice">
+                        <th mat-header-cell *matHeaderCellDef>Unit Price</th>
+                        <td mat-cell *matCellDef="let row">{{ row.SqiUnitPrice | number : '1.2-2' }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="discount">
+                        <th mat-header-cell *matHeaderCellDef>Discount</th>
+                        <td mat-cell *matCellDef="let row">{{ row.SqiDiscount | number : '1.2-2' }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="total">
+                        <th mat-header-cell *matHeaderCellDef>Total</th>
+                        <td mat-cell *matCellDef="let row">{{ row.SqiTotal | number : '1.2-2' }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef>Actions</th>
+                        <td mat-cell *matCellDef="let row">
+                          <div class="actions-col">
+                            <button mat-icon-button (click)="startItemEdit(row)" matTooltip="Edit item">
+                              <mat-icon>edit</mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" (click)="deleteItem(row)" matTooltip="Delete item">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </div>
+                        </td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="itemColumns"></tr>
+                      <tr mat-row *matRowDef="let row; columns: itemColumns;"></tr>
+
+                      <tr class="mat-row" *matNoDataRow>
+                        <td class="mat-cell" [attr.colspan]="itemColumns.length">
+                          {{ itemSaving() ? 'Saving items...' : 'No items added.' }}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveQuotation()"
+        [disabled]="quotationForm.invalid || saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+      @if (error()) {
+        <span class="error">{{ error() }}</span>
+      }
+    </mat-dialog-actions>
+  </div>
+</ng-template>

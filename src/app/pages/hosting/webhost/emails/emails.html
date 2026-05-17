@@ -1,0 +1,496 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Webhost Emails</h1>
+        <p>Manage mailboxes created inside Webhost hosts.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput placeholder="Email, host, domain or provider" formControlName="search" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Provider</mat-label>
+        <mat-select formControlName="provider">
+          <mat-option value="">All</mat-option>
+          @for (provider of providerFilterOptions(); track provider.uuid) {
+            <mat-option [value]="provider.uuid">
+              {{ provider.name }} · {{ providerLabel(provider.platform) }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Host</mat-label>
+        <mat-select formControlName="hostUUID" (openedChange)="onHostOpened($event)">
+          <mat-option value="">All</mat-option>
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="hostSearch()"
+                (input)="hostSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search host"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          @for (host of filteredHosts(); track host.HwhUUID) {
+            <mat-option [value]="host.HwhUUID">
+              {{ hostLabel(host) }} · {{ host.ProviderName }} ·
+              {{ providerLabel(host.HwlProvider) }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">All</mat-option>
+          @for (opt of statusOptions; track opt.value) {
+            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Provision</mat-label>
+        <mat-select formControlName="provisionStatus">
+          <mat-option value="">All</mat-option>
+          @for (opt of provisionOptions; track opt.value) {
+            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount() > 0) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button mat-stroked-button color="warn" type="button" (click)="removeSelectedEmails()">
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applyFilters()">Apply</button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="pagedRows()" matSort (matSortChange)="onSort($event)">
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible Webhost emails"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleEmailSelection(row, $event.checked)"
+              [attr.aria-label]="'Select Webhost email ' + row.HweEmail"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+          <td mat-cell *matCellDef="let row">{{ row.HweEmail }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="host">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Host</th>
+          <td mat-cell *matCellDef="let row">{{ emailHostLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.ProviderName }} · {{ providerLabel(row.HwlProvider) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="quota">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Quota</th>
+          <td mat-cell *matCellDef="let row">{{ quotaLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.HweStatus === 'active'"
+              [class.is-inactive]="row.HweStatus !== 'active'"
+            >
+              {{ statusLabel(row.HweStatus) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="provision">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provision</th>
+          <td mat-cell *matCellDef="let row">{{ provisionLabel(row.HweProvisionStatus) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="lastSync">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Sync</th>
+          <td mat-cell *matCellDef="let row">{{ row.HweLastSyncAt || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openPasswordAction(row, 'provision')"
+                [disabled]="actionEmailUUID() === row.HweUUID"
+                matTooltip="Provision"
+              >
+                <mat-icon>cloud_upload</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openPasswordAction(row, 'reset-password')"
+                [disabled]="actionEmailUUID() === row.HweUUID"
+                matTooltip="Reset password"
+              >
+                <mat-icon>password</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="runAction(row, row.HweStatus === 'suspended' ? 'unsuspend' : 'suspend')"
+                [disabled]="actionEmailUUID() === row.HweUUID"
+                [matTooltip]="row.HweStatus === 'suspended' ? 'Unsuspend' : 'Suspend'"
+              >
+                <mat-icon>{{ row.HweStatus === 'suspended' ? 'play_arrow' : 'pause' }}</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="runAction(row, 'sync')"
+                [disabled]="actionEmailUUID() === row.HweUUID"
+                matTooltip="Sync"
+              >
+                <mat-icon>sync</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="deprovision(row)"
+                matTooltip="Deprovision"
+              >
+                <mat-icon>cloud_off</mat-icon>
+              </button>
+              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                (click)="remove(row)"
+                matTooltip="Delete"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading Webhost emails...' : 'No Webhost emails found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="rows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of Webhost emails"
+      (page)="onPage($event)"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #emailFormDialog>
+  <div class="hosting-webhost-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit Webhost email' : 'New Webhost email' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update mailbox ownership and provision state.'
+              : 'Create a mailbox inside a Webhost host.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="emailForm">
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  @for (opt of statusOptions; track opt.value) {
+                    <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Provision</mat-label>
+                <mat-select formControlName="provisionStatus">
+                  @for (opt of provisionOptions; track opt.value) {
+                    <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Active</mat-label>
+                <mat-select formControlName="isActive">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Host</mat-label>
+                <mat-select formControlName="hostUUID" (openedChange)="onHostOpened($event)">
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="hostSearch()"
+                        (input)="hostSearch.set($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search host"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (host of filteredHosts(); track host.HwhUUID) {
+                    <mat-option [value]="host.HwhUUID">
+                      {{ hostLabel(host) }} · {{ providerLabel(host.HwlProvider) }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Local Part</mat-label>
+                <input matInput formControlName="localPart" placeholder="admin" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Domain</mat-label>
+                <input matInput [value]="selectedHost()?.DomainName || ''" disabled />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Quota MB</mat-label>
+                <input matInput type="number" min="0" formControlName="quotaMb" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Provision">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="emailForm">
+              <mat-form-field appearance="outline">
+                <mat-label>Auto Provision</mat-label>
+                <mat-select formControlName="autoProvision">
+                  <mat-option [value]="1">Yes</mat-option>
+                  <mat-option [value]="0">No</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              @if (!editing()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Password</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    formControlName="password"
+                    autocomplete="new-password"
+                  />
+                </mat-form-field>
+              }
+            </form>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Notes">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="emailForm">
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>Notes</mat-label>
+                <textarea matInput rows="4" formControlName="notes"></textarea>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelForm()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="submit()"
+          [disabled]="saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #passwordDialog>
+  <div class="hosting-webhost-dialog password-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ passwordAction() === 'provision' ? 'Provision email' : 'Reset password' }}</h2>
+        <p>{{ passwordTarget()?.HweEmail }}</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <form class="form-grid" [formGroup]="passwordForm">
+        <mat-form-field appearance="outline" class="span-4">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" autocomplete="new-password" />
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          type="button"
+          (click)="closePasswordDialog()"
+        >
+          Cancel
+        </button>
+      </div>
+      <div class="primary-actions save-split-action is-single-action">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="submitPasswordAction()"
+          [disabled]="actionEmailUUID() === passwordTarget()?.HweUUID"
+        >
+          <mat-icon>key</mat-icon>
+          Apply
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

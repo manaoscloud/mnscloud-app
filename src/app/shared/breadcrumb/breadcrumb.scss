@@ -1,0 +1,106 @@
+/* ===========================================================================
+   BREADCRUMB — Compact 48px (ALINHADO COM HEADER/SEARCH/TOPBAR)
+=========================================================================== */
+
+.breadcrumb-wrapper {
+    height: 48px;
+    display: flex;
+    align-items: center;
+
+    padding: 0 1rem;
+
+    background: var(--mat-sys-color-surface-container-lowest);
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--mat-sys-color-on-surface-variant);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ícone inicial */
+.breadcrumb-icon {
+    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--mat-sys-color-primary);
+    position: relative;
+    top: -1px;
+}
+
+/* lista */
+.breadcrumb-list {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    padding: 0;
+    margin: 0;
+    list-style: none;
+
+    min-width: 0;
+}
+
+/* item */
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+/* links */
+.breadcrumb-item a {
+    color: var(--mat-sys-color-primary);
+    text-decoration: none;
+    font-weight: 600;
+
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* seta */
+.arrow {
+    font-size: 18px;
+    opacity: 0.55;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+    top: -1px;
+}
+
+/* último item */
+.current {
+    font-weight: 700;
+    color: var(--mat-sys-color-on-surface);
+
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 600px) {
+    .breadcrumb-wrapper {
+        height: 44px;
+        padding: 0 0.75rem;
+        font-size: 0.78rem;
+    }
+
+    .breadcrumb-icon {
+        display: none;
+    }
+
+    .arrow {
+        top: 0;
+    }
+}

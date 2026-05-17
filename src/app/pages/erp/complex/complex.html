@@ -1,0 +1,311 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Complexes</h1>
+        <p>Manage complexes, locations, and contacts.</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-4">
+        <mat-label>Search complexes</mat-label>
+        <input
+          matInput
+          [ngModel]="searchInput"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Name, alias, document, city"
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelectedComplexes()"
+            [disabled]="loading"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearSearchFilters()" type="button">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
+      @if (loading) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible complexes"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleComplexSelection(row, $event.checked)"
+              [attr.aria-label]="'Select ' + row.Name"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.Name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="document">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Document</th>
+          <td mat-cell *matCellDef="let row">{{ row.Document || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="cityState">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>City / State</th>
+          <td mat-cell *matCellDef="let row">{{ formatCityState(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.Status === 'active'"
+              [class.is-inactive]="row.Status !== 'active'"
+            >
+              {{ row.Status }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button matTooltip="Edit" (click)="startEdit(row)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Delete" (click)="deleteComplex(row.ComplexUUID)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{
+              loading
+                ? 'Loading complexes...'
+                : 'No complexes found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of complexes"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #complexFormDialog>
+  <div class="complex-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editingComplex ? 'Edit complex' : 'New complex' }}</h2>
+        <p>
+          {{ editingComplex ? 'Update complex details and save changes.' : 'Add a new complex.' }}
+        </p>
+      </div>
+      @if (editingComplex) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="form.name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Alias</mat-label>
+                <input matInput [(ngModel)]="form.alias" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="form.status">
+                  @for (status of statusOptions; track status.value) {
+                    <mat-option [value]="status.value">{{ status.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Document</mat-label>
+                <input matInput [(ngModel)]="form.document" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Email</mat-label>
+                <input matInput [formControl]="emailControl" placeholder="name@example.com" />
+                <mat-icon matSuffix>mail</mat-icon>
+                @if (emailControl.invalid && (emailControl.dirty || emailControl.touched)) {
+                  <mat-error>{{ emailError() }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Phone</mat-label>
+                <app-phone-input
+                  [(ngModel)]="form.phone"
+                  placeholder="5511999999999"
+                ></app-phone-input>
+                <mat-icon matSuffix>phone</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Addresses">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Zip</mat-label>
+                <input matInput [(ngModel)]="form.zip" (keyup.enter)="searchPostalCode()" />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  matTooltip="Search postal code"
+                  [disabled]="searchingPostalCode"
+                  (click)="searchPostalCode()"
+                >
+                  <mat-icon>{{ searchingPostalCode ? 'hourglass_top' : 'search' }}</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Country</mat-label>
+                <input matInput [(ngModel)]="form.country" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>City</mat-label>
+                <input matInput [(ngModel)]="form.city" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>State</mat-label>
+                <input matInput [(ngModel)]="form.state" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Street</mat-label>
+                <input matInput [(ngModel)]="form.street" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Number</mat-label>
+                <input #addressNumberInput matInput [(ngModel)]="form.number" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>District</mat-label>
+                <input matInput [(ngModel)]="form.district" />
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Notes">
+          <div class="tab-content notes-tab-content">
+            <mat-form-field appearance="outline" class="notes-field">
+              <mat-label>Notes</mat-label>
+              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button (click)="cancelComplexForm()" type="button">Cancel</button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editingComplex">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          (click)="saveComplex()"
+          [disabled]="saving"
+          type="button"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editingComplex) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            [matMenuTriggerFor]="complexSaveMenu"
+            [disabled]="saving"
+            type="button"
+            aria-label="More save actions"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #complexSaveMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button mat-menu-item (click)="saveAndNewComplex()" [disabled]="saving" type="button">
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

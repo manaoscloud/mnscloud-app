@@ -1,0 +1,129 @@
+/* =========================================================
+   SIGNIN — alinhado com Forgot Password / Signup
+========================================================= */
+
+.page-wrapper {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 1rem;
+
+  background: var(--mat-sys-color-surface);
+  color: var(--mat-sys-color-on-surface);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  border-radius: 1.25rem;
+
+  background: var(--mat-sys-color-surface-container-high);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
+}
+
+.language-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.language-select {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+@media (max-width: 520px) {
+  .language-select {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   FORM FIELDS
+========================================================= */
+
+mat-form-field {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Ícone de olho (suffix) — sem fundo, só ícone com respiro */
+
+.field-icon-btn {
+  padding: 0 6px !important;
+  margin-right: 2px;
+}
+
+.field-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =========================================================
+   FORGOT PASSWORD LINK
+========================================================= */
+
+.forgot-row {
+  margin: -0.25rem 0 0.75rem 0;
+  text-align: right;
+
+  a {
+    color: var(--mat-sys-color-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* =========================================================
+   SUBMIT BUTTON
+   → mesmo conceito do forgot-password: apenas layout
+========================================================= */
+
+.submit-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  /* cor e estado disabled ficam por conta do Material */
+}
+
+/* =========================================================
+   API ERROR
+========================================================= */
+
+.api-error {
+  margin: -0.25rem 0 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mat-sys-color-error);
+}
+
+/* =========================================================
+   BOTTOM LINK
+========================================================= */
+
+.link-row {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+
+  a {
+    color: var(--mat-sys-color-primary);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

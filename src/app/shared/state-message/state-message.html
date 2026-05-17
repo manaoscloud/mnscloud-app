@@ -1,0 +1,34 @@
+<div class="state-wrapper" [class.page]="layout === 'page'">
+
+  <div class="state-box" [class.error]="type === 'error'" [class.success]="type === 'success'">
+
+    <div class="state-icon">
+      <mat-icon>{{ icon }}</mat-icon>
+    </div>
+
+    <h2 class="state-title">
+      {{ title }}
+    </h2>
+
+    <p class="state-message">
+      {{ message }}
+    </p>
+
+    @if (primaryLabel || secondaryLabel) {
+      <div class="actions">
+        @if (primaryLabel) {
+          <button mat-flat-button color="primary" type="button" (click)="onPrimary()">
+            {{ primaryLabel }}
+          </button>
+        }
+        @if (secondaryLabel) {
+          <button mat-stroked-button color="primary" type="button" (click)="onSecondary()">
+            {{ secondaryLabel }}
+          </button>
+        }
+      </div>
+    }
+
+  </div>
+
+</div>

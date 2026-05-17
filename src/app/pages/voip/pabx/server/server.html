@@ -1,0 +1,422 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>PABX Servers</h1>
+        <p>Register PABX platform servers used by tenant domains and routing.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search servers</mat-label>
+        <input
+          matInput
+          placeholder="Name, hostname, IP"
+          [(ngModel)]="searchInput"
+          (keydown.enter)="applySearchFilters()"
+        />
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            [disabled]="loading()"
+            (click)="removeSelectedServers()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible PABX servers"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleServerSelection(row, $event.checked)"
+              [attr.aria-label]="'Select ' + row.VpsName"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.VpsName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="hostname">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Hostname</th>
+          <td mat-cell *matCellDef="let row">{{ row.VpsHostname || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="publicIPs">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Public IPs</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="ip-stack">
+              <span>{{ publicIPv4(row) || '-' }}</span>
+              @if (publicIPv6(row)) {
+                <span>{{ publicIPv6(row) }}</span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="privateIPs">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Private IPs</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="ip-stack">
+              <span>{{ privateIPv4(row) || '-' }}</span>
+              @if (privateIPv6(row)) {
+                <span>{{ privateIPv6(row) }}</span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="engine">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="engine-col">Engine</th>
+          <td mat-cell *matCellDef="let row" class="engine-col">
+            {{ engineLabel(row.VpsEngine) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="control">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Control</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="control-stack">
+              <span>{{ controlTarget(row) }}</span>
+              <mat-chip
+                class="control-secret-pill"
+                [class.is-set]="row.VpsControlSecretSet"
+                [class.is-missing]="!row.VpsControlSecretSet"
+              >
+                {{ controlSecretLabel(row) }}
+              </mat-chip>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="+row.VpsStatus === 1"
+              [class.is-inactive]="+row.VpsStatus !== 1"
+            >
+              {{ statusLabel(row) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="lastSeen">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="last-seen-col">Last Seen</th>
+          <td mat-cell *matCellDef="let row" class="last-seen-col">
+            {{ row.VpsLastSeenAt ? (row.VpsLastSeenAt | date: 'short') : '-' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">
+            Actions
+          </th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Validate remote control"
+                [disabled]="!canValidateControl(row) || isValidating(row)"
+                (click)="validateControl(row)"
+              >
+                @if (isValidating(row)) {
+                  <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+                } @else {
+                  <mat-icon>network_check</mat-icon>
+                }
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Edit server"
+                (click)="startEdit(row)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                matTooltip="Delete server"
+                (click)="remove(row)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading PABX servers...' : 'No PABX servers found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of PABX servers"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #formDialog>
+  <div class="voip-pabx-server-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit PABX server' : 'New PABX server' }}</h2>
+        <p>Configure the platform server identity used by PABX provisioning.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <form id="voipPabxServerForm" [formGroup]="form" (ngSubmit)="save()">
+        <mat-tab-group class="form-tabs" animationDuration="150ms">
+          <mat-tab label="Data">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Engine</mat-label>
+                <mat-select formControlName="engine">
+                  <mat-option value="freeswitch">FreeSWITCH</mat-option>
+                  <mat-option value="asterisk">Asterisk</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" autocomplete="off" />
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Network">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Hostname</mat-label>
+                <input matInput formControlName="hostname" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Public IPv4</mat-label>
+                <input matInput formControlName="publicIPv4" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Public IPv6</mat-label>
+                <input matInput formControlName="publicIPv6" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Private IPv4</mat-label>
+                <input matInput formControlName="privateIPv4" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Private IPv6</mat-label>
+                <input matInput formControlName="privateIPv6" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Base URL</mat-label>
+                <input matInput formControlName="baseUrl" autocomplete="off" />
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="API">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Node UUID</mat-label>
+                <input matInput formControlName="nodeUUID" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>API Token Hash</mat-label>
+                <input matInput formControlName="apiTokenHash" autocomplete="off" />
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Control">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Remote command executor</mat-label>
+                <mat-select formControlName="remoteCommandExecutor">
+                  <mat-option value="">Tenant default</mat-option>
+                  <mat-option value="agent">Agent</mat-option>
+                  <mat-option value="esl_ami">ESL/AMI</mat-option>
+                </mat-select>
+                <mat-hint>Empty uses tenant, then master. Master fallback is Agent.</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Control Host</mat-label>
+                <input matInput formControlName="controlHost" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Control Port</mat-label>
+                <input matInput type="number" formControlName="controlPort" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Control Username</mat-label>
+                <input matInput formControlName="controlUsername" autocomplete="off" />
+                <mat-hint>Asterisk AMI usa usuario. FreeSWITCH ESL pode ficar vazio.</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Control Secret</mat-label>
+                <input
+                  matInput
+                  type="password"
+                  formControlName="controlSecret"
+                  autocomplete="new-password"
+                />
+                <mat-hint>
+                  {{
+                    editing()?.VpsControlSecretSet
+                      ? 'Senha ja salva. Preencha somente para trocar.'
+                      : 'Nenhuma senha salva ainda.'
+                  }}
+                </mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Allowed IPs</mat-label>
+                <input matInput formControlName="controlAllowedIps" autocomplete="off" />
+                <mat-hint>Lista separada por virgula. Ex.: 168.0.230.247/32</mat-hint>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Notes">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>Notes</mat-label>
+                <textarea matInput rows="6" formControlName="notes"></textarea>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          form="voipPabxServerForm"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="form.invalid || saving()"
+            aria-label="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu #saveActionsMenu="matMenu">
+        <button
+          mat-menu-item
+          type="button"
+          (click)="save(true)"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          type="button"
+          (click)="closeDialog()"
+        >
+          Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

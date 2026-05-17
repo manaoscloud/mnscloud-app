@@ -1,0 +1,473 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ meta().title }}</h1>
+        <p>{{ meta().subtitle }}</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input
+          matInput
+          [value]="searchInput"
+          placeholder="Search records"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        @if (selectedCount) {
+          <span class="selection-count">{{ selectedCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeSelected()"
+            [disabled]="deletingSelected()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible records"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleSelection(row, $event.checked)"
+              [attr.aria-label]="'Select ' + row.name"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="account">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
+          <td mat-cell *matCellDef="let row">{{ row.pabxName || '-' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="primary">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ meta().primary }}</th>
+          <td mat-cell *matCellDef="let row">{{ primaryValue(row) || '-' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="secondary">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ meta().secondary }}</th>
+          <td mat-cell *matCellDef="let row">{{ secondaryValue(row) || '-' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="isActive(row)"
+              [class.is-inactive]="!isActive(row)"
+            >
+              {{ statusLabel(row) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">
+            Actions
+          </th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Edit record"
+                (click)="editItem(row)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                matTooltip="Delete record"
+                (click)="removeItem(row)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading records...' : 'No records registered yet.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #resourceFormDialog>
+  <div class="pabx-trunk-route-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit Record' : 'New Record' }}</h2>
+        <p>{{ meta().subtitle }}</p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form id="PABXResourceForm" class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>PABX</mat-label>
+                <mat-select
+                  formControlName="pabxUUID"
+                  (selectionChange)="onPabxChange()"
+                  (openedChange)="clearAccountSearch($event)"
+                >
+                  <mat-option class="select-search-option">
+                    <input
+                      matInput
+                      class="select-search-field"
+                      placeholder="Search PABX"
+                      [value]="accountSearch"
+                      (input)="setAccountSearch($any($event.target).value)"
+                      (click)="$event.stopPropagation()"
+                    />
+                  </mat-option>
+                  <mat-option *ngFor="let option of filteredAccounts()" [value]="option.VpaUUID">
+                    {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              @if (usesTrunk()) {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Trunk{{ meta().trunkMode === 'required' ? ' *' : '' }}</mat-label>
+                  <mat-select formControlName="trunkUUID" (openedChange)="clearTrunkSearch($event)">
+                    <mat-option class="select-search-option">
+                      <input
+                        matInput
+                        class="select-search-field"
+                        placeholder="Search trunk"
+                        [value]="trunkSearch"
+                        (input)="setTrunkSearch($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
+                    <mat-option value="">None</mat-option>
+                    <mat-option *ngFor="let option of filteredTrunks()" [value]="option.uuid">
+                      {{ option.name }} - {{ option['host'] || option['direction'] || 'No host' }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              }
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+              @if (!isInboundRouteResource()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ meta().primary }}</mat-label>
+                  <input matInput formControlName="primary" />
+                </mat-form-field>
+              }
+              @if (isTrunkResource()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Direction</mat-label>
+                  <mat-select formControlName="secondary">
+                    <mat-option *ngFor="let option of directionOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Auth Mode</mat-label>
+                  <mat-select formControlName="authMode">
+                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Transport</mat-label>
+                  <mat-select formControlName="transport">
+                    <mat-option *ngFor="let option of transportOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Port</mat-label>
+                  <input matInput type="number" min="1" max="65535" formControlName="port" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Username</mat-label>
+                  <input matInput formControlName="username" autocomplete="off" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Password</mat-label>
+                  <input
+                    matInput
+                    [type]="passwordVisible ? 'text' : 'password'"
+                    formControlName="password"
+                    autocomplete="new-password"
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    [attr.aria-label]="passwordVisible ? 'Hide password' : 'Show password'"
+                    [matTooltip]="passwordVisible ? 'Hide password' : 'Show password'"
+                    (click)="passwordVisible = !passwordVisible"
+                  >
+                    <mat-icon>{{ passwordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Realm</mat-label>
+                  <input matInput formControlName="realm" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>From Domain</mat-label>
+                  <input matInput formControlName="fromDomain" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>From User</mat-label>
+                  <input matInput formControlName="fromUser" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Allowed CIDRs</mat-label>
+                  <input matInput formControlName="allowedCidrs" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Priority</mat-label>
+                  <input matInput type="number" min="1" formControlName="priority" />
+                </mat-form-field>
+                <div class="toggle-row">
+                  <mat-slide-toggle formControlName="registerEnabled">Register</mat-slide-toggle>
+                </div>
+              } @else if (isInboundRouteResource()) {
+                <mat-form-field appearance="outline" class="start-new-row">
+                  <mat-label>Registered DID</mat-label>
+                  <mat-select
+                    formControlName="didUUID"
+                    (selectionChange)="onDidChange($event.value)"
+                    (openedChange)="clearDidSearch($event)"
+                  >
+                    <mat-option class="select-search-option">
+                      <input
+                        matInput
+                        class="select-search-field"
+                        placeholder="Search DID"
+                        [value]="didSearch"
+                        (input)="setDidSearch($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
+                    <mat-option *ngFor="let option of filteredDids()" [value]="option.VddUUID">
+                      {{ option.VddNumber }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ meta().primary }}</mat-label>
+                  <input matInput formControlName="primary" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Route Type</mat-label>
+                  <mat-select formControlName="secondary" (selectionChange)="onRouteTypeChange()">
+                    <mat-option value="extension">extension</mat-option>
+                    <mat-option value="external">external</mat-option>
+                    <mat-option value="group">group</mat-option>
+                    <mat-option value="queue">queue</mat-option>
+                    <mat-option value="ivr">ivr</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Destination</mat-label>
+                  <mat-select
+                    formControlName="routeTargetUUID"
+                    (openedChange)="clearTargetSearch($event)"
+                  >
+                    <mat-option class="select-search-option">
+                      <input
+                        matInput
+                        class="select-search-field"
+                        placeholder="Search destination"
+                        [value]="targetSearch"
+                        (input)="setTargetSearch($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
+                    <mat-option *ngFor="let option of filteredTargets()" [value]="option.uuid">
+                      {{ option.name }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              } @else if (isOutboundRouteResource()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ meta().secondary }}</mat-label>
+                  <input matInput formControlName="secondary" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Strip digits</mat-label>
+                  <input matInput type="number" min="0" formControlName="stripDigits" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Priority</mat-label>
+                  <input matInput type="number" min="1" formControlName="priority" />
+                </mat-form-field>
+              }
+              @if (isTrunkResource()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Audio Codecs</mat-label>
+                  <mat-select
+                    formControlName="audioCodecs"
+                    multiple
+                    (openedChange)="clearCodecSearch($event)"
+                  >
+                    <mat-option class="select-search-option">
+                      <input
+                        matInput
+                        class="select-search-field"
+                        placeholder="Search audio codec"
+                        [value]="audioCodecSearch"
+                        (input)="setAudioCodecSearch($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
+                    <mat-option *ngFor="let codec of filteredAudioCodecs()" [value]="codec">
+                      {{ codec }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Video Codecs</mat-label>
+                  <mat-select
+                    formControlName="videoCodecs"
+                    multiple
+                    (openedChange)="clearCodecSearch($event)"
+                  >
+                    <mat-option class="select-search-option">
+                      <input
+                        matInput
+                        class="select-search-field"
+                        placeholder="Search video codec"
+                        [value]="videoCodecSearch"
+                        (input)="setVideoCodecSearch($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
+                    <mat-option *ngFor="let codec of filteredVideoCodecs()" [value]="codec">
+                      {{ codec }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              }
+              <div class="toggle-row">
+                <mat-slide-toggle formControlName="status">Active</mat-slide-toggle>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+    <mat-dialog-actions class="form-actions">
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          form="PABXResourceForm"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="resourceSaveMenu"
+            [disabled]="form.invalid || saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+      <mat-menu
+        #resourceSaveMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNew()"
+          [disabled]="form.invalid || saving()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          type="button"
+          (click)="cancelEdit()"
+        >
+          Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

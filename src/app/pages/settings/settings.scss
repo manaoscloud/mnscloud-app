@@ -1,0 +1,140 @@
+/* =========================================================
+   SETTINGS — Material 3 (Padrão Global)
+========================================================= */
+
+.settings-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    min-height: 100vh;
+
+    background: var(--mat-sys-color-surface);
+}
+
+/* CARD PRINCIPAL */
+
+.settings-card {
+    width: 100%;
+    max-width: 720px;
+
+    padding: 2rem 2.5rem;
+    border-radius: 1.25rem;
+
+    background: var(--mat-sys-color-surface-container-high);
+    border: 1px solid var(--mat-sys-color-outline-variant);
+
+    box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
+}
+
+/* TÍTULOS */
+
+.title {
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+    color: var(--mat-sys-color-on-surface);
+}
+
+.subtitle {
+    margin-bottom: 2rem;
+    color: var(--mat-sys-color-on-surface-variant);
+}
+
+/* BLOCOS / SEÇÕES */
+
+.section-block {
+    margin: 2rem 0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+
+    mat-icon {
+        font-size: 24px !important;
+        width: 32px;
+        height: 32px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        color: var(--mat-sys-color-primary);
+    }
+}
+
+.section-description {
+    font-size: 0.9rem;
+    margin: 0.35rem 0 1rem;
+    color: var(--mat-sys-color-on-surface-variant);
+}
+
+/* RADIO GROUP – tema / opções */
+
+.theme-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.theme-radio {
+    width: 100%;
+    padding: 0.25rem 0.5rem;
+}
+
+.theme-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.theme-icon {
+    font-size: 24px !important;
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--mat-sys-color-primary);
+}
+
+.theme-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.theme-label {
+    font-weight: 600;
+}
+
+.theme-description {
+    font-size: 0.85rem;
+    color: var(--mat-sys-color-on-surface-variant);
+}
+
+/* HINT TEXT */
+
+.hint-text {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--mat-sys-color-on-surface-variant);
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+    .settings-card {
+        padding: 1.5rem 1.75rem;
+    }
+
+    .section-block {
+        margin: 1.5rem 0;
+    }
+
+    .theme-option {
+        gap: 0.65rem;
+    }
+}

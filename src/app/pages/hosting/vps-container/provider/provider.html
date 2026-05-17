@@ -1,0 +1,389 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>VPS Container Provider</h1>
+        <p>Configure Incus providers for VPS Container provisioning.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput placeholder="Name, provider, project or API URL" formControlName="search" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">All</mat-option>
+          <mat-option value="1">Active</mat-option>
+          <mat-option value="0">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount() > 0) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button mat-stroked-button color="warn" type="button" (click)="removeSelectedProviders()">
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applyFilters()">Apply</button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="pagedRows()" matSort (matSortChange)="onSort($event)">
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible providers"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleProviderSelection(row, $event.checked)"
+              [attr.aria-label]="'Select provider ' + row.HcpName"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.HcpName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <td mat-cell *matCellDef="let row">{{ providerLabel(row.HcpProvider) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="region">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Project / API</th>
+          <td mat-cell *matCellDef="let row">
+            {{ providerConfigValue(row, 'project') || providerConfigValue(row, 'apiUrl') || '-' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="default">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="providerIsDefault(row)"
+              [class.is-inactive]="!providerIsDefault(row)"
+            >
+              {{ providerIsDefault(row) ? 'Yes' : 'No' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.HcpIsActive === 1"
+              [class.is-inactive]="row.HcpIsActive !== 1"
+            >
+              {{ statusLabel(row) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                (click)="validateProvider(row)"
+                [disabled]="validatingProviderId() === row.HcpUUID"
+                matTooltip="Test provider"
+              >
+                @if (validatingProviderId() === row.HcpUUID) {
+                  <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+                } @else {
+                  <mat-icon>science</mat-icon>
+                }
+              </button>
+              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                (click)="remove(row)"
+                matTooltip="Delete"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading providers...' : 'No providers found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="rows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of VPS Container providers"
+      (page)="onPage($event)"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #providerFormDialog>
+  <div class="hosting-vps-container-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit provider' : 'New provider' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update VPS Container provider metadata and credentials.'
+              : 'Configure credentials for VPS Container provisioning.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="providerForm">
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="isActive">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Default</mat-label>
+                <mat-select formControlName="isDefault">
+                  <mat-option [value]="1">Yes</mat-option>
+                  <mat-option [value]="0">No</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Provider</mat-label>
+                <mat-select formControlName="provider">
+                  @for (opt of providerOptions; track opt.value) {
+                    <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="Primary provider" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="API">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="providerForm">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Incus API URL</mat-label>
+                <input
+                  matInput
+                  formControlName="apiUrl"
+                  placeholder="https://incus.example.com:8443"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Project</mat-label>
+                <input matInput formControlName="project" placeholder="default" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Target node</mat-label>
+                <input matInput formControlName="target" placeholder="node-01" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Storage pool</mat-label>
+                <input matInput formControlName="storagePool" placeholder="default" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Network</mat-label>
+                <input matInput formControlName="network" placeholder="incusbr0" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Profile</mat-label>
+                <input matInput formControlName="profile" placeholder="default" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Image server</mat-label>
+                <input
+                  matInput
+                  formControlName="remote"
+                  placeholder="https://images.linuxcontainers.org"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Default image alias</mat-label>
+                <input matInput formControlName="imageAlias" placeholder="debian/12" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Bearer token</mat-label>
+                <input
+                  matInput
+                  [type]="hideBearerToken() ? 'password' : 'text'"
+                  formControlName="bearerToken"
+                  placeholder="optional token"
+                />
+                <button
+                  type="button"
+                  mat-icon-button
+                  matSuffix
+                  (click)="toggleSecret($event)"
+                  [attr.aria-label]="hideBearerToken() ? 'Show bearer token' : 'Hide bearer token'"
+                >
+                  <mat-icon>{{ hideBearerToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Client certificate</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  formControlName="clientCertificate"
+                  placeholder="-----BEGIN CERTIFICATE-----"
+                ></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Client private key</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  formControlName="clientPrivateKey"
+                  placeholder="-----BEGIN PRIVATE KEY-----"
+                ></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Server certificate</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  formControlName="serverCertificate"
+                  placeholder="Optional trusted server certificate"
+                ></textarea>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelForm()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="submit()"
+          [disabled]="saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

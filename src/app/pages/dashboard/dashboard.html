@@ -1,0 +1,36 @@
+<section class="dashboard-container" @fadeIn>
+
+    <header class="header-block">
+        <h1 class="title mat-headline-medium">Dashboard</h1>
+        <p class="subtitle mat-body-large">
+            Welcome back, {{ firstName }} 👋
+        </p>
+    </header>
+
+    <!-- SUMMARY CARDS -->
+    <div class="cards">
+        <mat-card class="card elevation-md">
+            <h3 class="card-title">User</h3>
+            <p class="card-value">{{ user()?.firstName }} {{ user()?.lastName }}</p>
+        </mat-card>
+
+        <mat-card class="card elevation-md">
+            <h3 class="card-title">Email</h3>
+            <p class="card-value">{{ user()?.email }}</p>
+        </mat-card>
+
+        <mat-card class="card elevation-md">
+            <h3 class="card-title">Status</h3>
+            <p class="card-value success">Online ✔️</p>
+        </mat-card>
+    </div>
+
+    <!-- WELCOME BOX -->
+    <mat-card class="welcome-box elevation-lg">
+        <h2 class="welcome-title mat-headline-small">Welcome to mnscloud 🎉</h2>
+        <p class="welcome-text mat-body-medium">
+            Your multi-tenant cloud environment is ready.
+        </p>
+    </mat-card>
+
+</section>

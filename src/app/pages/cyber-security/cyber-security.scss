@@ -1,0 +1,464 @@
+.cyber-page {
+  display: block;
+  padding: 24px;
+}
+
+.cyber-shell-header,
+.section-toolbar,
+.filter-actions,
+.header-actions,
+.button-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cyber-shell-header {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: #42d7d7;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.cyber-shell-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.cyber-shell-header p {
+  margin: 6px 0 0;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+}
+
+.posture-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.posture-card {
+  min-height: 116px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mat-sys-surface) 92%, #42d7d7 8%);
+}
+
+.posture-card span,
+.posture-card small {
+  display: block;
+  color: color-mix(in srgb, currentColor 68%, transparent);
+  font-size: 12px;
+}
+
+.posture-card strong {
+  display: block;
+  margin: 10px 0 8px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.posture-card.primary {
+  border-color: color-mix(in srgb, #42d7d7 44%, transparent);
+}
+
+.posture-card.warning {
+  border-color: color-mix(in srgb, #ffca5d 48%, transparent);
+}
+
+.posture-card.danger {
+  border-color: color-mix(in srgb, #ff5d6c 52%, transparent);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 14px;
+}
+
+.summary-panel,
+.activity-panel {
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 8px;
+  background: var(--mat-sys-surface);
+}
+
+.summary-panel {
+  padding: 18px;
+}
+
+.summary-panel h2,
+.section-toolbar h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.posture-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.posture-line:last-child {
+  border-bottom: 0;
+}
+
+.posture-line span,
+.section-toolbar span {
+  color: color-mix(in srgb, currentColor 68%, transparent);
+  font-size: 13px;
+}
+
+.action-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.action-list a {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.action-list a:hover {
+  border-color: color-mix(in srgb, #42d7d7 46%, transparent);
+  color: #42d7d7;
+}
+
+.activity-panel {
+  overflow: hidden;
+}
+
+.section-toolbar {
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.table-wrapper {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+}
+
+th,
+td {
+  white-space: nowrap;
+}
+
+.mat-column-logs {
+  width: 34%;
+}
+
+.mat-column-ports {
+  width: 24%;
+}
+
+.mat-column-collections {
+  width: 16%;
+}
+
+.mat-column-job {
+  width: 30%;
+}
+
+.service-logs-cell,
+.service-ports-cell,
+.service-collections-cell,
+.server-job-cell {
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.server-job-cell {
+  max-width: 460px;
+}
+
+.job-command {
+  display: block;
+  white-space: normal;
+}
+
+.service-logs-cell {
+  max-width: 520px;
+}
+
+.service-ports-cell {
+  max-width: 320px;
+}
+
+.service-collections-cell {
+  max-width: 240px;
+}
+
+td small {
+  display: block;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+.job-message {
+  color: #ffca5d;
+  white-space: normal;
+}
+
+.table-select {
+  width: 220px;
+  margin: 4px 0;
+}
+
+.table-select :is(.mat-mdc-form-field-subscript-wrapper) {
+  display: none;
+}
+
+.select-search-option {
+  height: auto;
+  padding: 6px 10px;
+}
+
+.select-search-field {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  padding: 8px 10px;
+}
+
+.actions-cell {
+  width: 232px;
+  min-width: 232px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table-actions {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+.table-actions .action-tooltip {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.table-actions button {
+  flex: 0 0 auto;
+}
+
+.status-chip {
+  display: inline-flex;
+  min-width: 84px;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.chip-protected,
+.chip-running,
+.chip-active {
+  color: #42d7d7;
+  border-color: color-mix(in srgb, #42d7d7 60%, transparent);
+}
+
+.chip-error,
+.chip-critical,
+.chip-failed {
+  color: #ff5d6c;
+  border-color: color-mix(in srgb, #ff5d6c 60%, transparent);
+}
+
+.chip-partial,
+.chip-warning,
+.chip-pending {
+  color: #ffca5d;
+  border-color: color-mix(in srgb, #ffca5d 60%, transparent);
+}
+
+.cyber-dialog {
+  padding: 22px;
+}
+
+.cyber-dialog h2 {
+  margin: 0 0 16px;
+}
+
+.job-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 16px;
+}
+
+.job-context span,
+.job-card small,
+.job-meta,
+.job-detail-message {
+  color: color-mix(in srgb, currentColor 66%, transparent);
+}
+
+.job-list {
+  display: grid;
+  gap: 12px;
+  min-width: min(920px, 84vw);
+}
+
+.job-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 8px;
+}
+
+.job-card.failed {
+  border-color: #ff5d6c;
+}
+
+.job-card header,
+.job-meta,
+.job-event {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.job-card header {
+  justify-content: space-between;
+}
+
+.job-meta {
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.job-detail-message {
+  margin: 0;
+}
+
+.job-error-code,
+.job-event code {
+  margin: 0;
+  color: #ff5d6c;
+  font-size: 12px;
+}
+
+.job-timeline {
+  display: grid;
+  gap: 8px;
+}
+
+.job-event {
+  align-items: flex-start;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.job-event > span {
+  min-width: 44px;
+  color: #42d7d7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.job-event.failed > span {
+  color: #ff5d6c;
+}
+
+.job-event strong,
+.job-event small,
+.job-event code {
+  display: block;
+}
+
+.empty-state {
+  padding: 28px;
+  text-align: center;
+}
+
+.dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 12px;
+  min-width: min(760px, 82vw);
+}
+
+.dialog-grid .full {
+  grid-column: 1 / -1;
+}
+
+textarea {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+@media (max-width: 1200px) {
+  .posture-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .cyber-page {
+    padding: 12px;
+  }
+
+  .cyber-shell-header,
+  .filter-actions,
+  .header-actions,
+  .section-toolbar,
+  .button-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .posture-grid,
+  .filter-grid,
+  .dashboard-layout,
+  .dialog-grid {
+    grid-template-columns: 1fr;
+  }
+}

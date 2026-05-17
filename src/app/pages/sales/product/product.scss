@@ -1,0 +1,448 @@
+.erp-page {
+  padding: 1.75rem;
+}
+
+.erp-card {
+  padding: 1.5rem 1.75rem;
+  background: var(--mat-sys-color-surface-container-high);
+  border-radius: 1rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+}
+
+.erp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+
+  button mat-icon {
+    margin-right: 0.25rem;
+  }
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+  align-self: center;
+  padding-right: 0.25rem;
+}
+
+.filter-actions button {
+  height: 40px;
+  line-height: 40px;
+  min-width: 96px;
+  white-space: nowrap;
+}
+
+.table-wrapper {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--mat-sys-color-surface-container);
+  position: relative;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+
+  .mat-mdc-header-row {
+    background: var(--mat-sys-color-surface-container-high);
+  }
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.3rem;
+  }
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+    background-clip: padding-box;
+  }
+
+  .mat-mdc-row:hover {
+    background: var(--mat-sys-color-surface-container-low);
+  }
+}
+
+.table-wrapper.is-loading {
+  min-height: 240px;
+}
+
+mat-paginator {
+  margin-top: 0.75rem;
+}
+
+.table-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container) 70%, transparent);
+  backdrop-filter: blur(2px);
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.table-wrapper.is-loading .table-loading {
+  opacity: 1;
+}
+
+.image-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--mat-sys-color-surface-container-high);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.form-section {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--mat-sys-color-outline-variant);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    font-size: 0.9rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.form-grid .span-2 {
+  grid-column: span 2;
+}
+
+.form-grid .span-3 {
+  grid-column: span 3;
+}
+
+.form-grid .span-4 {
+  grid-column: span 4;
+}
+
+.image-section {
+  margin: 1.25rem 0 0.75rem;
+}
+
+.image-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.image-card {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  background: var(--mat-sys-color-surface-container-high);
+
+  img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.image-card-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0.5rem 0.5rem;
+}
+
+.cover-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: var(--mat-sys-color-primary);
+  color: var(--mat-sys-color-on-primary);
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+
+.empty-images {
+  margin: 0.5rem 0;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.85rem;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .error {
+    color: var(--mat-sys-color-error);
+    font-size: 0.9rem;
+  }
+}
+
+.actions-col {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  min-width: 140px;
+  align-items: center;
+}
+
+.actions-col-cell {
+  min-width: 140px;
+  width: 140px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.status-col {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.status-pill {
+  height: 26px;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.6rem;
+  border: 1px solid var(--mat-sys-color-outline);
+  background: transparent;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.status-pill.is-active {
+  color: var(--mat-sys-color-primary);
+  border-color: color-mix(in srgb, var(--mat-sys-color-primary) 55%, var(--mat-sys-color-outline));
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 14%, transparent);
+}
+
+.status-pill.is-inactive {
+  color: var(--mat-sys-color-on-surface-variant);
+  border-color: var(--mat-sys-color-outline);
+  background: transparent;
+}
+
+:host ::ng-deep .select-search-option {
+  height: auto;
+  cursor: default;
+  padding: 0;
+}
+
+:host ::ng-deep .select-search-field {
+  width: 100%;
+  margin: 0.5rem 0 0.25rem;
+  padding: 0 0.75rem;
+  box-sizing: border-box;
+}
+
+:host ::ng-deep .select-search-option .mdc-list-item__primary-text {
+  width: 100%;
+}
+
+:host ::ng-deep .select-search-field .mat-mdc-form-field {
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+
+:host ::ng-deep .select-search-field .mat-mdc-text-field-wrapper {
+  width: 100%;
+  max-width: 100%;
+}
+
+:host ::ng-deep .select-search-field .mat-mdc-form-field-infix {
+  width: 100%;
+}
+
+@media (max-width: 1400px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .form-grid .span-4 {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form-grid .span-3,
+  .form-grid .span-4 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .erp-page {
+    padding: 1.25rem 1rem;
+  }
+
+  .erp-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-grid .barcode-field {
+    order: 1;
+  }
+
+  .filter-actions {
+    order: 2;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid .span-2,
+  .form-grid .span-3,
+  .form-grid .span-4 {
+    grid-column: span 1;
+  }
+}
+
+/* Keep dialog tab spacing aligned with ERP Customer baseline */
+.crud-dialog {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.crud-dialog .dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(82vh, 980px);
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.crud-dialog .form-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.crud-dialog .tab-content {
+  padding: 0.65rem 0 0.25rem;
+}
+
+@media (max-width: 900px) {
+  .crud-dialog .dialog-content {
+    max-height: none;
+  }
+
+  .crud-dialog .form-tabs {
+    margin-bottom: 0;
+  }
+}

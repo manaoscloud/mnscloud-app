@@ -1,0 +1,176 @@
+<section class="activity-page" @fadeIn>
+  <div class="activity-surface">
+    <header class="activity-header">
+      <div>
+        <h1>Activity Logs</h1>
+        <p>Operational events, process results, and system failures.</p>
+      </div>
+      <button mat-stroked-button color="primary" type="button" (click)="load()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput formControlName="search" />
+      </mat-form-field>
+
+      @if (isMaster) {
+        <mat-form-field appearance="outline">
+          <mat-label>Environment UUID</mat-label>
+          <input matInput formControlName="environmentUUID" />
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Level</mat-label>
+        <mat-select formControlName="level">
+          @for (option of levelOptions; track option) {
+            <mat-option [value]="option">{{ option || 'All' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          @for (option of statusOptions; track option) {
+            <mat-option [value]="option">{{ option || 'All' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="category">
+          @for (option of categoryOptions; track option) {
+            <mat-option [value]="option">{{ option || 'All' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Correlation ID</mat-label>
+        <input matInput formControlName="correlationID" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Limit</mat-label>
+        <input matInput type="number" min="1" max="1000" formControlName="limit" />
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">Apply</button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="result-summary">{{ total() }} records</div>
+
+    <div class="table-wrapper">
+      <table mat-table [dataSource]="rows()">
+        <ng-container matColumnDef="created">
+          <th mat-header-cell *matHeaderCellDef>Created</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.dateCreated ? (row.dateCreated | date: 'short') : '-' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="level">
+          <th mat-header-cell *matHeaderCellDef>Level</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-chip level-chip" [ngClass]="chipClass(row.level)">{{
+              row.level
+            }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-chip state-chip" [ngClass]="chipClass(row.status)">{{
+              row.status
+            }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>Action</th>
+          <td mat-cell *matCellDef="let row">{{ row.action }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="resource">
+          <th mat-header-cell *matHeaderCellDef>Resource</th>
+          <td mat-cell *matCellDef="let row">
+            <span>{{ row.resourceType || '-' }}</span>
+            <small>{{ row.resourceLabel || row.resourceUUID || '' }}</small>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="message">
+          <th mat-header-cell *matHeaderCellDef>Message</th>
+          <td mat-cell *matCellDef="let row">{{ row.message }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="duration">
+          <th mat-header-cell *matHeaderCellDef>Duration</th>
+          <td mat-cell *matCellDef="let row">{{ formatDuration(row.durationMs) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-icon-button type="button" (click)="openDetails(row, detailDialog)">
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading activity logs...' : 'No activity logs found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    }
+  </div>
+</section>
+
+<ng-template #detailDialog>
+  @if (selected(); as item) {
+    <div class="detail-dialog">
+      <header>
+        <h2>{{ item.action }}</h2>
+        <span class="status-chip state-chip" [ngClass]="chipClass(item.status)">{{
+          item.status
+        }}</span>
+      </header>
+      <dl>
+        <dt>Message</dt>
+        <dd>{{ item.message }}</dd>
+        <dt>Environment</dt>
+        <dd>{{ item.environmentUUID || 'global' }}</dd>
+        <dt>Correlation ID</dt>
+        <dd>{{ item.correlationID || '-' }}</dd>
+        <dt>Job UUID</dt>
+        <dd>{{ item.jobUUID || '-' }}</dd>
+        <dt>Actor</dt>
+        <dd>{{ item.actorType }} {{ item.actorName || '' }}</dd>
+        <dt>Error</dt>
+        <dd>{{ item.errorCode || '-' }} {{ item.errorMessage || '' }}</dd>
+        <dt>Suggestion</dt>
+        <dd>{{ item.suggestion || '-' }}</dd>
+      </dl>
+      <pre>{{ formatDetails(item.details) }}</pre>
+    </div>
+  }
+</ng-template>

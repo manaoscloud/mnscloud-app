@@ -1,0 +1,475 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>VPS Container Plans</h1>
+        <p>Define commercial prices and technical defaults for provider instance sizes.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid" [formGroup]="filterForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput placeholder="Name, provider, region or size" formControlName="search" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Provider</mat-label>
+        <mat-select formControlName="provider" (openedChange)="onProviderFilterOpened($event)">
+          <mat-option value="">All</mat-option>
+          <mat-option
+            class="select-search-option"
+            [value]="null"
+            (click)="$event.stopPropagation()"
+            (onSelectionChange)="$event.source.deselect()"
+          >
+            <mat-form-field appearance="outline" class="select-search-field">
+              <input
+                matInput
+                [value]="providerFilterSearch()"
+                (input)="providerFilterSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                placeholder="Search provider"
+                autocomplete="off"
+              />
+            </mat-form-field>
+          </mat-option>
+          @for (provider of filteredProviderFilterOptions(); track provider.HcpUUID) {
+            <mat-option [value]="provider.HcpUUID">{{ provider.HcpName }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">All</mat-option>
+          <mat-option value="1">Active</mat-option>
+          <mat-option value="0">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        @if (selectedCount() > 0) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button mat-stroked-button color="warn" type="button" (click)="removeSelectedPlans()">
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applyFilters()">Apply</button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="pagedRows()" matSort (matSortChange)="onSort($event)">
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="isAllVisibleSelected()"
+              [indeterminate]="isSomeVisibleSelected()"
+              (change)="toggleVisibleSelection($event.checked)"
+              aria-label="Select visible VPS Container plans"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (click)="$event.stopPropagation()"
+              (change)="togglePlanSelection(row, $event.checked)"
+              [attr.aria-label]="'Select VPS Container plan ' + row.HcnName"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.HcnName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <td mat-cell *matCellDef="let row">{{ providerNameForPlan(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="region">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Region</th>
+          <td mat-cell *matCellDef="let row">{{ row.HcnRegion || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="size">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Size</th>
+          <td mat-cell *matCellDef="let row">{{ row.HcnSize || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+          <td mat-cell *matCellDef="let row">{{ moneyLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <mat-chip
+              class="status-pill"
+              [class.is-active]="row.HcnIsActive === 1"
+              [class.is-inactive]="row.HcnIsActive !== 1"
+            >
+              {{ statusLabel(row) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                (click)="remove(row)"
+                matTooltip="Delete"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading VPS Container plans...' : 'No VPS Container plans found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="rows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of VPS Container plans"
+      (page)="onPage($event)"
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #planFormDialog>
+  <div class="hosting-vps-container-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit VPS Container plan' : 'New VPS Container plan' }}</h2>
+        <p>
+          {{
+            editing()
+              ? 'Update price and provider defaults.'
+              : 'Create a commercial VPS Container plan from provider catalog data.'
+          }}
+        </p>
+      </div>
+      @if (editing()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="planForm">
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="isActive">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Provider</mat-label>
+                <mat-select
+                  formControlName="providerUUID"
+                  (openedChange)="onProviderOpened($event)"
+                >
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="providerSearch()"
+                        (input)="providerSearch.set($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search provider"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (acc of filteredProviders; track acc.HcpUUID) {
+                    <mat-option [value]="acc.HcpUUID">
+                      {{ acc.HcpName }} · {{ providerLabel(acc.HcpProvider) }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="DO Basic 1GB" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Price</mat-label>
+                <input matInput type="number" min="0" step="0.01" formControlName="price" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Config">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="planForm">
+              @if (regionOptions().length) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Region</mat-label>
+                  <mat-select formControlName="region" (openedChange)="onRegionOpened($event)">
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="regionSearch()"
+                          (input)="regionSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search region"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (opt of filteredRegionOptions(); track opt.id) {
+                      <mat-option [value]="opt.id">{{ opt.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              } @else {
+                <mat-form-field appearance="outline">
+                  <mat-label>Region</mat-label>
+                  <input matInput formControlName="region" placeholder="nyc3" />
+                </mat-form-field>
+              }
+
+              @if (sizeOptions().length) {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Size / Bundle</mat-label>
+                  <mat-select formControlName="size" (openedChange)="onSizeOpened($event)">
+                    <mat-select-trigger>{{ selectedSizeLabel() }}</mat-select-trigger>
+                    <mat-option
+                      class="select-search-option"
+                      [value]="null"
+                      (click)="$event.stopPropagation()"
+                      (onSelectionChange)="$event.source.deselect()"
+                    >
+                      <mat-form-field appearance="outline" class="select-search-field">
+                        <input
+                          matInput
+                          [value]="sizeSearch()"
+                          (input)="sizeSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                          placeholder="Search size"
+                          autocomplete="off"
+                        />
+                      </mat-form-field>
+                    </mat-option>
+                    @for (opt of filteredSizeOptions(); track opt.id) {
+                      <mat-option
+                        class="catalog-select-option rich-catalog-option"
+                        [value]="opt.id"
+                      >
+                        <div class="rich-option">
+                          <mat-icon class="rich-option-icon">dns</mat-icon>
+                          <div class="rich-option-body">
+                            <div class="rich-option-main">
+                              <span class="rich-option-name">{{ sizeOptionName(opt) }}</span>
+                              @if (sizeOptionPrice(opt)) {
+                                <span class="rich-option-accent">{{ sizeOptionPrice(opt) }}</span>
+                              }
+                            </div>
+                            <div class="rich-option-meta">
+                              @if (sizeOptionMeta(opt)) {
+                                <span>{{ sizeOptionMeta(opt) }}</span>
+                              }
+                              <span>{{ sizeOptionSlug(opt) }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              } @else {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Size / Bundle</mat-label>
+                  <input matInput formControlName="size" placeholder="s-1vcpu-1gb" />
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline" class="config-row-start">
+                <mat-label>CPU</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  formControlName="cpu"
+                  [readonly]="selectedSizeHasCatalogSpecs()"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Memory MB</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  formControlName="memoryMb"
+                  [readonly]="selectedSizeHasCatalogSpecs()"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Disk GB</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  formControlName="diskGb"
+                  [readonly]="selectedSizeHasCatalogSpecs()"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Transfer GB</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  formControlName="transferGb"
+                  [readonly]="selectedSizeHasCatalogSpecs()"
+                />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+        <mat-tab label="Notes">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="planForm">
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>Notes</mat-label>
+                <textarea
+                  matInput
+                  rows="6"
+                  formControlName="notes"
+                  placeholder="Internal plan notes"
+                ></textarea>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="cancelForm()"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="submit()"
+          [disabled]="saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editing()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="saveActionsMenu"
+            [disabled]="saving()"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+
+      <mat-menu
+        #saveActionsMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
+        <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
+
+      @if (catalogLoading()) {
+        <span class="hint">Loading provider catalog...</span>
+      }
+    </mat-dialog-actions>
+  </div>
+</ng-template>

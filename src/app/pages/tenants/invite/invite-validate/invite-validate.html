@@ -1,0 +1,24 @@
+@if (loading()) {
+<app-state-message layout="page" type="empty" icon="hourglass_top" title="Validating invitation..."
+    message="Please wait while we validate your invitation link." />
+} @else {
+
+@if (error()) {
+<app-state-message layout="page" type="error" icon="link_off" title="Invitation not available" [message]="error()!"
+    primaryLabel="Back to Sign In" [primaryAction]="goSignin" secondaryLabel="Go to Dashboard"
+    [secondaryAction]="goHome" />
+} @else {
+@if (invite(); as i) {
+<div class="invite-container">
+    <h2>Invitation</h2>
+    <p>You were invited to join:</p>
+    <h3>{{ i.EnvironmentName }}</h3>
+    <p>Email invited: <strong>{{ i.InviteEmail }}</strong></p>
+    <p>Role: <strong>{{ i.InviteRole }}</strong></p>
+    <button class="btn-primary" (click)="goToAccept(i.token)">
+        Continue
+    </button>
+</div>
+}
+}
+}

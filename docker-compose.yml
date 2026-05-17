@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4200:4200"
+    environment:
+      MNSCLOUD_API_BASE_URL: ${MNSCLOUD_API_BASE_URL:-}

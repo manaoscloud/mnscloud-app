@@ -1,0 +1,442 @@
+<section class="erp-page">
+
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Tickets</h1>
+        <p>Open and manage support tickets with protocol tracking and SLA targets.</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" (click)="refreshList()" [disabled]="loading" type="button">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>Search tickets</mat-label>
+        <input matInput [ngModel]="searchInput" (ngModelChange)="onSearchChange($event)" />
+        @if (searchInput) {
+          <button mat-icon-button matSuffix (click)="onSearchChange('')" type="button">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <div class="filters-grid span-2">
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="filters.status" (selectionChange)="onFilterChange()">
+            <mat-option value="">All</mat-option>
+            @for (item of statusOptions; track item.value) {
+              <mat-option [value]="item.value">{{ item.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-select [(ngModel)]="filters.priority" (selectionChange)="onFilterChange()">
+            <mat-option value="">All</mat-option>
+            @for (item of priorityOptions; track item.value) {
+              <mat-option [value]="item.value">{{ item.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Customer</mat-label>
+          <mat-select
+            [(ngModel)]="filters.customerUUID"
+            (selectionChange)="onFilterChange()"
+            (openedChange)="onFilterCustomerOpened($event)"
+          >
+            <mat-option
+              class="select-search-option"
+              [value]="null"
+              (click)="$event.stopPropagation()"
+              (onSelectionChange)="$event.source.deselect()"
+            >
+              <mat-form-field appearance="outline" class="select-search-field">
+                <input
+                  matInput
+                  [(ngModel)]="filterCustomerSearch"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                  placeholder="Search customer"
+                  autocomplete="off"
+                />
+              </mat-form-field>
+            </mat-option>
+            <mat-option value="">All</mat-option>
+            @for (item of filteredFilterCustomers; track item.value) {
+              <mat-option [value]="item.value">{{ item.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Channel</mat-label>
+          <mat-select
+            [(ngModel)]="filters.channelUUID"
+            (selectionChange)="onFilterChange()"
+            (openedChange)="onFilterChannelOpened($event)"
+          >
+            <mat-option
+              class="select-search-option"
+              [value]="null"
+              (click)="$event.stopPropagation()"
+              (onSelectionChange)="$event.source.deselect()"
+            >
+              <mat-form-field appearance="outline" class="select-search-field">
+                <input
+                  matInput
+                  [(ngModel)]="filterChannelSearch"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                  placeholder="Search channel"
+                  autocomplete="off"
+                />
+              </mat-form-field>
+            </mat-option>
+            <mat-option value="">All</mat-option>
+            @for (item of filteredFilterChannels; track item.value) {
+              <mat-option [value]="item.value">{{ item.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="applySearchFilters()" [disabled]="loading" type="button">
+          Apply
+        </button>
+        <button mat-stroked-button (click)="clearSearchFilters()" type="button">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
+      @if (loading) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="protocol">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Protocol </th>
+          <td mat-cell *matCellDef="let row"> {{ row.SupportTicketID || '-' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="subject">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Subject </th>
+          <td mat-cell *matCellDef="let row"> {{ row.Subject }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Customer </th>
+          <td mat-cell *matCellDef="let row"> {{ customerLabel(row.CustomerUUID) || row.CustomerName || '-' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="channel">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Channel </th>
+          <td mat-cell *matCellDef="let row"> {{ channelLabel(row.ChannelUUID) || row.ChannelName || '-' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Priority </th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip class="status-pill">{{ priorityLabel(row.Priority) }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip class="status-pill" [class.is-active]="row.Status === 'open'" [class.is-inactive]="row.Status !== 'open'">
+              {{ statusLabel(row.Status) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="openedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Opened </th>
+          <td mat-cell *matCellDef="let row"> {{ row.OpenedAt ? (row.OpenedAt | date:'short') : '-' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef> Actions </th>
+          <td mat-cell *matCellDef="let row">
+            <div class="actions-col">
+              <button mat-icon-button (click)="startEdit(row)" matTooltip="Edit ticket" type="button">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteTicket(row)" matTooltip="Delete ticket">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            No tickets found for "{{ search || 'all' }}"
+          </td>
+        </tr>
+      </table>
+
+      <mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25]" aria-label="Select page of tickets"></mat-paginator>
+    </div>
+
+  </mat-card>
+</section>
+
+<ng-template #ticketFormDialog>
+  <div class="customer-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing ? 'Edit ticket' : 'New ticket' }}</h2>
+        <p>Create a new support ticket and track SLA and resolution dates.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Customer</mat-label>
+                <mat-select [(ngModel)]="form.customerUUID" (openedChange)="onCustomerOpened($event)">
+                  <mat-option class="select-search-option" [value]="null" (click)="$event.stopPropagation()" (onSelectionChange)="$event.source.deselect()">
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input matInput [(ngModel)]="customerSearch" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" placeholder="Search customer" autocomplete="off" />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (item of filteredCustomers; track item.value) {
+                    <mat-option [value]="item.value">{{ item.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Channel</mat-label>
+                <mat-select [(ngModel)]="form.channelUUID" (openedChange)="onChannelOpened($event)">
+                  <mat-option class="select-search-option" [value]="null" (click)="$event.stopPropagation()" (onSelectionChange)="$event.source.deselect()">
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input matInput [(ngModel)]="channelSearch" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" placeholder="Search channel" autocomplete="off" />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (item of filteredChannels; track item.value) {
+                    <mat-option [value]="item.value">{{ item.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="form.status">
+                  @for (item of statusOptions; track item.value) {
+                    <mat-option [value]="item.value">{{ item.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Priority</mat-label>
+                <mat-select [(ngModel)]="form.priority">
+                  @for (item of priorityOptions; track item.value) {
+                    <mat-option [value]="item.value">{{ item.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Severity</mat-label>
+                <mat-select [(ngModel)]="form.severity">
+                  <mat-option value="">None</mat-option>
+                  @for (item of severityOptions; track item.value) {
+                    <mat-option [value]="item.value">{{ item.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="form.type">
+                  @for (item of typeOptions; track item.value) {
+                    <mat-option [value]="item.value">{{ item.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Subject</mat-label>
+                <input matInput [(ngModel)]="form.subject" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Description</mat-label>
+                <textarea matInput rows="4" [(ngModel)]="form.description"></textarea>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Contact">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Contact name</mat-label>
+                <input matInput [(ngModel)]="form.contactName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Contact email</mat-label>
+                <input matInput [formControl]="emailControl" placeholder="name@example.com" />
+                <mat-icon matSuffix>mail</mat-icon>
+                @if (emailControl.invalid && (emailControl.dirty || emailControl.touched)) {
+                  <mat-error>{{ emailError() }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Contact phone</mat-label>
+                <app-phone-input [(ngModel)]="form.contactPhone" placeholder="5511999999999"></app-phone-input>
+                <mat-icon matSuffix>phone</mat-icon>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Assigned to (User UUID)</mat-label>
+                <input matInput [(ngModel)]="form.assignedToUserUUID" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Tags</mat-label>
+                <input matInput [(ngModel)]="form.tags" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Internal notes</mat-label>
+                <input matInput [(ngModel)]="form.internalNotes" />
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Dates & SLA">
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Opened at</mat-label>
+                <input matInput [(ngModel)]="form.openedAt" [matDatepicker]="openedAtPicker" appDateMask />
+                <mat-datepicker-toggle matSuffix [for]="openedAtPicker"></mat-datepicker-toggle>
+                <mat-datepicker #openedAtPicker touchUi></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>First response at</mat-label>
+                <input matInput [(ngModel)]="form.firstResponseAt" [matDatepicker]="firstResponseAtPicker" appDateMask />
+                <mat-datepicker-toggle matSuffix [for]="firstResponseAtPicker"></mat-datepicker-toggle>
+                <mat-datepicker #firstResponseAtPicker touchUi></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Resolved at</mat-label>
+                <input matInput [(ngModel)]="form.resolvedAt" [matDatepicker]="resolvedAtPicker" appDateMask />
+                <mat-datepicker-toggle matSuffix [for]="resolvedAtPicker"></mat-datepicker-toggle>
+                <mat-datepicker #resolvedAtPicker touchUi></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Closed at</mat-label>
+                <input matInput [(ngModel)]="form.closedAt" [matDatepicker]="closedAtPicker" appDateMask />
+                <mat-datepicker-toggle matSuffix [for]="closedAtPicker"></mat-datepicker-toggle>
+                <mat-datepicker #closedAtPicker touchUi></mat-datepicker>
+              </mat-form-field>
+            </div>
+
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>SLA plan</mat-label>
+                <input matInput [(ngModel)]="form.slaPlan" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>SLA response deadline</mat-label>
+                <input matInput [(ngModel)]="form.slaResponseDeadline" [matDatepicker]="slaResponsePicker" appDateMask />
+                <mat-datepicker-toggle matSuffix [for]="slaResponsePicker"></mat-datepicker-toggle>
+                <mat-datepicker #slaResponsePicker touchUi></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>SLA resolution deadline</mat-label>
+                <input matInput [(ngModel)]="form.slaResolutionDeadline" [matDatepicker]="slaResolutionPicker" appDateMask />
+                <mat-datepicker-toggle matSuffix [for]="slaResolutionPicker"></mat-datepicker-toggle>
+                <mat-datepicker #slaResolutionPicker touchUi></mat-datepicker>
+              </mat-form-field>
+              <div class="checkbox-field">
+                <mat-checkbox [(ngModel)]="form.slaBreached">SLA breached</mat-checkbox>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Timeline">
+          <div class="tab-content">
+            @if (!editing) {
+              <p>Save the ticket first to add timeline events.</p>
+            } @else {
+              <div class="event-grid">
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Add internal note</mat-label>
+                  <input matInput [(ngModel)]="eventForm.message" />
+                </mat-form-field>
+                <div class="checkbox-field">
+                  <mat-checkbox [(ngModel)]="eventForm.isInternal">Internal only</mat-checkbox>
+                </div>
+                <div class="event-actions">
+                  <button mat-stroked-button color="primary" (click)="addEvent()" [disabled]="loadingEvents" type="button">Add update</button>
+                </div>
+              </div>
+
+              @if (eventError) {
+                <div class="event-error">{{ eventError }}</div>
+              }
+
+              <div class="event-list">
+                @for (item of events; track item.SupportTicketEventUUID) {
+                  <div class="event-item">
+                    <div>
+                      <strong>{{ item.Type }}</strong>
+                      <span class="event-date">{{ item.DateCreated ? (item.DateCreated | date:'short') : '' }}</span>
+                    </div>
+                    <p>{{ item.Message || 'No description' }}</p>
+                    @if (item.StatusFrom || item.StatusTo) {
+                      <small>Status: {{ item.StatusFrom || '-' }} → {{ item.StatusTo || '-' }}</small>
+                    }
+                  </div>
+                }
+                @if (!events.length && !loadingEvents) {
+                  <div class="event-empty">No events registered yet.</div>
+                }
+              </div>
+            }
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions" align="end">
+      <button mat-flat-button color="primary" (click)="saveTicket()" [disabled]="loading" type="button">Save</button>
+      @if (!editing) {
+        <button mat-stroked-button (click)="saveTicket(true)" [disabled]="loading" type="button">Save and new</button>
+      }
+      <button mat-stroked-button (click)="closeFormDialog()" type="button">Cancel</button>
+      @if (error) {
+        <span class="error">{{ error }}</span>
+      }
+    </mat-dialog-actions>
+  </div>
+</ng-template>

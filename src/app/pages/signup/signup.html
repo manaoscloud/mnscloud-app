@@ -1,0 +1,97 @@
+<main class="page-wrapper" @fadeIn>
+
+  <mat-card class="auth-card">
+
+    <h1 class="mat-headline-small title">Create Account ✨</h1>
+    <p class="subtitle mat-body-medium">Join mnscloud in seconds</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit($event)" autocomplete="off" novalidate>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>First Name</mat-label>
+          <input matInput type="text" formControlName="firstName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Last Name</mat-label>
+          <input matInput type="text" formControlName="lastName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Phone</mat-label>
+          <app-phone-input formControlName="phone" [required]="true"></app-phone-input>
+          <mat-icon matSuffix>phone</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="name@example.com" />
+          <mat-icon matSuffix>mail</mat-icon>
+          @if (form.get('email')?.invalid) {
+            <mat-error>{{ emailError() }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <!-- Sucesso -->
+      @if (successMessage()) {
+        <p class="api-success">{{ successMessage() }}</p>
+      }
+
+      <!-- API ERROR -->
+      @if (apiError()) {
+        <p class="api-error">{{ apiError() }}</p>
+      }
+
+      <!-- Date of birth com MatDatepicker -->
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Date of birth</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="dateBirth" appDateMask />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker touchUi></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Password -->
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+
+          <input matInput [type]="showPassword() ? 'text' : 'password'" formControlName="password" />
+
+          <button
+            type="button"
+            mat-icon-button
+            matSuffix
+            class="field-icon-btn"
+            (click)="togglePassword($event)"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            <mat-icon class="field-icon">
+              {{ showPassword() ? 'visibility_off' : 'visibility' }}
+            </mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
+
+      <!-- 🔹 Botão agora usa exatamente a mesma regra do Signin -->
+      <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="!canSubmit">
+        @if (!isLoading()) {
+          Sign Up
+        } @else {
+          <mat-spinner diameter="22"></mat-spinner>
+        }
+
+      </button>
+
+    </form>
+
+    <p class="link-row">
+      Already have an account?
+      <a routerLink="/signin">Sign in</a>
+    </p>
+
+  </mat-card>
+
+</main>

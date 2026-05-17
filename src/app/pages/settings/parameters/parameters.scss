@@ -1,0 +1,274 @@
+.erp-page {
+  padding: 1.75rem;
+}
+
+.erp-card {
+  padding: 1.5rem 1.75rem;
+  background: var(--mat-sys-color-surface-container-high);
+  border-radius: 1rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+}
+
+.erp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+
+  button mat-icon {
+    margin-right: 0.25rem;
+  }
+}
+
+.parameters-form {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-height: 420px;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+app-settings-parameters .parameters-form .mat-mdc-tab-header,
+app-settings-parameters .parameters-form .mat-mdc-tab-body-wrapper,
+app-settings-parameters .parameters-form .mat-mdc-tab-body-content {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+app-settings-parameters .parameters-form .mat-mdc-tab-body-content {
+  overflow: auto;
+}
+
+.table-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container) 70%, transparent);
+  backdrop-filter: blur(2px);
+  z-index: 1;
+}
+
+.dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(82vh, 980px);
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.form-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.tab-content {
+  padding: 0.65rem 0 0.25rem;
+}
+
+.nested-tabs {
+  min-height: 320px;
+}
+
+.empty-tab {
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.95rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.span-4 {
+  grid-column: span 4;
+}
+
+.toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 0.35rem 0 0.25rem;
+}
+
+.form-actions {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  justify-content: stretch !important;
+  gap: 0.75rem;
+  margin: auto 0 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
+  width: auto;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.secondary-actions {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1;
+  justify-content: flex-start;
+}
+
+.primary-actions {
+  display: flex;
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-end;
+}
+
+.form-message {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.form-message.error {
+  color: var(--mat-sys-color-error);
+}
+
+.form-message.success {
+  color: #15803d;
+}
+
+.form-actions button {
+  min-width: 136px;
+}
+
+.save-main-button {
+  height: 40px;
+  border-radius: 999px !important;
+}
+
+.save-main-button mat-progress-spinner {
+  display: inline-flex;
+  margin-right: 0.4rem;
+}
+
+@media (max-width: 1400px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .erp-page {
+    padding: 1.25rem 1rem;
+  }
+
+  .erp-card {
+    padding: 1rem 1rem 0.25rem;
+  }
+
+  .erp-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+  }
+
+  .parameters-form {
+    min-height: 0;
+  }
+
+  .dialog-content {
+    max-height: none;
+  }
+
+  .form-tabs {
+    margin-bottom: 0;
+  }
+
+  .form-grid,
+  .toggle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2,
+  .span-4 {
+    grid-column: span 1;
+  }
+
+  .form-actions {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    padding: 0.75rem 0.5rem 0.65rem !important;
+  }
+
+  .primary-actions {
+    order: 1;
+    display: block;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .secondary-actions {
+    order: 2;
+    display: block;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .form-message {
+    order: 3;
+    text-align: left;
+  }
+
+  .form-actions button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
