@@ -13,7 +13,6 @@ export type VoipPabxServerItem = {
   VpsPrivateIPv4?: string | null;
   VpsPrivateIPv6?: string | null;
   VpsBaseUrl?: string | null;
-  VpsApiTokenHash?: string | null;
   VpsControlHost?: string | null;
   VpsControlPort?: number | null;
   VpsControlUsername?: string | null;
@@ -67,5 +66,9 @@ export class VoipPabxServerService {
 
   validateControl(uuid: string, isMaster = true) {
     return this.api.post<any>(`${this.basePath(isMaster)}/${uuid}/validate-control`, {});
+  }
+
+  rotateToken(uuid: string, isMaster = true) {
+    return this.api.post<any>(`${this.basePath(isMaster)}/${uuid}/rotate-token`, {});
   }
 }

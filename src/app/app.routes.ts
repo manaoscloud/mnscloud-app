@@ -767,6 +767,20 @@ export const routes: Routes = [
                 },
               })) as any),
               {
+                path: 'voip/webrtc',
+                redirectTo: 'voip/webrtc/server',
+                pathMatch: 'full',
+              },
+              ...(['server', 'parameter'].map((section) => ({
+                path: `voip/webrtc/${section}`,
+                loadComponent: () =>
+                  import('./pages/voip/webrtc/webrtc').then((m) => m.VoipWebRtcPage),
+                title: `VoIP • WebRTC • ${section} | mnscloud`,
+                data: {
+                  resource: section === 'server' ? 'servers' : 'parameters',
+                },
+              })) as any),
+              {
                 path: 'voip/softswitch',
                 loadComponent: () =>
                   import('./pages/voip/softswitch/softswitch').then((m) => m.VoipSoftswitchPage),

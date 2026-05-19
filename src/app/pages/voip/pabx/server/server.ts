@@ -36,7 +36,6 @@ type ServerPayload = {
   privateIPv4: string;
   privateIPv6: string;
   baseUrl: string;
-  apiTokenHash: string;
   controlHost: string;
   controlPort: number | null;
   controlUsername: string;
@@ -115,7 +114,6 @@ export class VoipPabxServerPage implements AfterViewInit {
     privateIPv4: [''],
     privateIPv6: [''],
     baseUrl: [''],
-    apiTokenHash: [''],
     controlHost: [''],
     controlPort: [null as number | null],
     controlUsername: [''],
@@ -216,7 +214,6 @@ export class VoipPabxServerPage implements AfterViewInit {
       privateIPv4: this.privateIPv4(row),
       privateIPv6: this.privateIPv6(row),
       baseUrl: row.VpsBaseUrl || '',
-      apiTokenHash: '',
       controlHost: row.VpsControlHost || '',
       controlPort: row.VpsControlPort ? Number(row.VpsControlPort) : null,
       controlUsername: row.VpsControlUsername || '',
@@ -239,8 +236,13 @@ export class VoipPabxServerPage implements AfterViewInit {
         await this.api.update(editing.VpsUUID, payload, true);
         this.snack.success('PABX server updated successfully.');
       } else {
-        await this.api.create(payload, true);
-        this.snack.success('PABX server created successfully.');
+        const response = await this.api.create(payload, true);
+        const installToken = response?.data?.installToken;
+        if (installToken) {
+          this.snack.success(`Installation token generated: ${installToken}`, 20000);
+        } else {
+          this.snack.success('PABX server created successfully.');
+        }
       }
 
       await this.load();
@@ -292,6 +294,27 @@ export class VoipPabxServerPage implements AfterViewInit {
       const done = new Set(this.validatingIds());
       done.delete(row.VpsUUID);
       this.validatingIds.set(done);
+    }
+  }
+
+  async rotateToken(row: VoipPabxServerItem) {
+    const confirmed = await this.confirmDelete(
+      'Generate PABX install token',
+      `Generate a replacement one-time token for "${row.VpsName}"?`,
+      'Generate token',
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await this.api.rotateToken(row.VpsUUID, true);
+      const token = response?.data?.token;
+      this.snack.success(
+        token ? `Replacement token generated: ${token}` : 'PABX install token generated.',
+        20000,
+      );
+      await this.load();
+    } catch (error: any) {
+      this.snack.error(error?.error?.error || 'Failed to generate PABX install token.');
     }
   }
 
@@ -441,7 +464,6 @@ export class VoipPabxServerPage implements AfterViewInit {
       privateIPv4: '',
       privateIPv6: '',
       baseUrl: '',
-      apiTokenHash: '',
       controlHost: '',
       controlPort: null,
       controlUsername: '',
@@ -465,7 +487,6 @@ export class VoipPabxServerPage implements AfterViewInit {
       privateIPv4: value.privateIPv4.trim(),
       privateIPv6: value.privateIPv6.trim(),
       baseUrl: value.baseUrl.trim(),
-      apiTokenHash: value.apiTokenHash.trim(),
       controlHost: value.controlHost.trim(),
       controlPort: value.controlPort === null || value.controlPort === undefined
         ? null
@@ -516,9 +537,9 @@ export class VoipPabxServerPage implements AfterViewInit {
       .filter((id: unknown): id is string => typeof id === 'string' && !!id);
   }
 
-  private async confirmDelete(title: string, message: string) {
+  private async confirmDelete(title: string, message: string, confirmLabel = 'Delete') {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: { title, message, confirmLabel: 'Delete' },
+      data: { title, message, confirmLabel },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
     });

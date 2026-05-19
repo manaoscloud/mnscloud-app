@@ -179,6 +179,14 @@
               <button
                 mat-icon-button
                 type="button"
+                matTooltip="Generate install token"
+                (click)="rotateToken(row)"
+              >
+                <mat-icon>vpn_key</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
                 matTooltip="Edit server"
                 (click)="startEdit(row)"
               >
@@ -293,11 +301,6 @@
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Node UUID</mat-label>
                 <input matInput formControlName="nodeUUID" autocomplete="off" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>API Token Hash</mat-label>
-                <input matInput formControlName="apiTokenHash" autocomplete="off" />
               </mat-form-field>
             </div>
           </mat-tab>

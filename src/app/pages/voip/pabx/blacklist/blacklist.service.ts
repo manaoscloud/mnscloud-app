@@ -27,7 +27,7 @@ export type VoipBlacklistNumberItem = {
 @Injectable({ providedIn: 'root' })
 export class VoipBlacklistUiService {
   private readonly api = inject(ApiService);
-  private readonly basePath = 'voip';
+  private readonly basePath = 'voip/pabx';
 
   list(params: { search?: string; limit?: number } = {}) {
     const query = new URLSearchParams();

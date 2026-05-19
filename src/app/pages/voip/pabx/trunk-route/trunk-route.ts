@@ -696,10 +696,10 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
   private targetResource() {
     const routeType = this.form.controls.secondary.value;
     if (routeType === 'extension') return 'extensions';
-    if (routeType === 'external') return 'external';
-    if (routeType === 'group') return 'group';
-    if (routeType === 'queue') return 'queue';
-    if (routeType === 'ivr') return 'ivr';
+    if (routeType === 'external') return 'externals';
+    if (routeType === 'group') return 'groups';
+    if (routeType === 'queue') return 'queues';
+    if (routeType === 'ivr') return 'ivrs';
     return '';
   }
   private async loadRouteTargets() {

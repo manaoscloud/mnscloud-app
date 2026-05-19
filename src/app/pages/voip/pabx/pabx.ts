@@ -263,7 +263,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     const provider = selected?.HspProvider ?? editing?.RecordingStorageProvider ?? 'storage';
     return (
       editing?.RecordingStorageEffectivePath ||
-      `${provider}://${account}/pabx/{pabx}/recordings/YYYY/MM/DD/{call_uuid}.wav`
+      `${provider}://${account}/pabx/{pabx_uuid}/recordings/YYYY/MM/DD/{call_uuid}.wav`
     );
   });
 
@@ -783,7 +783,9 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const response = await this.customerApi.get<any>(`voip/pabx/blacklists?limit=${this.listLimit}`);
+    const response = await this.customerApi.get<any>(
+      `voip/pabx/blacklists?limit=${this.listLimit}`,
+    );
     const blacklists = (response?.data?.items ?? []) as BlacklistItem[];
     this.blacklistMap = new Map(blacklists.map((item) => [item.VbkUUID, item]));
     this.blacklistOptions = blacklists.map((item) => ({

@@ -45,9 +45,11 @@ import {
 } from '../../../../shared/upload/file-upload-progress';
 import type { FileUploadProgress } from '../../../../shared/upload/file-upload-progress';
 import { VoipPabxCdrRecordingDialogComponent } from '../cdr/recording-dialog/recording-dialog';
+import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxMediaFileItem, VoipPabxMediaFilesService } from './media-files.service';
 
 type StorageAccountOption = { value: string; label: string };
+type PabxOption = { value: string; label: string };
 
 @Component({
   selector: 'app-voip-pabx-media-files',
@@ -79,6 +81,7 @@ type StorageAccountOption = { value: string; label: string };
 })
 export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(VoipPabxMediaFilesService);
+  private readonly pabxApi = inject(VoipPabxService);
   private readonly genericApi = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
@@ -106,6 +109,13 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
     return 'Save';
   });
   readonly storageMode = signal<'default' | 'filesystem' | 'storage'>('default');
+  readonly pabxSearch = signal('');
+  readonly pabxOptions = signal<PabxOption[]>([]);
+  readonly filteredPabxOptions = computed(() => {
+    const search = this.pabxSearch().trim().toLowerCase();
+    if (!search) return this.pabxOptions();
+    return this.pabxOptions().filter((item) => item.label.toLowerCase().includes(search));
+  });
   readonly dataSource = new MatTableDataSource<VoipPabxMediaFileItem>([]);
   readonly displayedColumns = [
     'select',
@@ -120,6 +130,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   readonly storageAccountOptions = signal<StorageAccountOption[]>([]);
 
   readonly form = this.fb.nonNullable.group({
+    pabxUUID: ['', Validators.required],
     name: ['', [Validators.required, Validators.minLength(2)]],
     storageMode: ['default' as 'default' | 'filesystem' | 'storage'],
     storageAccountUUID: [''],
@@ -166,7 +177,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
     this.loading.set(true);
     const start = performance.now();
     try {
-      await this.loadStorageAccounts();
+      await this.loadLookups();
       const response = await this.api.list({
         search: this.search(),
         status: this.statusFilter(),
@@ -189,6 +200,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
     this.selectedFile.set(null);
     this.uploadProgress.set(null);
     this.form.reset({
+      pabxUUID: this.pabxOptions()[0]?.value ?? '',
       name: '',
       storageMode: 'default',
       storageAccountUUID: '',
@@ -205,6 +217,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
     this.selectedFile.set(null);
     this.uploadProgress.set(null);
     this.form.reset({
+      pabxUUID: item.pabxUUID ?? '',
       name: item.name,
       storageMode: item.storageMode ?? 'default',
       storageAccountUUID: item.storageAccountUUID ?? '',
@@ -226,10 +239,15 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
     if (value !== 'storage') this.form.patchValue({ storageAccountUUID: '' });
   }
 
+  clearPabxSearch(open: boolean) {
+    if (!open) this.pabxSearch.set('');
+  }
+
   async saveItem(saveAndNew = false) {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
     const payload = {
+      pabxUUID: value.pabxUUID,
       name: value.name.trim(),
       storageMode: value.storageMode,
       storageAccountUUID: value.storageMode === 'storage' ? value.storageAccountUUID || '' : '',
@@ -422,13 +440,24 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async loadStorageAccounts() {
-    const response = await this.genericApi.get<any>('hosting/storage/accounts');
-    const rows = Array.isArray(response?.data) ? response.data : (response?.data?.items ?? []);
+  private async loadLookups() {
+    const [storageResponse, pabxResponse] = await Promise.all([
+      this.genericApi.get<any>('hosting/storage/accounts'),
+      this.pabxApi.list(false, { limit: this.listLimit }),
+    ]);
+    const rows = Array.isArray(storageResponse?.data)
+      ? storageResponse.data
+      : (storageResponse?.data?.items ?? []);
     this.storageAccountOptions.set(
       rows.map((item: any) => ({
         value: item.HsaUUID,
         label: `${item.HsaName} · ${item.HspProvider ?? item.HspName ?? 'storage'}`,
+      })),
+    );
+    this.pabxOptions.set(
+      (pabxResponse?.data?.items ?? []).map((item: VoipPabxAccount) => ({
+        value: item.VpaUUID,
+        label: item.VpaName,
       })),
     );
   }
@@ -529,6 +558,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
 
   private sortValue(row: VoipPabxMediaFileItem, column: string) {
     if (column === 'storage') return `${row.storageMode} ${row.storageAccountName ?? ''}`;
+    if (column === 'name') return `${row.name} ${row.pabxName ?? ''}`;
     if (column === 'file') return this.fileLabel(row);
     if (column === 'status') return row.enabled;
     return (row as any)[column] ?? '';
@@ -537,5 +567,4 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   private messageFromError(err: any, fallback: string) {
     return err?.error?.error || err?.message || fallback;
   }
-
 }

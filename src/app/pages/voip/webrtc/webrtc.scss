@@ -1,0 +1,28 @@
+.webrtc-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.actions-col-cell {
+  white-space: nowrap;
+}
+.selection-count {
+  align-self: center;
+  opacity: 0.8;
+}
+.webrtc-token-dialog {
+  pre {
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 16px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.06);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .token-warning {
+    font-weight: 500;
+  }
+}

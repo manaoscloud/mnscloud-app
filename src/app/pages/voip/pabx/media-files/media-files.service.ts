@@ -4,6 +4,8 @@ import { ApiService } from '../../../../services/api.service';
 export type VoipPabxMediaFileItem = {
   uuid: string;
   id: string;
+  pabxUUID?: string | null;
+  pabxName?: string | null;
   name: string;
   description?: string | null;
   storageMode: 'default' | 'filesystem' | 'storage';
@@ -34,6 +36,7 @@ export class VoipPabxMediaFilesService {
       status?: string;
       limit?: number;
       offset?: number;
+      pabxUUID?: string;
     } = {},
   ) {
     const query = new URLSearchParams();
@@ -41,6 +44,7 @@ export class VoipPabxMediaFilesService {
     if (params.status !== undefined && params.status !== '') query.set('status', params.status);
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
+    if (params.pabxUUID) query.set('pabxUUID', params.pabxUUID);
     const suffix = query.toString();
     return this.api.get<any>(`${this.endpoint}${suffix ? `?${suffix}` : ''}`);
   }

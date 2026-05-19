@@ -69,8 +69,7 @@ interface UserAccessResponse {
   status: string;
   message: string;
   data?: {
-    getUserAccess?: UserEnvironment[];
-    accessList?: UserEnvironment[];
+    access?: UserEnvironment[];
   };
 }
 
@@ -554,7 +553,7 @@ export class MainLayout {
     try {
       const resp = await this.api.get<UserAccessResponse>('user/access');
 
-      const list = resp?.data?.getUserAccess ?? resp?.data?.accessList ?? [];
+      const list = resp?.data?.access ?? [];
 
       this.environments.set(list);
 
@@ -1192,6 +1191,25 @@ export class MainLayout {
             },
             { id: 'voip/sbc/route', label: 'Route', icon: 'alt_route', route: '/voip/sbc/route' },
             { id: 'voip/sbc/policy', label: 'Policy', icon: 'policy', route: '/voip/sbc/policy' },
+          ],
+        },
+        {
+          id: 'voip/webrtc',
+          label: 'WebRTC',
+          icon: 'settings_input_antenna',
+          children: [
+            {
+              id: 'voip/webrtc/server',
+              label: 'Server',
+              icon: 'dns',
+              route: '/voip/webrtc/server',
+            },
+            {
+              id: 'voip/webrtc/parameter',
+              label: 'Parameter',
+              icon: 'tune',
+              route: '/voip/webrtc/parameter',
+            },
           ],
         },
         {

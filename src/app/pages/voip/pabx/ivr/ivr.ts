@@ -121,7 +121,11 @@ export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {
     this.filterOptions(this.pabxOptions(), this.pabxSearch()),
   );
   readonly filteredMediaFileOptions = computed(() => {
-    return this.filterOptions(this.mediaFileOptions(), this.mediaFileSearch());
+    const pabxUUID = this.form.controls.pabxUUID.value;
+    return this.filterOptions(
+      this.mediaFileOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
+      this.mediaFileSearch(),
+    );
   });
   readonly filteredOptionTargetOptions = computed(() =>
     this.filterOptions(this.optionTargetOptions(), this.optionTargetSearch()),
@@ -470,6 +474,7 @@ export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {
       (mediaFileResponse?.data?.items ?? []).map((item: VoipPabxMediaFileItem) => ({
         value: item.uuid,
         label: item.name,
+        pabxUUID: item.pabxUUID,
       })),
     );
   }

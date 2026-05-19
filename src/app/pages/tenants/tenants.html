@@ -1,16 +1,12 @@
 <h2 class="page-title">Tenants</h2>
-<p class="page-subtitle">
-  Manage tenant members and access for this environment.
-</p>
+<p class="page-subtitle">Manage tenant members and access for this environment.</p>
 
 <!-- ================= INVITE BOX ================= -->
 <section class="invite-box">
   <h3>Invite a Member</h3>
 
   <form [formGroup]="inviteForm" (ngSubmit)="sendInvite()">
-
     <div class="invite-grid">
-
       <!-- Email -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Email</mat-label>
@@ -19,7 +15,7 @@
 
       <!-- Role -->
       <mat-form-field appearance="outline" class="role-field">
-      <mat-label>Access level</mat-label>
+        <mat-label>Access level</mat-label>
         <mat-select formControlName="role">
           @for (r of roles; track r) {
             <mat-option [value]="r">
@@ -30,15 +26,19 @@
       </mat-form-field>
 
       <!-- Botão -->
-      <button mat-flat-button color="primary" class="invite-btn" type="submit" [disabled]="!canInvite">
+      <button
+        mat-flat-button
+        color="primary"
+        class="invite-btn"
+        type="submit"
+        [disabled]="!canInvite"
+      >
         @if (!inviting()) {
           Send Invitation
         } @else {
           Sending...
         }
-
       </button>
-
     </div>
 
     <!-- Mensagens -->
@@ -81,7 +81,7 @@
       </tr>
     </thead>
     <tbody>
-  @for (item of selfList(); track item.EnvironmentUUID) {
+      @for (item of selfList(); track item.EnvironmentUUID) {
         <tr>
           <td>{{ item.EnvironmentName || '—' }}</td>
           <td>{{ item.Role }}</td>
@@ -106,9 +106,7 @@
 }
 
 @if (!selfLoading() && !selfList().length) {
-  <div class="empty-state">
-    No tenants found.
-  </div>
+  <div class="empty-state">No tenants found.</div>
 }
 
 <!-- ================= LISTAGEM DE ACESSOS ================= -->
@@ -136,16 +134,14 @@
       </tr>
     </thead>
     <tbody>
-  @for (item of list(); track item.UscUUID ?? item.EnvironmentUUID) {
+      @for (item of list(); track item.UscUUID ?? item.EnvironmentUUID) {
         <tr>
           <td>{{ item.EnvironmentName || '—' }}</td>
           <td>{{ item.Role }}</td>
           <td>{{ item.Status === 1 ? 'Active' : 'Inactive' }}</td>
           <td>
             @if (item.UscUUID && item.Role !== 'OWNER') {
-              <button class="btn-danger" (click)="remove(item.UscUUID)">
-                Remove member
-              </button>
+              <button class="btn-danger" (click)="remove(item.UscUUID)">Remove member</button>
             }
           </td>
         </tr>
@@ -155,9 +151,7 @@
 }
 
 @if (!loading() && !list().length) {
-  <div class="empty-state">
-    No tenant members found.
-  </div>
+  <div class="empty-state">No tenant members found.</div>
 }
 
 <!-- ================= LISTAGEM DE CONVITES ================= -->
@@ -187,20 +181,18 @@
       </tr>
     </thead>
     <tbody>
-  @for (inv of invites(); track inv.UsiUUID ?? inv.InviteUUID ?? inv.UsiEmail) {
+      @for (inv of invites(); track inv.UsiUUID) {
         <tr>
           <td>{{ inv.UsiEmail }}</td>
           <td>{{ inv.UsiRole }}</td>
           <td>
-            <span class="status-pill" [class.status-pending]="inv.UsiStatus === 0"
-              [class.status-accepted]="inv.UsiStatus === 1" [class.status-canceled]="inv.UsiStatus === 2">
-              {{
-              inv.UsiStatus === 0
-              ? 'Pending'
-              : inv.UsiStatus === 1
-              ? 'Accepted'
-              : 'Canceled'
-              }}
+            <span
+              class="status-pill"
+              [class.status-pending]="inv.UsiStatus === 0"
+              [class.status-accepted]="inv.UsiStatus === 1"
+              [class.status-canceled]="inv.UsiStatus === 2"
+            >
+              {{ inv.UsiStatus === 0 ? 'Pending' : inv.UsiStatus === 1 ? 'Accepted' : 'Canceled' }}
             </span>
           </td>
           <td>
@@ -212,10 +204,20 @@
           <td class="invite-actions-cell">
             @if (inv.UsiStatus === 0) {
               <div class="invite-actions">
-                <button mat-stroked-button color="warn" type="button" (click)="cancelInvite(inv.UsiUUID)">
+                <button
+                  mat-stroked-button
+                  color="warn"
+                  type="button"
+                  (click)="cancelInvite(inv.UsiUUID)"
+                >
                   Cancel invitation
                 </button>
-                <button mat-stroked-button color="primary" type="button" (click)="resendInvite(inv.UsiUUID)">
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  type="button"
+                  (click)="resendInvite(inv.UsiUUID)"
+                >
                   Resend invitation
                 </button>
               </div>
@@ -230,7 +232,5 @@
 }
 
 @if (!invitesLoading() && !invites().length) {
-  <div class="empty-state">
-    No invitations found.
-  </div>
+  <div class="empty-state">No invitations found.</div>
 }

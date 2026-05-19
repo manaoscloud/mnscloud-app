@@ -114,7 +114,11 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     this.filterOptions(this.targetOptions(), this.targetSearch()),
   );
   readonly filteredMediaFileOptions = computed(() => {
-    return this.filterOptions(this.mediaFileOptions(), this.mediaFileSearch());
+    const pabxUUID = this.form.controls.pabxUUID.value;
+    return this.filterOptions(
+      this.mediaFileOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
+      this.mediaFileSearch(),
+    );
   });
 
   readonly dataSource = new MatTableDataSource<any>([]);
@@ -570,6 +574,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
       (mediaFileResponse?.data?.items ?? []).map((item: VoipPabxMediaFileItem) => ({
         value: item.uuid,
         label: item.name,
+        pabxUUID: item.pabxUUID,
       })),
     );
     await this.loadTargets();

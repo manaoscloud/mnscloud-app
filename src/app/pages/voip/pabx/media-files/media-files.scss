@@ -96,6 +96,16 @@
     font-size: 0.9rem;
   }
 
+  td strong,
+  td small {
+    display: block;
+  }
+
+  td small {
+    margin-top: 0.2rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+
   .mat-mdc-header-cell,
   .mat-mdc-cell {
     border-bottom: 1px solid var(--mat-sys-color-outline-variant);
@@ -160,7 +170,7 @@
   flex: 1 1 auto;
   min-height: 0;
   max-height: min(82vh, 980px);
-  overflow: hidden;
+  overflow: auto;
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -214,10 +224,17 @@
 .upload-progress-panel {
   display: grid;
   gap: 0.65rem;
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.85rem 1rem;
   border: 1px solid color-mix(in srgb, var(--mat-sys-color-primary) 55%, transparent);
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--mat-sys-color-primary-container) 16%, transparent);
+}
+
+.dialog-upload-progress {
+  flex: 0 0 auto;
+  margin: 0.75rem 0 1rem;
 }
 
 .upload-progress-header {
@@ -255,6 +272,7 @@
 
 .form-actions {
   display: grid !important;
+  flex: 0 0 auto;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
   margin: auto 0 0 !important;
