@@ -2,7 +2,7 @@
 
 ## Routing
 
-- Routes are defined in `app/src/app/app.routes.ts`.
+- Routes are defined in `src/app/app.routes.ts`.
 - ERP routes use `/erp/*` paths.
 
 ## Public API Client Boundary
@@ -24,14 +24,14 @@
 ## Layout
 
 - Main shell and menu are in:
-  - `app/src/app/layout/main-layout/main-layout.ts`
-  - `app/src/app/layout/main-layout/main-layout.html`
+  - `src/app/layout/main-layout/main-layout.ts`
+  - `src/app/layout/main-layout/main-layout.html`
 
 ## Public Theme Runtime
 
 - The app loads tenant branding at bootstrap through `PublicThemeContextService`.
 - Runtime endpoint: `GET <apiBaseUrl>/public/theme/context`.
-- API base resolution is centralized in `app/src/app/shared/runtime/app-runtime-config.ts`.
+- API base resolution is centralized in `src/app/shared/runtime/app-runtime-config.ts`.
   - Empty or missing `/env.js` config falls back to same-origin `/api/v1`.
   - `apiBaseUrl` may be configured as an origin (`https://api.example.com`), `/api`, or `/api/v1`;
     the resolver normalizes it to the v1 API base.
@@ -172,7 +172,7 @@
 ## File Upload Progress Baseline (Current)
 
 - Any CRUD or execution flow that sends a user-selected file must show explicit upload progress.
-- The shared upload contract lives in `app/src/app/shared/upload/file-upload-progress.ts`.
+- The shared upload contract lives in `src/app/shared/upload/file-upload-progress.ts`.
   - Use `FileUploadProgress<T>` for upload state.
   - Use `buildFileUploadViewModel(progress, active)` for UI title, detail, percent label, progress
     mode, progress value, and busy state.
@@ -219,7 +219,7 @@
 ## Dialog Action Footer Baseline (Current)
 
 - Use a stable `mat-dialog-actions.form-actions` footer for every CRUD dialog.
-- Use the repository CRUD template (`app/templates/crud`) as the concrete baseline for CRUD dialogs:
+- Use the repository CRUD template (`templates/crud`) as the concrete baseline for CRUD dialogs:
   - dialog root uses `width: 100%`, `max-width: 100%`, `max-height: min(92vh, 1100px)`, desktop `height: 100%`, and padding `1.5rem 1.75rem 1.25rem`
   - `.dialog-content` uses `flex: 1 1 auto`, `min-height: 0`, `max-height: min(82vh, 980px)`, `overflow: hidden`, and zero Material margin/padding
   - `.form-tabs` is a flex column with `height: 100%`, `min-height: 0`, and `margin-bottom: 1.25rem`
@@ -292,8 +292,8 @@
   - form grids must follow `4/3/2/1` (`desktop`, `<=1400`, `<=1200`, `<=900`)
   - on `<=900`, span classes collapse to 1 column
 - Validation:
-  - must pass `npm --prefix app run check:crud -- <component-folder-or-html>` for every CRUD page touched
-  - must pass `npm --prefix app run build`
+  - must pass `npm run check:crud -- <component-folder-or-html>` for every CRUD page touched
+  - must pass `npm run build`
   - delivery must explicitly list each changed file and confirm checklist compliance
 
 ## CRUD Template Validator
@@ -302,7 +302,7 @@
 - For every CRUD creation/refactor, run:
 
 ```bash
-npm --prefix app run check:crud -- src/app/pages/<area>/<component>
+npm run check:crud -- src/app/pages/<area>/<component>
 ```
 
 - The validator checks the required global CSS hooks, including:
@@ -312,7 +312,7 @@ npm --prefix app run check:crud -- src/app/pages/<area>/<component>
   - `matNoDataRow`
   - `.save-split-action`, `.save-main-button`, `.save-more-button`, and `is-single-action`
   - `openCrudTemplateDialog`, `SlowConfirmDialogComponent`, visible-row bulk selection, and partial-failure handling
-- A component must not be considered "100% template" until this validator passes and `npm --prefix app run build` passes.
+- A component must not be considered "100% template" until this validator passes and `npm run build` passes.
 
 ## Non-negotiables (Blockers)
 
@@ -326,7 +326,7 @@ npm --prefix app run check:crud -- src/app/pages/<area>/<component>
 
 ## Request Template (recommended)
 
-- `Refatoração completa do(s) componente(s) <nomes>. Aplique 100% o Definition Of Done do app/app.md, sem simplificações. Só finalize após build e checklist de conformidade item a item.`
+- `Refatoração completa do(s) componente(s) <nomes>. Aplique 100% o Definition Of Done do app.md, sem simplificações. Só finalize após build e checklist de conformidade item a item.`
 
 ## Dialog Viewport Rules (Current)
 
@@ -372,8 +372,8 @@ npm --prefix app run check:crud -- src/app/pages/<area>/<component>
 
 ## Styling Baseline (Current)
 
-- Global theme variables are in `app/src/styles.scss`.
-- The reusable CRUD visual baseline is global and must live in `app/src/styles.scss`.
+- Global theme variables are in `src/styles.scss`.
+- The reusable CRUD visual baseline is global and must live in `src/styles.scss`.
 - New/refactored CRUD components must use the baseline classes instead of duplicating the common layout SCSS locally.
 - Component SCSS should be limited to resource-specific details such as unusual column widths, custom visual widgets, or domain-specific helper classes.
 - Layout classes styled globally across CRUD pages:
@@ -431,7 +431,7 @@ npm --prefix app run check:crud -- src/app/pages/<area>/<component>
 
 ## API Access
 
-- Use `ApiService` from `app/src/app/services/api.service.ts`.
+- Use `ApiService` from `src/app/services/api.service.ts`.
 - Use relative endpoints (example: `erp/customers`).
 
 ## Maps (Mapbox)
@@ -445,6 +445,6 @@ npm --prefix app run check:crud -- src/app/pages/<area>/<component>
 
 ## I18n
 
-- Glossary: `app/i18n-glossary.md`
-- Runtime service: `app/src/app/services/i18n.service.ts`
-- DOM translation layer: `app/src/app/services/i18n-dom.service.ts`
+- Glossary: `i18n-glossary.md`
+- Runtime service: `src/app/services/i18n.service.ts`
+- DOM translation layer: `src/app/services/i18n-dom.service.ts`

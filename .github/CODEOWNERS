@@ -5,7 +5,7 @@
 * @manaoscloud/core-maintainers
 
 # Suggested future split, once teams exist:
-# /app/ @manaoscloud/frontend-maintainers
+# /src/ @manaoscloud/frontend-maintainers
 # /api/ @manaoscloud/api-maintainers
 # /mariadb/ @manaoscloud/database-maintainers
 # /workers/ @manaoscloud/workers-maintainers

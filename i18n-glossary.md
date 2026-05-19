@@ -93,4 +93,4 @@ Official business/UI glossary used by the app translation layer.
 ## Notes
 - Keep `RADIUS`, `PPPoE`, `FTTH`, `VoIP`, `SBC`, `PABX`, `VPS`, `GeoMap` untranslated.
 - In product copy, prefer `Ambiente/Entorno` instead of `Tenant/Inquilino`.
-- This glossary is the preferred source for manual overrides in `app/src/app/services/i18n.service.ts`.
+- This glossary is the preferred source for manual overrides in `src/app/services/i18n.service.ts`.

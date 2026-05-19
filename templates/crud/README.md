@@ -1,8 +1,8 @@
 # CRUD Page Template
 
-This template follows `app/app.md` patterns for header, filter/search, table, bulk delete, and dialog CRUD layout.
-Bulk delete is part of the default CRUD contract and must follow the `Bulk Delete Baseline (Current)` section in `app/app.md`.
-`app/app.md` is the source of truth. Do not use an existing page component as the canonical reference.
+This template follows `app.md` patterns for header, filter/search, table, bulk delete, and dialog CRUD layout.
+Bulk delete is part of the default CRUD contract and must follow the `Bulk Delete Baseline (Current)` section in `app.md`.
+`app.md` is the source of truth. Do not use an existing page component as the canonical reference.
 For DB-backed resources, only edit SQL files in the repository. Do not apply schema/procedure scripts directly to the database unless the user explicitly requests that action.
 
 Files:
@@ -31,13 +31,13 @@ How to use:
 16. Preserve the dialog viewport fallback: `updateSize(width, height || maxHeight)` so desktop dialogs do not collapse.
 17. Keep the first dialog tab label as `Data` by default; change it only when the resource domain has a documented, explicit reason.
 18. Whenever the form has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent annotation), keep it in a dedicated `mat-tab label="Notes"` with a full-row textarea; never mix notes into `Data`, `Config`, `Pricing`, or `Provision`.
-19. Keep the dialog visual contract aligned with this CRUD template and `app/app.md`: root padding `1.5rem 1.75rem 1.25rem`, compact tab content, sticky translucent `.form-actions` with `margin: auto 0 0`, internal horizontal padding, blur/shadow, desktop Cancel left and Save split right, mobile Save first and Cancel second.
+19. Keep the dialog visual contract aligned with this CRUD template and `app.md`: root padding `1.5rem 1.75rem 1.25rem`, compact tab content, sticky translucent `.form-actions` with `margin: auto 0 0`, internal horizontal padding, blur/shadow, desktop Cancel left and Save split right, mobile Save first and Cancel second.
 20. For currency defaults, resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`; tenant parameters must win and master parameters are the fallback. Do not hardcode `BRL`/`USD` as the source of truth for create/reset flows.
-21. Add the dialog `panelClass` to global overlay styles in `app/src/styles.scss` when the page uses a new panel class, so `.mat-mdc-dialog-surface`, content, and actions match the shared CRUD surface.
+21. Add the dialog `panelClass` to global overlay styles in `src/styles.scss` when the page uses a new panel class, so `.mat-mdc-dialog-surface`, content, and actions match the shared CRUD surface.
 22. Run the CRUD template validator before finishing:
 
 ```bash
-npm --prefix app run check:crud -- src/app/pages/<area>/<component>
+npm run check:crud -- src/app/pages/<area>/<component>
 ```
 
 The validator is mandatory because the global CSS depends on exact hook classes such as `mat-elevation-z8`, `is-loading`, `select-col`, `status-col`, `actions-col`, `save-main-button`, `save-more-button`, and `is-single-action`.
