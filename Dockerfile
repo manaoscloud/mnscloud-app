@@ -2,17 +2,15 @@ FROM node:24-slim
 
 WORKDIR /app
 
-RUN npm install -g @angular/cli
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 
-COPY docker/entrypoint.sh /usr/local/bin/mnscloud-app-entrypoint
-RUN chmod +x /usr/local/bin/mnscloud-app-entrypoint
-
 EXPOSE 4200
 
-ENTRYPOINT ["mnscloud-app-entrypoint"]
 CMD ["npm", "run", "start"]

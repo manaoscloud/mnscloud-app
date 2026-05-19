@@ -1,7 +1,13 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "4200:4200"
     environment:
-      MNSCLOUD_API_BASE_URL: ${MNSCLOUD_API_BASE_URL:-}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - /app/node_modules

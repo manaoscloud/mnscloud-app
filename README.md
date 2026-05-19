@@ -45,8 +45,12 @@ npm run build
 ## Docker
 
 ```bash
-MNSCLOUD_API_BASE_URL="https://api.example.com/api/v1" docker compose up --build
+docker compose up --build
 ```
+
+The standalone Compose file mounts the project into `/app` and keeps `node_modules` in a container
+volume, so Angular hot reload works through the standard `npm run start` script. Configure the API
+endpoint in `public/env.js`.
 
 ## Security Boundary
 
