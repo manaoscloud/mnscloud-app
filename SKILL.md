@@ -27,6 +27,15 @@ npm run build
 
 Use `npm run check:crud` when changing CRUD templates or CRUD baseline behavior.
 
+For bare-metal production runtime validation, the installer is:
+
+```bash
+sudo ./scripts/install-nginx-runtime.sh
+```
+
+It installs Nginx on Debian/Ubuntu hosts, builds the app, deploys `dist/app/browser`, writes
+runtime `env.js`, and creates `/etc/nginx/conf.d/mnscloud-app.conf`.
+
 ## Contribution Governance
 
 - External contributions must be submitted through Pull Requests.

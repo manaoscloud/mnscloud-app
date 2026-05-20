@@ -114,6 +114,13 @@ The production image is autonomous: it builds the Angular app and serves the gen
 with an internal Nginx runtime. The edge gateway should proxy the app domain to this service, while
 `/api` remains owned by the API edge route.
 
+There are two supported production runtime paths:
+
+- Docker image with internal Nginx.
+- Bare-metal Nginx installed by this repository.
+
+### Docker Runtime
+
 ```bash
 docker build -f Dockerfile.production -t mnscloud-app:production .
 docker run --rm -p 8080:80 mnscloud-app:production
@@ -148,6 +155,50 @@ Example runtime override:
 docker run --rm -p 8080:80 \
   -v /etc/mnscloud/app/env.js:/usr/share/nginx/html/env.js:ro \
   mnscloud-app:production
+```
+
+### Bare-Metal Nginx Runtime
+
+Use the installer when this module owns its own Nginx process on the app host. By default it serves
+the built app from `/var/www/mnscloud-app` and listens on `127.0.0.1:8080`, so the external
+`mnscloud-nginx` edge can proxy to it without sharing the app files.
+
+```bash
+sudo ./scripts/install-nginx-runtime.sh
+```
+
+Useful options:
+
+```bash
+sudo APP_LISTEN_ADDR=127.0.0.1 \
+  APP_LISTEN_PORT=8080 \
+  APP_API_BASE_URL="" \
+  ./scripts/install-nginx-runtime.sh
+```
+
+The installer:
+
+- installs Nginx on Debian/Ubuntu hosts;
+- runs `npm ci` and `npm run build`;
+- copies `dist/app/browser` into `/var/www/mnscloud-app`;
+- writes runtime config to `/var/www/mnscloud-app/env.js`;
+- creates `/etc/nginx/conf.d/mnscloud-app.conf`;
+- validates and reloads Nginx.
+
+When `APP_API_BASE_URL` is empty, the app uses same-origin `/api/v1`. That is the preferred setup
+when the edge gateway exposes both the app and `/api` on the public domain. If the app must call a
+separate API origin, pass the full API v1 URL:
+
+```bash
+sudo APP_API_BASE_URL=https://api.example.com/api/v1 ./scripts/install-nginx-runtime.sh
+```
+
+Example edge proxy to the app runtime:
+
+```nginx
+location / {
+  proxy_pass http://127.0.0.1:8080;
+}
 ```
 
 ## Security Boundary

@@ -8,6 +8,7 @@ This repository contains only the standalone MNSCloud Angular app.
 - Start: `npm run start`
 - Build: `npm run build`
 - CRUD validation: `npm run check:crud`
+- Install bare-metal Nginx runtime: `sudo ./scripts/install-nginx-runtime.sh`
 
 ## Public Client Boundary
 
