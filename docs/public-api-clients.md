@@ -16,5 +16,10 @@ window.MNSCLOUD_APP_CONFIG = {
 };
 ```
 
-Use placeholders in examples. The API remains the source of truth for authentication, tenant scope,
-permissions, billing, routing ownership, policy decisions, and secret resolution.
+Use placeholders in examples. Do not commit partner, staging, production, private, or customer
+specific API URLs into the repository. Generate `public/env.js` in CI from GitHub Actions variables
+or inputs, keep `apiBaseUrl` empty for same-origin `/api/v1`, or mount an environment-specific
+`env.js` into the production container at deploy time.
+
+The API remains the source of truth for authentication, tenant scope, permissions, billing, routing
+ownership, policy decisions, and secret resolution.

@@ -32,7 +32,8 @@ cd /opt/mnscloud/mnscloud-app
 
 ## API Configuration
 
-The app reads runtime configuration from `public/env.js` before Angular starts:
+The app reads runtime configuration from `public/env.js` before Angular starts. This file is a
+runtime/build input, not the permanent source of truth for any environment:
 
 ```js
 window.MNSCLOUD_APP_CONFIG = {
@@ -40,8 +41,17 @@ window.MNSCLOUD_APP_CONFIG = {
 };
 ```
 
-If `apiBaseUrl` is empty, the app falls back to same-origin `/api/v1`. For a contributor working
-from another country or network, only this API URL should need to change.
+If `apiBaseUrl` is empty, the app falls back to same-origin `/api/v1`. This is the recommended
+production default when an edge gateway serves the app and proxies `/api` to MNSCloud API.
+
+Do not commit tenant, partner, staging, or production API URLs into `public/env.js`. Use one of
+these environment-specific mechanisms instead:
+
+- Local development: copy `public/env.example.js` to `public/env.js` and edit only the local file.
+- GitHub static build: pass `api_base_url` when manually running the `CI` workflow, or configure the
+  `MNSCLOUD_API_BASE_URL` GitHub Actions variable.
+- Docker production runtime: keep `apiBaseUrl` empty for same-origin `/api/v1`, or mount an
+  environment-specific `/usr/share/nginx/html/env.js` at deploy time.
 
 The API must allow the app origin through CORS when the frontend and API run on different domains,
 for example `http://localhost:4200` during local development.
@@ -58,16 +68,21 @@ Open `http://localhost:4200`.
 
 ## Build
 
+Create the Angular production bundle locally:
+
 ```bash
 npm run build
 ```
+
+The browser files are generated at `dist/app/browser`.
 
 ## GitHub Build Configuration
 
 GitHub Actions generates `public/env.js` during CI, so environment-specific API URLs do not need to
 be committed. By default the value is empty and the browser uses same-origin `/api/v1`.
 
-For repository-wide builds, create this GitHub Actions variable:
+For repository-wide builds, create this GitHub Actions variable under
+`Settings -> Secrets and variables -> Actions -> Variables`:
 
 ```text
 MNSCLOUD_API_BASE_URL=https://api.example.com/api/v1
@@ -75,6 +90,13 @@ MNSCLOUD_API_BASE_URL=https://api.example.com/api/v1
 
 For one-off builds, run the `CI` workflow manually and fill the optional `api_base_url` input. The
 workflow uploads the generated browser bundle as the `mnscloud-app-browser` artifact.
+
+Recommended build choices:
+
+- Use an empty API URL when the final domain also exposes `/api/v1` through the edge gateway.
+- Use `api_base_url` or `MNSCLOUD_API_BASE_URL` only when the app must call a separate API origin.
+- Treat public API URLs as deploy configuration. Never use secrets, tokens, customer identifiers, or
+  private infrastructure details in `env.js`.
 
 ## Development Docker
 
@@ -119,6 +141,14 @@ The app container intentionally serves only the browser client. If `public/env.j
 `apiBaseUrl` empty, the browser uses same-origin `/api/v1`, so the edge must keep the API route
 available on the same public origin. For a separate API domain, provide a custom `public/env.js`
 before building or mount one over `/usr/share/nginx/html/env.js` at runtime.
+
+Example runtime override:
+
+```bash
+docker run --rm -p 8080:80 \
+  -v /etc/mnscloud/app/env.js:/usr/share/nginx/html/env.js:ro \
+  mnscloud-app:production
+```
 
 ## Security Boundary
 
