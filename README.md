@@ -179,12 +179,13 @@ sudo APP_LISTEN_ADDR=127.0.0.1 \
 Supported operating systems match the `mnscloud-nginx` edge module:
 
 - Debian 12/13
-- RHEL 8/9
-- Rocky Linux 8/9
-- AlmaLinux 8/9
+- RHEL 9/10
+- Rocky Linux 9/10
+- AlmaLinux 9/10
 
 The installer:
 
+- configures the official stable nginx.org package repository;
 - installs Nginx with `apt` or `dnf`;
 - runs `npm ci` and `npm run build`;
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;
