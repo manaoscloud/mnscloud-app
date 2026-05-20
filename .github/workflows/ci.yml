@@ -16,6 +16,7 @@ jobs:
     name: Angular app
     runs-on: ubuntu-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       MNSCLOUD_API_BASE_URL: ${{ github.event.inputs.api_base_url || vars.MNSCLOUD_API_BASE_URL || '' }}
     steps:
       - name: Checkout
