@@ -33,8 +33,9 @@ For bare-metal production runtime validation, the installer is:
 sudo ./scripts/install-nginx-runtime.sh
 ```
 
-It installs Nginx on Debian/Ubuntu hosts, builds the app, deploys `dist/app/browser`, writes
-runtime `env.js`, and creates `/etc/nginx/conf.d/mnscloud-app.conf`.
+It supports Debian 12/13 and RHEL/Rocky/AlmaLinux 8/9, installs Nginx with the host package
+manager, builds the app, deploys `dist/app/browser`, writes runtime `env.js`, and creates
+`/etc/nginx/conf.d/mnscloud-app.conf`.
 
 ## Contribution Governance
 

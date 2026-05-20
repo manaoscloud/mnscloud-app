@@ -176,9 +176,16 @@ sudo APP_LISTEN_ADDR=127.0.0.1 \
   ./scripts/install-nginx-runtime.sh
 ```
 
+Supported operating systems match the `mnscloud-nginx` edge module:
+
+- Debian 12/13
+- RHEL 8/9
+- Rocky Linux 8/9
+- AlmaLinux 8/9
+
 The installer:
 
-- installs Nginx on Debian/Ubuntu hosts;
+- installs Nginx with `apt` or `dnf`;
 - runs `npm ci` and `npm run build`;
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;
