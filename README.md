@@ -12,14 +12,18 @@ the business core stays in the API/control plane.
 
 ## Repository Access
 
-Install GitHub CLI if needed, authenticate, and clone the private repository. If
-`gh` is not installed yet, follow the official installation guide:
+Install GitHub CLI if needed:
 [cli/cli installation](https://github.com/cli/cli#installation).
+
+Authenticate GitHub CLI:
 
 ```bash
 gh auth login
-gh auth status
+```
 
+Clone the private repository:
+
+```bash
 sudo install -d -m 0755 /opt/mnscloud
 cd /opt/mnscloud
 gh repo clone manaoscloud/mnscloud-app
