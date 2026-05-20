@@ -3,11 +3,12 @@ set -Eeuo pipefail
 
 APP_NAME="${APP_NAME:-mnscloud-app}"
 APP_WEB_ROOT="${APP_WEB_ROOT:-/var/www/mnscloud-app}"
-APP_LISTEN_ADDR="${APP_LISTEN_ADDR:-127.0.0.1}"
+APP_LISTEN_ADDR="${APP_LISTEN_ADDR:-0.0.0.0}"
 APP_LISTEN_PORT="${APP_LISTEN_PORT:-8080}"
 APP_SERVER_NAME="${APP_SERVER_NAME:-_}"
 APP_API_BASE_URL="${APP_API_BASE_URL:-}"
 NGINX_CONF_PATH="${NGINX_CONF_PATH:-/etc/nginx/conf.d/${APP_NAME}.conf}"
+DISABLE_DEFAULT_NGINX_CONF="${DISABLE_DEFAULT_NGINX_CONF:-1}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
 NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION:-24}"
 
@@ -168,6 +169,10 @@ process.stdout.write(`(function (window) {
 NODE
 
 log "writing Nginx site ${NGINX_CONF_PATH}"
+if [[ "${DISABLE_DEFAULT_NGINX_CONF}" == "1" ]]; then
+  rm -f /etc/nginx/conf.d/default.conf
+fi
+
 cat > "${NGINX_CONF_PATH}" <<EOF
 server {
   listen ${APP_LISTEN_ADDR}:${APP_LISTEN_PORT};

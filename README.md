@@ -163,8 +163,8 @@ docker run --rm -p 8080:80 \
 ### Bare-Metal Nginx Runtime
 
 Use the installer when this module owns its own Nginx process on the app host. By default it serves
-the built app from `/var/www/mnscloud-app` and listens on `127.0.0.1:8080`, so the external
-`mnscloud-nginx` edge can proxy to it without sharing the app files.
+the built app from `/var/www/mnscloud-app` and listens on `0.0.0.0:8080`, so an external
+`mnscloud-nginx` edge on another host can proxy to it without sharing the app files.
 
 ```bash
 sudo ./scripts/install-nginx-runtime.sh
@@ -173,11 +173,13 @@ sudo ./scripts/install-nginx-runtime.sh
 Useful options:
 
 ```bash
-sudo APP_LISTEN_ADDR=127.0.0.1 \
+sudo APP_LISTEN_ADDR=0.0.0.0 \
   APP_LISTEN_PORT=8080 \
   APP_API_BASE_URL="" \
   ./scripts/install-nginx-runtime.sh
 ```
+
+Use `APP_LISTEN_ADDR=127.0.0.1` only when the app runtime and the edge gateway are on the same host.
 
 Supported operating systems match the `mnscloud-nginx` edge module:
 
@@ -195,6 +197,7 @@ The installer:
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;
 - creates `/etc/nginx/conf.d/mnscloud-app.conf`;
+- removes the official Nginx `default.conf` unless `DISABLE_DEFAULT_NGINX_CONF=0`;
 - validates and reloads Nginx.
 
 When `APP_API_BASE_URL` is empty, the app uses same-origin `/api/v1`. That is the preferred setup
@@ -209,7 +212,7 @@ Example edge proxy to the app runtime:
 
 ```nginx
 location / {
-  proxy_pass http://127.0.0.1:8080;
+  proxy_pass http://app-private-ip-or-dns:8080;
 }
 ```
 
