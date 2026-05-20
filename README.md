@@ -62,6 +62,20 @@ Open `http://localhost:4200`.
 npm run build
 ```
 
+## GitHub Build Configuration
+
+GitHub Actions generates `public/env.js` during CI, so environment-specific API URLs do not need to
+be committed. By default the value is empty and the browser uses same-origin `/api/v1`.
+
+For repository-wide builds, create this GitHub Actions variable:
+
+```text
+MNSCLOUD_API_BASE_URL=https://api.example.com/api/v1
+```
+
+For one-off builds, run the `CI` workflow manually and fill the optional `api_base_url` input. The
+workflow uploads the generated browser bundle as the `mnscloud-app-browser` artifact.
+
 ## Development Docker
 
 ```bash

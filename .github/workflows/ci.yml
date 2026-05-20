@@ -4,11 +4,19 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "Optional API base URL for this build, for example https://api.example.com/api/v1"
+        required: false
+        type: string
 
 jobs:
   app:
     name: Angular app
     runs-on: ubuntu-latest
+    env:
+      MNSCLOUD_API_BASE_URL: ${{ github.event.inputs.api_base_url || vars.MNSCLOUD_API_BASE_URL || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,5 +27,24 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Generate runtime config
+        run: |
+          node -e '
+            const fs = require("fs");
+            const apiBaseUrl = process.env.MNSCLOUD_API_BASE_URL || "";
+            const contents = `(function (window) {
+              window.MNSCLOUD_APP_CONFIG = window.MNSCLOUD_APP_CONFIG || {
+                apiBaseUrl: ${JSON.stringify(apiBaseUrl)},
+              };
+            })(window);
+          `;
+            fs.writeFileSync("public/env.js", contents);
+          '
       - name: Build
         run: npm run build
+      - name: Upload browser build
+        uses: actions/upload-artifact@v4
+        with:
+          name: mnscloud-app-browser
+          path: dist/app/browser
+          if-no-files-found: error
