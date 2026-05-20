@@ -62,7 +62,7 @@ Open `http://localhost:4200`.
 npm run build
 ```
 
-## Docker
+## Development Docker
 
 ```bash
 docker compose up --build
@@ -71,6 +71,40 @@ docker compose up --build
 The standalone Compose file mounts the project into `/app` and keeps `node_modules` in a container
 volume, so Angular hot reload works through the standard `npm run start` script. Configure the API
 endpoint in `public/env.js`.
+
+## Production Runtime
+
+The production image is autonomous: it builds the Angular app and serves the generated static files
+with an internal Nginx runtime. The edge gateway should proxy the app domain to this service, while
+`/api` remains owned by the API edge route.
+
+```bash
+docker build -f Dockerfile.production -t mnscloud-app:production .
+docker run --rm -p 8080:80 mnscloud-app:production
+```
+
+Or with Compose:
+
+```bash
+docker compose -f docker-compose.production.yml up --build
+```
+
+Open `http://localhost:8080`. In production behind `mnscloud-nginx`, configure the edge like:
+
+```nginx
+location /api/ {
+  proxy_pass http://mnscloud-api:8000/api/;
+}
+
+location / {
+  proxy_pass http://mnscloud-app:80;
+}
+```
+
+The app container intentionally serves only the browser client. If `public/env.js` leaves
+`apiBaseUrl` empty, the browser uses same-origin `/api/v1`, so the edge must keep the API route
+available on the same public origin. For a separate API domain, provide a custom `public/env.js`
+before building or mount one over `/usr/share/nginx/html/env.js` at runtime.
 
 ## Security Boundary
 
