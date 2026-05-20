@@ -10,6 +10,9 @@ the business core stays in the API/control plane.
 - npm
 - Access to an MNSCloud API endpoint
 
+The bare-metal Nginx runtime installer installs Node.js 24 automatically when a suitable `node` and
+`npm` are not already available.
+
 ## Repository Access
 
 Install GitHub CLI if needed:
@@ -187,6 +190,7 @@ The installer:
 
 - configures the official stable nginx.org package repository;
 - installs Nginx with `apt` or `dnf`;
+- installs Node.js 24 from NodeSource when needed;
 - runs `npm ci` and `npm run build`;
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;

@@ -9,6 +9,7 @@ APP_SERVER_NAME="${APP_SERVER_NAME:-_}"
 APP_API_BASE_URL="${APP_API_BASE_URL:-}"
 NGINX_CONF_PATH="${NGINX_CONF_PATH:-/etc/nginx/conf.d/${APP_NAME}.conf}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
+NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION:-24}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/dist/app/browser"
@@ -90,6 +91,40 @@ install_packages() {
   fi
 }
 
+node_major_version() {
+  if ! command -v node >/dev/null 2>&1; then
+    printf '0'
+    return 0
+  fi
+
+  node -p 'Number(process.versions.node.split(".")[0])' 2>/dev/null || printf '0'
+}
+
+nodejs_is_usable() {
+  local major
+  major="$(node_major_version)"
+  [[ "${major}" -ge "${NODE_MAJOR_VERSION}" ]] && command -v npm >/dev/null 2>&1
+}
+
+install_nodejs() {
+  if nodejs_is_usable; then
+    log "Node.js $(node -v) and npm $(npm -v) already available"
+    return 0
+  fi
+
+  log "installing Node.js ${NODE_MAJOR_VERSION}.x runtime"
+  if [[ "${OS_FAMILY}" == "debian" ]]; then
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR_VERSION}.x" | bash -
+    apt-get install -y --no-install-recommends nodejs
+  else
+    curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR_VERSION}.x" | bash -
+    dnf install -y nodejs
+  fi
+
+  nodejs_is_usable || die "Node.js ${NODE_MAJOR_VERSION}.x with npm is required before building ${APP_NAME}"
+  log "using Node.js $(node -v) and npm $(npm -v)"
+}
+
 reload_nginx() {
   nginx -t
 
@@ -105,10 +140,7 @@ require_root
 detect_os
 log "detected ${OS_PRETTY_NAME}"
 install_packages
-
-if ! command -v npm >/dev/null 2>&1; then
-  die "npm is required before installing the ${APP_NAME} runtime"
-fi
+install_nodejs
 
 if [[ "${SKIP_BUILD}" != "1" ]]; then
   log "installing dependencies"

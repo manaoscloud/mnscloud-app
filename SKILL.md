@@ -34,8 +34,9 @@ sudo ./scripts/install-nginx-runtime.sh
 ```
 
 It supports Debian 12/13 and RHEL/Rocky/AlmaLinux 9/10, configures the official stable nginx.org
-package repository, installs Nginx with the host package manager, builds the app, deploys
-`dist/app/browser`, writes runtime `env.js`, and creates `/etc/nginx/conf.d/mnscloud-app.conf`.
+package repository, installs Nginx with the host package manager, installs Node.js 24 from
+NodeSource when needed, builds the app, deploys `dist/app/browser`, writes runtime `env.js`, and
+creates `/etc/nginx/conf.d/mnscloud-app.conf`.
 
 ## Contribution Governance
 
