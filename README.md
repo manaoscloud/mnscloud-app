@@ -10,6 +10,22 @@ the business core stays in the API/control plane.
 - npm
 - Access to an MNSCloud API endpoint
 
+## Repository Access
+
+Install GitHub CLI if needed, authenticate, and clone the private repository. If
+`gh` is not installed yet, follow the official installation guide:
+[cli/cli installation](https://github.com/cli/cli#installation).
+
+```bash
+gh auth login
+gh auth status
+
+sudo install -d -m 0755 /opt/mnscloud
+cd /opt/mnscloud
+gh repo clone manaoscloud/mnscloud-app
+cd /opt/mnscloud/mnscloud-app
+```
+
 ## API Configuration
 
 The app reads runtime configuration from `public/env.js` before Angular starts:
