@@ -1,12 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -23,6 +31,10 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
+import {
+  CrudDialogBinding,
+  openCrudTemplateDialog,
+} from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type HostingSmtpProvider = {
@@ -82,7 +94,7 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
 
-  private dialogRef: MatDialogRef<unknown> | null = null;
+  private dialogBinding: CrudDialogBinding | null = null;
   private loadingStarted = 0;
   readonly dataSource = new MatTableDataSource<HostingSmtpAccount>([]);
 
@@ -106,7 +118,15 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   readonly providerSearch = signal('');
   readonly validatingId = signal<string | null>(null);
 
-  readonly displayedColumns = ['select', 'name', 'provider', 'from', 'default', 'status', 'actions'];
+  readonly displayedColumns = [
+    'select',
+    'name',
+    'provider',
+    'from',
+    'default',
+    'status',
+    'actions',
+  ];
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
@@ -125,8 +145,9 @@ export class HostingSmtpAccountsPage implements OnDestroy {
 
   readonly filteredProviderOptions = computed(() => {
     const term = this.providerSearch().trim().toLowerCase();
-    return this.providers().filter((provider) =>
-      !term || `${provider.HspName} ${provider.HspProvider}`.toLowerCase().includes(term),
+    return this.providers().filter(
+      (provider) =>
+        !term || `${provider.HspName} ${provider.HspProvider}`.toLowerCase().includes(term),
     );
   });
 
@@ -157,7 +178,7 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.dialogRef?.close();
+    this.closeDialog();
   }
 
   refreshList() {
@@ -238,17 +259,16 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   }
 
   private openDialog() {
-    if (!this.accountDialog) return;
-    this.dialogRef = this.dialog.open(this.accountDialog, {
-      width: 'min(960px, calc(100vw - 32px))',
-      maxWidth: '960px',
-      height: 'min(92vh, 720px)',
-      maxHeight: '92vh',
-      disableClose: true,
-      panelClass: 'crud-dialog-panel',
-    });
-    this.dialogRef.keydownEvents().subscribe((event) => {
-      if (event.key === 'Escape') this.closeDialog();
+    if (!this.accountDialog || this.dialogBinding) return;
+    this.dialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.accountDialog,
+      'crud-form-dialog',
+      { onEscape: () => this.closeDialog() },
+    );
+    this.dialogBinding.ref.afterClosed().subscribe(() => {
+      this.dialogBinding?.stop();
+      this.dialogBinding = null;
     });
   }
 
@@ -257,8 +277,10 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   }
 
   closeDialog() {
-    this.dialogRef?.close();
-    this.dialogRef = null;
+    if (!this.dialogBinding) return;
+    this.dialogBinding.ref.close();
+    this.dialogBinding.stop();
+    this.dialogBinding = null;
     this.editing.set(null);
   }
 
@@ -325,12 +347,19 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   async deleteSelectedAccounts() {
     const ids = [...this.selectedIds()];
     if (!ids.length) return;
-    const ok = await this.confirm(`Delete ${ids.length} selected SMTP account(s)?`);
+    const ok = await this.confirm(this.bulkDeleteMessage(ids));
     if (!ok) return;
     try {
-      await this.api.delete(`${this.endpoint()}/bulk`, { ids });
-      this.selectedIds.set(new Set());
-      this.snack.success('Selected SMTP accounts deleted.');
+      const response = await this.api.delete<any>(`${this.endpoint()}/bulk`, { ids });
+      const result = this.parseBulkDeleteResult(response, ids);
+      this.accounts.set(this.accounts().filter((row) => !result.deleted.has(row.HsaUUID)));
+      this.dataSource.data = this.accounts();
+      this.selectedIds.set(result.failed);
+      if (result.failed.size) {
+        this.snack.error(`${result.failed.size} selected SMTP account(s) could not be deleted.`);
+      } else {
+        this.snack.success(`${result.deleted.size} selected SMTP account(s) deleted.`);
+      }
       await this.loadAll();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete selected SMTP accounts.'));
@@ -366,7 +395,10 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   }
 
   providerLabel(item: HostingSmtpAccount) {
-    const name = item.HspName || this.providers().find((provider) => provider.HspUUID === item.HostingSmtpProviderHspUUID)?.HspName;
+    const name =
+      item.HspName ||
+      this.providers().find((provider) => provider.HspUUID === item.HostingSmtpProviderHspUUID)
+        ?.HspName;
     return name ?? '-';
   }
 
@@ -376,6 +408,10 @@ export class HostingSmtpAccountsPage implements OnDestroy {
 
   statusLabel(value: number) {
     return value === 1 ? 'Active' : 'Inactive';
+  }
+
+  statusChipClass(value: number) {
+    return value === 1 ? 'chip-success' : 'chip-skipped';
   }
 
   canValidate(item: HostingSmtpAccount) {
@@ -416,6 +452,40 @@ export class HostingSmtpAccountsPage implements OnDestroy {
       disableClose: true,
     });
     return !!(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private bulkDeleteMessage(ids: string[]) {
+    const labels = this.accounts()
+      .filter((item) => ids.includes(item.HsaUUID))
+      .slice(0, 3)
+      .map((item) => item.HsaName);
+    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
+    return `Delete ${ids.length} selected SMTP account(s)?${suffix}`;
+  }
+
+  private parseBulkDeleteResult(response: any, requestedIds: string[]) {
+    const payload = response?.data ?? response ?? {};
+    const failedItems = Array.isArray(payload.failed) ? payload.failed : [];
+    const failed = new Set<string>(
+      failedItems
+        .map((item: any) => this.extractBulkFailureUUID(item))
+        .filter((uuid: string | null): uuid is string => !!uuid),
+    );
+    const deletedItems = Array.isArray(payload.deleted) ? payload.deleted : [];
+    const deleted = new Set<string>(
+      deletedItems.length
+        ? deletedItems.filter((uuid: unknown): uuid is string => typeof uuid === 'string')
+        : requestedIds.filter((uuid) => !failed.has(uuid)),
+    );
+    return { deleted, failed };
+  }
+
+  private extractBulkFailureUUID(item: any): string | null {
+    if (!item || typeof item !== 'object') return null;
+    if (typeof item.HsaUUID === 'string') return item.HsaUUID;
+    if (typeof item.UUID === 'string') return item.UUID;
+    const uuidKey = Object.keys(item).find((key) => key.endsWith('UUID'));
+    return uuidKey && typeof item[uuidKey] === 'string' ? item[uuidKey] : null;
   }
 
   private errorMessage(error: unknown, fallback: string) {
