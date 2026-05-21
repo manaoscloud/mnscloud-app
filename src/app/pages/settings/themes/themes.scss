@@ -196,13 +196,6 @@
   border: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
 }
 
-.status-message {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.78rem;
-  color: var(--mat-sys-color-on-surface-variant);
-}
-
 @media (max-width: 1400px) {
   .filter-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

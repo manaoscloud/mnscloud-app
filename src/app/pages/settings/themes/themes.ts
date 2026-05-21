@@ -492,11 +492,6 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
     return job?.Status ?? 'idle';
   }
 
-  getJobMessage(item: ThemeDomain, action: 'web' | 'cert') {
-    const job = this.jobs()[item.ThemeUUID]?.[action];
-    return job?.Message ?? null;
-  }
-
   statusClass(status: string) {
     switch (status) {
       case 'queued':

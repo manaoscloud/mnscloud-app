@@ -115,9 +115,6 @@
             >
               {{ statusLabel(getJobStatus(row, 'web')) }}
             </mat-chip>
-            @if (getJobMessage(row, 'web')) {
-              <span class="status-message">{{ getJobMessage(row, 'web') }}</span>
-            }
           </td>
         </ng-container>
 
@@ -132,9 +129,6 @@
             >
               {{ statusLabel(getJobStatus(row, 'cert')) }}
             </mat-chip>
-            @if (getJobMessage(row, 'cert')) {
-              <span class="status-message">{{ getJobMessage(row, 'cert') }}</span>
-            }
           </td>
         </ng-container>
 
