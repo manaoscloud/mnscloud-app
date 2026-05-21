@@ -208,6 +208,26 @@ separate API origin, pass the full API v1 URL:
 sudo APP_API_BASE_URL=https://api.example.com/api/v1 ./scripts/install-nginx-runtime.sh
 ```
 
+Update and validate the runtime later:
+
+```bash
+cd /opt/mnscloud/mnscloud-app
+sudo ./scripts/update-nginx-runtime.sh
+sudo ./scripts/validate-nginx-runtime.sh
+```
+
+Deploy a specific tag or commit:
+
+```bash
+sudo ./scripts/update-nginx-runtime.sh --ref v1.4.0
+```
+
+Rollback to a known-good tag or commit:
+
+```bash
+sudo ./scripts/rollback-nginx-runtime.sh --ref v1.3.2
+```
+
 Example edge proxy to the app runtime:
 
 ```nginx
