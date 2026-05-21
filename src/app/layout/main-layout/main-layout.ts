@@ -161,6 +161,7 @@ export class MainLayout {
   private static readonly ENV_STORAGE_KEY = 'mc_current_env';
   private static readonly LAYOUT_COMPACT_STORAGE_KEY = 'mc_layout_compact';
   private compactCloseTimer: ReturnType<typeof setTimeout> | null = null;
+  private autoExpandScheduled = false;
 
   @HostBinding('class') themeClass = '';
 
@@ -168,6 +169,11 @@ export class MainLayout {
     // Atualiza tema automaticamente
     effect(() => {
       this.themeClass = `${this.theme()}-theme`;
+    });
+
+    effect(() => {
+      this.localizedNavItems();
+      this.scheduleAutoExpandSections();
     });
 
     // Responsividade
@@ -202,12 +208,12 @@ export class MainLayout {
 
     // Auto expand menus
     const sub = this.router.events.subscribe((e) => {
-      if (e instanceof NavigationEnd) this.autoExpandSections();
+      if (e instanceof NavigationEnd) this.scheduleAutoExpandSections();
     });
 
     this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.destroyRef.onDestroy(() => this.clearCompactCloseTimer());
-    setTimeout(() => this.autoExpandSections(), 0);
+    this.scheduleAutoExpandSections();
 
     // Carrega environments (tenants)
     this.initEnvironments();
@@ -239,7 +245,12 @@ export class MainLayout {
   // =======================================================
   isActiveRoute(route?: string): boolean {
     if (!route) return false;
-    return this.router.url === route;
+    const normalize = (url: string) => {
+      const path = url.split(/[?#]/)[0]?.replace(/\/+$/, '');
+      return path || '/';
+    };
+
+    return normalize(this.router.url) === normalize(route);
   }
 
   isActiveSection(item: NavItem): boolean {
@@ -259,6 +270,16 @@ export class MainLayout {
     };
     scan(this.localizedNavItems());
     this.expandedSections.set(expanded);
+  }
+
+  private scheduleAutoExpandSections() {
+    if (this.autoExpandScheduled) return;
+    this.autoExpandScheduled = true;
+
+    queueMicrotask(() => {
+      this.autoExpandScheduled = false;
+      this.autoExpandSections();
+    });
   }
 
   isExpanded(id: string) {
