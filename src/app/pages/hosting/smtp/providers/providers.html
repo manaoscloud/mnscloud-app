@@ -238,8 +238,8 @@
                 <mat-form-field appearance="outline">
                   <mat-label>Security</mat-label>
                   <mat-select formControlName="secure">
-                    <mat-option [value]="false">Plain / STARTTLS external</mat-option>
-                    <mat-option [value]="true">Direct TLS / SSL</mat-option>
+                    <mat-option [value]="false">STARTTLS / Plain (587)</mat-option>
+                    <mat-option [value]="true">Direct TLS / SSL (465)</mat-option>
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-2">
