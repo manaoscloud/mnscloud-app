@@ -201,7 +201,10 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
-                <mat-select formControlName="provider">
+                <mat-select
+                  formControlName="provider"
+                  (selectionChange)="onProviderChange($event.value)"
+                >
                   @for (provider of providerOptions; track provider.value) {
                     <mat-option [value]="provider.value">{{ provider.label }}</mat-option>
                   }
@@ -220,17 +223,112 @@
             </form>
           </div>
         </mat-tab>
-        <mat-tab label="API">
+        <mat-tab label="Credentials">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="form">
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Config JSON</mat-label>
-                <textarea matInput rows="6" formControlName="configJson"></textarea>
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Credentials JSON</mat-label>
-                <textarea matInput rows="6" formControlName="credentialsJson"></textarea>
-              </mat-form-field>
+              @if (selectedProvider() === 'smtp') {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Host</mat-label>
+                  <input matInput formControlName="host" autocomplete="off" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Port</mat-label>
+                  <input matInput type="number" min="1" formControlName="port" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Security</mat-label>
+                  <mat-select formControlName="secure">
+                    <mat-option [value]="false">Plain / STARTTLS external</mat-option>
+                    <mat-option [value]="true">Direct TLS / SSL</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Username</mat-label>
+                  <input matInput formControlName="username" autocomplete="off" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Password</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    formControlName="password"
+                    autocomplete="new-password"
+                  />
+                  <mat-hint>{{ secretHint('password') }}</mat-hint>
+                </mat-form-field>
+              }
+
+              @if (selectedProvider() === 'sendgrid') {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>API key</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    formControlName="apiKey"
+                    autocomplete="new-password"
+                  />
+                  <mat-hint>{{ secretHint('API key') }}</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>SMTP host</mat-label>
+                  <input matInput formControlName="host" readonly />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>SMTP username</mat-label>
+                  <input matInput formControlName="username" readonly />
+                </mat-form-field>
+              }
+
+              @if (selectedProvider() === 'ses') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Region</mat-label>
+                  <input
+                    matInput
+                    formControlName="region"
+                    autocomplete="off"
+                    (input)="onRegionInput()"
+                  />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Access key ID</mat-label>
+                  <input matInput formControlName="accessKeyId" autocomplete="off" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Secret access key</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    formControlName="secretAccessKey"
+                    autocomplete="new-password"
+                  />
+                  <mat-hint>{{ secretHint('secret access key') }}</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>SMTP endpoint</mat-label>
+                  <input matInput formControlName="host" readonly />
+                </mat-form-field>
+              }
+
+              @if (selectedProvider() === 'mailersend') {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>API token</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    formControlName="apiKey"
+                    autocomplete="new-password"
+                  />
+                  <mat-hint>{{ secretHint('API token') }}</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>API host</mat-label>
+                  <input matInput formControlName="host" readonly />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>API port</mat-label>
+                  <input matInput type="number" formControlName="port" readonly />
+                </mat-form-field>
+              }
             </form>
           </div>
         </mat-tab>

@@ -52,6 +52,22 @@ type HostingSmtpProvider = {
   HspIsDefault: number;
 };
 
+type ProviderFormValue = {
+  name: string;
+  provider: SmtpProvider;
+  isActive: number;
+  isDefault: number;
+  host: string;
+  port: number;
+  secure: boolean;
+  username: string;
+  password: string;
+  apiKey: string;
+  region: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+};
+
 @Component({
   selector: 'app-hosting-smtp-providers',
   standalone: true,
@@ -110,6 +126,7 @@ export class HostingSmtpProvidersPage implements OnDestroy {
   readonly sortActive = signal('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
   readonly validatingId = signal<string | null>(null);
+  readonly selectedProvider = signal<SmtpProvider>('smtp');
 
   readonly displayedColumns = ['select', 'name', 'provider', 'default', 'status', 'actions'];
 
@@ -131,8 +148,15 @@ export class HostingSmtpProvidersPage implements OnDestroy {
     provider: ['smtp' as SmtpProvider, [Validators.required]],
     isActive: [1],
     isDefault: [0],
-    configJson: [''],
-    credentialsJson: [''],
+    host: [''],
+    port: [587],
+    secure: [false],
+    username: [''],
+    password: [''],
+    apiKey: [''],
+    region: [''],
+    accessKeyId: [''],
+    secretAccessKey: [''],
   });
 
   readonly filteredProviders = computed(() => {
@@ -212,22 +236,41 @@ export class HostingSmtpProvidersPage implements OnDestroy {
       provider: 'smtp',
       isActive: 1,
       isDefault: 0,
-      configJson: '',
-      credentialsJson: '',
+      host: '',
+      port: 587,
+      secure: false,
+      username: '',
+      password: '',
+      apiKey: '',
+      region: '',
+      accessKeyId: '',
+      secretAccessKey: '',
     });
+    this.selectedProvider.set('smtp');
+    this.applyProviderDefaults('smtp', true);
     this.openDialog();
   }
 
   startEdit(item: HostingSmtpProvider) {
+    const config = this.normalizedConfig(item);
     this.editing.set(item);
+    this.selectedProvider.set(item.HspProvider);
     this.form.reset({
       name: item.HspName,
       provider: item.HspProvider,
       isActive: item.HspIsActive ? 1 : 0,
       isDefault: item.HspIsDefault ? 1 : 0,
-      configJson: item.HspConfig ? JSON.stringify(item.HspConfig, null, 2) : '',
-      credentialsJson: '',
+      host: String(config['host'] ?? ''),
+      port: Number(config['port'] ?? this.defaultPort(item.HspProvider)),
+      secure: this.normalizeSecure(config['secure'] ?? item.HspSecure),
+      username: String(config['username'] ?? item.HspUsername ?? ''),
+      password: '',
+      apiKey: '',
+      region: String(config['region'] ?? ''),
+      accessKeyId: String(config['accessKeyId'] ?? ''),
+      secretAccessKey: '',
     });
+    this.applyProviderDefaults(item.HspProvider, false);
     this.openDialog();
   }
 
@@ -264,19 +307,18 @@ export class HostingSmtpProvidersPage implements OnDestroy {
     }
 
     const raw = this.form.getRawValue();
-    let config: Record<string, unknown> = {};
-    let credentials: Record<string, unknown> = {};
-    try {
-      config = raw.configJson.trim() ? JSON.parse(raw.configJson) : {};
-      credentials = raw.credentialsJson.trim() ? JSON.parse(raw.credentialsJson) : {};
-    } catch {
-      this.snack.error('Config and credentials must be valid JSON.');
+    const provider = raw.provider;
+    const missing = this.requiredProviderFields(raw);
+    if (missing.length) {
+      this.snack.error(`Required provider fields: ${missing.join(', ')}.`);
       return;
     }
 
+    const config = this.buildProviderConfig(raw);
+    const credentials = this.buildProviderCredentials(raw);
     const payload = {
       name: raw.name,
-      provider: raw.provider,
+      provider,
       config,
       credentials,
       isActive: raw.isActive === 1,
@@ -379,6 +421,124 @@ export class HostingSmtpProvidersPage implements OnDestroy {
 
   providerLabel(value: string) {
     return this.providerOptions.find((item) => item.value === value)?.label ?? value;
+  }
+
+  onProviderChange(provider: SmtpProvider) {
+    this.selectedProvider.set(provider);
+    this.applyProviderDefaults(provider, true);
+  }
+
+  onRegionInput() {
+    if (this.selectedProvider() !== 'ses') return;
+    const region = this.form.controls.region.value.trim();
+    if (!region) return;
+    this.form.patchValue({ host: `email-smtp.${region}.amazonaws.com` });
+  }
+
+  secretHint(label: string) {
+    return this.editing() ? `Leave blank to keep current ${label}.` : `${label} is required.`;
+  }
+
+  private applyProviderDefaults(provider: SmtpProvider, force: boolean) {
+    const current = this.form.getRawValue();
+    const patch: Partial<typeof current> = {};
+    if (provider === 'smtp') {
+      if (force || !current.port) patch.port = 587;
+      if (force) patch.secure = false;
+    } else if (provider === 'sendgrid') {
+      patch.host = 'smtp.sendgrid.net';
+      patch.port = 587;
+      patch.secure = false;
+      patch.username = 'apikey';
+      if (force) patch.password = '';
+    } else if (provider === 'ses') {
+      patch.port = 587;
+      patch.secure = false;
+      if (current.region) patch.host = `email-smtp.${current.region.trim()}.amazonaws.com`;
+    } else if (provider === 'mailersend') {
+      patch.host = 'api.mailersend.com';
+      patch.port = 443;
+      patch.secure = true;
+      if (force) patch.username = '';
+    }
+    this.form.patchValue(patch);
+  }
+
+  private defaultPort(provider: SmtpProvider) {
+    if (provider === 'mailersend') return 443;
+    return 587;
+  }
+
+  private normalizedConfig(item: HostingSmtpProvider) {
+    return {
+      ...(item.HspConfig ?? {}),
+      host: item.HspConfig?.['host'] ?? item.HspHost ?? undefined,
+      port: item.HspConfig?.['port'] ?? item.HspPort ?? undefined,
+      secure: item.HspConfig?.['secure'] ?? item.HspSecure ?? undefined,
+      username: item.HspConfig?.['username'] ?? item.HspUsername ?? undefined,
+    } as Record<string, unknown>;
+  }
+
+  private normalizeSecure(value: unknown) {
+    return value === true || value === 1 || value === '1';
+  }
+
+  private requiredProviderFields(raw: ProviderFormValue) {
+    const missing: string[] = [];
+    const isEdit = !!this.editing();
+    if (raw.provider === 'smtp') {
+      if (!raw.host.trim()) missing.push('Host');
+      if (!Number(raw.port)) missing.push('Port');
+      if (!raw.username.trim()) missing.push('Username');
+      if (!isEdit && !raw.password.trim()) missing.push('Password');
+    } else if (raw.provider === 'sendgrid') {
+      if (!isEdit && !raw.apiKey.trim()) missing.push('API key');
+    } else if (raw.provider === 'ses') {
+      if (!raw.region.trim()) missing.push('Region');
+      if (!raw.accessKeyId.trim()) missing.push('Access key ID');
+      if (!isEdit && !raw.secretAccessKey.trim()) missing.push('Secret access key');
+    } else if (raw.provider === 'mailersend') {
+      if (!isEdit && !raw.apiKey.trim()) missing.push('API token');
+    }
+    return missing;
+  }
+
+  private buildProviderConfig(raw: ProviderFormValue) {
+    if (raw.provider === 'sendgrid') {
+      return { service: 'sendgrid', host: 'smtp.sendgrid.net', port: 587, secure: false };
+    }
+    if (raw.provider === 'ses') {
+      const region = raw.region.trim();
+      return {
+        region,
+        accessKeyId: raw.accessKeyId.trim(),
+        host: `email-smtp.${region}.amazonaws.com`,
+        port: 587,
+        secure: false,
+      };
+    }
+    if (raw.provider === 'mailersend') {
+      return { service: 'mailersend', host: 'api.mailersend.com', port: 443, secure: true };
+    }
+    return {
+      host: raw.host.trim(),
+      port: Number(raw.port),
+      secure: !!raw.secure,
+      username: raw.username.trim(),
+    };
+  }
+
+  private buildProviderCredentials(raw: ProviderFormValue) {
+    if (raw.provider === 'sendgrid') {
+      return raw.apiKey.trim() ? { apiKey: raw.apiKey.trim() } : {};
+    }
+    if (raw.provider === 'ses') {
+      return raw.secretAccessKey.trim() ? { secretAccessKey: raw.secretAccessKey.trim() } : {};
+    }
+    if (raw.provider === 'mailersend') {
+      return raw.apiKey.trim() ? { apiKey: raw.apiKey.trim() } : {};
+    }
+    return raw.password.trim() ? { password: raw.password.trim() } : {};
   }
 
   statusLabel(value: number) {
