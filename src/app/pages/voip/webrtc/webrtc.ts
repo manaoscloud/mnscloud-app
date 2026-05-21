@@ -504,10 +504,14 @@ if [ -z "\${PUBLIC_DOMAIN}" ]; then
     "\${API%/}/api/v1/webrtc/edge/config" | jq -r ".data.server.publicDomain // empty")
 fi
 HOSTNAME=$(hostname -f 2>/dev/null || hostname)
-PRIVATE_IP=$(ip -o -4 route get 1.1.1.1 2>/dev/null | awk "{for(i=1;i<=NF;i++) if(\\$i==\\"src\\") {print \\$(i+1); exit}}" || true)
+PRIVATE_IPV4=$(ip -o -4 route get 1.1.1.1 2>/dev/null | awk "{for(i=1;i<=NF;i++) if(\\$i==\\"src\\") {print \\$(i+1); exit}}" || true)
+PRIVATE_IPV6=$(ip -o -6 route get 2001:4860:4860::8888 2>/dev/null | awk "{for(i=1;i<=NF;i++) if(\\$i==\\"src\\") {print \\$(i+1); exit}}" || true)
+PRIVATE_IP=$(printf "%s\\n%s\\n" "\${PRIVATE_IPV4}" "\${PRIVATE_IPV6}" | awk "NF" | paste -sd ", " -)
 PUBLIC_IP=""
 if [ -n "\${PUBLIC_DOMAIN}" ]; then
-  PUBLIC_IP=$(getent ahostsv4 "\${PUBLIC_DOMAIN}" | awk "{print \\$1; exit}" || true)
+  PUBLIC_IPV4=$(getent ahostsv4 "\${PUBLIC_DOMAIN}" | awk "{print \\$1; exit}" || true)
+  PUBLIC_IPV6=$(getent ahostsv6 "\${PUBLIC_DOMAIN}" | awk "{print \\$1; exit}" || true)
+  PUBLIC_IP=$(printf "%s\\n%s\\n" "\${PUBLIC_IPV4}" "\${PUBLIC_IPV6}" | awk "NF" | paste -sd ", " -)
 fi
 BASE_URL=""
 if [ -n "\${PUBLIC_DOMAIN}" ]; then
