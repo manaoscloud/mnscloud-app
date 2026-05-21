@@ -47,6 +47,7 @@ interface NavItem {
   label: string;
   icon?: string;
   route?: string;
+  masterRoute?: string;
   children?: NavItem[];
 
   // ✅ Controle de visibilidade por role
@@ -253,9 +254,18 @@ export class MainLayout {
     return normalize(this.router.url) === normalize(route);
   }
 
+  private routeForItem(item: NavItem): string | undefined {
+    return this.user()?.role === 'MASTER' ? (item.masterRoute ?? item.route) : item.route;
+  }
+
+  isActiveItem(item: NavItem): boolean {
+    return this.isActiveRoute(item.route) || this.isActiveRoute(item.masterRoute);
+  }
+
   isActiveSection(item: NavItem): boolean {
     return (
-      (item.route && this.isActiveRoute(item.route)) ||
+      this.isActiveRoute(item.route) ||
+      this.isActiveRoute(item.masterRoute) ||
       (item.children?.some((child) => this.isActiveSection(child)) ?? false)
     );
   }
@@ -294,8 +304,9 @@ export class MainLayout {
   }
 
   async navigateTo(item: NavItem) {
-    if (!item.route) return;
-    await this.router.navigate([item.route]);
+    const route = this.routeForItem(item);
+    if (!route) return;
+    await this.router.navigate([route]);
     this.closeDrawerOnMobile();
   }
 
@@ -694,230 +705,6 @@ export class MainLayout {
   readonly navItemsRaw: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
 
-    // ✅ MASTER AREA (somente MASTER enxerga)
-    {
-      id: 'system',
-      label: 'System',
-      icon: 'admin_panel_settings',
-      roles: ['MASTER'],
-      children: [
-        {
-          id: 'system/financial',
-          label: 'Financial',
-          icon: 'account_balance',
-          children: [
-            {
-              id: 'system/payment-gateway',
-              label: 'Payment Gateways',
-              icon: 'credit_card',
-              route: '/system/payment-gateway',
-              roles: ['MASTER'],
-            },
-          ],
-        },
-        {
-          id: 'system/monitoring',
-          label: 'Monitoring',
-          icon: 'monitor_heart',
-          children: [
-            {
-              id: 'system/monitoring/agents',
-              label: 'Agents',
-              icon: 'sensors',
-              route: '/system/monitoring/agents',
-              roles: ['MASTER'],
-            },
-            {
-              id: 'monitoring/activity-logs',
-              label: 'Activity Logs',
-              icon: 'fact_check',
-              route: '/system/monitoring/activity-logs',
-              roles: ['MASTER'],
-            },
-          ],
-        },
-        {
-          id: 'system/settings',
-          label: 'Settings',
-          icon: 'tune',
-          children: [
-            {
-              id: 'system/parameters',
-              label: 'Parameters',
-              icon: 'tune',
-              route: '/system/parameters',
-              roles: ['MASTER'],
-            },
-          ],
-        },
-        {
-          id: 'system/hosting',
-          label: 'Hosting',
-          icon: 'dns',
-          children: [
-            {
-              id: 'system/hosting/smtp',
-              label: 'SMTP',
-              icon: 'mark_email_read',
-              roles: ['MASTER'],
-              children: [
-                {
-                  id: 'system/hosting/smtp/providers',
-                  label: 'Provider',
-                  icon: 'cloud_sync',
-                  route: '/system/hosting/smtp/providers',
-                  roles: ['MASTER'],
-                },
-                {
-                  id: 'system/hosting/smtp/accounts',
-                  label: 'Account',
-                  icon: 'alternate_email',
-                  route: '/system/hosting/smtp/accounts',
-                  roles: ['MASTER'],
-                },
-                {
-                  id: 'system/hosting/smtp/routes',
-                  label: 'Route',
-                  icon: 'route',
-                  route: '/system/hosting/smtp/routes',
-                  roles: ['MASTER'],
-                },
-              ],
-            },
-            {
-              id: 'system/hosting/storage',
-              label: 'Storage',
-              icon: 'storage',
-              roles: ['MASTER'],
-              children: [
-                {
-                  id: 'system/hosting/storage/providers',
-                  label: 'Provider',
-                  icon: 'cloud_sync',
-                  route: '/system/hosting/storage/providers',
-                  roles: ['MASTER'],
-                },
-                {
-                  id: 'system/hosting/storage/accounts',
-                  label: 'Storage',
-                  icon: 'inventory_2',
-                  route: '/system/hosting/storage/accounts',
-                  roles: ['MASTER'],
-                },
-              ],
-            },
-            {
-              id: 'system/vps',
-              label: 'VPS',
-              icon: 'cloud',
-              roles: ['MASTER'],
-              children: [
-                {
-                  id: 'system/vps/provider',
-                  label: 'Provider',
-                  icon: 'cloud_sync',
-                  route: '/system/vps/provider',
-                  roles: ['MASTER'],
-                },
-                {
-                  id: 'system/vps/plans',
-                  label: 'Plans',
-                  icon: 'view_list',
-                  route: '/system/vps/plans',
-                  roles: ['MASTER'],
-                },
-                {
-                  id: 'system/vps/instances',
-                  label: 'Instances',
-                  icon: 'dns',
-                  route: '/system/vps/instances',
-                  roles: ['MASTER'],
-                },
-              ],
-            },
-            {
-              id: 'system/vps-container',
-              label: 'VPS Container',
-              icon: 'apps',
-              roles: ['MASTER'],
-              children: [
-                {
-                  id: 'system/vps-container/provider',
-                  label: 'Provider',
-                  icon: 'cloud_sync',
-                  route: '/system/vps-container/provider',
-                  roles: ['MASTER'],
-                },
-                {
-                  id: 'system/vps-container/plans',
-                  label: 'Plans',
-                  icon: 'view_list',
-                  route: '/system/vps-container/plans',
-                  roles: ['MASTER'],
-                },
-                {
-                  id: 'system/vps-container/instances',
-                  label: 'Instances',
-                  icon: 'dns',
-                  route: '/system/vps-container/instances',
-                  roles: ['MASTER'],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: 'system/isp',
-          label: 'ISP',
-          icon: 'network_check',
-          children: [
-            {
-              id: 'system/isp/radius-server',
-              label: 'Radius Server',
-              icon: 'security',
-              route: '/system/isp/radius-server',
-              roles: ['MASTER'],
-            },
-          ],
-        },
-        {
-          id: 'system/voip',
-          label: 'VoIP',
-          icon: 'call',
-          children: [
-            {
-              id: 'system/softswitch',
-              label: 'Softswitch',
-              icon: 'router',
-              route: '/system/softswitch',
-              roles: ['MASTER'],
-            },
-            {
-              id: 'system/sbc',
-              label: 'SBC',
-              icon: 'settings_input_component',
-              route: '/system/sbc',
-              roles: ['MASTER'],
-            },
-            {
-              id: 'system/pabx',
-              label: 'PABX',
-              icon: 'phone_in_talk',
-              children: [
-                {
-                  id: 'system/pabx/registry',
-                  label: 'PABX',
-                  icon: 'badge',
-                  route: '/system/pabx',
-                  roles: ['MASTER'],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-
     {
       id: 'user',
       label: 'User',
@@ -927,7 +714,7 @@ export class MainLayout {
       ],
     },
 
-    // ✅ ERP TENANT (exige env) — não aparece para MASTER e não aparece sem Environment selecionado
+    // ✅ ERP (tenant; MASTER usa rotas globais quando disponível)
     {
       id: 'erp',
       label: 'ERP',
@@ -988,6 +775,7 @@ export class MainLayout {
                   label: 'Gateway',
                   icon: 'credit_card',
                   route: '/erp/financial/payment-gateway',
+                  masterRoute: '/system/payment-gateway',
                 },
               ],
             },
@@ -1027,7 +815,7 @@ export class MainLayout {
       ],
     },
 
-    // ✅ ISP (tenant) — requer ambiente selecionado
+    // ✅ ISP (tenant; MASTER usa rotas globais quando disponível)
     {
       id: 'isp',
       label: 'ISP',
@@ -1079,6 +867,7 @@ export class MainLayout {
               label: 'Registry',
               icon: 'badge',
               route: '/isp/radius-server',
+              masterRoute: '/system/isp/radius-server',
             },
             {
               id: 'isp/radius-server/pppoe-client',
@@ -1151,7 +940,7 @@ export class MainLayout {
       ],
     },
 
-    // ✅ VoIP (tenant) — requer ambiente selecionado
+    // ✅ VoIP (tenant; MASTER usa rotas globais quando disponível)
     {
       id: 'voip',
       label: 'VoIP',
@@ -1195,7 +984,8 @@ export class MainLayout {
               id: 'voip/sbc/server',
               label: 'Server',
               icon: 'dns',
-              route: '/system/sbc/server',
+              route: '/voip/sbc/server',
+              masterRoute: '/system/sbc/server',
               roles: ['MASTER'],
             },
             {
@@ -1242,7 +1032,8 @@ export class MainLayout {
               id: 'voip/softswitch/server',
               label: 'Server',
               icon: 'dns',
-              route: '/system/softswitch/server',
+              route: '/voip/softswitch/server',
+              masterRoute: '/system/softswitch/server',
               roles: ['MASTER'],
             },
             {
@@ -1256,6 +1047,7 @@ export class MainLayout {
               label: 'Softswitch',
               icon: 'router',
               route: '/voip/softswitch',
+              masterRoute: '/system/softswitch',
             },
             {
               id: 'voip/softswitch/subscriber',
@@ -1310,7 +1102,8 @@ export class MainLayout {
               id: 'voip/pabx/server',
               label: 'Server',
               icon: 'dns',
-              route: '/system/pabx/server',
+              route: '/voip/pabx/server',
+              masterRoute: '/system/pabx/server',
               roles: ['MASTER'],
             },
             {
@@ -1318,6 +1111,7 @@ export class MainLayout {
               label: 'PABX',
               icon: 'settings_phone',
               route: '/voip/pabx',
+              masterRoute: '/system/pabx',
             },
             {
               id: 'voip/pabx/trunks',
@@ -1412,7 +1206,7 @@ export class MainLayout {
       ],
     },
 
-    // ✅ Hosting (tenant) — requer ambiente selecionado
+    // ✅ Hosting (tenant; MASTER usa rotas globais quando disponível)
     {
       id: 'hosting',
       label: 'Hosting',
@@ -1449,18 +1243,21 @@ export class MainLayout {
               label: 'Provider',
               icon: 'cloud_sync',
               route: '/hosting/smtp/providers',
+              masterRoute: '/system/hosting/smtp/providers',
             },
             {
               id: 'hosting/smtp/accounts',
               label: 'Account',
               icon: 'alternate_email',
               route: '/hosting/smtp/accounts',
+              masterRoute: '/system/hosting/smtp/accounts',
             },
             {
               id: 'hosting/smtp/routes',
               label: 'Route',
               icon: 'route',
               route: '/hosting/smtp/routes',
+              masterRoute: '/system/hosting/smtp/routes',
             },
           ],
         },
@@ -1474,12 +1271,14 @@ export class MainLayout {
               label: 'Provider',
               icon: 'cloud_sync',
               route: '/hosting/storage/providers',
+              masterRoute: '/system/hosting/storage/providers',
             },
             {
               id: 'hosting/storage/accounts',
               label: 'Storage',
               icon: 'inventory_2',
               route: '/hosting/storage/accounts',
+              masterRoute: '/system/hosting/storage/accounts',
             },
           ],
         },
@@ -1493,18 +1292,21 @@ export class MainLayout {
               label: 'Provider',
               icon: 'cloud_sync',
               route: '/hosting/vps/provider',
+              masterRoute: '/system/vps/provider',
             },
             {
               id: 'hosting/vps/plans',
               label: 'Plans',
               icon: 'view_list',
               route: '/hosting/vps/plans',
+              masterRoute: '/system/vps/plans',
             },
             {
               id: 'hosting/vps/instances',
               label: 'Instances',
               icon: 'dns',
               route: '/hosting/vps/instances',
+              masterRoute: '/system/vps/instances',
             },
           ],
         },
@@ -1518,18 +1320,21 @@ export class MainLayout {
               label: 'Provider',
               icon: 'cloud_sync',
               route: '/hosting/vps-container/provider',
+              masterRoute: '/system/vps-container/provider',
             },
             {
               id: 'hosting/vps-container/plans',
               label: 'Plans',
               icon: 'view_list',
               route: '/hosting/vps-container/plans',
+              masterRoute: '/system/vps-container/plans',
             },
             {
               id: 'hosting/vps-container/instances',
               label: 'Instances',
               icon: 'dns',
               route: '/hosting/vps-container/instances',
+              masterRoute: '/system/vps-container/instances',
             },
           ],
         },
@@ -1638,6 +1443,7 @@ export class MainLayout {
           label: 'Agents',
           icon: 'sensors',
           route: '/monitoring/agents',
+          masterRoute: '/system/monitoring/agents',
           roles: ['OWNER', 'ADMIN'],
           requiresEnvironment: true,
         },
@@ -1646,6 +1452,7 @@ export class MainLayout {
           label: 'Activity Logs',
           icon: 'fact_check',
           route: '/monitoring/activity-logs',
+          masterRoute: '/system/monitoring/activity-logs',
           roles: ['OWNER', 'ADMIN'],
           requiresEnvironment: true,
         },
@@ -1807,6 +1614,7 @@ export class MainLayout {
           label: 'Parameters',
           icon: 'tune',
           route: '/settings/parameters',
+          masterRoute: '/system/parameters',
           roles: ['OWNER', 'ADMIN'],
           requiresEnvironment: true,
         },

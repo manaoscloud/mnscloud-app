@@ -1,9 +1,11 @@
 <mat-sidenav-container class="mat-app-background layout-container" [autosize]="true">
-
-  <mat-sidenav class="sidenav" [class.compact]="isDesktopCompact()"
-    [mode]="isHandset() ? 'over' : 'side'" [opened]="isHandset() ? drawerOpened() : true"
-    (openedChange)="drawerOpened.set($event)">
-
+  <mat-sidenav
+    class="sidenav"
+    [class.compact]="isDesktopCompact()"
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="isHandset() ? drawerOpened() : true"
+    (openedChange)="drawerOpened.set($event)"
+  >
     <!-- HEADER -->
     <div class="drawer-header">
       <div class="drawer-logo">MC</div>
@@ -15,192 +17,251 @@
 
     <!-- SEARCH -->
     @if (!isDesktopCompact()) {
-    <div class="drawer-search">
-      <mat-icon>search</mat-icon>
-      <div class="search-field">
-        <input
-          [placeholder]="'layout.searchMenu' | t"
-          [value]="menuSearch()"
-          (input)="menuSearch.set($any($event.target).value)"
-        />
-        @if (isSearching()) {
-        <button type="button" class="search-clear" (click)="menuSearch.set('')">
-          <mat-icon>close</mat-icon>
-        </button>
-        }
+      <div class="drawer-search">
+        <mat-icon>search</mat-icon>
+        <div class="search-field">
+          <input
+            [placeholder]="'layout.searchMenu' | t"
+            [value]="menuSearch()"
+            (input)="menuSearch.set($any($event.target).value)"
+          />
+          @if (isSearching()) {
+            <button type="button" class="search-clear" (click)="menuSearch.set('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
       </div>
-    </div>
     }
 
     <!-- MENU -->
     <div class="sidenav-scroll">
       <nav class="nav-menu">
-
         @for (item of filteredNavItems; track item.id) {
-        <!-- ROOT -->
-        <button type="button" class="menu-item root-item" (click)="onRootItemClick(item)"
-          (mouseenter)="onCompactRootEnter(item, $event)"
-          (mouseleave)="onCompactRootLeave()"
-          [class.active-root]="isActiveSection(item)">
-          @if (item.icon) {
-          <mat-icon class="menu-icon">
-            {{ item.icon }}
-          </mat-icon>
-          }
-          <span class="menu-label">{{ item.label }}</span>
-          <span class="menu-spacer"></span>
-          @if (item.children?.length) {
-          <mat-icon class="collapse-icon">
-            {{ isExpanded(item.id) ? 'expand_less' : 'expand_more' }}
-          </mat-icon>
-          }
-        </button>
-        <!-- CHILDREN -->
-        @if (item.children?.length && (isExpanded(item.id) || isSearching())) {
-        <div class="children">
-          @for (child of item.children; track child.id) {
-          @if (child.children?.length) {
-          <div class="child-with-grand">
-            <button type="button" class="menu-item child-item" (click)="toggleSection(child.id); $event.stopPropagation()"
-              [class.active-child]="isActiveSection(child)">
-              @if (child.icon) {
-              <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
-              }
-              <span class="menu-label">{{ child.label }}</span>
-              <span class="menu-spacer"></span>
-              <mat-icon class="collapse-icon">
-                {{ isExpanded(child.id) ? 'expand_less' : 'expand_more' }}
+          <!-- ROOT -->
+          <button
+            type="button"
+            class="menu-item root-item"
+            (click)="onRootItemClick(item)"
+            (mouseenter)="onCompactRootEnter(item, $event)"
+            (mouseleave)="onCompactRootLeave()"
+            [class.active-root]="isActiveSection(item)"
+          >
+            @if (item.icon) {
+              <mat-icon class="menu-icon">
+                {{ item.icon }}
               </mat-icon>
-            </button>
-            @if (isExpanded(child.id) || isSearching()) {
-            <div class="grand-children">
-              @for (grand of child.children; track grand.id) {
-              @if (grand.children?.length) {
-              <div class="grand-with-great">
-                <button class="menu-item grand-item" (click)="toggleSection(grand.id); $event.stopPropagation()"
-                  [class.active-grand]="isActiveSection(grand)">
-                  @if (grand.icon) {
-                  <mat-icon class="menu-icon">{{ grand.icon }}</mat-icon>
-                  }
-                  <span class="menu-label">{{ grand.label }}</span>
-                  <span class="menu-spacer"></span>
-                  <mat-icon class="collapse-icon">
-                    {{ isExpanded(grand.id) ? 'expand_less' : 'expand_more' }}
-                  </mat-icon>
-                </button>
-                @if (isExpanded(grand.id) || isSearching()) {
-                <div class="great-children">
-                  @for (great of grand.children; track great.id) {
-                  <button class="menu-item great-item" (click)="navigateTo(great)"
-                    [class.active-grand]="isActiveRoute(great.route)">
-                    @if (great.icon) {
-                    <mat-icon class="menu-icon">{{ great.icon }}</mat-icon>
+            }
+            <span class="menu-label">{{ item.label }}</span>
+            <span class="menu-spacer"></span>
+            @if (item.children?.length) {
+              <mat-icon class="collapse-icon">
+                {{ isExpanded(item.id) ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            }
+          </button>
+          <!-- CHILDREN -->
+          @if (item.children?.length && (isExpanded(item.id) || isSearching())) {
+            <div class="children">
+              @for (child of item.children; track child.id) {
+                @if (child.children?.length) {
+                  <div class="child-with-grand">
+                    <button
+                      type="button"
+                      class="menu-item child-item"
+                      (click)="toggleSection(child.id); $event.stopPropagation()"
+                      [class.active-child]="isActiveSection(child)"
+                    >
+                      @if (child.icon) {
+                        <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
+                      }
+                      <span class="menu-label">{{ child.label }}</span>
+                      <span class="menu-spacer"></span>
+                      <mat-icon class="collapse-icon">
+                        {{ isExpanded(child.id) ? 'expand_less' : 'expand_more' }}
+                      </mat-icon>
+                    </button>
+                    @if (isExpanded(child.id) || isSearching()) {
+                      <div class="grand-children">
+                        @for (grand of child.children; track grand.id) {
+                          @if (grand.children?.length) {
+                            <div class="grand-with-great">
+                              <button
+                                class="menu-item grand-item"
+                                (click)="toggleSection(grand.id); $event.stopPropagation()"
+                                [class.active-grand]="isActiveSection(grand)"
+                              >
+                                @if (grand.icon) {
+                                  <mat-icon class="menu-icon">{{ grand.icon }}</mat-icon>
+                                }
+                                <span class="menu-label">{{ grand.label }}</span>
+                                <span class="menu-spacer"></span>
+                                <mat-icon class="collapse-icon">
+                                  {{ isExpanded(grand.id) ? 'expand_less' : 'expand_more' }}
+                                </mat-icon>
+                              </button>
+                              @if (isExpanded(grand.id) || isSearching()) {
+                                <div class="great-children">
+                                  @for (great of grand.children; track great.id) {
+                                    <button
+                                      class="menu-item great-item"
+                                      (click)="navigateTo(great)"
+                                      [class.active-grand]="isActiveItem(great)"
+                                    >
+                                      @if (great.icon) {
+                                        <mat-icon class="menu-icon">{{ great.icon }}</mat-icon>
+                                      }
+                                      <span class="menu-label">{{ great.label }}</span>
+                                    </button>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          } @else {
+                            <button
+                              class="menu-item grand-item"
+                              (click)="navigateTo(grand)"
+                              [class.active-grand]="isActiveItem(grand)"
+                            >
+                              @if (grand.icon) {
+                                <mat-icon class="menu-icon">{{ grand.icon }}</mat-icon>
+                              }
+                              <span class="menu-label">{{ grand.label }}</span>
+                            </button>
+                          }
+                        }
+                      </div>
                     }
-                    <span class="menu-label">{{ great.label }}</span>
+                  </div>
+                } @else {
+                  <button
+                    class="menu-item child-item"
+                    (click)="navigateTo(child)"
+                    [class.active-child]="isActiveItem(child)"
+                  >
+                    @if (child.icon) {
+                      <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
+                    }
+                    <span class="menu-label">{{ child.label }}</span>
                   </button>
-                  }
-                </div>
                 }
-              </div>
-              } @else {
-              <button class="menu-item grand-item" (click)="navigateTo(grand)"
-                [class.active-grand]="isActiveRoute(grand.route)">
-                @if (grand.icon) {
-                <mat-icon class="menu-icon">{{ grand.icon }}</mat-icon>
-                }
-                <span class="menu-label">{{ grand.label }}</span>
-              </button>
-              }
               }
             </div>
-            }
-          </div>
-          } @else {
-          <button class="menu-item child-item" (click)="navigateTo(child)"
-            [class.active-child]="isActiveRoute(child.route)">
-            @if (child.icon) {
-            <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
-            }
-            <span class="menu-label">{{ child.label }}</span>
-          </button>
           }
-          }
-        </div>
         }
-        }
-
       </nav>
 
       @if (isDesktopCompact() && compactHoverRootItem(); as hoverRoot) {
-      <div class="compact-flyout compact-flyout-root" [style.top.px]="compactRootFlyoutTop()"
-        [style.left.px]="compactFlyoutLeft()" (mouseenter)="onCompactFlyoutEnter()"
-        (mouseleave)="onCompactFlyoutLeave()">
-        @for (child of hoverRoot.children ?? []; track child.id) {
-        <button type="button" class="compact-flyout-item" [class.is-active]="isActiveSection(child)"
-          [class.has-children]="child.children?.length" (mouseenter)="onCompactChildEnter(child, $event)"
-          (click)="child.children?.length ? onCompactChildEnter(child, $event) : onCompactFlyoutNavigate(child)">
-          <span class="compact-flyout-main">
-            <mat-icon class="compact-flyout-icon">{{ child.icon || 'fiber_manual_record' }}</mat-icon>
-            <span>{{ child.label }}</span>
-          </span>
-          @if (child.children?.length) {
-          <mat-icon>chevron_right</mat-icon>
+        <div
+          class="compact-flyout compact-flyout-root"
+          [style.top.px]="compactRootFlyoutTop()"
+          [style.left.px]="compactFlyoutLeft()"
+          (mouseenter)="onCompactFlyoutEnter()"
+          (mouseleave)="onCompactFlyoutLeave()"
+        >
+          @for (child of hoverRoot.children ?? []; track child.id) {
+            <button
+              type="button"
+              class="compact-flyout-item"
+              [class.is-active]="isActiveSection(child)"
+              [class.has-children]="child.children?.length"
+              (mouseenter)="onCompactChildEnter(child, $event)"
+              (click)="
+                child.children?.length
+                  ? onCompactChildEnter(child, $event)
+                  : onCompactFlyoutNavigate(child)
+              "
+            >
+              <span class="compact-flyout-main">
+                <mat-icon class="compact-flyout-icon">{{
+                  child.icon || 'fiber_manual_record'
+                }}</mat-icon>
+                <span>{{ child.label }}</span>
+              </span>
+              @if (child.children?.length) {
+                <mat-icon>chevron_right</mat-icon>
+              }
+            </button>
           }
-        </button>
-        }
-      </div>
+        </div>
       }
 
       @if (isDesktopCompact() && compactHoverChildItem(); as hoverChild) {
-      <div class="compact-flyout compact-flyout-child" [style.top.px]="compactChildFlyoutTop()"
-        [style.left.px]="compactFlyoutLeft() + 242" (mouseenter)="onCompactFlyoutEnter()"
-        (mouseleave)="onCompactFlyoutLeave()">
-        @for (grand of hoverChild.children ?? []; track grand.id) {
-        <button type="button" class="compact-flyout-item" [class.is-active]="isActiveSection(grand)"
-          [class.has-children]="grand.children?.length" (mouseenter)="onCompactGrandEnter(grand, $event)"
-          (click)="grand.children?.length ? onCompactGrandEnter(grand, $event) : onCompactFlyoutNavigate(grand)">
-          <span class="compact-flyout-main">
-            <mat-icon class="compact-flyout-icon">{{ grand.icon || 'fiber_manual_record' }}</mat-icon>
-            <span>{{ grand.label }}</span>
-          </span>
-          @if (grand.children?.length) {
-          <mat-icon>chevron_right</mat-icon>
+        <div
+          class="compact-flyout compact-flyout-child"
+          [style.top.px]="compactChildFlyoutTop()"
+          [style.left.px]="compactFlyoutLeft() + 242"
+          (mouseenter)="onCompactFlyoutEnter()"
+          (mouseleave)="onCompactFlyoutLeave()"
+        >
+          @for (grand of hoverChild.children ?? []; track grand.id) {
+            <button
+              type="button"
+              class="compact-flyout-item"
+              [class.is-active]="isActiveSection(grand)"
+              [class.has-children]="grand.children?.length"
+              (mouseenter)="onCompactGrandEnter(grand, $event)"
+              (click)="
+                grand.children?.length
+                  ? onCompactGrandEnter(grand, $event)
+                  : onCompactFlyoutNavigate(grand)
+              "
+            >
+              <span class="compact-flyout-main">
+                <mat-icon class="compact-flyout-icon">{{
+                  grand.icon || 'fiber_manual_record'
+                }}</mat-icon>
+                <span>{{ grand.label }}</span>
+              </span>
+              @if (grand.children?.length) {
+                <mat-icon>chevron_right</mat-icon>
+              }
+            </button>
           }
-        </button>
-        }
-      </div>
+        </div>
       }
 
       @if (isDesktopCompact() && compactHoverGrandItem(); as hoverGrand) {
-      <div class="compact-flyout compact-flyout-grand" [style.top.px]="compactGrandFlyoutTop()"
-        [style.left.px]="compactFlyoutLeft() + 484" (mouseenter)="onCompactFlyoutEnter()"
-        (mouseleave)="onCompactFlyoutLeave()">
-        @for (great of hoverGrand.children ?? []; track great.id) {
-        <button type="button" class="compact-flyout-item" [class.is-active]="isActiveRoute(great.route)"
-          (click)="onCompactFlyoutNavigate(great)">
-          <span class="compact-flyout-main">
-            <mat-icon class="compact-flyout-icon">{{ great.icon || 'fiber_manual_record' }}</mat-icon>
-            <span>{{ great.label }}</span>
-          </span>
-        </button>
-        }
-      </div>
+        <div
+          class="compact-flyout compact-flyout-grand"
+          [style.top.px]="compactGrandFlyoutTop()"
+          [style.left.px]="compactFlyoutLeft() + 484"
+          (mouseenter)="onCompactFlyoutEnter()"
+          (mouseleave)="onCompactFlyoutLeave()"
+        >
+          @for (great of hoverGrand.children ?? []; track great.id) {
+            <button
+              type="button"
+              class="compact-flyout-item"
+              [class.is-active]="isActiveItem(great)"
+              (click)="onCompactFlyoutNavigate(great)"
+            >
+              <span class="compact-flyout-main">
+                <mat-icon class="compact-flyout-icon">{{
+                  great.icon || 'fiber_manual_record'
+                }}</mat-icon>
+                <span>{{ great.label }}</span>
+              </span>
+            </button>
+          }
+        </div>
       }
     </div>
-
   </mat-sidenav>
 
   <!-- CONTENT AREA -->
   <mat-sidenav-content class="content-area">
-
     <mat-toolbar class="topbar">
-
       <button mat-icon-button (click)="toggleDrawer()">
         <mat-icon>
           {{
-          isHandset()
-          ? (drawerOpened() ? 'menu_open' : 'menu')
-          : (isDesktopCompact() ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left')
+            isHandset()
+              ? drawerOpened()
+                ? 'menu_open'
+                : 'menu'
+              : isDesktopCompact()
+                ? 'keyboard_double_arrow_right'
+                : 'keyboard_double_arrow_left'
           }}
         </mat-icon>
       </button>
@@ -208,12 +269,11 @@
       <span class="spacer"></span>
 
       <div class="topbar-end">
-
         @if (!online()) {
-        <div class="offline-pill">
-          <mat-icon>cloud_off</mat-icon>
-          <span>{{ 'layout.offline' | t }}</span>
-        </div>
+          <div class="offline-pill">
+            <mat-icon>cloud_off</mat-icon>
+            <span>{{ 'layout.offline' | t }}</span>
+          </div>
         }
 
         <!-- Language -->
@@ -224,75 +284,88 @@
         </button>
         <mat-menu #languageMenu="matMenu" class="rounded-menu">
           @for (language of languageOptions; track language.code) {
-          <button mat-menu-item (click)="changeLanguage(language.code)">
-            <span>{{ language.labelKey | t }}</span>
-            @if (language.code === currentLanguageOption()) {
-            <mat-icon>check</mat-icon>
-            }
-          </button>
+            <button mat-menu-item (click)="changeLanguage(language.code)">
+              <span>{{ language.labelKey | t }}</span>
+              @if (language.code === currentLanguageOption()) {
+                <mat-icon>check</mat-icon>
+              }
+            </button>
           }
         </mat-menu>
 
         <!-- Tenant Switch -->
         @if (environments().length) {
-        <div class="tenant-switch">
-          <button mat-button class="tenant-button" [matMenuTriggerFor]="tenantMenu" [disabled]="loadingEnvironments()">
-            <mat-icon class="tenant-icon">business</mat-icon>
-            <span class="tenant-name">{{ currentEnvironmentName() }}</span>
-            @if (currentEnvironment()?.IsDefault == 1) {
-            <mat-icon class="tenant-default-icon">star</mat-icon>
-            }
-            <mat-icon class="tenant-arrow">expand_more</mat-icon>
-          </button>
-        </div>
+          <div class="tenant-switch">
+            <button
+              mat-button
+              class="tenant-button"
+              [matMenuTriggerFor]="tenantMenu"
+              [disabled]="loadingEnvironments()"
+            >
+              <mat-icon class="tenant-icon">business</mat-icon>
+              <span class="tenant-name">{{ currentEnvironmentName() }}</span>
+              @if (currentEnvironment()?.IsDefault == 1) {
+                <mat-icon class="tenant-default-icon">star</mat-icon>
+              }
+              <mat-icon class="tenant-arrow">expand_more</mat-icon>
+            </button>
+          </div>
         }
 
         <mat-menu #tenantMenu="matMenu" class="rounded-menu">
           @for (env of environments(); track env.EnvironmentUUID) {
-          <button mat-menu-item class="tenant-menu-item" (click)="switchEnvironment(env)">
-            <span class="tenant-star-slot" [class.is-default]="env.IsDefault == 1"
-              (click)="setDefaultEnvironment(env, $event)" [title]="'layout.setDefault' | t">
-              <mat-icon>{{ env.IsDefault == 1 ? 'star' : 'star_border' }}</mat-icon>
-            </span>
-            <span class="tenant-menu-name">{{ env.EnvironmentName }}</span>
-            @if (env.EnvironmentUUID === activeEnvironmentId()) {
-            <mat-icon class="tenant-check-icon">check</mat-icon>
-            }
-          </button>
+            <button mat-menu-item class="tenant-menu-item" (click)="switchEnvironment(env)">
+              <span
+                class="tenant-star-slot"
+                [class.is-default]="env.IsDefault == 1"
+                (click)="setDefaultEnvironment(env, $event)"
+                [title]="'layout.setDefault' | t"
+              >
+                <mat-icon>{{ env.IsDefault == 1 ? 'star' : 'star_border' }}</mat-icon>
+              </span>
+              <span class="tenant-menu-name">{{ env.EnvironmentName }}</span>
+              @if (env.EnvironmentUUID === activeEnvironmentId()) {
+                <mat-icon class="tenant-check-icon">check</mat-icon>
+              }
+            </button>
           }
           @if (!environments().length) {
-          <button mat-menu-item>
-            <span>{{ 'layout.noEnvironments' | t }}</span>
-          </button>
+            <button mat-menu-item>
+              <span>{{ 'layout.noEnvironments' | t }}</span>
+            </button>
           }
         </mat-menu>
 
         <!-- Theme -->
         <button mat-icon-button (click)="changeTheme()">
           <mat-icon>
-            {{ theme() === 'light' ? 'light_mode'
-            : theme() === 'dark' ? 'dark_mode'
-            : 'settings_suggest' }}
+            {{
+              theme() === 'light'
+                ? 'light_mode'
+                : theme() === 'dark'
+                  ? 'dark_mode'
+                  : 'settings_suggest'
+            }}
           </mat-icon>
         </button>
 
         <!-- Avatar -->
         <button mat-icon-button [matMenuTriggerFor]="menu">
-          <div class="avatar" [class.avatar-has-image]="avatarUrl()"
-            [style.background-image]="avatarUrl() ? 'url(' + avatarUrl() + ')' : ''">
-
+          <div
+            class="avatar"
+            [class.avatar-has-image]="avatarUrl()"
+            [style.background-image]="avatarUrl() ? 'url(' + avatarUrl() + ')' : ''"
+          >
             @if (!avatarUrl()) {
-            <span class="avatar-initial">
-              {{ avatarLetter }}
-            </span>
+              <span class="avatar-initial">
+                {{ avatarLetter }}
+              </span>
             }
           </div>
         </button>
-
       </div>
 
       <mat-menu #menu="matMenu" class="rounded-menu">
-
         <button mat-menu-item routerLink="/user/profile">
           <mat-icon>person</mat-icon>
           <span>{{ 'menu.myProfile' | t }}</span>
@@ -307,9 +380,7 @@
           <mat-icon color="warn">logout</mat-icon>
           <span>{{ 'menu.logout' | t }}</span>
         </button>
-
       </mat-menu>
-
     </mat-toolbar>
 
     <app-breadcrumb></app-breadcrumb>
@@ -318,9 +389,6 @@
       <router-outlet></router-outlet>
     </main>
 
-    <footer class="footer">
-      © {{ currentYear }} mnscloud - {{ 'layout.footer' | t }}
-    </footer>
-
+    <footer class="footer">© {{ currentYear }} mnscloud - {{ 'layout.footer' | t }}</footer>
   </mat-sidenav-content>
 </mat-sidenav-container>
