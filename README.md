@@ -13,6 +13,28 @@ the business core stays in the API/control plane.
 The bare-metal Nginx runtime installer installs Node.js 24 automatically when a suitable `node` and
 `npm` are not already available.
 
+## Contract
+
+- Product/runtime: `mnscloud-app`
+- Project directory: `/opt/mnscloud/mnscloud-app`
+- Framework: Angular
+- Local development command: `npm run start`
+- Build command: `npm run build`
+- Browser build output: `dist/app/browser`
+- Runtime config source: `public/env.js`
+- Runtime config example: `public/env.example.js`
+- Production Dockerfile: `Dockerfile.production`
+- Production Compose file: `docker-compose.production.yml`
+- Bare-metal Nginx installer: `scripts/install-nginx-runtime.sh`
+- Bare-metal update command: `scripts/update-nginx-runtime.sh`
+- Bare-metal rollback command: `scripts/rollback-nginx-runtime.sh`
+- Bare-metal validation command: `scripts/validate-nginx-runtime.sh`
+- Bare-metal web root: `/var/www/mnscloud-app`
+- Bare-metal runtime config: `/var/www/mnscloud-app/env.js`
+- Bare-metal Nginx config: `/etc/nginx/conf.d/mnscloud-app.conf`
+- Bare-metal service: `nginx.service`
+- Bare-metal listen address: `0.0.0.0:8080`
+
 ## Repository Access
 
 Install GitHub CLI if needed:
