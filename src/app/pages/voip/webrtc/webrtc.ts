@@ -342,12 +342,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       description: 'VwpDescription',
     };
     if (key === 'status') return this.status(row) ? 'active' : 'inactive';
-    if (key === 'configJson')
-      return JSON.stringify(
-        row['VwrConfig'] ?? {},
-        null,
-        2,
-      );
+    if (key === 'configJson') return JSON.stringify(row['VwrConfig'] ?? {}, null, 2);
     if (key === 'valueJson') return this.displayValue(row['VwpValue']);
     return row[m[key]] ?? '';
   }
@@ -498,6 +493,43 @@ curl -fsS -X POST \\
   -H "Content-Type: application/json" \\
   --data "{\\"node_uuid\\":\\"\${UUID}\\",\\"engine\\":\\"kamailio\\"}" \\
   "\${API%/}/api/v1/webrtc/edge/validate" >/dev/null
+PUBLIC_DOMAIN=""
+if [ -s /etc/mnscloud/kamailio-webrtc/public.domain ]; then
+  PUBLIC_DOMAIN=$(tr -d "\\r\\n" < /etc/mnscloud/kamailio-webrtc/public.domain)
+fi
+if [ -z "\${PUBLIC_DOMAIN}" ]; then
+  PUBLIC_DOMAIN=$(curl -fsS \\
+    -H "Authorization: Bearer \${TOKEN}" \\
+    -H "X-WebRTC-Node-UUID: \${UUID}" \\
+    "\${API%/}/api/v1/webrtc/edge/config" | jq -r ".data.server.publicDomain // empty")
+fi
+HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+PRIVATE_IP=$(ip -o -4 route get 1.1.1.1 2>/dev/null | awk "{for(i=1;i<=NF;i++) if(\\$i==\\"src\\") {print \\$(i+1); exit}}" || true)
+PUBLIC_IP=""
+if [ -n "\${PUBLIC_DOMAIN}" ]; then
+  PUBLIC_IP=$(getent ahostsv4 "\${PUBLIC_DOMAIN}" | awk "{print \\$1; exit}" || true)
+fi
+BASE_URL=""
+if [ -n "\${PUBLIC_DOMAIN}" ]; then
+  BASE_URL="https://\${PUBLIC_DOMAIN}"
+fi
+VERSION=$(dpkg-query -W -f="\${Version}" kamailio 2>/dev/null | sed "s/^/kamailio:/" || true)
+curl -fsS -X POST \\
+  -H "Authorization: Bearer \${TOKEN}" \\
+  -H "X-WebRTC-Node-UUID: \${UUID}" \\
+  -H "X-WebRTC-Engine: kamailio" \\
+  -H "Content-Type: application/json" \\
+  --data "$(jq -n \\
+    --arg node_uuid "\${UUID}" \\
+    --arg engine "kamailio" \\
+    --arg hostname "\${HOSTNAME}" \\
+    --arg publicDomain "\${PUBLIC_DOMAIN}" \\
+    --arg publicIP "\${PUBLIC_IP}" \\
+    --arg privateIP "\${PRIVATE_IP}" \\
+    --arg baseUrl "\${BASE_URL}" \\
+    --arg version "\${VERSION}" \\
+    "{node_uuid:\\$node_uuid,engine:\\$engine,hostname:\\$hostname,publicDomain:\\$publicDomain,publicIP:\\$publicIP,privateIP:\\$privateIP,baseUrl:\\$baseUrl,version:\\$version}")" \\
+  "\${API%/}/api/v1/webrtc/edge/bootstrap" >/dev/null
 systemctl restart mnscloud-webrtc-sync.service
 systemctl status mnscloud-webrtc-sync.service --no-pager -l'`;
   }
