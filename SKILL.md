@@ -40,6 +40,20 @@ creates `/etc/nginx/conf.d/mnscloud-app.conf`. The app runtime listens on `0.0.0
 default so a separate `mnscloud-nginx` edge host can reach it; use `APP_LISTEN_ADDR=127.0.0.1` only
 for same-host edge deployments.
 
+After a repository commit has been pushed, update an existing app host with:
+
+```bash
+cd /opt/mnscloud/mnscloud-app
+sudo ./scripts/update-nginx-runtime.sh
+sudo ./scripts/validate-nginx-runtime.sh
+curl -I http://127.0.0.1:8080
+```
+
+The update script pulls the latest code, rebuilds the Angular bundle, deploys it to
+`/var/www/mnscloud-app`, writes runtime `env.js`, validates Nginx, and reloads the service. Use
+`sudo ./scripts/update-nginx-runtime.sh --ref <tag-or-commit>` for controlled production releases
+and `sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-tag-or-commit>` for rollback.
+
 ## Contribution Governance
 
 - External contributions must be submitted through Pull Requests.

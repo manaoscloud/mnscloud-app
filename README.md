@@ -238,11 +238,33 @@ sudo ./scripts/update-nginx-runtime.sh
 sudo ./scripts/validate-nginx-runtime.sh
 ```
 
+Use this same update flow for development, staging, and production app hosts after a change has been
+committed and pushed to this repository. The command pulls the latest code, installs dependencies,
+builds the Angular browser bundle, publishes it to `/var/www/mnscloud-app`, refreshes
+`/var/www/mnscloud-app/env.js`, validates Nginx, and reloads the app runtime.
+
+Recommended operator flow after a repository commit:
+
+```bash
+cd /opt/mnscloud/mnscloud-app
+git status --short
+sudo ./scripts/update-nginx-runtime.sh
+sudo ./scripts/validate-nginx-runtime.sh
+curl -I http://127.0.0.1:8080
+```
+
+The `curl -I` response should show a fresh `Last-Modified` timestamp for the newly published
+browser bundle. If the app host is behind the `mnscloud-nginx` edge, validate the public route from a
+browser or with `curl` against the edge domain after the local validation passes.
+
 Deploy a specific tag or commit:
 
 ```bash
 sudo ./scripts/update-nginx-runtime.sh --ref v1.4.0
 ```
+
+Use `--ref` for controlled releases when production should deploy a known tag or commit instead of
+whatever is currently on `main`.
 
 Rollback to a known-good tag or commit:
 
