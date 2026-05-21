@@ -337,7 +337,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       config,
       credentials,
       isActive: raw.isActive === 1,
-      isDefault: raw.isDefault === 1,
+      isDefault: Boolean(raw.isDefault),
     };
 
     this.saving.set(true);
