@@ -481,8 +481,16 @@ export class MainLayout {
   // =======================================================
   // ✅ MENU: MASTER vs TENANT
   // =======================================================
+  private currentKnownEnvironmentUUID(): string | null {
+    return (
+      normalizeEnvironmentUUID(this.activeEnvironmentId()) ??
+      readStoredEnvironmentUUID() ??
+      normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID)
+    );
+  }
+
   private hasTenantSelected(): boolean {
-    return !!this.activeEnvironmentId();
+    return !!this.currentKnownEnvironmentUUID();
   }
 
   private readInitialContextMode(): ContextMode {
@@ -652,11 +660,16 @@ export class MainLayout {
       this.environments.set(list);
 
       if (!list.length) {
-        this.activeEnvironmentId.set(null);
+        const preservedEnv = this.currentKnownEnvironmentUUID();
+        this.activeEnvironmentId.set(preservedEnv);
 
-        // ✅ mantém AuthService coerente
-        this.auth.updateUser({ EnvironmentUUID: null });
-        writeStoredEnvironmentUUID(null);
+        if (preservedEnv) {
+          writeStoredEnvironmentUUID(preservedEnv);
+          this.auth.updateUser({ EnvironmentUUID: preservedEnv });
+        } else {
+          this.auth.updateUser({ EnvironmentUUID: null });
+          writeStoredEnvironmentUUID(null);
+        }
 
         return;
       }
