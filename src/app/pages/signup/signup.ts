@@ -119,7 +119,7 @@ export class Signup {
         throw new Error('Could not complete automatic sign-in.');
       }
 
-      await this.auth.login(jwt, null, this.api);
+      await this.auth.login(jwt, login?.data?.user ?? null, this.api);
       this.snack.success('Welcome!');
       await this.router.navigate(['/dashboard']);
     } catch (err: any) {

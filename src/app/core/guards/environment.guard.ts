@@ -20,7 +20,10 @@ async function recoverEnvironment(api: ApiService, auth: AuthService): Promise<s
     try {
         const response = await api.get<EnvironmentAccessResponse>('user/access');
         const access = extractEnvironmentAccess(response);
-        const selected = resolveSelectedEnvironmentUUID(access, readStoredEnvironmentUUID());
+        const selected = resolveSelectedEnvironmentUUID(
+            access,
+            readStoredEnvironmentUUID() ?? auth.user()?.EnvironmentUUID,
+        );
         if (!selected) return null;
 
         writeStoredEnvironmentUUID(selected);

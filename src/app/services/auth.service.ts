@@ -3,6 +3,7 @@ import { ApiService } from './api.service';
 import {
   normalizeEnvironmentUUID,
   readStoredEnvironmentUUID,
+  writeStoredEnvironmentUUID,
 } from '../core/environment/environment-context';
 
 const AUTH_STATE = 'mnscloud_auth';
@@ -25,6 +26,13 @@ export interface AuthUser {
   EnvironmentUUID?: string | null;
 }
 
+function normalizeAppRole(value: unknown): AppRole | undefined {
+  const role = String(value ?? '').toUpperCase();
+  return role === 'MASTER' || role === 'OWNER' || role === 'ADMIN' || role === 'USER'
+    ? role
+    : undefined;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private _loggedIn = signal<boolean>(this.readInitialState());
@@ -43,10 +51,30 @@ export class AuthService {
   // ---------------------------------------------------------
   // LOGIN – salva JWT e carrega perfil completo + role (/user/me)
   // ---------------------------------------------------------
-  async login(jwt: string, _ignoredUser: any, api: ApiService) {
+  async login(jwt: string, initialUser: any, api: ApiService) {
     localStorage.setItem(JWT_KEY, jwt);
     localStorage.setItem(AUTH_STATE, 'true');
     this._loggedIn.set(true);
+
+    const initialEnvironmentUUID = normalizeEnvironmentUUID(initialUser?.EnvironmentUUID);
+    if (initialEnvironmentUUID) {
+      writeStoredEnvironmentUUID(initialEnvironmentUUID);
+    }
+
+    if (initialUser) {
+      const seedUser: AuthUser = {
+        uuid: initialUser.uuid ?? initialUser.UserUUID ?? '',
+        email: initialUser.email ?? initialUser.Email ?? '',
+        token: jwt,
+        firstName: initialUser.firstName ?? initialUser.FirstName ?? initialUser.name ?? '',
+        lastName: initialUser.lastName ?? initialUser.LastName ?? '',
+        role: normalizeAppRole(initialUser.role),
+        EnvironmentUUID: initialEnvironmentUUID,
+      };
+
+      localStorage.setItem(USER_KEY, JSON.stringify(seedUser));
+      this._user.set(seedUser);
+    }
 
     // 1) Perfil (inclui avatar)
     await this.loadUserFromApi(api);
@@ -62,6 +90,7 @@ export class AuthService {
     localStorage.removeItem(JWT_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(AUTH_STATE);
+    writeStoredEnvironmentUUID(null);
 
     this._user.set(null);
     this._loggedIn.set(false);
@@ -121,8 +150,9 @@ export class AuthService {
         avatarVersion,
 
         // ✅ preserva role/env
-        role: prev?.role,
-        EnvironmentUUID: prev?.EnvironmentUUID ?? null,
+        role: normalizeAppRole(prev?.role),
+        EnvironmentUUID:
+          readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(prev?.EnvironmentUUID) ?? null,
       };
 
       localStorage.setItem(USER_KEY, JSON.stringify(updated));
@@ -153,7 +183,7 @@ export class AuthService {
 
       const merged: AuthUser = {
         ...current,
-        role: raw?.role ?? current.role ?? 'ADMIN',
+        role: normalizeAppRole(raw?.role) ?? normalizeAppRole(current.role) ?? 'ADMIN',
         EnvironmentUUID:
           normalizeEnvironmentUUID(raw?.EnvironmentUUID) ??
           readStoredEnvironmentUUID() ??

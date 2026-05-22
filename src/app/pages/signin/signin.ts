@@ -96,8 +96,7 @@ export class Signin {
         throw new Error(this.i18n.t('signin.error.invalidResponse'));
       }
 
-      // passa só o JWT; o perfil completo vem do /user/profile
-      await this.auth.login(jwt, null, this.api);
+      await this.auth.login(jwt, result?.data?.user ?? null, this.api);
 
       this.snack.success(this.i18n.t('signin.success.welcomeBack'));
 
