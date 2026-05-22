@@ -1,5 +1,9 @@
 import { Injectable, signal } from '@angular/core';
 import { ApiService } from './api.service';
+import {
+  normalizeEnvironmentUUID,
+  readStoredEnvironmentUUID,
+} from '../core/environment/environment-context';
 
 const AUTH_STATE = 'mnscloud_auth';
 const JWT_KEY = 'mnscloud_jwt';
@@ -150,7 +154,11 @@ export class AuthService {
       const merged: AuthUser = {
         ...current,
         role: raw?.role ?? current.role ?? 'ADMIN',
-        EnvironmentUUID: raw?.EnvironmentUUID ?? current.EnvironmentUUID ?? null,
+        EnvironmentUUID:
+          normalizeEnvironmentUUID(raw?.EnvironmentUUID) ??
+          readStoredEnvironmentUUID() ??
+          normalizeEnvironmentUUID(current.EnvironmentUUID) ??
+          null,
       };
 
       localStorage.setItem(USER_KEY, JSON.stringify(merged));

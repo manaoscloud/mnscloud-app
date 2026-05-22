@@ -6,6 +6,10 @@ import { SnackbarService } from './snackbar.service';
 import { createInitialFileUploadProgress } from '../shared/upload/file-upload-progress';
 import type { FileUploadProgress } from '../shared/upload/file-upload-progress';
 import { resolveApiUrl } from '../shared/runtime/app-runtime-config';
+import {
+  normalizeEnvironmentUUID,
+  readStoredEnvironmentUUID,
+} from '../core/environment/environment-context';
 export type { FileUploadProgress, FileUploadPhase } from '../shared/upload/file-upload-progress';
 
 @Injectable({ providedIn: 'root' })
@@ -14,23 +18,9 @@ export class ApiService {
   private auth = inject(AuthService);
   private snack = inject(SnackbarService);
 
-  private normalizeEnvironmentUUID(value: string | null | undefined): string | null {
-    const trimmed = value?.trim();
-    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null;
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)
-      ? trimmed
-      : null;
-  }
-
   private currentEnvironmentUUID(): string | null {
-    const rawStorageEnv =
-      typeof localStorage !== 'undefined' ? localStorage.getItem('mc_current_env') : null;
-    const envFromStorage =
-      typeof localStorage !== 'undefined' ? this.normalizeEnvironmentUUID(rawStorageEnv) : null;
-    if (rawStorageEnv && !envFromStorage && typeof localStorage !== 'undefined') {
-      localStorage.removeItem('mc_current_env');
-    }
-    const envFromUser = this.normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID);
+    const envFromStorage = readStoredEnvironmentUUID();
+    const envFromUser = normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID);
     return envFromStorage ?? envFromUser;
   }
 

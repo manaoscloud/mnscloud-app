@@ -37,6 +37,13 @@ import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
 import { I18nService, AppLanguage, LanguageOptionCode } from '../../services/i18n.service';
 import { TranslatePipe } from '../../shared/i18n/translate.pipe';
+import {
+  extractEnvironmentAccess,
+  normalizeEnvironmentUUID,
+  readStoredEnvironmentUUID,
+  resolveSelectedEnvironmentUUID,
+  writeStoredEnvironmentUUID,
+} from '../../core/environment/environment-context';
 
 // =======================================================
 // Types
@@ -168,7 +175,6 @@ export class MainLayout {
     () => this.currentEnvironment()?.EnvironmentName ?? this.i18n.t('layout.noEnvironment'),
   );
 
-  private static readonly ENV_STORAGE_KEY = 'mc_current_env';
   private static readonly CONTEXT_MODE_STORAGE_KEY = 'mc_context_mode';
   private static readonly LAYOUT_COMPACT_STORAGE_KEY = 'mc_layout_compact';
   private compactCloseTimer: ReturnType<typeof setTimeout> | null = null;
@@ -641,8 +647,7 @@ export class MainLayout {
 
     try {
       const resp = await this.api.get<UserAccessResponse>('user/access');
-
-      const list = resp?.data?.access ?? [];
+      const list = extractEnvironmentAccess(resp);
 
       this.environments.set(list);
 
@@ -651,21 +656,19 @@ export class MainLayout {
 
         // ✅ mantém AuthService coerente
         this.auth.updateUser({ EnvironmentUUID: null });
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem(MainLayout.ENV_STORAGE_KEY);
-        }
+        writeStoredEnvironmentUUID(null);
 
         return;
       }
 
-      const stored = localStorage.getItem(MainLayout.ENV_STORAGE_KEY);
-      const valid = list.some((t) => t.EnvironmentUUID === stored) ? stored : null;
-
-      const defaultEnv = list.find((t) => Number(t.IsDefault ?? 0) === 1)?.EnvironmentUUID ?? null;
-      const finalEnv = valid ?? defaultEnv ?? list[0].EnvironmentUUID;
+      const finalEnv = resolveSelectedEnvironmentUUID(
+        list,
+        readStoredEnvironmentUUID() ?? this.auth.user()?.EnvironmentUUID,
+      );
+      if (!finalEnv) return;
 
       this.activeEnvironmentId.set(finalEnv);
-      localStorage.setItem(MainLayout.ENV_STORAGE_KEY, finalEnv);
+      writeStoredEnvironmentUUID(finalEnv);
 
       const selectedEnv = list.find((t) => t.EnvironmentUUID === finalEnv) ?? null;
       const selectedRole = selectedEnv
@@ -687,26 +690,31 @@ export class MainLayout {
     } catch (e) {
       console.error('❌ Failed to load environments:', e);
       this.environments.set([]);
-      this.activeEnvironmentId.set(null);
 
-      this.auth.updateUser({ EnvironmentUUID: null });
+      const preservedEnv =
+        readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID);
+      this.activeEnvironmentId.set(preservedEnv);
+      if (preservedEnv) {
+        this.auth.updateUser({ EnvironmentUUID: preservedEnv });
+      }
     } finally {
       this.loadingEnvironments.set(false);
     }
   }
 
   switchEnvironment(env: UserEnvironment) {
-    if (!env || env.EnvironmentUUID === this.activeEnvironmentId()) return;
+    const environmentUUID = normalizeEnvironmentUUID(env?.EnvironmentUUID);
+    if (!environmentUUID || environmentUUID === this.activeEnvironmentId()) return;
 
-    this.activeEnvironmentId.set(env.EnvironmentUUID);
-    localStorage.setItem(MainLayout.ENV_STORAGE_KEY, env.EnvironmentUUID);
+    this.activeEnvironmentId.set(environmentUUID);
+    writeStoredEnvironmentUUID(environmentUUID);
     if (this.isMasterUser()) {
       this.setContextMode('tenant');
     }
 
     // ✅ Mantém AuthService sincronizado (guards/menu)
     this.auth.updateUser({
-      EnvironmentUUID: env.EnvironmentUUID,
+      EnvironmentUUID: environmentUUID,
       role:
         (this.auth.user()?.role === 'MASTER'
           ? 'MASTER'
