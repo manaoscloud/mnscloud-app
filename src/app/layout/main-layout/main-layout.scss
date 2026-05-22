@@ -453,6 +453,16 @@ mat-sidenav.sidenav.compact {
   gap: 0.2rem;
 }
 
+.context-button {
+  text-transform: none;
+  border-radius: 999px;
+  min-height: 32px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 0.55rem;
+  gap: 0.2rem;
+}
+
 /* ícones do topbar nivelados com avatar */
 .topbar mat-icon {
   font-size: 24px !important;
@@ -728,6 +738,7 @@ html.dark {
   }
 
   .lang-button span,
+  .context-button span,
   .tenant-name,
   .tenant-arrow,
   .offline-pill span {
@@ -735,6 +746,7 @@ html.dark {
   }
 
   .lang-button,
+  .context-button,
   .tenant-button {
     min-width: 36px;
     height: 32px;

@@ -293,8 +293,35 @@
           }
         </mat-menu>
 
+        @if (isMasterUser()) {
+          <button mat-button class="context-button" [matMenuTriggerFor]="contextMenu">
+            <mat-icon>{{
+              effectiveContextMode() === 'master' ? 'admin_panel_settings' : 'business'
+            }}</mat-icon>
+            <span>{{ contextModeLabel() }}</span>
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+
+        <mat-menu #contextMenu="matMenu" class="rounded-menu">
+          <button mat-menu-item (click)="setContextMode('master')">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>System</span>
+            @if (effectiveContextMode() === 'master') {
+              <mat-icon>check</mat-icon>
+            }
+          </button>
+          <button mat-menu-item (click)="setContextMode('tenant')">
+            <mat-icon>business</mat-icon>
+            <span>Tenant</span>
+            @if (effectiveContextMode() === 'tenant') {
+              <mat-icon>check</mat-icon>
+            }
+          </button>
+        </mat-menu>
+
         <!-- Tenant Switch -->
-        @if (environments().length) {
+        @if (environments().length && effectiveContextMode() === 'tenant') {
           <div class="tenant-switch">
             <button
               mat-button

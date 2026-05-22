@@ -48,6 +48,7 @@ interface NavItem {
   icon?: string;
   route?: string;
   masterRoute?: string;
+  scope?: MenuScope;
   children?: NavItem[];
 
   // ✅ Controle de visibilidade por role
@@ -56,6 +57,9 @@ interface NavItem {
   // ✅ Controle de visibilidade por TENANT (exige EnvironmentUUID selecionado)
   requiresEnvironment?: boolean;
 }
+
+type ContextMode = 'master' | 'tenant';
+type MenuScope = 'public' | 'tenant' | 'master' | 'both';
 
 export interface UserEnvironment {
   EnvironmentUUID: string;
@@ -148,6 +152,11 @@ export class MainLayout {
   readonly environments = signal<UserEnvironment[]>([]);
   readonly activeEnvironmentId = signal<string | null>(null);
   readonly loadingEnvironments = signal<boolean>(false);
+  readonly contextMode = signal<ContextMode>(this.readInitialContextMode());
+  readonly isMasterUser = computed(() => this.user()?.role === 'MASTER');
+  readonly effectiveContextMode = computed<ContextMode>(() =>
+    this.isMasterUser() ? this.contextMode() : 'tenant',
+  );
 
   readonly currentEnvironment = computed(() => {
     const list = this.environments();
@@ -160,6 +169,7 @@ export class MainLayout {
   );
 
   private static readonly ENV_STORAGE_KEY = 'mc_current_env';
+  private static readonly CONTEXT_MODE_STORAGE_KEY = 'mc_context_mode';
   private static readonly LAYOUT_COMPACT_STORAGE_KEY = 'mc_layout_compact';
   private compactCloseTimer: ReturnType<typeof setTimeout> | null = null;
   private autoExpandScheduled = false;
@@ -255,7 +265,17 @@ export class MainLayout {
   }
 
   private routeForItem(item: NavItem): string | undefined {
-    return this.user()?.role === 'MASTER' ? (item.masterRoute ?? item.route) : item.route;
+    const scope = item.scope ?? 'public';
+    const mode = this.effectiveContextMode();
+
+    if (scope === 'public') return item.route;
+    if (scope === 'master')
+      return this.isMasterUser() && mode === 'master' ? item.masterRoute : undefined;
+    if (scope === 'both') {
+      if (this.isMasterUser() && mode === 'master') return item.masterRoute;
+      return item.route;
+    }
+    return mode === 'tenant' ? item.route : undefined;
   }
 
   isActiveItem(item: NavItem): boolean {
@@ -459,6 +479,27 @@ export class MainLayout {
     return !!this.activeEnvironmentId();
   }
 
+  private readInitialContextMode(): ContextMode {
+    if (typeof localStorage === 'undefined') return 'master';
+    return localStorage.getItem(MainLayout.CONTEXT_MODE_STORAGE_KEY) === 'tenant'
+      ? 'tenant'
+      : 'master';
+  }
+
+  setContextMode(mode: ContextMode) {
+    if (!this.isMasterUser()) return;
+    this.contextMode.set(mode);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(MainLayout.CONTEXT_MODE_STORAGE_KEY, mode);
+    }
+    this.closeCompactFlyouts();
+    this.scheduleAutoExpandSections();
+  }
+
+  contextModeLabel() {
+    return this.effectiveContextMode() === 'master' ? 'System' : 'Tenant';
+  }
+
   private hasRole(item: NavItem): boolean {
     const role = this.user()?.role;
 
@@ -475,32 +516,48 @@ export class MainLayout {
   }
 
   private canShowByEnvironment(item: NavItem): boolean {
-    const role = this.user()?.role;
-    if (role === 'MASTER') return true;
+    const scope = item.scope ?? 'public';
+    const mode = this.effectiveContextMode();
 
-    // Se não exige environment, ok
-    if (!item.requiresEnvironment) return true;
-
-    // Exige EnvironmentUUID selecionado
-    return this.hasTenantSelected();
+    if (scope === 'public') return true;
+    if (scope === 'master') return this.isMasterUser() && mode === 'master';
+    if (scope === 'both') {
+      if (this.isMasterUser() && mode === 'master') return !!item.masterRoute;
+      return !!item.route && this.hasTenantSelected();
+    }
+    if (scope === 'tenant') return mode === 'tenant' && this.hasTenantSelected();
+    return false;
   }
 
-  private filterMenu(items: NavItem[]): NavItem[] {
+  private resolveMenuScope(item: NavItem, inheritedScope?: MenuScope): MenuScope {
+    if (item.scope) return item.scope;
+    if (item.masterRoute && item.route) return 'both';
+    if (item.masterRoute) return 'master';
+    if (item.requiresEnvironment) return 'tenant';
+    return inheritedScope ?? 'public';
+  }
+
+  private filterMenu(items: NavItem[], inheritedScope?: MenuScope): NavItem[] {
     return items
       .map((i) => {
+        const scope = this.resolveMenuScope(i, inheritedScope);
+        const scopedItem = { ...i, scope };
+
         // 1) Role
-        if (!this.hasRole(i)) return null;
+        if (!this.hasRole(scopedItem)) return null;
 
-        // 2) Tenant selection (EnvironmentUUID)
-        if (!this.canShowByEnvironment(i)) return null;
-
-        // 3) Filtra filhos
-        const children = i.children ? this.filterMenu(i.children) : undefined;
+        // 2) Filtra filhos antes do escopo do grupo, porque grupos tenant podem conter filhos both.
+        const children = scopedItem.children
+          ? this.filterMenu(scopedItem.children, scope)
+          : undefined;
 
         // Se era grupo e perdeu todos os filhos, remove
-        if (i.children?.length && (!children || children.length === 0)) return null;
+        if (scopedItem.children?.length && (!children || children.length === 0)) return null;
 
-        return { ...i, children };
+        // 3) Escopo/contexto
+        if (!scopedItem.children?.length && !this.canShowByEnvironment(scopedItem)) return null;
+
+        return { ...scopedItem, children };
       })
       .filter(Boolean) as NavItem[];
   }
@@ -643,6 +700,9 @@ export class MainLayout {
 
     this.activeEnvironmentId.set(env.EnvironmentUUID);
     localStorage.setItem(MainLayout.ENV_STORAGE_KEY, env.EnvironmentUUID);
+    if (this.isMasterUser()) {
+      this.setContextMode('tenant');
+    }
 
     // ✅ Mantém AuthService sincronizado (guards/menu)
     this.auth.updateUser({

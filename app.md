@@ -448,9 +448,14 @@ npm run check:crud -- src/app/pages/<area>/<component>
 - `ApiService` must send `X-Environment-UUID` only when the selected environment is a valid UUID.
   If no valid tenant is selected, tenant-scoped calls must be blocked in the browser before the API
   request is sent.
-- Mixed master/tenant menus may link to both route types, but tenant menu entries must still rely
-  on `environmentGuard`; opening a tenant route from a master context without a valid tenant should
-  redirect or prompt for tenant selection instead of calling the API.
+- Menu items must declare or inherit one explicit navigation scope: `public`, `tenant`, `master`,
+  or `both`. Do not infer global access from the user role alone.
+- `MASTER` users have an explicit context mode: `master` for global `/system/...` routes and
+  `tenant` for tenant routes using the selected `EnvironmentUUID`. `MASTER` in `master` mode must
+  not fall through to tenant routes when a `masterRoute` is missing.
+- Mixed master/tenant resources use `scope: 'both'`, `route`, and `masterRoute`. Tenant-only
+  resources, such as Webhost until a `/system/hosting/webhost` API exists, must stay
+  `scope: 'tenant'` and only appear in tenant context.
 
 ## I18n
 
