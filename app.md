@@ -442,6 +442,15 @@ npm run check:crud -- src/app/pages/<area>/<component>
 
 - Tenant routes use `environmentGuard`.
 - Master-only routes use `masterGuard`.
+- Tenant routes require an active environment stored as a real UUID in `mc_current_env` or in the
+  authenticated user state. Do not treat empty strings, `null`, `undefined`, or any non-UUID value
+  as a selected tenant.
+- `ApiService` must send `X-Environment-UUID` only when the selected environment is a valid UUID.
+  If no valid tenant is selected, tenant-scoped calls must be blocked in the browser before the API
+  request is sent.
+- Mixed master/tenant menus may link to both route types, but tenant menu entries must still rely
+  on `environmentGuard`; opening a tenant route from a master context without a valid tenant should
+  redirect or prompt for tenant selection instead of calling the API.
 
 ## I18n
 
