@@ -25,10 +25,13 @@ export class ApiService {
     }
 
     private currentEnvironmentUUID(): string | null {
+        const rawStorageEnv =
+            typeof localStorage !== 'undefined' ? localStorage.getItem('mc_current_env') : null;
         const envFromStorage =
-            typeof localStorage !== 'undefined'
-                ? this.normalizeEnvironmentUUID(localStorage.getItem('mc_current_env'))
-                : null;
+            typeof localStorage !== 'undefined' ? this.normalizeEnvironmentUUID(rawStorageEnv) : null;
+        if (rawStorageEnv && !envFromStorage && typeof localStorage !== 'undefined') {
+            localStorage.removeItem('mc_current_env');
+        }
         const envFromUser = this.normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID);
         return envFromStorage ?? envFromUser;
     }
