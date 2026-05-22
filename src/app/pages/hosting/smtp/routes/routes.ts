@@ -91,10 +91,12 @@ export class HostingSmtpRoutesPage implements OnDestroy {
   private readonly snack = inject(SnackbarService);
 
   @ViewChild('routeDialog') routeDialog?: TemplateRef<unknown>;
+  @ViewChild('testDialog') testDialog?: TemplateRef<unknown>;
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
 
   private dialogBinding: CrudDialogBinding | null = null;
+  private testDialogBinding: CrudDialogBinding | null = null;
   readonly dataSource = new MatTableDataSource<SmtpRoute>([]);
 
   readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
@@ -105,9 +107,11 @@ export class HostingSmtpRoutesPage implements OnDestroy {
 
   readonly loading = signal(false);
   readonly saving = signal(false);
+  readonly testing = signal(false);
   readonly routes = signal<SmtpRoute[]>([]);
   readonly accounts = signal<SmtpAccount[]>([]);
   readonly editing = signal<SmtpRoute | null>(null);
+  readonly testingRoute = signal<SmtpRoute | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly pageIndex = signal(0);
@@ -130,6 +134,12 @@ export class HostingSmtpRoutesPage implements OnDestroy {
     fromName: [''],
     fromEmail: ['', [Validators.email]],
     isActive: [1],
+  });
+
+  readonly testForm = this.fb.nonNullable.group({
+    to: ['', [Validators.required, Validators.email]],
+    subject: ['MNSCloud SMTP route test'],
+    html: ['<p>This is a test email sent from an MNSCloud SMTP route.</p>'],
   });
 
   readonly eventTypeOptions = [
@@ -176,6 +186,7 @@ export class HostingSmtpRoutesPage implements OnDestroy {
 
   ngOnDestroy() {
     this.closeDialog();
+    this.closeTestDialog();
   }
 
   refreshList() {
@@ -273,6 +284,62 @@ export class HostingSmtpRoutesPage implements OnDestroy {
     this.dialogBinding.stop();
     this.dialogBinding = null;
     this.editing.set(null);
+  }
+
+  startTest(route: SmtpRoute) {
+    this.testingRoute.set(route);
+    this.testForm.reset({
+      to: '',
+      subject: `MNSCloud SMTP route test: ${route.HsrEventType}`,
+      html: `<p>This is a test email sent from the ${route.HsrEventType} SMTP route.</p>`,
+    });
+    this.openTestDialog();
+  }
+
+  private openTestDialog() {
+    if (!this.testDialog || this.testDialogBinding) return;
+    this.testDialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.testDialog,
+      'crud-form-dialog',
+      { onEscape: () => this.closeTestDialog() },
+    );
+    this.testDialogBinding.ref.afterClosed().subscribe(() => {
+      this.testDialogBinding?.stop();
+      this.testDialogBinding = null;
+    });
+  }
+
+  closeTestDialog() {
+    if (!this.testDialogBinding) return;
+    this.testDialogBinding.ref.close();
+    this.testDialogBinding.stop();
+    this.testDialogBinding = null;
+    this.testingRoute.set(null);
+  }
+
+  async sendTestEmail() {
+    if (this.testForm.invalid) {
+      this.testForm.markAllAsTouched();
+      return;
+    }
+    const route = this.testingRoute();
+    if (!route) return;
+    const raw = this.testForm.getRawValue();
+    this.testing.set(true);
+    try {
+      await this.api.post(`${this.endpoint()}/${route.HsrUUID}/test`, {
+        to: raw.to,
+        subject: raw.subject,
+        html: raw.html,
+      });
+      this.snack.success('SMTP route test email sent.');
+      this.closeTestDialog();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to send SMTP route test email.'));
+    } finally {
+      this.testing.set(false);
+    }
   }
 
   async save(keepOpen = false) {
