@@ -514,8 +514,17 @@ export class MainLayout {
     return this.effectiveContextMode() === 'master' ? 'System' : 'Tenant';
   }
 
+  private currentRole(): AppRole | null {
+    const role = String(this.user()?.role ?? '').toUpperCase();
+    if (role === 'MASTER' || role === 'OWNER' || role === 'ADMIN' || role === 'USER') {
+      return role;
+    }
+
+    return this.auth.isLoggedIn() ? 'USER' : null;
+  }
+
   private hasRole(item: NavItem): boolean {
-    const role = this.user()?.role;
+    const role = this.currentRole();
 
     // MASTER enxerga tudo
     if (role === 'MASTER') return true;
@@ -537,9 +546,9 @@ export class MainLayout {
     if (scope === 'master') return this.isMasterUser() && mode === 'master';
     if (scope === 'both') {
       if (this.isMasterUser() && mode === 'master') return !!item.masterRoute;
-      return !!item.route && this.hasTenantSelected();
+      return !!item.route && (!this.isMasterUser() || this.hasTenantSelected());
     }
-    if (scope === 'tenant') return mode === 'tenant' && this.hasTenantSelected();
+    if (scope === 'tenant') return mode === 'tenant' && (!this.isMasterUser() || this.hasTenantSelected());
     return false;
   }
 
