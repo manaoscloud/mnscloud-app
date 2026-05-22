@@ -15,9 +15,27 @@ export class ApiService {
     private auth = inject(AuthService);
     private snack = inject(SnackbarService);
 
+    private normalizeEnvironmentUUID(value: string | null | undefined): string | null {
+        const trimmed = value?.trim();
+        if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null;
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+            .test(trimmed)
+            ? trimmed
+            : null;
+    }
+
+    private currentEnvironmentUUID(): string | null {
+        const envFromStorage =
+            typeof localStorage !== 'undefined'
+                ? this.normalizeEnvironmentUUID(localStorage.getItem('mc_current_env'))
+                : null;
+        const envFromUser = this.normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID);
+        return envFromStorage ?? envFromUser;
+    }
+
     private getHeaders(isFormData = false): HttpHeaders {
         const token = this.auth.getToken();
-        const user = this.auth.user();
+        const environmentUUID = this.currentEnvironmentUUID();
 
         const headers: Record<string, string> = {
             'Accept': 'application/json',
@@ -25,13 +43,7 @@ export class ApiService {
         };
 
         // 🔹 Environment atual (multi-tenant)
-        if (typeof localStorage !== 'undefined') {
-            const envUUID = localStorage.getItem('mc_current_env');
-            if (envUUID) headers['X-Environment-UUID'] = envUUID;
-            else if (user?.EnvironmentUUID) headers['X-Environment-UUID'] = user.EnvironmentUUID;
-        } else if (user?.EnvironmentUUID) {
-            headers['X-Environment-UUID'] = user.EnvironmentUUID;
-        }
+        if (environmentUUID) headers['X-Environment-UUID'] = environmentUUID;
 
         if (!isFormData) headers['Content-Type'] = 'application/json';
 
@@ -64,13 +76,9 @@ export class ApiService {
     private assertEnvironment(endpoint: string) {
         if (!this.requiresEnvironment(endpoint)) return;
 
-        const envUUID =
-            typeof localStorage !== 'undefined'
-                ? localStorage.getItem('mc_current_env')
-                : null;
-        const userEnv = this.auth.user()?.EnvironmentUUID ?? null;
+        const environmentUUID = this.currentEnvironmentUUID();
 
-        if (!envUUID && !userEnv) {
+        if (!environmentUUID) {
             const message = 'Select an environment before continuing.';
             this.snack.warning(message);
             throw new Error(message);
