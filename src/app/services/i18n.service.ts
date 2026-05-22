@@ -31,6 +31,10 @@ const MENU_TRANSLATIONS_PT: Record<string, string> = {
   Carrier: 'Transportadora',
   Reseller: 'Revendedor',
   Complex: 'Condomínio',
+  'Human Resources': 'Recursos Humanos',
+  Employees: 'Funcionários',
+  Departments: 'Departamentos',
+  Positions: 'Cargos',
   Accounts: 'Contas',
   Payables: 'Contas a Pagar',
   Receivables: 'Contas a Receber',
@@ -111,6 +115,10 @@ const MENU_TRANSLATIONS_ES: Record<string, string> = {
   Carrier: 'Transportista',
   Reseller: 'Revendedor',
   Complex: 'Complejo',
+  'Human Resources': 'Recursos Humanos',
+  Employees: 'Empleados',
+  Departments: 'Departamentos',
+  Positions: 'Cargos',
   Accounts: 'Cuentas',
   Payables: 'Cuentas por Pagar',
   Receivables: 'Cuentas por Cobrar',
@@ -729,7 +737,7 @@ export class I18nService {
   readonly language = signal<AppLanguage>(resolveInitialLanguage());
   readonly languageMode = signal<AppLanguageMode>(resolveInitialLanguageMode());
   readonly selectedLanguageOption = computed<LanguageOptionCode>(() =>
-    this.languageMode() === 'auto' ? 'auto' : this.language()
+    this.languageMode() === 'auto' ? 'auto' : this.language(),
   );
 
   constructor() {
@@ -739,11 +747,7 @@ export class I18nService {
 
   t(key: string): string {
     const lang = this.language();
-    return (
-      TRANSLATIONS[lang][key] ??
-        TRANSLATIONS['en-US'][key] ??
-        this.translateLiteral(key)
-    );
+    return TRANSLATIONS[lang][key] ?? TRANSLATIONS['en-US'][key] ?? this.translateLiteral(key);
   }
 
   translateLiteral(value: string): string {

@@ -192,6 +192,30 @@ export const routes: Routes = [
                   import('./pages/erp/reseller/reseller').then((m) => m.ErpResellerPage),
                 title: 'ERP • Reseller | mnscloud',
               },
+              {
+                path: 'erp/human-resources/departments',
+                loadComponent: () =>
+                  import('./pages/erp/human-resources/departments/departments').then(
+                    (m) => m.ErpHumanResourcesDepartmentsPage,
+                  ),
+                title: 'ERP • Human Resources • Departments | mnscloud',
+              },
+              {
+                path: 'erp/human-resources/positions',
+                loadComponent: () =>
+                  import('./pages/erp/human-resources/positions/positions').then(
+                    (m) => m.ErpHumanResourcesPositionsPage,
+                  ),
+                title: 'ERP • Human Resources • Positions | mnscloud',
+              },
+              {
+                path: 'erp/human-resources/employees',
+                loadComponent: () =>
+                  import('./pages/erp/human-resources/employees/employees').then(
+                    (m) => m.ErpHumanResourcesEmployeesPage,
+                  ),
+                title: 'ERP • Human Resources • Employees | mnscloud',
+              },
 
               // Financeiro
               {

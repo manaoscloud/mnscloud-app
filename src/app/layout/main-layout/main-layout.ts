@@ -812,6 +812,31 @@ export class MainLayout {
             },
           ],
         },
+        {
+          id: 'erp/human-resources',
+          label: 'Human Resources',
+          icon: 'groups',
+          children: [
+            {
+              id: 'erp/human-resources/employees',
+              label: 'Employees',
+              icon: 'badge',
+              route: '/erp/human-resources/employees',
+            },
+            {
+              id: 'erp/human-resources/departments',
+              label: 'Departments',
+              icon: 'account_tree',
+              route: '/erp/human-resources/departments',
+            },
+            {
+              id: 'erp/human-resources/positions',
+              label: 'Positions',
+              icon: 'work',
+              route: '/erp/human-resources/positions',
+            },
+          ],
+        },
       ],
     },
 
