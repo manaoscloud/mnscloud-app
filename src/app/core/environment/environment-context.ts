@@ -25,11 +25,19 @@ type EnvironmentAccessResponse = {
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const COMPACT_UUID_RE = /^[0-9a-f]{32}$/i;
 
 export function normalizeEnvironmentUUID(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null;
-  return UUID_RE.test(trimmed) ? trimmed : null;
+  if (UUID_RE.test(trimmed)) return trimmed.toLowerCase();
+  if (!COMPACT_UUID_RE.test(trimmed)) return null;
+
+  const compact = trimmed.toLowerCase();
+  return `${compact.slice(0, 8)}-${compact.slice(8, 12)}-${compact.slice(12, 16)}-${compact.slice(
+    16,
+    20,
+  )}-${compact.slice(20)}`;
 }
 
 export function readStoredEnvironmentUUID(): string | null {
