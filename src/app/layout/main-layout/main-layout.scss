@@ -96,6 +96,7 @@ mat-sidenav.sidenav.compact {
 /* ================= HEADER ================= */
 
 .drawer-header {
+  box-sizing: border-box;
   flex: 0 0 var(--layout-bar-height);
   height: var(--layout-bar-height);
   display: flex;
@@ -145,6 +146,7 @@ mat-sidenav.sidenav.compact {
 /* ================= SEARCH ================= */
 
 .drawer-search {
+  box-sizing: border-box;
   flex: 0 0 var(--layout-bar-height);
   height: var(--layout-bar-height);
   display: flex;
@@ -397,6 +399,7 @@ mat-sidenav.sidenav.compact {
 /* ================= TOPBAR ================= */
 
 .topbar {
+  box-sizing: border-box;
   height: var(--layout-bar-height);
   display: flex;
   align-items: center;
