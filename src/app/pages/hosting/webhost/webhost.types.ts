@@ -10,6 +10,7 @@ export type WebhostProviderConfig = {
 export type WebhostProviderCredentials = {
   username?: string | null;
   apiToken?: string | null;
+  apiTokenConfigured?: boolean | null;
 };
 
 export type HostingWebhostProvider = {

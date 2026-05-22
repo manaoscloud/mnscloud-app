@@ -264,7 +264,7 @@
                   matInput
                   [type]="hideApiToken() ? 'password' : 'text'"
                   formControlName="apiToken"
-                  placeholder="API token"
+                  [placeholder]="apiTokenPlaceholder()"
                 />
                 <button
                   type="button"

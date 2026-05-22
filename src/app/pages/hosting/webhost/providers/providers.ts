@@ -206,6 +206,12 @@ export class HostingWebhostProvidersPage implements OnDestroy {
     return item.credentials?.username || '-';
   }
 
+  apiTokenPlaceholder() {
+    return this.editing()?.credentials?.apiTokenConfigured
+      ? 'Token stored; leave blank to keep it'
+      : 'API token';
+  }
+
   onPage(event: PageEvent) {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
