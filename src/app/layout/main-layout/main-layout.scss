@@ -27,6 +27,12 @@ mat-sidenav.sidenav {
   width: 260px;
 }
 
+:host ::ng-deep .sidenav .mat-drawer-inner-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 mat-sidenav.sidenav.compact {
   width: 84px;
 }
@@ -41,15 +47,21 @@ mat-sidenav.sidenav.compact {
 
 /* scroll interno */
 .sidenav-scroll {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
   padding-bottom: 1rem;
+  scrollbar-width: thin;
 }
 
 .sidenav-scroll::-webkit-scrollbar {
-  display: none;
+  width: 8px;
+}
+
+.sidenav-scroll::-webkit-scrollbar-thumb {
+  background: var(--mat-sys-color-outline);
+  border-radius: 999px;
 }
 
 .sidenav.compact .drawer-header {
@@ -84,6 +96,7 @@ mat-sidenav.sidenav.compact {
 /* ================= HEADER ================= */
 
 .drawer-header {
+  flex: 0 0 var(--layout-bar-height);
   height: var(--layout-bar-height);
   display: flex;
   align-items: center;
@@ -132,6 +145,7 @@ mat-sidenav.sidenav.compact {
 /* ================= SEARCH ================= */
 
 .drawer-search {
+  flex: 0 0 var(--layout-bar-height);
   height: var(--layout-bar-height);
   display: flex;
   align-items: center;
