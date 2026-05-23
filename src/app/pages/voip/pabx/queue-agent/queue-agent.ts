@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
+  OnDestroy,
   TemplateRef,
   ViewChild,
   computed,
@@ -22,28 +23,29 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
+import {
+  CrudDialogBinding,
+  openCrudTemplateDialog,
+} from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipPabxExtensionItem, VoipPabxExtensionService } from '../extension/extension.service';
 import { VoipPabxQueueAgentItem, VoipPabxQueueAgentService } from './queue-agent.service';
 
-type EmployeeOption = {
-  uuid: string;
-  label: string;
-  email?: string | null;
-};
+type RuntimeStatus = VoipPabxQueueAgentItem['VqaRuntimeStatus'];
+type RuntimeAction = 'login' | 'logout' | 'pause' | 'unpause';
 
-type ExtensionOption = {
+type LookupOption = {
   uuid: string;
   label: string;
-  pabx?: string | null;
+  detail?: string | null;
 };
 
 @Component({
@@ -66,592 +68,37 @@ type ExtensionOption = {
     MatProgressSpinnerModule,
     MatSelectModule,
     MatSortModule,
-    MatTabsModule,
     MatTableModule,
+    MatTabsModule,
     MatTooltipModule,
   ],
-  template: `
-    <section class="page-shell" @fadeIn>
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">VoIP / PABX</p>
-          <h1>Queue Agents</h1>
-          <p>Manage queue agents linked to employees and extensions.</p>
-        </div>
-        <div class="header-actions">
-          <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
-            <mat-icon>refresh</mat-icon>
-            Refresh
-          </button>
-          <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
-            <mat-icon>add</mat-icon>
-            New
-          </button>
-        </div>
-      </header>
-
-      <mat-card class="toolbar-card">
-        <div class="toolbar-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Search agents</mat-label>
-            <mat-icon matPrefix>search</mat-icon>
-            <input
-              matInput
-              [(ngModel)]="searchInput"
-              placeholder="Employee, extension, login code..."
-              (keyup.enter)="applySearch()"
-            />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Runtime</mat-label>
-            <mat-select [(ngModel)]="runtimeFilter">
-              <mat-option value="">All</mat-option>
-              <mat-option value="LOGGED_OUT">Logged out</mat-option>
-              <mat-option value="AVAILABLE">Available</mat-option>
-              <mat-option value="PAUSED">Paused</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div class="filter-actions">
-          @if (selectedCount()) {
-            <span class="selected-count">{{ selectedCount() }} selected</span>
-            <button
-              mat-stroked-button
-              color="warn"
-              type="button"
-              [disabled]="deletingSelected()"
-              (click)="deleteSelected()"
-            >
-              <mat-icon>delete</mat-icon>
-              Delete selected
-            </button>
-          }
-          <button mat-stroked-button color="primary" type="button" (click)="applySearch()">
-            <mat-icon>filter_alt</mat-icon>
-            Apply
-          </button>
-          <button mat-stroked-button color="primary" type="button" (click)="clearFilters()">
-            <mat-icon>backspace</mat-icon>
-            Clear
-          </button>
-        </div>
-      </mat-card>
-
-      <mat-card class="table-card">
-        @if (loading()) {
-          <div class="loading-state">
-            <mat-spinner diameter="36"></mat-spinner>
-          </div>
-        }
-
-        <table mat-table [dataSource]="dataSource" matSort>
-          <ng-container matColumnDef="select">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-checkbox
-                [checked]="isAllVisibleSelected()"
-                [indeterminate]="isSomeVisibleSelected()"
-                (change)="toggleVisibleSelection($event.checked)"
-                aria-label="Select visible queue agents"
-              ></mat-checkbox>
-            </th>
-            <td mat-cell *matCellDef="let row">
-              <mat-checkbox
-                [checked]="isSelected(row)"
-                (change)="toggleSelection(row, $event.checked)"
-                aria-label="Select queue agent"
-              ></mat-checkbox>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="loginCode">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
-            <td mat-cell *matCellDef="let row">{{ row.VqaLoginCode }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="employee">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Employee</th>
-            <td mat-cell *matCellDef="let row">
-              <strong>{{ row.EmployeeName || row.VqaDisplayName || '-' }}</strong>
-              <span>{{ row.EmployeeEmail || '-' }}</span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="extension">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Extension</th>
-            <td mat-cell *matCellDef="let row">
-              <strong>{{ row.ExtensionUsername || '-' }}</strong>
-              <span>{{ row.PabxName || '-' }}</span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="runtime">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Runtime</th>
-            <td mat-cell *matCellDef="let row">
-              <mat-chip
-                class="status-pill"
-                [class.is-active]="row.VqaRuntimeStatus === 'AVAILABLE'"
-                [class.is-paused]="row.VqaRuntimeStatus === 'PAUSED'"
-              >
-                {{ runtimeLabel(row.VqaRuntimeStatus) }}
-              </mat-chip>
-              @if (row.VqaPauseReason) {
-                <span>{{ row.VqaPauseReason }}</span>
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-            <td mat-cell *matCellDef="let row">
-              <mat-chip class="status-pill" [class.is-active]="row.VqaEnabled === 1">
-                {{ row.VqaEnabled === 1 ? 'ACTIVE' : 'INACTIVE' }}
-              </mat-chip>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let row" class="actions-cell">
-              <button mat-icon-button matTooltip="Edit" type="button" (click)="startEdit(row)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              @if (row.VqaRuntimeStatus === 'LOGGED_OUT') {
-                <button
-                  mat-icon-button
-                  matTooltip="Log in"
-                  type="button"
-                  (click)="setRuntime(row, 'login')"
-                >
-                  <mat-icon>login</mat-icon>
-                </button>
-              } @else {
-                <button
-                  mat-icon-button
-                  matTooltip="Log out"
-                  type="button"
-                  (click)="setRuntime(row, 'logout')"
-                >
-                  <mat-icon>logout</mat-icon>
-                </button>
-              }
-              @if (row.VqaRuntimeStatus === 'PAUSED') {
-                <button
-                  mat-icon-button
-                  matTooltip="Unpause"
-                  type="button"
-                  (click)="setRuntime(row, 'unpause')"
-                >
-                  <mat-icon>play_arrow</mat-icon>
-                </button>
-              } @else if (row.VqaRuntimeStatus === 'AVAILABLE') {
-                <button
-                  mat-icon-button
-                  matTooltip="Pause"
-                  type="button"
-                  (click)="setRuntime(row, 'pause')"
-                >
-                  <mat-icon>pause</mat-icon>
-                </button>
-              }
-              <button mat-icon-button matTooltip="Delete" type="button" (click)="deleteAgent(row)">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-
-        @if (!loading() && dataSource.data.length === 0) {
-          <div class="empty-state">No queue agents found.</div>
-        }
-
-        <mat-paginator
-          class="mobile-paginator"
-          [pageSize]="25"
-          [pageSizeOptions]="[10, 25, 50, 100]"
-        ></mat-paginator>
-      </mat-card>
-    </section>
-
-    <ng-template #agentDialog>
-      <form class="dialog-form" [formGroup]="form" (ngSubmit)="saveAgent()">
-        <header class="dialog-header">
-          <h2>{{ editing() ? 'Edit Queue Agent' : 'New Queue Agent' }}</h2>
-          <button mat-icon-button type="button" mat-dialog-close>
-            <mat-icon>close</mat-icon>
-          </button>
-        </header>
-
-        <div class="dialog-content">
-          <mat-tab-group class="form-tabs">
-            <mat-tab label="Data">
-              <div class="tab-content">
-                <mat-form-field appearance="outline">
-                  <mat-label>Employee</mat-label>
-                  <mat-select
-                    formControlName="employeeUUID"
-                    (openedChange)="clearEmployeeSearch(!$event)"
-                  >
-                    <mat-option class="select-search-option" disabled>
-                      <input
-                        class="select-search-field"
-                        matInput
-                        placeholder="Search employee"
-                        [ngModel]="employeeSearch()"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="employeeSearch.set($event)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    @for (option of filteredEmployees(); track option.uuid) {
-                      <mat-option [value]="option.uuid">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Extension</mat-label>
-                  <mat-select
-                    formControlName="extensionUUID"
-                    (openedChange)="clearExtensionSearch(!$event)"
-                  >
-                    <mat-option class="select-search-option" disabled>
-                      <input
-                        class="select-search-field"
-                        matInput
-                        placeholder="Search extension"
-                        [ngModel]="extensionSearch()"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="extensionSearch.set($event)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    @for (option of filteredExtensions(); track option.uuid) {
-                      <mat-option [value]="option.uuid">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Login Code</mat-label>
-                  <input matInput formControlName="loginCode" maxlength="32" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Display Name</mat-label>
-                  <input matInput formControlName="displayName" maxlength="150" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Runtime</mat-label>
-                  <mat-select formControlName="runtimeStatus">
-                    <mat-option value="LOGGED_OUT">Logged out</mat-option>
-                    <mat-option value="AVAILABLE">Available</mat-option>
-                    <mat-option value="PAUSED">Paused</mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Pause Reason</mat-label>
-                  <input matInput formControlName="pauseReason" maxlength="120" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Status</mat-label>
-                  <mat-select formControlName="enabled">
-                    <mat-option [value]="true">Active</mat-option>
-                    <mat-option [value]="false">Inactive</mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            </mat-tab>
-          </mat-tab-group>
-        </div>
-
-        <footer class="form-actions">
-          <div class="secondary-actions">
-            <button mat-stroked-button type="button" mat-dialog-close>Cancel</button>
-          </div>
-          <div class="primary-actions">
-            @if (!editing()) {
-              <div class="save-split-action">
-                <button
-                  mat-flat-button
-                  color="primary"
-                  type="submit"
-                  [disabled]="form.invalid || saving()"
-                >
-                  <mat-icon>save</mat-icon>
-                  Save
-                </button>
-                <button
-                  mat-flat-button
-                  color="primary"
-                  type="button"
-                  [disabled]="form.invalid || saving()"
-                  [matMenuTriggerFor]="saveMenu"
-                  aria-label="More save actions"
-                >
-                  <mat-icon>expand_more</mat-icon>
-                </button>
-              </div>
-              <mat-menu #saveMenu="matMenu" xPosition="before" yPosition="below">
-                <button mat-menu-item type="button" (click)="saveAndNew()">Save/New</button>
-              </mat-menu>
-            } @else {
-              <button
-                mat-flat-button
-                color="primary"
-                type="submit"
-                [disabled]="form.invalid || saving()"
-              >
-                <mat-icon>save</mat-icon>
-                Save
-              </button>
-            }
-          </div>
-        </footer>
-      </form>
-    </ng-template>
-  `,
-  styles: [
-    `
-      .page-shell {
-        display: grid;
-        gap: 20px;
-        padding: 32px;
-      }
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: flex-start;
-      }
-      .header-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-      }
-      .page-header h1 {
-        margin: 0;
-        font-size: 32px;
-      }
-      .page-header p {
-        margin: 6px 0 0;
-        color: var(--text-muted, #a8b2b1);
-      }
-      .eyebrow {
-        margin: 0 0 4px !important;
-        color: var(--primary-color, #46d7d9) !important;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-      .toolbar-card,
-      .table-card {
-        border-radius: 8px;
-      }
-      .toolbar-grid {
-        display: grid;
-        grid-template-columns: minmax(240px, 1fr) minmax(180px, 260px);
-        gap: 12px;
-      }
-      .filter-actions {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 10px;
-        grid-column: 1 / -1;
-      }
-      .selected-count {
-        color: var(--text-muted, #a8b2b1);
-        font-size: 13px;
-      }
-      .table-card {
-        overflow: auto;
-        position: relative;
-      }
-      table {
-        width: 100%;
-      }
-      td strong,
-      td span {
-        display: block;
-      }
-      td span {
-        color: var(--text-muted, #a8b2b1);
-        font-size: 12px;
-        margin-top: 2px;
-      }
-      .actions-cell {
-        text-align: right;
-        white-space: nowrap;
-      }
-      .status-pill {
-        border-radius: 999px;
-      }
-      .status-pill.is-active {
-        background: rgba(70, 215, 217, 0.18);
-        color: var(--primary-color, #46d7d9);
-      }
-      .status-pill.is-paused {
-        background: rgba(245, 158, 11, 0.14);
-        color: #b7791f;
-      }
-      .loading-state,
-      .empty-state {
-        display: grid;
-        min-height: 160px;
-        place-items: center;
-      }
-      .dialog-form {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        max-height: min(92vh, 1100px);
-        min-width: min(760px, 90vw);
-      }
-      .dialog-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 18px 24px;
-      }
-      .dialog-header h2 {
-        margin: 0;
-      }
-      .dialog-content {
-        flex: 1 1 auto;
-        min-height: 0;
-        padding: 0 24px 8px;
-        overflow: hidden;
-      }
-      .form-tabs {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        min-height: 0;
-      }
-      .tab-content {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-        padding: 12px 0 4px;
-      }
-      .form-actions {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px;
-        margin: auto 0 0;
-        padding: 14px 24px 16px;
-        border-top: 1px solid rgba(148, 163, 184, 0.22);
-        background: rgba(255, 255, 255, 0.84);
-        backdrop-filter: blur(8px);
-      }
-      .secondary-actions {
-        grid-row: 1;
-        justify-self: start;
-      }
-      .primary-actions {
-        grid-row: 1;
-        justify-self: end;
-      }
-      .save-split-action {
-        display: grid;
-        grid-template-columns: minmax(160px, auto) 44px;
-        gap: 0;
-        overflow: hidden;
-        border-radius: 999px;
-      }
-      .save-split-action button {
-        border-radius: 0;
-        height: 40px;
-      }
-      .save-split-action button:first-child {
-        border-radius: 999px 0 0 999px;
-      }
-      .save-split-action button:last-child {
-        min-width: 44px;
-        padding: 0;
-        border-radius: 0 999px 999px 0;
-      }
-      .select-search-option {
-        height: auto;
-        padding: 8px 12px;
-      }
-      .select-search-field {
-        width: 100%;
-        border: 0;
-        outline: 0;
-      }
-      @media (max-width: 720px) {
-        .page-shell {
-          padding: 20px;
-        }
-        .page-header {
-          flex-direction: column;
-        }
-        .header-actions,
-        .filter-actions {
-          justify-content: flex-end;
-        }
-        .toolbar-grid,
-        .tab-content {
-          grid-template-columns: 1fr;
-        }
-        .dialog-form {
-          min-width: 92vw;
-        }
-        .form-actions {
-          grid-template-columns: 1fr;
-        }
-        .primary-actions,
-        .secondary-actions {
-          justify-self: stretch;
-        }
-        .primary-actions {
-          grid-row: 1;
-        }
-        .secondary-actions {
-          grid-row: 2;
-        }
-        .primary-actions button,
-        .secondary-actions button,
-        .save-split-action {
-          width: 100%;
-        }
-      }
-    `,
-  ],
+  templateUrl: './queue-agent.html',
+  styleUrls: ['./queue-agent.scss'],
   animations: [fadeIn],
 })
-export class VoipPabxQueueAgentPage implements AfterViewInit {
+export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(VoipPabxQueueAgentService);
   private readonly extensionApi = inject(VoipPabxExtensionService);
   private readonly genericApi = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('agentDialog') agentDialog?: TemplateRef<unknown>;
+  private readonly listLimit = 5000;
 
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipPabxQueueAgentItem | null>(null);
-  readonly selectedUUIDs = signal<Set<string>>(new Set());
-  readonly employees = signal<EmployeeOption[]>([]);
-  readonly extensions = signal<ExtensionOption[]>([]);
+  readonly searchInput = signal('');
+  readonly search = signal('');
+  readonly runtimeFilter = signal<RuntimeStatus | ''>('');
+  readonly statusFilter = signal<'1' | '0' | ''>('');
   readonly employeeSearch = signal('');
   readonly extensionSearch = signal('');
+  readonly employeeOptions = signal<LookupOption[]>([]);
+  readonly extensionOptions = signal<LookupOption[]>([]);
+  readonly selectedQueueAgentUUIDs = signal<Set<string>>(new Set());
+
   readonly dataSource = new MatTableDataSource<VoipPabxQueueAgentItem>([]);
   readonly displayedColumns = [
     'select',
@@ -660,217 +107,318 @@ export class VoipPabxQueueAgentPage implements AfterViewInit {
     'extension',
     'runtime',
     'status',
+    'lastStatus',
     'actions',
   ];
-
-  searchInput = '';
-  runtimeFilter = '';
 
   readonly form = this.fb.nonNullable.group({
     employeeUUID: ['', Validators.required],
     extensionUUID: ['', Validators.required],
     loginCode: ['', [Validators.required, Validators.maxLength(32)]],
-    displayName: [''],
-    runtimeStatus: ['LOGGED_OUT', Validators.required],
-    pauseReason: [''],
+    displayName: ['', Validators.maxLength(150)],
+    runtimeStatus: ['LOGGED_OUT' as RuntimeStatus, Validators.required],
+    pauseReason: ['', Validators.maxLength(120)],
     enabled: [true],
   });
 
-  readonly filteredEmployees = computed(() => {
-    const term = this.employeeSearch().toLowerCase();
-    return this.employees().filter((item) => item.label.toLowerCase().includes(term));
-  });
+  readonly filteredEmployeeOptions = computed(() =>
+    this.filterOptions(this.employeeOptions(), this.employeeSearch()),
+  );
 
-  readonly filteredExtensions = computed(() => {
-    const term = this.extensionSearch().toLowerCase();
-    return this.extensions().filter((item) => item.label.toLowerCase().includes(term));
-  });
+  readonly filteredExtensionOptions = computed(() =>
+    this.filterOptions(this.extensionOptions(), this.extensionSearch()),
+  );
+
+  @ViewChild(MatPaginator) paginator?: MatPaginator;
+  @ViewChild(MatSort) sort?: MatSort;
+  @ViewChild('queueAgentFormDialog') queueAgentFormDialog?: TemplateRef<unknown>;
+
+  private queueAgentDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator ?? null;
     this.dataSource.sort = this.sort ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => {
-      if (column === 'employee') return row.EmployeeName ?? '';
-      if (column === 'extension') return row.ExtensionUsername ?? '';
-      if (column === 'runtime') return row.VqaRuntimeStatus ?? '';
-      if (column === 'status') return row.VqaEnabled ?? 0;
-      return (row as any)[column] ?? '';
+      switch (column) {
+        case 'loginCode':
+          return row.VqaLoginCode ?? '';
+        case 'employee':
+          return this.employeeLabel(row);
+        case 'extension':
+          return this.extensionLabel(row);
+        case 'runtime':
+          return this.runtimeLabel(row.VqaRuntimeStatus);
+        case 'status':
+          return this.isActive(row) ? 'ACTIVE' : 'INACTIVE';
+        case 'lastStatus':
+          return row.VqaLastStatusAt ?? '';
+        default:
+          return '';
+      }
     };
-    void this.bootstrap();
+
+    setTimeout(() => {
+      void this.bootstrap();
+    }, 0);
+  }
+
+  ngOnDestroy() {
+    this.closeQueueAgentDialog();
   }
 
   async bootstrap() {
-    await Promise.all([this.loadLookups(), this.loadAgents()]);
+    await Promise.all([this.loadLookups(), this.loadItems()]);
+  }
+
+  applySearchFilters() {
+    this.search.set(this.searchInput().trim());
+    this.resetPaginator();
+    void this.loadItems();
+  }
+
+  clearSearchFilters() {
+    this.searchInput.set('');
+    this.search.set('');
+    this.runtimeFilter.set('');
+    this.statusFilter.set('');
+    this.resetPaginator();
+    void this.loadItems();
+  }
+
+  refreshList() {
+    void this.loadItems();
+  }
+
+  async loadItems() {
+    this.loading.set(true);
+    const start = performance.now();
+
+    try {
+      const params = new URLSearchParams({ limit: String(this.listLimit) });
+      if (this.search()) params.set('search', this.search());
+      if (this.runtimeFilter()) params.set('runtimeStatus', this.runtimeFilter());
+      if (this.statusFilter()) params.set('status', this.statusFilter());
+
+      const response = await this.api.list(params);
+      this.dataSource.data = response?.data?.items ?? [];
+      this.reconcileSelection();
+    } catch (err) {
+      this.dataSource.data = [];
+      this.reconcileSelection();
+      this.snack.error(this.extractErrorMessage(err, 'Failed to load queue agents.'));
+    } finally {
+      const waitMs = Math.max(0, 600 - (performance.now() - start));
+      if (waitMs) setTimeout(() => this.loading.set(false), waitMs);
+      else this.loading.set(false);
+    }
   }
 
   async loadLookups() {
     try {
       const [employeesResponse, extensionsResponse] = await Promise.all([
-        this.genericApi.get<any>('erp/human-resources/employees?limit=500'),
-        this.extensionApi.list(new URLSearchParams({ limit: '1000' })),
+        this.genericApi.get<any>('erp/human-resources/employees?limit=5000'),
+        this.extensionApi.list(new URLSearchParams({ limit: '5000' })),
       ]);
-      this.employees.set(
-        ((employeesResponse?.data?.items ?? []) as any[]).map((item) => ({
+
+      this.employeeOptions.set(
+        (employeesResponse?.data?.items ?? []).map((item: any) => ({
           uuid: item.EmployeeUUID,
           label: item.Name ?? item.EmployeeName ?? item.EmpName ?? item.EmployeeUUID,
-          email: item.Email ?? null,
+          detail: item.Email ?? item.EmployeeEmail ?? item.EmpEmail ?? null,
         })),
       );
-      this.extensions.set(
+
+      this.extensionOptions.set(
         ((extensionsResponse?.data?.items ?? []) as VoipPabxExtensionItem[]).map((item) => ({
           uuid: item.VpeUUID,
-          label: `${item.VpeUsername}${item.PabxName ? ` - ${item.PabxName}` : ''}`,
-          pabx: item.PabxName ?? null,
+          label: item.VpeUsername,
+          detail: item.PabxName ?? item.DomainName ?? null,
         })),
       );
     } catch (err) {
-      this.snack.error(this.extractError(err, 'Failed to load employees and extensions.'));
+      this.snack.error(this.extractErrorMessage(err, 'Failed to load employees and extensions.'));
     }
-  }
-
-  async loadAgents() {
-    this.loading.set(true);
-    try {
-      const params = new URLSearchParams({ limit: '500' });
-      if (this.searchInput.trim()) params.set('search', this.searchInput.trim());
-      if (this.runtimeFilter) params.set('runtimeStatus', this.runtimeFilter);
-      const response = await this.api.list(params);
-      this.dataSource.data = (response?.data?.items ?? []) as VoipPabxQueueAgentItem[];
-      this.reconcileSelection();
-    } catch (err) {
-      this.snack.error(this.extractError(err, 'Failed to load queue agents.'));
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  applySearch() {
-    void this.loadAgents();
-  }
-
-  refreshList() {
-    void this.loadAgents();
-  }
-
-  clearFilters() {
-    this.searchInput = '';
-    this.runtimeFilter = '';
-    void this.loadAgents();
   }
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
-      employeeUUID: '',
-      extensionUUID: '',
-      loginCode: '',
-      displayName: '',
-      runtimeStatus: 'LOGGED_OUT',
-      pauseReason: '',
-      enabled: true,
-    });
-    this.openDialog();
+    this.resetForm();
+    this.openQueueAgentDialog();
   }
 
-  startEdit(row: VoipPabxQueueAgentItem) {
-    this.editing.set(row);
+  startEdit(item: VoipPabxQueueAgentItem) {
+    this.editing.set(item);
     this.form.reset({
-      employeeUUID: row.ErpHrEmployeeEmpUUID,
-      extensionUUID: row.VoipPabxExtensionVpeUUID,
-      loginCode: row.VqaLoginCode,
-      displayName: row.VqaDisplayName ?? '',
-      runtimeStatus: row.VqaRuntimeStatus,
-      pauseReason: row.VqaPauseReason ?? '',
-      enabled: row.VqaEnabled === 1,
+      employeeUUID: item.ErpHrEmployeeEmpUUID,
+      extensionUUID: item.VoipPabxExtensionVpeUUID,
+      loginCode: item.VqaLoginCode,
+      displayName: item.VqaDisplayName ?? '',
+      runtimeStatus: item.VqaRuntimeStatus,
+      pauseReason: item.VqaPauseReason ?? '',
+      enabled: item.VqaEnabled === 1,
     });
-    this.openDialog();
+    this.openQueueAgentDialog();
   }
 
-  async saveAgent(keepOpen = false) {
+  async saveItem(saveAndNew = false) {
     if (this.form.invalid) return;
-    this.saving.set(true);
+
     const value = this.form.getRawValue();
     const payload = {
       employeeUUID: value.employeeUUID,
       extensionUUID: value.extensionUUID,
-      loginCode: value.loginCode,
-      displayName: value.displayName || null,
+      loginCode: value.loginCode.trim(),
+      displayName: value.displayName.trim() || null,
       runtimeStatus: value.runtimeStatus,
-      pauseReason: value.pauseReason || null,
+      pauseReason: value.runtimeStatus === 'PAUSED' ? value.pauseReason.trim() || null : null,
       enabled: value.enabled,
     };
+    const createMode = !this.editing();
+
+    this.saving.set(true);
     try {
       const editing = this.editing();
-      if (editing) await this.api.update(editing.VqaUUID, payload);
-      else await this.api.create(payload);
-      this.snack.success(editing ? 'Queue agent updated.' : 'Queue agent created.');
-      if (keepOpen && !editing) {
-        this.form.reset({
-          employeeUUID: '',
-          extensionUUID: '',
-          loginCode: '',
-          displayName: '',
-          runtimeStatus: 'LOGGED_OUT',
-          pauseReason: '',
-          enabled: true,
-        });
+      if (editing) {
+        await this.api.update(editing.VqaUUID, payload);
+        this.snack.success('Queue agent updated successfully.');
       } else {
-        this.dialog.closeAll();
+        await this.api.create(payload);
+        this.snack.success('Queue agent created successfully.');
       }
-      await this.loadAgents();
+
+      await this.loadItems();
+
+      if (saveAndNew && createMode) {
+        this.resetForm();
+        this.editing.set(null);
+        return;
+      }
+
+      this.cancelForm();
     } catch (err) {
-      this.snack.error(this.extractError(err, 'Failed to save queue agent.'));
+      this.snack.error(this.extractErrorMessage(err, 'Failed to save queue agent.'));
     } finally {
       this.saving.set(false);
     }
   }
 
-  saveAndNew() {
-    void this.saveAgent(true);
+  saveAndNewItem() {
+    if (this.editing()) return;
+    void this.saveItem(true);
   }
 
-  async deleteAgent(row: VoipPabxQueueAgentItem) {
+  cancelForm() {
+    this.closeQueueAgentDialog();
+    this.resetForm();
+    this.editing.set(null);
+  }
+
+  async deleteItem(item: VoipPabxQueueAgentItem) {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      width: '420px',
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
       data: {
         title: 'Delete queue agent',
-        message: `Delete queue agent ${row.EmployeeName ?? row.VqaLoginCode}?`,
+        message: `Are you sure you want to delete "${this.rowLabel(item)}"?`,
         confirmLabel: 'Delete',
       },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
+
+    this.loading.set(true);
     try {
-      await this.api.remove(row.VqaUUID);
-      this.snack.success('Queue agent deleted.');
-      this.selectedUUIDs.update((set) => {
-        const next = new Set(set);
-        next.delete(row.VqaUUID);
+      await this.api.remove(item.VqaUUID);
+      await this.loadItems();
+      this.selectedQueueAgentUUIDs.update((current) => {
+        const next = new Set(current);
+        next.delete(item.VqaUUID);
         return next;
       });
-      await this.loadAgents();
+      this.snack.success('Queue agent deleted successfully.');
     } catch (err) {
-      this.snack.error(this.extractError(err, 'Failed to delete queue agent.'));
+      this.snack.error(this.extractErrorMessage(err, 'Failed to delete queue agent.'));
+    } finally {
+      this.loading.set(false);
     }
   }
 
-  selectedCount() {
-    return this.selectedUUIDs().size;
+  async deleteSelectedItems() {
+    const ids = Array.from(this.selectedQueueAgentUUIDs());
+    if (!ids.length) return;
+
+    const labels = this.dataSource.data
+      .filter((item) => ids.includes(item.VqaUUID))
+      .slice(0, 3)
+      .map((item) => this.rowLabel(item));
+    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: {
+        title: 'Delete selected queue agents',
+        message: `Are you sure you want to delete ${ids.length} selected queue agent(s)?${suffix}`,
+        confirmLabel: 'Delete selected',
+      },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+    const confirmed = await firstValueFrom(ref.afterClosed());
+    if (!confirmed) return;
+
+    this.deletingSelected.set(true);
+    this.loading.set(true);
+    try {
+      const response = await this.api.removeMany(ids);
+      const deleted = new Set<string>(response?.data?.deleted ?? []);
+      const failed = new Set<string>(
+        (response?.data?.failed ?? [])
+          .map((item: any) => item?.VqaUUID)
+          .filter((uuid: string | null): uuid is string => !!uuid),
+      );
+
+      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VqaUUID));
+      this.selectedQueueAgentUUIDs.set(failed);
+      if (failed.size) {
+        this.snack.error(`${failed.size} selected queue agent(s) could not be deleted.`);
+      } else {
+        this.snack.success(`${deleted.size || ids.length} selected queue agent(s) deleted.`);
+      }
+      await this.loadItems();
+    } catch (err) {
+      this.snack.error(this.extractErrorMessage(err, 'Failed to delete selected queue agents.'));
+    } finally {
+      this.deletingSelected.set(false);
+      this.loading.set(false);
+    }
+  }
+
+  async setRuntime(item: VoipPabxQueueAgentItem, action: RuntimeAction) {
+    try {
+      await this.api.setStatus(
+        item.VqaUUID,
+        action,
+        action === 'pause' ? 'Manual pause' : undefined,
+      );
+      await this.loadItems();
+      this.snack.success('Queue agent status updated successfully.');
+    } catch (err) {
+      this.snack.error(this.extractErrorMessage(err, 'Failed to update queue agent status.'));
+    }
+  }
+
+  get selectedCount() {
+    return this.selectedQueueAgentUUIDs().size;
   }
 
   visibleRows() {
-    const rows = this.dataSource.filteredData.length
-      ? this.dataSource.filteredData
-      : this.dataSource.data;
-    if (!this.paginator) return rows;
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    return rows.slice(start, start + this.paginator.pageSize);
+    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
+    const paginator = this.dataSource.paginator;
+    if (!paginator) return filtered;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return filtered.slice(start, start + paginator.pageSize);
   }
 
-  isSelected(row: VoipPabxQueueAgentItem) {
-    return this.selectedUUIDs().has(row.VqaUUID);
+  isSelected(item: VoipPabxQueueAgentItem) {
+    return this.selectedQueueAgentUUIDs().has(item.VqaUUID);
   }
 
   isAllVisibleSelected() {
@@ -883,117 +431,134 @@ export class VoipPabxQueueAgentPage implements AfterViewInit {
     return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
   }
 
-  toggleSelection(row: VoipPabxQueueAgentItem, checked: boolean) {
-    this.selectedUUIDs.update((set) => {
-      const next = new Set(set);
-      if (checked) next.add(row.VqaUUID);
-      else next.delete(row.VqaUUID);
+  toggleQueueAgentSelection(item: VoipPabxQueueAgentItem, selected: boolean) {
+    this.selectedQueueAgentUUIDs.update((current) => {
+      const next = new Set(current);
+      if (selected) next.add(item.VqaUUID);
+      else next.delete(item.VqaUUID);
       return next;
     });
   }
 
-  toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleSelection(row, checked));
-  }
-
-  async deleteSelected() {
-    const ids = Array.from(this.selectedUUIDs());
-    if (!ids.length) return;
-    const names = this.dataSource.data
-      .filter((row) => ids.includes(row.VqaUUID))
-      .slice(0, 3)
-      .map((row) => row.EmployeeName || row.VqaDisplayName || row.VqaLoginCode)
-      .join(', ');
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      width: '420px',
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-      data: {
-        title: 'Delete selected queue agents',
-        message: `Delete ${ids.length} selected queue agent(s)?${names ? ` Examples: ${names}.` : ''}`,
-        confirmLabel: 'Delete selected',
-      },
+  toggleVisibleSelection(selected: boolean) {
+    this.selectedQueueAgentUUIDs.update((current) => {
+      const next = new Set(current);
+      for (const row of this.visibleRows()) {
+        if (selected) next.add(row.VqaUUID);
+        else next.delete(row.VqaUUID);
+      }
+      return next;
     });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.deletingSelected.set(true);
-    try {
-      const response = await this.api.removeMany(ids);
-      const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = this.failedUUIDs(response?.data?.failed ?? []);
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VqaUUID));
-      this.selectedUUIDs.set(new Set(failed));
-      if (failed.length)
-        this.snack.warning(`${failed.length} queue agent(s) could not be deleted.`);
-      else this.snack.success(`${deleted.size} queue agent(s) deleted successfully.`);
-    } catch (err) {
-      this.snack.error(this.extractError(err, 'Failed to delete selected queue agents.'));
-    } finally {
-      this.deletingSelected.set(false);
-    }
   }
 
-  async setRuntime(row: VoipPabxQueueAgentItem, action: 'login' | 'logout' | 'pause' | 'unpause') {
-    try {
-      await this.api.setStatus(
-        row.VqaUUID,
-        action,
-        action === 'pause' ? 'Manual pause' : undefined,
-      );
-      this.snack.success('Queue agent status updated.');
-      await this.loadAgents();
-    } catch (err) {
-      this.snack.error(this.extractError(err, 'Failed to update queue agent status.'));
-    }
+  employeeLabel(item: VoipPabxQueueAgentItem) {
+    return item.EmployeeName || item.VqaDisplayName || item.ErpHrEmployeeEmpUUID || '';
   }
 
-  runtimeLabel(status: string) {
+  extensionLabel(item: VoipPabxQueueAgentItem) {
+    return item.ExtensionUsername || item.VoipPabxExtensionVpeUUID || '';
+  }
+
+  runtimeLabel(status: RuntimeStatus | string) {
     if (status === 'AVAILABLE') return 'AVAILABLE';
     if (status === 'PAUSED') return 'PAUSED';
     return 'LOGGED OUT';
   }
 
-  clearEmployeeSearch(closed: boolean) {
-    if (closed) this.employeeSearch.set('');
+  isActive(item: VoipPabxQueueAgentItem) {
+    return Number(item.VqaEnabled) === 1;
   }
 
-  clearExtensionSearch(closed: boolean) {
-    if (closed) this.extensionSearch.set('');
+  runtimeChipClass(status: RuntimeStatus) {
+    return {
+      'chip-success': status === 'AVAILABLE',
+      'chip-running': status === 'PAUSED',
+      'chip-skipped': status === 'LOGGED_OUT',
+      'is-active': status === 'AVAILABLE',
+      'is-inactive': status !== 'AVAILABLE',
+    };
   }
 
-  private openDialog() {
-    if (!this.agentDialog) return;
-    const ref = this.dialog.open(this.agentDialog, {
-      width: '820px',
-      maxWidth: '94vw',
-      maxHeight: '88vh',
-      autoFocus: false,
-      disableClose: true,
-      panelClass: 'voip-pabx-queue-agent-dialog',
+  statusChipClass(item: VoipPabxQueueAgentItem) {
+    return {
+      'chip-success': this.isActive(item),
+      'chip-skipped': !this.isActive(item),
+      'is-active': this.isActive(item),
+      'is-inactive': !this.isActive(item),
+    };
+  }
+
+  onEmployeeSelectOpened(opened: boolean) {
+    if (!opened) this.employeeSearch.set('');
+  }
+
+  onExtensionSelectOpened(opened: boolean) {
+    if (!opened) this.extensionSearch.set('');
+  }
+
+  private resetForm() {
+    this.form.reset({
+      employeeUUID: '',
+      extensionUUID: '',
+      loginCode: '',
+      displayName: '',
+      runtimeStatus: 'LOGGED_OUT',
+      pauseReason: '',
+      enabled: true,
     });
-    ref.updateSize('820px', '88vh');
+    this.employeeSearch.set('');
+    this.extensionSearch.set('');
+  }
+
+  private openQueueAgentDialog() {
+    if (!this.queueAgentFormDialog || this.queueAgentDialogBinding) return;
+    this.queueAgentDialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.queueAgentFormDialog,
+      'crud-form-dialog',
+      { onEscape: () => this.cancelForm() },
+    );
+    this.queueAgentDialogBinding.ref.afterClosed().subscribe(() => {
+      this.queueAgentDialogBinding?.stop();
+      this.queueAgentDialogBinding = null;
+    });
+  }
+
+  private closeQueueAgentDialog() {
+    if (!this.queueAgentDialogBinding) return;
+    this.queueAgentDialogBinding.ref.close();
+    this.queueAgentDialogBinding.stop();
+    this.queueAgentDialogBinding = null;
+  }
+
+  private filterOptions(options: LookupOption[], search: string) {
+    const term = search.trim().toLowerCase();
+    if (!term) return options;
+    return options.filter((option) =>
+      `${option.label} ${option.detail ?? ''}`.toLowerCase().includes(term),
+    );
+  }
+
+  rowLabel(item: VoipPabxQueueAgentItem) {
+    return this.employeeLabel(item) || item.VqaLoginCode || item.VqaID || item.VqaUUID;
+  }
+
+  resetPaginator() {
+    if (this.paginator) this.paginator.firstPage();
   }
 
   private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.VqaUUID));
-    this.selectedUUIDs.set(new Set([...this.selectedUUIDs()].filter((uuid) => valid.has(uuid))));
+    const available = new Set(this.dataSource.data.map((item) => item.VqaUUID));
+    this.selectedQueueAgentUUIDs.update((current) => {
+      const next = new Set<string>();
+      current.forEach((uuid) => {
+        if (available.has(uuid)) next.add(uuid);
+      });
+      return next;
+    });
   }
 
-  private failedUUIDs(value: unknown) {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map((item) => item?.VqaUUID ?? item?.uuid ?? item)
-      .filter((item): item is string => typeof item === 'string' && item.length > 0);
-  }
-
-  private extractError(err: unknown, fallback: string) {
-    if (err && typeof err === 'object' && 'error' in err) {
-      const value = (err as any).error;
-      if (typeof value === 'string') return value;
-      if (value?.error) return value.error;
-      if (value?.message) return value.message;
-    }
-    return fallback;
+  private extractErrorMessage(err: any, fallback: string) {
+    return err?.error?.error || err?.error?.message || err?.message || fallback;
   }
 }
