@@ -92,16 +92,6 @@
               <button mat-icon-button type="button" matTooltip="Edit" (click)="startEdit(row)">
                 <mat-icon>edit</mat-icon>
               </button>
-              @if (config().resource === 'servers') {
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Rotate node token"
-                  (click)="rotateToken(row)"
-                >
-                  <mat-icon>vpn_key</mat-icon>
-                </button>
-              }
               @if (config().resource === 'domains') {
                 <button
                   mat-icon-button
@@ -261,32 +251,6 @@
           <span>Save/New</span>
         </button></mat-menu
       >
-    </mat-dialog-actions>
-  </div>
-</ng-template>
-
-<ng-template #tokenDialog>
-  <div class="webrtc-token-dialog">
-    <h2 mat-dialog-title>WebRTC token command</h2>
-    <mat-dialog-content>
-      <p>Run this command on an installed WebRTC edge server.</p>
-      <p class="token-warning">
-        This token is shown only once. Generating this command again rotates the token and
-        invalidates the previous one.
-      </p>
-      <pre>{{ tokenCommand() }}</pre>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button
-        mat-stroked-button
-        type="button"
-        [cdkCopyToClipboard]="tokenCommand()"
-        (cdkCopyToClipboardCopied)="notifyCommandCopied($event)"
-      >
-        <mat-icon>content_copy</mat-icon>
-        Copy
-      </button>
-      <button mat-flat-button color="primary" mat-dialog-close type="button">Done</button>
     </mat-dialog-actions>
   </div>
 </ng-template>

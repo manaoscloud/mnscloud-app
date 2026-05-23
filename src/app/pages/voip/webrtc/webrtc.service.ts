@@ -39,10 +39,6 @@ export class VoipWebRtcService {
     return this.api.delete<any>(`${this.resourcePath(resource)}/bulk`, { ids });
   }
 
-  rotateToken(uuid: string) {
-    return this.api.post<any>(`${this.basePath}/servers/${uuid}/rotate-token`, {});
-  }
-
   provisionDomain(uuid: string) {
     return this.api.post<any>(`${this.basePath}/domains/${uuid}/provision`, {});
   }

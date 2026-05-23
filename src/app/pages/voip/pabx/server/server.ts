@@ -1,4 +1,3 @@
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -52,7 +51,6 @@ type ServerPayload = {
   standalone: true,
   imports: [
     CommonModule,
-    ClipboardModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -99,8 +97,6 @@ export class VoipPabxServerPage implements AfterViewInit {
   readonly saving = signal(false);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly validatingIds = signal<Set<string>>(new Set());
-  readonly generatedInstallToken = signal('');
-  readonly generatedInstallTarget = signal<VoipPabxServerItem | null>(null);
 
   search = '';
   searchInput = '';
@@ -131,7 +127,6 @@ export class VoipPabxServerPage implements AfterViewInit {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
   @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
-  @ViewChild('installTokenDialog') installTokenDialog?: TemplateRef<unknown>;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -234,8 +229,6 @@ export class VoipPabxServerPage implements AfterViewInit {
   async save(createAnother = false) {
     if (this.form.invalid || this.saving()) return;
     this.saving.set(true);
-    this.generatedInstallToken.set('');
-    this.generatedInstallTarget.set(null);
     const payload = this.normalizedPayload();
     try {
       const editing = this.editing();
@@ -243,14 +236,8 @@ export class VoipPabxServerPage implements AfterViewInit {
         await this.api.update(editing.VpsUUID, payload, true);
         this.snack.success('PABX server updated successfully.');
       } else {
-        const response = await this.api.create(payload, true);
-        const installToken = response?.data?.installToken;
-        if (installToken) {
-          this.setInstallToken(response?.data?.item, installToken);
-          this.snack.success('PABX install command generated.');
-        } else {
-          this.snack.success('PABX server created successfully.');
-        }
+        await this.api.create(payload, true);
+        this.snack.success('PABX server created successfully.');
       }
 
       await this.load();
@@ -259,7 +246,6 @@ export class VoipPabxServerPage implements AfterViewInit {
         return;
       }
       this.closeDialog();
-      if (this.generatedInstallToken()) this.openInstallTokenDialog();
     } catch (error: any) {
       this.snack.error(error?.error?.error || 'Failed to save PABX server.');
     } finally {
@@ -303,32 +289,6 @@ export class VoipPabxServerPage implements AfterViewInit {
       const done = new Set(this.validatingIds());
       done.delete(row.VpsUUID);
       this.validatingIds.set(done);
-    }
-  }
-
-  async rotateToken(row: VoipPabxServerItem) {
-    if (!this.canGenerateInstallToken(row)) {
-      this.snack.error('Save the PABX node UUID before generating an install token.');
-      return;
-    }
-    const confirmed = await this.confirmDelete(
-      'Generate PABX install token',
-      `Generate a replacement one-time token for "${row.VpsName}"?`,
-      'Generate token',
-    );
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.rotateToken(row.VpsUUID, true);
-      const token = response?.data?.token;
-      if (token) {
-        this.setInstallToken(response?.data?.server ?? row, token);
-        this.openInstallTokenDialog();
-      }
-      this.snack.success(token ? 'PABX install command generated.' : 'PABX install token generated.');
-      await this.load();
-    } catch (error: any) {
-      this.snack.error(error?.error?.error || 'Failed to generate PABX install token.');
     }
   }
 
@@ -449,61 +409,6 @@ export class VoipPabxServerPage implements AfterViewInit {
     return this.validatingIds().has(row.VpsUUID);
   }
 
-  canGenerateInstallToken(row: VoipPabxServerItem) {
-    return this.isValidNodeUUID(row.VpsNodeUUID ?? '');
-  }
-
-  installCommand() {
-    const token = this.generatedInstallToken();
-    const target = this.generatedInstallTarget();
-    const nodeUUID = this.normalizeNodeUUID(target?.VpsNodeUUID ?? '');
-    const engine = this.normalizedEngine(target?.VpsEngine);
-    return `sudo bash -lc 'set -euo pipefail
-install -d -m 750 /etc/mnscloud/pabx
-printf "%s\\n" "${nodeUUID}" > /etc/mnscloud/pabx/node.uuid
-printf "%s\\n" "${token}" > /etc/mnscloud/pabx/api.token
-chown root:root /etc/mnscloud/pabx/node.uuid
-if getent group freeswitch >/dev/null 2>&1; then
-  chown root:freeswitch /etc/mnscloud/pabx/api.token
-elif getent group asterisk >/dev/null 2>&1; then
-  chown root:asterisk /etc/mnscloud/pabx/api.token
-else
-  chown root:root /etc/mnscloud/pabx/api.token
-fi
-chmod 0640 /etc/mnscloud/pabx/node.uuid /etc/mnscloud/pabx/api.token
-test -s /etc/mnscloud/pabx/api.base || { echo "Missing /etc/mnscloud/pabx/api.base. Run the PABX installer first." >&2; exit 1; }
-API=$(tr -d "\\r\\n" < /etc/mnscloud/pabx/api.base)
-UUID=$(tr -d "\\r\\n" < /etc/mnscloud/pabx/node.uuid)
-TOKEN=$(tr -d "\\r\\n" < /etc/mnscloud/pabx/api.token)
-curl -fsS -X POST \\
-  -H "Authorization: Bearer \${TOKEN}" \\
-  -H "X-PABX-Node-UUID: \${UUID}" \\
-  -H "Content-Type: application/json" \\
-  --data "{\\"node_uuid\\":\\"\${UUID}\\"}" \\
-  "\${API%/}/api/v1/pabx/${engine}/heartbeat?node_uuid=\${UUID}" >/dev/null
-TOKEN_SED=$(printf "%s" "\${TOKEN}" | sed "s/[\\\\&|]/\\\\\\\\&/g")
-if [ -f /etc/freeswitch/autoload_configs/xml_curl.conf.xml ]; then
-  cp -n /etc/freeswitch/autoload_configs/xml_curl.conf.xml /etc/freeswitch/autoload_configs/xml_curl.conf.xml.bkp-token-sync 2>/dev/null || true
-  sed -i -E "s|(gateway-credentials\\" value=\\"mnscloud:)[^\\"]*|\\\\1\${TOKEN_SED}|g" /etc/freeswitch/autoload_configs/xml_curl.conf.xml
-fi
-if [ -f /etc/freeswitch/autoload_configs/json_cdr.conf.xml ]; then
-  cp -n /etc/freeswitch/autoload_configs/json_cdr.conf.xml /etc/freeswitch/autoload_configs/json_cdr.conf.xml.bkp-token-sync 2>/dev/null || true
-  sed -i -E "s|(cred\\" value=\\"mnscloud:)[^\\"]*|\\\\1\${TOKEN_SED}|g" /etc/freeswitch/autoload_configs/json_cdr.conf.xml
-fi
-if command -v fs_cli >/dev/null 2>&1; then
-  fs_cli -x reloadxml >/dev/null 2>&1 || true
-  fs_cli -x "reload mod_xml_curl" >/dev/null 2>&1 || true
-  fs_cli -x "reload mod_json_cdr" >/dev/null 2>&1 || true
-fi
-echo "PABX install token saved and validated."'`;
-  }
-
-  notifyInstallCommandCopied(copied: boolean) {
-    copied
-      ? this.snack.success('PABX install command copied.')
-      : this.snack.error('Failed to copy PABX install command.');
-  }
-
   closeDialog() {
     this.dialogBinding?.stop();
     this.dialogBinding = null;
@@ -520,37 +425,6 @@ echo "PABX install token saved and validated."'`;
       { onEscape: () => this.closeDialog() },
     );
     this.dialogRef = this.dialogBinding.ref;
-  }
-
-  private openInstallTokenDialog() {
-    if (!this.installTokenDialog || !this.generatedInstallToken()) return;
-    this.dialog.open(this.installTokenDialog, {
-      width: 'min(820px, calc(100vw - 32px))',
-      maxWidth: '820px',
-      disableClose: false,
-    });
-  }
-
-  private setInstallToken(item: VoipPabxServerItem | null | undefined, token: string) {
-    this.generatedInstallTarget.set(item ?? null);
-    this.generatedInstallToken.set(token);
-  }
-
-  private normalizedEngine(engine?: string | null) {
-    return engine?.toLowerCase() === 'asterisk' ? 'asterisk' : 'freeswitch';
-  }
-
-  private normalizeNodeUUID(value: string) {
-    const compact = value.replaceAll('-', '').trim();
-    if (!/^[0-9a-f]{32}$/i.test(compact)) return value.trim();
-    const lower = compact.toLowerCase();
-    return `${lower.slice(0, 8)}-${lower.slice(8, 12)}-${lower.slice(12, 16)}-${
-      lower.slice(16, 20)
-    }-${lower.slice(20)}`;
-  }
-
-  private isValidNodeUUID(value: string) {
-    return /^[0-9a-f]{32}$/i.test(value.replaceAll('-', '').trim());
   }
 
   private emptyFormValue(): ServerPayload {

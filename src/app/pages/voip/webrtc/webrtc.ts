@@ -9,7 +9,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -159,7 +158,6 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   standalone: true,
   imports: [
     CommonModule,
-    ClipboardModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -206,9 +204,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
   @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
-  @ViewChild('tokenDialog') tokenDialog?: TemplateRef<unknown>;
   private dialogRef: MatDialogRef<unknown> | null = null;
-  readonly generatedToken = signal('');
   private binding: CrudDialogBinding | null = null;
   private routeSub: Subscription | null = null;
   private viewReady = false;
@@ -442,16 +438,8 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     try {
       const row = this.editing();
       if (row) await this.api.update(this.config().resource, this.uuid(row), this.payload());
-      else {
-        const result = await this.api.create(this.config().resource, this.payload());
-        const installToken = result?.data?.installToken;
-        if (installToken) {
-          this.generatedToken.set(installToken);
-          this.openTokenDialog();
-          this.snack.success('WebRTC install command generated.');
-        }
-      }
-      if (row || this.config().resource !== 'servers') this.snack.success('WebRTC record saved.');
+      else await this.api.create(this.config().resource, this.payload());
+      this.snack.success('WebRTC record saved.');
       await this.load();
       if (saveAndNew && !row) {
         this.editing.set(null);
@@ -482,109 +470,10 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     this.snack.success('WebRTC record deleted.');
     await this.load();
   }
-  async rotateToken(row: WebRtcRecord) {
-    const ok = await firstValueFrom(
-      this.dialog
-        .open(SlowConfirmDialogComponent, {
-          panelClass: 'slow-confirm-dialog',
-          disableClose: true,
-          data: {
-            title: 'Replace WebRTC Node Token',
-            message: `Generate a replacement one-time token for ${this.name(row)}?`,
-            confirmText: 'Generate token',
-          },
-        })
-        .afterClosed(),
-    );
-    if (!ok) return;
-    const result = await this.api.rotateToken(this.uuid(row));
-    const token = result?.data?.token;
-    if (token) {
-      this.generatedToken.set(token);
-      this.openTokenDialog();
-    }
-    this.snack.success(token ? 'WebRTC install command generated.' : 'WebRTC token replaced.');
-    await this.load();
-  }
   async provisionDomain(row: WebRtcRecord) {
     await this.api.provisionDomain(this.uuid(row));
     this.snack.success('WebRTC domain provisioning queued on edge agent.');
     await this.load();
-  }
-  openTokenDialog() {
-    if (!this.tokenDialog) return;
-    this.dialog.open(this.tokenDialog, {
-      width: 'min(760px, calc(100vw - 32px))',
-      maxWidth: '760px',
-      disableClose: false,
-    });
-  }
-  tokenCommand() {
-    const token = this.generatedToken();
-    return `sudo bash -lc 'set -euo pipefail
-install -d -m 700 /etc/mnscloud/kamailio-webrtc
-printf "%s\\n" "${token}" > /etc/mnscloud/kamailio-webrtc/node.token
-chmod 600 /etc/mnscloud/kamailio-webrtc/node.token
-test -s /etc/mnscloud/kamailio-webrtc/api.base || { echo "Missing /etc/mnscloud/kamailio-webrtc/api.base. Run the WebRTC installer first." >&2; exit 1; }
-test -s /etc/mnscloud/kamailio-webrtc/node.uuid || { echo "Missing /etc/mnscloud/kamailio-webrtc/node.uuid. Run the WebRTC installer first." >&2; exit 1; }
-API=$(tr -d "\\r\\n" < /etc/mnscloud/kamailio-webrtc/api.base)
-UUID=$(tr -d "\\r\\n" < /etc/mnscloud/kamailio-webrtc/node.uuid)
-TOKEN=$(tr -d "\\r\\n" < /etc/mnscloud/kamailio-webrtc/node.token)
-curl -fsS -X POST \\
-  -H "Authorization: Bearer \${TOKEN}" \\
-  -H "X-WebRTC-Node-UUID: \${UUID}" \\
-  -H "X-WebRTC-Engine: kamailio" \\
-  -H "Content-Type: application/json" \\
-  --data "{\\"node_uuid\\":\\"\${UUID}\\",\\"engine\\":\\"kamailio\\"}" \\
-  "\${API%/}/api/v1/webrtc/edge/validate" >/dev/null
-PUBLIC_DOMAIN=""
-if [ -s /etc/mnscloud/kamailio-webrtc/public.domain ]; then
-  PUBLIC_DOMAIN=$(tr -d "\\r\\n" < /etc/mnscloud/kamailio-webrtc/public.domain)
-fi
-if [ -z "\${PUBLIC_DOMAIN}" ]; then
-  PUBLIC_DOMAIN=$(curl -fsS \\
-    -H "Authorization: Bearer \${TOKEN}" \\
-    -H "X-WebRTC-Node-UUID: \${UUID}" \\
-    "\${API%/}/api/v1/webrtc/edge/config" | jq -r ".data.server.publicDomain // empty")
-fi
-HOSTNAME=$(hostname -f 2>/dev/null || hostname)
-PRIVATE_IPV4=$(ip -o -4 route get 1.1.1.1 2>/dev/null | awk "{for(i=1;i<=NF;i++) if(\\$i==\\"src\\") {print \\$(i+1); exit}}" || true)
-PRIVATE_IPV6=$(ip -o -6 route get 2001:4860:4860::8888 2>/dev/null | awk "{for(i=1;i<=NF;i++) if(\\$i==\\"src\\") {print \\$(i+1); exit}}" || true)
-PRIVATE_IP=$(printf "%s\\n%s\\n" "\${PRIVATE_IPV4}" "\${PRIVATE_IPV6}" | awk "NF" | paste -sd ", " -)
-PUBLIC_IP=""
-if [ -n "\${PUBLIC_DOMAIN}" ]; then
-  PUBLIC_IPV4=$(getent ahostsv4 "\${PUBLIC_DOMAIN}" | awk "{print \\$1; exit}" || true)
-  PUBLIC_IPV6=$(getent ahostsv6 "\${PUBLIC_DOMAIN}" | awk "{print \\$1; exit}" || true)
-  PUBLIC_IP=$(printf "%s\\n%s\\n" "\${PUBLIC_IPV4}" "\${PUBLIC_IPV6}" | awk "NF" | paste -sd ", " -)
-fi
-BASE_URL=""
-if [ -n "\${PUBLIC_DOMAIN}" ]; then
-  BASE_URL="https://\${PUBLIC_DOMAIN}"
-fi
-VERSION=$(dpkg-query -W -f="\\\${Version}" kamailio 2>/dev/null | sed "s/^/kamailio:/" || true)
-curl -fsS -X POST \\
-  -H "Authorization: Bearer \${TOKEN}" \\
-  -H "X-WebRTC-Node-UUID: \${UUID}" \\
-  -H "X-WebRTC-Engine: kamailio" \\
-  -H "Content-Type: application/json" \\
-  --data "$(jq -n \\
-    --arg node_uuid "\${UUID}" \\
-    --arg engine "kamailio" \\
-    --arg hostname "\${HOSTNAME}" \\
-    --arg publicDomain "\${PUBLIC_DOMAIN}" \\
-    --arg publicIP "\${PUBLIC_IP}" \\
-    --arg privateIP "\${PRIVATE_IP}" \\
-    --arg baseUrl "\${BASE_URL}" \\
-    --arg version "\${VERSION}" \\
-    "{node_uuid:\\$node_uuid,engine:\\$engine,hostname:\\$hostname,publicDomain:\\$publicDomain,publicIP:\\$publicIP,privateIP:\\$privateIP,baseUrl:\\$baseUrl,version:\\$version}")" \\
-  "\${API%/}/api/v1/webrtc/edge/bootstrap" >/dev/null
-systemctl restart mnscloud-webrtc-sync.service
-systemctl status mnscloud-webrtc-sync.service --no-pager -l'`;
-  }
-  notifyCommandCopied(copied: boolean) {
-    copied
-      ? this.snack.success('Install command copied.')
-      : this.snack.error('Failed to copy install command.');
   }
   isSelected(row: WebRtcRecord) {
     return this.selected.has(this.uuid(row));
