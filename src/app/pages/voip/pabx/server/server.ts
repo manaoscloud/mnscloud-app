@@ -481,6 +481,20 @@ curl -fsS -X POST \\
   -H "Content-Type: application/json" \\
   --data "{\\"node_uuid\\":\\"\${UUID}\\"}" \\
   "\${API%/}/api/v1/pabx/${engine}/heartbeat?node_uuid=\${UUID}" >/dev/null
+TOKEN_SED=$(printf "%s" "\${TOKEN}" | sed "s/[\\\\&|]/\\\\\\\\&/g")
+if [ -f /etc/freeswitch/autoload_configs/xml_curl.conf.xml ]; then
+  cp -n /etc/freeswitch/autoload_configs/xml_curl.conf.xml /etc/freeswitch/autoload_configs/xml_curl.conf.xml.bkp-token-sync 2>/dev/null || true
+  sed -i -E "s|(gateway-credentials\\" value=\\"mnscloud:)[^\\"]*|\\\\1\${TOKEN_SED}|g" /etc/freeswitch/autoload_configs/xml_curl.conf.xml
+fi
+if [ -f /etc/freeswitch/autoload_configs/json_cdr.conf.xml ]; then
+  cp -n /etc/freeswitch/autoload_configs/json_cdr.conf.xml /etc/freeswitch/autoload_configs/json_cdr.conf.xml.bkp-token-sync 2>/dev/null || true
+  sed -i -E "s|(cred\\" value=\\"mnscloud:)[^\\"]*|\\\\1\${TOKEN_SED}|g" /etc/freeswitch/autoload_configs/json_cdr.conf.xml
+fi
+if command -v fs_cli >/dev/null 2>&1; then
+  fs_cli -x reloadxml >/dev/null 2>&1 || true
+  fs_cli -x "reload mod_xml_curl" >/dev/null 2>&1 || true
+  fs_cli -x "reload mod_json_cdr" >/dev/null 2>&1 || true
+fi
 echo "PABX install token saved and validated."'`;
   }
 
