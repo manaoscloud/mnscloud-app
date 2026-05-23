@@ -1,0 +1,214 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>External DID</h1>
+        <p>
+          {{
+            isMasterScope()
+              ? 'Validate and control tenant-owned DIDs.'
+              : 'Register third-party numbers used in this platform.'
+          }}
+        </p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="loadItems()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        @if (!isMasterScope()) {
+          <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+            <mat-icon>add</mat-icon>
+            New
+          </button>
+        }
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput [(ngModel)]="searchInput" placeholder="Number, provider or tenant" />
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">Apply</button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Number</th>
+          <td mat-cell *matCellDef="let row">{{ row.VddNumber }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <td mat-cell *matCellDef="let row">
+            <strong>{{ row.VddExternalProviderName || '-' }}</strong>
+            <small>{{ row.VddExternalProviderAccount || '' }}</small>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="validation">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Validation</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip class="status-pill" [ngClass]="validationClass(row)">
+              {{ row.VddValidationStatus }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="billing">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Billing</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.VddBillingStatus }} · {{ row.VddBillingCurrency }}
+            {{ row.VddBillingAmount || 0 }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tenant">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tenant</th>
+          <td mat-cell *matCellDef="let row">{{ row.TenantName || row.UserUsrUUID || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              @if (!isMasterScope()) {
+                <button mat-icon-button type="button" matTooltip="Edit" (click)="startEdit(row)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Restart validation"
+                  (click)="startValidation(row)"
+                >
+                  <mat-icon>rule</mat-icon>
+                </button>
+              }
+              @if (isMasterScope()) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Approve"
+                  (click)="setStatus(row, 'ACTIVE', 'BILLABLE')"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Reject"
+                  (click)="setStatus(row, 'REJECTED', 'SUSPENDED')"
+                >
+                  <mat-icon>block</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Suspend"
+                  (click)="setStatus(row, 'SUSPENDED', 'SUSPENDED')"
+                >
+                  <mat-icon>pause_circle</mat-icon>
+                </button>
+              }
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                matTooltip="Delete"
+                (click)="remove(row)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ loading() ? 'Loading external DIDs...' : 'No external DIDs found.' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[10, 20, 50]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #externalFormDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editing() ? 'Edit external DID' : 'New external DID' }}</h2>
+        <p>Register the third-party provider data and platform billing policy.</p>
+      </div>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <form id="externalDidForm" class="form-grid" [formGroup]="form" (ngSubmit)="save()">
+        <mat-form-field appearance="outline">
+          <mat-label>Number</mat-label>
+          <input matInput formControlName="number" placeholder="5592999999999" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Provider</mat-label>
+          <input matInput formControlName="providerName" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Provider account</mat-label>
+          <input matInput formControlName="providerAccount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Allowed sources</mat-label>
+          <textarea matInput rows="2" formControlName="allowedSources"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Billing amount</mat-label>
+          <input matInput type="number" formControlName="billingAmount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Currency</mat-label>
+          <input matInput formControlName="billingCurrency" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Billing interval</mat-label>
+          <mat-select formControlName="billingInterval">
+            <mat-option value="MONTHLY">Monthly</mat-option>
+            <mat-option value="USAGE">Usage</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Routing notes</mat-label>
+          <textarea matInput rows="3" formControlName="notes"></textarea>
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        form="externalDidForm"
+        [disabled]="saving()"
+      >
+        Save
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

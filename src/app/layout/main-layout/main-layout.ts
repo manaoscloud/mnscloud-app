@@ -1091,6 +1091,13 @@ export class MainLayout {
               route: '/voip/did',
               masterRoute: '/system/did/number',
             },
+            {
+              id: 'voip/did/external',
+              label: 'External',
+              icon: 'add_ic_call',
+              route: '/voip/did/external',
+              masterRoute: '/system/did/external',
+            },
           ],
         },
         {

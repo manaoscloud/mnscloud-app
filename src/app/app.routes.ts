@@ -751,6 +751,13 @@ export const routes: Routes = [
                 title: 'VoIP • DID | mnscloud',
               },
               {
+                path: 'voip/did/external',
+                loadComponent: () =>
+                  import('./pages/voip/did/external/external').then((m) => m.VoipDidExternalPage),
+                title: 'VoIP • DID • External | mnscloud',
+                data: { scope: 'tenant' },
+              },
+              {
                 path: 'voip/portability',
                 loadComponent: () =>
                   import('./pages/voip/portability/portability').then((m) => m.VoipPortabilityPage),
@@ -1049,6 +1056,13 @@ export const routes: Routes = [
                 path: 'did/number',
                 loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
                 title: 'System DID Number | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'did/external',
+                loadComponent: () =>
+                  import('./pages/voip/did/external/external').then((m) => m.VoipDidExternalPage),
+                title: 'System DID External | mnscloud',
                 data: { scope: 'master' },
               },
               {

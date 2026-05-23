@@ -1,0 +1,115 @@
+:host {
+  display: block;
+}
+
+.erp-page {
+  padding: 24px;
+}
+
+.erp-card {
+  padding: 0;
+}
+
+.erp-header,
+.filter-grid {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+}
+
+.erp-header h1 {
+  margin: 0;
+}
+
+.erp-header p {
+  margin: 4px 0 0;
+}
+
+.header-actions,
+.filter-actions,
+.actions-col {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-grid mat-form-field {
+  flex: 1;
+}
+
+.table-wrapper {
+  position: relative;
+  margin: 0 24px 16px;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+}
+
+td small {
+  display: block;
+  opacity: 0.72;
+}
+
+.table-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--mat-sys-surface) 70%, transparent);
+}
+
+.status-pill.status-active,
+.status-pill.status-success {
+  color: #18b889;
+}
+
+.status-pill.status-rejected,
+.status-pill.status-failed,
+.status-pill.status-suspended {
+  color: #ff5f6d;
+}
+
+.status-pill.status-pending,
+.status-pill.status-validating {
+  color: #f5b642;
+}
+
+.dialog-content {
+  max-height: 70vh;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 760px) {
+  .erp-page {
+    padding: 12px;
+  }
+
+  .erp-header,
+  .filter-grid {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: span 1;
+  }
+}
