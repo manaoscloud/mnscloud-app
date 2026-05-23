@@ -136,7 +136,15 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     uuid: 'VwdUUID',
     name: 'VwdDomain',
     status: 'VwdStatus',
-    columns: ['domain', 'server', 'certificateProvider', 'nginxStatus', 'certificateStatus', 'autoProvision', 'status'],
+    columns: [
+      'domain',
+      'server',
+      'certificateProvider',
+      'nginxStatus',
+      'certificateStatus',
+      'autoProvision',
+      'status',
+    ],
     fields: [
       { key: 'serverUUID', label: 'Server', type: 'lookup', lookup: 'servers', required: true },
       { key: 'domain', label: 'Domain', required: true },
@@ -146,7 +154,12 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         type: 'select',
         options: ['letsencrypt', 'manual', 'self_signed'],
       },
-      { key: 'autoProvision', label: 'Auto Provision', type: 'select', options: ['active', 'inactive'] },
+      {
+        key: 'autoProvision',
+        label: 'Auto Provision',
+        type: 'select',
+        options: ['active', 'inactive'],
+      },
       { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
       { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4' },
     ],
@@ -312,7 +325,10 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     );
     await Promise.all(
       [...needs].map(async (key) => {
-        const res = await this.api.list(key, { limit: 5000 });
+        const res =
+          this.config().resource === 'domains' && key === 'servers'
+            ? await this.api.listServerOptions()
+            : await this.api.list(key, { limit: 5000 });
         const rows = res?.data?.items ?? [];
         this.lookups[key] = rows
           .map((row: WebRtcRecord) => ({
@@ -372,9 +388,12 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       description: 'VwpDescription',
     };
     if (key === 'status') return this.status(row) ? 'active' : 'inactive';
-    if (key === 'autoProvision') return Number(row['VwdAutoProvision'] ?? 1) === 1 ? 'active' : 'inactive';
+    if (key === 'autoProvision')
+      return Number(row['VwdAutoProvision'] ?? 1) === 1 ? 'active' : 'inactive';
     if (key === 'notes') {
-      return this.config().resource === 'domains' ? row['VwdNotes'] ?? '' : row['VwrNotes'] ?? '';
+      return this.config().resource === 'domains'
+        ? (row['VwdNotes'] ?? '')
+        : (row['VwrNotes'] ?? '');
     }
     if (key === 'configJson') return JSON.stringify(row['VwrConfig'] ?? {}, null, 2);
     if (key === 'valueJson') return this.displayValue(row['VwpValue']);

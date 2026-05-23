@@ -9,18 +9,29 @@ export type WebRtcRecord = Record<string, any>;
 export class VoipWebRtcService {
   private readonly api = inject(ApiService);
   private readonly basePath = 'voip/webrtc';
+  private readonly systemBasePath = 'system/voip/webrtc';
 
   private resourcePath(resource: WebRtcResource) {
+    if (resource === 'servers' || resource === 'parameters') {
+      return `${this.systemBasePath}/${resource}`;
+    }
     return `${this.basePath}/${resource}`;
   }
 
-  list(resource: WebRtcResource, params: { limit?: number; offset?: number; search?: string } = {}) {
+  list(
+    resource: WebRtcResource,
+    params: { limit?: number; offset?: number; search?: string } = {},
+  ) {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     if (params.search) query.set('search', params.search);
     const suffix = query.toString();
     return this.api.get<any>(`${this.resourcePath(resource)}${suffix ? `?${suffix}` : ''}`);
+  }
+
+  listServerOptions() {
+    return this.api.get<any>(`${this.basePath}/server-options`);
   }
 
   create(resource: WebRtcResource, payload: WebRtcRecord) {

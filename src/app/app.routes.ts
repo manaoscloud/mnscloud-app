@@ -795,14 +795,18 @@ export const routes: Routes = [
                 redirectTo: 'voip/webrtc/domain',
                 pathMatch: 'full',
               },
-              ...(['server', 'domain', 'parameter'].map((section) => ({
+              ...(['domain'].map((section) => ({
                 path: `voip/webrtc/${section}`,
                 loadComponent: () =>
                   import('./pages/voip/webrtc/webrtc').then((m) => m.VoipWebRtcPage),
                 title: `VoIP • WebRTC • ${section} | mnscloud`,
                 data: {
                   resource:
-                    section === 'server' ? 'servers' : section === 'domain' ? 'domains' : 'parameters',
+                    section === 'server'
+                      ? 'servers'
+                      : section === 'domain'
+                        ? 'domains'
+                        : 'parameters',
                 },
               })) as any),
               {
@@ -1012,6 +1016,21 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/voip/sbc/sbc').then((m) => m.VoipSbcPage),
                 title: `System SBC • ${section} | mnscloud`,
                 data: { scope: 'master', resource: 'servers' },
+              })) as any),
+              {
+                path: 'webrtc',
+                redirectTo: 'webrtc/server',
+                pathMatch: 'full',
+              },
+              ...(['server', 'parameter'].map((section) => ({
+                path: `webrtc/${section}`,
+                loadComponent: () =>
+                  import('./pages/voip/webrtc/webrtc').then((m) => m.VoipWebRtcPage),
+                title: `System WebRTC • ${section} | mnscloud`,
+                data: {
+                  scope: 'master',
+                  resource: section === 'server' ? 'servers' : 'parameters',
+                },
               })) as any),
               {
                 path: 'pabx',
