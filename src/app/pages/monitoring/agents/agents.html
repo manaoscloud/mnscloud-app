@@ -331,6 +331,10 @@
         This enrollment token is short-lived and shown only once. The runtime Agent token is issued
         directly to the server and is never displayed in the browser.
       </p>
+      <p>
+        The API base is generated from the current MNSCloud App origin. Use this command from the
+        production/control-plane URL, not from a local browser preview.
+      </p>
       <pre>{{ tokenCommand() }}</pre>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
