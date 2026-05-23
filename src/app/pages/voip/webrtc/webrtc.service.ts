@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 
-export type WebRtcResource = 'servers' | 'parameters';
+export type WebRtcResource = 'servers' | 'parameters' | 'domains';
 
 export type WebRtcRecord = Record<string, any>;
 

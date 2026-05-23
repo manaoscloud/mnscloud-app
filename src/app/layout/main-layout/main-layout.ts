@@ -1132,6 +1132,12 @@ export class MainLayout {
               route: '/voip/webrtc/server',
             },
             {
+              id: 'voip/webrtc/domain',
+              label: 'Domain',
+              icon: 'language',
+              route: '/voip/webrtc/domain',
+            },
+            {
               id: 'voip/webrtc/parameter',
               label: 'Parameter',
               icon: 'tune',

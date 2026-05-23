@@ -64,6 +64,11 @@ const COLUMN_LABELS: Record<string, string> = {
   hostname: 'Hostname',
   publicDomain: 'Public Domain',
   publicIP: 'Public IP',
+  domain: 'Domain',
+  certificateProvider: 'Certificate',
+  nginxStatus: 'Nginx',
+  certificateStatus: 'TLS',
+  autoProvision: 'Auto',
   version: 'Version',
   lastSeen: 'Last Seen',
   server: 'Server',
@@ -123,6 +128,28 @@ const CONFIGS: Record<WebRtcResource, Config> = {
       { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
       { key: 'valueJson', label: 'Value', type: 'textarea', span: 'span-4' },
       { key: 'description', label: 'Description', type: 'textarea', span: 'span-4' },
+    ],
+  },
+  domains: {
+    resource: 'domains',
+    title: 'WebRTC Domains',
+    subtitle: 'Publish partner and tenant WSS domains on authorized WebRTC edge nodes.',
+    uuid: 'VwdUUID',
+    name: 'VwdDomain',
+    status: 'VwdStatus',
+    columns: ['domain', 'server', 'certificateProvider', 'nginxStatus', 'certificateStatus', 'autoProvision', 'status'],
+    fields: [
+      { key: 'serverUUID', label: 'Server', type: 'lookup', lookup: 'servers', required: true },
+      { key: 'domain', label: 'Domain', required: true },
+      {
+        key: 'certificateProvider',
+        label: 'Certificate Provider',
+        type: 'select',
+        options: ['letsencrypt', 'manual', 'self_signed'],
+      },
+      { key: 'autoProvision', label: 'Auto Provision', type: 'select', options: ['active', 'inactive'] },
+      { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
+      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4' },
     ],
   },
 };
@@ -232,6 +259,11 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       version: row['VwrVersion'],
       lastSeen: row['VwrLastSeenAt'],
       server: row['VwrName'],
+      domain: row['VwdDomain'],
+      certificateProvider: row['VwdCertificateProvider'],
+      nginxStatus: row['VwdNginxStatus'],
+      certificateStatus: row['VwdCertificateStatus'],
+      autoProvision: Number(row['VwdAutoProvision'] ?? 0) === 1 ? 'YES' : 'NO',
       key: row['VwpKey'],
       value: this.displayValue(row['VwpValue']),
       type: row['VwpType'],
@@ -335,13 +367,19 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       privateIP: 'VwrPrivateIP',
       baseUrl: 'VwrBaseUrl',
       version: 'VwrVersion',
-      notes: 'VwrNotes',
       serverUUID: 'VoipWebRtcServerVwrUUID',
+      domain: 'VwdDomain',
+      certificateProvider: 'VwdCertificateProvider',
+      autoProvision: 'VwdAutoProvision',
       key: 'VwpKey',
       type: 'VwpType',
       description: 'VwpDescription',
     };
     if (key === 'status') return this.status(row) ? 'active' : 'inactive';
+    if (key === 'autoProvision') return Number(row['VwdAutoProvision'] ?? 1) === 1 ? 'active' : 'inactive';
+    if (key === 'notes') {
+      return this.config().resource === 'domains' ? row['VwdNotes'] ?? '' : row['VwrNotes'] ?? '';
+    }
     if (key === 'configJson') return JSON.stringify(row['VwrConfig'] ?? {}, null, 2);
     if (key === 'valueJson') return this.displayValue(row['VwpValue']);
     return row[m[key]] ?? '';
@@ -375,6 +413,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   payload() {
     const raw = this.form.getRawValue() as Record<string, any>;
     const p: Record<string, any> = { ...raw, status: raw['status'] === 'inactive' ? 0 : 1 };
+    if ('autoProvision' in raw) p['autoProvision'] = raw['autoProvision'] === 'inactive' ? 0 : 1;
     if (this.config().resource === 'servers') p['engine'] = 'kamailio';
     if (raw['configJson']) {
       try {

@@ -795,13 +795,14 @@ export const routes: Routes = [
                 redirectTo: 'voip/webrtc/server',
                 pathMatch: 'full',
               },
-              ...(['server', 'parameter'].map((section) => ({
+              ...(['server', 'domain', 'parameter'].map((section) => ({
                 path: `voip/webrtc/${section}`,
                 loadComponent: () =>
                   import('./pages/voip/webrtc/webrtc').then((m) => m.VoipWebRtcPage),
                 title: `VoIP • WebRTC • ${section} | mnscloud`,
                 data: {
-                  resource: section === 'server' ? 'servers' : 'parameters',
+                  resource:
+                    section === 'server' ? 'servers' : section === 'domain' ? 'domains' : 'parameters',
                 },
               })) as any),
               {
