@@ -102,6 +102,16 @@
                   <mat-icon>vpn_key</mat-icon>
                 </button>
               }
+              @if (config().resource === 'domains') {
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Provision on edge"
+                  (click)="provisionDomain(row)"
+                >
+                  <mat-icon>sync</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 color="warn"

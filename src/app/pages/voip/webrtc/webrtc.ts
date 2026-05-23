@@ -506,6 +506,11 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     this.snack.success(token ? 'WebRTC install command generated.' : 'WebRTC token replaced.');
     await this.load();
   }
+  async provisionDomain(row: WebRtcRecord) {
+    await this.api.provisionDomain(this.uuid(row));
+    this.snack.success('WebRTC domain marked for edge provisioning.');
+    await this.load();
+  }
   openTokenDialog() {
     if (!this.tokenDialog) return;
     this.dialog.open(this.tokenDialog, {

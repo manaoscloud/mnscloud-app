@@ -42,4 +42,8 @@ export class VoipWebRtcService {
   rotateToken(uuid: string) {
     return this.api.post<any>(`${this.basePath}/servers/${uuid}/rotate-token`, {});
   }
+
+  provisionDomain(uuid: string) {
+    return this.api.post<any>(`${this.basePath}/domains/${uuid}/provision`, {});
+  }
 }
