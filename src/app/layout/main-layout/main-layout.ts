@@ -1266,12 +1266,24 @@ export class MainLayout {
               icon: 'ring_volume',
               route: '/voip/pabx/group',
             },
-            { id: 'voip/pabx/queue', label: 'Queue', icon: 'groups', route: '/voip/pabx/queue' },
             {
-              id: 'voip/pabx/queue-agents',
-              label: 'Queue Agents',
-              icon: 'support_agent',
-              route: '/voip/pabx/queue-agents',
+              id: 'voip/pabx/queue',
+              label: 'Queue',
+              icon: 'groups',
+              children: [
+                {
+                  id: 'voip/pabx/queue/agents',
+                  label: 'Agents',
+                  icon: 'support_agent',
+                  route: '/voip/pabx/queue-agents',
+                },
+                {
+                  id: 'voip/pabx/queue/queues',
+                  label: 'Queues',
+                  icon: 'groups',
+                  route: '/voip/pabx/queue',
+                },
+              ],
             },
             {
               id: 'voip/pabx/external',
