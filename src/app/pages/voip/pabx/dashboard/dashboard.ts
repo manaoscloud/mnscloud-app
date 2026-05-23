@@ -113,7 +113,7 @@ export class VoipPabxDashboardPage implements AfterViewInit {
         icon: 'dns',
       },
       {
-        label: 'Extensions active',
+        label: 'Extensions registered',
         value: this.ratio(item.extensionsActive, item.extensionsTotal),
         icon: 'dialpad',
       },
