@@ -1261,6 +1261,12 @@ export class MainLayout {
             },
             { id: 'voip/pabx/queue', label: 'Queue', icon: 'groups', route: '/voip/pabx/queue' },
             {
+              id: 'voip/pabx/queue-agents',
+              label: 'Queue Agents',
+              icon: 'support_agent',
+              route: '/voip/pabx/queue-agents',
+            },
+            {
               id: 'voip/pabx/external',
               label: 'External',
               icon: 'phone_forwarded',

@@ -926,6 +926,14 @@ export const routes: Routes = [
                 title: 'VoIP • PABX • Queue | mnscloud',
               },
               {
+                path: 'voip/pabx/queue-agents',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/queue-agent/queue-agent').then(
+                    (m) => m.VoipPabxQueueAgentPage,
+                  ),
+                title: 'VoIP • PABX • Queue Agents | mnscloud',
+              },
+              {
                 path: 'voip/pabx/media-files',
                 loadComponent: () =>
                   import('./pages/voip/pabx/media-files/media-files').then(
