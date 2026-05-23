@@ -792,7 +792,7 @@ export const routes: Routes = [
               })) as any),
               {
                 path: 'voip/webrtc',
-                redirectTo: 'voip/webrtc/server',
+                redirectTo: 'voip/webrtc/domain',
                 pathMatch: 'full',
               },
               ...(['server', 'domain', 'parameter'].map((section) => ({

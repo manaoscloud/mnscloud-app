@@ -508,7 +508,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   }
   async provisionDomain(row: WebRtcRecord) {
     await this.api.provisionDomain(this.uuid(row));
-    this.snack.success('WebRTC domain marked for edge provisioning.');
+    this.snack.success('WebRTC domain provisioning queued on edge agent.');
     await this.load();
   }
   openTokenDialog() {

@@ -1126,16 +1126,16 @@ export class MainLayout {
           icon: 'settings_input_antenna',
           children: [
             {
-              id: 'voip/webrtc/server',
-              label: 'Server',
-              icon: 'dns',
-              route: '/voip/webrtc/server',
-            },
-            {
               id: 'voip/webrtc/domain',
               label: 'Domain',
               icon: 'language',
               route: '/voip/webrtc/domain',
+            },
+            {
+              id: 'voip/webrtc/server',
+              label: 'Server',
+              icon: 'dns',
+              route: '/voip/webrtc/server',
             },
             {
               id: 'voip/webrtc/parameter',
