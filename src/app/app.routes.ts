@@ -847,6 +847,14 @@ export const routes: Routes = [
                 title: 'VoIP • PABX | mnscloud',
               },
               {
+                path: 'voip/pabx/dashboard',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/dashboard/dashboard').then(
+                    (m) => m.VoipPabxDashboardPage,
+                  ),
+                title: 'VoIP • PABX • Dashboard | mnscloud',
+              },
+              {
                 path: 'voip/pabx/extension',
                 loadComponent: () =>
                   import('./pages/voip/pabx/extension/extension').then(

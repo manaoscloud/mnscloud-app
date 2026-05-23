@@ -548,7 +548,8 @@ export class MainLayout {
       if (this.isMasterUser() && mode === 'master') return !!item.masterRoute;
       return !!item.route && (!this.isMasterUser() || this.hasTenantSelected());
     }
-    if (scope === 'tenant') return mode === 'tenant' && (!this.isMasterUser() || this.hasTenantSelected());
+    if (scope === 'tenant')
+      return mode === 'tenant' && (!this.isMasterUser() || this.hasTenantSelected());
     return false;
   }
 
@@ -1213,6 +1214,12 @@ export class MainLayout {
           label: 'PABX',
           icon: 'phone_in_talk',
           children: [
+            {
+              id: 'voip/pabx/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/voip/pabx/dashboard',
+            },
             {
               id: 'voip/pabx/server',
               label: 'Server',
