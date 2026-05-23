@@ -133,6 +133,12 @@ export const routes: Routes = [
                 title: 'Monitoring • Agents | mnscloud',
               },
               {
+                path: 'billing',
+                loadComponent: () =>
+                  import('./pages/billing/wallet/wallet').then((m) => m.BillingWalletPage),
+                title: 'Billing | mnscloud',
+              },
+              {
                 path: 'cyber-security',
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
@@ -984,6 +990,13 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/monitoring/agents/agents').then((m) => m.MonitoringAgentsPage),
                 title: 'System Monitoring • Agents | mnscloud',
+              },
+              {
+                path: 'billing',
+                loadComponent: () =>
+                  import('./pages/billing/system/system').then((m) => m.BillingSystemPage),
+                title: 'System Billing | mnscloud',
+                data: { scope: 'master' },
               },
               {
                 path: 'softswitch',

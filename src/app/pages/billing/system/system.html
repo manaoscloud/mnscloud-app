@@ -1,0 +1,487 @@
+<section class="billing-page" @fadeIn>
+  <mat-card class="billing-card">
+    <header class="page-header">
+      <div>
+        <h1>Billing Control</h1>
+        <p>Global products, price book, subscriptions and prepaid credit operations.</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="openCreditDialog()">
+          <mat-icon>add_card</mat-icon>
+          Manual credit
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput [(ngModel)]="searchInput" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Product</mat-label>
+        <mat-select [(ngModel)]="priceProductFilter">
+          <mat-option value="">All</mat-option>
+          @for (product of products(); track product.BprUUID) {
+            <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="statusFilter">
+          <mat-option [value]="null">All</mat-option>
+          <mat-option [value]="1">Active</mat-option>
+          <mat-option [value]="0">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Subscription status</mat-label>
+        <mat-select [(ngModel)]="subscriptionStatusFilter">
+          <mat-option value="">All</mat-option>
+          <mat-option value="ACTIVE">Active</mat-option>
+          <mat-option value="SUSPENDED">Suspended</mat-option>
+          <mat-option value="CANCELED">Canceled</mat-option>
+          <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-actions">
+      <button mat-stroked-button type="button" (click)="applyFilters()">
+        <mat-icon>filter_alt</mat-icon>
+        Apply
+      </button>
+      <button mat-stroked-button type="button" (click)="clearFilters()">
+        <mat-icon>backspace</mat-icon>
+        Clear
+      </button>
+    </div>
+
+    @if (error()) {
+      <div class="error-banner">{{ error() }}</div>
+    }
+
+    <mat-tab-group class="billing-tabs">
+      <mat-tab label="Products">
+        <div class="tab-toolbar">
+          <button mat-stroked-button color="primary" type="button" (click)="openProductCreate()">
+            <mat-icon>add</mat-icon>
+            Product
+          </button>
+        </div>
+        <div class="table-wrapper" [class.is-loading]="loading()">
+          @if (loading()) {
+            <div class="table-loading">
+              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+            </div>
+          }
+          <table mat-table [dataSource]="productSource" matSort #productSort="matSort">
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+              <td mat-cell *matCellDef="let row">{{ row.BprCode }}</td>
+            </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <td mat-cell *matCellDef="let row">{{ row.BprName }}</td>
+            </ng-container>
+            <ng-container matColumnDef="module">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Module</th>
+              <td mat-cell *matCellDef="let row">{{ row.BprModule }}</td>
+            </ng-container>
+            <ng-container matColumnDef="scope">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
+              <td mat-cell *matCellDef="let row">{{ row.BprBillingScope }}</td>
+            </ng-container>
+            <ng-container matColumnDef="prices">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Prices</th>
+              <td mat-cell *matCellDef="let row">{{ row.ActivePrices || 0 }}</td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill" [class.inactive]="row.BprStatus !== 1">{{
+                  row.BprStatus === 1 ? 'Active' : 'Inactive'
+                }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Edit"
+                  (click)="openProductEdit(row)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Delete"
+                  (click)="deleteProduct(row)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="productColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: productColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="productColumns.length">No products found.</td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          #productPaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[10, 20, 50]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </mat-tab>
+
+      <mat-tab label="Prices">
+        <div class="tab-toolbar">
+          <button mat-stroked-button color="primary" type="button" (click)="openPriceCreate()">
+            <mat-icon>add</mat-icon>
+            Price
+          </button>
+        </div>
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="priceSource" matSort #priceSort="matSort">
+            <ng-container matColumnDef="product">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.BprName || productName(row.BillingProductBprUUID) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <td mat-cell *matCellDef="let row">{{ row.BpcName }}</td>
+            </ng-container>
+            <ng-container matColumnDef="mode">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mode</th>
+              <td mat-cell *matCellDef="let row">{{ label(row.BpcBillingMode) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="unitPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit price</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BpcUnitPrice, row.BpcCurrency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="setup">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Setup</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BpcSetupAmount, row.BpcCurrency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill" [class.inactive]="row.BpcStatus !== 1">{{
+                  row.BpcStatus === 1 ? 'Active' : 'Inactive'
+                }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Edit"
+                  (click)="openPriceEdit(row)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Delete"
+                  (click)="deletePrice(row)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="priceColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: priceColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="priceColumns.length">No prices found.</td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          #pricePaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[10, 20, 50]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </mat-tab>
+
+      <mat-tab label="Subscriptions">
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="subscriptionSource" matSort #subscriptionSort="matSort">
+            <ng-container matColumnDef="tenant">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Tenant</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.EnvironmentName || row.EnvironmentUUID }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="product">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+              <td mat-cell *matCellDef="let row">{{ row.BprName || row.BprCode }}</td>
+            </ng-container>
+            <ng-container matColumnDef="resource">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Resource</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.BsuResourceLabel || row.BsuResourceType || '-' }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="quantity">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Qty</th>
+              <td mat-cell *matCellDef="let row">{{ row.BsuQuantity }}</td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill" [class.inactive]="row.BsuStatus !== 'ACTIVE'">{{
+                  label(row.BsuStatus)
+                }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="price">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BsuUnitPriceSnapshot, row.BsuCurrency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Cancel"
+                  (click)="cancelSubscription(row)"
+                  [disabled]="row.BsuStatus === 'CANCELED'"
+                >
+                  <mat-icon>block</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="subscriptionColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: subscriptionColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="subscriptionColumns.length">
+                No subscriptions found.
+              </td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          #subscriptionPaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[10, 20, 50]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</section>
+
+<ng-template #productDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <h2>{{ editingProduct() ? 'Edit product' : 'New product' }}</h2>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <form class="form-grid" [formGroup]="productForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Code</mat-label>
+          <input matInput formControlName="code" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Module</mat-label>
+          <input matInput formControlName="module" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Scope</mat-label>
+          <mat-select formControlName="billingScope">
+            <mat-option value="SERVICE">Service</mat-option>
+            <mat-option value="MODULE">Module</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Description</mat-label>
+          <input matInput formControlName="description" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option [value]="1">Active</mat-option>
+            <mat-option [value]="0">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveProduct()"
+        [disabled]="saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #priceDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <h2>{{ editingPrice() ? 'Edit price' : 'New price' }}</h2>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <form class="form-grid" [formGroup]="priceForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Product</mat-label>
+          <mat-select formControlName="productUUID">
+            @for (product of products(); track product.BprUUID) {
+              <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Currency</mat-label>
+          <input matInput maxlength="3" formControlName="currency" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Billing mode</mat-label>
+          <mat-select formControlName="billingMode">
+            <mat-option value="ONE_TIME">One time</mat-option>
+            <mat-option value="MONTHLY">Monthly</mat-option>
+            <mat-option value="HOURLY">Hourly</mat-option>
+            <mat-option value="MINUTELY">Minutely</mat-option>
+            <mat-option value="SECONDLY">Secondly</mat-option>
+            <mat-option value="USAGE_UNIT">Usage unit</mat-option>
+            <mat-option value="GB_HOUR">GB hour</mat-option>
+            <mat-option value="GB_MONTH">GB month</mat-option>
+            <mat-option value="MODULE_MONTHLY">Module monthly</mat-option>
+            <mat-option value="TIERED_USAGE">Tiered usage</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Unit code</mat-label>
+          <input matInput formControlName="unitCode" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Unit price</mat-label>
+          <input matInput type="number" step="0.000001" formControlName="unitPrice" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Setup amount</mat-label>
+          <input matInput type="number" step="0.000001" formControlName="setupAmount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Included quantity</mat-label>
+          <input matInput type="number" step="0.000001" formControlName="includedQuantity" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Minimum commitment</mat-label>
+          <input matInput type="number" step="0.000001" formControlName="minimumCommitment" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option [value]="1">Active</mat-option>
+            <mat-option [value]="0">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Config JSON</mat-label>
+          <textarea matInput rows="4" formControlName="configJson"></textarea>
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="savePrice()"
+        [disabled]="saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #creditDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <h2>Manual credit</h2>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <form class="form-grid" [formGroup]="creditForm">
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Tenant UUID</mat-label>
+          <input matInput formControlName="environmentUUID" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Amount</mat-label>
+          <input matInput type="number" step="0.000001" formControlName="amount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Currency</mat-label>
+          <input matInput maxlength="3" formControlName="currency" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Reason</mat-label>
+          <input matInput formControlName="reason" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Reference</mat-label>
+          <input matInput formControlName="reference" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Idempotency key</mat-label>
+          <input matInput formControlName="idempotencyKey" />
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveManualCredit()"
+        [disabled]="saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

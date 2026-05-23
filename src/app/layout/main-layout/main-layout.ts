@@ -795,6 +795,13 @@ export class MainLayout {
   // =======================================================
   readonly navItemsRaw: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
+    {
+      id: 'billing',
+      label: 'Billing',
+      icon: 'account_balance_wallet',
+      route: '/billing',
+      masterRoute: '/system/billing',
+    },
 
     {
       id: 'user',

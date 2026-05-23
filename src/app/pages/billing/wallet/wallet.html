@@ -1,0 +1,291 @@
+<section class="billing-page" @fadeIn>
+  <mat-card class="billing-card">
+    <header class="page-header">
+      <div>
+        <h1>Billing</h1>
+        <p>Prepaid balance, service catalog, subscriptions and ledger.</p>
+      </div>
+      <button mat-stroked-button color="primary" type="button" (click)="refresh()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </header>
+
+    <div class="wallet-grid">
+      @for (wallet of wallets(); track wallet.BwaUUID) {
+        <article class="metric-card">
+          <span>{{ wallet.BwaCurrency }}</span>
+          <strong>{{ formatMoney(wallet.BwaBalance) }}</strong>
+          <small>Reserved {{ formatMoney(wallet.BwaReservedBalance) }}</small>
+        </article>
+      } @empty {
+        <article class="metric-card muted">
+          <span>No wallet</span>
+          <strong>0.00</strong>
+          <small>Add prepaid credit before contracting paid services.</small>
+        </article>
+      }
+    </div>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Catalog and subscriptions</mat-label>
+        <input matInput [(ngModel)]="searchInput" placeholder="Search products or resources" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Ledger</mat-label>
+        <input matInput [(ngModel)]="ledgerSearchInput" placeholder="Search ledger" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="statusFilter">
+          <mat-option value="">All</mat-option>
+          <mat-option value="ACTIVE">Active</mat-option>
+          <mat-option value="SUSPENDED">Suspended</mat-option>
+          <mat-option value="CANCELED">Canceled</mat-option>
+          <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-actions">
+      <button mat-stroked-button type="button" (click)="applyFilters()">
+        <mat-icon>filter_alt</mat-icon>
+        Apply
+      </button>
+      <button mat-stroked-button type="button" (click)="clearFilters()">
+        <mat-icon>backspace</mat-icon>
+        Clear
+      </button>
+    </div>
+
+    @if (error()) {
+      <div class="error-banner">{{ error() }}</div>
+    }
+
+    <mat-tab-group class="billing-tabs">
+      <mat-tab label="Catalog">
+        <div class="table-wrapper" [class.is-loading]="loading()">
+          @if (loading()) {
+            <div class="table-loading">
+              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+            </div>
+          }
+          <table mat-table [dataSource]="catalogSource" matSort #catalogSort="matSort">
+            <ng-container matColumnDef="product">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+              <td mat-cell *matCellDef="let row">
+                <strong>{{ row.BprName }}</strong>
+                <span>{{ row.BprCode }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="mode">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mode</th>
+              <td mat-cell *matCellDef="let row">{{ statusLabel(row.BpcBillingMode) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="price">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit price</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BpcUnitPrice, row.BpcCurrency) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="setup">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Setup</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BpcSetupAmount, row.BpcCurrency) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Subscribe"
+                  (click)="openSubscribeDialog(row)"
+                >
+                  <mat-icon>add_shopping_cart</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="catalogColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: catalogColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="catalogColumns.length">
+                No products available.
+              </td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          #catalogPaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[10, 20, 50]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </mat-tab>
+
+      <mat-tab label="Subscriptions">
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="subscriptionSource" matSort #subscriptionSort="matSort">
+            <ng-container matColumnDef="product">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+              <td mat-cell *matCellDef="let row">
+                <strong>{{ row.BprName || row.BprCode }}</strong>
+                <span>{{ row.BpcName }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="resource">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Resource</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.BsuResourceLabel || row.BsuResourceType || '-' }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="quantity">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Qty</th>
+              <td mat-cell *matCellDef="let row">{{ row.BsuQuantity }}</td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill" [class.inactive]="row.BsuStatus !== 'ACTIVE'">{{
+                  statusLabel(row.BsuStatus)
+                }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="price">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BsuUnitPriceSnapshot, row.BsuCurrency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Cancel"
+                  (click)="cancelSubscription(row)"
+                  [disabled]="row.BsuStatus === 'CANCELED'"
+                >
+                  <mat-icon>block</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="subscriptionColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: subscriptionColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="subscriptionColumns.length">
+                No subscriptions found.
+              </td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          #subscriptionPaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[10, 20, 50]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </mat-tab>
+
+      <mat-tab label="Ledger">
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="ledgerSource" matSort #ledgerSort="matSort">
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+              <td mat-cell *matCellDef="let row">{{ row.BleDateCreated | date: 'short' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+              <td mat-cell *matCellDef="let row">{{ statusLabel(row.BleType) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="direction">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Direction</th>
+              <td mat-cell *matCellDef="let row">{{ row.BleDirection }}</td>
+            </ng-container>
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BleAmount, row.BleCurrency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="balance">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Balance</th>
+              <td mat-cell *matCellDef="let row">
+                {{ formatMoney(row.BleBalanceAfter, row.BleCurrency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="reason">
+              <th mat-header-cell *matHeaderCellDef>Reason</th>
+              <td mat-cell *matCellDef="let row">{{ row.BleReason || row.BleReference || '-' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="ledgerColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: ledgerColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="ledgerColumns.length">
+                No ledger entries found.
+              </td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          #ledgerPaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[10, 20, 50]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</section>
+
+<ng-template #subscriptionDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>New subscription</h2>
+        <p>{{ selectedCatalogItem()?.BprName }}</p>
+      </div>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <form class="form-grid" [formGroup]="subscriptionForm" (ngSubmit)="saveSubscription()">
+        <mat-form-field appearance="outline">
+          <mat-label>Quantity</mat-label>
+          <input matInput type="number" min="0.000001" step="0.000001" formControlName="quantity" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Resource type</mat-label>
+          <input matInput formControlName="resourceType" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Resource UUID</mat-label>
+          <input matInput formControlName="resourceUUID" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Resource label</mat-label>
+          <input matInput formControlName="resourceLabel" />
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" mat-dialog-close>Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveSubscription()"
+        [disabled]="saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
