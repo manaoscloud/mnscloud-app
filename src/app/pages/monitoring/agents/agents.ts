@@ -137,7 +137,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   });
 
   readonly form = this.fb.nonNullable.group({
-    agentUUID: ['', [Validators.required]],
+    agentUUID: [''],
     name: ['', [Validators.required, Validators.minLength(2)]],
     hostname: [''],
     status: [1],
@@ -275,9 +275,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
         await this.api.put(`monitoring/agents/${editing.uuid}`, payload);
         this.snack.success('Agent updated.');
       } else {
-        const response = await this.api.post<any>('monitoring/agents', payload);
-        this.generatedToken.set(response?.data?.agentToken ?? '');
-        this.snack.success('Agent created. Copy the generated token.');
+        const response = await this.api.post<any>('monitoring/agents/enrollments', payload);
+        this.generatedToken.set(response?.data?.enrollmentToken ?? '');
+        this.snack.success('Agent enrollment created. Copy the install command.');
         this.openTokenDialog();
       }
       await this.load();
@@ -296,15 +296,21 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   async generateInstallCommand(row: MonitoringAgent) {
     const ok = await this.confirm(
       'Generate install command',
-      `Generate a new install command for agent ${row.name || row.uuid}? This rotates the agent token, so any previous token stops working after you confirm.`,
+      `Generate a short-lived install command for agent ${row.name || row.uuid}? The runtime token will be issued directly to the server when the enrollment is consumed.`,
       'Generate command',
     );
     if (!ok) return;
     try {
-      const response = await this.api.post<any>(`monitoring/agents/${row.uuid}/rotate-token`, {});
-      this.generatedToken.set(response?.data?.agentToken ?? '');
+      const response = await this.api.post<any>('monitoring/agents/enrollments', {
+        name: row.name || row.hostname || row.uuid,
+        hostname: row.hostname || null,
+        capabilities: this.parseCapabilities(row.capabilities || 'linux.status'),
+        resourceType: row.resourceType || null,
+        resourceUUID: row.resourceUUID || null,
+      });
+      this.generatedToken.set(response?.data?.enrollmentToken ?? '');
       this.openTokenDialog();
-      this.snack.success('Agent install command generated.');
+      this.snack.success('Agent enrollment command generated.');
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to generate install command.'));
     }
@@ -363,7 +369,18 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
 
   tokenCommand() {
     const token = this.generatedToken();
-    return `sudo install -d -m 700 /var/lib/mnscloud/agent && printf '%s\\n' '${token}' | sudo tee /var/lib/mnscloud/agent/agent.token >/dev/null && sudo chmod 600 /var/lib/mnscloud/agent/agent.token && sudo systemctl restart mnscloud-agent`;
+    const apiBase = window.location.origin;
+    return [
+      'sudo install -d -m 0755 /opt/mnscloud',
+      'cd /opt/mnscloud',
+      '[ -d mnscloud-agent/.git ] && sudo git -C mnscloud-agent pull || sudo git clone https://github.com/manaoscloud/mnscloud-agent.git',
+      `sudo bash /opt/mnscloud/mnscloud-agent/scripts/install-agent.sh --api-base ${this.shellQuote(apiBase)} --enrollment-token ${this.shellQuote(token)}`,
+      'sudo systemctl status mnscloud-agent --no-pager -l',
+    ].join(' && ');
+  }
+
+  private shellQuote(value: string) {
+    return `'${value.replace(/'/g, `'\\''`)}'`;
   }
 
   notifyCommandCopied(copied: boolean) {

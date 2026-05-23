@@ -231,6 +231,7 @@
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Agent UUID</mat-label>
               <input matInput formControlName="agentUUID" autocomplete="off" />
+              <mat-hint>Optional for new enrollments; the installer creates the UUID.</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
@@ -325,10 +326,10 @@
   <div class="agent-token-dialog">
     <h2 mat-dialog-title>Agent install command</h2>
     <mat-dialog-content>
-      <p>Run this command on the server where the agent was installed.</p>
+      <p>Run this command on the server that should be enrolled as an Agent.</p>
       <p class="token-warning">
-        This token is shown only once. Generating this command again rotates the token and
-        invalidates the previous one.
+        This enrollment token is short-lived and shown only once. The runtime Agent token is issued
+        directly to the server and is never displayed in the browser.
       </p>
       <pre>{{ tokenCommand() }}</pre>
     </mat-dialog-content>
