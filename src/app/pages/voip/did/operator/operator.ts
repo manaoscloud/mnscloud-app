@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -35,7 +36,10 @@ import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../../shared/dialog/crud-dialog.util';
+import {
+  CrudDialogBinding,
+  openCrudTemplateDialog,
+} from '../../../../shared/dialog/crud-dialog.util';
 import { VoipDidOperatorService, VoipDidOperatorItem } from './operator.service';
 
 type SupplierOption = { value: string; label: string };
@@ -72,6 +76,7 @@ type SupplierOption = { value: string; label: string };
 export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipDidOperatorService);
+  private readonly route = inject(ActivatedRoute);
   private readonly coreApi = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -92,6 +97,7 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   supplierMap = new Map<string, SupplierOption>();
   readonly suppliersReady = signal(false);
   readonly viewReady = signal(false);
+  readonly isMasterScope = signal(false);
   supplierSearch = '';
 
   readonly statusOptions = [
@@ -113,6 +119,7 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngOnInit() {
+    this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
     setTimeout(() => void this.loadSuppliers());
   }
 
@@ -227,10 +234,13 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     const start = performance.now();
 
     try {
-      const response = await this.api.list({
-        search: this.search || undefined,
-        limit: this.listLimit,
-      });
+      const response = await this.api.list(
+        {
+          search: this.search || undefined,
+          limit: this.listLimit,
+        },
+        this.isMasterScope(),
+      );
       this.dataSource.data = response?.data?.items ?? [];
       this.reconcileSelection();
       this.dataSource.filter = '';
@@ -287,10 +297,10 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        await this.api.update(editing.VdoUUID, payload);
+        await this.api.update(editing.VdoUUID, payload, this.isMasterScope());
         this.snack.success('DID operator updated successfully.');
       } else {
-        await this.api.create(payload);
+        await this.api.create(payload, this.isMasterScope());
         this.snack.success('DID operator created successfully.');
       }
 
@@ -347,7 +357,7 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     try {
-      await this.api.remove(item.VdoUUID);
+      await this.api.remove(item.VdoUUID, this.isMasterScope());
       this.dataSource.data = this.dataSource.data.filter((row) => row.VdoUUID !== item.VdoUUID);
       this.toggleOperatorSelection(item, false);
       this.snack.success('DID operator deleted successfully.');
@@ -382,7 +392,7 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     this.deletingSelected.set(true);
 
     try {
-      const response = await this.api.removeMany(ids);
+      const response = await this.api.removeMany(ids, this.isMasterScope());
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VdoUUID));
       this.selectedOperatorUUIDs.set(

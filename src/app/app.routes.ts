@@ -746,21 +746,9 @@ export const routes: Routes = [
                 title: 'VoIP • Domain | mnscloud',
               },
               {
-                path: 'voip/did/operator',
-                loadComponent: () =>
-                  import('./pages/voip/did/operator/operator').then((m) => m.VoipDidOperatorPage),
-                title: 'VoIP • Operator | mnscloud',
-              },
-              {
                 path: 'voip/did',
                 loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
                 title: 'VoIP • DID | mnscloud',
-              },
-              {
-                path: 'voip/did/customer',
-                loadComponent: () =>
-                  import('./pages/voip/did/customer/customer').then((m) => m.VoipDidCustomerPage),
-                title: 'VoIP • DID • Customer | mnscloud',
               },
               {
                 path: 'voip/portability',
@@ -1043,6 +1031,24 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/voip/pabx/server/server').then((m) => m.VoipPabxServerPage),
                 title: 'System PABX Server | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'did',
+                redirectTo: 'did/number',
+                pathMatch: 'full',
+              },
+              {
+                path: 'did/operator',
+                loadComponent: () =>
+                  import('./pages/voip/did/operator/operator').then((m) => m.VoipDidOperatorPage),
+                title: 'System DID Operator | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'did/number',
+                loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
+                title: 'System DID Number | mnscloud',
                 data: { scope: 'master' },
               },
               {

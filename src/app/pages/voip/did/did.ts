@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -76,6 +77,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipDidService);
   private readonly operatorApi = inject(VoipDidOperatorService);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -87,13 +89,15 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   readonly selectedDidUUIDs = signal<Set<string>>(new Set());
   readonly skippedExisting = signal<Array<{ number: string; reason: string }>>([]);
   readonly failedBulkItems = signal<Array<{ number: string; message: string }>>([]);
+  readonly isMasterScope = signal(false);
 
   readonly operators = signal<OperatorOption[]>([]);
   readonly operatorMap = signal<Map<string, VoipDidOperatorItem>>(new Map());
   operatorSearch = '';
 
   readonly dataSource = new MatTableDataSource<VoipDidItem>([]);
-  readonly displayedColumns = ['select', 'number', 'operator', 'status', 'actions'];
+  private readonly masterDisplayedColumns = ['select', 'number', 'operator', 'status', 'actions'];
+  private readonly tenantDisplayedColumns = ['number', 'operator', 'status'];
   search = '';
   searchInput = '';
 
@@ -116,7 +120,12 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   private didFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
+  get displayedColumns() {
+    return this.isMasterScope() ? this.masterDisplayedColumns : this.tenantDisplayedColumns;
+  }
+
   async ngAfterViewInit() {
+    this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
     this.dataSource.paginator = this.paginator ?? null;
     this.dataSource.sort = this.sort ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -217,7 +226,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
 
   async loadOperators() {
     try {
-      const response = await this.operatorApi.list({ limit: this.listLimit });
+      const response = await this.operatorApi.list({ limit: this.listLimit }, this.isMasterScope());
       const items: VoipDidOperatorItem[] = response?.data?.items ?? [];
       const map = new Map<string, VoipDidOperatorItem>();
       items.forEach((item) => {
@@ -241,10 +250,13 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     const start = performance.now();
 
     try {
-      const response = await this.api.list({
-        search: this.search || undefined,
-        limit: this.listLimit,
-      });
+      const response = await this.api.list(
+        {
+          search: this.search || undefined,
+          limit: this.listLimit,
+        },
+        this.isMasterScope(),
+      );
       this.dataSource.data = response?.data?.items ?? [];
       this.reconcileSelection();
       this.dataSource.filter = '';
@@ -269,6 +281,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   }
 
   startCreate() {
+    if (!this.isMasterScope()) return;
     this.resetForm();
     this.syncCreateModeValidators();
     this.openDidDialog();
@@ -305,7 +318,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        await this.api.update(editing.VddUUID, payload);
+        await this.api.update(editing.VddUUID, payload, this.isMasterScope());
       } else if (createMode === 'range') {
         const parsedRange = this.parseRange(didRange);
         if (!parsedRange) {
@@ -318,12 +331,15 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
           return;
         }
 
-        const response = await this.api.bulkCreate({
-          rangeStart: parsedRange.start,
-          rangeEnd: parsedRange.end,
-          operatorUUID,
-          status,
-        });
+        const response = await this.api.bulkCreate(
+          {
+            rangeStart: parsedRange.start,
+            rangeEnd: parsedRange.end,
+            operatorUUID,
+            status,
+          },
+          this.isMasterScope(),
+        );
 
         this.skippedExisting.set(response?.data?.skippedExisting ?? []);
         this.failedBulkItems.set(response?.data?.failed ?? []);
@@ -338,7 +354,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
         this.snack.warning(response?.message ?? 'DID range completed with warnings.');
         return;
       } else {
-        await this.api.create(payload);
+        await this.api.create(payload, this.isMasterScope());
       }
 
       await this.loadDids();
@@ -360,6 +376,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   }
 
   editDid(item: VoipDidItem) {
+    if (!this.isMasterScope()) return;
     this.skippedExisting.set([]);
     this.failedBulkItems.set([]);
     this.editing.set(item);
@@ -394,7 +411,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     try {
-      await this.api.remove(item.VddUUID);
+      await this.api.remove(item.VddUUID, this.isMasterScope());
       this.dataSource.data = this.dataSource.data.filter((row) => row.VddUUID !== item.VddUUID);
       this.toggleDidSelection(item, false);
       this.snack.success('DID deleted successfully.');
@@ -429,7 +446,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     this.deletingSelected.set(true);
 
     try {
-      const response = await this.api.removeMany(ids);
+      const response = await this.api.removeMany(ids, this.isMasterScope());
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VddUUID));
       this.selectedDidUUIDs.set(

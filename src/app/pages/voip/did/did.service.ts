@@ -8,7 +8,7 @@ export type VoipDidItem = {
   VddStatus: number;
   VoipDidOperatorVdoUUID: string;
   OperatorName?: string | null;
-  VoipDidCustomerVdcUUID?: string | null;
+  VoipDidAssignmentVdaUUID?: string | null;
   CustomerCusUUID?: string | null;
   CustomerName?: string | null;
   IsAvailable?: number;
@@ -31,39 +31,53 @@ export type VoipDidBulkCreateResponse = {
 export class VoipDidService {
   private readonly api = inject(ApiService);
 
-  list(params: { search?: string; limit?: number; offset?: number; availableOnly?: boolean } = {}) {
+  private basePath(system = false) {
+    return system ? 'system/voip/did/numbers' : 'voip/did/numbers';
+  }
+
+  list(
+    params: { search?: string; limit?: number; offset?: number; availableOnly?: boolean } = {},
+    system = false,
+  ) {
     const query = new URLSearchParams();
     if (params.search?.trim()) query.set('search', params.search.trim());
     if (params.availableOnly) query.set('availableOnly', 'true');
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();
-    return this.api.get<any>(`voip/did/numbers${suffix ? `?${suffix}` : ''}`);
+    return this.api.get<any>(`${this.basePath(system)}${suffix ? `?${suffix}` : ''}`);
   }
 
-  create(payload: { number: string; operatorUUID: string; status: number }) {
-    return this.api.post<any>('voip/did/numbers', payload);
+  create(payload: { number: string; operatorUUID: string; status: number }, system = false) {
+    return this.api.post<any>(this.basePath(system), payload);
   }
 
-  bulkCreate(payload: {
-    range?: string;
-    rangeStart?: string;
-    rangeEnd?: string;
-    operatorUUID: string;
-    status: number;
-  }) {
-    return this.api.post<VoipDidBulkCreateResponse>('voip/did/numbers/bulk', payload);
+  bulkCreate(
+    payload: {
+      range?: string;
+      rangeStart?: string;
+      rangeEnd?: string;
+      operatorUUID: string;
+      status: number;
+    },
+    system = false,
+  ) {
+    return this.api.post<VoipDidBulkCreateResponse>(`${this.basePath(system)}/bulk`, payload);
   }
 
-  update(uuid: string, payload: { number: string; operatorUUID: string; status: number }) {
-    return this.api.put<any>(`voip/did/numbers/${uuid}`, payload);
+  update(
+    uuid: string,
+    payload: { number: string; operatorUUID: string; status: number },
+    system = false,
+  ) {
+    return this.api.put<any>(`${this.basePath(system)}/${uuid}`, payload);
   }
 
-  remove(uuid: string) {
-    return this.api.delete<any>(`voip/did/numbers/${uuid}`);
+  remove(uuid: string, system = false) {
+    return this.api.delete<any>(`${this.basePath(system)}/${uuid}`);
   }
 
-  removeMany(ids: string[]) {
-    return this.api.delete<any>('voip/did/numbers/bulk', { ids });
+  removeMany(ids: string[], system = false) {
+    return this.api.delete<any>(`${this.basePath(system)}/bulk`, { ids });
   }
 }
