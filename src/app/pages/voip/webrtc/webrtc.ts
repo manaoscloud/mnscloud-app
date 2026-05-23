@@ -517,7 +517,7 @@ BASE_URL=""
 if [ -n "\${PUBLIC_DOMAIN}" ]; then
   BASE_URL="https://\${PUBLIC_DOMAIN}"
 fi
-VERSION=$(dpkg-query -W -f="\${Version}" kamailio 2>/dev/null | sed "s/^/kamailio:/" || true)
+VERSION=$(dpkg-query -W -f="\\\${Version}" kamailio 2>/dev/null | sed "s/^/kamailio:/" || true)
 curl -fsS -X POST \\
   -H "Authorization: Bearer \${TOKEN}" \\
   -H "X-WebRTC-Node-UUID: \${UUID}" \\
