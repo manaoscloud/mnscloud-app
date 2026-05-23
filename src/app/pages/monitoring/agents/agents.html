@@ -108,6 +108,9 @@
           <td mat-cell *matCellDef="let row">
             <div class="agent-name">
               <span>{{ row.name || '-' }}</span>
+              @if (row.installLabel && row.installLabel !== row.name) {
+                <small>Install: {{ row.installLabel }}</small>
+              }
               <small>{{ row.uuid }}</small>
             </div>
           </td>

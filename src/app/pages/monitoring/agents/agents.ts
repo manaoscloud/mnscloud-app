@@ -38,6 +38,7 @@ type MonitoringAgent = {
   uuid: string;
   id?: string;
   name?: string | null;
+  installLabel?: string | null;
   type?: string | null;
   capabilities?: string | null;
   resourceType?: string | null;
