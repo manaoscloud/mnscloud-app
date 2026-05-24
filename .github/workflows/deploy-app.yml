@@ -1,0 +1,119 @@
+name: Deploy App
+
+on:
+  repository_dispatch:
+    types: [api-deployed]
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'GitHub Environment to deploy'
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      ref:
+        description: 'Optional App ref to deploy'
+        required: false
+        type: string
+      api_base_url:
+        description: 'Optional API base URL for this build'
+        required: false
+        type: string
+      db_sha:
+        description: 'Optional DB commit SHA that triggered this deploy'
+        required: false
+        type: string
+      api_sha:
+        description: 'Optional API commit SHA deployed before this deploy'
+        required: false
+        type: string
+      migration:
+        description: 'Optional DB migration applied before this deploy'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-deploy-${{ github.event.inputs.target_environment || github.event.client_payload.environment || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-app:
+    name: Build and deploy App
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_environment || github.event.client_payload.environment || 'dev' }}
+    env:
+      TARGET_ENVIRONMENT: ${{ github.event.inputs.target_environment || github.event.client_payload.environment || 'dev' }}
+      MNSCLOUD_API_BASE_URL: ${{ github.event.inputs.api_base_url || vars.MNSCLOUD_API_BASE_URL || '' }}
+      DB_SHA: ${{ github.event.inputs.db_sha || github.event.client_payload.db_sha || '' }}
+      API_SHA: ${{ github.event.inputs.api_sha || github.event.client_payload.api_sha || '' }}
+      MIGRATION: ${{ github.event.inputs.migration || github.event.client_payload.migration || '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.ref || github.event.client_payload.app_ref || github.ref }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate runtime config
+        run: |
+          node -e '
+            const fs = require("fs");
+            const apiBaseUrl = process.env.MNSCLOUD_API_BASE_URL || "";
+            const contents = `(function (window) {
+              window.MNSCLOUD_APP_CONFIG = window.MNSCLOUD_APP_CONFIG || {
+                apiBaseUrl: ${JSON.stringify(apiBaseUrl)},
+              };
+            })(window);
+          `;
+            fs.writeFileSync("public/env.js", contents);
+          '
+      - name: Build
+        run: npm run build
+      - name: Upload browser build
+        uses: actions/upload-artifact@v6
+        with:
+          name: mnscloud-app-browser-${{ github.sha }}
+          path: dist/app/browser
+          if-no-files-found: error
+      - name: Request deployment through MNSCloud control plane
+        env:
+          MNSCLOUD_DEPLOY_ENABLED: ${{ vars.MNSCLOUD_DEPLOY_ENABLED || 'false' }}
+          MNSCLOUD_DEPLOY_API_URL: ${{ vars.MNSCLOUD_DEPLOY_API_URL || '' }}
+          MNSCLOUD_DEPLOY_TOKEN: ${{ secrets.MNSCLOUD_DEPLOY_TOKEN || '' }}
+        run: |
+          set -euo pipefail
+          if [ "$MNSCLOUD_DEPLOY_ENABLED" != "true" ]; then
+            echo "MNSCLOUD_DEPLOY_ENABLED is not true; App deployment request is skipped."
+            exit 0
+          fi
+          if [ -z "$MNSCLOUD_DEPLOY_API_URL" ] || [ -z "$MNSCLOUD_DEPLOY_TOKEN" ]; then
+            echo "MNSCLOUD_DEPLOY_API_URL and MNSCLOUD_DEPLOY_TOKEN are required when deploy is enabled." >&2
+            exit 1
+          fi
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+          payload="$(jq -n \
+            --arg sourceRepo "$GITHUB_REPOSITORY" \
+            --arg sourceSha "$GITHUB_SHA" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg environment "$TARGET_ENVIRONMENT" \
+            --arg dbSha "$DB_SHA" \
+            --arg apiSha "$API_SHA" \
+            --arg migration "$MIGRATION" \
+            '{sourceRepo:$sourceRepo, sourceSha:$sourceSha, actor:$actor, environment:$environment, service:"app", dbSha:$dbSha, apiSha:$apiSha, migration:$migration}')"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${MNSCLOUD_DEPLOY_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "$payload" \
+            "$MNSCLOUD_DEPLOY_API_URL"

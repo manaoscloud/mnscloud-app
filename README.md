@@ -116,6 +116,9 @@ MNSCLOUD_API_BASE_URL=https://api.example.com/api/v1
 For one-off builds, run the `CI` workflow manually and fill the optional `api_base_url` input. The
 workflow uploads the generated browser bundle as the `mnscloud-app-browser` artifact.
 
+GitHub-driven deployment automation for the DB -> API -> App cascade is documented in
+`docs/deployment-automation.md`.
+
 Recommended build choices:
 
 - Use an empty API URL when the final domain also exposes `/api/v1` through the edge gateway.
