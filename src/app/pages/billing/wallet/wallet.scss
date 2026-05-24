@@ -95,6 +95,29 @@
   margin-top: 0.5rem;
 }
 
+.dashboard-grid,
+.section-links {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.section-links {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+
+  a {
+    justify-content: flex-start;
+  }
+
+  mat-icon {
+    margin-right: 0.35rem;
+  }
+}
+
 .tab-toolbar {
   min-height: 52px;
   margin: 0.85rem 0 0.75rem;

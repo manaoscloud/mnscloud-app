@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
+  Input,
   OnDestroy,
   TemplateRef,
   ViewChild,
@@ -24,6 +25,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -36,6 +38,8 @@ import {
   BillingSubscription,
   BillingWallet,
 } from '../shared/billing.service';
+
+export type BillingTenantSection = 'dashboard' | 'catalog' | 'subscriptions' | 'ledger';
 
 @Component({
   selector: 'app-billing-wallet',
@@ -59,6 +63,7 @@ import {
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,
+    RouterLink,
   ],
   templateUrl: './wallet.html',
   styleUrls: ['./wallet.scss'],
@@ -69,6 +74,8 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
+
+  @Input() section: BillingTenantSection = 'dashboard';
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -164,6 +171,22 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.ledgerSearchInput = '';
     this.statusFilter = '';
     void this.refresh();
+  }
+
+  isSection(section: BillingTenantSection) {
+    return this.section === section;
+  }
+
+  get activeSubscriptionCount() {
+    return this.subscriptionSource.data.filter((row) => row.BsuStatus === 'ACTIVE').length;
+  }
+
+  get availableCatalogCount() {
+    return this.catalogSource.data.length;
+  }
+
+  get ledgerEntryCount() {
+    return this.ledgerSource.data.length;
   }
 
   openSubscribeDialog(row: BillingCatalogItem) {

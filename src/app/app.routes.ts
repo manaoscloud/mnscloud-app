@@ -135,8 +135,34 @@ export const routes: Routes = [
               {
                 path: 'billing',
                 loadComponent: () =>
-                  import('./pages/billing/wallet/wallet').then((m) => m.BillingWalletPage),
+                  import('./pages/billing/tenant/dashboard/dashboard').then(
+                    (m) => m.BillingTenantDashboardPage,
+                  ),
                 title: 'Billing | mnscloud',
+              },
+              {
+                path: 'billing/catalog',
+                loadComponent: () =>
+                  import('./pages/billing/tenant/catalog/catalog').then(
+                    (m) => m.BillingTenantCatalogPage,
+                  ),
+                title: 'Billing • Catalog | mnscloud',
+              },
+              {
+                path: 'billing/subscriptions',
+                loadComponent: () =>
+                  import('./pages/billing/tenant/subscriptions/subscriptions').then(
+                    (m) => m.BillingTenantSubscriptionsPage,
+                  ),
+                title: 'Billing • Subscriptions | mnscloud',
+              },
+              {
+                path: 'billing/ledger',
+                loadComponent: () =>
+                  import('./pages/billing/tenant/ledger/ledger').then(
+                    (m) => m.BillingTenantLedgerPage,
+                  ),
+                title: 'Billing • Ledger | mnscloud',
               },
               {
                 path: 'cyber-security',
@@ -994,8 +1020,46 @@ export const routes: Routes = [
               {
                 path: 'billing',
                 loadComponent: () =>
-                  import('./pages/billing/system/system').then((m) => m.BillingSystemPage),
+                  import('./pages/billing/system/dashboard/dashboard').then(
+                    (m) => m.BillingSystemDashboardPage,
+                  ),
                 title: 'System Billing | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'billing/products',
+                loadComponent: () =>
+                  import('./pages/billing/system/products/products').then(
+                    (m) => m.BillingSystemProductsPage,
+                  ),
+                title: 'System Billing • Products | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'billing/prices',
+                loadComponent: () =>
+                  import('./pages/billing/system/prices/prices').then(
+                    (m) => m.BillingSystemPricesPage,
+                  ),
+                title: 'System Billing • Prices | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'billing/subscriptions',
+                loadComponent: () =>
+                  import('./pages/billing/system/subscriptions/subscriptions').then(
+                    (m) => m.BillingSystemSubscriptionsPage,
+                  ),
+                title: 'System Billing • Subscriptions | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'billing/wallets',
+                loadComponent: () =>
+                  import('./pages/billing/system/wallets/wallets').then(
+                    (m) => m.BillingSystemWalletsPage,
+                  ),
+                title: 'System Billing • Wallets | mnscloud',
                 data: { scope: 'master' },
               },
               {

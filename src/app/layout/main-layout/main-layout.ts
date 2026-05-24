@@ -799,8 +799,42 @@ export class MainLayout {
       id: 'billing',
       label: 'Billing',
       icon: 'account_balance_wallet',
-      route: '/billing',
-      masterRoute: '/system/billing',
+      children: [
+        {
+          id: 'billing/dashboard',
+          label: 'Dashboard',
+          icon: 'dashboard',
+          route: '/billing',
+          masterRoute: '/system/billing',
+        },
+        {
+          id: 'billing/catalog-products',
+          label: 'Catalog',
+          icon: 'storefront',
+          route: '/billing/catalog',
+          masterRoute: '/system/billing/products',
+        },
+        {
+          id: 'billing/prices',
+          label: 'Prices',
+          icon: 'sell',
+          masterRoute: '/system/billing/prices',
+        },
+        {
+          id: 'billing/subscriptions',
+          label: 'Subscriptions',
+          icon: 'subscriptions',
+          route: '/billing/subscriptions',
+          masterRoute: '/system/billing/subscriptions',
+        },
+        {
+          id: 'billing/ledger-wallets',
+          label: 'Ledger',
+          icon: 'receipt_long',
+          route: '/billing/ledger',
+          masterRoute: '/system/billing/wallets',
+        },
+      ],
     },
 
     {

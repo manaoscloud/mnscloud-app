@@ -85,350 +85,400 @@
       <div class="error-banner">{{ error() }}</div>
     }
 
-    <mat-tab-group class="billing-tabs">
-      <mat-tab label="Products">
-        <div class="tab-toolbar">
-          @if (selectedProductCount) {
-            <span class="selection-count">{{ selectedProductCount }} selected</span>
-            <button
-              mat-stroked-button
-              color="warn"
-              type="button"
-              (click)="deleteSelectedProducts()"
-              [disabled]="loading()"
-            >
-              <mat-icon>delete</mat-icon>
-              Delete selected
-            </button>
-          }
-          <button mat-stroked-button color="primary" type="button" (click)="openProductCreate()">
-            <mat-icon>add</mat-icon>
-            New
+    <div class="dashboard-grid">
+      @if (isSection('dashboard')) {
+        <article class="metric-card">
+          <span>Active products</span>
+          <strong>{{ activeProductCount }}</strong>
+          <small>{{ productSource.data.length }} total products</small>
+        </article>
+        <article class="metric-card">
+          <span>Active prices</span>
+          <strong>{{ activePriceCount }}</strong>
+          <small>{{ priceSource.data.length }} total price records</small>
+        </article>
+        <article class="metric-card">
+          <span>Active subscriptions</span>
+          <strong>{{ activeSystemSubscriptionCount }}</strong>
+          <small>{{ tenantSubscriptionCount }} tenant(s)</small>
+        </article>
+        <article class="metric-card action-card">
+          <span>Manual credit</span>
+          <strong>Wallets</strong>
+          <button mat-stroked-button color="primary" type="button" (click)="openCreditDialog()">
+            <mat-icon>add_card</mat-icon>
+            Add credit
           </button>
-        </div>
-        <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
-          @if (loading()) {
-            <div class="table-loading" aria-live="polite" aria-busy="true">
-              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
-            </div>
-          }
-          <table mat-table [dataSource]="productSource" matSort #productSort="matSort">
-            <ng-container matColumnDef="select">
-              <th mat-header-cell *matHeaderCellDef class="select-col">
-                <mat-checkbox
-                  [checked]="isAllVisibleProductsSelected()"
-                  [indeterminate]="isSomeVisibleProductsSelected()"
-                  (change)="toggleVisibleProducts($event.checked)"
-                  aria-label="Select visible products"
-                ></mat-checkbox>
-              </th>
-              <td mat-cell *matCellDef="let row" class="select-col">
-                <mat-checkbox
-                  [checked]="isProductSelected(row)"
-                  (change)="toggleProductSelection(row, $event.checked)"
-                  [attr.aria-label]="'Select ' + row.BprName"
-                ></mat-checkbox>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="code">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
-              <td mat-cell *matCellDef="let row">{{ row.BprCode }}</td>
-            </ng-container>
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-              <td mat-cell *matCellDef="let row">{{ row.BprName }}</td>
-            </ng-container>
-            <ng-container matColumnDef="module">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Module</th>
-              <td mat-cell *matCellDef="let row">{{ row.BprModule }}</td>
-            </ng-container>
-            <ng-container matColumnDef="scope">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
-              <td mat-cell *matCellDef="let row">{{ row.BprBillingScope }}</td>
-            </ng-container>
-            <ng-container matColumnDef="prices">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Prices</th>
-              <td mat-cell *matCellDef="let row">{{ row.ActivePrices || 0 }}</td>
-            </ng-container>
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-              <td mat-cell *matCellDef="let row">
-                <span
-                  class="status-pill"
-                  [class.is-active]="row.BprStatus === 1"
-                  [class.is-inactive]="row.BprStatus !== 1"
-                  >{{ row.BprStatus === 1 ? 'Active' : 'Inactive' }}</span
-                >
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row" class="actions-col-cell">
-                <div class="actions-col">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Edit"
-                    (click)="openProductEdit(row)"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Delete"
-                    (click)="deleteProduct(row)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="productColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: productColumns"></tr>
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="productColumns.length">No products found.</td>
-            </tr>
-          </table>
-        </div>
-        <mat-paginator
-          #productPaginator
-          class="mobile-paginator"
-          [pageSizeOptions]="[5, 10, 25, 100]"
-          showFirstLastButtons
-        ></mat-paginator>
-      </mat-tab>
+        </article>
+      }
+    </div>
 
-      <mat-tab label="Prices">
-        <div class="tab-toolbar">
-          @if (selectedPriceCount) {
-            <span class="selection-count">{{ selectedPriceCount }} selected</span>
-            <button
-              mat-stroked-button
-              color="warn"
-              type="button"
-              (click)="deleteSelectedPrices()"
-              [disabled]="loading()"
-            >
-              <mat-icon>delete</mat-icon>
-              Delete selected
-            </button>
-          }
-          <button mat-stroked-button color="primary" type="button" (click)="openPriceCreate()">
-            <mat-icon>add</mat-icon>
-            New
+    <div class="section-links">
+      <a mat-stroked-button color="primary" routerLink="/system/billing/products"
+        ><mat-icon>storefront</mat-icon>Products</a
+      >
+      <a mat-stroked-button color="primary" routerLink="/system/billing/prices"
+        ><mat-icon>sell</mat-icon>Prices</a
+      >
+      <a mat-stroked-button color="primary" routerLink="/system/billing/subscriptions"
+        ><mat-icon>subscriptions</mat-icon>Subscriptions</a
+      >
+      <a mat-stroked-button color="primary" routerLink="/system/billing/wallets"
+        ><mat-icon>receipt_long</mat-icon>Wallets</a
+      >
+    </div>
+    @if (isSection('products')) {
+      <div class="tab-toolbar">
+        @if (selectedProductCount) {
+          <span class="selection-count">{{ selectedProductCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="deleteSelectedProducts()"
+            [disabled]="loading()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
           </button>
-        </div>
-        <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
-          @if (loading()) {
-            <div class="table-loading" aria-live="polite" aria-busy="true">
-              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
-            </div>
-          }
-          <table mat-table [dataSource]="priceSource" matSort #priceSort="matSort">
-            <ng-container matColumnDef="select">
-              <th mat-header-cell *matHeaderCellDef class="select-col">
-                <mat-checkbox
-                  [checked]="isAllVisiblePricesSelected()"
-                  [indeterminate]="isSomeVisiblePricesSelected()"
-                  (change)="toggleVisiblePrices($event.checked)"
-                  aria-label="Select visible prices"
-                ></mat-checkbox>
-              </th>
-              <td mat-cell *matCellDef="let row" class="select-col">
-                <mat-checkbox
-                  [checked]="isPriceSelected(row)"
-                  (change)="togglePriceSelection(row, $event.checked)"
-                  [attr.aria-label]="'Select ' + row.BpcName"
-                ></mat-checkbox>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="product">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.BprName || productName(row.BillingProductBprUUID) }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-              <td mat-cell *matCellDef="let row">{{ row.BpcName }}</td>
-            </ng-container>
-            <ng-container matColumnDef="mode">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mode</th>
-              <td mat-cell *matCellDef="let row">{{ label(row.BpcBillingMode) }}</td>
-            </ng-container>
-            <ng-container matColumnDef="unitPrice">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit price</th>
-              <td mat-cell *matCellDef="let row">
-                {{ formatMoney(row.BpcUnitPrice, row.BpcCurrency) }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="setup">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Setup</th>
-              <td mat-cell *matCellDef="let row">
-                {{ formatMoney(row.BpcSetupAmount, row.BpcCurrency) }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-              <td mat-cell *matCellDef="let row">
-                <span
-                  class="status-pill"
-                  [class.is-active]="row.BpcStatus === 1"
-                  [class.is-inactive]="row.BpcStatus !== 1"
-                  >{{ row.BpcStatus === 1 ? 'Active' : 'Inactive' }}</span
+        }
+        <button mat-stroked-button color="primary" type="button" (click)="openProductCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+      <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
+        @if (loading()) {
+          <div class="table-loading" aria-live="polite" aria-busy="true">
+            <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+        <table mat-table [dataSource]="productSource" matSort #productSort="matSort">
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef class="select-col">
+              <mat-checkbox
+                [checked]="isAllVisibleProductsSelected()"
+                [indeterminate]="isSomeVisibleProductsSelected()"
+                (change)="toggleVisibleProducts($event.checked)"
+                aria-label="Select visible products"
+              ></mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let row" class="select-col">
+              <mat-checkbox
+                [checked]="isProductSelected(row)"
+                (change)="toggleProductSelection(row, $event.checked)"
+                [attr.aria-label]="'Select ' + row.BprName"
+              ></mat-checkbox>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+            <td mat-cell *matCellDef="let row">{{ row.BprCode }}</td>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+            <td mat-cell *matCellDef="let row">{{ row.BprName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="module">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Module</th>
+            <td mat-cell *matCellDef="let row">{{ row.BprModule }}</td>
+          </ng-container>
+          <ng-container matColumnDef="scope">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
+            <td mat-cell *matCellDef="let row">{{ row.BprBillingScope }}</td>
+          </ng-container>
+          <ng-container matColumnDef="prices">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Prices</th>
+            <td mat-cell *matCellDef="let row">{{ row.ActivePrices || 0 }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span
+                class="status-pill"
+                [class.is-active]="row.BprStatus === 1"
+                [class.is-inactive]="row.BprStatus !== 1"
+                >{{ row.BprStatus === 1 ? 'Active' : 'Inactive' }}</span
+              >
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row" class="actions-col-cell">
+              <div class="actions-col">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Edit"
+                  (click)="openProductEdit(row)"
                 >
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row" class="actions-col-cell">
-                <div class="actions-col">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Edit"
-                    (click)="openPriceEdit(row)"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Delete"
-                    (click)="deletePrice(row)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="priceColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: priceColumns"></tr>
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="priceColumns.length">No prices found.</td>
-            </tr>
-          </table>
-        </div>
-        <mat-paginator
-          #pricePaginator
-          class="mobile-paginator"
-          [pageSizeOptions]="[5, 10, 25, 100]"
-          showFirstLastButtons
-        ></mat-paginator>
-      </mat-tab>
-
-      <mat-tab label="Subscriptions">
-        <div class="tab-toolbar">
-          @if (selectedSubscriptionCount) {
-            <span class="selection-count">{{ selectedSubscriptionCount }} selected</span>
-            <button
-              mat-stroked-button
-              color="warn"
-              type="button"
-              (click)="cancelSelectedSubscriptions()"
-              [disabled]="loading()"
-            >
-              <mat-icon>block</mat-icon>
-              Cancel selected
-            </button>
-          }
-        </div>
-        <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
-          @if (loading()) {
-            <div class="table-loading" aria-live="polite" aria-busy="true">
-              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
-            </div>
-          }
-          <table mat-table [dataSource]="subscriptionSource" matSort #subscriptionSort="matSort">
-            <ng-container matColumnDef="select">
-              <th mat-header-cell *matHeaderCellDef class="select-col">
-                <mat-checkbox
-                  [checked]="isAllVisibleSubscriptionsSelected()"
-                  [indeterminate]="isSomeVisibleSubscriptionsSelected()"
-                  (change)="toggleVisibleSubscriptions($event.checked)"
-                  aria-label="Select visible subscriptions"
-                ></mat-checkbox>
-              </th>
-              <td mat-cell *matCellDef="let row" class="select-col">
-                <mat-checkbox
-                  [checked]="isSubscriptionSelected(row)"
-                  (change)="toggleSubscriptionSelection(row, $event.checked)"
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Delete"
+                  (click)="deleteProduct(row)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="productColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: productColumns"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="productColumns.length">No products found.</td>
+          </tr>
+        </table>
+      </div>
+      <mat-paginator
+        #productPaginator
+        class="mobile-paginator"
+        [pageSizeOptions]="[5, 10, 25, 100]"
+        showFirstLastButtons
+      ></mat-paginator>
+    }
+    @if (isSection('prices')) {
+      <div class="tab-toolbar">
+        @if (selectedPriceCount) {
+          <span class="selection-count">{{ selectedPriceCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="deleteSelectedPrices()"
+            [disabled]="loading()"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button color="primary" type="button" (click)="openPriceCreate()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+      <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
+        @if (loading()) {
+          <div class="table-loading" aria-live="polite" aria-busy="true">
+            <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+        <table mat-table [dataSource]="priceSource" matSort #priceSort="matSort">
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef class="select-col">
+              <mat-checkbox
+                [checked]="isAllVisiblePricesSelected()"
+                [indeterminate]="isSomeVisiblePricesSelected()"
+                (change)="toggleVisiblePrices($event.checked)"
+                aria-label="Select visible prices"
+              ></mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let row" class="select-col">
+              <mat-checkbox
+                [checked]="isPriceSelected(row)"
+                (change)="togglePriceSelection(row, $event.checked)"
+                [attr.aria-label]="'Select ' + row.BpcName"
+              ></mat-checkbox>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="product">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.BprName || productName(row.BillingProductBprUUID) }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+            <td mat-cell *matCellDef="let row">{{ row.BpcName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="mode">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mode</th>
+            <td mat-cell *matCellDef="let row">{{ label(row.BpcBillingMode) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="unitPrice">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit price</th>
+            <td mat-cell *matCellDef="let row">
+              {{ formatMoney(row.BpcUnitPrice, row.BpcCurrency) }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="setup">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Setup</th>
+            <td mat-cell *matCellDef="let row">
+              {{ formatMoney(row.BpcSetupAmount, row.BpcCurrency) }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span
+                class="status-pill"
+                [class.is-active]="row.BpcStatus === 1"
+                [class.is-inactive]="row.BpcStatus !== 1"
+                >{{ row.BpcStatus === 1 ? 'Active' : 'Inactive' }}</span
+              >
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row" class="actions-col-cell">
+              <div class="actions-col">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Edit"
+                  (click)="openPriceEdit(row)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Delete"
+                  (click)="deletePrice(row)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="priceColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: priceColumns"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="priceColumns.length">No prices found.</td>
+          </tr>
+        </table>
+      </div>
+      <mat-paginator
+        #pricePaginator
+        class="mobile-paginator"
+        [pageSizeOptions]="[5, 10, 25, 100]"
+        showFirstLastButtons
+      ></mat-paginator>
+    }
+    @if (isSection('subscriptions')) {
+      <div class="tab-toolbar">
+        @if (selectedSubscriptionCount) {
+          <span class="selection-count">{{ selectedSubscriptionCount }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="cancelSelectedSubscriptions()"
+            [disabled]="loading()"
+          >
+            <mat-icon>block</mat-icon>
+            Cancel selected
+          </button>
+        }
+      </div>
+      <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
+        @if (loading()) {
+          <div class="table-loading" aria-live="polite" aria-busy="true">
+            <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+        <table mat-table [dataSource]="subscriptionSource" matSort #subscriptionSort="matSort">
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef class="select-col">
+              <mat-checkbox
+                [checked]="isAllVisibleSubscriptionsSelected()"
+                [indeterminate]="isSomeVisibleSubscriptionsSelected()"
+                (change)="toggleVisibleSubscriptions($event.checked)"
+                aria-label="Select visible subscriptions"
+              ></mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let row" class="select-col">
+              <mat-checkbox
+                [checked]="isSubscriptionSelected(row)"
+                (change)="toggleSubscriptionSelection(row, $event.checked)"
+                [disabled]="row.BsuStatus === 'CANCELED'"
+                [attr.aria-label]="'Select ' + (row.BprName || row.BprCode || 'subscription')"
+              ></mat-checkbox>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="tenant">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Tenant</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.EnvironmentName || row.EnvironmentUUID }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="product">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+            <td mat-cell *matCellDef="let row">{{ row.BprName || row.BprCode }}</td>
+          </ng-container>
+          <ng-container matColumnDef="resource">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Resource</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.BsuResourceLabel || row.BsuResourceType || '-' }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Qty</th>
+            <td mat-cell *matCellDef="let row">{{ row.BsuQuantity }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span
+                class="status-pill"
+                [class.is-active]="row.BsuStatus === 'ACTIVE'"
+                [class.is-inactive]="row.BsuStatus !== 'ACTIVE'"
+                >{{ label(row.BsuStatus) }}</span
+              >
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+            <td mat-cell *matCellDef="let row">
+              {{ formatMoney(row.BsuUnitPriceSnapshot, row.BsuCurrency) }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row" class="actions-col-cell">
+              <div class="actions-col">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Cancel"
+                  (click)="cancelSubscription(row)"
                   [disabled]="row.BsuStatus === 'CANCELED'"
-                  [attr.aria-label]="'Select ' + (row.BprName || row.BprCode || 'subscription')"
-                ></mat-checkbox>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="tenant">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Tenant</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.EnvironmentName || row.EnvironmentUUID }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="product">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
-              <td mat-cell *matCellDef="let row">{{ row.BprName || row.BprCode }}</td>
-            </ng-container>
-            <ng-container matColumnDef="resource">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Resource</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.BsuResourceLabel || row.BsuResourceType || '-' }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="quantity">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Qty</th>
-              <td mat-cell *matCellDef="let row">{{ row.BsuQuantity }}</td>
-            </ng-container>
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-              <td mat-cell *matCellDef="let row">
-                <span
-                  class="status-pill"
-                  [class.is-active]="row.BsuStatus === 'ACTIVE'"
-                  [class.is-inactive]="row.BsuStatus !== 'ACTIVE'"
-                  >{{ label(row.BsuStatus) }}</span
                 >
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="price">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
-              <td mat-cell *matCellDef="let row">
-                {{ formatMoney(row.BsuUnitPriceSnapshot, row.BsuCurrency) }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row" class="actions-col-cell">
-                <div class="actions-col">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Cancel"
-                    (click)="cancelSubscription(row)"
-                    [disabled]="row.BsuStatus === 'CANCELED'"
-                  >
-                    <mat-icon>block</mat-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="subscriptionColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: subscriptionColumns"></tr>
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="subscriptionColumns.length">
-                No subscriptions found.
-              </td>
-            </tr>
-          </table>
+                  <mat-icon>block</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="subscriptionColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: subscriptionColumns"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="subscriptionColumns.length">
+              No subscriptions found.
+            </td>
+          </tr>
+        </table>
+      </div>
+      <mat-paginator
+        #subscriptionPaginator
+        class="mobile-paginator"
+        [pageSizeOptions]="[5, 10, 25, 100]"
+        showFirstLastButtons
+      ></mat-paginator>
+    }
+    @if (isSection('wallets')) {
+      <section class="action-panel">
+        <div>
+          <h2>Wallet operations</h2>
+          <p>Apply audited prepaid credits to tenant wallets.</p>
         </div>
-        <mat-paginator
-          #subscriptionPaginator
-          class="mobile-paginator"
-          [pageSizeOptions]="[5, 10, 25, 100]"
-          showFirstLastButtons
-        ></mat-paginator>
-      </mat-tab>
-    </mat-tab-group>
+        <button mat-stroked-button color="primary" type="button" (click)="openCreditDialog()">
+          <mat-icon>add_card</mat-icon>
+          Manual credit
+        </button>
+      </section>
+    }
   </mat-card>
 </section>
 

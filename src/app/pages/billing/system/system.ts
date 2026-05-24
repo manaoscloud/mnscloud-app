@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
+  Input,
   OnDestroy,
   TemplateRef,
   ViewChild,
@@ -24,6 +25,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -35,6 +37,13 @@ import {
   BillingService,
   BillingSubscription,
 } from '../shared/billing.service';
+
+export type BillingSystemSection =
+  | 'dashboard'
+  | 'products'
+  | 'prices'
+  | 'subscriptions'
+  | 'wallets';
 
 @Component({
   selector: 'app-billing-system',
@@ -58,6 +67,7 @@ import {
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,
+    RouterLink,
   ],
   templateUrl: './system.html',
   styleUrls: ['./system.scss'],
@@ -68,6 +78,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+
+  @Input() section: BillingSystemSection = 'dashboard';
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -215,6 +227,27 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.statusFilter = null;
     this.subscriptionStatusFilter = '';
     void this.refresh();
+  }
+
+  isSection(section: BillingSystemSection) {
+    return this.section === section;
+  }
+
+  get activeProductCount() {
+    return this.productSource.data.filter((row) => row.BprStatus === 1).length;
+  }
+
+  get activePriceCount() {
+    return this.priceSource.data.filter((row) => row.BpcStatus === 1).length;
+  }
+
+  get activeSystemSubscriptionCount() {
+    return this.subscriptionSource.data.filter((row) => row.BsuStatus === 'ACTIVE').length;
+  }
+
+  get tenantSubscriptionCount() {
+    return new Set(this.subscriptionSource.data.map((row) => row.EnvironmentUUID).filter(Boolean))
+      .size;
   }
 
   openProductCreate() {
