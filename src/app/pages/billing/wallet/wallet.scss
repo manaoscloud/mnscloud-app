@@ -29,9 +29,15 @@
   }
 }
 
+.header-actions,
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .erp-header button mat-icon,
-.filter-actions button mat-icon,
-.tab-toolbar button mat-icon {
+.filter-actions button mat-icon {
   margin-right: 0.25rem;
 }
 
@@ -73,26 +79,21 @@
   align-items: center;
 }
 
-.filter-actions,
-.tab-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
 .filter-actions {
+  justify-content: flex-end;
   margin-bottom: 1.25rem;
 
   button {
-    min-width: 96px;
+    width: var(--crud-action-button-width);
+    min-width: var(--crud-action-button-width);
     height: 40px;
     white-space: nowrap;
   }
-}
 
-.billing-tabs {
-  margin-top: 0.5rem;
+  .context-action {
+    width: auto;
+    min-width: max-content;
+  }
 }
 
 .dashboard-grid {
@@ -105,13 +106,11 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-.tab-toolbar {
-  min-height: 52px;
-  margin: 0.85rem 0 0.75rem;
+.billing-tabs {
+  margin-top: 0.5rem;
 }
 
 .selection-count {
-  margin-right: auto;
   color: var(--mat-sys-color-on-surface-variant);
   font-size: 0.9rem;
 }
@@ -337,8 +336,7 @@ td span {
   }
 
   .erp-header,
-  .filter-actions,
-  .tab-toolbar {
+  .filter-actions {
     align-items: stretch;
     flex-direction: column;
   }

@@ -78,7 +78,7 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
   "Channel": "Canal",
   "Canceled": "Cancelado",
   "Channels": "Canais",
-  "Clear": "Claro",
+  "Clear": "Limpar",
   "Card": "Cartão",
   "Check": "Verificar",
   "Check service viability by coordinates.":
@@ -873,7 +873,7 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
   "Carriers": "Transportistas",
   "Can close": "puede cerrar",
   "Certificate": "Certificado",
-  "Clear": "Claro",
+  "Clear": "Limpiar",
   "City": "Ciudad",
   "Check": "Controlar",
   "Check capacity for CTO and PON.": "Verificar capacidad para CTO y PON.",

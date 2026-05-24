@@ -30,16 +30,14 @@
 }
 
 .header-actions,
-.filter-actions,
-.tab-toolbar {
+.filter-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .header-actions button mat-icon,
-.filter-actions button mat-icon,
-.tab-toolbar button mat-icon {
+.filter-actions button mat-icon {
   margin-right: 0.25rem;
 }
 
@@ -56,9 +54,15 @@
   margin-bottom: 1.25rem;
 
   button {
-    min-width: 96px;
+    width: var(--crud-action-button-width);
+    min-width: var(--crud-action-button-width);
     height: 40px;
     white-space: nowrap;
+  }
+
+  .context-action {
+    width: auto;
+    min-width: max-content;
   }
 }
 
@@ -113,14 +117,7 @@
   }
 }
 
-.tab-toolbar {
-  justify-content: flex-end;
-  min-height: 52px;
-  margin: 0.85rem 0 0.75rem;
-}
-
 .selection-count {
-  margin-right: auto;
   color: var(--mat-sys-color-on-surface-variant);
   font-size: 0.9rem;
 }
@@ -371,8 +368,7 @@
 
   .erp-header,
   .header-actions,
-  .filter-actions,
-  .tab-toolbar {
+  .filter-actions {
     align-items: stretch;
     flex-direction: column;
   }
