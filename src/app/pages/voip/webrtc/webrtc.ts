@@ -281,6 +281,14 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     };
     return map[column] ?? '';
   }
+  publicIpParts(row: WebRtcRecord) {
+    const raw = String(this.cell(row, 'publicIP') ?? '').trim();
+    if (!raw) return [];
+    return raw
+      .split(/[,\n]+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
   displayValue(value: unknown) {
     if (value === undefined || value === null) return '';
     if (typeof value === 'object') return JSON.stringify(value);

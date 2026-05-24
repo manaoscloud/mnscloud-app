@@ -68,10 +68,16 @@
               *matHeaderCellDef
               mat-sort-header
               [class.status-col]="column === 'status'"
+              [class.ip-col]="column === 'publicIP'"
             >
               {{ columnLabel(column) }}
             </th>
-            <td mat-cell *matCellDef="let row" [class.status-col]="column === 'status'">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [class.status-col]="column === 'status'"
+              [class.ip-col]="column === 'publicIP'"
+            >
               @if (column === 'status') {
                 <mat-chip
                   class="status-pill"
@@ -79,6 +85,14 @@
                   [class.is-inactive]="!status(row)"
                   >{{ cell(row, column) }}</mat-chip
                 >
+              } @else if (column === 'publicIP') {
+                <div class="ip-stack">
+                  @for (ip of publicIpParts(row); track ip) {
+                    <span>{{ ip }}</span>
+                  } @empty {
+                    <span>-</span>
+                  }
+                </div>
               } @else {
                 {{ cell(row, column) }}
               }

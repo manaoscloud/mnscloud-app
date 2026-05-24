@@ -6,6 +6,21 @@
 .actions-col-cell {
   white-space: nowrap;
 }
+.ip-col {
+  min-width: 180px;
+  max-width: 280px;
+}
+.ip-stack {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  max-width: 260px;
+
+  span {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
 .selection-count {
   align-self: center;
   opacity: 0.8;
