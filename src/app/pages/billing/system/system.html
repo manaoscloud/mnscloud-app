@@ -1,6 +1,6 @@
-<section class="billing-page" @fadeIn>
-  <mat-card class="billing-card">
-    <header class="page-header">
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
       <div>
         <h1>Billing Control</h1>
         <p>Global products, price book, subscriptions and prepaid credit operations.</p>
@@ -24,9 +24,28 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Product</mat-label>
-        <mat-select [(ngModel)]="priceProductFilter">
+        <mat-select
+          [(ngModel)]="priceProductFilter"
+          (openedChange)="!$event && clearProductSelectSearch()"
+        >
+          <mat-option class="select-search-option">
+            <mat-form-field
+              appearance="outline"
+              class="select-search-field"
+              subscriptSizing="dynamic"
+            >
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                placeholder="Search products"
+                [(ngModel)]="priceProductSearchInput"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+              />
+            </mat-form-field>
+          </mat-option>
           <mat-option value="">All</mat-option>
-          @for (product of products(); track product.BprUUID) {
+          @for (product of filteredProducts(priceProductSearchInput); track product.BprUUID) {
             <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
           }
         </mat-select>
@@ -69,18 +88,48 @@
     <mat-tab-group class="billing-tabs">
       <mat-tab label="Products">
         <div class="tab-toolbar">
+          @if (selectedProductCount) {
+            <span class="selection-count">{{ selectedProductCount }} selected</span>
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              (click)="deleteSelectedProducts()"
+              [disabled]="loading()"
+            >
+              <mat-icon>delete</mat-icon>
+              Delete selected
+            </button>
+          }
           <button mat-stroked-button color="primary" type="button" (click)="openProductCreate()">
             <mat-icon>add</mat-icon>
-            Product
+            New
           </button>
         </div>
-        <div class="table-wrapper" [class.is-loading]="loading()">
+        <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
           @if (loading()) {
-            <div class="table-loading">
+            <div class="table-loading" aria-live="polite" aria-busy="true">
               <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
             </div>
           }
           <table mat-table [dataSource]="productSource" matSort #productSort="matSort">
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef class="select-col">
+                <mat-checkbox
+                  [checked]="isAllVisibleProductsSelected()"
+                  [indeterminate]="isSomeVisibleProductsSelected()"
+                  (change)="toggleVisibleProducts($event.checked)"
+                  aria-label="Select visible products"
+                ></mat-checkbox>
+              </th>
+              <td mat-cell *matCellDef="let row" class="select-col">
+                <mat-checkbox
+                  [checked]="isProductSelected(row)"
+                  (change)="toggleProductSelection(row, $event.checked)"
+                  [attr.aria-label]="'Select ' + row.BprName"
+                ></mat-checkbox>
+              </td>
+            </ng-container>
             <ng-container matColumnDef="code">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
               <td mat-cell *matCellDef="let row">{{ row.BprCode }}</td>
@@ -104,30 +153,35 @@
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let row">
-                <span class="status-pill" [class.inactive]="row.BprStatus !== 1">{{
-                  row.BprStatus === 1 ? 'Active' : 'Inactive'
-                }}</span>
+                <span
+                  class="status-pill"
+                  [class.is-active]="row.BprStatus === 1"
+                  [class.is-inactive]="row.BprStatus !== 1"
+                  >{{ row.BprStatus === 1 ? 'Active' : 'Inactive' }}</span
+                >
               </td>
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row">
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Edit"
-                  (click)="openProductEdit(row)"
-                >
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Delete"
-                  (click)="deleteProduct(row)"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
+              <td mat-cell *matCellDef="let row" class="actions-col-cell">
+                <div class="actions-col">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    matTooltip="Edit"
+                    (click)="openProductEdit(row)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    matTooltip="Delete"
+                    (click)="deleteProduct(row)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="productColumns"></tr>
@@ -140,20 +194,55 @@
         <mat-paginator
           #productPaginator
           class="mobile-paginator"
-          [pageSizeOptions]="[10, 20, 50]"
+          [pageSizeOptions]="[5, 10, 25, 100]"
           showFirstLastButtons
         ></mat-paginator>
       </mat-tab>
 
       <mat-tab label="Prices">
         <div class="tab-toolbar">
+          @if (selectedPriceCount) {
+            <span class="selection-count">{{ selectedPriceCount }} selected</span>
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              (click)="deleteSelectedPrices()"
+              [disabled]="loading()"
+            >
+              <mat-icon>delete</mat-icon>
+              Delete selected
+            </button>
+          }
           <button mat-stroked-button color="primary" type="button" (click)="openPriceCreate()">
             <mat-icon>add</mat-icon>
-            Price
+            New
           </button>
         </div>
-        <div class="table-wrapper">
+        <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
+          @if (loading()) {
+            <div class="table-loading" aria-live="polite" aria-busy="true">
+              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+            </div>
+          }
           <table mat-table [dataSource]="priceSource" matSort #priceSort="matSort">
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef class="select-col">
+                <mat-checkbox
+                  [checked]="isAllVisiblePricesSelected()"
+                  [indeterminate]="isSomeVisiblePricesSelected()"
+                  (change)="toggleVisiblePrices($event.checked)"
+                  aria-label="Select visible prices"
+                ></mat-checkbox>
+              </th>
+              <td mat-cell *matCellDef="let row" class="select-col">
+                <mat-checkbox
+                  [checked]="isPriceSelected(row)"
+                  (change)="togglePriceSelection(row, $event.checked)"
+                  [attr.aria-label]="'Select ' + row.BpcName"
+                ></mat-checkbox>
+              </td>
+            </ng-container>
             <ng-container matColumnDef="product">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
               <td mat-cell *matCellDef="let row">
@@ -183,30 +272,35 @@
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let row">
-                <span class="status-pill" [class.inactive]="row.BpcStatus !== 1">{{
-                  row.BpcStatus === 1 ? 'Active' : 'Inactive'
-                }}</span>
+                <span
+                  class="status-pill"
+                  [class.is-active]="row.BpcStatus === 1"
+                  [class.is-inactive]="row.BpcStatus !== 1"
+                  >{{ row.BpcStatus === 1 ? 'Active' : 'Inactive' }}</span
+                >
               </td>
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row">
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Edit"
-                  (click)="openPriceEdit(row)"
-                >
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Delete"
-                  (click)="deletePrice(row)"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
+              <td mat-cell *matCellDef="let row" class="actions-col-cell">
+                <div class="actions-col">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    matTooltip="Edit"
+                    (click)="openPriceEdit(row)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    matTooltip="Delete"
+                    (click)="deletePrice(row)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="priceColumns"></tr>
@@ -219,14 +313,52 @@
         <mat-paginator
           #pricePaginator
           class="mobile-paginator"
-          [pageSizeOptions]="[10, 20, 50]"
+          [pageSizeOptions]="[5, 10, 25, 100]"
           showFirstLastButtons
         ></mat-paginator>
       </mat-tab>
 
       <mat-tab label="Subscriptions">
-        <div class="table-wrapper">
+        <div class="tab-toolbar">
+          @if (selectedSubscriptionCount) {
+            <span class="selection-count">{{ selectedSubscriptionCount }} selected</span>
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              (click)="cancelSelectedSubscriptions()"
+              [disabled]="loading()"
+            >
+              <mat-icon>block</mat-icon>
+              Cancel selected
+            </button>
+          }
+        </div>
+        <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
+          @if (loading()) {
+            <div class="table-loading" aria-live="polite" aria-busy="true">
+              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+            </div>
+          }
           <table mat-table [dataSource]="subscriptionSource" matSort #subscriptionSort="matSort">
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef class="select-col">
+                <mat-checkbox
+                  [checked]="isAllVisibleSubscriptionsSelected()"
+                  [indeterminate]="isSomeVisibleSubscriptionsSelected()"
+                  (change)="toggleVisibleSubscriptions($event.checked)"
+                  aria-label="Select visible subscriptions"
+                ></mat-checkbox>
+              </th>
+              <td mat-cell *matCellDef="let row" class="select-col">
+                <mat-checkbox
+                  [checked]="isSubscriptionSelected(row)"
+                  (change)="toggleSubscriptionSelection(row, $event.checked)"
+                  [disabled]="row.BsuStatus === 'CANCELED'"
+                  [attr.aria-label]="'Select ' + (row.BprName || row.BprCode || 'subscription')"
+                ></mat-checkbox>
+              </td>
+            </ng-container>
             <ng-container matColumnDef="tenant">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Tenant</th>
               <td mat-cell *matCellDef="let row">
@@ -250,9 +382,12 @@
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let row">
-                <span class="status-pill" [class.inactive]="row.BsuStatus !== 'ACTIVE'">{{
-                  label(row.BsuStatus)
-                }}</span>
+                <span
+                  class="status-pill"
+                  [class.is-active]="row.BsuStatus === 'ACTIVE'"
+                  [class.is-inactive]="row.BsuStatus !== 'ACTIVE'"
+                  >{{ label(row.BsuStatus) }}</span
+                >
               </td>
             </ng-container>
             <ng-container matColumnDef="price">
@@ -263,16 +398,18 @@
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row">
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Cancel"
-                  (click)="cancelSubscription(row)"
-                  [disabled]="row.BsuStatus === 'CANCELED'"
-                >
-                  <mat-icon>block</mat-icon>
-                </button>
+              <td mat-cell *matCellDef="let row" class="actions-col-cell">
+                <div class="actions-col">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    matTooltip="Cancel"
+                    (click)="cancelSubscription(row)"
+                    [disabled]="row.BsuStatus === 'CANCELED'"
+                  >
+                    <mat-icon>block</mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="subscriptionColumns"></tr>
@@ -287,7 +424,7 @@
         <mat-paginator
           #subscriptionPaginator
           class="mobile-paginator"
-          [pageSizeOptions]="[10, 20, 50]"
+          [pageSizeOptions]="[5, 10, 25, 100]"
           showFirstLastButtons
         ></mat-paginator>
       </mat-tab>
@@ -296,151 +433,261 @@
 </section>
 
 <ng-template #productDialog>
-  <div class="crud-dialog">
+  <div class="crud-dialog billing-dialog">
     <div class="dialog-header">
-      <h2>{{ editingProduct() ? 'Edit product' : 'New product' }}</h2>
+      <div>
+        <h2>{{ editingProduct() ? 'Edit product' : 'New product' }}</h2>
+        <p>Maintain the global billing catalog product contract.</p>
+      </div>
+      @if (editingProduct()) {
+        <span class="pill">Editing</span>
+      }
     </div>
     <mat-dialog-content class="dialog-content">
-      <form class="form-grid" [formGroup]="productForm">
-        <mat-form-field appearance="outline">
-          <mat-label>Code</mat-label>
-          <input matInput formControlName="code" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Module</mat-label>
-          <input matInput formControlName="module" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Scope</mat-label>
-          <mat-select formControlName="billingScope">
-            <mat-option value="SERVICE">Service</mat-option>
-            <mat-option value="MODULE">Module</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Description</mat-label>
-          <input matInput formControlName="description" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option [value]="1">Active</mat-option>
-            <mat-option [value]="0">Inactive</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </form>
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="productForm">
+              <mat-form-field appearance="outline">
+                <mat-label>Code</mat-label>
+                <input matInput formControlName="code" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Module</mat-label>
+                <input matInput formControlName="module" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Scope</mat-label>
+                <mat-select formControlName="billingScope">
+                  <mat-option value="SERVICE">Service</mat-option>
+                  <mat-option value="MODULE">Module</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Description</mat-label>
+                <input matInput formControlName="description" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
     </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        (click)="saveProduct()"
-        [disabled]="saving()"
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
+      </div>
+      <div class="primary-actions save-split-action" [class.is-single-action]="editingProduct()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="saveProduct()"
+          [disabled]="saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editingProduct()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            [matMenuTriggerFor]="productSaveMenu"
+            [disabled]="saving()"
+            type="button"
+            aria-label="More save actions"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+      <mat-menu
+        #productSaveMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
       >
-        <mat-icon>save</mat-icon>
-        Save
-      </button>
+        <button mat-menu-item (click)="saveAndNewProduct()" [disabled]="saving()" type="button">
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
     </mat-dialog-actions>
   </div>
 </ng-template>
 
 <ng-template #priceDialog>
-  <div class="crud-dialog">
+  <div class="crud-dialog billing-dialog">
     <div class="dialog-header">
-      <h2>{{ editingPrice() ? 'Edit price' : 'New price' }}</h2>
+      <div>
+        <h2>{{ editingPrice() ? 'Edit price' : 'New price' }}</h2>
+        <p>Configure billing units, recurrence and commercial values.</p>
+      </div>
+      @if (editingPrice()) {
+        <span class="pill">Editing</span>
+      }
     </div>
     <mat-dialog-content class="dialog-content">
-      <form class="form-grid" [formGroup]="priceForm">
-        <mat-form-field appearance="outline">
-          <mat-label>Product</mat-label>
-          <mat-select formControlName="productUUID">
-            @for (product of products(); track product.BprUUID) {
-              <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Currency</mat-label>
-          <input matInput maxlength="3" formControlName="currency" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Billing mode</mat-label>
-          <mat-select formControlName="billingMode">
-            <mat-option value="ONE_TIME">One time</mat-option>
-            <mat-option value="MONTHLY">Monthly</mat-option>
-            <mat-option value="HOURLY">Hourly</mat-option>
-            <mat-option value="MINUTELY">Minutely</mat-option>
-            <mat-option value="SECONDLY">Secondly</mat-option>
-            <mat-option value="USAGE_UNIT">Usage unit</mat-option>
-            <mat-option value="GB_HOUR">GB hour</mat-option>
-            <mat-option value="GB_MONTH">GB month</mat-option>
-            <mat-option value="MODULE_MONTHLY">Module monthly</mat-option>
-            <mat-option value="TIERED_USAGE">Tiered usage</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Unit code</mat-label>
-          <input matInput formControlName="unitCode" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Unit price</mat-label>
-          <input matInput type="number" step="0.000001" formControlName="unitPrice" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Setup amount</mat-label>
-          <input matInput type="number" step="0.000001" formControlName="setupAmount" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Included quantity</mat-label>
-          <input matInput type="number" step="0.000001" formControlName="includedQuantity" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Minimum commitment</mat-label>
-          <input matInput type="number" step="0.000001" formControlName="minimumCommitment" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option [value]="1">Active</mat-option>
-            <mat-option [value]="0">Inactive</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Config JSON</mat-label>
-          <textarea matInput rows="4" formControlName="configJson"></textarea>
-        </mat-form-field>
-      </form>
+      <mat-tab-group class="form-tabs">
+        <mat-tab label="Data">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="priceForm">
+              <mat-form-field appearance="outline">
+                <mat-label>Product</mat-label>
+                <mat-select
+                  formControlName="productUUID"
+                  (openedChange)="!$event && clearProductSelectSearch()"
+                >
+                  <mat-option class="select-search-option">
+                    <mat-form-field
+                      appearance="outline"
+                      class="select-search-field"
+                      subscriptSizing="dynamic"
+                    >
+                      <mat-icon matPrefix>search</mat-icon>
+                      <input
+                        matInput
+                        placeholder="Search products"
+                        [(ngModel)]="priceFormProductSearchInput"
+                        [ngModelOptions]="{ standalone: true }"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (
+                    product of filteredProducts(priceFormProductSearchInput);
+                    track product.BprUUID
+                  ) {
+                    <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Currency</mat-label>
+                <input matInput maxlength="3" formControlName="currency" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Billing mode</mat-label>
+                <mat-select formControlName="billingMode">
+                  <mat-option value="ONE_TIME">One time</mat-option>
+                  <mat-option value="MONTHLY">Monthly</mat-option>
+                  <mat-option value="HOURLY">Hourly</mat-option>
+                  <mat-option value="MINUTELY">Minutely</mat-option>
+                  <mat-option value="SECONDLY">Secondly</mat-option>
+                  <mat-option value="USAGE_UNIT">Usage unit</mat-option>
+                  <mat-option value="GB_HOUR">GB hour</mat-option>
+                  <mat-option value="GB_MONTH">GB month</mat-option>
+                  <mat-option value="MODULE_MONTHLY">Module monthly</mat-option>
+                  <mat-option value="TIERED_USAGE">Tiered usage</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Unit code</mat-label>
+                <input matInput formControlName="unitCode" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Unit price</mat-label>
+                <input matInput type="number" step="0.000001" formControlName="unitPrice" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Setup amount</mat-label>
+                <input matInput type="number" step="0.000001" formControlName="setupAmount" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Included quantity</mat-label>
+                <input matInput type="number" step="0.000001" formControlName="includedQuantity" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Minimum commitment</mat-label>
+                <input matInput type="number" step="0.000001" formControlName="minimumCommitment" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Config JSON</mat-label>
+                <textarea matInput rows="4" formControlName="configJson"></textarea>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
     </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        (click)="savePrice()"
-        [disabled]="saving()"
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
+      </div>
+      <div class="primary-actions save-split-action" [class.is-single-action]="editingPrice()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="savePrice()"
+          [disabled]="saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        @if (!editingPrice()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            [matMenuTriggerFor]="priceSaveMenu"
+            [disabled]="saving()"
+            type="button"
+            aria-label="More save actions"
+            matTooltip="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+      <mat-menu
+        #priceSaveMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
       >
-        <mat-icon>save</mat-icon>
-        Save
-      </button>
+        <button mat-menu-item (click)="saveAndNewPrice()" [disabled]="saving()" type="button">
+          <mat-icon>add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
     </mat-dialog-actions>
   </div>
 </ng-template>
 
 <ng-template #creditDialog>
-  <div class="crud-dialog">
+  <div class="crud-dialog billing-dialog compact-dialog">
     <div class="dialog-header">
-      <h2>Manual credit</h2>
+      <div>
+        <h2>Manual credit</h2>
+        <p>Add prepaid balance to a tenant wallet with an audit reference.</p>
+      </div>
     </div>
     <mat-dialog-content class="dialog-content">
       <form class="form-grid" [formGroup]="creditForm">
@@ -470,18 +717,23 @@
         </mat-form-field>
       </form>
     </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        (click)="saveManualCredit()"
-        [disabled]="saving()"
-      >
-        <mat-icon>save</mat-icon>
-        Save
-      </button>
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
+      </div>
+      <div class="primary-actions save-split-action is-single-action">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="saveManualCredit()"
+          [disabled]="saving()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+      </div>
     </mat-dialog-actions>
   </div>
 </ng-template>

@@ -11,10 +11,12 @@ import {
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -22,7 +24,9 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
+import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
 import {
@@ -42,10 +46,12 @@ import {
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatMenuModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
@@ -75,12 +81,21 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   readonly ledgerSource = new MatTableDataSource<BillingLedgerEntry>([]);
 
   readonly catalogColumns = ['product', 'mode', 'price', 'setup', 'actions'];
-  readonly subscriptionColumns = ['product', 'resource', 'quantity', 'status', 'price', 'actions'];
+  readonly subscriptionColumns = [
+    'select',
+    'product',
+    'resource',
+    'quantity',
+    'status',
+    'price',
+    'actions',
+  ];
   readonly ledgerColumns = ['date', 'type', 'direction', 'amount', 'balance', 'reason'];
 
   searchInput = '';
   ledgerSearchInput = '';
   statusFilter = '';
+  readonly selectedSubscriptionUUIDs = new Set<string>();
 
   readonly subscriptionForm = this.fb.nonNullable.group({
     priceUUID: ['', Validators.required],
@@ -98,6 +113,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   @ViewChild('subscriptionSort') subscriptionSort?: MatSort;
   @ViewChild('ledgerSort') ledgerSort?: MatSort;
   private subscriptionDialogRef: MatDialogRef<unknown> | null = null;
+  private subscriptionDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
     this.catalogSource.paginator = this.catalogPaginator ?? null;
@@ -113,10 +129,11 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.subscriptionDialogRef?.close();
+    this.closeSubscriptionDialog();
   }
 
   async refresh() {
+    const startedAt = Date.now();
     this.loading.set(true);
     this.error.set(null);
     try {
@@ -130,10 +147,11 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       this.catalogSource.data = catalog;
       this.subscriptionSource.data = subscriptions;
       this.ledgerSource.data = ledger;
+      this.reconcileSelection();
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'Failed to load billing data.');
     } finally {
-      this.loading.set(false);
+      await this.finishLoading(startedAt);
     }
   }
 
@@ -158,16 +176,24 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       resourceLabel: '',
     });
     if (!this.subscriptionDialog) return;
-    this.subscriptionDialogRef = this.dialog.open(this.subscriptionDialog, {
-      width: '720px',
-      maxWidth: 'calc(100vw - 32px)',
-      maxHeight: 'calc(100vh - 32px)',
-      autoFocus: false,
+    this.closeSubscriptionDialog();
+    this.subscriptionDialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.subscriptionDialog,
+      'crud-dialog-panel',
+      { onEscape: () => this.closeSubscriptionDialog() },
+    );
+    this.subscriptionDialogRef = this.subscriptionDialogBinding.ref;
+    if (window.innerWidth > 900) this.subscriptionDialogRef.updateSize('720px', 'min(92vh, 760px)');
+    this.subscriptionDialogRef.afterClosed().subscribe(() => {
+      this.subscriptionDialogBinding?.stop();
+      this.subscriptionDialogBinding = null;
+      this.subscriptionDialogRef = null;
+      this.saving.set(false);
     });
-    this.subscriptionDialogRef.updateSize('720px', 'auto');
   }
 
-  async saveSubscription() {
+  async saveSubscription(keepOpen = false) {
     if (this.subscriptionForm.invalid || this.saving()) return;
     this.saving.set(true);
     try {
@@ -179,8 +205,9 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
         resourceLabel: this.emptyToNull(this.subscriptionForm.value.resourceLabel),
       });
       this.snack.success('Subscription created.');
-      this.subscriptionDialogRef?.close();
+      if (!keepOpen) this.closeSubscriptionDialog();
       await this.refresh();
+      if (keepOpen) this.resetSubscriptionForm();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to create subscription.');
     } finally {
@@ -188,19 +215,22 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     }
   }
 
+  async saveAndNewSubscription() {
+    await this.saveSubscription(true);
+  }
+
   async cancelSubscription(row: BillingSubscription) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      width: '440px',
-      data: {
-        title: 'Cancel subscription',
-        message: `Cancel ${row.BprName ?? row.BprCode ?? 'this subscription'}?`,
-        confirmText: 'Cancel subscription',
-      },
-    });
-    const confirmed = await ref.afterClosed().toPromise();
-    if (!confirmed) return;
+    if (
+      !(await this.confirm(
+        'Cancel subscription',
+        `Cancel ${row.BprName ?? row.BprCode ?? 'this subscription'}?`,
+        'Cancel subscription',
+      ))
+    )
+      return;
     try {
       await this.billing.cancelSubscription(row.BsuUUID);
+      this.selectedSubscriptionUUIDs.delete(row.BsuUUID);
       this.snack.success('Subscription canceled.');
       await this.refresh();
     } catch (error) {
@@ -220,6 +250,79 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     return String(value ?? '').replace(/_/g, ' ');
   }
 
+  closeDialog() {
+    this.closeSubscriptionDialog();
+  }
+
+  get selectedSubscriptionCount() {
+    return this.selectedSubscriptionUUIDs.size;
+  }
+
+  visibleSubscriptionRows() {
+    return this.visibleRows(this.subscriptionSource).filter((row) => row.BsuStatus !== 'CANCELED');
+  }
+
+  isSubscriptionSelected(row: BillingSubscription) {
+    return this.selectedSubscriptionUUIDs.has(row.BsuUUID);
+  }
+
+  isAllVisibleSubscriptionsSelected() {
+    const rows = this.visibleSubscriptionRows();
+    return rows.length > 0 && rows.every((row) => this.isSubscriptionSelected(row));
+  }
+
+  isSomeVisibleSubscriptionsSelected() {
+    const rows = this.visibleSubscriptionRows();
+    return (
+      rows.some((row) => this.isSubscriptionSelected(row)) &&
+      !this.isAllVisibleSubscriptionsSelected()
+    );
+  }
+
+  toggleSubscriptionSelection(row: BillingSubscription, checked: boolean) {
+    if (checked) this.selectedSubscriptionUUIDs.add(row.BsuUUID);
+    else this.selectedSubscriptionUUIDs.delete(row.BsuUUID);
+  }
+
+  toggleVisibleSubscriptions(checked: boolean) {
+    this.visibleSubscriptionRows().forEach((row) => this.toggleSubscriptionSelection(row, checked));
+  }
+
+  async cancelSelectedSubscriptions() {
+    const ids = Array.from(this.selectedSubscriptionUUIDs);
+    if (!ids.length) return;
+    if (
+      !(await this.confirm(
+        'Cancel selected subscriptions',
+        `Cancel ${ids.length} selected active subscription record(s)?`,
+        'Cancel selected',
+      ))
+    )
+      return;
+
+    this.loading.set(true);
+    const failed = new Set<string>();
+    try {
+      for (const uuid of ids) {
+        try {
+          await this.billing.cancelSubscription(uuid);
+          this.selectedSubscriptionUUIDs.delete(uuid);
+        } catch {
+          failed.add(uuid);
+        }
+      }
+      await this.refresh();
+      if (failed.size) {
+        failed.forEach((uuid) => this.selectedSubscriptionUUIDs.add(uuid));
+        this.snack.error(`${failed.size} selected subscription record(s) could not be canceled.`);
+      } else {
+        this.snack.success(`${ids.length} subscription record(s) canceled.`);
+      }
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   private sortValue(row: any, column: string) {
     return String(row?.[column] ?? row?.BprName ?? row?.BleDateCreated ?? '').toLowerCase();
   }
@@ -227,5 +330,59 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private emptyToNull(value: unknown) {
     const text = String(value ?? '').trim();
     return text ? text : null;
+  }
+
+  private async confirm(title: string, message: string, confirmText: string) {
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      width: '440px',
+      data: { title, message, confirmText, confirmLabel: confirmText },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+    return !!(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private closeSubscriptionDialog() {
+    this.subscriptionDialogBinding?.stop();
+    this.subscriptionDialogRef?.close();
+    this.subscriptionDialogBinding = null;
+    this.subscriptionDialogRef = null;
+  }
+
+  private resetSubscriptionForm() {
+    const item = this.selectedCatalogItem();
+    this.subscriptionForm.reset({
+      priceUUID: item?.BpcUUID ?? '',
+      quantity: 1,
+      resourceType: '',
+      resourceUUID: '',
+      resourceLabel: '',
+    });
+  }
+
+  private visibleRows<T>(source: MatTableDataSource<T>) {
+    const filtered = source.filter ? source.filteredData : source.data;
+    const paginator = source.paginator;
+    if (!paginator) return filtered;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return filtered.slice(start, start + paginator.pageSize);
+  }
+
+  private reconcileSelection() {
+    const valid = new Set(
+      this.subscriptionSource.data
+        .filter((row) => row.BsuStatus !== 'CANCELED')
+        .map((row) => row.BsuUUID),
+    );
+    Array.from(this.selectedSubscriptionUUIDs).forEach((uuid) => {
+      if (!valid.has(uuid)) this.selectedSubscriptionUUIDs.delete(uuid);
+    });
+  }
+
+  private async finishLoading(startedAt: number) {
+    const elapsed = Date.now() - startedAt;
+    const remaining = Math.max(0, 600 - elapsed);
+    if (remaining) await new Promise((resolve) => setTimeout(resolve, remaining));
+    this.loading.set(false);
   }
 }
