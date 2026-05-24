@@ -393,8 +393,8 @@ export class VoipPabxServerPage implements AfterViewInit {
     return host && port ? `${host}:${port}` : host || port || '-';
   }
 
-  controlSecretLabel(row: VoipPabxServerItem) {
-    return row.VpsControlSecretSet ? 'SET' : 'MISSING';
+  controlSecretTooltip(row: VoipPabxServerItem) {
+    return row.VpsControlSecretSet ? 'Control secret is configured' : 'Control secret is missing';
   }
 
   canValidateControl(row: VoipPabxServerItem) {
@@ -462,9 +462,10 @@ export class VoipPabxServerPage implements AfterViewInit {
       privateIPv6: value.privateIPv6.trim(),
       baseUrl: value.baseUrl.trim(),
       controlHost: value.controlHost.trim(),
-      controlPort: value.controlPort === null || value.controlPort === undefined
-        ? null
-        : Number(value.controlPort),
+      controlPort:
+        value.controlPort === null || value.controlPort === undefined
+          ? null
+          : Number(value.controlPort),
       controlUsername: value.controlUsername.trim(),
       controlSecret: value.controlSecret.trim(),
       controlAllowedIps: value.controlAllowedIps.trim(),

@@ -30,17 +30,27 @@
   }
 }
 
-.control-secret-pill {
+.control-state {
+  display: inline-flex;
+  align-items: center;
   width: fit-content;
-  min-height: 22px;
-  font-size: 11px;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--mat-sys-color-on-surface-variant);
 
-  &.is-set {
-    --mdc-chip-elevated-container-color: rgba(34, 122, 74, 0.12);
+  mat-icon {
+    width: 17px;
+    height: 17px;
+    font-size: 17px;
   }
 
-  &.is-missing {
-    --mdc-chip-elevated-container-color: rgba(172, 68, 61, 0.12);
+  &.is-ready {
+    color: color-mix(in srgb, var(--mat-sys-color-primary) 82%, white 8%);
+  }
+
+  &.is-pending {
+    color: var(--mat-sys-color-error);
   }
 }
 

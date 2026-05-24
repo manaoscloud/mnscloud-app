@@ -126,13 +126,15 @@
           <td mat-cell *matCellDef="let row">
             <div class="control-stack">
               <span>{{ controlTarget(row) }}</span>
-              <mat-chip
-                class="control-secret-pill"
-                [class.is-set]="row.VpsControlSecretSet"
-                [class.is-missing]="!row.VpsControlSecretSet"
+              <span
+                class="control-state"
+                [class.is-ready]="row.VpsControlSecretSet"
+                [class.is-pending]="!row.VpsControlSecretSet"
+                [matTooltip]="controlSecretTooltip(row)"
               >
-                {{ controlSecretLabel(row) }}
-              </mat-chip>
+                <mat-icon>{{ row.VpsControlSecretSet ? 'verified' : 'warning' }}</mat-icon>
+                <span>{{ row.VpsControlSecretSet ? 'Configured' : 'Pending' }}</span>
+              </span>
             </div>
           </td>
         </ng-container>
