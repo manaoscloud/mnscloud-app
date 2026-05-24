@@ -25,7 +25,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -41,30 +40,31 @@ import {
 
 export type BillingTenantSection = 'dashboard' | 'catalog' | 'subscriptions' | 'ledger';
 
+export const BILLING_WALLET_IMPORTS = [
+  CommonModule,
+  FormsModule,
+  ReactiveFormsModule,
+  MatButtonModule,
+  MatCardModule,
+  MatCheckboxModule,
+  MatDialogModule,
+  MatFormFieldModule,
+  MatIconModule,
+  MatInputModule,
+  MatMenuModule,
+  MatPaginatorModule,
+  MatProgressSpinnerModule,
+  MatSelectModule,
+  MatSortModule,
+  MatTableModule,
+  MatTabsModule,
+  MatTooltipModule,
+];
+
 @Component({
   selector: 'app-billing-wallet',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    MatTooltipModule,
-    RouterLink,
-  ],
+  imports: BILLING_WALLET_IMPORTS,
   templateUrl: './wallet.html',
   styleUrls: ['./wallet.scss'],
   animations: [fadeIn],

@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
-import { BillingSystemPage } from '../system';
+import { BILLING_SYSTEM_IMPORTS, BillingSystemPage, BillingSystemSection } from '../system';
 
 @Component({
   selector: 'app-billing-system-dashboard',
   standalone: true,
-  imports: [BillingSystemPage],
-  template: '<app-billing-system section="dashboard"></app-billing-system>',
+  imports: BILLING_SYSTEM_IMPORTS,
+  templateUrl: '../system.html',
+  styleUrls: ['../system.scss'],
 })
-export class BillingSystemDashboardPage {}
+export class BillingSystemDashboardPage extends BillingSystemPage {
+  override section: BillingSystemSection = 'dashboard';
+}

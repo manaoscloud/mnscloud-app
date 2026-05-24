@@ -83,17 +83,6 @@
       }
     </div>
 
-    <div class="section-links">
-      <a mat-stroked-button color="primary" routerLink="/billing/catalog"
-        ><mat-icon>storefront</mat-icon>Catalog</a
-      >
-      <a mat-stroked-button color="primary" routerLink="/billing/subscriptions"
-        ><mat-icon>subscriptions</mat-icon>Subscriptions</a
-      >
-      <a mat-stroked-button color="primary" routerLink="/billing/ledger"
-        ><mat-icon>receipt_long</mat-icon>Ledger</a
-      >
-    </div>
     @if (isSection('catalog')) {
       <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
         @if (loading()) {

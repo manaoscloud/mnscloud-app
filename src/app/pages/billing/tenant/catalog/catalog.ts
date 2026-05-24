@@ -1,10 +1,17 @@
 import { Component } from '@angular/core';
-import { BillingWalletPage } from '../../wallet/wallet';
+import {
+  BILLING_WALLET_IMPORTS,
+  BillingWalletPage,
+  BillingTenantSection,
+} from '../../wallet/wallet';
 
 @Component({
   selector: 'app-billing-tenant-catalog',
   standalone: true,
-  imports: [BillingWalletPage],
-  template: '<app-billing-wallet section="catalog"></app-billing-wallet>',
+  imports: BILLING_WALLET_IMPORTS,
+  templateUrl: '../../wallet/wallet.html',
+  styleUrls: ['../../wallet/wallet.scss'],
 })
-export class BillingTenantCatalogPage {}
+export class BillingTenantCatalogPage extends BillingWalletPage {
+  override section: BillingTenantSection = 'catalog';
+}

@@ -113,20 +113,6 @@
       }
     </div>
 
-    <div class="section-links">
-      <a mat-stroked-button color="primary" routerLink="/system/billing/products"
-        ><mat-icon>storefront</mat-icon>Products</a
-      >
-      <a mat-stroked-button color="primary" routerLink="/system/billing/prices"
-        ><mat-icon>sell</mat-icon>Prices</a
-      >
-      <a mat-stroked-button color="primary" routerLink="/system/billing/subscriptions"
-        ><mat-icon>subscriptions</mat-icon>Subscriptions</a
-      >
-      <a mat-stroked-button color="primary" routerLink="/system/billing/wallets"
-        ><mat-icon>receipt_long</mat-icon>Wallets</a
-      >
-    </div>
     @if (isSection('products')) {
       <div class="tab-toolbar">
         @if (selectedProductCount) {

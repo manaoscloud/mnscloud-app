@@ -25,7 +25,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -45,30 +44,31 @@ export type BillingSystemSection =
   | 'subscriptions'
   | 'wallets';
 
+export const BILLING_SYSTEM_IMPORTS = [
+  CommonModule,
+  FormsModule,
+  ReactiveFormsModule,
+  MatButtonModule,
+  MatCardModule,
+  MatCheckboxModule,
+  MatDialogModule,
+  MatFormFieldModule,
+  MatIconModule,
+  MatInputModule,
+  MatMenuModule,
+  MatPaginatorModule,
+  MatProgressSpinnerModule,
+  MatSelectModule,
+  MatSortModule,
+  MatTableModule,
+  MatTabsModule,
+  MatTooltipModule,
+];
+
 @Component({
   selector: 'app-billing-system',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    MatTooltipModule,
-    RouterLink,
-  ],
+  imports: BILLING_SYSTEM_IMPORTS,
   templateUrl: './system.html',
   styleUrls: ['./system.scss'],
   animations: [fadeIn],
