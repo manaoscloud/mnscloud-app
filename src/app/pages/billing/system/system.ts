@@ -422,7 +422,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
         reference: this.emptyToNull(value.reference),
         idempotencyKey: this.emptyToNull(value.idempotencyKey),
       });
-      this.snack.success('Manual credit added.');
+      this.snack.success('Credit added.');
       this.closeActiveDialog();
       await this.refresh();
     } catch (error) {
