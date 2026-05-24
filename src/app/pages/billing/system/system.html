@@ -10,83 +10,15 @@
           <mat-icon>refresh</mat-icon>
           Refresh
         </button>
-        <button mat-stroked-button color="primary" type="button" (click)="openCreditDialog()">
-          <mat-icon>add_card</mat-icon>
-          Add credit
-        </button>
       </div>
     </header>
-
-    <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search</mat-label>
-        <input matInput [(ngModel)]="searchInput" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Product</mat-label>
-        <mat-select
-          [(ngModel)]="priceProductFilter"
-          (openedChange)="!$event && clearProductSelectSearch()"
-        >
-          <mat-option class="select-search-option">
-            <mat-form-field
-              appearance="outline"
-              class="select-search-field"
-              subscriptSizing="dynamic"
-            >
-              <mat-icon matPrefix>search</mat-icon>
-              <input
-                matInput
-                placeholder="Search products"
-                [(ngModel)]="priceProductSearchInput"
-                (click)="$event.stopPropagation()"
-                (keydown)="$event.stopPropagation()"
-              />
-            </mat-form-field>
-          </mat-option>
-          <mat-option value="">All</mat-option>
-          @for (product of filteredProducts(priceProductSearchInput); track product.BprUUID) {
-            <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
-        <mat-select [(ngModel)]="statusFilter">
-          <mat-option [value]="null">All</mat-option>
-          <mat-option [value]="1">Active</mat-option>
-          <mat-option [value]="0">Inactive</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Subscription status</mat-label>
-        <mat-select [(ngModel)]="subscriptionStatusFilter">
-          <mat-option value="">All</mat-option>
-          <mat-option value="ACTIVE">Active</mat-option>
-          <mat-option value="SUSPENDED">Suspended</mat-option>
-          <mat-option value="CANCELED">Canceled</mat-option>
-          <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
-    <div class="filter-actions">
-      <button mat-stroked-button type="button" (click)="applyFilters()">
-        <mat-icon>filter_alt</mat-icon>
-        Apply
-      </button>
-      <button mat-stroked-button type="button" (click)="clearFilters()">
-        <mat-icon>backspace</mat-icon>
-        Clear
-      </button>
-    </div>
 
     @if (error()) {
       <div class="error-banner">{{ error() }}</div>
     }
 
-    <div class="dashboard-grid">
-      @if (isSection('dashboard')) {
+    @if (isSection('dashboard')) {
+      <div class="dashboard-grid">
         <article class="metric-card">
           <span>Active products</span>
           <strong>{{ activeProductCount }}</strong>
@@ -110,10 +42,36 @@
             Add credit
           </button>
         </article>
-      }
-    </div>
+      </div>
+    }
 
     @if (isSection('products')) {
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Search products</mat-label>
+          <input matInput [(ngModel)]="searchInput" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter">
+            <mat-option [value]="null">All</mat-option>
+            <mat-option [value]="1">Active</mat-option>
+            <mat-option [value]="0">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+
       <div class="tab-toolbar">
         @if (selectedProductCount) {
           <span class="selection-count">{{ selectedProductCount }} selected</span>
@@ -226,6 +184,60 @@
       ></mat-paginator>
     }
     @if (isSection('prices')) {
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Search prices</mat-label>
+          <input matInput [(ngModel)]="searchInput" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Product</mat-label>
+          <mat-select
+            [(ngModel)]="priceProductFilter"
+            (openedChange)="!$event && clearProductSelectSearch()"
+          >
+            <mat-option class="select-search-option">
+              <mat-form-field
+                appearance="outline"
+                class="select-search-field"
+                subscriptSizing="dynamic"
+              >
+                <mat-icon matPrefix>search</mat-icon>
+                <input
+                  matInput
+                  placeholder="Search products"
+                  [(ngModel)]="priceProductSearchInput"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                />
+              </mat-form-field>
+            </mat-option>
+            <mat-option value="">All</mat-option>
+            @for (product of filteredProducts(priceProductSearchInput); track product.BprUUID) {
+              <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter">
+            <mat-option [value]="null">All</mat-option>
+            <mat-option [value]="1">Active</mat-option>
+            <mat-option [value]="0">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+
       <div class="tab-toolbar">
         @if (selectedPriceCount) {
           <span class="selection-count">{{ selectedPriceCount }} selected</span>
@@ -344,6 +356,34 @@
       ></mat-paginator>
     }
     @if (isSection('subscriptions')) {
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Search subscriptions</mat-label>
+          <input matInput [(ngModel)]="searchInput" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Subscription status</mat-label>
+          <mat-select [(ngModel)]="subscriptionStatusFilter">
+            <mat-option value="">All</mat-option>
+            <mat-option value="ACTIVE">Active</mat-option>
+            <mat-option value="SUSPENDED">Suspended</mat-option>
+            <mat-option value="CANCELED">Canceled</mat-option>
+            <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+
       <div class="tab-toolbar">
         @if (selectedSubscriptionCount) {
           <span class="selection-count">{{ selectedSubscriptionCount }} selected</span>

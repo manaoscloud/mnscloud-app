@@ -11,60 +11,28 @@
       </button>
     </header>
 
-    <div class="wallet-grid">
-      @for (wallet of wallets(); track wallet.BwaUUID) {
-        <article class="metric-card">
-          <span>{{ wallet.BwaCurrency }}</span>
-          <strong>{{ formatMoney(wallet.BwaBalance) }}</strong>
-          <small>Reserved {{ formatMoney(wallet.BwaReservedBalance) }}</small>
-        </article>
-      } @empty {
-        <article class="metric-card muted">
-          <span>No wallet</span>
-          <strong>0.00</strong>
-          <small>Add prepaid credit before contracting paid services.</small>
-        </article>
-      }
-    </div>
-
-    <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Catalog and subscriptions</mat-label>
-        <input matInput [(ngModel)]="searchInput" placeholder="Search products or resources" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Ledger</mat-label>
-        <input matInput [(ngModel)]="ledgerSearchInput" placeholder="Search ledger" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
-        <mat-select [(ngModel)]="statusFilter">
-          <mat-option value="">All</mat-option>
-          <mat-option value="ACTIVE">Active</mat-option>
-          <mat-option value="SUSPENDED">Suspended</mat-option>
-          <mat-option value="CANCELED">Canceled</mat-option>
-          <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
-    <div class="filter-actions">
-      <button mat-stroked-button type="button" (click)="applyFilters()">
-        <mat-icon>filter_alt</mat-icon>
-        Apply
-      </button>
-      <button mat-stroked-button type="button" (click)="clearFilters()">
-        <mat-icon>backspace</mat-icon>
-        Clear
-      </button>
-    </div>
-
     @if (error()) {
       <div class="error-banner">{{ error() }}</div>
     }
 
-    <div class="dashboard-grid">
-      @if (isSection('dashboard')) {
+    @if (isSection('dashboard')) {
+      <div class="wallet-grid">
+        @for (wallet of wallets(); track wallet.BwaUUID) {
+          <article class="metric-card">
+            <span>{{ wallet.BwaCurrency }}</span>
+            <strong>{{ formatMoney(wallet.BwaBalance) }}</strong>
+            <small>Reserved {{ formatMoney(wallet.BwaReservedBalance) }}</small>
+          </article>
+        } @empty {
+          <article class="metric-card muted">
+            <span>No wallet</span>
+            <strong>0.00</strong>
+            <small>Add prepaid credit before contracting paid services.</small>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-grid">
         <article class="metric-card">
           <span>Available catalog</span>
           <strong>{{ availableCatalogCount }}</strong>
@@ -80,10 +48,28 @@
           <strong>{{ ledgerEntryCount }}</strong>
           <small>Financial movements</small>
         </article>
-      }
-    </div>
+      </div>
+    }
 
     @if (isSection('catalog')) {
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Catalog</mat-label>
+          <input matInput [(ngModel)]="searchInput" placeholder="Search products" />
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+
       <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
         @if (loading()) {
           <div class="table-loading" aria-live="polite" aria-busy="true">
@@ -147,6 +133,34 @@
       ></mat-paginator>
     }
     @if (isSection('subscriptions')) {
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Subscriptions</mat-label>
+          <input matInput [(ngModel)]="searchInput" placeholder="Search products or resources" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter">
+            <mat-option value="">All</mat-option>
+            <mat-option value="ACTIVE">Active</mat-option>
+            <mat-option value="SUSPENDED">Suspended</mat-option>
+            <mat-option value="CANCELED">Canceled</mat-option>
+            <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+
       <div class="tab-toolbar">
         @if (selectedSubscriptionCount) {
           <span class="selection-count">{{ selectedSubscriptionCount }} selected</span>
@@ -254,6 +268,24 @@
       ></mat-paginator>
     }
     @if (isSection('ledger')) {
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Ledger</mat-label>
+          <input matInput [(ngModel)]="ledgerSearchInput" placeholder="Search ledger" />
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
+      </div>
+
       <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading()">
         @if (loading()) {
           <div class="table-loading" aria-live="polite" aria-busy="true">
