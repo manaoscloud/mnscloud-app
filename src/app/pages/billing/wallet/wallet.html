@@ -56,33 +56,19 @@
     @if (isSection('catalog')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Catalog</mat-label>
-          <input matInput [(ngModel)]="searchInput" placeholder="Search products" />
+          <mat-label>{{ 'Catalog' | t }}</mat-label>
+          <input matInput [(ngModel)]="searchInput" [placeholder]="'Search products' | t" />
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
-        @if (selectedSubscriptionCount) {
-          <span class="selection-count">{{ selectedSubscriptionCount }} selected</span>
-          <button
-            class="context-action"
-            mat-stroked-button
-            color="warn"
-            type="button"
-            (click)="cancelSelectedSubscriptions()"
-            [disabled]="loading()"
-          >
-            <mat-icon>block</mat-icon>
-            Cancel selected
-          </button>
-        }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          Apply
+          {{ 'Apply' | t }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          Clear
+          {{ 'Clear' | t }}
         </button>
       </div>
 
@@ -94,7 +80,7 @@
         }
         <table mat-table [dataSource]="catalogSource" matSort #catalogSort="matSort">
           <ng-container matColumnDef="product">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | t }}</th>
             <td mat-cell *matCellDef="let row">
               <strong>{{ row.BprName }}</strong>
               <span>{{ row.BprCode }}</span>
@@ -102,31 +88,33 @@
           </ng-container>
 
           <ng-container matColumnDef="mode">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mode</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Mode' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ statusLabel(row.BpcBillingMode) }}</td>
           </ng-container>
 
           <ng-container matColumnDef="price">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit price</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Unit price' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BpcUnitPrice, row.BpcCurrency) }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="setup">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Setup</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Setup' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BpcSetupAmount, row.BpcCurrency) }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | t }}
+            </th>
             <td mat-cell *matCellDef="let row">
               <button
                 mat-icon-button
                 type="button"
-                matTooltip="Subscribe"
+                [matTooltip]="'Subscribe' | t"
                 (click)="openSubscribeDialog(row)"
               >
                 <mat-icon>add_shopping_cart</mat-icon>
@@ -137,7 +125,9 @@
           <tr mat-header-row *matHeaderRowDef="catalogColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: catalogColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="catalogColumns.length">No products available.</td>
+            <td class="mat-cell" [attr.colspan]="catalogColumns.length">
+              {{ 'No products available.' | t }}
+            </td>
           </tr>
         </table>
       </div>
@@ -151,29 +141,47 @@
     @if (isSection('subscriptions')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Subscriptions</mat-label>
-          <input matInput [(ngModel)]="searchInput" placeholder="Search products or resources" />
+          <mat-label>{{ 'Subscriptions' | t }}</mat-label>
+          <input
+            matInput
+            [(ngModel)]="searchInput"
+            [placeholder]="'Search products or resources' | t"
+          />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
+          <mat-label>{{ 'Status' | t }}</mat-label>
           <mat-select [(ngModel)]="statusFilter">
-            <mat-option value="">All</mat-option>
-            <mat-option value="ACTIVE">Active</mat-option>
-            <mat-option value="SUSPENDED">Suspended</mat-option>
-            <mat-option value="CANCELED">Canceled</mat-option>
-            <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
+            <mat-option value="">{{ 'All' | t }}</mat-option>
+            <mat-option value="ACTIVE">{{ 'Active' | t }}</mat-option>
+            <mat-option value="SUSPENDED">{{ 'Suspended' | t }}</mat-option>
+            <mat-option value="CANCELED">{{ 'Canceled' | t }}</mat-option>
+            <mat-option value="PENDING_PAYMENT">{{ 'Pending payment' | t }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
+        @if (selectedSubscriptionCount) {
+          <span class="selection-count">{{ selectedSubscriptionCount }} {{ 'selected' | t }}</span>
+          <button
+            class="context-action"
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="cancelSelectedSubscriptions()"
+            [disabled]="loading()"
+          >
+            <mat-icon>block</mat-icon>
+            {{ 'Cancel selected' | t }}
+          </button>
+        }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          Apply
+          {{ 'Apply' | t }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          Clear
+          {{ 'Clear' | t }}
         </button>
       </div>
 
@@ -203,24 +211,26 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="product">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | t }}</th>
             <td mat-cell *matCellDef="let row">
               <strong>{{ row.BprName || row.BprCode }}</strong>
               <span>{{ row.BpcName }}</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="resource">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Resource</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Resource' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.BsuResourceLabel || row.BsuResourceType || '-' }}
             </td>
           </ng-container>
           <ng-container matColumnDef="quantity">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Qty</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Qty' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BsuQuantity }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+              {{ 'Status' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="status-col">
               <span
                 class="status-pill status-chip"
@@ -228,24 +238,26 @@
                 [class.is-inactive]="row.BsuStatus !== 'ACTIVE'"
                 [class.chip-success]="row.BsuStatus === 'ACTIVE'"
                 [class.chip-skipped]="row.BsuStatus !== 'ACTIVE'"
-                >{{ statusLabel(row.BsuStatus) }}</span
+                >{{ statusLabel(row.BsuStatus) | t }}</span
               >
             </td>
           </ng-container>
           <ng-container matColumnDef="price">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Price' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BsuUnitPriceSnapshot, row.BsuCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
                 <button
                   mat-icon-button
                   type="button"
-                  matTooltip="Cancel"
+                  [matTooltip]="'Cancel' | t"
                   (click)="cancelSubscription(row)"
                   [disabled]="row.BsuStatus === 'CANCELED'"
                 >
@@ -258,7 +270,7 @@
           <tr mat-row *matRowDef="let row; columns: subscriptionColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="subscriptionColumns.length">
-              No subscriptions found.
+              {{ 'No subscriptions found.' | t }}
             </td>
           </tr>
         </table>
@@ -273,19 +285,19 @@
     @if (isSection('ledger')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Ledger</mat-label>
-          <input matInput [(ngModel)]="ledgerSearchInput" placeholder="Search ledger" />
+          <mat-label>{{ 'Ledger' | t }}</mat-label>
+          <input matInput [(ngModel)]="ledgerSearchInput" [placeholder]="'Search ledger' | t" />
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          Apply
+          {{ 'Apply' | t }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          Clear
+          {{ 'Clear' | t }}
         </button>
       </div>
 
@@ -297,37 +309,39 @@
         }
         <table mat-table [dataSource]="ledgerSource" matSort #ledgerSort="matSort">
           <ng-container matColumnDef="date">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Date' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BleDateCreated | date: 'short' }}</td>
           </ng-container>
           <ng-container matColumnDef="type">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-            <td mat-cell *matCellDef="let row">{{ statusLabel(row.BleType) }}</td>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | t }}</th>
+            <td mat-cell *matCellDef="let row">{{ statusLabel(row.BleType) | t }}</td>
           </ng-container>
           <ng-container matColumnDef="direction">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Direction</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Direction' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BleDirection }}</td>
           </ng-container>
           <ng-container matColumnDef="amount">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Amount' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BleAmount, row.BleCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="balance">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Balance</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Balance' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BleBalanceAfter, row.BleCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="reason">
-            <th mat-header-cell *matHeaderCellDef>Reason</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'Reason' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BleReason || row.BleReference || '-' }}</td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="ledgerColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: ledgerColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="ledgerColumns.length">No ledger entries found.</td>
+            <td class="mat-cell" [attr.colspan]="ledgerColumns.length">
+              {{ 'No ledger entries found.' | t }}
+            </td>
           </tr>
         </table>
       </div>
@@ -355,7 +369,7 @@
           <div class="tab-content">
             <form class="form-grid" [formGroup]="subscriptionForm" (ngSubmit)="saveSubscription()">
               <mat-form-field appearance="outline">
-                <mat-label>Quantity</mat-label>
+                <mat-label>{{ 'Quantity' | t }}</mat-label>
                 <input
                   matInput
                   type="number"
@@ -365,15 +379,15 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Resource type</mat-label>
+                <mat-label>{{ 'Resource type' | t }}</mat-label>
                 <input matInput formControlName="resourceType" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Resource UUID</mat-label>
+                <mat-label>{{ 'Resource UUID' | t }}</mat-label>
                 <input matInput formControlName="resourceUUID" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Resource label</mat-label>
+                <mat-label>{{ 'Resource label' | t }}</mat-label>
                 <input matInput formControlName="resourceLabel" />
               </mat-form-field>
             </form>
@@ -405,7 +419,7 @@
           [disabled]="saving()"
           type="button"
           aria-label="More save actions"
-          matTooltip="More save actions"
+          [matTooltip]="'More save actions' | t"
         >
           <mat-icon>expand_more</mat-icon>
         </button>

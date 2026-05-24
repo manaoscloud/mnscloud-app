@@ -8,24 +8,24 @@
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refresh()">
           <mat-icon>refresh</mat-icon>
-          Refresh
+          {{ 'Refresh' | t }}
         </button>
         @if (isSection('products')) {
           <button mat-stroked-button color="primary" type="button" (click)="openProductCreate()">
             <mat-icon>add</mat-icon>
-            New
+            {{ 'New' | t }}
           </button>
         }
         @if (isSection('prices')) {
           <button mat-stroked-button color="primary" type="button" (click)="openPriceCreate()">
             <mat-icon>add</mat-icon>
-            New
+            {{ 'New' | t }}
           </button>
         }
         @if (isSection('wallets')) {
           <button mat-stroked-button color="primary" type="button" (click)="openCreditDialog()">
             <mat-icon>add_card</mat-icon>
-            Add credit
+            {{ 'Add credit' | t }}
           </button>
         }
       </div>
@@ -66,22 +66,22 @@
     @if (isSection('products')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Search products</mat-label>
+          <mat-label>{{ 'Search products' | t }}</mat-label>
           <input matInput [(ngModel)]="searchInput" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
+          <mat-label>{{ 'Status' | t }}</mat-label>
           <mat-select [(ngModel)]="statusFilter">
-            <mat-option [value]="null">All</mat-option>
-            <mat-option [value]="1">Active</mat-option>
-            <mat-option [value]="0">Inactive</mat-option>
+            <mat-option [value]="null">{{ 'All' | t }}</mat-option>
+            <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+            <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
         @if (selectedProductCount) {
-          <span class="selection-count">{{ selectedProductCount }} selected</span>
+          <span class="selection-count">{{ selectedProductCount }} {{ 'selected' | t }}</span>
           <button
             class="context-action"
             mat-stroked-button
@@ -91,16 +91,16 @@
             [disabled]="loading()"
           >
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | t }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          Apply
+          {{ 'Apply' | t }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          Clear
+          {{ 'Clear' | t }}
         </button>
       </div>
 
@@ -129,27 +129,29 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="code">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Code' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprCode }}</td>
           </ng-container>
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprName }}</td>
           </ng-container>
           <ng-container matColumnDef="module">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Module</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Module' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprModule }}</td>
           </ng-container>
           <ng-container matColumnDef="scope">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Scope' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprBillingScope }}</td>
           </ng-container>
           <ng-container matColumnDef="prices">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Prices</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Prices' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.ActivePrices || 0 }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+              {{ 'Status' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="status-col">
               <span
                 class="status-pill status-chip"
@@ -157,18 +159,20 @@
                 [class.is-inactive]="row.BprStatus !== 1"
                 [class.chip-success]="row.BprStatus === 1"
                 [class.chip-skipped]="row.BprStatus !== 1"
-                >{{ row.BprStatus === 1 ? 'Active' : 'Inactive' }}</span
+                >{{ (row.BprStatus === 1 ? 'Active' : 'Inactive') | t }}</span
               >
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
                 <button
                   mat-icon-button
                   type="button"
-                  matTooltip="Edit"
+                  [matTooltip]="'Edit' | t"
                   (click)="openProductEdit(row)"
                 >
                   <mat-icon>edit</mat-icon>
@@ -176,7 +180,7 @@
                 <button
                   mat-icon-button
                   type="button"
-                  matTooltip="Delete"
+                  [matTooltip]="'Delete' | t"
                   (click)="deleteProduct(row)"
                 >
                   <mat-icon>delete</mat-icon>
@@ -187,7 +191,9 @@
           <tr mat-header-row *matHeaderRowDef="productColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: productColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="productColumns.length">No products found.</td>
+            <td class="mat-cell" [attr.colspan]="productColumns.length">
+              {{ 'No products found.' | t }}
+            </td>
           </tr>
         </table>
       </div>
@@ -201,11 +207,11 @@
     @if (isSection('prices')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Search prices</mat-label>
+          <mat-label>{{ 'Search prices' | t }}</mat-label>
           <input matInput [(ngModel)]="searchInput" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Product</mat-label>
+          <mat-label>{{ 'Product' | t }}</mat-label>
           <mat-select
             [(ngModel)]="priceProductFilter"
             (openedChange)="!$event && clearProductSelectSearch()"
@@ -219,32 +225,32 @@
                 <mat-icon matPrefix>search</mat-icon>
                 <input
                   matInput
-                  placeholder="Search products"
+                  [placeholder]="'Search products' | t"
                   [(ngModel)]="priceProductSearchInput"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                 />
               </mat-form-field>
             </mat-option>
-            <mat-option value="">All</mat-option>
+            <mat-option value="">{{ 'All' | t }}</mat-option>
             @for (product of filteredProducts(priceProductSearchInput); track product.BprUUID) {
               <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
+          <mat-label>{{ 'Status' | t }}</mat-label>
           <mat-select [(ngModel)]="statusFilter">
-            <mat-option [value]="null">All</mat-option>
-            <mat-option [value]="1">Active</mat-option>
-            <mat-option [value]="0">Inactive</mat-option>
+            <mat-option [value]="null">{{ 'All' | t }}</mat-option>
+            <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+            <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
         @if (selectedPriceCount) {
-          <span class="selection-count">{{ selectedPriceCount }} selected</span>
+          <span class="selection-count">{{ selectedPriceCount }} {{ 'selected' | t }}</span>
           <button
             class="context-action"
             mat-stroked-button
@@ -254,16 +260,16 @@
             [disabled]="loading()"
           >
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | t }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          Apply
+          {{ 'Apply' | t }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          Clear
+          {{ 'Clear' | t }}
         </button>
       </div>
 
@@ -292,33 +298,35 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="product">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.BprName || productName(row.BillingProductBprUUID) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BpcName }}</td>
           </ng-container>
           <ng-container matColumnDef="mode">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mode</th>
-            <td mat-cell *matCellDef="let row">{{ label(row.BpcBillingMode) }}</td>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Mode' | t }}</th>
+            <td mat-cell *matCellDef="let row">{{ label(row.BpcBillingMode) | t }}</td>
           </ng-container>
           <ng-container matColumnDef="unitPrice">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit price</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Unit price' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BpcUnitPrice, row.BpcCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="setup">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Setup</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Setup' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BpcSetupAmount, row.BpcCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+              {{ 'Status' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="status-col">
               <span
                 class="status-pill status-chip"
@@ -326,18 +334,20 @@
                 [class.is-inactive]="row.BpcStatus !== 1"
                 [class.chip-success]="row.BpcStatus === 1"
                 [class.chip-skipped]="row.BpcStatus !== 1"
-                >{{ row.BpcStatus === 1 ? 'Active' : 'Inactive' }}</span
+                >{{ (row.BpcStatus === 1 ? 'Active' : 'Inactive') | t }}</span
               >
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
                 <button
                   mat-icon-button
                   type="button"
-                  matTooltip="Edit"
+                  [matTooltip]="'Edit' | t"
                   (click)="openPriceEdit(row)"
                 >
                   <mat-icon>edit</mat-icon>
@@ -345,7 +355,7 @@
                 <button
                   mat-icon-button
                   type="button"
-                  matTooltip="Delete"
+                  [matTooltip]="'Delete' | t"
                   (click)="deletePrice(row)"
                 >
                   <mat-icon>delete</mat-icon>
@@ -356,7 +366,9 @@
           <tr mat-header-row *matHeaderRowDef="priceColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: priceColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="priceColumns.length">No prices found.</td>
+            <td class="mat-cell" [attr.colspan]="priceColumns.length">
+              {{ 'No prices found.' | t }}
+            </td>
           </tr>
         </table>
       </div>
@@ -370,24 +382,24 @@
     @if (isSection('subscriptions')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Search subscriptions</mat-label>
+          <mat-label>{{ 'Search subscriptions' | t }}</mat-label>
           <input matInput [(ngModel)]="searchInput" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Subscription status</mat-label>
+          <mat-label>{{ 'Subscription status' | t }}</mat-label>
           <mat-select [(ngModel)]="subscriptionStatusFilter">
-            <mat-option value="">All</mat-option>
-            <mat-option value="ACTIVE">Active</mat-option>
-            <mat-option value="SUSPENDED">Suspended</mat-option>
-            <mat-option value="CANCELED">Canceled</mat-option>
-            <mat-option value="PENDING_PAYMENT">Pending payment</mat-option>
+            <mat-option value="">{{ 'All' | t }}</mat-option>
+            <mat-option value="ACTIVE">{{ 'Active' | t }}</mat-option>
+            <mat-option value="SUSPENDED">{{ 'Suspended' | t }}</mat-option>
+            <mat-option value="CANCELED">{{ 'Canceled' | t }}</mat-option>
+            <mat-option value="PENDING_PAYMENT">{{ 'Pending payment' | t }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
         @if (selectedSubscriptionCount) {
-          <span class="selection-count">{{ selectedSubscriptionCount }} selected</span>
+          <span class="selection-count">{{ selectedSubscriptionCount }} {{ 'selected' | t }}</span>
           <button
             class="context-action"
             mat-stroked-button
@@ -397,16 +409,16 @@
             [disabled]="loading()"
           >
             <mat-icon>block</mat-icon>
-            Cancel selected
+            {{ 'Cancel selected' | t }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          Apply
+          {{ 'Apply' | t }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          Clear
+          {{ 'Clear' | t }}
         </button>
       </div>
 
@@ -436,27 +448,29 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="tenant">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Tenant</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Tenant' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.EnvironmentName || row.EnvironmentUUID }}
             </td>
           </ng-container>
           <ng-container matColumnDef="product">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprName || row.BprCode }}</td>
           </ng-container>
           <ng-container matColumnDef="resource">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Resource</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Resource' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.BsuResourceLabel || row.BsuResourceType || '-' }}
             </td>
           </ng-container>
           <ng-container matColumnDef="quantity">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Qty</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Qty' | t }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BsuQuantity }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+              {{ 'Status' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="status-col">
               <span
                 class="status-pill status-chip"
@@ -464,24 +478,26 @@
                 [class.is-inactive]="row.BsuStatus !== 'ACTIVE'"
                 [class.chip-success]="row.BsuStatus === 'ACTIVE'"
                 [class.chip-skipped]="row.BsuStatus !== 'ACTIVE'"
-                >{{ label(row.BsuStatus) }}</span
+                >{{ label(row.BsuStatus) | t }}</span
               >
             </td>
           </ng-container>
           <ng-container matColumnDef="price">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Price' | t }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BsuUnitPriceSnapshot, row.BsuCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | t }}
+            </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
                 <button
                   mat-icon-button
                   type="button"
-                  matTooltip="Cancel"
+                  [matTooltip]="'Cancel' | t"
                   (click)="cancelSubscription(row)"
                   [disabled]="row.BsuStatus === 'CANCELED'"
                 >
@@ -494,7 +510,7 @@
           <tr mat-row *matRowDef="let row; columns: subscriptionColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="subscriptionColumns.length">
-              No subscriptions found.
+              {{ 'No subscriptions found.' | t }}
             </td>
           </tr>
         </table>
@@ -538,33 +554,33 @@
           <div class="tab-content">
             <form class="form-grid" [formGroup]="productForm">
               <mat-form-field appearance="outline">
-                <mat-label>Code</mat-label>
+                <mat-label>{{ 'Code' | t }}</mat-label>
                 <input matInput formControlName="code" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | t }}</mat-label>
                 <input matInput formControlName="name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Module</mat-label>
+                <mat-label>{{ 'Module' | t }}</mat-label>
                 <input matInput formControlName="module" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Scope</mat-label>
+                <mat-label>{{ 'Scope' | t }}</mat-label>
                 <mat-select formControlName="billingScope">
-                  <mat-option value="SERVICE">Service</mat-option>
-                  <mat-option value="MODULE">Module</mat-option>
+                  <mat-option value="SERVICE">{{ 'Service' | t }}</mat-option>
+                  <mat-option value="MODULE">{{ 'Module' | t }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Description</mat-label>
+                <mat-label>{{ 'Description' | t }}</mat-label>
                 <input matInput formControlName="description" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | t }}</mat-label>
                 <mat-select formControlName="status">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </form>
@@ -597,7 +613,7 @@
             [disabled]="saving()"
             type="button"
             aria-label="More save actions"
-            matTooltip="More save actions"
+            [matTooltip]="'More save actions' | t"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -635,7 +651,7 @@
           <div class="tab-content">
             <form class="form-grid" [formGroup]="priceForm">
               <mat-form-field appearance="outline">
-                <mat-label>Product</mat-label>
+                <mat-label>{{ 'Product' | t }}</mat-label>
                 <mat-select
                   formControlName="productUUID"
                   (openedChange)="!$event && clearProductSelectSearch()"
@@ -649,7 +665,7 @@
                       <mat-icon matPrefix>search</mat-icon>
                       <input
                         matInput
-                        placeholder="Search products"
+                        [placeholder]="'Search products' | t"
                         [(ngModel)]="priceFormProductSearchInput"
                         [ngModelOptions]="{ standalone: true }"
                         (click)="$event.stopPropagation()"
@@ -666,57 +682,57 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | t }}</mat-label>
                 <input matInput formControlName="name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Currency</mat-label>
+                <mat-label>{{ 'Currency' | t }}</mat-label>
                 <input matInput maxlength="3" formControlName="currency" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Billing mode</mat-label>
+                <mat-label>{{ 'Billing mode' | t }}</mat-label>
                 <mat-select formControlName="billingMode">
-                  <mat-option value="ONE_TIME">One time</mat-option>
-                  <mat-option value="MONTHLY">Monthly</mat-option>
-                  <mat-option value="HOURLY">Hourly</mat-option>
-                  <mat-option value="MINUTELY">Minutely</mat-option>
-                  <mat-option value="SECONDLY">Secondly</mat-option>
-                  <mat-option value="USAGE_UNIT">Usage unit</mat-option>
-                  <mat-option value="GB_HOUR">GB hour</mat-option>
-                  <mat-option value="GB_MONTH">GB month</mat-option>
-                  <mat-option value="MODULE_MONTHLY">Module monthly</mat-option>
-                  <mat-option value="TIERED_USAGE">Tiered usage</mat-option>
+                  <mat-option value="ONE_TIME">{{ 'One time' | t }}</mat-option>
+                  <mat-option value="MONTHLY">{{ 'Monthly' | t }}</mat-option>
+                  <mat-option value="HOURLY">{{ 'Hourly' | t }}</mat-option>
+                  <mat-option value="MINUTELY">{{ 'Minutely' | t }}</mat-option>
+                  <mat-option value="SECONDLY">{{ 'Secondly' | t }}</mat-option>
+                  <mat-option value="USAGE_UNIT">{{ 'Usage unit' | t }}</mat-option>
+                  <mat-option value="GB_HOUR">{{ 'GB hour' | t }}</mat-option>
+                  <mat-option value="GB_MONTH">{{ 'GB month' | t }}</mat-option>
+                  <mat-option value="MODULE_MONTHLY">{{ 'Module monthly' | t }}</mat-option>
+                  <mat-option value="TIERED_USAGE">{{ 'Tiered usage' | t }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Unit code</mat-label>
+                <mat-label>{{ 'Unit code' | t }}</mat-label>
                 <input matInput formControlName="unitCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Unit price</mat-label>
+                <mat-label>{{ 'Unit price' | t }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="unitPrice" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Setup amount</mat-label>
+                <mat-label>{{ 'Setup amount' | t }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="setupAmount" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Included quantity</mat-label>
+                <mat-label>{{ 'Included quantity' | t }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="includedQuantity" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Minimum commitment</mat-label>
+                <mat-label>{{ 'Minimum commitment' | t }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="minimumCommitment" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | t }}</mat-label>
                 <mat-select formControlName="status">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Config JSON</mat-label>
+                <mat-label>{{ 'Config JSON' | t }}</mat-label>
                 <textarea matInput rows="4" formControlName="configJson"></textarea>
               </mat-form-field>
             </form>
@@ -749,7 +765,7 @@
             [disabled]="saving()"
             type="button"
             aria-label="More save actions"
-            matTooltip="More save actions"
+            [matTooltip]="'More save actions' | t"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -781,27 +797,27 @@
     <mat-dialog-content class="dialog-content">
       <form class="form-grid" [formGroup]="creditForm">
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Tenant UUID</mat-label>
+          <mat-label>{{ 'Tenant UUID' | t }}</mat-label>
           <input matInput formControlName="environmentUUID" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Amount</mat-label>
+          <mat-label>{{ 'Amount' | t }}</mat-label>
           <input matInput type="number" step="0.000001" formControlName="amount" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Currency</mat-label>
+          <mat-label>{{ 'Currency' | t }}</mat-label>
           <input matInput maxlength="3" formControlName="currency" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Reason</mat-label>
+          <mat-label>{{ 'Reason' | t }}</mat-label>
           <input matInput formControlName="reason" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Reference</mat-label>
+          <mat-label>{{ 'Reference' | t }}</mat-label>
           <input matInput formControlName="reference" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Idempotency key</mat-label>
+          <mat-label>{{ 'Idempotency key' | t }}</mat-label>
           <input matInput formControlName="idempotencyKey" />
         </mat-form-field>
       </form>
