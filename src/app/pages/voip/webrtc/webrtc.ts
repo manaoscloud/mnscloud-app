@@ -9,6 +9,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -171,6 +172,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   standalone: true,
   imports: [
     CommonModule,
+    ClipboardModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -207,6 +209,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   readonly saving = signal(false);
   readonly editing = signal<WebRtcRecord | null>(null);
   readonly selected = new Set<string>();
+  readonly generatedInstall = signal<Record<string, string> | null>(null);
   searchInput = '';
   search = '';
   readonly dataSource = new MatTableDataSource<WebRtcRecord>([]);
@@ -217,6 +220,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
   @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
+  @ViewChild('installCommandDialog') installCommandDialog?: TemplateRef<unknown>;
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
   private routeSub: Subscription | null = null;
@@ -501,6 +505,60 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     await this.api.provisionDomain(this.uuid(row));
     this.snack.success('WebRTC domain provisioning queued on edge agent.');
     await this.load();
+  }
+  async generateInstallCommand(row: WebRtcRecord) {
+    if (this.config().resource !== 'servers') return;
+    const ok = await firstValueFrom(
+      this.dialog
+        .open(SlowConfirmDialogComponent, {
+          panelClass: 'slow-confirm-dialog',
+          disableClose: true,
+          data: {
+            title: 'Generate Install Command',
+            message: `Generate a new install command for ${this.name(row)}? The previous WebRTC runtime token will be replaced.`,
+            confirmText: 'Generate command',
+          },
+        })
+        .afterClosed(),
+    );
+    if (!ok) return;
+    try {
+      const response = await this.api.generateInstallCommand(this.uuid(row));
+      this.generatedInstall.set(response?.data ?? null);
+      this.openInstallCommandDialog();
+      this.snack.success('WebRTC install command generated.');
+    } catch (e: any) {
+      this.snack.error(e?.error?.error || e?.message || 'Failed to generate install command.');
+    }
+  }
+  openInstallCommandDialog() {
+    if (!this.installCommandDialog) return;
+    this.dialog.open(this.installCommandDialog, {
+      width: 'min(860px, calc(100vw - 32px))',
+      maxWidth: '860px',
+      disableClose: false,
+    });
+  }
+  installCommand() {
+    const data = this.generatedInstall();
+    if (!data) return '';
+    const apiBase = window.location.origin;
+    const publicDomain = data['publicDomain'] || 'webrtc.example.com';
+    return [
+      'sudo install -d -m 0755 /opt/mnscloud',
+      'cd /opt/mnscloud',
+      '[ -d mnscloud-kamailio-webrtc/.git ] && sudo git -C mnscloud-kamailio-webrtc pull || gh repo clone manaoscloud/mnscloud-kamailio-webrtc',
+      `sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/install-kamailio-webrtc.sh --api-base ${this.shellQuote(apiBase)} --public-domain ${this.shellQuote(publicDomain)} --node-uuid ${this.shellQuote(data['nodeUUID'] || '')} --runtime-token ${this.shellQuote(data['runtimeToken'] || '')}`,
+      'sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/validate-kamailio-webrtc.sh',
+    ].join(' && ');
+  }
+  notifyCommandCopied(copied: boolean) {
+    copied
+      ? this.snack.success('Install command copied.')
+      : this.snack.error('Failed to copy install command.');
+  }
+  private shellQuote(value: string) {
+    return `'${value.replace(/'/g, `'\\''`)}'`;
   }
   isSelected(row: WebRtcRecord) {
     return this.selected.has(this.uuid(row));

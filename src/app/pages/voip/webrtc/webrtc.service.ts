@@ -53,4 +53,8 @@ export class VoipWebRtcService {
   provisionDomain(uuid: string) {
     return this.api.post<any>(`${this.basePath}/domains/${uuid}/provision`, {});
   }
+
+  generateInstallCommand(uuid: string) {
+    return this.api.post<any>(`${this.systemBasePath}/servers/${uuid}/install-command`, {});
+  }
 }
