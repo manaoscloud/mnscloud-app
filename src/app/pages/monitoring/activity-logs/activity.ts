@@ -112,7 +112,17 @@ export class MonitoringActivityLogsPage implements OnInit {
     'failed',
     'skipped',
   ];
-  readonly categoryOptions = ['', 'pabx', 'voip', 'api', 'worker', 'system', 'security'];
+  readonly categoryOptions = [
+    '',
+    'agent',
+    'api',
+    'crud',
+    'pabx',
+    'security',
+    'system',
+    'voip',
+    'worker',
+  ];
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
@@ -129,6 +139,16 @@ export class MonitoringActivityLogsPage implements OnInit {
   }
 
   refreshList() {
+    this.pageIndex.set(0);
+    this.sortActive.set('');
+    this.sortDirection.set('');
+    if (this.paginator) {
+      this.paginator.firstPage();
+    }
+    if (this.sort) {
+      this.sort.active = '';
+      this.sort.direction = '';
+    }
     void this.load();
   }
 
