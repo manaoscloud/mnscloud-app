@@ -684,7 +684,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   }
 
   private async loadPabxOptions() {
-    const response = await this.pabxApi.list(false, { limit: this.listLimit });
+    const response = await this.pabxApi.list({ limit: this.listLimit });
     const accounts: VoipPabxAccount[] = response?.data?.items ?? [];
     this.pabxMap.clear();
     accounts.forEach((item) => this.pabxMap.set(item.VpaUUID, item));

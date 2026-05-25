@@ -660,7 +660,7 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
   }
   private async loadLookups() {
     const [accounts, trunks] = await Promise.all([
-      this.accountApi.list(false, { limit: this.listLimit }),
+      this.accountApi.list({ limit: this.listLimit }),
       this.api.list('trunks', { limit: this.listLimit }),
     ]);
     this.accountOptions.set(accounts?.data?.items ?? []);

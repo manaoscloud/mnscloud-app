@@ -44,41 +44,36 @@ export type VoipPabxAccount = {
 export class VoipPabxService {
   private readonly api = inject(ApiService);
 
-  private basePath(isMaster: boolean) {
-    return isMaster ? 'system/voip/pabx/accounts' : 'voip/pabx/accounts';
-  }
+  private readonly basePath = 'voip/pabx/accounts';
 
-  list(isMaster = false, params: { search?: string; limit?: number; offset?: number } = {}) {
+  list(params: { search?: string; limit?: number; offset?: number } = {}) {
     const query = new URLSearchParams();
     if (params.search) query.set('search', params.search);
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();
-    return this.api.get<any>(`${this.basePath(isMaster)}${suffix ? `?${suffix}` : ''}`);
+    return this.api.get<any>(`${this.basePath}${suffix ? `?${suffix}` : ''}`);
   }
 
-  create(
-    payload: {
-      name: string;
-      serverUUID?: string;
-      domainUUID?: string;
-      customerUUID?: string;
-      dialPlanUUID?: string;
-      blacklistUUID?: string;
-      recordingStorageMode?: 'default' | 'filesystem' | 'storage';
-      storageAccountUUID?: string;
-      mediaStorageMode?: 'default' | 'filesystem' | 'storage';
-      mediaStorageAccountUUID?: string;
-      mediaDeliveryMode?: 'default' | 'online' | 'offline';
-      timezone?: string;
-      defaultAudioCodecs?: string;
-      defaultVideoCodecs?: string;
-      isActive?: boolean;
-      isDefault?: boolean;
-    },
-    isMaster = false,
-  ) {
-    return this.api.post<any>(this.basePath(isMaster), payload);
+  create(payload: {
+    name: string;
+    serverUUID?: string;
+    domainUUID?: string;
+    customerUUID?: string;
+    dialPlanUUID?: string;
+    blacklistUUID?: string;
+    recordingStorageMode?: 'default' | 'filesystem' | 'storage';
+    storageAccountUUID?: string;
+    mediaStorageMode?: 'default' | 'filesystem' | 'storage';
+    mediaStorageAccountUUID?: string;
+    mediaDeliveryMode?: 'default' | 'online' | 'offline';
+    timezone?: string;
+    defaultAudioCodecs?: string;
+    defaultVideoCodecs?: string;
+    isActive?: boolean;
+    isDefault?: boolean;
+  }) {
+    return this.api.post<any>(this.basePath, payload);
   }
 
   update(
@@ -101,20 +96,19 @@ export class VoipPabxService {
       isActive?: boolean;
       isDefault?: boolean;
     },
-    isMaster = false,
   ) {
-    return this.api.put<any>(`${this.basePath(isMaster)}/${uuid}`, payload);
+    return this.api.put<any>(`${this.basePath}/${uuid}`, payload);
   }
 
-  remove(uuid: string, isMaster = false) {
-    return this.api.delete<any>(`${this.basePath(isMaster)}/${uuid}`);
+  remove(uuid: string) {
+    return this.api.delete<any>(`${this.basePath}/${uuid}`);
   }
 
-  removeMany(ids: string[], isMaster = false) {
-    return this.api.delete<any>(`${this.basePath(isMaster)}/bulk`, { ids });
+  removeMany(ids: string[]) {
+    return this.api.delete<any>(`${this.basePath}/bulk`, { ids });
   }
 
-  resolveDefault(isMaster = false) {
-    return this.api.get<any>(`${this.basePath(isMaster)}/default`);
+  resolveDefault() {
+    return this.api.get<any>(`${this.basePath}/default`);
   }
 }

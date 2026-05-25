@@ -1105,12 +1105,6 @@ export const routes: Routes = [
                 },
               })) as any),
               {
-                path: 'pabx',
-                loadComponent: () => import('./pages/voip/pabx/pabx').then((m) => m.VoipPabxPage),
-                title: 'System PABX | mnscloud',
-                data: { scope: 'master' },
-              },
-              {
                 path: 'pabx/server',
                 loadComponent: () =>
                   import('./pages/voip/pabx/server/server').then((m) => m.VoipPabxServerPage),

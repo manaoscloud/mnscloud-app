@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -124,17 +123,10 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   private readonly customerApi = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
 
-  readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
   readonly pageTitle = computed(() => 'PABX');
-  readonly pageSubtitle = computed(() =>
-    this.isMaster()
-      ? 'Configure default PABX accounts for all tenants.'
-      : 'Register PABX accounts and default codecs.',
-  );
+  readonly pageSubtitle = computed(() => 'Register tenant PABX accounts and default codecs.');
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -277,7 +269,6 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.configureFormRulesByScope();
     this.dataSource.paginator = this.paginator ?? null;
     this.dataSource.sort = this.sort ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
@@ -350,7 +341,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
       await this.loadDialPlans();
       await this.loadBlacklists();
       await this.loadStorageAccounts();
-      const res = await this.api.list(this.isMaster(), {
+      const res = await this.api.list({
         search: this.search,
         limit: this.listLimit,
       });
@@ -421,11 +412,11 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
       name: value.name,
       defaultAudioCodecs: this.formatCodecs(value.defaultAudioCodecs),
       defaultVideoCodecs: this.formatCodecs(value.defaultVideoCodecs),
-      serverUUID: this.isMaster() ? undefined : value.serverUUID,
-      domainUUID: this.isMaster() ? undefined : value.domainUUID,
-      customerUUID: this.isMaster() ? undefined : value.customerUUID,
-      dialPlanUUID: this.isMaster() ? undefined : value.dialPlanUUID,
-      blacklistUUID: this.isMaster() ? undefined : value.blacklistUUID || '',
+      serverUUID: value.serverUUID,
+      domainUUID: value.domainUUID,
+      customerUUID: value.customerUUID,
+      dialPlanUUID: value.dialPlanUUID,
+      blacklistUUID: value.blacklistUUID || '',
       recordingStorageMode: value.recordingStorageMode,
       storageAccountUUID:
         value.recordingStorageMode === 'storage' ? value.storageAccountUUID || '' : '',
@@ -442,10 +433,10 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        await this.api.update(editing.VpaUUID, payload, this.isMaster());
+        await this.api.update(editing.VpaUUID, payload);
         this.snack.success('PABX account updated successfully.');
       } else {
-        await this.api.create(payload, this.isMaster());
+        await this.api.create(payload);
         this.snack.success('PABX account created successfully.');
       }
       await this.loadAccounts();
@@ -480,7 +471,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     try {
-      await this.api.remove(item.VpaUUID, this.isMaster());
+      await this.api.remove(item.VpaUUID);
       this.snack.success('PABX account deleted successfully.');
       this.selectedAccountUUIDs.delete(item.VpaUUID);
       await this.loadAccounts();
@@ -546,7 +537,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
 
     this.deletingSelected.set(true);
     try {
-      const response = await this.api.removeMany(ids, this.isMaster());
+      const response = await this.api.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.VpaUUID),
@@ -672,10 +663,10 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
       name: '',
       defaultAudioCodecs: ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'],
       defaultVideoCodecs: ['H264'],
-      serverUUID: this.isMaster() ? '' : fallbackServerUUID,
-      domainUUID: this.isMaster() ? '' : fallbackDomainUUID,
-      customerUUID: this.isMaster() ? '' : fallbackCustomerUUID,
-      dialPlanUUID: this.isMaster() ? '' : fallbackDialPlanUUID,
+      serverUUID: fallbackServerUUID,
+      domainUUID: fallbackDomainUUID,
+      customerUUID: fallbackCustomerUUID,
+      dialPlanUUID: fallbackDialPlanUUID,
       blacklistUUID: '',
       recordingStorageMode: 'default',
       storageAccountUUID: '',
@@ -690,7 +681,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     this.mediaStorageMode.set('default');
     this.selectedStorageAccountUUID.set('');
     this.selectedMediaStorageAccountUUID.set('');
-    this.selectedServerUUID.set(this.isMaster() ? '' : fallbackServerUUID);
+    this.selectedServerUUID.set(fallbackServerUUID);
     this.editing.set(null);
   }
 
@@ -709,13 +700,6 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   private async loadDomains() {
-    if (this.isMaster()) {
-      this.domainMap = new Map<string, VoipDomainItem>();
-      this.domainOptions = [];
-      this.form.patchValue({ domainUUID: '' });
-      return;
-    }
-
     const response = await this.domainApi.list({ limit: this.listLimit });
     const domains = (response?.data?.items ?? []) as VoipDomainItem[];
     this.domainMap = new Map(domains.map((domain) => [domain.VdmUUID, domain]));
@@ -731,12 +715,6 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   private async loadServers() {
-    if (this.isMaster()) {
-      this.serverMap = new Map<string, VoipPabxServerItem>();
-      this.serverOptions = [];
-      this.form.patchValue({ serverUUID: '' });
-      return;
-    }
     const response = await this.serverApi.list(false, { limit: this.listLimit });
     const servers = (response?.data?.items ?? []) as VoipPabxServerItem[];
     this.serverMap = new Map(servers.map((server) => [server.VpsUUID, server]));
@@ -754,13 +732,6 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   private async loadCustomers() {
-    if (this.isMaster()) {
-      this.customerMap = new Map<string, CustomerItem>();
-      this.customerOptions = [];
-      this.form.patchValue({ customerUUID: '' });
-      return;
-    }
-
     const response = await this.customerApi.get<any>('erp/customers');
     const customers = (response?.data?.items ?? []) as CustomerItem[];
     this.customerMap = new Map(customers.map((customer) => [customer.CustomerUUID, customer]));
@@ -776,13 +747,6 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   private async loadBlacklists() {
-    if (this.isMaster()) {
-      this.blacklistMap = new Map<string, BlacklistItem>();
-      this.blacklistOptions = [];
-      this.form.patchValue({ blacklistUUID: '' });
-      return;
-    }
-
     const response = await this.customerApi.get<any>(
       `voip/pabx/blacklists?limit=${this.listLimit}`,
     );
@@ -800,10 +764,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   private async loadStorageAccounts() {
-    const endpoint = this.isMaster()
-      ? 'system/hosting/storage/accounts'
-      : 'hosting/storage/accounts';
-    const response = await this.customerApi.get<any>(endpoint);
+    const response = await this.customerApi.get<any>('hosting/storage/accounts');
     const accounts = (Array.isArray(response?.data) ? response.data : []) as StorageAccountItem[];
     this.storageAccountMap = new Map(accounts.map((item) => [item.HsaUUID, item]));
     this.storageAccountOptions = accounts
@@ -821,13 +782,6 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   private async loadDialPlans() {
-    if (this.isMaster()) {
-      this.dialPlanMap = new Map<string, DialPlanItem>();
-      this.dialPlanOptions = [];
-      this.form.patchValue({ dialPlanUUID: '' });
-      return;
-    }
-
     const response = await this.customerApi.get<any>(
       `voip/pabx/dial-plans?limit=${this.listLimit}`,
     );
@@ -845,28 +799,6 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
         dialPlanUUID: defaultPlan?.uuid ?? this.dialPlanOptions[0]?.value ?? '',
       });
     }
-  }
-
-  private configureFormRulesByScope() {
-    const domainControl = this.form.controls.domainUUID;
-    const customerControl = this.form.controls.customerUUID;
-    const serverControl = this.form.controls.serverUUID;
-    const dialPlanControl = this.form.controls.dialPlanUUID;
-    if (this.isMaster()) {
-      domainControl.clearValidators();
-      customerControl.clearValidators();
-      serverControl.clearValidators();
-      dialPlanControl.clearValidators();
-    } else {
-      domainControl.setValidators([Validators.required]);
-      customerControl.setValidators([Validators.required]);
-      serverControl.setValidators([Validators.required]);
-      dialPlanControl.setValidators([Validators.required]);
-    }
-    domainControl.updateValueAndValidity({ emitEvent: false });
-    customerControl.updateValueAndValidity({ emitEvent: false });
-    serverControl.updateValueAndValidity({ emitEvent: false });
-    dialPlanControl.updateValueAndValidity({ emitEvent: false });
   }
 
   private parseCodecs(value: string | null | undefined, fallback: string[]): string[] {

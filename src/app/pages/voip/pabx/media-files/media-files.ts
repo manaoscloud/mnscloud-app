@@ -443,7 +443,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   private async loadLookups() {
     const [storageResponse, pabxResponse] = await Promise.all([
       this.genericApi.get<any>('hosting/storage/accounts'),
-      this.pabxApi.list(false, { limit: this.listLimit }),
+      this.pabxApi.list({ limit: this.listLimit }),
     ]);
     const rows = Array.isArray(storageResponse?.data)
       ? storageResponse.data

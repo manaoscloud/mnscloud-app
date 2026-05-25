@@ -1291,7 +1291,6 @@ export class MainLayout {
               label: 'PABX',
               icon: 'settings_phone',
               route: '/voip/pabx',
-              masterRoute: '/system/pabx',
             },
             {
               id: 'voip/pabx/trunks',

@@ -553,7 +553,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
 
   private async loadLookups() {
     const [pabxResponse, extResponse, mediaFileResponse] = await Promise.all([
-      this.pabxApi.list(false, { limit: this.listLimit }),
+      this.pabxApi.list({ limit: this.listLimit }),
       this.extensionApi.list(new URLSearchParams({ limit: String(this.listLimit) })),
       this.mediaFileApi.list({ limit: this.listLimit, status: '1' }),
     ]);

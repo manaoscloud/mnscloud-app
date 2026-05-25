@@ -222,7 +222,7 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   private async loadOptions() {
     try {
       const [pabxResponse, serverResponse, domainResponse] = await Promise.all([
-        this.pabxApi.list(false, { limit: this.listLimit }),
+        this.pabxApi.list({ limit: this.listLimit }),
         this.serverApi.list(false, { limit: this.listLimit }),
         this.domainApi.list({ limit: this.listLimit }),
       ]);
