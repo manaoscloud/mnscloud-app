@@ -68,4 +68,7 @@ export class VoipPabxServerService {
     return this.api.post<any>(`${this.basePath(isMaster)}/${uuid}/validate-control`, {});
   }
 
+  generateInstallCommand(uuid: string, isMaster = true) {
+    return this.api.post<any>(`${this.basePath(isMaster)}/${uuid}/install-command`, {});
+  }
 }

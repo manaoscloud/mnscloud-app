@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -51,6 +52,7 @@ type ServerPayload = {
   standalone: true,
   imports: [
     CommonModule,
+    ClipboardModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -97,6 +99,7 @@ export class VoipPabxServerPage implements AfterViewInit {
   readonly saving = signal(false);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly validatingIds = signal<Set<string>>(new Set());
+  readonly generatedInstall = signal<Record<string, unknown> | null>(null);
 
   search = '';
   searchInput = '';
@@ -127,6 +130,7 @@ export class VoipPabxServerPage implements AfterViewInit {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
   @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
+  @ViewChild('installCommandDialog') installCommandDialog?: TemplateRef<unknown>;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -236,8 +240,12 @@ export class VoipPabxServerPage implements AfterViewInit {
         await this.api.update(editing.VpsUUID, payload, true);
         this.snack.success('PABX server updated successfully.');
       } else {
-        await this.api.create(payload, true);
+        const response = await this.api.create(payload, true);
+        const created = response?.data?.item as VoipPabxServerItem | null | undefined;
         this.snack.success('PABX server created successfully.');
+        if (created?.VpsUUID) {
+          await this.openGeneratedInstallCommand(created.VpsUUID, false);
+        }
       }
 
       await this.load();
@@ -290,6 +298,55 @@ export class VoipPabxServerPage implements AfterViewInit {
       done.delete(row.VpsUUID);
       this.validatingIds.set(done);
     }
+  }
+
+  async generateInstallCommand(row: VoipPabxServerItem) {
+    const confirmed = await this.confirmDelete(
+      'Generate install command',
+      `Generate a new install command for "${row.VpsName}"? The previous PABX runtime token will be replaced.`,
+      'Generate command',
+    );
+    if (!confirmed) return;
+    await this.openGeneratedInstallCommand(row.VpsUUID, true);
+  }
+
+  openInstallCommandDialog() {
+    if (!this.installCommandDialog) return;
+    this.dialog.open(this.installCommandDialog, {
+      width: 'min(860px, calc(100vw - 32px))',
+      maxWidth: '860px',
+      disableClose: false,
+    });
+  }
+
+  installCommand() {
+    const data = this.generatedInstall();
+    if (!data) return '';
+    const engine = String(data['engine'] || '').toLowerCase();
+    const repo = engine === 'asterisk' ? 'mnscloud-asterisk' : 'mnscloud-freeswitch';
+    const script = engine === 'asterisk' ? 'install-asterisk.sh' : 'install-freeswitch.sh';
+    const validateScript = engine === 'asterisk' ? 'validate-asterisk.sh' : 'validate-freeswitch.sh';
+    const apiBase = window.location.origin;
+    const installLine =
+      `sudo bash /opt/mnscloud/${repo}/scripts/${script} --api-base ${
+        this.shellQuote(apiBase)
+      } --node-uuid ${this.shellQuote(String(data['nodeUUID'] || ''))} --runtime-token ${
+        this.shellQuote(String(data['runtimeToken'] || ''))
+      }`;
+    const postValidate = `[ -f /opt/mnscloud/${repo}/scripts/${validateScript} ] && sudo bash /opt/mnscloud/${repo}/scripts/${validateScript} || true`;
+    return [
+      'sudo install -d -m 0755 /opt/mnscloud',
+      'cd /opt/mnscloud',
+      `[ -d ${repo}/.git ] && sudo git -C ${repo} pull || sudo gh repo clone manaoscloud/${repo} || sudo git clone https://github.com/manaoscloud/${repo}.git ${repo}`,
+      installLine,
+      postValidate,
+    ].join(' && ');
+  }
+
+  notifyCommandCopied(copied: boolean) {
+    copied
+      ? this.snack.success('Install command copied.')
+      : this.snack.error('Failed to copy install command.');
   }
 
   async removeSelectedServers() {
@@ -519,6 +576,21 @@ export class VoipPabxServerPage implements AfterViewInit {
       disableClose: true,
     });
     return !!(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private async openGeneratedInstallCommand(uuid: string, showSuccess: boolean) {
+    try {
+      const response = await this.api.generateInstallCommand(uuid, true);
+      this.generatedInstall.set(response?.data ?? null);
+      this.openInstallCommandDialog();
+      if (showSuccess) this.snack.success('PABX install command generated.');
+    } catch (error: any) {
+      this.snack.error(error?.error?.error || 'Failed to generate install command.');
+    }
+  }
+
+  private shellQuote(value: string) {
+    return `'${value.replace(/'/g, `'\\''`)}'`;
   }
 
   private startLoading() {

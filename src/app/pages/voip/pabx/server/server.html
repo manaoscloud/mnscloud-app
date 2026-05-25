@@ -181,6 +181,14 @@
               <button
                 mat-icon-button
                 type="button"
+                matTooltip="Generate install command"
+                (click)="generateInstallCommand(row)"
+              >
+                <mat-icon>terminal</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
                 matTooltip="Edit server"
                 (click)="startEdit(row)"
               >
@@ -415,6 +423,32 @@
           Cancel
         </button>
       </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #installCommandDialog>
+  <div class="pabx-token-dialog">
+    <h2 mat-dialog-title>PABX install command</h2>
+    <mat-dialog-content>
+      <p>Run this command on the FreeSWITCH or Asterisk server.</p>
+      <p class="token-warning">
+        This runtime token is shown only once. Generating a new command replaces the previous token
+        for this PABX server.
+      </p>
+      <pre>{{ installCommand() }}</pre>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button
+        mat-stroked-button
+        type="button"
+        [cdkCopyToClipboard]="installCommand()"
+        (cdkCopyToClipboardCopied)="notifyCommandCopied($event)"
+      >
+        <mat-icon>content_copy</mat-icon>
+        Copy
+      </button>
+      <button mat-flat-button color="primary" mat-dialog-close type="button">Done</button>
     </mat-dialog-actions>
   </div>
 </ng-template>
