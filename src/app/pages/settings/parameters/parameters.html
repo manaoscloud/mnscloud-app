@@ -119,6 +119,20 @@
                 ></textarea>
               </mat-form-field>
 
+              @if (isMaster()) {
+                <mat-form-field appearance="outline" class="span-4">
+                  <mat-label>SignalWire Repo Token</mat-label>
+                  <textarea
+                    matInput
+                    rows="4"
+                    [ngModel]="item().signalWireRepoToken"
+                    (ngModelChange)="updateItem({ signalWireRepoToken: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="SignalWire repository token for FreeSWITCH packages"
+                  ></textarea>
+                </mat-form-field>
+              }
+
               <div class="toggle-grid span-4">
                 <mat-slide-toggle
                   [ngModel]="item().googleMapsEmbedApiKeyIsActive"
@@ -135,6 +149,16 @@
                 >
                   Mapbox Token Active
                 </mat-slide-toggle>
+
+                @if (isMaster()) {
+                  <mat-slide-toggle
+                    [ngModel]="item().signalWireRepoTokenIsActive"
+                    (ngModelChange)="updateItem({ signalWireRepoTokenIsActive: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    SignalWire Repo Token Active
+                  </mat-slide-toggle>
+                }
               </div>
             </form>
           </mat-tab>

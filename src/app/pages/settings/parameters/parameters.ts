@@ -22,6 +22,8 @@ type SystemParametersItem = {
   googleMapsEmbedApiKeyIsActive: boolean;
   mapboxToken: string;
   mapboxTokenIsActive: boolean;
+  signalWireRepoToken: string;
+  signalWireRepoTokenIsActive: boolean;
   defaultCurrency: string;
   defaultCurrencyIsActive: boolean;
   defaultLanguage: string;
@@ -53,6 +55,8 @@ const DEFAULT_ITEM: SystemParametersItem = {
   googleMapsEmbedApiKeyIsActive: true,
   mapboxToken: '',
   mapboxTokenIsActive: true,
+  signalWireRepoToken: '',
+  signalWireRepoTokenIsActive: true,
   defaultCurrency: 'BRL',
   defaultCurrencyIsActive: true,
   defaultLanguage: 'pt-BR',
@@ -226,6 +230,10 @@ export class SettingsParametersPage implements OnInit {
         item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
         item.mapboxToken = value;
         item.mapboxTokenIsActive = isActive;
+      } else if (key === 'SIGNALWIRE_REPO_TOKEN') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.signalWireRepoToken = value;
+        item.signalWireRepoTokenIsActive = isActive;
       } else if (key === 'DEFAULT_CURRENCY') {
         item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
         item.defaultCurrency = value || 'BRL';
@@ -273,6 +281,8 @@ export class SettingsParametersPage implements OnInit {
       googleMapsEmbedApiKeyIsActive: raw?.googleMapsEmbedApiKeyIsActive !== false,
       mapboxToken: String(raw?.mapboxToken ?? ''),
       mapboxTokenIsActive: raw?.mapboxTokenIsActive !== false,
+      signalWireRepoToken: String(raw?.signalWireRepoToken ?? ''),
+      signalWireRepoTokenIsActive: raw?.signalWireRepoTokenIsActive !== false,
       defaultCurrency: String(raw?.defaultCurrency ?? 'BRL') || 'BRL',
       defaultCurrencyIsActive: raw?.defaultCurrencyIsActive !== false,
       defaultLanguage: String(raw?.defaultLanguage ?? 'pt-BR') || 'pt-BR',
@@ -300,6 +310,7 @@ export class SettingsParametersPage implements OnInit {
       ...value,
       googleMapsEmbedApiKey: value.googleMapsEmbedApiKey.trim(),
       mapboxToken: value.mapboxToken.trim(),
+      signalWireRepoToken: this.isMaster() ? value.signalWireRepoToken.trim() : '',
       defaultCurrency: (value.defaultCurrency.trim() || 'BRL').toUpperCase(),
       defaultLanguage: value.defaultLanguage.trim() || 'pt-BR',
       defaultTimezone: value.defaultTimezone.trim(),
@@ -322,6 +333,8 @@ export class SettingsParametersPage implements OnInit {
       googleMapsEmbedApiKeyIsActive: value.googleMapsEmbedApiKeyIsActive,
       mapboxToken: value.mapboxToken,
       mapboxTokenIsActive: value.mapboxTokenIsActive,
+      signalWireRepoToken: value.signalWireRepoToken,
+      signalWireRepoTokenIsActive: value.signalWireRepoTokenIsActive,
       defaultCurrency: value.defaultCurrency,
       defaultCurrencyIsActive: value.defaultCurrencyIsActive,
       defaultLanguage: value.defaultLanguage,

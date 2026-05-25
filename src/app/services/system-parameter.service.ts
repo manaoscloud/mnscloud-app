@@ -5,6 +5,7 @@ import { ApiService } from './api.service';
 export type SystemParameterKey =
   | 'GOOGLE_MAPS_EMBED_API_KEY'
   | 'MAPBOX_TOKEN'
+  | 'SIGNALWIRE_REPO_TOKEN'
   | 'DEFAULT_CURRENCY'
   | 'DEFAULT_LANGUAGE'
   | 'DEFAULT_TIMEZONE';
