@@ -132,6 +132,9 @@ export class SettingsParametersPage implements OnInit {
   readonly saving = signal(false);
   readonly feedback = signal<string | null>(null);
   readonly success = signal<string | null>(null);
+  readonly showGoogleMapsEmbedApiKey = signal(false);
+  readonly showMapboxToken = signal(false);
+  readonly showSignalWireRepoToken = signal(false);
   readonly item = signal<SystemParametersItem>({ ...DEFAULT_ITEM });
   readonly baselineItem = signal<SystemParametersItem>({ ...DEFAULT_ITEM });
   readonly storageAccounts = signal<StorageAccountItem[]>([]);

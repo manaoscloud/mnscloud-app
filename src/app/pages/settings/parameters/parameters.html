@@ -97,39 +97,66 @@
             <form class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Google Maps Embed API Key</mat-label>
-                <textarea
+                <input
                   matInput
-                  rows="4"
+                  [type]="showGoogleMapsEmbedApiKey() ? 'text' : 'password'"
                   [ngModel]="item().googleMapsEmbedApiKey"
                   (ngModelChange)="updateItem({ googleMapsEmbedApiKey: $event })"
                   [ngModelOptions]="{ standalone: true }"
                   placeholder="Google Maps Street View embed API key"
-                ></textarea>
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  [attr.aria-label]="showGoogleMapsEmbedApiKey() ? 'Hide Google Maps key' : 'Show Google Maps key'"
+                  (click)="showGoogleMapsEmbedApiKey.set(!showGoogleMapsEmbedApiKey())"
+                >
+                  <mat-icon>{{ showGoogleMapsEmbedApiKey() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Mapbox Token</mat-label>
-                <textarea
+                <input
                   matInput
-                  rows="4"
+                  [type]="showMapboxToken() ? 'text' : 'password'"
                   [ngModel]="item().mapboxToken"
                   (ngModelChange)="updateItem({ mapboxToken: $event })"
                   [ngModelOptions]="{ standalone: true }"
                   placeholder="Mapbox public token"
-                ></textarea>
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  [attr.aria-label]="showMapboxToken() ? 'Hide Mapbox token' : 'Show Mapbox token'"
+                  (click)="showMapboxToken.set(!showMapboxToken())"
+                >
+                  <mat-icon>{{ showMapboxToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
               </mat-form-field>
 
               @if (isMaster()) {
                 <mat-form-field appearance="outline" class="span-4">
                   <mat-label>SignalWire Repo Token</mat-label>
-                  <textarea
+                  <input
                     matInput
-                    rows="4"
+                    [type]="showSignalWireRepoToken() ? 'text' : 'password'"
                     [ngModel]="item().signalWireRepoToken"
                     (ngModelChange)="updateItem({ signalWireRepoToken: $event })"
                     [ngModelOptions]="{ standalone: true }"
                     placeholder="SignalWire repository token for FreeSWITCH packages"
-                  ></textarea>
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    [attr.aria-label]="showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token'"
+                    (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())"
+                  >
+                    <mat-icon>{{ showSignalWireRepoToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
                 </mat-form-field>
               }
 
