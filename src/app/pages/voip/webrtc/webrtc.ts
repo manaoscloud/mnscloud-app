@@ -468,10 +468,20 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     this.saving.set(true);
     try {
       const row = this.editing();
-      if (row) await this.api.update(this.config().resource, this.uuid(row), this.payload());
-      else await this.api.create(this.config().resource, this.payload());
+      const resource = this.config().resource;
+      const response = row
+        ? await this.api.update(resource, this.uuid(row), this.payload())
+        : await this.api.create(resource, this.payload());
       this.snack.success('WebRTC record saved.');
       await this.load();
+      if (!row && resource === 'servers' && !saveAndNew) {
+        const item = response?.data?.item ?? null;
+        const createdUUID = String(item?.[this.config().uuid] ?? '');
+        this.closeDialog();
+        if (createdUUID) await this.generateInstallCommandForUUID(createdUUID, false);
+        else this.snack.error('WebRTC server saved, but install command could not be generated.');
+        return;
+      }
       if (saveAndNew && !row) {
         this.editing.set(null);
         this.buildForm(null);
@@ -480,6 +490,16 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       this.snack.error(e?.error?.error || e?.message || 'Failed to save WebRTC record.');
     } finally {
       this.saving.set(false);
+    }
+  }
+  private async generateInstallCommandForUUID(uuid: string, showSuccess = true) {
+    try {
+      const response = await this.api.generateInstallCommand(uuid);
+      this.generatedInstall.set(response?.data ?? null);
+      this.openInstallCommandDialog();
+      if (showSuccess) this.snack.success('WebRTC install command generated.');
+    } catch (e: any) {
+      this.snack.error(e?.error?.error || e?.message || 'Failed to generate install command.');
     }
   }
   async remove(row: WebRtcRecord) {
@@ -522,14 +542,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
         .afterClosed(),
     );
     if (!ok) return;
-    try {
-      const response = await this.api.generateInstallCommand(this.uuid(row));
-      this.generatedInstall.set(response?.data ?? null);
-      this.openInstallCommandDialog();
-      this.snack.success('WebRTC install command generated.');
-    } catch (e: any) {
-      this.snack.error(e?.error?.error || e?.message || 'Failed to generate install command.');
-    }
+    await this.generateInstallCommandForUUID(this.uuid(row));
   }
   openInstallCommandDialog() {
     if (!this.installCommandDialog) return;
