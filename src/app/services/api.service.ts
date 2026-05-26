@@ -34,7 +34,7 @@ export class ApiService {
     };
 
     // 🔹 Environment atual (multi-tenant)
-    if (environmentUUID && this.requiresEnvironment(endpoint)) {
+    if (environmentUUID && this.sendsEnvironment(endpoint)) {
       headers['X-Environment-UUID'] = environmentUUID;
     }
 
@@ -54,9 +54,26 @@ export class ApiService {
     const normalized = endpoint.replace(/^\//, '');
     const allowPrefixes = ['auth', 'user', 'health', 'openapi.yaml', 'docs', 'system'];
 
+    if (this.environmentOptional(endpoint)) return false;
+
     return !allowPrefixes.some(
       (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
     );
+  }
+
+  private sendsEnvironment(endpoint: string): boolean {
+    if (this.systemCyberSecurityContext(endpoint)) return false;
+    return this.requiresEnvironment(endpoint) || this.environmentOptional(endpoint);
+  }
+
+  private environmentOptional(endpoint: string): boolean {
+    const normalized = endpoint.replace(/^\//, '');
+    return normalized === 'cyber-security' || normalized.startsWith('cyber-security/');
+  }
+
+  private systemCyberSecurityContext(endpoint: string): boolean {
+    if (!this.environmentOptional(endpoint) || typeof window === 'undefined') return false;
+    return window.location.pathname.replace(/\/+$/, '').startsWith('/system/cyber-security');
   }
 
   private assertEnvironment(endpoint: string) {

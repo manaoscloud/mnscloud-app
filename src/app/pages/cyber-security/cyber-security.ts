@@ -11,7 +11,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../../services/api.service';
 import { SnackbarService } from '../../services/snackbar.service';
@@ -128,6 +128,7 @@ export class CyberSecurityPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
 
   @ViewChild('serviceDialog')
@@ -360,7 +361,9 @@ export class CyberSecurityPage implements OnInit {
   }
 
   routeFor(section: CyberSection) {
-    const base = '/cyber-security';
+    const base = this.router.url.startsWith('/system/cyber-security')
+      ? '/system/cyber-security'
+      : '/cyber-security';
     return section === 'dashboard' ? base : `${base}/${section}`;
   }
 

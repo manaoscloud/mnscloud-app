@@ -1018,6 +1018,20 @@ export const routes: Routes = [
                 title: 'System Monitoring • Agents | mnscloud',
               },
               {
+                path: 'cyber-security',
+                loadComponent: () =>
+                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
+                title: 'System Cyber Security | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'cyber-security/:section',
+                loadComponent: () =>
+                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
+                title: 'System Cyber Security | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'billing',
                 loadComponent: () =>
                   import('./pages/billing/system/dashboard/dashboard').then(
