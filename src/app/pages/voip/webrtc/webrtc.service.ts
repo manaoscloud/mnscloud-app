@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 
 export type WebRtcResource = 'servers' | 'parameters' | 'domains';
+export type WebRtcScope = 'tenant' | 'master';
 
 export type WebRtcRecord = Record<string, any>;
 
@@ -11,8 +12,8 @@ export class VoipWebRtcService {
   private readonly basePath = 'voip/webrtc';
   private readonly systemBasePath = 'system/voip/webrtc';
 
-  private resourcePath(resource: WebRtcResource) {
-    if (resource === 'servers' || resource === 'parameters') {
+  private resourcePath(resource: WebRtcResource, scope: WebRtcScope = 'tenant') {
+    if (scope === 'master' || resource === 'servers' || resource === 'parameters') {
       return `${this.systemBasePath}/${resource}`;
     }
     return `${this.basePath}/${resource}`;
@@ -21,37 +22,44 @@ export class VoipWebRtcService {
   list(
     resource: WebRtcResource,
     params: { limit?: number; offset?: number; search?: string } = {},
+    scope: WebRtcScope = 'tenant',
   ) {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     if (params.search) query.set('search', params.search);
     const suffix = query.toString();
-    return this.api.get<any>(`${this.resourcePath(resource)}${suffix ? `?${suffix}` : ''}`);
+    return this.api.get<any>(`${this.resourcePath(resource, scope)}${suffix ? `?${suffix}` : ''}`);
   }
 
   listServerOptions() {
     return this.api.get<any>(`${this.basePath}/server-options`);
   }
 
-  create(resource: WebRtcResource, payload: WebRtcRecord) {
-    return this.api.post<any>(this.resourcePath(resource), payload);
+  create(resource: WebRtcResource, payload: WebRtcRecord, scope: WebRtcScope = 'tenant') {
+    return this.api.post<any>(this.resourcePath(resource, scope), payload);
   }
 
-  update(resource: WebRtcResource, uuid: string, payload: WebRtcRecord) {
-    return this.api.put<any>(`${this.resourcePath(resource)}/${uuid}`, payload);
+  update(
+    resource: WebRtcResource,
+    uuid: string,
+    payload: WebRtcRecord,
+    scope: WebRtcScope = 'tenant',
+  ) {
+    return this.api.put<any>(`${this.resourcePath(resource, scope)}/${uuid}`, payload);
   }
 
-  remove(resource: WebRtcResource, uuid: string) {
-    return this.api.delete<any>(`${this.resourcePath(resource)}/${uuid}`);
+  remove(resource: WebRtcResource, uuid: string, scope: WebRtcScope = 'tenant') {
+    return this.api.delete<any>(`${this.resourcePath(resource, scope)}/${uuid}`);
   }
 
-  removeMany(resource: WebRtcResource, ids: string[]) {
-    return this.api.delete<any>(`${this.resourcePath(resource)}/bulk`, { ids });
+  removeMany(resource: WebRtcResource, ids: string[], scope: WebRtcScope = 'tenant') {
+    return this.api.delete<any>(`${this.resourcePath(resource, scope)}/bulk`, { ids });
   }
 
-  provisionDomain(uuid: string) {
-    return this.api.post<any>(`${this.basePath}/domains/${uuid}/provision`, {});
+  provisionDomain(uuid: string, scope: WebRtcScope = 'tenant') {
+    const basePath = scope === 'master' ? this.systemBasePath : this.basePath;
+    return this.api.post<any>(`${basePath}/domains/${uuid}/provision`, {});
   }
 
   generateInstallCommand(uuid: string) {

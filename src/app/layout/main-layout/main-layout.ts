@@ -1180,6 +1180,7 @@ export class MainLayout {
               label: 'Domain',
               icon: 'language',
               route: '/voip/webrtc/domain',
+              masterRoute: '/system/webrtc/domain',
             },
             {
               id: 'voip/webrtc/server',

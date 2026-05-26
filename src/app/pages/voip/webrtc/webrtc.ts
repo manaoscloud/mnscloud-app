@@ -33,7 +33,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { VoipWebRtcService, WebRtcRecord, WebRtcResource } from './webrtc.service';
+import { VoipWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
 
 type LookupKey = 'servers';
 type LookupOption = { value: string; label: string };
@@ -202,6 +202,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   readonly currentResource = signal<WebRtcResource>('servers');
+  readonly scope = signal<WebRtcScope>('tenant');
   readonly config = computed(() => CONFIGS[this.currentResource()]);
   readonly title = computed(() => this.config().title);
   readonly subtitle = computed(() => this.config().subtitle);
@@ -229,6 +230,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   ngOnInit() {
     this.routeSub = this.route.data.subscribe((data) => {
       this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
+      this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
       this.searchInput = '';
       this.search = '';
       this.dataSource.filter = '';
@@ -301,10 +303,14 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   async load() {
     this.loading.set(true);
     try {
-      const res = await this.api.list(this.config().resource, {
-        limit: 5000,
-        search: this.search,
-      });
+      const res = await this.api.list(
+        this.config().resource,
+        {
+          limit: 5000,
+          search: this.search,
+        },
+        this.scope(),
+      );
       this.dataSource.data = res?.data?.items ?? [];
       this.reconcile();
     } catch (e: any) {
@@ -338,9 +344,9 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     await Promise.all(
       [...needs].map(async (key) => {
         const res =
-          this.config().resource === 'domains' && key === 'servers'
+          this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
             ? await this.api.listServerOptions()
-            : await this.api.list(key, { limit: 5000 });
+            : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
         this.lookups[key] = rows
           .map((row: WebRtcRecord) => ({
@@ -470,8 +476,8 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       const row = this.editing();
       const resource = this.config().resource;
       const response = row
-        ? await this.api.update(resource, this.uuid(row), this.payload())
-        : await this.api.create(resource, this.payload());
+        ? await this.api.update(resource, this.uuid(row), this.payload(), this.scope())
+        : await this.api.create(resource, this.payload(), this.scope());
       this.snack.success('WebRTC record saved.');
       await this.load();
       if (!row && resource === 'servers' && !saveAndNew) {
@@ -517,12 +523,12 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
         .afterClosed(),
     );
     if (!ok) return;
-    await this.api.remove(this.config().resource, this.uuid(row));
+    await this.api.remove(this.config().resource, this.uuid(row), this.scope());
     this.snack.success('WebRTC record deleted.');
     await this.load();
   }
   async provisionDomain(row: WebRtcRecord) {
-    await this.api.provisionDomain(this.uuid(row));
+    await this.api.provisionDomain(this.uuid(row), this.scope());
     this.snack.success('WebRTC domain provisioning queued on edge agent.');
     await this.load();
   }
@@ -556,8 +562,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     const data = this.generatedInstall();
     if (!data) return '';
     const apiBase = window.location.origin;
-    const refreshAgentCommand =
-      `[ ! -x /opt/mnscloud/mnscloud-agent/scripts/update-agent.sh ] || sudo bash /opt/mnscloud/mnscloud-agent/scripts/update-agent.sh --api-base ${this.shellQuote(apiBase)} --install-label "$(hostname -f 2>/dev/null || hostname)"`;
+    const refreshAgentCommand = `[ ! -x /opt/mnscloud/mnscloud-agent/scripts/update-agent.sh ] || sudo bash /opt/mnscloud/mnscloud-agent/scripts/update-agent.sh --api-base ${this.shellQuote(apiBase)} --install-label "$(hostname -f 2>/dev/null || hostname)"`;
     return [
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
@@ -619,7 +624,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
         .afterClosed(),
     );
     if (!ok) return;
-    const result = await this.api.removeMany(this.config().resource, ids);
+    const result = await this.api.removeMany(this.config().resource, ids, this.scope());
     const failed = result?.data?.failed ?? [];
     const uuidKey = this.config().uuid;
     const failedIds = new Set(

@@ -1105,17 +1105,22 @@ export const routes: Routes = [
               })) as any),
               {
                 path: 'webrtc',
-                redirectTo: 'webrtc/server',
+                redirectTo: 'webrtc/domain',
                 pathMatch: 'full',
               },
-              ...(['server', 'parameter'].map((section) => ({
+              ...(['domain', 'server', 'parameter'].map((section) => ({
                 path: `webrtc/${section}`,
                 loadComponent: () =>
                   import('./pages/voip/webrtc/webrtc').then((m) => m.VoipWebRtcPage),
                 title: `System WebRTC • ${section} | mnscloud`,
                 data: {
                   scope: 'master',
-                  resource: section === 'server' ? 'servers' : 'parameters',
+                  resource:
+                    section === 'server'
+                      ? 'servers'
+                      : section === 'domain'
+                        ? 'domains'
+                        : 'parameters',
                 },
               })) as any),
               {
