@@ -431,6 +431,176 @@
                   </button>
                 </mat-form-field>
               }
+
+              @if (providerSelection() === 'sangfor_scp') {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>API URL</mat-label>
+                  <input matInput formControlName="apiUrl" placeholder="https://scp.example.com" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>API version</mat-label>
+                  <input matInput formControlName="apiVersion" placeholder="v1" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Auth path</mat-label>
+                  <input matInput formControlName="authPath" placeholder="/api/v1/auth/login" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Validate path</mat-label>
+                  <input
+                    matInput
+                    formControlName="validatePath"
+                    placeholder="/api/v1/system/version"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Region</mat-label>
+                  <input matInput formControlName="region" placeholder="default" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Resource pool ID</mat-label>
+                  <input matInput formControlName="resourcePoolId" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Cluster ID</mat-label>
+                  <input matInput formControlName="clusterId" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Network ID</mat-label>
+                  <input matInput formControlName="networkId" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Datastore ID</mat-label>
+                  <input matInput formControlName="datastoreId" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Storage pool ID</mat-label>
+                  <input matInput formControlName="storagePoolId" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Image ID</mat-label>
+                  <input matInput formControlName="imageId" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Timeout seconds</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="3"
+                    max="120"
+                    formControlName="timeoutSeconds"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Catalog regions path</mat-label>
+                  <input
+                    matInput
+                    formControlName="catalogRegionsPath"
+                    placeholder="/api/v1/regions"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Catalog sizes path</mat-label>
+                  <input
+                    matInput
+                    formControlName="catalogSizesPath"
+                    placeholder="/api/v1/flavors"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Catalog images path</mat-label>
+                  <input
+                    matInput
+                    formControlName="catalogImagesPath"
+                    placeholder="/api/v1/images"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>API token</mat-label>
+                  <input
+                    matInput
+                    [type]="hideApiToken() ? 'password' : 'text'"
+                    formControlName="apiToken"
+                    placeholder="Bearer token"
+                  />
+                  <button
+                    type="button"
+                    mat-icon-button
+                    matSuffix
+                    (click)="toggleSecret($event, 'apiToken')"
+                    [attr.aria-label]="hideApiToken() ? 'Show API token' : 'Hide API token'"
+                  >
+                    <mat-icon>{{ hideApiToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Access Key</mat-label>
+                  <input matInput formControlName="accessKeyId" autocomplete="off" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Secret Key</mat-label>
+                  <input
+                    matInput
+                    [type]="hideSecretAccessKey() ? 'password' : 'text'"
+                    formControlName="secretAccessKey"
+                    autocomplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    mat-icon-button
+                    matSuffix
+                    (click)="toggleSecret($event, 'secretAccessKey')"
+                    [attr.aria-label]="
+                      hideSecretAccessKey() ? 'Show secret key' : 'Hide secret key'
+                    "
+                  >
+                    <mat-icon>{{
+                      hideSecretAccessKey() ? 'visibility_off' : 'visibility'
+                    }}</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Username</mat-label>
+                  <input matInput formControlName="username" autocomplete="off" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Password</mat-label>
+                  <input
+                    matInput
+                    [type]="hidePassword() ? 'password' : 'text'"
+                    formControlName="password"
+                    autocomplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    mat-icon-button
+                    matSuffix
+                    (click)="toggleSecret($event, 'password')"
+                    [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+                  >
+                    <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
+                </mat-form-field>
+              }
             </form>
           </div>
         </mat-tab>

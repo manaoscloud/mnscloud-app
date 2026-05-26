@@ -41,10 +41,11 @@ type HostingStorageProvider = {
   HspUUID: string;
   HspName: string;
   HspProvider: StorageProvider;
+  HspConfig?: Record<string, unknown> | null;
   HspIsActive: number;
 };
 
-type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces';
+type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
 
 type HostingStorageAccount = {
   HsaUUID: string;
@@ -464,7 +465,11 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   }
 
   canValidate(item: HostingStorageAccount) {
-    return item.HspProvider === 's3' || item.HspProvider === 'spaces';
+    return (
+      item.HspProvider === 's3' ||
+      item.HspProvider === 'spaces' ||
+      item.HspProvider === 'sangfor_scp'
+    );
   }
 
   private syncSelectedProvider(providerUuid: string) {
@@ -475,7 +480,11 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   }
 
   private applyProviderValidators(provider: StorageProvider | null) {
-    const bucketRequired = provider === 's3' || provider === 'spaces' || provider === 'gcs';
+    const bucketRequired =
+      provider === 's3' ||
+      provider === 'spaces' ||
+      provider === 'gcs' ||
+      provider === 'sangfor_scp';
     const containerRequired = provider === 'azure';
 
     this.form.controls.bucket.clearValidators();

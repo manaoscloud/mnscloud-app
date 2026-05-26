@@ -102,6 +102,7 @@ export class HostingVpsProviderPage implements OnDestroy {
         this.providerConfigValue(item, 'projectId'),
         this.providerConfigValue(item, 'apiUrl'),
         this.providerConfigValue(item, 'vcenterUrl'),
+        this.providerConfigValue(item, 'resourcePoolId'),
       ].map((value) => String(value ?? '').toLowerCase());
       const matchesSearch =
         !search ||
@@ -147,6 +148,7 @@ export class HostingVpsProviderPage implements OnDestroy {
     { value: 'lightsail', label: 'Amazon Lightsail' },
     { value: 'proxmox', label: 'Proxmox VE' },
     { value: 'vmware_vcenter', label: 'VMware vCenter' },
+    { value: 'sangfor_scp', label: 'Sangfor Technologies SCP/HCI' },
   ];
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -175,6 +177,19 @@ export class HostingVpsProviderPage implements OnDestroy {
     templateVm: [''],
     templateVmId: [''],
     customizationSpec: [''],
+    apiVersion: [''],
+    authPath: [''],
+    validatePath: [''],
+    resourcePoolId: [''],
+    clusterId: [''],
+    networkId: [''],
+    datastoreId: [''],
+    storagePoolId: [''],
+    imageId: [''],
+    timeoutSeconds: [''],
+    catalogRegionsPath: [''],
+    catalogSizesPath: [''],
+    catalogImagesPath: [''],
     apiToken: [''],
     secretAccessKey: [''],
     tokenId: [''],
@@ -319,6 +334,19 @@ export class HostingVpsProviderPage implements OnDestroy {
       templateVm: config.templateVm ?? '',
       templateVmId: config.templateVmId ?? '',
       customizationSpec: config.customizationSpec ?? '',
+      apiVersion: config.apiVersion ?? '',
+      authPath: config.authPath ?? '',
+      validatePath: config.validatePath ?? '',
+      resourcePoolId: config.resourcePoolId ?? '',
+      clusterId: config.clusterId ?? '',
+      networkId: config.networkId ?? '',
+      datastoreId: config.datastoreId ?? '',
+      storagePoolId: config.storagePoolId ?? '',
+      imageId: config.imageId ?? '',
+      timeoutSeconds: config.timeoutSeconds === undefined ? '' : String(config.timeoutSeconds),
+      catalogRegionsPath: config.catalogPaths?.regions ?? '',
+      catalogSizesPath: config.catalogPaths?.sizes ?? '',
+      catalogImagesPath: config.catalogPaths?.images ?? '',
       apiToken: credentials.apiToken ?? '',
       secretAccessKey: credentials.secretAccessKey ?? '',
       tokenId: credentials.tokenId ?? '',
@@ -351,6 +379,20 @@ export class HostingVpsProviderPage implements OnDestroy {
     if (!this.editing() && !credentials) {
       this.snack.warning('Credentials are required for new providers.');
       return;
+    }
+    if (values.provider === 'sangfor_scp') {
+      const hasToken = !!this.normalizeString(values.apiToken);
+      const hasAccessKeyPair =
+        !!this.normalizeString(values.accessKeyId) &&
+        !!this.normalizeString(values.secretAccessKey);
+      const hasLogin =
+        !!this.normalizeString(values.username) && !!this.normalizeString(values.password);
+      if (!this.editing() && !hasToken && !hasAccessKeyPair && !hasLogin) {
+        this.snack.warning(
+          'Sangfor requires an API token, Access Key/Secret Key, or username/password.',
+        );
+        return;
+      }
     }
 
     this.saving.set(true);
@@ -552,6 +594,7 @@ export class HostingVpsProviderPage implements OnDestroy {
     controls.accessKeyId.clearValidators();
     controls.apiUrl.clearValidators();
     controls.vcenterUrl.clearValidators();
+    controls.resourcePoolId.clearValidators();
     controls.apiToken.clearValidators();
     controls.secretAccessKey.clearValidators();
     controls.tokenId.clearValidators();
@@ -581,6 +624,9 @@ export class HostingVpsProviderPage implements OnDestroy {
         controls.password.setValidators([Validators.required]);
       }
     }
+    if (provider === 'sangfor_scp') {
+      controls.apiUrl.setValidators([Validators.required]);
+    }
     for (const control of Object.values(controls)) {
       control.updateValueAndValidity({ emitEvent: false });
     }
@@ -608,6 +654,19 @@ export class HostingVpsProviderPage implements OnDestroy {
       templateVm: '',
       templateVmId: '',
       customizationSpec: '',
+      apiVersion: '',
+      authPath: '',
+      validatePath: '',
+      resourcePoolId: '',
+      clusterId: '',
+      networkId: '',
+      datastoreId: '',
+      storagePoolId: '',
+      imageId: '',
+      timeoutSeconds: '',
+      catalogRegionsPath: '',
+      catalogSizesPath: '',
+      catalogImagesPath: '',
       apiToken: '',
       secretAccessKey: '',
       tokenId: '',
@@ -661,6 +720,7 @@ export class HostingVpsProviderPage implements OnDestroy {
           this.providerConfigValue(item, 'region') ??
             this.providerConfigValue(item, 'apiUrl') ??
             this.providerConfigValue(item, 'vcenterUrl') ??
+            this.providerConfigValue(item, 'resourcePoolId') ??
             this.providerConfigValue(item, 'projectId') ??
             '',
         );
@@ -707,6 +767,19 @@ export class HostingVpsProviderPage implements OnDestroy {
     const templateVm = this.normalizeString(values.templateVm);
     const templateVmId = this.normalizeString(values.templateVmId);
     const customizationSpec = this.normalizeString(values.customizationSpec);
+    const apiVersion = this.normalizeString(values.apiVersion);
+    const authPath = this.normalizeString(values.authPath);
+    const validatePath = this.normalizeString(values.validatePath);
+    const resourcePoolId = this.normalizeString(values.resourcePoolId);
+    const clusterId = this.normalizeString(values.clusterId);
+    const networkId = this.normalizeString(values.networkId);
+    const datastoreId = this.normalizeString(values.datastoreId);
+    const storagePoolId = this.normalizeString(values.storagePoolId);
+    const imageId = this.normalizeString(values.imageId);
+    const timeoutSeconds = this.normalizeString(values.timeoutSeconds);
+    const catalogRegionsPath = this.normalizeString(values.catalogRegionsPath);
+    const catalogSizesPath = this.normalizeString(values.catalogSizesPath);
+    const catalogImagesPath = this.normalizeString(values.catalogImagesPath);
     if (region) config.region = region;
     if (projectId) config.projectId = projectId;
     if (accessKeyId) config.accessKeyId = accessKeyId;
@@ -725,6 +798,22 @@ export class HostingVpsProviderPage implements OnDestroy {
     if (templateVm) config.templateVm = templateVm;
     if (templateVmId) config.templateVmId = templateVmId;
     if (customizationSpec) config.customizationSpec = customizationSpec;
+    if (apiVersion) config.apiVersion = apiVersion;
+    if (authPath) config.authPath = authPath;
+    if (validatePath) config.validatePath = validatePath;
+    if (resourcePoolId) config.resourcePoolId = resourcePoolId;
+    if (clusterId) config.clusterId = clusterId;
+    if (networkId) config.networkId = networkId;
+    if (datastoreId) config.datastoreId = datastoreId;
+    if (storagePoolId) config.storagePoolId = storagePoolId;
+    if (imageId) config.imageId = imageId;
+    if (timeoutSeconds) config.timeoutSeconds = timeoutSeconds;
+    const catalogPaths = {
+      regions: catalogRegionsPath,
+      sizes: catalogSizesPath,
+      images: catalogImagesPath,
+    };
+    if (Object.values(catalogPaths).some(Boolean)) config.catalogPaths = catalogPaths;
     return config;
   }
 

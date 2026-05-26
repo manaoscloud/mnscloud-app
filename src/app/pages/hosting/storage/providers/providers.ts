@@ -37,7 +37,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
-type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces';
+type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
 
 type HostingStorageProvider = {
   HspUUID: string;
@@ -118,6 +118,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
     { value: 'spaces', label: 'DigitalOcean Spaces' },
     { value: 'gcs', label: 'Google Cloud Storage' },
     { value: 'azure', label: 'Azure Blob Storage' },
+    { value: 'sangfor_scp', label: 'Sangfor Technologies SCP/HCI' },
   ];
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -141,6 +142,19 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
     accountName: [''],
     accountKey: [''],
     forcePathStyle: [false],
+    mode: ['scp_storage'],
+    apiUrl: [''],
+    apiVersion: [''],
+    authPath: [''],
+    validatePath: [''],
+    resourcePoolId: [''],
+    storagePoolId: [''],
+    datastoreId: [''],
+    verifyTls: [true],
+    timeoutSeconds: [''],
+    username: [''],
+    password: [''],
+    apiToken: [''],
     configJson: [''],
     credentialsJson: [''],
   });
@@ -237,6 +251,19 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       accountName: '',
       accountKey: '',
       forcePathStyle: false,
+      mode: 'scp_storage',
+      apiUrl: '',
+      apiVersion: '',
+      authPath: '',
+      validatePath: '',
+      resourcePoolId: '',
+      storagePoolId: '',
+      datastoreId: '',
+      verifyTls: true,
+      timeoutSeconds: '',
+      username: '',
+      password: '',
+      apiToken: '',
       configJson: '',
       credentialsJson: '',
     });
@@ -263,6 +290,19 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       accountName: this.stringValue(config['accountName']),
       accountKey: '',
       forcePathStyle: this.boolValue(config['forcePathStyle']),
+      mode: this.stringValue(config['mode']) || 'scp_storage',
+      apiUrl: this.stringValue(config['apiUrl']),
+      apiVersion: this.stringValue(config['apiVersion']),
+      authPath: this.stringValue(config['authPath']),
+      validatePath: this.stringValue(config['validatePath']),
+      resourcePoolId: this.stringValue(config['resourcePoolId']),
+      storagePoolId: this.stringValue(config['storagePoolId']),
+      datastoreId: this.stringValue(config['datastoreId']),
+      verifyTls: config['verifyTls'] === undefined ? true : this.boolValue(config['verifyTls']),
+      timeoutSeconds: this.stringValue(config['timeoutSeconds']),
+      username: '',
+      password: '',
+      apiToken: '',
       configJson: this.extraJson(config, [
         'region',
         'endpoint',
@@ -271,6 +311,16 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
         'clientEmail',
         'accountName',
         'forcePathStyle',
+        'mode',
+        'apiUrl',
+        'apiVersion',
+        'authPath',
+        'validatePath',
+        'resourcePoolId',
+        'storagePoolId',
+        'datastoreId',
+        'verifyTls',
+        'timeoutSeconds',
       ]),
       credentialsJson: '',
     });
@@ -330,6 +380,20 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       ...extraCredentials,
       ...this.providerCredentialsFromForm(raw.provider, raw),
     });
+    if (raw.provider === 'sangfor_scp' && raw.mode === 'scp_storage') {
+      const hasToken = !!this.stringValue(credentials['apiToken']);
+      const hasAccessKeyPair =
+        !!this.stringValue(config['accessKeyId']) &&
+        !!this.stringValue(credentials['secretAccessKey']);
+      const hasLogin =
+        !!this.stringValue(credentials['username']) && !!this.stringValue(credentials['password']);
+      if (!this.editing() && !hasToken && !hasAccessKeyPair && !hasLogin) {
+        this.snack.warning(
+          'Sangfor requires an API token, Access Key/Secret Key, or username/password.',
+        );
+        return;
+      }
+    }
 
     const payload = {
       name: raw.name.trim(),
@@ -368,6 +432,19 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
           accountName: '',
           accountKey: '',
           forcePathStyle: false,
+          mode: 'scp_storage',
+          apiUrl: '',
+          apiVersion: '',
+          authPath: '',
+          validatePath: '',
+          resourcePoolId: '',
+          storagePoolId: '',
+          datastoreId: '',
+          verifyTls: true,
+          timeoutSeconds: '',
+          username: '',
+          password: '',
+          apiToken: '',
           configJson: '',
           credentialsJson: '',
         });
@@ -472,6 +549,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       spaces: ['region', 'accessKeyId', 'secretAccessKey'],
       gcs: ['projectId', 'clientEmail', 'privateKey'],
       azure: ['accountName', 'accountKey'],
+      sangfor_scp: ['apiUrl'],
     };
     const optionalFields = [
       'region',
@@ -483,6 +561,10 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       'privateKey',
       'accountName',
       'accountKey',
+      'apiUrl',
+      'apiToken',
+      'username',
+      'password',
     ] as const;
 
     for (const field of optionalFields) {
@@ -513,6 +595,28 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
         clientEmail: raw.clientEmail,
       };
     }
+    if (provider === 'sangfor_scp') {
+      const config: Record<string, unknown> = {
+        mode: raw.mode,
+        apiUrl: raw.apiUrl,
+        apiVersion: raw.apiVersion,
+        authPath: raw.authPath,
+        validatePath: raw.validatePath,
+        resourcePoolId: raw.resourcePoolId,
+        storagePoolId: raw.storagePoolId,
+        datastoreId: raw.datastoreId,
+        accessKeyId: raw.accessKeyId,
+        verifyTls: raw.verifyTls,
+        timeoutSeconds: raw.timeoutSeconds,
+      };
+      if (raw.mode === 's3_compatible') {
+        config['region'] = raw.region;
+        config['endpoint'] = raw.endpoint;
+        config['accessKeyId'] = raw.accessKeyId;
+        config['forcePathStyle'] = raw.forcePathStyle;
+      }
+      return config;
+    }
     return {
       accountName: raw.accountName,
     };
@@ -527,6 +631,22 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
     }
     if (provider === 'gcs') {
       return { privateKey: raw.privateKey };
+    }
+    if (provider === 'sangfor_scp') {
+      if (raw.mode === 's3_compatible') {
+        return {
+          secretAccessKey: raw.secretAccessKey,
+          apiToken: raw.apiToken,
+          username: raw.username,
+          password: raw.password,
+        };
+      }
+      return {
+        apiToken: raw.apiToken,
+        secretAccessKey: raw.secretAccessKey,
+        username: raw.username,
+        password: raw.password,
+      };
     }
     return { accountKey: raw.accountKey };
   }

@@ -1,4 +1,9 @@
-export type VpsProvider = 'digitalocean' | 'lightsail' | 'proxmox' | 'vmware_vcenter';
+export type VpsProvider =
+  | 'digitalocean'
+  | 'lightsail'
+  | 'proxmox'
+  | 'vmware_vcenter'
+  | 'sangfor_scp';
 
 export type VpsProviderConfig = {
   region?: string;
@@ -22,6 +27,21 @@ export type VpsProviderConfig = {
   customizationSpec?: string;
   guestOs?: string;
   verifyTls?: boolean;
+  apiVersion?: string;
+  authPath?: string;
+  validatePath?: string;
+  resourcePoolId?: string;
+  clusterId?: string;
+  networkId?: string;
+  datastoreId?: string;
+  storagePoolId?: string;
+  imageId?: string;
+  timeoutSeconds?: number | string;
+  catalogPaths?: {
+    regions?: string | null;
+    sizes?: string | null;
+    images?: string | null;
+  };
   flavors?: Array<Record<string, unknown>>;
 };
 

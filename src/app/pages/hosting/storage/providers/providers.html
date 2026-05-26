@@ -126,7 +126,11 @@
           <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
-              @if (row.HspProvider === 's3' || row.HspProvider === 'spaces') {
+              @if (
+                row.HspProvider === 's3' ||
+                row.HspProvider === 'spaces' ||
+                row.HspProvider === 'sangfor_scp'
+              ) {
                 <button
                   mat-icon-button
                   type="button"
@@ -294,6 +298,145 @@
                   matInput
                   type="password"
                   formControlName="accountKey"
+                  autocomplete="new-password"
+                />
+              </mat-form-field>
+            }
+
+            @if (selectedProvider() === 'sangfor_scp') {
+              <mat-form-field appearance="outline">
+                <mat-label>Mode</mat-label>
+                <mat-select formControlName="mode">
+                  <mat-option value="scp_storage">SCP/HCI API</mat-option>
+                  <mat-option value="s3_compatible">S3 compatible</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>API URL</mat-label>
+                <input matInput formControlName="apiUrl" placeholder="https://scp.example.com" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>API version</mat-label>
+                <input matInput formControlName="apiVersion" placeholder="v1" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Auth path</mat-label>
+                <input matInput formControlName="authPath" placeholder="/api/v1/auth/login" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Validate path</mat-label>
+                <input
+                  matInput
+                  formControlName="validatePath"
+                  placeholder="/api/v1/system/version"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Resource pool ID</mat-label>
+                <input matInput formControlName="resourcePoolId" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Storage pool ID</mat-label>
+                <input matInput formControlName="storagePoolId" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Datastore ID</mat-label>
+                <input matInput formControlName="datastoreId" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Verify TLS</mat-label>
+                <mat-select formControlName="verifyTls">
+                  <mat-option [value]="true">Yes</mat-option>
+                  <mat-option [value]="false">No</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Timeout seconds</mat-label>
+                <input matInput type="number" min="3" max="120" formControlName="timeoutSeconds" />
+              </mat-form-field>
+
+              @if (form.controls.mode.value === 's3_compatible') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Region</mat-label>
+                  <input matInput formControlName="region" placeholder="us-east-1" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Access key</mat-label>
+                  <input matInput formControlName="accessKeyId" autocomplete="off" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Secret access</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    formControlName="secretAccessKey"
+                    autocomplete="new-password"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Endpoint</mat-label>
+                  <input matInput formControlName="endpoint" placeholder="https://s3.example.com" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Force path style</mat-label>
+                  <mat-select formControlName="forcePathStyle">
+                    <mat-option [value]="true">Yes</mat-option>
+                    <mat-option [value]="false">No</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>API token</mat-label>
+                <input
+                  matInput
+                  type="password"
+                  formControlName="apiToken"
+                  autocomplete="new-password"
+                />
+              </mat-form-field>
+
+              @if (form.controls.mode.value === 'scp_storage') {
+                <mat-form-field appearance="outline">
+                  <mat-label>Access Key</mat-label>
+                  <input matInput formControlName="accessKeyId" autocomplete="off" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Secret Key</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    formControlName="secretAccessKey"
+                    autocomplete="new-password"
+                  />
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline">
+                <mat-label>Username</mat-label>
+                <input matInput formControlName="username" autocomplete="off" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Password</mat-label>
+                <input
+                  matInput
+                  type="password"
+                  formControlName="password"
                   autocomplete="new-password"
                 />
               </mat-form-field>
