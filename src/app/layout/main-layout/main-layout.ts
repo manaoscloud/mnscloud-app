@@ -1106,11 +1106,18 @@ export class MainLayout {
       requiresEnvironment: true,
       children: [
         {
-          id: 'voip/domain',
-          label: 'Domain',
+          id: 'voip/domains',
+          label: 'Domains',
           icon: 'language',
-          route: '/voip/domain',
-          masterRoute: '/system/voip/domain',
+          children: [
+            {
+              id: 'voip/domain',
+              label: 'VoIP Domain',
+              icon: 'language',
+              route: '/voip/domain',
+              masterRoute: '/system/voip/domain',
+            },
+          ],
         },
         {
           id: 'voip/portability',
