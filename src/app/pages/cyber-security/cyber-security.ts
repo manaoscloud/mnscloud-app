@@ -46,6 +46,9 @@ type CyberRecord = {
   attentionServers?: number;
   activeDecisions?: number;
   openAlerts?: number;
+  trustedNodes?: number;
+  networkPolicies?: number;
+  securityEvents24h?: number;
   agentName?: string;
   agentHostname?: string;
   agentConnectionStatus?: string;
@@ -60,6 +63,32 @@ type CyberRecord = {
   attemptCount?: number;
   errorCode?: string;
   errorMessage?: string;
+  nodeUUID?: string;
+  nodeType?: string;
+  hostname?: string;
+  allowedNetworks?: unknown;
+  endpointGroups?: unknown;
+  authMode?: string;
+  secretVersion?: number;
+  lastSeenAt?: string;
+  lastSeenIP?: string;
+  notes?: string;
+  endpointGroup?: string;
+  action?: string;
+  priority?: number;
+  networks?: unknown;
+  methods?: unknown;
+  rateLimitPerMinute?: number | null;
+  burst?: number | null;
+  trustedNodeUUID?: string | null;
+  trustedNodeName?: string | null;
+  eventType?: string;
+  decision?: string;
+  sourceIP?: string;
+  method?: string;
+  path?: string;
+  detectedAt?: string;
+  policyName?: string | null;
 };
 
 type CyberProgressEvent = {
@@ -107,6 +136,10 @@ export class CyberSecurityPage implements OnInit {
   profileDialog?: TemplateRef<unknown>;
   @ViewChild('listDialog')
   listDialog?: TemplateRef<unknown>;
+  @ViewChild('trustedNodeDialog')
+  trustedNodeDialog?: TemplateRef<unknown>;
+  @ViewChild('networkPolicyDialog')
+  networkPolicyDialog?: TemplateRef<unknown>;
   @ViewChild('jobDialog')
   jobDialog?: TemplateRef<unknown>;
 
@@ -118,9 +151,14 @@ export class CyberSecurityPage implements OnInit {
   readonly decisions = signal<CyberRecord[]>([]);
   readonly alerts = signal<CyberRecord[]>([]);
   readonly listEntries = signal<CyberRecord[]>([]);
+  readonly trustedNodes = signal<CyberRecord[]>([]);
+  readonly networkPolicies = signal<CyberRecord[]>([]);
+  readonly securityEvents = signal<CyberRecord[]>([]);
   readonly editingService = signal<CyberRecord | null>(null);
   readonly editingProfile = signal<CyberRecord | null>(null);
   readonly editingListEntry = signal<CyberRecord | null>(null);
+  readonly editingTrustedNode = signal<CyberRecord | null>(null);
+  readonly editingNetworkPolicy = signal<CyberRecord | null>(null);
   readonly serverProfileSearch = signal('');
   readonly selectedServer = signal<CyberRecord | null>(null);
   readonly selectedJobs = signal<CyberRecord[]>([]);
@@ -174,6 +212,24 @@ export class CyberSecurityPage implements OnInit {
       icon: 'rule',
       description: 'Explicit allow and block entries for trusted operations.',
     },
+    {
+      key: 'trusted-nodes',
+      label: 'Trusted Nodes',
+      icon: 'hub',
+      description: 'Authenticated infrastructure nodes and agent-backed integrations.',
+    },
+    {
+      key: 'network-policies',
+      label: 'Network Policies',
+      icon: 'policy',
+      description: 'Endpoint groups, node scopes, rate limits and enforcement mode.',
+    },
+    {
+      key: 'security-events',
+      label: 'Security Events',
+      icon: 'manage_search',
+      description: 'Audited decisions for trusted access, deny, rate limit and monitor events.',
+    },
   ];
 
   readonly currentSection = computed(
@@ -204,6 +260,32 @@ export class CyberSecurityPage implements OnInit {
   readonly decisionColumns = ['value', 'action', 'origin', 'scenario', 'service', 'expires'];
   readonly alertColumns = ['level', 'status', 'scenario', 'service', 'source', 'message'];
   readonly listColumns = ['type', 'value', 'scope', 'reason', 'actions'];
+  readonly trustedNodeColumns = [
+    'name',
+    'type',
+    'networks',
+    'groups',
+    'status',
+    'lastSeen',
+    'actions',
+  ];
+  readonly networkPolicyColumns = [
+    'name',
+    'endpointGroup',
+    'action',
+    'mode',
+    'rateLimit',
+    'node',
+    'actions',
+  ];
+  readonly securityEventColumns = [
+    'detectedAt',
+    'decision',
+    'endpointGroup',
+    'source',
+    'node',
+    'reason',
+  ];
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
@@ -239,6 +321,37 @@ export class CyberSecurityPage implements OnInit {
     enabled: [1],
   });
 
+  readonly trustedNodeForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required]],
+    nodeUUID: ['', [Validators.required]],
+    nodeType: ['freeswitch', [Validators.required]],
+    hostname: [''],
+    allowedNetworks: ['[]'],
+    endpointGroups: ['[]'],
+    authMode: ['hmac', [Validators.required]],
+    secret: [''],
+    status: ['active', [Validators.required]],
+    mode: ['monitor', [Validators.required]],
+    notes: [''],
+  });
+
+  readonly networkPolicyForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required]],
+    endpointGroup: ['freeswitch_xml_curl', [Validators.required]],
+    action: ['custom_rate_limit', [Validators.required]],
+    scope: ['tenant', [Validators.required]],
+    mode: ['monitor', [Validators.required]],
+    priority: [100],
+    nodeType: ['freeswitch', [Validators.required]],
+    trustedNodeUUID: [''],
+    networks: ['[]'],
+    methods: ['["GET","POST"]'],
+    rateLimitPerMinute: [300],
+    burst: [120],
+    reason: [''],
+    enabled: [1],
+  });
+
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
       this.activeSection.set(this.normalizeSection(params.get('section')));
@@ -255,7 +368,18 @@ export class CyberSecurityPage implements OnInit {
     this.loading.set(true);
     try {
       const query = this.queryString();
-      const [dashboard, servers, services, profiles, decisions, alerts, lists] = await Promise.all([
+      const [
+        dashboard,
+        servers,
+        services,
+        profiles,
+        decisions,
+        alerts,
+        lists,
+        trustedNodes,
+        networkPolicies,
+        securityEvents,
+      ] = await Promise.all([
         this.api.get<any>('cyber-security/dashboard'),
         this.api.get<any>(`cyber-security/servers${query}`),
         this.api.get<any>(`cyber-security/services${query}`),
@@ -263,6 +387,9 @@ export class CyberSecurityPage implements OnInit {
         this.api.get<any>(`cyber-security/decisions${query}`),
         this.api.get<any>(`cyber-security/alerts${query}`),
         this.api.get<any>(`cyber-security/lists${query}`),
+        this.api.get<any>(`cyber-security/trusted-nodes${query}`),
+        this.api.get<any>(`cyber-security/network-policies${query}`),
+        this.api.get<any>(`cyber-security/security-events${query}`),
       ]);
       this.dashboard.set(dashboard?.data ?? {});
       this.servers.set(servers?.data?.items ?? []);
@@ -271,6 +398,9 @@ export class CyberSecurityPage implements OnInit {
       this.decisions.set(decisions?.data?.items ?? []);
       this.alerts.set(alerts?.data?.items ?? []);
       this.listEntries.set(lists?.data?.items ?? []);
+      this.trustedNodes.set(trustedNodes?.data?.items ?? []);
+      this.networkPolicies.set(networkPolicies?.data?.items ?? []);
+      this.securityEvents.set(securityEvents?.data?.items ?? []);
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to load Cyber Security.'));
     } finally {
@@ -417,6 +547,83 @@ export class CyberSecurityPage implements OnInit {
     await this.remove(`cyber-security/lists/${row.uuid}`);
   }
 
+  openTrustedNode(row?: CyberRecord) {
+    this.editingTrustedNode.set(row ?? null);
+    this.trustedNodeForm.reset({
+      name: row?.name ?? '',
+      nodeUUID: row?.nodeUUID ?? '',
+      nodeType: row?.nodeType ?? 'freeswitch',
+      hostname: row?.hostname ?? '',
+      allowedNetworks: this.pretty(row?.allowedNetworks ?? []),
+      endpointGroups: this.pretty(row?.endpointGroups ?? []),
+      authMode: row?.authMode ?? 'hmac',
+      secret: '',
+      status: row?.status ?? 'active',
+      mode: row?.mode ?? 'monitor',
+      notes: row?.notes ?? '',
+    });
+    this.openDialog(this.trustedNodeDialog);
+  }
+
+  async saveTrustedNode() {
+    if (this.trustedNodeForm.invalid) return;
+    const row = this.editingTrustedNode();
+    const payload = this.parseJsonFields(this.trustedNodeForm.getRawValue(), [
+      'allowedNetworks',
+      'endpointGroups',
+    ]);
+    if (!payload['secret']) delete payload['secret'];
+    await this.save(
+      row ? `cyber-security/trusted-nodes/${row.uuid}` : 'cyber-security/trusted-nodes',
+      payload,
+      !!row,
+    );
+  }
+
+  async deleteTrustedNode(row: CyberRecord) {
+    await this.remove(`cyber-security/trusted-nodes/${row.uuid}`);
+  }
+
+  openNetworkPolicy(row?: CyberRecord) {
+    this.editingNetworkPolicy.set(row ?? null);
+    this.networkPolicyForm.reset({
+      name: row?.name ?? '',
+      endpointGroup: row?.endpointGroup ?? 'freeswitch_xml_curl',
+      action: row?.action ?? 'custom_rate_limit',
+      scope: row?.scope ?? 'tenant',
+      mode: row?.mode ?? 'monitor',
+      priority: row?.priority ?? 100,
+      nodeType: row?.nodeType ?? 'freeswitch',
+      trustedNodeUUID: row?.trustedNodeUUID ?? '',
+      networks: this.pretty(row?.networks ?? []),
+      methods: this.pretty(row?.methods ?? ['GET', 'POST']),
+      rateLimitPerMinute: row?.rateLimitPerMinute ?? 300,
+      burst: row?.burst ?? 120,
+      reason: row?.reason ?? '',
+      enabled: row?.enabled ?? 1,
+    });
+    this.openDialog(this.networkPolicyDialog);
+  }
+
+  async saveNetworkPolicy() {
+    if (this.networkPolicyForm.invalid) return;
+    const row = this.editingNetworkPolicy();
+    const payload = this.parseJsonFields(this.networkPolicyForm.getRawValue(), [
+      'networks',
+      'methods',
+    ]);
+    if (!payload['trustedNodeUUID']) payload['trustedNodeUUID'] = null;
+    await this.save(
+      row ? `cyber-security/network-policies/${row.uuid}` : 'cyber-security/network-policies',
+      payload,
+      !!row,
+    );
+  }
+
+  async deleteNetworkPolicy(row: CyberRecord) {
+    await this.remove(`cyber-security/network-policies/${row.uuid}`);
+  }
+
   async requestStatusRefresh(row: CyberRecord) {
     if (!row.agentUUID) return;
     await this.api.post('cyber-security/servers/jobs', {
@@ -530,6 +737,11 @@ export class CyberSecurityPage implements OnInit {
     return ports.join(', ') || '-';
   }
 
+  trustedNodeLabel(uuid: string | null | undefined) {
+    if (!uuid) return 'Any trusted node';
+    return this.trustedNodes().find((node) => node.uuid === uuid)?.name ?? uuid;
+  }
+
   private async save(endpoint: string, payload: Record<string, any>, update: boolean) {
     try {
       if (update) await this.api.put(endpoint, payload);
@@ -604,4 +816,7 @@ type CyberSection =
   | 'services'
   | 'decisions'
   | 'alerts'
-  | 'lists';
+  | 'lists'
+  | 'trusted-nodes'
+  | 'network-policies'
+  | 'security-events';
