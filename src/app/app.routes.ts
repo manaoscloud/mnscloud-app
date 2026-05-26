@@ -1108,6 +1108,13 @@ export const routes: Routes = [
                 redirectTo: 'webrtc/domain',
                 pathMatch: 'full',
               },
+              {
+                path: 'voip/domain',
+                loadComponent: () =>
+                  import('./pages/voip/domain/domain').then((m) => m.VoipDomainPage),
+                title: 'System VoIP Domain | mnscloud',
+                data: { scope: 'master' },
+              },
               ...(['domain', 'server', 'parameter'].map((section) => ({
                 path: `webrtc/${section}`,
                 loadComponent: () =>

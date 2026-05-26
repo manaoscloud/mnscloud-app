@@ -1105,7 +1105,13 @@ export class MainLayout {
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
-        { id: 'voip/domain', label: 'Domain', icon: 'language', route: '/voip/domain' },
+        {
+          id: 'voip/domain',
+          label: 'Domain',
+          icon: 'language',
+          route: '/voip/domain',
+          masterRoute: '/system/voip/domain',
+        },
         {
           id: 'voip/portability',
           label: 'Portability',

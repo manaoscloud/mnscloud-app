@@ -19,6 +19,10 @@ export class VoipWebRtcService {
     return `${this.basePath}/${resource}`;
   }
 
+  private voipDomainPath(scope: WebRtcScope = 'tenant') {
+    return scope === 'master' ? 'system/voip/domains' : 'voip/pabx/domains';
+  }
+
   list(
     resource: WebRtcResource,
     params: { limit?: number; offset?: number; search?: string } = {},
@@ -34,6 +38,14 @@ export class VoipWebRtcService {
 
   listServerOptions() {
     return this.api.get<any>(`${this.basePath}/server-options`);
+  }
+
+  listVoipDomains(scope: WebRtcScope = 'tenant', params: { limit?: number; search?: string } = {}) {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.search) query.set('search', params.search);
+    const suffix = query.toString();
+    return this.api.get<any>(`${this.voipDomainPath(scope)}${suffix ? `?${suffix}` : ''}`);
   }
 
   create(resource: WebRtcResource, payload: WebRtcRecord, scope: WebRtcScope = 'tenant') {

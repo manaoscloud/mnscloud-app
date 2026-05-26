@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   Component,
   OnDestroy,
+  OnInit,
   TemplateRef,
   ViewChild,
   inject,
@@ -26,13 +27,14 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription, firstValueFrom } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { VoipDomainService, VoipDomainItem } from './domain.service';
+import { VoipDomainService, VoipDomainItem, VoipDomainScope } from './domain.service';
 
 const DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
@@ -64,10 +66,11 @@ const DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?
   styleUrls: ['./domain.scss'],
   animations: [fadeIn],
 })
-export class VoipDomainPage implements AfterViewInit, OnDestroy {
+export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipDomainService);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -76,6 +79,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy {
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipDomainItem | null>(null);
   readonly selectedDomainUUIDs = signal<Set<string>>(new Set());
+  readonly scope = signal<VoipDomainScope>('tenant');
 
   readonly dataSource = new MatTableDataSource<VoipDomainItem>([]);
   readonly displayedColumns = ['select', 'name', 'status', 'actions'];
@@ -97,8 +101,18 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy {
   @ViewChild('domainFormDialog') domainFormDialog?: TemplateRef<unknown>;
   private domainFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private routeSub: Subscription | null = null;
+  private viewReady = false;
+
+  ngOnInit() {
+    this.routeSub = this.route.data.subscribe((data) => {
+      this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
+      if (this.viewReady) void this.loadDomains();
+    });
+  }
 
   ngAfterViewInit() {
+    this.viewReady = true;
     this.dataSource.paginator = this.paginator ?? null;
     this.dataSource.sort = this.sort ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -124,6 +138,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.routeSub?.unsubscribe();
     this.closeDomainDialog();
   }
 
@@ -203,10 +218,13 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy {
     const start = performance.now();
 
     try {
-      const response = await this.api.list({
-        search: this.search || undefined,
-        limit: this.listLimit,
-      });
+      const response = await this.api.list(
+        {
+          search: this.search || undefined,
+          limit: this.listLimit,
+        },
+        this.scope(),
+      );
       this.dataSource.data = response?.data?.items ?? [];
       this.reconcileSelection();
       this.dataSource.filter = '';
@@ -263,10 +281,10 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        await this.api.update(editing.VdmUUID, payload);
+        await this.api.update(editing.VdmUUID, payload, this.scope());
         this.snack.success('VoIP domain updated.');
       } else {
-        await this.api.create(payload);
+        await this.api.create(payload, this.scope());
         this.snack.success('VoIP domain created.');
       }
 
@@ -304,7 +322,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     try {
-      await this.api.remove(item.VdmUUID);
+      await this.api.remove(item.VdmUUID, this.scope());
       this.dataSource.data = this.dataSource.data.filter((row) => row.VdmUUID !== item.VdmUUID);
       this.toggleDomainSelection(item, false);
       this.snack.success('VoIP domain deleted.');
@@ -341,7 +359,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy {
     this.deletingSelected.set(true);
 
     try {
-      const response = await this.api.removeMany(ids);
+      const response = await this.api.removeMany(ids, this.scope());
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VdmUUID));
       this.selectedDomainUUIDs.set(

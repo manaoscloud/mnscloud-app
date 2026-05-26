@@ -35,7 +35,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SnackbarService } from '../../../services/snackbar.service';
 import { VoipWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
 
-type LookupKey = 'servers';
+type LookupKey = 'servers' | 'domains';
 type LookupOption = { value: string; label: string };
 type Field = {
   key: string;
@@ -64,7 +64,7 @@ const COLUMN_LABELS: Record<string, string> = {
   hostname: 'Hostname',
   publicDomain: 'Public Domain',
   publicIP: 'Public IP',
-  domain: 'Domain',
+  domain: 'VoIP Domain',
   certificateProvider: 'Certificate',
   nginxStatus: 'Nginx',
   certificateStatus: 'TLS',
@@ -135,7 +135,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     title: 'WebRTC Domains',
     subtitle: 'Publish partner and tenant WSS domains on authorized WebRTC edge nodes.',
     uuid: 'VwdUUID',
-    name: 'VwdDomain',
+    name: 'VdmName',
     status: 'VwdStatus',
     columns: [
       'domain',
@@ -148,7 +148,13 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     ],
     fields: [
       { key: 'serverUUID', label: 'Server', type: 'lookup', lookup: 'servers', required: true },
-      { key: 'domain', label: 'Domain', required: true },
+      {
+        key: 'domainUUID',
+        label: 'VoIP Domain',
+        type: 'lookup',
+        lookup: 'domains',
+        required: true,
+      },
       {
         key: 'certificateProvider',
         label: 'Certificate Provider',
@@ -215,8 +221,8 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   search = '';
   readonly dataSource = new MatTableDataSource<WebRtcRecord>([]);
   readonly displayedColumns = computed(() => ['select', ...this.config().columns, 'actions']);
-  readonly lookups: Record<LookupKey, LookupOption[]> = { servers: [] };
-  readonly lookupSearch: Record<LookupKey, string> = { servers: '' };
+  readonly lookups: Record<LookupKey, LookupOption[]> = { servers: [], domains: [] };
+  readonly lookupSearch: Record<LookupKey, string> = { servers: '', domains: '' };
   form = this.fb.group({});
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
@@ -274,7 +280,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       version: row['VwrVersion'],
       lastSeen: row['VwrLastSeenAt'],
       server: row['VwrName'],
-      domain: row['VwdDomain'],
+      domain: row['VdmName'],
       certificateProvider: row['VwdCertificateProvider'],
       nginxStatus: row['VwdNginxStatus'],
       certificateStatus: row['VwdCertificateStatus'],
@@ -344,14 +350,16 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     await Promise.all(
       [...needs].map(async (key) => {
         const res =
-          this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
-            ? await this.api.listServerOptions()
-            : await this.api.list(key, { limit: 5000 }, 'master');
+          key === 'domains'
+            ? await this.api.listVoipDomains(this.scope(), { limit: 5000 })
+            : this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
+              ? await this.api.listServerOptions()
+              : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
         this.lookups[key] = rows
           .map((row: WebRtcRecord) => ({
-            value: String(row['VwrUUID'] ?? ''),
-            label: String(row['VwrName'] ?? ''),
+            value: String(key === 'domains' ? (row['VdmUUID'] ?? '') : (row['VwrUUID'] ?? '')),
+            label: String(key === 'domains' ? (row['VdmName'] ?? '') : (row['VwrName'] ?? '')),
           }))
           .filter((option: LookupOption) => option.value);
       }),
@@ -398,7 +406,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       baseUrl: 'VwrBaseUrl',
       version: 'VwrVersion',
       serverUUID: 'VoipWebRtcServerVwrUUID',
-      domain: 'VwdDomain',
+      domainUUID: 'VoipDomainVdmUUID',
       certificateProvider: 'VwdCertificateProvider',
       autoProvision: 'VwdAutoProvision',
       key: 'VwpKey',
