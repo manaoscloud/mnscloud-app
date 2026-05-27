@@ -157,7 +157,11 @@
                     }
                   </small>
                   @if (row.lastJobProgressMessage || row.lastJobErrorMessage) {
-                    <small class="job-message">
+                    <small
+                      class="job-message"
+                      [class.failed]="row.lastJobErrorMessage"
+                      [matTooltip]="row.lastJobErrorMessage || row.lastJobProgressMessage"
+                    >
                       {{ row.lastJobErrorMessage || row.lastJobProgressMessage }}
                     </small>
                   }

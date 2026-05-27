@@ -168,13 +168,11 @@ td {
 
 .server-job-cell {
   line-height: 1.45;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: normal;
+  white-space: nowrap;
 }
 
 .server-job-cell {
-  max-width: 460px;
+  max-width: 260px;
 }
 
 td small {
@@ -183,8 +181,19 @@ td small {
 }
 
 .job-message {
+  max-width: 240px;
   color: #ffca5d;
+  display: -webkit-box;
+  overflow: hidden;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.job-message.failed {
+  color: #ff6b7a;
 }
 
 .table-select {
