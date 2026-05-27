@@ -309,13 +309,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     );
     if (!ok) return;
     try {
-      const response = await this.api.post<any>('monitoring/agents/enrollments', {
-        name: row.name || row.hostname || row.uuid,
-        hostname: row.hostname || null,
-        capabilities: this.parseCapabilities(row.capabilities || 'linux.status'),
-        resourceType: row.resourceType || null,
-        resourceUUID: row.resourceUUID || null,
-      });
+      const response = await this.api.post<any>(`monitoring/agents/${row.uuid}/enrollments`, {});
       this.generatedToken.set(response?.data?.enrollmentToken ?? '');
       this.openTokenDialog();
       this.snack.success('Agent enrollment command generated.');
