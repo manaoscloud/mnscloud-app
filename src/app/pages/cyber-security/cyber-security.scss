@@ -88,7 +88,7 @@
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
   gap: 12px;
   align-items: start;
   margin-bottom: 14px;
@@ -461,6 +461,12 @@ textarea {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
+@media (max-width: 1400px) {
+  .filter-grid {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+}
+
 @media (max-width: 1200px) {
   .kpi-grid,
   .dashboard-grid {
@@ -468,7 +474,7 @@ textarea {
   }
 
   .filter-grid {
-    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 
   .alerts-panel .table-wrapper {
