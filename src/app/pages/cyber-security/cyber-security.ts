@@ -133,8 +133,6 @@ export class CyberSecurityPage implements OnInit {
 
   @ViewChild('listDialog')
   listDialog?: TemplateRef<unknown>;
-  @ViewChild('networkPolicyDialog')
-  networkPolicyDialog?: TemplateRef<unknown>;
   @ViewChild('jobDialog')
   jobDialog?: TemplateRef<unknown>;
 
@@ -147,10 +145,8 @@ export class CyberSecurityPage implements OnInit {
   readonly alerts = signal<CyberRecord[]>([]);
   readonly listEntries = signal<CyberRecord[]>([]);
   readonly trustedNodes = signal<CyberRecord[]>([]);
-  readonly networkPolicies = signal<CyberRecord[]>([]);
   readonly securityEvents = signal<CyberRecord[]>([]);
   readonly editingListEntry = signal<CyberRecord | null>(null);
-  readonly editingNetworkPolicy = signal<CyberRecord | null>(null);
   readonly serverProfileSearch = signal('');
   readonly selectedServer = signal<CyberRecord | null>(null);
   readonly selectedJobs = signal<CyberRecord[]>([]);
@@ -244,15 +240,6 @@ export class CyberSecurityPage implements OnInit {
   readonly decisionColumns = ['value', 'action', 'origin', 'scenario', 'service', 'expires'];
   readonly alertColumns = ['level', 'status', 'scenario', 'service', 'source', 'message'];
   readonly listColumns = ['type', 'value', 'scope', 'reason', 'actions'];
-  readonly networkPolicyColumns = [
-    'name',
-    'endpointGroup',
-    'action',
-    'mode',
-    'rateLimit',
-    'node',
-    'actions',
-  ];
   readonly securityEventColumns = [
     'detectedAt',
     'decision',
@@ -270,23 +257,6 @@ export class CyberSecurityPage implements OnInit {
     listType: ['allowlist', [Validators.required]],
     value: ['', [Validators.required]],
     scope: ['ip', [Validators.required]],
-    reason: [''],
-    enabled: [1],
-  });
-
-  readonly networkPolicyForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    endpointGroup: ['freeswitch_xml_curl', [Validators.required]],
-    action: ['custom_rate_limit', [Validators.required]],
-    scope: ['tenant', [Validators.required]],
-    mode: ['monitor', [Validators.required]],
-    priority: [100],
-    nodeType: ['freeswitch', [Validators.required]],
-    trustedNodeUUID: [''],
-    networks: ['[]'],
-    methods: ['["GET","POST"]'],
-    rateLimitPerMinute: [300],
-    burst: [120],
     reason: [''],
     enabled: [1],
   });
@@ -318,7 +288,6 @@ export class CyberSecurityPage implements OnInit {
         alerts,
         lists,
         trustedNodes,
-        networkPolicies,
         securityEvents,
       ] = await Promise.all([
         this.api.get<any>('cyber-security/dashboard'),
@@ -329,7 +298,6 @@ export class CyberSecurityPage implements OnInit {
         this.api.get<any>(`cyber-security/alerts${query}`),
         this.api.get<any>(`cyber-security/lists${query}`),
         this.api.get<any>(`cyber-security/trusted-nodes${query}`),
-        this.api.get<any>(`cyber-security/network-policies${query}`),
         this.api.get<any>(`cyber-security/security-events${query}`),
       ]);
       this.dashboard.set(dashboard?.data ?? {});
@@ -340,7 +308,6 @@ export class CyberSecurityPage implements OnInit {
       this.alerts.set(alerts?.data?.items ?? []);
       this.listEntries.set(lists?.data?.items ?? []);
       this.trustedNodes.set(trustedNodes?.data?.items ?? []);
-      this.networkPolicies.set(networkPolicies?.data?.items ?? []);
       this.securityEvents.set(securityEvents?.data?.items ?? []);
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to load Cyber Security.'));
@@ -386,46 +353,6 @@ export class CyberSecurityPage implements OnInit {
 
   async deleteListEntry(row: CyberRecord) {
     await this.remove(`cyber-security/lists/${row.uuid}`);
-  }
-
-  openNetworkPolicy(row?: CyberRecord) {
-    this.editingNetworkPolicy.set(row ?? null);
-    this.networkPolicyForm.reset({
-      name: row?.name ?? '',
-      endpointGroup: row?.endpointGroup ?? 'freeswitch_xml_curl',
-      action: row?.action ?? 'custom_rate_limit',
-      scope: row?.scope ?? 'tenant',
-      mode: row?.mode ?? 'monitor',
-      priority: row?.priority ?? 100,
-      nodeType: row?.nodeType ?? 'freeswitch',
-      trustedNodeUUID: row?.trustedNodeUUID ?? '',
-      networks: this.pretty(row?.networks ?? []),
-      methods: this.pretty(row?.methods ?? ['GET', 'POST']),
-      rateLimitPerMinute: row?.rateLimitPerMinute ?? 300,
-      burst: row?.burst ?? 120,
-      reason: row?.reason ?? '',
-      enabled: row?.enabled ?? 1,
-    });
-    this.openDialog(this.networkPolicyDialog);
-  }
-
-  async saveNetworkPolicy() {
-    if (this.networkPolicyForm.invalid) return;
-    const row = this.editingNetworkPolicy();
-    const payload = this.parseJsonFields(this.networkPolicyForm.getRawValue(), [
-      'networks',
-      'methods',
-    ]);
-    if (!payload['trustedNodeUUID']) payload['trustedNodeUUID'] = null;
-    await this.save(
-      row ? `cyber-security/network-policies/${row.uuid}` : 'cyber-security/network-policies',
-      payload,
-      !!row,
-    );
-  }
-
-  async deleteNetworkPolicy(row: CyberRecord) {
-    await this.remove(`cyber-security/network-policies/${row.uuid}`);
   }
 
   async requestStatusRefresh(row: CyberRecord) {

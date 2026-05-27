@@ -195,6 +195,14 @@ export const routes: Routes = [
                 title: 'Cyber Security • Trusted Nodes | mnscloud',
               },
               {
+                path: 'cyber-security/network-policies',
+                loadComponent: () =>
+                  import('./pages/cyber-security/network-policies/network-policies').then(
+                    (m) => m.CyberSecurityNetworkPoliciesPage,
+                  ),
+                title: 'Cyber Security • Network Policies | mnscloud',
+              },
+              {
                 path: 'cyber-security/:section',
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
@@ -1073,6 +1081,15 @@ export const routes: Routes = [
                     (m) => m.CyberSecurityTrustedNodesPage,
                   ),
                 title: 'System Cyber Security • Trusted Nodes | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'cyber-security/network-policies',
+                loadComponent: () =>
+                  import('./pages/cyber-security/network-policies/network-policies').then(
+                    (m) => m.CyberSecurityNetworkPoliciesPage,
+                  ),
+                title: 'System Cyber Security • Network Policies | mnscloud',
                 data: { scope: 'master' },
               },
               {
