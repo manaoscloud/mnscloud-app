@@ -447,6 +447,10 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return 'chip-skipped is-inactive';
   }
 
+  shortBuildRef(value: string | null | undefined) {
+    return value ? value.slice(0, 12) : '-';
+  }
+
   private queryString() {
     const value = this.filterForm.getRawValue();
     const params = new URLSearchParams();

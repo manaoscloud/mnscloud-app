@@ -141,7 +141,11 @@
           <td mat-cell *matCellDef="let row">
             <div class="version-cell">
               <span>{{ row.version || '-' }}</span>
-              <small>Latest {{ row.latestVersion || '-' }}</small>
+              <small>Build {{ shortBuildRef(row.buildRef) }}</small>
+              <small
+                >Latest {{ row.latestVersion || '-' }} ·
+                {{ shortBuildRef(row.latestBuildRef) }}</small
+              >
               <span class="status-pill version-chip" [ngClass]="updateChipClass(row)">
                 {{ updateLabel(row) }}
               </span>
