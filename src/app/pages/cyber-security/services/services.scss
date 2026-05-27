@@ -1,0 +1,32 @@
+.table-wrapper small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.select-col {
+  width: 56px;
+  min-width: 56px;
+}
+
+.wrapped-cell {
+  max-width: 360px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.actions-col-header {
+  width: 112px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.no-data-cell {
+  padding: 1.5rem !important;
+  text-align: center;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+textarea {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}

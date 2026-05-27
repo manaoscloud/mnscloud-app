@@ -326,76 +326,6 @@
         </div>
       </section>
     }
-    @case ('services') {
-      <section class="activity-panel">
-        <div class="section-toolbar">
-          <div>
-            <h2>Protected Services</h2>
-            <span>{{ services().length }} records</span>
-          </div>
-          <button mat-stroked-button type="button" (click)="openService()">
-            <mat-icon>add</mat-icon>
-            New
-          </button>
-        </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="services()">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-            </ng-container>
-            <ng-container matColumnDef="slug">
-              <th mat-header-cell *matHeaderCellDef>Slug</th>
-              <td mat-cell *matCellDef="let row">{{ row.slug }}</td>
-            </ng-container>
-            <ng-container matColumnDef="ports">
-              <th mat-header-cell *matHeaderCellDef>Ports</th>
-              <td mat-cell *matCellDef="let row" class="service-ports-cell">
-                {{ formatPorts(row.defaultPorts) }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="logs">
-              <th mat-header-cell *matHeaderCellDef>Logs</th>
-              <td mat-cell *matCellDef="let row" class="service-logs-cell">
-                {{ formatList(row.logPaths) }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="collections">
-              <th mat-header-cell *matHeaderCellDef>Collections</th>
-              <td mat-cell *matCellDef="let row" class="service-collections-cell">
-                {{ formatList(row.crowdsecCollections) }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let row" class="actions-cell">
-                <div class="table-actions">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Edit"
-                    (click)="openService(row)"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    type="button"
-                    matTooltip="Delete"
-                    (click)="deleteService(row)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="serviceColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: serviceColumns"></tr>
-          </table>
-        </div>
-      </section>
-    }
     @case ('decisions') {
       <section class="activity-panel">
         <div class="section-toolbar">
@@ -819,41 +749,6 @@
 
     <mat-dialog-actions align="end">
       <button mat-stroked-button mat-dialog-close>Close</button>
-    </mat-dialog-actions>
-  </div>
-</ng-template>
-
-<ng-template #serviceDialog>
-  <div class="cyber-dialog">
-    <h2>
-      {{ editingService() ? 'Edit protected service' : 'New protected service' }}
-    </h2>
-    <mat-dialog-content class="dialog-grid" [formGroup]="serviceForm">
-      <mat-form-field appearance="outline"
-        ><mat-label>Name</mat-label><input matInput formControlName="name"
-      /></mat-form-field>
-      <mat-form-field appearance="outline"
-        ><mat-label>Slug</mat-label><input matInput formControlName="slug"
-      /></mat-form-field>
-      <mat-form-field appearance="outline" class="full"
-        ><mat-label>Description</mat-label><input matInput formControlName="description"
-      /></mat-form-field>
-      <mat-form-field appearance="outline"
-        ><mat-label>Default ports JSON</mat-label
-        ><textarea matInput rows="5" formControlName="defaultPorts"></textarea>
-      </mat-form-field>
-      <mat-form-field appearance="outline"
-        ><mat-label>Log paths JSON</mat-label
-        ><textarea matInput rows="5" formControlName="logPaths"></textarea>
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="full"
-        ><mat-label>CrowdSec collections JSON</mat-label
-        ><textarea matInput rows="4" formControlName="crowdsecCollections"></textarea>
-      </mat-form-field>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button mat-dialog-close>Close</button>
-      <button mat-flat-button color="primary" (click)="saveService()">Save</button>
     </mat-dialog-actions>
   </div>
 </ng-template>

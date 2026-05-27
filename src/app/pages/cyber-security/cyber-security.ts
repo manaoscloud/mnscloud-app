@@ -131,8 +131,6 @@ export class CyberSecurityPage implements OnInit {
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('serviceDialog')
-  serviceDialog?: TemplateRef<unknown>;
   @ViewChild('profileDialog')
   profileDialog?: TemplateRef<unknown>;
   @ViewChild('listDialog')
@@ -155,7 +153,6 @@ export class CyberSecurityPage implements OnInit {
   readonly trustedNodes = signal<CyberRecord[]>([]);
   readonly networkPolicies = signal<CyberRecord[]>([]);
   readonly securityEvents = signal<CyberRecord[]>([]);
-  readonly editingService = signal<CyberRecord | null>(null);
   readonly editingProfile = signal<CyberRecord | null>(null);
   readonly editingListEntry = signal<CyberRecord | null>(null);
   readonly editingTrustedNode = signal<CyberRecord | null>(null);
@@ -188,12 +185,6 @@ export class CyberSecurityPage implements OnInit {
       label: 'Security Profiles',
       icon: 'shield',
       description: 'Reusable protection policies for Linux services.',
-    },
-    {
-      key: 'services',
-      label: 'Protected Services',
-      icon: 'settings_applications',
-      description: 'Service definitions, ports, logs and CrowdSec collections.',
     },
     {
       key: 'decisions',
@@ -256,7 +247,6 @@ export class CyberSecurityPage implements OnInit {
     'lastSync',
     'actions',
   ];
-  readonly serviceColumns = ['name', 'slug', 'ports', 'logs', 'collections', 'actions'];
   readonly profileColumns = ['name', 'mode', 'level', 'services', 'actions'];
   readonly decisionColumns = ['value', 'action', 'origin', 'scenario', 'service', 'expires'];
   readonly alertColumns = ['level', 'status', 'scenario', 'service', 'source', 'message'];
@@ -290,16 +280,6 @@ export class CyberSecurityPage implements OnInit {
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
-  });
-
-  readonly serviceForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    slug: ['', [Validators.required]],
-    description: [''],
-    defaultPorts: ['[]'],
-    logPaths: ['[]'],
-    crowdsecCollections: ['[]'],
-    enabled: [1],
   });
 
   readonly profileForm = this.fb.nonNullable.group({
@@ -424,35 +404,6 @@ export class CyberSecurityPage implements OnInit {
     if (!open) this.serverProfileSearch.set('');
   }
 
-  openService(row?: CyberRecord) {
-    this.editingService.set(row ?? null);
-    this.serviceForm.reset({
-      name: row?.name ?? '',
-      slug: row?.slug ?? '',
-      description: row?.description ?? '',
-      defaultPorts: this.pretty(row?.defaultPorts ?? []),
-      logPaths: this.pretty(row?.logPaths ?? []),
-      crowdsecCollections: this.pretty(row?.crowdsecCollections ?? []),
-      enabled: row?.enabled ?? 1,
-    });
-    this.openDialog(this.serviceDialog);
-  }
-
-  async saveService() {
-    if (this.serviceForm.invalid) return;
-    const row = this.editingService();
-    const payload = this.parseJsonFields(this.serviceForm.getRawValue(), [
-      'defaultPorts',
-      'logPaths',
-      'crowdsecCollections',
-    ]);
-    await this.save(
-      row ? `cyber-security/services/${row.uuid}` : 'cyber-security/services',
-      payload,
-      !!row,
-    );
-  }
-
   openProfile(row?: CyberRecord) {
     this.editingProfile.set(row ?? null);
     this.fillProfileForm(row, row?.name ?? '');
@@ -536,10 +487,6 @@ export class CyberSecurityPage implements OnInit {
       this.listForm.getRawValue(),
       !!row,
     );
-  }
-
-  async deleteService(row: CyberRecord) {
-    await this.remove(`cyber-security/services/${row.uuid}`);
   }
 
   async deleteProfile(row: CyberRecord) {
@@ -816,7 +763,6 @@ type CyberSection =
   | 'dashboard'
   | 'servers'
   | 'profiles'
-  | 'services'
   | 'decisions'
   | 'alerts'
   | 'lists'

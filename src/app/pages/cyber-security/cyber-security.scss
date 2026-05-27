@@ -177,25 +177,10 @@ td {
   white-space: nowrap;
 }
 
-.mat-column-logs {
-  width: 34%;
-}
-
-.mat-column-ports {
-  width: 24%;
-}
-
-.mat-column-collections {
-  width: 16%;
-}
-
 .mat-column-job {
   width: 30%;
 }
 
-.service-logs-cell,
-.service-ports-cell,
-.service-collections-cell,
 .server-job-cell {
   line-height: 1.45;
   white-space: normal;
@@ -210,18 +195,6 @@ td {
 .job-command {
   display: block;
   white-space: normal;
-}
-
-.service-logs-cell {
-  max-width: 520px;
-}
-
-.service-ports-cell {
-  max-width: 320px;
-}
-
-.service-collections-cell {
-  max-width: 240px;
 }
 
 td small {
