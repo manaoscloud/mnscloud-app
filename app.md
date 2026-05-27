@@ -50,6 +50,20 @@
 
 - Baseline page structure:
   - `.erp-page` -> `.erp-card` -> `.erp-header` -> `.filter-grid` -> `.table-wrapper` -> `.mobile-paginator`
+- End-to-end frontend refactor completeness:
+  - A full page/module refactor is not complete with layout and build only.
+  - Update the app translation layer for every new or changed visible literal in the same change:
+    menu labels, page headings, helper text, dialog titles, tab labels, field labels, placeholders,
+    tooltips, aria-labels, empty states, confirmation text, snackbar fallback messages, and action
+    labels.
+  - Manual translations belong in `src/app/services/i18n.service.ts` when generated auto literals
+    are not enough or when the domain wording must stay controlled in Portuguese and Spanish.
+  - If the refactor establishes or changes a reusable frontend behavior, document that behavior in
+    this `app.md` baseline instead of creating product-specific docs for a single module.
+  - Product/module docs are only for product semantics, operational contracts, or cross-repository
+    architecture that cannot be expressed as a reusable app pattern.
+  - Final validation must report translation/doc coverage explicitly alongside build results and
+    visual/CRUD baseline compliance.
 - List actions:
   - `Refresh` should call `refreshList()`.
   - `New` should open the create flow.
