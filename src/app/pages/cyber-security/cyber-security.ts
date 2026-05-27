@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -114,6 +115,7 @@ type CyberProgressEvent = {
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatSelectModule,
     MatTableModule,
     MatTooltipModule,
@@ -217,6 +219,67 @@ export class CyberSecurityPage implements OnInit {
   readonly currentSection = computed(
     () => this.sections.find((section) => section.key === this.activeSection()) ?? this.sections[0],
   );
+  readonly dashboardKpis = computed(() => {
+    const item = this.dashboard();
+    return [
+      {
+        label: 'Protected coverage',
+        value: this.ratio(item.protectedServers, item.servers),
+        icon: 'admin_panel_settings',
+      },
+      {
+        label: 'Needs attention',
+        value: this.number(item.attentionServers),
+        icon: 'report_problem',
+      },
+      {
+        label: 'Open alerts',
+        value: this.number(item.openAlerts),
+        icon: 'notification_important',
+      },
+      {
+        label: 'Active decisions',
+        value: this.number(item.activeDecisions),
+        icon: 'gavel',
+      },
+      {
+        label: 'Trusted nodes',
+        value: this.number(item.trustedNodes),
+        icon: 'hub',
+      },
+      {
+        label: 'Events 24h',
+        value: this.number(item.securityEvents24h),
+        icon: 'manage_search',
+      },
+    ];
+  });
+  readonly postureMetrics = computed(() => {
+    const item = this.dashboard();
+    const total = Number(item.servers ?? 0);
+    return [
+      {
+        label: 'Servers enrolled',
+        value: this.number(item.servers),
+        percent: total > 0 ? 100 : 0,
+      },
+      {
+        label: 'Protected servers',
+        value: this.number(item.protectedServers),
+        percent: this.percent(item.protectedServers, item.servers),
+      },
+      {
+        label: 'Needs attention',
+        value: this.number(item.attentionServers),
+        percent: this.percent(item.attentionServers, item.servers),
+      },
+      {
+        label: 'Open alerts',
+        value: this.number(item.openAlerts),
+        percent: this.percent(item.openAlerts, item.servers || item.openAlerts),
+      },
+    ];
+  });
   readonly filteredProfiles = computed(() => {
     const search = this.serverProfileSearch().trim().toLowerCase();
     if (!search) return this.profiles();
@@ -537,6 +600,20 @@ export class CyberSecurityPage implements OnInit {
     return this.sections.some((item) => item.key === section)
       ? (section as CyberSection)
       : 'dashboard';
+  }
+
+  private number(value: unknown) {
+    return String(Number(value ?? 0));
+  }
+
+  private ratio(value: unknown, total: unknown) {
+    return `${Number(value ?? 0)}/${Number(total ?? 0)}`;
+  }
+
+  private percent(value: unknown, total: unknown) {
+    const denominator = Number(total ?? 0);
+    if (!denominator) return 0;
+    return Math.min(100, Math.round((Number(value ?? 0) / denominator) * 100));
   }
 }
 

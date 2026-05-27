@@ -1,9 +1,82 @@
-.cyber-page {
-  display: block;
-  padding: 24px;
+.dashboard-content {
+  position: relative;
+  display: grid;
+  gap: 1rem;
 }
 
-.cyber-shell-header,
+.kpi-grid,
+.dashboard-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.kpi-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.dashboard-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kpi-tile,
+.dashboard-panel {
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 8px;
+  background: var(--mat-sys-color-surface);
+}
+
+.kpi-tile {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem;
+}
+
+.kpi-tile mat-icon {
+  color: var(--mat-sys-color-primary);
+}
+
+.kpi-tile span,
+.metric-row span {
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+}
+
+.kpi-tile strong {
+  font-size: 1.25rem;
+}
+
+.dashboard-panel {
+  min-width: 0;
+  padding: 1rem;
+}
+
+.dashboard-panel h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 34px;
+}
+
+.metric-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--mat-sys-color-surface-container-highest);
+}
+
+.metric-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--mat-sys-color-primary);
+}
+
 .section-toolbar,
 .filter-actions,
 .header-actions,
@@ -13,119 +86,31 @@
   gap: 12px;
 }
 
-.cyber-shell-header {
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.eyebrow {
-  display: block;
-  margin-bottom: 6px;
-  color: #42d7d7;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.cyber-shell-header h1 {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.cyber-shell-header p {
-  margin: 6px 0 0;
-  color: color-mix(in srgb, currentColor 72%, transparent);
-}
-
-.posture-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.posture-card {
-  min-height: 116px;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--mat-sys-surface) 92%, #42d7d7 8%);
-}
-
-.posture-card span,
-.posture-card small {
-  display: block;
-  color: color-mix(in srgb, currentColor 68%, transparent);
-  font-size: 12px;
-}
-
-.posture-card strong {
-  display: block;
-  margin: 10px 0 8px;
-  font-size: 30px;
-  line-height: 1;
-}
-
-.posture-card.primary {
-  border-color: color-mix(in srgb, #42d7d7 44%, transparent);
-}
-
-.posture-card.warning {
-  border-color: color-mix(in srgb, #ffca5d 48%, transparent);
-}
-
-.posture-card.danger {
-  border-color: color-mix(in srgb, #ff5d6c 52%, transparent);
-}
-
 .filter-grid {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) auto;
+  grid-template-columns: minmax(240px, 1fr);
   gap: 12px;
   align-items: start;
   margin-bottom: 14px;
 }
 
-.dashboard-layout {
-  display: grid;
-  grid-template-columns: minmax(320px, 0.8fr) minmax(360px, 1.2fr);
-  gap: 14px;
+.filter-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
 }
 
-.summary-panel,
 .activity-panel {
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 8px;
   background: var(--mat-sys-surface);
 }
 
-.summary-panel {
-  padding: 18px;
-}
-
-.summary-panel h2,
 .section-toolbar h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
 }
 
-.posture-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 44px;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
-}
-
-.posture-line:last-child {
-  border-bottom: 0;
-}
-
-.posture-line span,
 .section-toolbar span {
   color: color-mix(in srgb, currentColor 68%, transparent);
   font-size: 13px;
@@ -409,17 +394,13 @@ textarea {
 }
 
 @media (max-width: 1200px) {
-  .posture-grid {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  .kpi-grid,
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 900px) {
-  .cyber-page {
-    padding: 12px;
-  }
-
-  .cyber-shell-header,
   .filter-actions,
   .header-actions,
   .section-toolbar,
@@ -428,9 +409,9 @@ textarea {
     flex-direction: column;
   }
 
-  .posture-grid,
   .filter-grid,
-  .dashboard-layout,
+  .dashboard-grid,
+  .kpi-grid,
   .dialog-grid {
     grid-template-columns: 1fr;
   }

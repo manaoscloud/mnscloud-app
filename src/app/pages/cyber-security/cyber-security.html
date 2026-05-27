@@ -1,464 +1,447 @@
-<section class="cyber-page" @fadeIn>
-  <header class="cyber-shell-header">
-    <div>
-      <span class="eyebrow">Security operations</span>
-      <h1>Cyber Security</h1>
-      <p>{{ currentSection().description }}</p>
-    </div>
-    <div class="header-actions">
-      <button mat-stroked-button type="button" (click)="loadAll()">
-        <mat-icon>refresh</mat-icon>
-        Refresh
-      </button>
-    </div>
-  </header>
+<section class="erp-page cyber-dashboard" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>Cyber Security</h1>
+        <p>{{ currentSection().description }}</p>
+      </div>
 
-  @if (activeSection() === 'dashboard') {
-    <div class="posture-grid">
-      <article class="posture-card primary">
-        <span>Protected coverage</span>
-        <strong>{{ dashboard().protectedServers || 0 }}/{{ dashboard().servers || 0 }}</strong>
-        <small>Servers reporting protected status</small>
-      </article>
-      <article class="posture-card" [class.warning]="(dashboard().attentionServers || 0) > 0">
-        <span>Needs attention</span>
-        <strong>{{ dashboard().attentionServers || 0 }}</strong>
-        <small>Servers requiring operator review</small>
-      </article>
-      <article class="posture-card" [class.danger]="(dashboard().openAlerts || 0) > 0">
-        <span>Open alerts</span>
-        <strong>{{ dashboard().openAlerts || 0 }}</strong>
-        <small>Unresolved security events</small>
-      </article>
-      <article class="posture-card">
-        <span>Active decisions</span>
-        <strong>{{ dashboard().activeDecisions || 0 }}</strong>
-        <small>Current blocks or remediations</small>
-      </article>
-      <article class="posture-card">
-        <span>Trusted nodes</span>
-        <strong>{{ dashboard().trustedNodes || 0 }}</strong>
-        <small>Authenticated infrastructure integrations</small>
-      </article>
-      <article class="posture-card">
-        <span>Policy events 24h</span>
-        <strong>{{ dashboard().securityEvents24h || 0 }}</strong>
-        <small>Recent trusted access decisions</small>
-      </article>
-    </div>
-  }
-
-  @if (activeSection() !== 'dashboard') {
-    <div class="filter-grid" [formGroup]="filterForm">
-      <mat-form-field appearance="outline">
-        <mat-label>Search</mat-label>
-        <input matInput formControlName="search" placeholder="IP, agent, service, profile" />
-      </mat-form-field>
-      <div class="filter-actions">
-        <button mat-stroked-button type="button" (click)="applyFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          Apply
-        </button>
-        <button mat-stroked-button type="button" (click)="clearFilters()">
-          <mat-icon>backspace</mat-icon>
-          Clear
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="loadAll()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
         </button>
       </div>
-    </div>
-  }
-  @switch (activeSection()) {
-    @case ('dashboard') {
-      <section class="dashboard-layout">
-        <article class="summary-panel">
-          <h2>Operational posture</h2>
-          <div class="posture-line">
-            <span>Servers enrolled</span>
-            <strong>{{ dashboard().servers || 0 }}</strong>
-          </div>
-          <div class="posture-line">
-            <span>Protected servers</span>
-            <strong>{{ dashboard().protectedServers || 0 }}</strong>
-          </div>
-          <div class="posture-line">
-            <span>Open alerts</span>
-            <strong>{{ dashboard().openAlerts || 0 }}</strong>
-          </div>
-        </article>
+    </header>
 
-        <article class="summary-panel">
-          <h2>Next actions</h2>
-          <div class="action-list">
-            <a [routerLink]="routeFor('servers')">
-              <mat-icon>dns</mat-icon>
-              <span>Review server protection</span>
-            </a>
-            <a [routerLink]="routeFor('profiles')">
-              <mat-icon>shield</mat-icon>
-              <span>Maintain security profiles</span>
-            </a>
-            <a [routerLink]="routeFor('alerts')">
-              <mat-icon>notification_important</mat-icon>
-              <span>Investigate open alerts</span>
-            </a>
-            <a [routerLink]="routeFor('trusted-nodes')">
-              <mat-icon>hub</mat-icon>
-              <span>Review trusted nodes</span>
-            </a>
-          </div>
-        </article>
-      </section>
+    @if (activeSection() !== 'dashboard') {
+      <div class="filter-grid" [formGroup]="filterForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Search</mat-label>
+          <input matInput formControlName="search" placeholder="IP, agent, service, profile" />
+        </mat-form-field>
+        <div class="filter-actions">
+          <button mat-stroked-button type="button" (click)="applyFilters()">
+            <mat-icon>filter_alt</mat-icon>
+            Apply
+          </button>
+          <button mat-stroked-button type="button" (click)="clearFilters()">
+            <mat-icon>backspace</mat-icon>
+            Clear
+          </button>
+        </div>
+      </div>
     }
-    @case ('servers') {
-      <section class="activity-panel">
-        <div class="section-toolbar">
-          <div>
-            <h2>Servers</h2>
-            <span>{{ servers().length }} records</span>
+    @switch (activeSection()) {
+      @case ('dashboard') {
+        <div class="dashboard-content" [class.is-loading]="loading()">
+          @if (loading()) {
+            <div class="table-loading" aria-live="polite" aria-busy="true">
+              <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+            </div>
+          }
+
+          <div class="kpi-grid">
+            @for (item of dashboardKpis(); track item.label) {
+              <article class="kpi-tile">
+                <mat-icon>{{ item.icon }}</mat-icon>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </article>
+            }
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="dashboard-panel">
+              <h2>Operational posture</h2>
+              @for (item of postureMetrics(); track item.label) {
+                <div class="metric-row">
+                  <span>{{ item.label }}</span>
+                  <div class="metric-track">
+                    <i [style.width.%]="item.percent"></i>
+                  </div>
+                  <strong>{{ item.value }}</strong>
+                </div>
+              }
+            </section>
+
+            <section class="dashboard-panel">
+              <h2>Next actions</h2>
+              <div class="action-list">
+                <a [routerLink]="routeFor('servers')">
+                  <mat-icon>dns</mat-icon>
+                  <span>Review server protection</span>
+                </a>
+                <a [routerLink]="routeFor('profiles')">
+                  <mat-icon>shield</mat-icon>
+                  <span>Maintain security profiles</span>
+                </a>
+                <a [routerLink]="routeFor('alerts')">
+                  <mat-icon>notification_important</mat-icon>
+                  <span>Investigate open alerts</span>
+                </a>
+                <a [routerLink]="routeFor('trusted-nodes')">
+                  <mat-icon>hub</mat-icon>
+                  <span>Review trusted nodes</span>
+                </a>
+              </div>
+            </section>
           </div>
         </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="servers()">
-            <ng-container matColumnDef="agent">
-              <th mat-header-cell *matHeaderCellDef>Agent</th>
-              <td mat-cell *matCellDef="let row">
-                <strong>{{ row.agentName || row.agentHostname || row.agentUUID }}</strong>
-                <small>{{ row.agentConnectionStatus }}</small>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="profile">
-              <th mat-header-cell *matHeaderCellDef>Profile</th>
-              <td mat-cell *matCellDef="let row">
-                <mat-form-field appearance="outline" class="table-select">
-                  <mat-select
-                    [value]="row.profileUUID || ''"
-                    (selectionChange)="assignServerProfile(row, $event.value || null)"
-                    (openedChange)="clearServerProfileSearch($event)"
-                  >
-                    <mat-option class="select-search-option" disabled>
-                      <input
-                        matInput
-                        class="select-search-field"
-                        placeholder="Search profile"
-                        [value]="serverProfileSearch()"
-                        (input)="serverProfileSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    <mat-option value="">No profile</mat-option>
-                    @for (profile of filteredProfiles(); track profile.uuid) {
-                      <mat-option [value]="profile.uuid">
-                        {{ profile.name }}
+      }
+      @case ('servers') {
+        <section class="activity-panel">
+          <div class="section-toolbar">
+            <div>
+              <h2>Servers</h2>
+              <span>{{ servers().length }} records</span>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="servers()">
+              <ng-container matColumnDef="agent">
+                <th mat-header-cell *matHeaderCellDef>Agent</th>
+                <td mat-cell *matCellDef="let row">
+                  <strong>{{ row.agentName || row.agentHostname || row.agentUUID }}</strong>
+                  <small>{{ row.agentConnectionStatus }}</small>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="profile">
+                <th mat-header-cell *matHeaderCellDef>Profile</th>
+                <td mat-cell *matCellDef="let row">
+                  <mat-form-field appearance="outline" class="table-select">
+                    <mat-select
+                      [value]="row.profileUUID || ''"
+                      (selectionChange)="assignServerProfile(row, $event.value || null)"
+                      (openedChange)="clearServerProfileSearch($event)"
+                    >
+                      <mat-option class="select-search-option" disabled>
+                        <input
+                          matInput
+                          class="select-search-field"
+                          placeholder="Search profile"
+                          [value]="serverProfileSearch()"
+                          (input)="serverProfileSearch.set($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          (keydown)="$event.stopPropagation()"
+                        />
                       </mat-option>
+                      <mat-option value="">No profile</mat-option>
+                      @for (profile of filteredProfiles(); track profile.uuid) {
+                        <mat-option [value]="profile.uuid">
+                          {{ profile.name }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="protection">
+                <th mat-header-cell *matHeaderCellDef>Protection</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-chip" [ngClass]="chipClass(row.protectionStatus)">
+                    {{ row.protectionStatus || 'unprotected' }}
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="job">
+                <th mat-header-cell *matHeaderCellDef>Last Job</th>
+                <td mat-cell *matCellDef="let row" class="server-job-cell">
+                  <strong class="job-command">{{ row.lastJobCommand || '-' }}</strong>
+                  <small>
+                    {{ row.lastJobStatus || 'idle' }}
+                    @if (
+                      row.lastJobProgressPercent !== null &&
+                      row.lastJobProgressPercent !== undefined
+                    ) {
+                      · {{ row.lastJobProgressPercent }}%
                     }
-                  </mat-select>
-                </mat-form-field>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="protection">
-              <th mat-header-cell *matHeaderCellDef>Protection</th>
-              <td mat-cell *matCellDef="let row">
-                <span class="status-chip" [ngClass]="chipClass(row.protectionStatus)">
-                  {{ row.protectionStatus || 'unprotected' }}
-                </span>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="job">
-              <th mat-header-cell *matHeaderCellDef>Last Job</th>
-              <td mat-cell *matCellDef="let row" class="server-job-cell">
-                <strong class="job-command">{{ row.lastJobCommand || '-' }}</strong>
-                <small>
-                  {{ row.lastJobStatus || 'idle' }}
-                  @if (
-                    row.lastJobProgressPercent !== null && row.lastJobProgressPercent !== undefined
-                  ) {
-                    · {{ row.lastJobProgressPercent }}%
-                  }
-                </small>
-                @if (row.lastJobProgressMessage || row.lastJobErrorMessage) {
-                  <small class="job-message">
-                    {{ row.lastJobErrorMessage || row.lastJobProgressMessage }}
                   </small>
-                }
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="crowdsec">
-              <th mat-header-cell *matHeaderCellDef>CrowdSec</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.crowdsecStatus || 'unknown' }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="bouncer">
-              <th mat-header-cell *matHeaderCellDef>Bouncer</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.bouncerStatus || 'unknown' }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="lastSync">
-              <th mat-header-cell *matHeaderCellDef>Last Sync</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.lastSyncAt ? (row.lastSyncAt | date: 'short') : '-' }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let row" class="actions-cell">
-                <div class="table-actions">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="View job details"
-                    aria-label="View job details"
-                    (click)="openJobDetails(row)"
-                  >
-                    <mat-icon>manage_search</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Refresh security status"
-                    aria-label="Refresh security status"
-                    (click)="requestStatusRefresh(row)"
-                  >
-                    <mat-icon>fact_check</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Install protection"
-                    aria-label="Install protection"
-                    (click)="queueInstall(row)"
-                  >
-                    <mat-icon>admin_panel_settings</mat-icon>
-                  </button>
-                  <span
-                    class="action-tooltip"
-                    [matTooltip]="
-                      row.profileUUID
-                        ? 'Apply assigned security profile'
-                        : 'Assign a security profile before applying it'
-                    "
-                  >
+                  @if (row.lastJobProgressMessage || row.lastJobErrorMessage) {
+                    <small class="job-message">
+                      {{ row.lastJobErrorMessage || row.lastJobProgressMessage }}
+                    </small>
+                  }
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="crowdsec">
+                <th mat-header-cell *matHeaderCellDef>CrowdSec</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.crowdsecStatus || 'unknown' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="bouncer">
+                <th mat-header-cell *matHeaderCellDef>Bouncer</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.bouncerStatus || 'unknown' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="lastSync">
+                <th mat-header-cell *matHeaderCellDef>Last Sync</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.lastSyncAt ? (row.lastSyncAt | date: 'short') : '-' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row" class="actions-cell">
+                  <div class="table-actions">
                     <button
                       mat-icon-button
                       type="button"
-                      aria-label="Apply assigned security profile"
-                      [disabled]="!row.profileUUID"
-                      (click)="queueProfileApply(row)"
+                      matTooltip="View job details"
+                      aria-label="View job details"
+                      (click)="openJobDetails(row)"
                     >
-                      <mat-icon>policy</mat-icon>
+                      <mat-icon>manage_search</mat-icon>
                     </button>
-                  </span>
-                </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="serverColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: serverColumns"></tr>
-          </table>
-        </div>
-      </section>
-    }
-    @case ('decisions') {
-      <section class="activity-panel">
-        <div class="section-toolbar">
-          <div>
-            <h2>Decisions</h2>
-            <span>{{ decisions().length }} records</span>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Refresh security status"
+                      aria-label="Refresh security status"
+                      (click)="requestStatusRefresh(row)"
+                    >
+                      <mat-icon>fact_check</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Install protection"
+                      aria-label="Install protection"
+                      (click)="queueInstall(row)"
+                    >
+                      <mat-icon>admin_panel_settings</mat-icon>
+                    </button>
+                    <span
+                      class="action-tooltip"
+                      [matTooltip]="
+                        row.profileUUID
+                          ? 'Apply assigned security profile'
+                          : 'Assign a security profile before applying it'
+                      "
+                    >
+                      <button
+                        mat-icon-button
+                        type="button"
+                        aria-label="Apply assigned security profile"
+                        [disabled]="!row.profileUUID"
+                        (click)="queueProfileApply(row)"
+                      >
+                        <mat-icon>policy</mat-icon>
+                      </button>
+                    </span>
+                  </div>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="serverColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: serverColumns"></tr>
+            </table>
           </div>
-        </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="decisions()">
-            <ng-container matColumnDef="value">
-              <th mat-header-cell *matHeaderCellDef>Value</th>
-              <td mat-cell *matCellDef="let row">{{ row.value }}</td>
-            </ng-container>
-            <ng-container matColumnDef="action">
-              <th mat-header-cell *matHeaderCellDef>Action</th>
-              <td mat-cell *matCellDef="let row">{{ row.action }}</td>
-            </ng-container>
-            <ng-container matColumnDef="origin">
-              <th mat-header-cell *matHeaderCellDef>Origin</th>
-              <td mat-cell *matCellDef="let row">{{ row.origin }}</td>
-            </ng-container>
-            <ng-container matColumnDef="scenario">
-              <th mat-header-cell *matHeaderCellDef>Scenario</th>
-              <td mat-cell *matCellDef="let row">{{ row.scenario || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="service">
-              <th mat-header-cell *matHeaderCellDef>Service</th>
-              <td mat-cell *matCellDef="let row">{{ row.serviceSlug || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="expires">
-              <th mat-header-cell *matHeaderCellDef>Expires</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.expiresAt ? (row.expiresAt | date: 'short') : '-' }}
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="decisionColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: decisionColumns"></tr>
-          </table>
-        </div>
-      </section>
-    }
-    @case ('alerts') {
-      <section class="activity-panel">
-        <div class="section-toolbar">
-          <div>
-            <h2>Alerts</h2>
-            <span>{{ alerts().length }} records</span>
+        </section>
+      }
+      @case ('decisions') {
+        <section class="activity-panel">
+          <div class="section-toolbar">
+            <div>
+              <h2>Decisions</h2>
+              <span>{{ decisions().length }} records</span>
+            </div>
           </div>
-        </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="alerts()">
-            <ng-container matColumnDef="level">
-              <th mat-header-cell *matHeaderCellDef>Level</th>
-              <td mat-cell *matCellDef="let row">{{ row.level }}</td>
-            </ng-container>
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let row">{{ row.status }}</td>
-            </ng-container>
-            <ng-container matColumnDef="scenario">
-              <th mat-header-cell *matHeaderCellDef>Scenario</th>
-              <td mat-cell *matCellDef="let row">{{ row.scenario || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="service">
-              <th mat-header-cell *matHeaderCellDef>Service</th>
-              <td mat-cell *matCellDef="let row">{{ row.serviceSlug || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef>Source</th>
-              <td mat-cell *matCellDef="let row">{{ row.sourceIP || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="message">
-              <th mat-header-cell *matHeaderCellDef>Message</th>
-              <td mat-cell *matCellDef="let row">{{ row.message }}</td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="alertColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: alertColumns"></tr>
-          </table>
-        </div>
-      </section>
-    }
-    @case ('lists') {
-      <section class="activity-panel">
-        <div class="section-toolbar">
-          <div>
-            <h2>Allowlist / Blocklist</h2>
-            <span>{{ listEntries().length }} records</span>
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="decisions()">
+              <ng-container matColumnDef="value">
+                <th mat-header-cell *matHeaderCellDef>Value</th>
+                <td mat-cell *matCellDef="let row">{{ row.value }}</td>
+              </ng-container>
+              <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef>Action</th>
+                <td mat-cell *matCellDef="let row">{{ row.action }}</td>
+              </ng-container>
+              <ng-container matColumnDef="origin">
+                <th mat-header-cell *matHeaderCellDef>Origin</th>
+                <td mat-cell *matCellDef="let row">{{ row.origin }}</td>
+              </ng-container>
+              <ng-container matColumnDef="scenario">
+                <th mat-header-cell *matHeaderCellDef>Scenario</th>
+                <td mat-cell *matCellDef="let row">{{ row.scenario || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="service">
+                <th mat-header-cell *matHeaderCellDef>Service</th>
+                <td mat-cell *matCellDef="let row">{{ row.serviceSlug || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="expires">
+                <th mat-header-cell *matHeaderCellDef>Expires</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.expiresAt ? (row.expiresAt | date: 'short') : '-' }}
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="decisionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: decisionColumns"></tr>
+            </table>
           </div>
-          <div class="button-group">
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="openListEntry(undefined, 'allowlist')"
-            >
-              <mat-icon>add</mat-icon>
-              Allow
-            </button>
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="openListEntry(undefined, 'blocklist')"
-            >
-              <mat-icon>block</mat-icon>
-              Block
-            </button>
+        </section>
+      }
+      @case ('alerts') {
+        <section class="activity-panel">
+          <div class="section-toolbar">
+            <div>
+              <h2>Alerts</h2>
+              <span>{{ alerts().length }} records</span>
+            </div>
           </div>
-        </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="listEntries()">
-            <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef>Type</th>
-              <td mat-cell *matCellDef="let row">{{ row.listType }}</td>
-            </ng-container>
-            <ng-container matColumnDef="value">
-              <th mat-header-cell *matHeaderCellDef>Value</th>
-              <td mat-cell *matCellDef="let row">{{ row.value }}</td>
-            </ng-container>
-            <ng-container matColumnDef="scope">
-              <th mat-header-cell *matHeaderCellDef>Scope</th>
-              <td mat-cell *matCellDef="let row">{{ row.scope }}</td>
-            </ng-container>
-            <ng-container matColumnDef="reason">
-              <th mat-header-cell *matHeaderCellDef>Reason</th>
-              <td mat-cell *matCellDef="let row">{{ row.reason || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let row" class="actions-cell">
-                <div class="table-actions">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Edit"
-                    (click)="openListEntry(row)"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    type="button"
-                    matTooltip="Delete"
-                    (click)="deleteListEntry(row)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: listColumns"></tr>
-          </table>
-        </div>
-      </section>
-    }
-    @case ('security-events') {
-      <section class="activity-panel">
-        <div class="section-toolbar">
-          <div>
-            <h2>Security Events</h2>
-            <span>{{ securityEvents().length }} records</span>
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="alerts()">
+              <ng-container matColumnDef="level">
+                <th mat-header-cell *matHeaderCellDef>Level</th>
+                <td mat-cell *matCellDef="let row">{{ row.level }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let row">{{ row.status }}</td>
+              </ng-container>
+              <ng-container matColumnDef="scenario">
+                <th mat-header-cell *matHeaderCellDef>Scenario</th>
+                <td mat-cell *matCellDef="let row">{{ row.scenario || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="service">
+                <th mat-header-cell *matHeaderCellDef>Service</th>
+                <td mat-cell *matCellDef="let row">{{ row.serviceSlug || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="source">
+                <th mat-header-cell *matHeaderCellDef>Source</th>
+                <td mat-cell *matCellDef="let row">{{ row.sourceIP || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="message">
+                <th mat-header-cell *matHeaderCellDef>Message</th>
+                <td mat-cell *matCellDef="let row">{{ row.message }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="alertColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: alertColumns"></tr>
+            </table>
           </div>
-        </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="securityEvents()">
-            <ng-container matColumnDef="detectedAt">
-              <th mat-header-cell *matHeaderCellDef>Detected</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.detectedAt ? (row.detectedAt | date: 'short') : '-' }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="decision">
-              <th mat-header-cell *matHeaderCellDef>Decision</th>
-              <td mat-cell *matCellDef="let row">{{ row.decision }}</td>
-            </ng-container>
-            <ng-container matColumnDef="endpointGroup">
-              <th mat-header-cell *matHeaderCellDef>Endpoint Group</th>
-              <td mat-cell *matCellDef="let row">{{ row.endpointGroup || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef>Source</th>
-              <td mat-cell *matCellDef="let row">{{ row.sourceIP || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="node">
-              <th mat-header-cell *matHeaderCellDef>Node</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.trustedNodeName || row.nodeUUID || '-' }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="reason">
-              <th mat-header-cell *matHeaderCellDef>Reason</th>
-              <td mat-cell *matCellDef="let row">{{ row.reason || row.eventType }}</td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="securityEventColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: securityEventColumns"></tr>
-          </table>
-        </div>
-      </section>
+        </section>
+      }
+      @case ('lists') {
+        <section class="activity-panel">
+          <div class="section-toolbar">
+            <div>
+              <h2>Allowlist / Blocklist</h2>
+              <span>{{ listEntries().length }} records</span>
+            </div>
+            <div class="button-group">
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="openListEntry(undefined, 'allowlist')"
+              >
+                <mat-icon>add</mat-icon>
+                Allow
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="openListEntry(undefined, 'blocklist')"
+              >
+                <mat-icon>block</mat-icon>
+                Block
+              </button>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="listEntries()">
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let row">{{ row.listType }}</td>
+              </ng-container>
+              <ng-container matColumnDef="value">
+                <th mat-header-cell *matHeaderCellDef>Value</th>
+                <td mat-cell *matCellDef="let row">{{ row.value }}</td>
+              </ng-container>
+              <ng-container matColumnDef="scope">
+                <th mat-header-cell *matHeaderCellDef>Scope</th>
+                <td mat-cell *matCellDef="let row">{{ row.scope }}</td>
+              </ng-container>
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-cell *matCellDef="let row">{{ row.reason || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row" class="actions-cell">
+                  <div class="table-actions">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Edit"
+                      (click)="openListEntry(row)"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      type="button"
+                      matTooltip="Delete"
+                      (click)="deleteListEntry(row)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: listColumns"></tr>
+            </table>
+          </div>
+        </section>
+      }
+      @case ('security-events') {
+        <section class="activity-panel">
+          <div class="section-toolbar">
+            <div>
+              <h2>Security Events</h2>
+              <span>{{ securityEvents().length }} records</span>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="securityEvents()">
+              <ng-container matColumnDef="detectedAt">
+                <th mat-header-cell *matHeaderCellDef>Detected</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.detectedAt ? (row.detectedAt | date: 'short') : '-' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="decision">
+                <th mat-header-cell *matHeaderCellDef>Decision</th>
+                <td mat-cell *matCellDef="let row">{{ row.decision }}</td>
+              </ng-container>
+              <ng-container matColumnDef="endpointGroup">
+                <th mat-header-cell *matHeaderCellDef>Endpoint Group</th>
+                <td mat-cell *matCellDef="let row">{{ row.endpointGroup || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="source">
+                <th mat-header-cell *matHeaderCellDef>Source</th>
+                <td mat-cell *matCellDef="let row">{{ row.sourceIP || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="node">
+                <th mat-header-cell *matHeaderCellDef>Node</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.trustedNodeName || row.nodeUUID || '-' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-cell *matCellDef="let row">{{ row.reason || row.eventType }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="securityEventColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: securityEventColumns"></tr>
+            </table>
+          </div>
+        </section>
+      }
     }
-  }
+  </mat-card>
 </section>
 
 <ng-template #jobDialog>
