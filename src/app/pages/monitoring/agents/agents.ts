@@ -447,18 +447,6 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return 'chip-skipped is-inactive';
   }
 
-  versionTooltip(row: MonitoringAgent) {
-    return [
-      `Atual: ${row.version || '-'}`,
-      `Disponível: ${row.latestVersion || '-'}`,
-      `Canal: ${row.updateChannel || 'stable'}`,
-      row.buildRef ? `Build: ${row.buildRef}` : '',
-      row.latestBuildRef ? `Último build: ${row.latestBuildRef}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-  }
-
   private queryString() {
     const value = this.filterForm.getRawValue();
     const params = new URLSearchParams();

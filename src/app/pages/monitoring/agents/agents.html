@@ -139,11 +139,7 @@
         <ng-container matColumnDef="version">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Agent</th>
           <td mat-cell *matCellDef="let row">
-            <div
-              class="version-cell"
-              [matTooltip]="versionTooltip(row)"
-              matTooltipClass="multiline-tooltip"
-            >
+            <div class="version-cell">
               <span>{{ row.version || '-' }}</span>
               <small>Latest {{ row.latestVersion || '-' }}</small>
               <span class="status-pill version-chip" [ngClass]="updateChipClass(row)">
