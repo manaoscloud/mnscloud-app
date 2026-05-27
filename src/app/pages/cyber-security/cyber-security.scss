@@ -217,7 +217,7 @@ td small {
 }
 
 .mat-column-message {
-  width: 31%;
+  width: 29%;
 }
 
 .alert-message-cell {
@@ -228,25 +228,29 @@ td small {
 }
 
 .mat-column-server {
-  width: 14%;
+  width: 13%;
 }
 
 .mat-column-scenario {
-  width: 15%;
+  width: 14%;
   overflow-wrap: anywhere;
 }
 
 .alerts-table :is(.mat-column-level, .mat-column-status) {
-  width: 7%;
+  width: 6%;
+}
+
+.alerts-table .mat-column-enforcement {
+  width: 8%;
 }
 
 .alerts-table .mat-column-service {
-  width: 8%;
+  width: 7%;
   overflow-wrap: anywhere;
 }
 
 .alerts-table .mat-column-source {
-  width: 10%;
+  width: 9%;
   overflow-wrap: anywhere;
 }
 
@@ -325,7 +329,8 @@ td small {
 
 .chip-protected,
 .chip-running,
-.chip-active {
+.chip-active,
+.chip-ban {
   color: #42d7d7;
   border-color: color-mix(in srgb, #42d7d7 60%, transparent);
 }
@@ -339,7 +344,9 @@ td small {
 
 .chip-partial,
 .chip-warning,
-.chip-pending {
+.chip-pending,
+.chip-not_blocked,
+.chip-expired {
   color: #ffca5d;
   border-color: color-mix(in srgb, #ffca5d 60%, transparent);
 }

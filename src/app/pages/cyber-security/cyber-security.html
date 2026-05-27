@@ -329,13 +329,34 @@
           </div>
           <div class="table-wrapper">
             <table mat-table [dataSource]="decisions()">
+              <ng-container matColumnDef="server">
+                <th mat-header-cell *matHeaderCellDef>Server</th>
+                <td mat-cell *matCellDef="let row">
+                  <strong>{{ serverLabel(row) }}</strong>
+                  @if (serverDetail(row)) {
+                    <small>{{ serverDetail(row) }}</small>
+                  }
+                </td>
+              </ng-container>
               <ng-container matColumnDef="value">
                 <th mat-header-cell *matHeaderCellDef>Value</th>
                 <td mat-cell *matCellDef="let row">{{ row.value }}</td>
               </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-chip" [ngClass]="chipClass(row.status)">
+                    {{ row.status || '-' | t }}
+                  </span>
+                </td>
+              </ng-container>
               <ng-container matColumnDef="action">
                 <th mat-header-cell *matHeaderCellDef>Action</th>
-                <td mat-cell *matCellDef="let row">{{ row.action }}</td>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-chip" [ngClass]="chipClass(row.action)">
+                    {{ row.action || '-' | t }}
+                  </span>
+                </td>
               </ng-container>
               <ng-container matColumnDef="origin">
                 <th mat-header-cell *matHeaderCellDef>Origin</th>
@@ -347,7 +368,7 @@
               </ng-container>
               <ng-container matColumnDef="service">
                 <th mat-header-cell *matHeaderCellDef>Service</th>
-                <td mat-cell *matCellDef="let row">{{ row.serviceSlug || '-' }}</td>
+                <td mat-cell *matCellDef="let row">{{ serviceLabel(row.serviceSlug) }}</td>
               </ng-container>
               <ng-container matColumnDef="expires">
                 <th mat-header-cell *matHeaderCellDef>Expires</th>
@@ -395,6 +416,20 @@
                   <span class="status-chip" [ngClass]="chipClass(row.status)">
                     {{ row.status || '-' | t }}
                   </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="enforcement">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Enforcement</th>
+                <td mat-cell *matCellDef="let row">
+                  <span
+                    class="status-chip"
+                    [ngClass]="chipClass(row.enforcementAction || row.enforcementStatus)"
+                  >
+                    {{ row.enforcementAction || row.enforcementStatus || '-' | t }}
+                  </span>
+                  @if (row.enforcementExpiresAt) {
+                    <small>{{ row.enforcementExpiresAt | date: 'short' }}</small>
+                  }
                 </td>
               </ng-container>
               <ng-container matColumnDef="scenario">

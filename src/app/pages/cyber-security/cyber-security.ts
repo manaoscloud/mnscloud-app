@@ -90,6 +90,10 @@ type CyberRecord = {
   trustedNodeName?: string | null;
   eventType?: string;
   decision?: string;
+  decisionUUID?: string | null;
+  enforcementStatus?: string | null;
+  enforcementAction?: string | null;
+  enforcementExpiresAt?: string | null;
   sourceIP?: string;
   serverName?: string | null;
   serverHostname?: string | null;
@@ -341,11 +345,21 @@ export class CyberSecurityPage implements OnInit {
     'lastSync',
     'actions',
   ];
-  readonly decisionColumns = ['value', 'action', 'origin', 'scenario', 'service', 'expires'];
+  readonly decisionColumns = [
+    'server',
+    'value',
+    'status',
+    'action',
+    'origin',
+    'scenario',
+    'service',
+    'expires',
+  ];
   readonly alertColumns = [
     'server',
     'level',
     'status',
+    'enforcement',
     'service',
     'source',
     'scenario',
@@ -388,6 +402,8 @@ export class CyberSecurityPage implements OnInit {
           return this.serviceLabel(row.serviceSlug);
         case 'source':
           return row.sourceIP ?? '';
+        case 'enforcement':
+          return row.enforcementAction ?? row.enforcementStatus ?? '';
         case 'detectedAt':
           return row.detectedAt ?? row.dateCreated ?? '';
         default:
