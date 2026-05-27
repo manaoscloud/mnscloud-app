@@ -101,6 +101,9 @@ type CyberRecord = {
   serverPublicIP?: string | null;
   method?: string;
   path?: string;
+  scenario?: string | null;
+  message?: string | null;
+  details?: unknown;
   detectedAt?: string;
   policyName?: string | null;
 };
@@ -153,6 +156,8 @@ export class CyberSecurityPage implements OnInit {
   listDialog?: TemplateRef<unknown>;
   @ViewChild('jobDialog')
   jobDialog?: TemplateRef<unknown>;
+  @ViewChild('alertDialog')
+  alertDialog?: TemplateRef<unknown>;
 
   readonly loading = signal(false);
   readonly dashboard = signal<CyberRecord>({});
@@ -168,6 +173,7 @@ export class CyberSecurityPage implements OnInit {
   readonly serverProfileSearch = signal('');
   readonly selectedServer = signal<CyberRecord | null>(null);
   readonly selectedJobs = signal<CyberRecord[]>([]);
+  readonly selectedAlert = signal<CyberRecord | null>(null);
   readonly activeSection = signal<CyberSection>('dashboard');
   readonly alertServerSearch = signal('');
   readonly alertServiceSearch = signal('');
@@ -365,6 +371,7 @@ export class CyberSecurityPage implements OnInit {
     'scenario',
     'message',
     'detectedAt',
+    'actions',
   ];
   readonly listColumns = ['type', 'value', 'scope', 'reason', 'actions'];
   readonly securityEventColumns = [
@@ -612,6 +619,25 @@ export class CyberSecurityPage implements OnInit {
   jobProgress(job: CyberRecord) {
     const value = Number(job.progressPercent ?? 0);
     return Number.isFinite(value) ? Math.min(Math.max(value, 0), 100) : 0;
+  }
+
+  openAlertDetails(row: CyberRecord) {
+    this.selectedAlert.set(row);
+    this.openDialog(this.alertDialog, '980px');
+  }
+
+  async updateAlertStatus(row: CyberRecord, status: string) {
+    if (!row.uuid) return;
+    const previous = row.status;
+    row.status = status;
+    try {
+      await this.api.put(`cyber-security/alerts/${row.uuid}/status`, { status });
+      this.snack.success('Alert updated.');
+      void this.loadAll();
+    } catch (error) {
+      row.status = previous;
+      this.snack.error(this.errorMessage(error, 'Failed to update alert.'));
+    }
   }
 
   chipClass(value: string | null | undefined) {

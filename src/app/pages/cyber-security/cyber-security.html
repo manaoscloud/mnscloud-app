@@ -460,6 +460,52 @@
                   }}
                 </td>
               </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row" class="actions-cell">
+                  <div class="table-actions">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="View alert details"
+                      aria-label="View alert details"
+                      (click)="openAlertDetails(row)"
+                    >
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Acknowledge alert"
+                      aria-label="Acknowledge alert"
+                      [disabled]="row.status === 'acknowledged'"
+                      (click)="updateAlertStatus(row, 'acknowledged')"
+                    >
+                      <mat-icon>done</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Resolve alert"
+                      aria-label="Resolve alert"
+                      [disabled]="row.status === 'resolved'"
+                      (click)="updateAlertStatus(row, 'resolved')"
+                    >
+                      <mat-icon>task_alt</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Ignore alert"
+                      aria-label="Ignore alert"
+                      [disabled]="row.status === 'ignored'"
+                      (click)="updateAlertStatus(row, 'ignored')"
+                    >
+                      <mat-icon>visibility_off</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
               <tr mat-header-row *matHeaderRowDef="alertColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: alertColumns"></tr>
             </table>
@@ -663,6 +709,80 @@
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
+      <button mat-stroked-button mat-dialog-close>Close</button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #alertDialog>
+  <div class="cyber-dialog alert-dialog">
+    <h2>Alert details</h2>
+    <mat-dialog-content>
+      @if (selectedAlert(); as alert) {
+        <div class="alert-detail-grid">
+          <div>
+            <span>Server</span>
+            <strong>{{ serverLabel(alert) }}</strong>
+            <small>{{ serverDetail(alert) || '-' }}</small>
+          </div>
+          <div>
+            <span>Level</span>
+            <strong>{{ alert.level || '-' | t }}</strong>
+          </div>
+          <div>
+            <span>Status</span>
+            <strong>{{ alert.status || '-' | t }}</strong>
+          </div>
+          <div>
+            <span>Enforcement</span>
+            <strong>{{ alert.enforcementAction || alert.enforcementStatus || '-' | t }}</strong>
+            @if (alert.enforcementExpiresAt) {
+              <small>{{ alert.enforcementExpiresAt | date: 'medium' }}</small>
+            }
+          </div>
+          <div>
+            <span>Service</span>
+            <strong>{{ serviceLabel(alert.serviceSlug) }}</strong>
+          </div>
+          <div>
+            <span>Origin</span>
+            <strong>{{ alert.sourceIP || '-' }}</strong>
+          </div>
+          <div class="full">
+            <span>Scenario</span>
+            <strong>{{ alert.scenario || '-' }}</strong>
+          </div>
+          <div class="full">
+            <span>Message</span>
+            <p>{{ alert.message || '-' }}</p>
+          </div>
+          <div class="full">
+            <span>Evidence</span>
+            <pre>{{ alert.details | json }}</pre>
+          </div>
+        </div>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      @if (selectedAlert(); as alert) {
+        <button mat-stroked-button type="button" (click)="updateAlertStatus(alert, 'acknowledged')">
+          <mat-icon>done</mat-icon>
+          Acknowledge
+        </button>
+        <button mat-stroked-button type="button" (click)="updateAlertStatus(alert, 'ignored')">
+          <mat-icon>visibility_off</mat-icon>
+          Ignore
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="updateAlertStatus(alert, 'resolved')"
+        >
+          <mat-icon>task_alt</mat-icon>
+          Resolve
+        </button>
+      }
       <button mat-stroked-button mat-dialog-close>Close</button>
     </mat-dialog-actions>
   </div>

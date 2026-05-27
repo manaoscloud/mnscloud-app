@@ -217,7 +217,7 @@ td small {
 }
 
 .mat-column-message {
-  width: 29%;
+  width: 23%;
 }
 
 .alert-message-cell {
@@ -228,11 +228,11 @@ td small {
 }
 
 .mat-column-server {
-  width: 13%;
+  width: 12%;
 }
 
 .mat-column-scenario {
-  width: 14%;
+  width: 13%;
   overflow-wrap: anywhere;
 }
 
@@ -255,6 +255,10 @@ td small {
 }
 
 .alerts-table .mat-column-detectedAt {
+  width: 8%;
+}
+
+.alerts-table .mat-column-actions {
   width: 8%;
 }
 
@@ -357,6 +361,43 @@ td small {
 
 .cyber-dialog h2 {
   margin: 0 0 16px;
+}
+
+.alert-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: min(860px, 82vw);
+}
+
+.alert-detail-grid > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 8px;
+}
+
+.alert-detail-grid .full {
+  grid-column: 1 / -1;
+}
+
+.alert-detail-grid span,
+.alert-detail-grid small {
+  color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+.alert-detail-grid p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.alert-detail-grid pre {
+  max-height: 260px;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .job-context {
