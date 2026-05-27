@@ -153,7 +153,8 @@
   overflow: auto;
 }
 
-.alerts-panel .table-wrapper {
+.alerts-panel .table-wrapper,
+.decisions-panel .table-wrapper {
   overflow-x: hidden;
 }
 
@@ -166,18 +167,21 @@ td {
   white-space: nowrap;
 }
 
-.alerts-table {
+.alerts-table,
+.decisions-table {
   table-layout: fixed;
 }
 
-.alerts-table :is(th, td) {
+.alerts-table :is(th, td),
+.decisions-table :is(th, td) {
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
   vertical-align: top;
 }
 
-.alerts-table :is(strong, small) {
+.alerts-table :is(strong, small),
+.decisions-table :is(strong, small) {
   overflow-wrap: anywhere;
   white-space: normal;
 }
@@ -262,6 +266,39 @@ td small {
   width: 8%;
 }
 
+.decisions-table :is(.mat-column-status, .mat-column-action) {
+  width: 8%;
+}
+
+.decisions-table .mat-column-server {
+  width: 13%;
+}
+
+.decisions-table .mat-column-value {
+  width: 10%;
+  overflow-wrap: anywhere;
+}
+
+.decisions-table .mat-column-origin,
+.decisions-table .mat-column-service {
+  width: 8%;
+  overflow-wrap: anywhere;
+}
+
+.decisions-table .mat-column-scenario {
+  width: 15%;
+  overflow-wrap: anywhere;
+}
+
+.decisions-table .mat-column-started,
+.decisions-table .mat-column-expires {
+  width: 9%;
+}
+
+.decisions-table .mat-column-actions {
+  width: 5%;
+}
+
 .table-select {
   width: 220px;
   margin: 4px 0;
@@ -334,7 +371,8 @@ td small {
 .chip-protected,
 .chip-running,
 .chip-active,
-.chip-ban {
+.chip-ban,
+.chip-allow {
   color: #42d7d7;
   border-color: color-mix(in srgb, #42d7d7 60%, transparent);
 }
@@ -350,7 +388,9 @@ td small {
 .chip-warning,
 .chip-pending,
 .chip-not_blocked,
-.chip-expired {
+.chip-expired,
+.chip-captcha,
+.chip-removed {
   color: #ffca5d;
   border-color: color-mix(in srgb, #ffca5d 60%, transparent);
 }

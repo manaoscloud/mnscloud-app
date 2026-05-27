@@ -95,6 +95,9 @@ type CyberRecord = {
   enforcementAction?: string | null;
   enforcementExpiresAt?: string | null;
   sourceIP?: string;
+  origin?: string;
+  startedAt?: string;
+  expiresAt?: string;
   serverName?: string | null;
   serverHostname?: string | null;
   serverPrivateIP?: string | null;
@@ -158,6 +161,8 @@ export class CyberSecurityPage implements OnInit {
   jobDialog?: TemplateRef<unknown>;
   @ViewChild('alertDialog')
   alertDialog?: TemplateRef<unknown>;
+  @ViewChild('decisionDialog')
+  decisionDialog?: TemplateRef<unknown>;
 
   readonly loading = signal(false);
   readonly dashboard = signal<CyberRecord>({});
@@ -174,10 +179,22 @@ export class CyberSecurityPage implements OnInit {
   readonly selectedServer = signal<CyberRecord | null>(null);
   readonly selectedJobs = signal<CyberRecord[]>([]);
   readonly selectedAlert = signal<CyberRecord | null>(null);
+  readonly selectedDecision = signal<CyberRecord | null>(null);
   readonly activeSection = signal<CyberSection>('dashboard');
   readonly alertServerSearch = signal('');
   readonly alertServiceSearch = signal('');
+  readonly decisionDataSource = new MatTableDataSource<CyberRecord>([]);
   readonly alertDataSource = new MatTableDataSource<CyberRecord>([]);
+
+  @ViewChild('decisionPaginator')
+  set decisionPaginator(paginator: MatPaginator | undefined) {
+    this.decisionDataSource.paginator = paginator ?? null;
+  }
+
+  @ViewChild('decisionSort')
+  set decisionSort(sort: MatSort | undefined) {
+    this.decisionDataSource.sort = sort ?? null;
+  }
 
   @ViewChild('alertPaginator')
   set alertPaginator(paginator: MatPaginator | undefined) {
@@ -357,9 +374,11 @@ export class CyberSecurityPage implements OnInit {
     'status',
     'action',
     'origin',
-    'scenario',
     'service',
+    'scenario',
+    'started',
     'expires',
+    'actions',
   ];
   readonly alertColumns = [
     'server',
@@ -390,6 +409,8 @@ export class CyberSecurityPage implements OnInit {
     level: [''],
     serviceSlug: [''],
     sourceIP: [''],
+    action: [''],
+    origin: [''],
   });
 
   readonly listForm = this.fb.nonNullable.group({
@@ -401,6 +422,20 @@ export class CyberSecurityPage implements OnInit {
   });
 
   ngOnInit() {
+    this.decisionDataSource.sortingDataAccessor = (row, column) => {
+      switch (column) {
+        case 'server':
+          return this.serverLabel(row);
+        case 'service':
+          return this.serviceLabel(row.serviceSlug);
+        case 'expires':
+          return row.expiresAt ?? '';
+        case 'started':
+          return row.startedAt ?? row.dateCreated ?? '';
+        default:
+          return row[column] ?? '';
+      }
+    };
     this.alertDataSource.sortingDataAccessor = (row, column) => {
       switch (column) {
         case 'server':
@@ -434,6 +469,7 @@ export class CyberSecurityPage implements OnInit {
     this.loading.set(true);
     try {
       const query = this.queryString();
+      const decisionQuery = this.decisionQueryString();
       const alertQuery = this.alertQueryString();
       const [
         dashboard,
@@ -450,7 +486,7 @@ export class CyberSecurityPage implements OnInit {
         this.api.get<any>(`cyber-security/servers${query}`),
         this.api.get<any>(`cyber-security/services${query}`),
         this.api.get<any>(`cyber-security/profiles${query}`),
-        this.api.get<any>(`cyber-security/decisions${query}`),
+        this.api.get<any>(`cyber-security/decisions${decisionQuery}`),
         this.api.get<any>(`cyber-security/alerts${alertQuery}`),
         this.api.get<any>(`cyber-security/lists${query}`),
         this.api.get<any>(`cyber-security/trusted-nodes${query}`),
@@ -460,7 +496,9 @@ export class CyberSecurityPage implements OnInit {
       this.servers.set(servers?.data?.items ?? []);
       this.services.set(services?.data?.items ?? []);
       this.profiles.set(profiles?.data?.items ?? []);
-      this.decisions.set(decisions?.data?.items ?? []);
+      const decisionItems = decisions?.data?.items ?? [];
+      this.decisions.set(decisionItems);
+      this.decisionDataSource.data = decisionItems;
       const alertItems = alerts?.data?.items ?? [];
       this.alerts.set(alertItems);
       this.alertDataSource.data = alertItems;
@@ -475,6 +513,7 @@ export class CyberSecurityPage implements OnInit {
   }
 
   applyFilters() {
+    this.resetDecisionPaginator();
     this.resetAlertPaginator();
     void this.loadAll();
   }
@@ -487,9 +526,12 @@ export class CyberSecurityPage implements OnInit {
       level: '',
       serviceSlug: '',
       sourceIP: '',
+      action: '',
+      origin: '',
     });
     this.alertServerSearch.set('');
     this.alertServiceSearch.set('');
+    this.resetDecisionPaginator();
     this.resetAlertPaginator();
     void this.loadAll();
   }
@@ -508,6 +550,10 @@ export class CyberSecurityPage implements OnInit {
 
   resetAlertPaginator() {
     this.alertDataSource.paginator?.firstPage();
+  }
+
+  resetDecisionPaginator() {
+    this.decisionDataSource.paginator?.firstPage();
   }
 
   openListEntry(row?: CyberRecord, listType = 'allowlist') {
@@ -624,6 +670,11 @@ export class CyberSecurityPage implements OnInit {
   openAlertDetails(row: CyberRecord) {
     this.selectedAlert.set(row);
     this.openDialog(this.alertDialog, '980px');
+  }
+
+  openDecisionDetails(row: CyberRecord) {
+    this.selectedDecision.set(row);
+    this.openDialog(this.decisionDialog, '980px');
   }
 
   async updateAlertStatus(row: CyberRecord, status: string) {
@@ -753,6 +804,20 @@ export class CyberSecurityPage implements OnInit {
     if (filters.serverUUID) params.set('serverUUID', filters.serverUUID);
     if (filters.status) params.set('status', filters.status);
     if (filters.level) params.set('level', filters.level);
+    if (filters.serviceSlug) params.set('serviceSlug', filters.serviceSlug);
+    if (filters.sourceIP.trim()) params.set('sourceIP', filters.sourceIP.trim());
+    params.set('limit', '1000');
+    return `?${params.toString()}`;
+  }
+
+  private decisionQueryString() {
+    const filters = this.filterForm.getRawValue();
+    const params = new URLSearchParams();
+    if (filters.search.trim()) params.set('search', filters.search.trim());
+    if (filters.serverUUID) params.set('serverUUID', filters.serverUUID);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.action) params.set('action', filters.action);
+    if (filters.origin) params.set('origin', filters.origin);
     if (filters.serviceSlug) params.set('serviceSlug', filters.serviceSlug);
     if (filters.sourceIP.trim()) params.set('sourceIP', filters.sourceIP.trim());
     params.set('limit', '1000');
