@@ -136,6 +136,23 @@
           <td mat-cell *matCellDef="let row">{{ row.hostname || '-' }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="version">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Agent</th>
+          <td mat-cell *matCellDef="let row">
+            <div
+              class="version-cell"
+              [matTooltip]="versionTooltip(row)"
+              matTooltipClass="multiline-tooltip"
+            >
+              <span>{{ row.version || '-' }}</span>
+              <small>Latest {{ row.latestVersion || '-' }}</small>
+              <span class="status-pill version-chip" [ngClass]="updateChipClass(row)">
+                {{ updateLabel(row) }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="uptime">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Uptime</th>
           <td mat-cell *matCellDef="let row">{{ formatUptime(row.uptimeSeconds) }}</td>

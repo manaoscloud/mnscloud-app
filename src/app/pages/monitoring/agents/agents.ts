@@ -47,6 +47,12 @@ type MonitoringAgent = {
   engine?: string | null;
   hostname?: string | null;
   version?: string | null;
+  buildRef?: string | null;
+  buildDate?: string | null;
+  updateChannel?: string | null;
+  latestVersion?: string | null;
+  latestBuildRef?: string | null;
+  updateStatus?: 'current' | 'outdated' | 'unsupported' | 'unknown' | string | null;
   status?: number | null;
   connectionStatus: 'online' | 'offline';
   lastHeartbeatAt?: string | null;
@@ -114,6 +120,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     'type',
     'resource',
     'hostname',
+    'version',
     'uptime',
     'heartbeat',
     'actions',
@@ -430,6 +437,34 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   }
 
+  updateLabel(row: MonitoringAgent) {
+    const status = row.updateStatus || 'unknown';
+    if (status === 'current') return 'Atualizado';
+    if (status === 'outdated') return 'Atualização disponível';
+    if (status === 'unsupported') return 'Sem suporte';
+    return 'Versão desconhecida';
+  }
+
+  updateChipClass(row: MonitoringAgent) {
+    const status = row.updateStatus || 'unknown';
+    if (status === 'current') return 'chip-success is-active';
+    if (status === 'outdated') return 'chip-warning';
+    if (status === 'unsupported') return 'chip-danger';
+    return 'chip-skipped is-inactive';
+  }
+
+  versionTooltip(row: MonitoringAgent) {
+    return [
+      `Atual: ${row.version || '-'}`,
+      `Disponível: ${row.latestVersion || '-'}`,
+      `Canal: ${row.updateChannel || 'stable'}`,
+      row.buildRef ? `Build: ${row.buildRef}` : '',
+      row.latestBuildRef ? `Último build: ${row.latestBuildRef}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
   private queryString() {
     const value = this.filterForm.getRawValue();
     const params = new URLSearchParams();
@@ -459,6 +494,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     if (column === 'type') return row.type ?? '';
     if (column === 'resource') return row.resourceLabel ?? '';
     if (column === 'hostname') return row.hostname ?? '';
+    if (column === 'version') return `${row.updateStatus ?? ''} ${row.version ?? ''}`;
     if (column === 'uptime') return String(row.uptimeSeconds ?? 0);
     if (column === 'heartbeat') return row.lastHeartbeatAt ?? '';
     return '';
@@ -473,12 +509,14 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   private parseCapabilities(value: string) {
-    return [...new Set(
-      value
-        .split(/[,\n]/)
-        .map((item) => item.trim().toLowerCase())
-        .filter(Boolean),
-    )];
+    return [
+      ...new Set(
+        value
+          .split(/[,\n]/)
+          .map((item) => item.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ];
   }
 
   private reconcileSelection() {

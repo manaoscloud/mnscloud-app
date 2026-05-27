@@ -1,5 +1,6 @@
 .agent-name,
-.resource-cell {
+.resource-cell,
+.version-cell {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -7,12 +8,42 @@
 }
 
 .agent-name small,
-.resource-cell small {
+.resource-cell small,
+.version-cell small {
   color: var(--muted-color, rgba(255, 255, 255, 0.62));
   font-size: 0.76rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.version-cell {
+  align-items: flex-start;
+  max-width: 12rem;
+}
+
+.version-cell > span:first-child {
+  font-weight: 600;
+}
+
+.version-chip {
+  font-size: 0.68rem;
+  min-height: 1.4rem;
+  padding: 0 0.55rem;
+}
+
+.version-chip.chip-warning {
+  border-color: rgba(255, 202, 93, 0.64);
+  color: #ffca5d;
+}
+
+.version-chip.chip-danger {
+  border-color: rgba(255, 107, 122, 0.64);
+  color: #ff6b7a;
+}
+
+:host ::ng-deep .multiline-tooltip {
+  white-space: pre-line;
 }
 
 .agent-token-dialog {
