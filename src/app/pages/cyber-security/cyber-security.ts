@@ -386,8 +386,6 @@ export class CyberSecurityPage implements OnInit {
     'status',
     'enforcement',
     'service',
-    'source',
-    'scenario',
     'message',
     'detectedAt',
     'actions',

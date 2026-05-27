@@ -500,17 +500,9 @@
                   }
                 </td>
               </ng-container>
-              <ng-container matColumnDef="scenario">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Scenario</th>
-                <td mat-cell *matCellDef="let row">{{ row.scenario || '-' }}</td>
-              </ng-container>
               <ng-container matColumnDef="service">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>Service</th>
                 <td mat-cell *matCellDef="let row">{{ serviceLabel(row.serviceSlug) }}</td>
-              </ng-container>
-              <ng-container matColumnDef="source">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Origin</th>
-                <td mat-cell *matCellDef="let row">{{ row.sourceIP || '-' }}</td>
               </ng-container>
               <ng-container matColumnDef="message">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>Message</th>
@@ -529,7 +521,7 @@
                 </td>
               </ng-container>
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef></th>
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
                 <td mat-cell *matCellDef="let row" class="actions-cell">
                   <div class="table-actions">
                     <button

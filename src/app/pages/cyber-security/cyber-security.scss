@@ -175,6 +175,10 @@ td {
   table-layout: fixed;
 }
 
+.alerts-table {
+  min-width: 1520px;
+}
+
 .alerts-table :is(th, td),
 .decisions-table :is(th, td) {
   overflow: visible;
@@ -223,8 +227,25 @@ td small {
   color: #ff6b7a;
 }
 
-.mat-column-message {
-  width: 20%;
+.alerts-table .mat-column-server {
+  width: 180px;
+}
+
+.alerts-table :is(.mat-column-level, .mat-column-status) {
+  width: 116px;
+}
+
+.alerts-table .mat-column-enforcement {
+  width: 150px;
+}
+
+.alerts-table .mat-column-service {
+  width: 130px;
+  overflow-wrap: anywhere;
+}
+
+.alerts-table .mat-column-message {
+  width: 560px;
 }
 
 .alert-message-cell {
@@ -243,31 +264,13 @@ td small {
   overflow-wrap: anywhere;
 }
 
-.alerts-table :is(.mat-column-level, .mat-column-status) {
-  width: 6%;
-}
-
-.alerts-table .mat-column-enforcement {
-  width: 8%;
-}
-
-.alerts-table .mat-column-service {
-  width: 7%;
-  overflow-wrap: anywhere;
-}
-
-.alerts-table .mat-column-source {
-  width: 8%;
-  overflow-wrap: anywhere;
-}
-
 .alerts-table .mat-column-detectedAt {
-  width: 7%;
+  width: 140px;
 }
 
 .alerts-table .mat-column-actions {
-  width: 12%;
-  min-width: 188px;
+  width: 244px;
+  min-width: 244px;
   text-align: right;
   white-space: nowrap;
 }
