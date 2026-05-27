@@ -27,6 +27,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
+import { I18nService } from '../../../services/i18n.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -69,6 +70,7 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(CyberSecurityServicesService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
@@ -272,9 +274,9 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     if (!service.uuid) return;
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete protected service',
-        message: `Are you sure you want to delete "${service.name || service.slug}"?`,
-        confirmLabel: 'Delete',
+        title: this.t('Delete protected service'),
+        message: `${this.t('Are you sure you want to delete')} "${service.name || service.slug}"?`,
+        confirmLabel: this.t('Delete'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -353,9 +355,9 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete selected protected services',
-        message: `Are you sure you want to delete ${ids.length} selected protected service(s)?${suffix}`,
-        confirmLabel: 'Delete selected',
+        title: this.t('Delete selected protected services'),
+        message: `${this.t('Are you sure you want to delete selected protected service(s)?')} ${ids.length}${suffix}`,
+        confirmLabel: this.t('Delete selected'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -375,9 +377,13 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.uuid));
       this.selectedServiceUUIDs.set(failed);
       if (failed.size) {
-        this.snack.error(`${failed.size} selected protected service(s) could not be deleted.`);
+        this.snack.error(
+          `${failed.size} ${this.t('selected protected service(s) could not be deleted.')}`,
+        );
       } else {
-        this.snack.success(`${deleted.size || ids.length} selected protected service(s) deleted.`);
+        this.snack.success(
+          `${deleted.size || ids.length} ${this.t('selected protected service(s) deleted.')}`,
+        );
       }
       await this.loadItems();
     } catch (error: any) {
@@ -429,8 +435,12 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     try {
       return JSON.parse(value || 'null');
     } catch {
-      throw new Error(`${label} must be valid JSON.`);
+      throw new Error(`${this.t(label)} ${this.t('must be valid JSON.')}`);
     }
+  }
+
+  private t(value: string) {
+    return this.i18n.translateLiteral(value);
   }
 
   private pretty(value: unknown) {

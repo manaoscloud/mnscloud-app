@@ -26,6 +26,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
+import { I18nService } from '../../../services/i18n.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -67,6 +68,7 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
   private readonly trustedNodesApi = inject(CyberSecurityTrustedNodesService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
@@ -278,9 +280,9 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
     if (!trustedNode.uuid) return;
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Revoke trusted node',
-        message: `Are you sure you want to revoke "${trustedNode.name}"?`,
-        confirmLabel: 'Revoke',
+        title: this.t('Revoke trusted node'),
+        message: `${this.t('Are you sure you want to revoke')} "${trustedNode.name}"?`,
+        confirmLabel: this.t('Revoke'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -359,9 +361,9 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
     const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Revoke selected trusted nodes',
-        message: `Are you sure you want to revoke ${ids.length} selected trusted node(s)?${suffix}`,
-        confirmLabel: 'Revoke selected',
+        title: this.t('Revoke selected trusted nodes'),
+        message: `${this.t('Are you sure you want to revoke selected trusted node(s)?')} ${ids.length}${suffix}`,
+        confirmLabel: this.t('Revoke selected'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -381,9 +383,13 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.uuid));
       this.selectedTrustedNodeUUIDs.set(failed);
       if (failed.size) {
-        this.snack.error(`${failed.size} selected trusted node(s) could not be revoked.`);
+        this.snack.error(
+          `${failed.size} ${this.t('selected trusted node(s) could not be revoked.')}`,
+        );
       } else {
-        this.snack.success(`${deleted.size || ids.length} selected trusted node(s) revoked.`);
+        this.snack.success(
+          `${deleted.size || ids.length} ${this.t('selected trusted node(s) revoked.')}`,
+        );
       }
       await this.loadItems();
     } catch (error: any) {
@@ -446,8 +452,12 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
     try {
       return JSON.parse(value || 'null');
     } catch {
-      throw new Error(`${label} must be valid JSON.`);
+      throw new Error(`${this.t(label)} ${this.t('must be valid JSON.')}`);
     }
+  }
+
+  private t(value: string) {
+    return this.i18n.translateLiteral(value);
   }
 
   private pretty(value: unknown) {

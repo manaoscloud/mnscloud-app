@@ -27,6 +27,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
+import { I18nService } from '../../../services/i18n.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -73,6 +74,7 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
   private readonly trustedNodesApi = inject(CyberSecurityTrustedNodesService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
@@ -275,9 +277,9 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
     if (!policy.uuid) return;
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete network policy',
-        message: `Are you sure you want to delete "${policy.name}"?`,
-        confirmLabel: 'Delete',
+        title: this.t('Delete network policy'),
+        message: `${this.t('Are you sure you want to delete')} "${policy.name}"?`,
+        confirmLabel: this.t('Delete'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -356,9 +358,9 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
     const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete selected network policies',
-        message: `Are you sure you want to delete ${ids.length} selected network policy(ies)?${suffix}`,
-        confirmLabel: 'Delete selected',
+        title: this.t('Delete selected network policies'),
+        message: `${this.t('Are you sure you want to delete selected network policy(ies)?')} ${ids.length}${suffix}`,
+        confirmLabel: this.t('Delete selected'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -378,9 +380,13 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.uuid));
       this.selectedPolicyUUIDs.set(failed);
       if (failed.size) {
-        this.snack.error(`${failed.size} selected network policy(ies) could not be deleted.`);
+        this.snack.error(
+          `${failed.size} ${this.t('selected network policy(ies) could not be deleted.')}`,
+        );
       } else {
-        this.snack.success(`${deleted.size || ids.length} selected network policy(ies) deleted.`);
+        this.snack.success(
+          `${deleted.size || ids.length} ${this.t('selected network policy(ies) deleted.')}`,
+        );
       }
       await this.loadItems();
     } catch (error: any) {
@@ -473,8 +479,12 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
     try {
       return JSON.parse(value || 'null');
     } catch {
-      throw new Error(`${label} must be valid JSON.`);
+      throw new Error(`${this.t(label)} ${this.t('must be valid JSON.')}`);
     }
+  }
+
+  private t(value: string) {
+    return this.i18n.translateLiteral(value);
   }
 
   private pretty(value: unknown) {

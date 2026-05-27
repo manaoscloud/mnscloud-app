@@ -27,6 +27,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
+import { I18nService } from '../../../services/i18n.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -73,6 +74,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   private readonly servicesApi = inject(CyberSecurityServicesService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
@@ -224,7 +226,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
 
   duplicateProfile(profile: CyberSecurityProfile) {
     this.editing.set(null);
-    this.fillForm(profile, this.nextProfileCopyName(profile.name ?? 'Security Profile'));
+    this.fillForm(profile, this.nextProfileCopyName(profile.name ?? this.t('Security Profile')));
     this.openProfileDialog();
   }
 
@@ -303,9 +305,9 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
     if (!profile.uuid) return;
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete security profile',
-        message: `Are you sure you want to delete "${profile.name}"?`,
-        confirmLabel: 'Delete',
+        title: this.t('Delete security profile'),
+        message: `${this.t('Are you sure you want to delete')} "${profile.name}"?`,
+        confirmLabel: this.t('Delete'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -384,9 +386,9 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
     const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete selected security profiles',
-        message: `Are you sure you want to delete ${ids.length} selected security profile(s)?${suffix}`,
-        confirmLabel: 'Delete selected',
+        title: this.t('Delete selected security profiles'),
+        message: `${this.t('Are you sure you want to delete selected security profile(s)?')} ${ids.length}${suffix}`,
+        confirmLabel: this.t('Delete selected'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -406,9 +408,13 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.uuid));
       this.selectedProfileUUIDs.set(failed);
       if (failed.size) {
-        this.snack.error(`${failed.size} selected security profile(s) could not be deleted.`);
+        this.snack.error(
+          `${failed.size} ${this.t('selected security profile(s) could not be deleted.')}`,
+        );
       } else {
-        this.snack.success(`${deleted.size || ids.length} selected security profile(s) deleted.`);
+        this.snack.success(
+          `${deleted.size || ids.length} ${this.t('selected security profile(s) deleted.')}`,
+        );
       }
       await this.loadItems();
     } catch (error: any) {
@@ -479,7 +485,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
         )
         .filter(Boolean),
     );
-    const base = `${baseName} Copy`;
+    const base = `${baseName} ${this.t('Copy')}`;
     if (!names.has(base.toLowerCase())) return base;
     for (let index = 2; index < 1000; index += 1) {
       const candidate = `${base} ${index}`;
@@ -492,8 +498,12 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
     try {
       return JSON.parse(value || 'null');
     } catch {
-      throw new Error(`${label} must be valid JSON.`);
+      throw new Error(`${this.t(label)} ${this.t('must be valid JSON.')}`);
     }
+  }
+
+  private t(value: string) {
+    return this.i18n.translateLiteral(value);
   }
 
   private pretty(value: unknown) {
