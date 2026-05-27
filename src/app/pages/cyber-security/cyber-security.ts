@@ -19,6 +19,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { fadeIn } from '../../shared/animations/fade.animation';
+import { TranslatePipe } from '../../shared/i18n/translate.pipe';
 
 type CyberRecord = {
   [key: string]: any;
@@ -130,6 +131,7 @@ type CyberProgressEvent = {
     MatTableModule,
     MatTooltipModule,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './cyber-security.html',
   styleUrls: ['./cyber-security.scss'],

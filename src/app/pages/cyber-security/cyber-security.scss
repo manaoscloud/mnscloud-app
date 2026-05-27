@@ -88,18 +88,10 @@
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
   gap: 12px;
   align-items: start;
   margin-bottom: 14px;
-}
-
-.filter-grid .span-2 {
-  grid-column: span 2;
-}
-
-.filter-grid .span-4 {
-  grid-column: span 4;
 }
 
 .filter-actions {
@@ -161,6 +153,10 @@
   overflow: auto;
 }
 
+.alerts-panel .table-wrapper {
+  overflow-x: hidden;
+}
+
 table {
   width: 100%;
 }
@@ -168,6 +164,15 @@ table {
 th,
 td {
   white-space: nowrap;
+}
+
+.alerts-table {
+  table-layout: fixed;
+}
+
+.alerts-table :is(th, td) {
+  white-space: normal;
+  vertical-align: top;
 }
 
 .mat-column-job {
@@ -205,23 +210,38 @@ td small {
 }
 
 .mat-column-message {
-  width: 34%;
-  min-width: 360px;
+  width: 30%;
 }
 
 .alert-message-cell {
-  max-width: 760px;
+  max-width: unset;
   white-space: normal;
   overflow-wrap: anywhere;
   line-height: 1.45;
 }
 
 .mat-column-server {
-  min-width: 220px;
+  width: 15%;
 }
 
 .mat-column-scenario {
-  min-width: 260px;
+  width: 17%;
+}
+
+.alerts-table :is(.mat-column-level, .mat-column-status) {
+  width: 9%;
+}
+
+.alerts-table .mat-column-service {
+  width: 8%;
+}
+
+.alerts-table .mat-column-source {
+  width: 11%;
+}
+
+.alerts-table .mat-column-detectedAt {
+  width: 11%;
 }
 
 .table-select {
@@ -430,6 +450,18 @@ textarea {
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .filter-grid {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+
+  .alerts-panel .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .alerts-table {
+    min-width: 1100px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -446,11 +478,6 @@ textarea {
   .kpi-grid,
   .dialog-grid {
     grid-template-columns: 1fr;
-  }
-
-  .filter-grid .span-2,
-  .filter-grid .span-4 {
-    grid-column: 1 / -1;
   }
 
   .alert-message-cell {
