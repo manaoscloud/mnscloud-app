@@ -153,9 +153,12 @@
   overflow: auto;
 }
 
-.alerts-panel .table-wrapper,
 .decisions-panel .table-wrapper {
   overflow-x: hidden;
+}
+
+.alerts-panel .table-wrapper {
+  overflow-x: auto;
 }
 
 table {
@@ -221,7 +224,7 @@ td small {
 }
 
 .mat-column-message {
-  width: 23%;
+  width: 20%;
 }
 
 .alert-message-cell {
@@ -232,11 +235,11 @@ td small {
 }
 
 .mat-column-server {
-  width: 12%;
+  width: 11%;
 }
 
 .mat-column-scenario {
-  width: 13%;
+  width: 12%;
   overflow-wrap: anywhere;
 }
 
@@ -254,16 +257,19 @@ td small {
 }
 
 .alerts-table .mat-column-source {
-  width: 9%;
+  width: 8%;
   overflow-wrap: anywhere;
 }
 
 .alerts-table .mat-column-detectedAt {
-  width: 8%;
+  width: 7%;
 }
 
 .alerts-table .mat-column-actions {
-  width: 8%;
+  width: 12%;
+  min-width: 188px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .decisions-table :is(.mat-column-status, .mat-column-action) {
