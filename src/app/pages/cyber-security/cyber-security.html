@@ -147,7 +147,6 @@
               <ng-container matColumnDef="job">
                 <th mat-header-cell *matHeaderCellDef>Last Job</th>
                 <td mat-cell *matCellDef="let row" class="server-job-cell">
-                  <strong class="job-command">{{ row.lastJobCommand || '-' }}</strong>
                   <small>
                     {{ row.lastJobStatus || 'idle' }}
                     @if (
