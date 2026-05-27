@@ -171,8 +171,15 @@ td {
 }
 
 .alerts-table :is(th, td) {
+  overflow: visible;
+  text-overflow: clip;
   white-space: normal;
   vertical-align: top;
+}
+
+.alerts-table :is(strong, small) {
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .mat-column-job {
@@ -210,7 +217,7 @@ td small {
 }
 
 .mat-column-message {
-  width: 30%;
+  width: 31%;
 }
 
 .alert-message-cell {
@@ -221,27 +228,30 @@ td small {
 }
 
 .mat-column-server {
-  width: 15%;
+  width: 14%;
 }
 
 .mat-column-scenario {
-  width: 17%;
+  width: 15%;
+  overflow-wrap: anywhere;
 }
 
 .alerts-table :is(.mat-column-level, .mat-column-status) {
-  width: 9%;
+  width: 7%;
 }
 
 .alerts-table .mat-column-service {
   width: 8%;
+  overflow-wrap: anywhere;
 }
 
 .alerts-table .mat-column-source {
-  width: 11%;
+  width: 10%;
+  overflow-wrap: anywhere;
 }
 
 .alerts-table .mat-column-detectedAt {
-  width: 11%;
+  width: 8%;
 }
 
 .table-select {
@@ -298,13 +308,19 @@ td small {
 
 .status-chip {
   display: inline-flex;
-  min-width: 84px;
+  width: 100%;
+  min-width: 0;
+  max-width: 112px;
   justify-content: center;
   border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 4px 8px;
   font-size: 12px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-align: center;
   text-transform: uppercase;
+  white-space: normal;
 }
 
 .chip-protected,
