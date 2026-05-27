@@ -88,10 +88,18 @@
 
 .filter-grid {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr);
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
   gap: 12px;
   align-items: start;
   margin-bottom: 14px;
+}
+
+.filter-grid .span-2 {
+  grid-column: span 2;
+}
+
+.filter-grid .span-4 {
+  grid-column: span 4;
 }
 
 .filter-actions {
@@ -194,6 +202,26 @@ td small {
 
 .job-message.failed {
   color: #ff6b7a;
+}
+
+.mat-column-message {
+  width: 34%;
+  min-width: 360px;
+}
+
+.alert-message-cell {
+  max-width: 760px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.mat-column-server {
+  min-width: 220px;
+}
+
+.mat-column-scenario {
+  min-width: 260px;
 }
 
 .table-select {
@@ -409,7 +437,7 @@ textarea {
   .header-actions,
   .section-toolbar,
   .button-group {
-    align-items: stretch;
+    align-items: flex-end;
     flex-direction: column;
   }
 
@@ -418,5 +446,14 @@ textarea {
   .kpi-grid,
   .dialog-grid {
     grid-template-columns: 1fr;
+  }
+
+  .filter-grid .span-2,
+  .filter-grid .span-4 {
+    grid-column: 1 / -1;
+  }
+
+  .alert-message-cell {
+    max-width: 420px;
   }
 }

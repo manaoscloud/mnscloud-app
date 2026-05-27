@@ -7,10 +7,12 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -29,6 +31,7 @@ type CyberRecord = {
   logPaths?: unknown;
   crowdsecCollections?: unknown;
   enabled?: number;
+  serviceSlug?: string | null;
   serviceSlugs?: string;
   mode?: string;
   level?: string;
@@ -41,6 +44,7 @@ type CyberRecord = {
   scope?: string;
   reason?: string;
   agentUUID?: string;
+  serverUUID?: string | null;
   profileUUID?: string;
   servers?: number;
   protectedServers?: number;
@@ -86,6 +90,10 @@ type CyberRecord = {
   eventType?: string;
   decision?: string;
   sourceIP?: string;
+  serverName?: string | null;
+  serverHostname?: string | null;
+  serverPrivateIP?: string | null;
+  serverPublicIP?: string | null;
   method?: string;
   path?: string;
   detectedAt?: string;
@@ -114,9 +122,11 @@ type CyberProgressEvent = {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatPaginatorModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    MatSortModule,
     MatTableModule,
     MatTooltipModule,
     RouterLink,
@@ -153,6 +163,19 @@ export class CyberSecurityPage implements OnInit {
   readonly selectedServer = signal<CyberRecord | null>(null);
   readonly selectedJobs = signal<CyberRecord[]>([]);
   readonly activeSection = signal<CyberSection>('dashboard');
+  readonly alertServerSearch = signal('');
+  readonly alertServiceSearch = signal('');
+  readonly alertDataSource = new MatTableDataSource<CyberRecord>([]);
+
+  @ViewChild('alertPaginator')
+  set alertPaginator(paginator: MatPaginator | undefined) {
+    this.alertDataSource.paginator = paginator ?? null;
+  }
+
+  @ViewChild('alertSort')
+  set alertSort(sort: MatSort | undefined) {
+    this.alertDataSource.sort = sort ?? null;
+  }
 
   readonly sections: Array<{
     key: CyberSection;
@@ -289,6 +312,22 @@ export class CyberSecurityPage implements OnInit {
         .includes(search),
     );
   });
+  readonly filteredAlertServers = computed(() => {
+    const search = this.alertServerSearch().trim().toLowerCase();
+    if (!search) return this.servers();
+    return this.servers().filter((server) =>
+      `${this.serverLabel(server)} ${this.serverDetail(server)}`.toLowerCase().includes(search),
+    );
+  });
+  readonly filteredAlertServices = computed(() => {
+    const search = this.alertServiceSearch().trim().toLowerCase();
+    if (!search) return this.services();
+    return this.services().filter((service) =>
+      `${service.name ?? ''} ${service.slug ?? ''} ${service.description ?? ''}`
+        .toLowerCase()
+        .includes(search),
+    );
+  });
 
   readonly serverColumns = [
     'agent',
@@ -301,7 +340,16 @@ export class CyberSecurityPage implements OnInit {
     'actions',
   ];
   readonly decisionColumns = ['value', 'action', 'origin', 'scenario', 'service', 'expires'];
-  readonly alertColumns = ['level', 'status', 'scenario', 'service', 'source', 'message'];
+  readonly alertColumns = [
+    'server',
+    'level',
+    'status',
+    'service',
+    'source',
+    'scenario',
+    'message',
+    'detectedAt',
+  ];
   readonly listColumns = ['type', 'value', 'scope', 'reason', 'actions'];
   readonly securityEventColumns = [
     'detectedAt',
@@ -314,6 +362,11 @@ export class CyberSecurityPage implements OnInit {
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
+    serverUUID: [''],
+    status: [''],
+    level: [''],
+    serviceSlug: [''],
+    sourceIP: [''],
   });
 
   readonly listForm = this.fb.nonNullable.group({
@@ -325,6 +378,20 @@ export class CyberSecurityPage implements OnInit {
   });
 
   ngOnInit() {
+    this.alertDataSource.sortingDataAccessor = (row, column) => {
+      switch (column) {
+        case 'server':
+          return this.serverLabel(row);
+        case 'service':
+          return this.serviceLabel(row.serviceSlug);
+        case 'source':
+          return row.sourceIP ?? '';
+        case 'detectedAt':
+          return row.detectedAt ?? row.dateCreated ?? '';
+        default:
+          return row[column] ?? '';
+      }
+    };
     this.route.paramMap.subscribe((params) => {
       this.activeSection.set(this.normalizeSection(params.get('section')));
     });
@@ -342,6 +409,7 @@ export class CyberSecurityPage implements OnInit {
     this.loading.set(true);
     try {
       const query = this.queryString();
+      const alertQuery = this.alertQueryString();
       const [
         dashboard,
         servers,
@@ -358,7 +426,7 @@ export class CyberSecurityPage implements OnInit {
         this.api.get<any>(`cyber-security/services${query}`),
         this.api.get<any>(`cyber-security/profiles${query}`),
         this.api.get<any>(`cyber-security/decisions${query}`),
-        this.api.get<any>(`cyber-security/alerts${query}`),
+        this.api.get<any>(`cyber-security/alerts${alertQuery}`),
         this.api.get<any>(`cyber-security/lists${query}`),
         this.api.get<any>(`cyber-security/trusted-nodes${query}`),
         this.api.get<any>(`cyber-security/security-events${query}`),
@@ -368,7 +436,9 @@ export class CyberSecurityPage implements OnInit {
       this.services.set(services?.data?.items ?? []);
       this.profiles.set(profiles?.data?.items ?? []);
       this.decisions.set(decisions?.data?.items ?? []);
-      this.alerts.set(alerts?.data?.items ?? []);
+      const alertItems = alerts?.data?.items ?? [];
+      this.alerts.set(alertItems);
+      this.alertDataSource.data = alertItems;
       this.listEntries.set(lists?.data?.items ?? []);
       this.trustedNodes.set(trustedNodes?.data?.items ?? []);
       this.securityEvents.set(securityEvents?.data?.items ?? []);
@@ -380,16 +450,39 @@ export class CyberSecurityPage implements OnInit {
   }
 
   applyFilters() {
+    this.resetAlertPaginator();
     void this.loadAll();
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '' });
+    this.filterForm.reset({
+      search: '',
+      serverUUID: '',
+      status: '',
+      level: '',
+      serviceSlug: '',
+      sourceIP: '',
+    });
+    this.alertServerSearch.set('');
+    this.alertServiceSearch.set('');
+    this.resetAlertPaginator();
     void this.loadAll();
   }
 
   clearServerProfileSearch(open: boolean) {
     if (!open) this.serverProfileSearch.set('');
+  }
+
+  clearAlertServerSearch(open: boolean) {
+    if (!open) this.alertServerSearch.set('');
+  }
+
+  clearAlertServiceSearch(open: boolean) {
+    if (!open) this.alertServiceSearch.set('');
+  }
+
+  resetAlertPaginator() {
+    this.alertDataSource.paginator?.firstPage();
   }
 
   openListEntry(row?: CyberRecord, listType = 'allowlist') {
@@ -536,6 +629,39 @@ export class CyberSecurityPage implements OnInit {
     return this.trustedNodes().find((node) => node.uuid === uuid)?.name ?? uuid;
   }
 
+  serverOptionValue(row: CyberRecord) {
+    return row.uuid || row.serverUUID || '';
+  }
+
+  serverLabel(row: CyberRecord | string | null | undefined): string {
+    if (!row) return '-';
+    if (typeof row === 'string') {
+      const server = this.servers().find((item) => item.uuid === row || item.serverUUID === row);
+      return server ? this.serverLabel(server) : row;
+    }
+    return (
+      row.serverName ||
+      row.agentName ||
+      row.serverHostname ||
+      row.agentHostname ||
+      row.hostname ||
+      row.agentUUID ||
+      row.serverUUID ||
+      '-'
+    );
+  }
+
+  serverDetail(row: CyberRecord) {
+    return (
+      row.serverPrivateIP || row.serverPublicIP || row.agentHostname || row.serverHostname || ''
+    );
+  }
+
+  serviceLabel(slug: string | null | undefined) {
+    if (!slug) return '-';
+    return this.services().find((service) => service.slug === slug)?.name ?? slug;
+  }
+
   private async save(endpoint: string, payload: Record<string, any>, update: boolean) {
     try {
       if (update) await this.api.put(endpoint, payload);
@@ -568,9 +694,23 @@ export class CyberSecurityPage implements OnInit {
   }
 
   private queryString() {
-    const search = this.filterForm.getRawValue().search.trim();
+    const filters = this.filterForm.getRawValue();
+    const search = filters.search.trim();
     const params = new URLSearchParams();
     if (search) params.set('search', search);
+    params.set('limit', '1000');
+    return `?${params.toString()}`;
+  }
+
+  private alertQueryString() {
+    const filters = this.filterForm.getRawValue();
+    const params = new URLSearchParams();
+    if (filters.search.trim()) params.set('search', filters.search.trim());
+    if (filters.serverUUID) params.set('serverUUID', filters.serverUUID);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.level) params.set('level', filters.level);
+    if (filters.serviceSlug) params.set('serviceSlug', filters.serviceSlug);
+    if (filters.sourceIP.trim()) params.set('sourceIP', filters.sourceIP.trim());
     params.set('limit', '1000');
     return `?${params.toString()}`;
   }
