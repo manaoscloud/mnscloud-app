@@ -133,8 +133,6 @@ export class CyberSecurityPage implements OnInit {
 
   @ViewChild('listDialog')
   listDialog?: TemplateRef<unknown>;
-  @ViewChild('trustedNodeDialog')
-  trustedNodeDialog?: TemplateRef<unknown>;
   @ViewChild('networkPolicyDialog')
   networkPolicyDialog?: TemplateRef<unknown>;
   @ViewChild('jobDialog')
@@ -152,7 +150,6 @@ export class CyberSecurityPage implements OnInit {
   readonly networkPolicies = signal<CyberRecord[]>([]);
   readonly securityEvents = signal<CyberRecord[]>([]);
   readonly editingListEntry = signal<CyberRecord | null>(null);
-  readonly editingTrustedNode = signal<CyberRecord | null>(null);
   readonly editingNetworkPolicy = signal<CyberRecord | null>(null);
   readonly serverProfileSearch = signal('');
   readonly selectedServer = signal<CyberRecord | null>(null);
@@ -247,15 +244,6 @@ export class CyberSecurityPage implements OnInit {
   readonly decisionColumns = ['value', 'action', 'origin', 'scenario', 'service', 'expires'];
   readonly alertColumns = ['level', 'status', 'scenario', 'service', 'source', 'message'];
   readonly listColumns = ['type', 'value', 'scope', 'reason', 'actions'];
-  readonly trustedNodeColumns = [
-    'name',
-    'type',
-    'networks',
-    'groups',
-    'status',
-    'lastSeen',
-    'actions',
-  ];
   readonly networkPolicyColumns = [
     'name',
     'endpointGroup',
@@ -284,20 +272,6 @@ export class CyberSecurityPage implements OnInit {
     scope: ['ip', [Validators.required]],
     reason: [''],
     enabled: [1],
-  });
-
-  readonly trustedNodeForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    nodeUUID: ['', [Validators.required]],
-    nodeType: ['freeswitch', [Validators.required]],
-    hostname: [''],
-    allowedNetworks: ['[]'],
-    endpointGroups: ['[]'],
-    authMode: ['hmac', [Validators.required]],
-    secret: [''],
-    status: ['active', [Validators.required]],
-    mode: ['monitor', [Validators.required]],
-    notes: [''],
   });
 
   readonly networkPolicyForm = this.fb.nonNullable.group({
@@ -412,43 +386,6 @@ export class CyberSecurityPage implements OnInit {
 
   async deleteListEntry(row: CyberRecord) {
     await this.remove(`cyber-security/lists/${row.uuid}`);
-  }
-
-  openTrustedNode(row?: CyberRecord) {
-    this.editingTrustedNode.set(row ?? null);
-    this.trustedNodeForm.reset({
-      name: row?.name ?? '',
-      nodeUUID: row?.nodeUUID ?? '',
-      nodeType: row?.nodeType ?? 'freeswitch',
-      hostname: row?.hostname ?? '',
-      allowedNetworks: this.pretty(row?.allowedNetworks ?? []),
-      endpointGroups: this.pretty(row?.endpointGroups ?? []),
-      authMode: row?.authMode ?? 'hmac',
-      secret: '',
-      status: row?.status ?? 'active',
-      mode: row?.mode ?? 'monitor',
-      notes: row?.notes ?? '',
-    });
-    this.openDialog(this.trustedNodeDialog);
-  }
-
-  async saveTrustedNode() {
-    if (this.trustedNodeForm.invalid) return;
-    const row = this.editingTrustedNode();
-    const payload = this.parseJsonFields(this.trustedNodeForm.getRawValue(), [
-      'allowedNetworks',
-      'endpointGroups',
-    ]);
-    if (!payload['secret']) delete payload['secret'];
-    await this.save(
-      row ? `cyber-security/trusted-nodes/${row.uuid}` : 'cyber-security/trusted-nodes',
-      payload,
-      !!row,
-    );
-  }
-
-  async deleteTrustedNode(row: CyberRecord) {
-    await this.remove(`cyber-security/trusted-nodes/${row.uuid}`);
   }
 
   openNetworkPolicy(row?: CyberRecord) {

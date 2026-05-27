@@ -1,0 +1,49 @@
+.table-wrapper small {
+  display: block;
+  margin-top: 0.2rem;
+  color: rgba(226, 235, 232, 0.68);
+}
+
+.select-col {
+  width: 56px;
+  min-width: 56px;
+}
+
+.wrapped-cell {
+  max-width: 360px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.actions-col {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  min-width: 104px;
+}
+
+.actions-col-cell,
+.actions-col-header {
+  width: 120px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.status-col small {
+  display: block;
+  margin-top: 0.2rem;
+  text-transform: capitalize;
+}
+
+.no-data-cell {
+  padding: 1.5rem !important;
+  text-align: center;
+  color: rgba(226, 235, 232, 0.72);
+}
+
+textarea {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
