@@ -1,0 +1,53 @@
+.table-wrapper small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.select-col {
+  width: 56px;
+  min-width: 56px;
+}
+
+.wrapped-cell {
+  max-width: 360px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.actions-col {
+  min-width: 152px;
+}
+
+.actions-col-cell,
+.actions-col-header {
+  width: 152px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.no-data-cell {
+  padding: 1.5rem !important;
+  text-align: center;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.select-search-option {
+  height: auto;
+  padding: 6px 10px;
+}
+
+.select-search-field {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  padding: 8px 10px;
+}
+
+textarea {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}

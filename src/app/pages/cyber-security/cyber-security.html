@@ -258,74 +258,6 @@
         </div>
       </section>
     }
-    @case ('profiles') {
-      <section class="activity-panel">
-        <div class="section-toolbar">
-          <div>
-            <h2>Security Profiles</h2>
-            <span>{{ profiles().length }} records</span>
-          </div>
-          <button mat-stroked-button type="button" (click)="openProfile()">
-            <mat-icon>add</mat-icon>
-            New
-          </button>
-        </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="profiles()">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-            </ng-container>
-            <ng-container matColumnDef="mode">
-              <th mat-header-cell *matHeaderCellDef>Mode</th>
-              <td mat-cell *matCellDef="let row">{{ row.mode }}</td>
-            </ng-container>
-            <ng-container matColumnDef="level">
-              <th mat-header-cell *matHeaderCellDef>Level</th>
-              <td mat-cell *matCellDef="let row">{{ row.level }}</td>
-            </ng-container>
-            <ng-container matColumnDef="services">
-              <th mat-header-cell *matHeaderCellDef>Services</th>
-              <td mat-cell *matCellDef="let row">{{ row.serviceSlugs || '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let row" class="actions-cell">
-                <div class="table-actions">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Edit"
-                    (click)="openProfile(row)"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    matTooltip="Duplicate"
-                    (click)="duplicateProfile(row)"
-                  >
-                    <mat-icon>content_copy</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    type="button"
-                    matTooltip="Delete"
-                    (click)="deleteProfile(row)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="profileColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: profileColumns"></tr>
-          </table>
-        </div>
-      </section>
-    }
     @case ('decisions') {
       <section class="activity-panel">
         <div class="section-toolbar">
@@ -749,62 +681,6 @@
 
     <mat-dialog-actions align="end">
       <button mat-stroked-button mat-dialog-close>Close</button>
-    </mat-dialog-actions>
-  </div>
-</ng-template>
-
-<ng-template #profileDialog>
-  <div class="cyber-dialog">
-    <h2>
-      {{ editingProfile() ? 'Edit security profile' : 'New security profile' }}
-    </h2>
-    <mat-dialog-content class="dialog-grid" [formGroup]="profileForm">
-      <mat-form-field appearance="outline"
-        ><mat-label>Name</mat-label><input matInput formControlName="name"
-      /></mat-form-field>
-      <mat-form-field appearance="outline"
-        ><mat-label>Mode</mat-label
-        ><mat-select formControlName="mode"
-          ><mat-option value="monitor">Monitor only</mat-option
-          ><mat-option value="enforce">Enforce</mat-option></mat-select
-        ></mat-form-field
-      >
-      <mat-form-field appearance="outline"
-        ><mat-label>Level</mat-label
-        ><mat-select formControlName="level"
-          ><mat-option value="basic">Basic</mat-option
-          ><mat-option value="balanced">Balanced</mat-option
-          ><mat-option value="strict">Strict</mat-option
-          ><mat-option value="custom">Custom</mat-option></mat-select
-        ></mat-form-field
-      >
-      <mat-form-field appearance="outline"
-        ><mat-label>Decision duration</mat-label
-        ><input matInput formControlName="defaultDecisionDuration"
-      /></mat-form-field>
-      <mat-form-field appearance="outline" class="full"
-        ><mat-label>Services</mat-label
-        ><mat-select formControlName="serviceUUIDs" multiple>
-          @for (service of services(); track service.uuid) {
-            <mat-option [value]="service.uuid">{{ service.slug }}</mat-option>
-          }
-        </mat-select></mat-form-field
-      >
-      <mat-form-field appearance="outline" class="full"
-        ><mat-label>Description</mat-label><input matInput formControlName="description"
-      /></mat-form-field>
-      <mat-form-field appearance="outline"
-        ><mat-label>Trusted networks JSON</mat-label
-        ><textarea matInput rows="5" formControlName="trustedNetworks"></textarea>
-      </mat-form-field>
-      <mat-form-field appearance="outline"
-        ><mat-label>Rules JSON</mat-label
-        ><textarea matInput rows="5" formControlName="rules"></textarea>
-      </mat-form-field>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button mat-dialog-close>Close</button>
-      <button mat-flat-button color="primary" (click)="saveProfile()">Save</button>
     </mat-dialog-actions>
   </div>
 </ng-template>

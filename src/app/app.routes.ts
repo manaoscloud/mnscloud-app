@@ -179,6 +179,14 @@ export const routes: Routes = [
                 title: 'Cyber Security • Services | mnscloud',
               },
               {
+                path: 'cyber-security/profiles',
+                loadComponent: () =>
+                  import('./pages/cyber-security/profiles/profiles').then(
+                    (m) => m.CyberSecurityProfilesPage,
+                  ),
+                title: 'Cyber Security • Profiles | mnscloud',
+              },
+              {
                 path: 'cyber-security/:section',
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
@@ -1039,6 +1047,15 @@ export const routes: Routes = [
                     (m) => m.CyberSecurityServicesPage,
                   ),
                 title: 'System Cyber Security • Services | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'cyber-security/profiles',
+                loadComponent: () =>
+                  import('./pages/cyber-security/profiles/profiles').then(
+                    (m) => m.CyberSecurityProfilesPage,
+                  ),
+                title: 'System Cyber Security • Profiles | mnscloud',
                 data: { scope: 'master' },
               },
               {

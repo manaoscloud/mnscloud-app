@@ -131,8 +131,6 @@ export class CyberSecurityPage implements OnInit {
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('profileDialog')
-  profileDialog?: TemplateRef<unknown>;
   @ViewChild('listDialog')
   listDialog?: TemplateRef<unknown>;
   @ViewChild('trustedNodeDialog')
@@ -153,7 +151,6 @@ export class CyberSecurityPage implements OnInit {
   readonly trustedNodes = signal<CyberRecord[]>([]);
   readonly networkPolicies = signal<CyberRecord[]>([]);
   readonly securityEvents = signal<CyberRecord[]>([]);
-  readonly editingProfile = signal<CyberRecord | null>(null);
   readonly editingListEntry = signal<CyberRecord | null>(null);
   readonly editingTrustedNode = signal<CyberRecord | null>(null);
   readonly editingNetworkPolicy = signal<CyberRecord | null>(null);
@@ -247,7 +244,6 @@ export class CyberSecurityPage implements OnInit {
     'lastSync',
     'actions',
   ];
-  readonly profileColumns = ['name', 'mode', 'level', 'services', 'actions'];
   readonly decisionColumns = ['value', 'action', 'origin', 'scenario', 'service', 'expires'];
   readonly alertColumns = ['level', 'status', 'scenario', 'service', 'source', 'message'];
   readonly listColumns = ['type', 'value', 'scope', 'reason', 'actions'];
@@ -280,18 +276,6 @@ export class CyberSecurityPage implements OnInit {
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
-  });
-
-  readonly profileForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    description: [''],
-    mode: ['monitor', [Validators.required]],
-    level: ['balanced', [Validators.required]],
-    defaultDecisionDuration: ['4h'],
-    serviceUUIDs: [[] as string[]],
-    trustedNetworks: ['[]'],
-    rules: ['{}'],
-    enabled: [1],
   });
 
   readonly listForm = this.fb.nonNullable.group({
@@ -404,69 +388,6 @@ export class CyberSecurityPage implements OnInit {
     if (!open) this.serverProfileSearch.set('');
   }
 
-  openProfile(row?: CyberRecord) {
-    this.editingProfile.set(row ?? null);
-    this.fillProfileForm(row, row?.name ?? '');
-    this.openDialog(this.profileDialog);
-  }
-
-  duplicateProfile(row: CyberRecord) {
-    this.editingProfile.set(null);
-    this.fillProfileForm(row, this.nextProfileCopyName(row.name ?? 'Security Profile'));
-    this.openDialog(this.profileDialog);
-  }
-
-  private fillProfileForm(row: CyberRecord | undefined, name: string) {
-    const selected = String(row?.serviceSlugs ?? '')
-      .split(',')
-      .map((slug) => this.services().find((service) => service.slug === slug)?.uuid)
-      .filter(Boolean) as string[];
-    this.profileForm.reset({
-      name,
-      description: row?.description ?? '',
-      mode: row?.mode ?? 'monitor',
-      level: row?.level ?? 'balanced',
-      defaultDecisionDuration: row?.defaultDecisionDuration ?? '4h',
-      serviceUUIDs: selected,
-      trustedNetworks: this.pretty(row?.trustedNetworks ?? []),
-      rules: this.pretty(row?.rules ?? {}),
-      enabled: row?.enabled ?? 1,
-    });
-  }
-
-  private nextProfileCopyName(baseName: string) {
-    const names = new Set(
-      this.profiles()
-        .map((profile) =>
-          String(profile.name ?? '')
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean),
-    );
-    const base = `${baseName} Copy`;
-    if (!names.has(base.toLowerCase())) return base;
-    for (let index = 2; index < 1000; index += 1) {
-      const candidate = `${base} ${index}`;
-      if (!names.has(candidate.toLowerCase())) return candidate;
-    }
-    return `${base} ${Date.now()}`;
-  }
-
-  async saveProfile() {
-    if (this.profileForm.invalid) return;
-    const row = this.editingProfile();
-    const payload = this.parseJsonFields(this.profileForm.getRawValue(), [
-      'trustedNetworks',
-      'rules',
-    ]);
-    await this.save(
-      row ? `cyber-security/profiles/${row.uuid}` : 'cyber-security/profiles',
-      payload,
-      !!row,
-    );
-  }
-
   openListEntry(row?: CyberRecord, listType = 'allowlist') {
     this.editingListEntry.set(row ?? null);
     this.listForm.reset({
@@ -487,10 +408,6 @@ export class CyberSecurityPage implements OnInit {
       this.listForm.getRawValue(),
       !!row,
     );
-  }
-
-  async deleteProfile(row: CyberRecord) {
-    await this.remove(`cyber-security/profiles/${row.uuid}`);
   }
 
   async deleteListEntry(row: CyberRecord) {
