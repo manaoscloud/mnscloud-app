@@ -294,13 +294,13 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       authMode: String(item['authMode'] ?? 'ip_acl'),
       transport: String(item['transport'] ?? 'udp'),
       port: Number(item['port'] ?? 5060),
-      username: String(item['username'] ?? ''),
-      password: String(item['password'] ?? ''),
-      realm: String(item['realm'] ?? ''),
-      fromDomain: String(item['fromDomain'] ?? ''),
-      fromUser: String(item['fromUser'] ?? ''),
+      username: this.optionalText(item['username']),
+      password: this.optionalText(item['password']),
+      realm: this.optionalText(item['realm']),
+      fromDomain: this.optionalText(item['fromDomain']),
+      fromUser: this.optionalText(item['fromUser']),
       registerEnabled: Number(item['registerEnabled'] ?? 0) === 1,
-      allowedCidrs: String(item['allowedCidrs'] ?? ''),
+      allowedCidrs: this.optionalText(item['allowedCidrs']),
       priority: Number(item['priority'] ?? 100),
       stripDigits: Number(item['stripDigits'] ?? 0),
       audioCodecs: this.parseAudioCodecs(String(item['codecs'] ?? '')),
@@ -592,13 +592,13 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       payload['authMode'] = value.authMode;
       payload['transport'] = value.transport;
       payload['port'] = value.port;
-      payload['username'] = value.username || null;
-      payload['password'] = value.password || null;
-      payload['realm'] = value.realm || null;
-      payload['fromDomain'] = value.fromDomain || null;
-      payload['fromUser'] = value.fromUser || null;
+      payload['username'] = this.payloadText(value.username);
+      payload['password'] = this.payloadText(value.password);
+      payload['realm'] = this.payloadText(value.realm);
+      payload['fromDomain'] = this.payloadText(value.fromDomain);
+      payload['fromUser'] = this.payloadText(value.fromUser);
       payload['registerEnabled'] = value.registerEnabled;
-      payload['allowedCidrs'] = value.allowedCidrs || null;
+      payload['allowedCidrs'] = this.payloadText(value.allowedCidrs);
       payload['priority'] = value.priority;
       payload['codecs'] = this.formatCodecs([...value.audioCodecs, ...value.videoCodecs]);
     }
@@ -607,6 +607,14 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       payload['stripDigits'] = value.stripDigits;
     }
     return payload;
+  }
+  private optionalText(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    const text = String(value).trim();
+    return text && !['null', 'undefined'].includes(text.toLowerCase()) ? text : '';
+  }
+  private payloadText(value: unknown): string | null {
+    return this.optionalText(value) || null;
   }
   private resetForm() {
     const meta = this.meta();
