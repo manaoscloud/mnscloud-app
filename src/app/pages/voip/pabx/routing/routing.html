@@ -177,7 +177,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs" [formGroup]="form">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form id="voipPabxRoutingForm" class="form-grid" [formGroup]="form" (ngSubmit)="save()">
               <mat-form-field appearance="outline" class="span-2">
@@ -250,7 +250,10 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Hold media file</mat-label>
-                  <mat-select formControlName="mediaFileUUID" (openedChange)="onMediaFileOpened($event)">
+                  <mat-select
+                    formControlName="mediaFileUUID"
+                    (openedChange)="onMediaFileOpened($event)"
+                  >
                     <mat-option [value]="''">None</mat-option>
                     <mat-option
                       class="select-search-option"
@@ -283,7 +286,10 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Greeting media file</mat-label>
-                  <mat-select formControlName="mediaFileUUID" (openedChange)="onMediaFileOpened($event)">
+                  <mat-select
+                    formControlName="mediaFileUUID"
+                    (openedChange)="onMediaFileOpened($event)"
+                  >
                     <mat-option [value]="''">None</mat-option>
                     <mat-option
                       class="select-search-option"

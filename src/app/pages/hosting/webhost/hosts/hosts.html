@@ -319,7 +319,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="hostForm">
               <mat-form-field appearance="outline">
@@ -355,7 +355,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Customer</mat-label>
-                <mat-select formControlName="customerUUID" (openedChange)="onCustomerOpened($event)">
+                <mat-select
+                  formControlName="customerUUID"
+                  (openedChange)="onCustomerOpened($event)"
+                >
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -375,7 +378,9 @@
                     </mat-form-field>
                   </mat-option>
                   @for (customer of filteredCustomers(); track customer.CustomerUUID) {
-                    <mat-option [value]="customer.CustomerUUID">{{ customerLabel(customer) }}</mat-option>
+                    <mat-option [value]="customer.CustomerUUID">{{
+                      customerLabel(customer)
+                    }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>

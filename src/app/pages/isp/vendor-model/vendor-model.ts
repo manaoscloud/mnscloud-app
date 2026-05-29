@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -22,6 +30,7 @@ import { ApiService } from '../../../services/api.service';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
 
@@ -44,6 +53,7 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './vendor-model.html',
   styleUrls: ['./vendor-model.scss'],

@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { ApiService } from '../../../services/api.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -89,6 +90,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
     MatProgressSpinnerModule,
     MatSlideToggleModule,
     MatTabsModule,
+    TranslatePipe,
     MatSelectModule,
   ],
   templateUrl: './parameters.html',
@@ -303,8 +305,7 @@ export class SettingsParametersPage implements OnInit {
       voipPabxRemoteCommandExecutor: this.normalizeRemoteCommandExecutor(
         raw?.voipPabxRemoteCommandExecutor,
       ),
-      voipPabxRemoteCommandExecutorIsActive:
-        raw?.voipPabxRemoteCommandExecutorIsActive !== false,
+      voipPabxRemoteCommandExecutorIsActive: raw?.voipPabxRemoteCommandExecutorIsActive !== false,
     };
   }
 

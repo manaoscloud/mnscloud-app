@@ -36,6 +36,7 @@ import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type Customer = {
   CustomerUUID: string;
@@ -191,6 +192,7 @@ class GeoMapStyleControl {
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     MatMenuModule,
     PhoneInputComponent,
   ],

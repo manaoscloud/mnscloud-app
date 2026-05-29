@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -19,6 +27,7 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type SaleStockTypeItem = {
   SstUUID: string;
@@ -45,6 +54,7 @@ type SaleStockTypeItem = {
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './stock-type.html',
   styleUrls: ['./stock-type.scss'],
@@ -160,7 +170,9 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
         const response = await this.api.put<any>(`sale/stock-types/${editing.SstUUID}`, payload);
         const item = response?.data?.item ?? null;
         if (item) {
-          this.stockTypes.update((items) => items.map((row) => (row.SstUUID === item.SstUUID ? item : row)));
+          this.stockTypes.update((items) =>
+            items.map((row) => (row.SstUUID === item.SstUUID ? item : row)),
+          );
           this.dataSource.data = [...this.stockTypes()];
         }
       } else {

@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -20,6 +28,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { ApiService } from '../../../services/api.service';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type IspPopItem = {
   IppUUID: string;
@@ -53,6 +62,7 @@ type IspPopItem = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './pop.html',
   styleUrls: ['./pop.scss'],

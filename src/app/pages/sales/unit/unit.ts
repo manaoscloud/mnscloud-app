@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -19,6 +27,7 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type UnitItem = {
   SunUUID: string;
@@ -46,6 +55,7 @@ type UnitItem = {
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './unit.html',
   styleUrls: ['./unit.scss'],
@@ -167,7 +177,9 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
         const response = await this.api.put<any>(`sale/units/${editing.SunUUID}`, payload);
         const item = response?.data?.item ?? null;
         if (item) {
-          this.units.update((items) => items.map((row) => (row.SunUUID === item.SunUUID ? item : row)));
+          this.units.update((items) =>
+            items.map((row) => (row.SunUUID === item.SunUUID ? item : row)),
+          );
           this.dataSource.data = [...this.units()];
         }
       } else {

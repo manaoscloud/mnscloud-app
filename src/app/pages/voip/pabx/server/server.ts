@@ -26,6 +26,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipPabxServerItem, VoipPabxServerService } from './server.service';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type ServerPayload = {
   name: string;
@@ -70,6 +71,7 @@ type ServerPayload = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './server.html',
@@ -325,14 +327,14 @@ export class VoipPabxServerPage implements AfterViewInit {
     const engine = String(data['engine'] || '').toLowerCase();
     const repo = engine === 'asterisk' ? 'mnscloud-asterisk' : 'mnscloud-freeswitch';
     const script = engine === 'asterisk' ? 'install-asterisk.sh' : 'install-freeswitch.sh';
-    const validateScript = engine === 'asterisk' ? 'validate-asterisk.sh' : 'validate-freeswitch.sh';
+    const validateScript =
+      engine === 'asterisk' ? 'validate-asterisk.sh' : 'validate-freeswitch.sh';
     const apiBase = window.location.origin;
-    const installLine =
-      `sudo bash /opt/mnscloud/${repo}/scripts/${script} --api-base ${
-        this.shellQuote(apiBase)
-      } --node-uuid ${this.shellQuote(String(data['nodeUUID'] || ''))} --runtime-token ${
-        this.shellQuote(String(data['runtimeToken'] || ''))
-      }`;
+    const installLine = `sudo bash /opt/mnscloud/${repo}/scripts/${script} --api-base ${this.shellQuote(
+      apiBase,
+    )} --node-uuid ${this.shellQuote(String(data['nodeUUID'] || ''))} --runtime-token ${this.shellQuote(
+      String(data['runtimeToken'] || ''),
+    )}`;
     const postValidate = `[ -f /opt/mnscloud/${repo}/scripts/${validateScript} ] && sudo bash /opt/mnscloud/${repo}/scripts/${validateScript} || true`;
     return [
       'sudo install -d -m 0755 /opt/mnscloud',

@@ -29,7 +29,7 @@
 
       <div class="dialog-content">
         <mat-tab-group class="form-tabs">
-          <mat-tab label="Data">
+          <mat-tab [label]="'Data' | t">
             <form class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default Currency</mat-label>
@@ -109,10 +109,14 @@
                   mat-icon-button
                   matSuffix
                   type="button"
-                  [attr.aria-label]="showGoogleMapsEmbedApiKey() ? 'Hide Google Maps key' : 'Show Google Maps key'"
+                  [attr.aria-label]="
+                    showGoogleMapsEmbedApiKey() ? 'Hide Google Maps key' : 'Show Google Maps key'
+                  "
                   (click)="showGoogleMapsEmbedApiKey.set(!showGoogleMapsEmbedApiKey())"
                 >
-                  <mat-icon>{{ showGoogleMapsEmbedApiKey() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  <mat-icon>{{
+                    showGoogleMapsEmbedApiKey() ? 'visibility_off' : 'visibility'
+                  }}</mat-icon>
                 </button>
               </mat-form-field>
 
@@ -152,10 +156,14 @@
                     mat-icon-button
                     matSuffix
                     type="button"
-                    [attr.aria-label]="showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token'"
+                    [attr.aria-label]="
+                      showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token'
+                    "
                     (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())"
                   >
-                    <mat-icon>{{ showSignalWireRepoToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    <mat-icon>{{
+                      showSignalWireRepoToken() ? 'visibility_off' : 'visibility'
+                    }}</mat-icon>
                   </button>
                 </mat-form-field>
               }
@@ -314,7 +322,9 @@
                     </mat-slide-toggle>
                     <mat-slide-toggle
                       [ngModel]="item().voipPabxRemoteCommandExecutorIsActive"
-                      (ngModelChange)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event })"
+                      (ngModelChange)="
+                        updateItem({ voipPabxRemoteCommandExecutorIsActive: $event })
+                      "
                       [ngModelOptions]="{ standalone: true }"
                     >
                       Remote Command Active

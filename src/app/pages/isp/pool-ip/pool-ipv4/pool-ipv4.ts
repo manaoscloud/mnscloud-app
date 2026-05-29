@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -20,6 +28,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../../../services/api.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type PoolIpv4Item = {
   Ip4UUID: string;
@@ -54,6 +63,7 @@ type PoolIpv4NetworkItem = {
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './pool-ipv4.html',
   styleUrls: ['./pool-ipv4.scss'],
@@ -152,7 +162,8 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
       this.applySearchFilters();
       const selected = this.selectedPool();
       if (selected) {
-        const refreshed = this.poolDataSource.data.find((row) => row.Ip4UUID === selected.Ip4UUID) ?? null;
+        const refreshed =
+          this.poolDataSource.data.find((row) => row.Ip4UUID === selected.Ip4UUID) ?? null;
         this.selectedPool.set(refreshed);
       }
       if (this.selectedPool()) await this.loadNetworks();
@@ -253,7 +264,9 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/ipv4-pools/${item.Ip4UUID}`);
-      this.poolDataSource.data = this.poolDataSource.data.filter((row) => row.Ip4UUID !== item.Ip4UUID);
+      this.poolDataSource.data = this.poolDataSource.data.filter(
+        (row) => row.Ip4UUID !== item.Ip4UUID,
+      );
       if (this.selectedPool()?.Ip4UUID === item.Ip4UUID) {
         this.selectedPool.set(null);
         this.networkDataSource.data = [];
@@ -320,7 +333,10 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editingNetwork();
       if (editing) {
-        await this.api.put(`isp/ipv4-pools/${selected.Ip4UUID}/networks/${editing.I4nUUID}`, payload);
+        await this.api.put(
+          `isp/ipv4-pools/${selected.Ip4UUID}/networks/${editing.I4nUUID}`,
+          payload,
+        );
       } else {
         await this.api.post(`isp/ipv4-pools/${selected.Ip4UUID}/networks`, payload);
       }
@@ -361,7 +377,9 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/ipv4-pools/${selected.Ip4UUID}/networks/${item.I4nUUID}`);
-      this.networkDataSource.data = this.networkDataSource.data.filter((row) => row.I4nUUID !== item.I4nUUID);
+      this.networkDataSource.data = this.networkDataSource.data.filter(
+        (row) => row.I4nUUID !== item.I4nUUID,
+      );
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to delete IPv4 network.'));
     }

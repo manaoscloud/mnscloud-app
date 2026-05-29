@@ -39,6 +39,7 @@ import { VoipPortabilityService, VoipPortabilityItem } from './portability.servi
 import { VoipDidOperatorService, VoipDidOperatorItem } from '../did/operator/operator.service';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type OperatorOption = { value: string; label: string };
 type CustomerOption = { value: string; label: string };
@@ -69,6 +70,7 @@ type CustomerItem = {
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     MatDatepickerModule,
     MatNativeDateModule,
     MatCheckboxModule,

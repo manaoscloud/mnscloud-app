@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -22,6 +30,7 @@ import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type ProductItem = {
   SprUUID: string;
@@ -87,6 +96,7 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     MatSortModule,
     CurrencyMaskDirective,
   ],
@@ -177,18 +187,24 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
         this.api.get<any>('sale/brands?limit=200'),
       ]);
 
-      this.units.set((unitsRes?.data?.items ?? []).map((item: any) => ({
-        uuid: item.SunUUID,
-        label: `${item.SunCode} - ${item.SunName}`,
-      })));
-      this.categories.set((categoriesRes?.data?.items ?? []).map((item: any) => ({
-        uuid: item.ScaUUID,
-        label: item.ScaName,
-      })));
-      this.brands.set((brandsRes?.data?.items ?? []).map((item: any) => ({
-        uuid: item.SbrUUID,
-        label: item.SbrName,
-      })));
+      this.units.set(
+        (unitsRes?.data?.items ?? []).map((item: any) => ({
+          uuid: item.SunUUID,
+          label: `${item.SunCode} - ${item.SunName}`,
+        })),
+      );
+      this.categories.set(
+        (categoriesRes?.data?.items ?? []).map((item: any) => ({
+          uuid: item.ScaUUID,
+          label: item.ScaName,
+        })),
+      );
+      this.brands.set(
+        (brandsRes?.data?.items ?? []).map((item: any) => ({
+          uuid: item.SbrUUID,
+          label: item.SbrName,
+        })),
+      );
     } catch (err) {
       console.error('Failed to load lookups.', err);
     }
@@ -430,7 +446,9 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
         const response = await this.api.put<any>(`sale/products/${editing.SprUUID}`, data);
         const item = response?.data?.item ?? null;
         if (item) {
-          this.products.update((items) => items.map((row) => (row.SprUUID === item.SprUUID ? item : row)));
+          this.products.update((items) =>
+            items.map((row) => (row.SprUUID === item.SprUUID ? item : row)),
+          );
           this.dataSource.data = [...this.products()];
         }
         this.cancelEdit();
@@ -508,7 +526,10 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
       const formData = new FormData();
       formData.append('image', file);
       try {
-        const response = await this.api.post<any>(`sale/products/${product.SprUUID}/images`, formData);
+        const response = await this.api.post<any>(
+          `sale/products/${product.SprUUID}/images`,
+          formData,
+        );
         const item = response?.data?.item ?? null;
         if (item) {
           this.images.update((items) => [item, ...items]);
@@ -550,7 +571,9 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
       const editing = this.editing();
       if (editing) {
         this.products.update((items) =>
-          items.map((row) => (row.SprUUID === editing.SprUUID ? { ...row, CoverUrl: image.SpiUrl } : row)),
+          items.map((row) =>
+            row.SprUUID === editing.SprUUID ? { ...row, CoverUrl: image.SpiUrl } : row,
+          ),
         );
         this.dataSource.data = [...this.products()];
       }

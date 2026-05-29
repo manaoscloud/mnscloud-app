@@ -38,14 +38,12 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { ApiService } from '../../../services/api.service';
 import { VoipDomainItem, VoipDomainService } from '../domain/domain.service';
 import { VoipSoftswitchAccountService, VoipSoftswitchAccount } from './softswitch.service';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import {
   VoipSoftswitchProviderItem,
   VoipSoftswitchProviderService,
 } from './provider/provider.service';
-import {
-  VoipSoftswitchServerItem,
-  VoipSoftswitchServerService,
-} from './server/server.service';
+import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server/server.service';
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -74,6 +72,7 @@ type CustomerOption = {
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     MatCheckboxModule,
     MatMenuModule,
   ],
@@ -240,7 +239,10 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
     this.error.set(null);
     const start = performance.now();
     try {
-      const res = await this.api.list(this.isMaster(), { search: this.search, limit: this.listLimit });
+      const res = await this.api.list(this.isMaster(), {
+        search: this.search,
+        limit: this.listLimit,
+      });
       this.dataSource.data = res?.data?.items ?? [];
       this.reconcileSelection();
       this.applySearchFilters();
@@ -532,6 +534,10 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
   private filterBy<T extends Record<string, any>>(items: T[], search: string, key: keyof T) {
     const value = search.trim().toLowerCase();
     if (!value) return items;
-    return items.filter((item) => String(item[key] ?? '').toLowerCase().includes(value));
+    return items.filter((item) =>
+      String(item[key] ?? '')
+        .toLowerCase()
+        .includes(value),
+    );
   }
 }

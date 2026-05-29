@@ -36,6 +36,7 @@ import {
   openCrudTemplateDialog,
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
 
@@ -72,6 +73,7 @@ type ApiResponse<T> = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './providers.html',

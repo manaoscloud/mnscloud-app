@@ -34,6 +34,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { VoipWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type LookupKey = 'servers' | 'domains';
 type LookupOption = { value: string; label: string };
@@ -196,6 +197,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './webrtc.html',

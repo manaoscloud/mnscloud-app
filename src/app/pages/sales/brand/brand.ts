@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -19,6 +27,7 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type BrandItem = {
   SbrUUID: string;
@@ -45,6 +54,7 @@ type BrandItem = {
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './brand.html',
   styleUrls: ['./brand.scss'],
@@ -160,7 +170,9 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
         const response = await this.api.put<any>(`sale/brands/${editing.SbrUUID}`, payload);
         const item = response?.data?.item ?? null;
         if (item) {
-          this.brands.update((items) => items.map((row) => (row.SbrUUID === item.SbrUUID ? item : row)));
+          this.brands.update((items) =>
+            items.map((row) => (row.SbrUUID === item.SbrUUID ? item : row)),
+          );
           this.dataSource.data = [...this.brands()];
         }
       } else {

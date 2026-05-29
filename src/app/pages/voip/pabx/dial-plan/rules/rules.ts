@@ -35,6 +35,7 @@ import {
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
 import {
   VoipPabxDialPlanItem,
   VoipPabxDialPlanRuleItem,
@@ -64,6 +65,7 @@ import {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './rules.html',

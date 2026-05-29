@@ -225,7 +225,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <form class="tab-content form-grid" [formGroup]="domainForm">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Domain</mat-label>
@@ -264,7 +264,11 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Logo URL</mat-label>
-              <input matInput placeholder="https://cdn.example.com/logo.svg" formControlName="logoUrl" />
+              <input
+                matInput
+                placeholder="https://cdn.example.com/logo.svg"
+                formControlName="logoUrl"
+              />
               <mat-error *ngIf="domainForm.controls.logoUrl.hasError('url')">
                 Use a valid http(s) URL.
               </mat-error>

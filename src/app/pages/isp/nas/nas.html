@@ -21,13 +21,22 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input #searchInput matInput placeholder="Search NAS" (input)="onSearchChange($any($event.target).value)" />
+        <input
+          #searchInput
+          matInput
+          placeholder="Search NAS"
+          (input)="onSearchChange($any($event.target).value)"
+        />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applySearchFilters(searchInput.value)">
           Apply
         </button>
-        <button mat-stroked-button type="button" (click)="searchInput.value=''; clearSearchFilters()">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="searchInput.value = ''; clearSearchFilters()"
+        >
           Clear
         </button>
       </div>
@@ -89,7 +98,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
@@ -99,8 +108,11 @@
       </table>
     </div>
 
-    <mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
-
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[10, 20, 50]"
+      showFirstLastButtons
+    ></mat-paginator>
   </mat-card>
 </section>
 
@@ -115,114 +127,117 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="nasForm" (ngSubmit)="saveNas()">
-        <mat-form-field appearance="outline">
-          <mat-label>POP</mat-label>
-          <mat-select formControlName="popUUID" (openedChange)="onPopOpened($event)">
-            <mat-option
-              class="select-search-option"
-              [value]="null"
-              (click)="$event.stopPropagation()"
-              (onSelectionChange)="$event.source.deselect()"
-            >
-              <mat-form-field appearance="outline" class="select-search-field">
-                <input
-                  matInput
-                  [value]="popSearch"
-                  (input)="popSearch = $any($event.target).value"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  placeholder="Search POP"
-                  autocomplete="off"
-                />
+              <mat-form-field appearance="outline">
+                <mat-label>POP</mat-label>
+                <mat-select formControlName="popUUID" (openedChange)="onPopOpened($event)">
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="popSearch"
+                        (input)="popSearch = $any($event.target).value"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search POP"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (pop of filteredPopOptions; track pop.IppUUID) {
+                    <mat-option [value]="pop.IppUUID">{{ pop.IppName }}</mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
-            </mat-option>
-            @for (pop of filteredPopOptions; track pop.IppUUID) {
-              <mat-option [value]="pop.IppUUID">{{ pop.IppName }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
-          <input matInput placeholder="e.g. NAS Core" formControlName="name" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>IP</mat-label>
-          <input matInput placeholder="e.g. 10.0.0.10" formControlName="ip" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Vendor</mat-label>
-          <mat-select formControlName="vendorUUID" (openedChange)="onVendorOpened($event)">
-            <mat-option
-              class="select-search-option"
-              [value]="null"
-              (click)="$event.stopPropagation()"
-              (onSelectionChange)="$event.source.deselect()"
-            >
-              <mat-form-field appearance="outline" class="select-search-field">
-                <input
-                  matInput
-                  [value]="vendorSearch"
-                  (input)="vendorSearch = $any($event.target).value"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  placeholder="Search vendor"
-                  autocomplete="off"
-                />
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput placeholder="e.g. NAS Core" formControlName="name" />
               </mat-form-field>
-            </mat-option>
-            @for (vendor of filteredVendorOptions; track vendor.VendorUUID) {
-              <mat-option [value]="vendor.VendorUUID">{{ vendor.VendorName }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Model</mat-label>
-          <mat-select formControlName="vendorModelUUID" (openedChange)="onVendorModelOpened($event)">
-            <mat-option
-              class="select-search-option"
-              [value]="null"
-              (click)="$event.stopPropagation()"
-              (onSelectionChange)="$event.source.deselect()"
-            >
-              <mat-form-field appearance="outline" class="select-search-field">
-                <input
-                  matInput
-                  [value]="vendorModelSearch"
-                  (input)="vendorModelSearch = $any($event.target).value"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  placeholder="Search model"
-                  autocomplete="off"
-                />
+              <mat-form-field appearance="outline">
+                <mat-label>IP</mat-label>
+                <input matInput placeholder="e.g. 10.0.0.10" formControlName="ip" />
               </mat-form-field>
-            </mat-option>
-            @for (model of filteredVendorModelOptions; track model.VendorModelUUID) {
-              <mat-option [value]="model.VendorModelUUID">
-                {{ model.VendorModelName }}
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Notes</mat-label>
-          <input matInput placeholder="Optional notes" formControlName="notes" />
-        </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Vendor</mat-label>
+                <mat-select formControlName="vendorUUID" (openedChange)="onVendorOpened($event)">
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="vendorSearch"
+                        (input)="vendorSearch = $any($event.target).value"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search vendor"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (vendor of filteredVendorOptions; track vendor.VendorUUID) {
+                    <mat-option [value]="vendor.VendorUUID">{{ vendor.VendorName }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option [value]="1">Active</mat-option>
-            <mat-option [value]="0">Inactive</mat-option>
-          </mat-select>
-        </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Model</mat-label>
+                <mat-select
+                  formControlName="vendorModelUUID"
+                  (openedChange)="onVendorModelOpened($event)"
+                >
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="vendorModelSearch"
+                        (input)="vendorModelSearch = $any($event.target).value"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search model"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (model of filteredVendorModelOptions; track model.VendorModelUUID) {
+                    <mat-option [value]="model.VendorModelUUID">
+                      {{ model.VendorModelName }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Notes</mat-label>
+                <input matInput placeholder="Optional notes" formControlName="notes" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option [value]="1">Active</mat-option>
+                  <mat-option [value]="0">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
             </form>
           </div>
         </mat-tab>
@@ -230,20 +245,20 @@
     </mat-dialog-content>
 
     <mat-dialog-actions class="form-actions">
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="saveNas()"
-          [disabled]="nasForm.invalid || saving()"
-        >
-          <mat-icon>save</mat-icon>
-          Save
-        </button>
-        <button mat-stroked-button type="button" (click)="cancelNasForm()">Cancel</button>
-        @if (error()) {
-          <span class="error">{{ error() }}</span>
-        }
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveNas()"
+        [disabled]="nasForm.invalid || saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      <button mat-stroked-button type="button" (click)="cancelNasForm()">Cancel</button>
+      @if (error()) {
+        <span class="error">{{ error() }}</span>
+      }
     </mat-dialog-actions>
   </div>
 </ng-template>

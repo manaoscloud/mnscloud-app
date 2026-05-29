@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -20,6 +28,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type PppoeClientItem = {
   PpcUUID: string;
@@ -58,6 +67,7 @@ type FixedIpv4Option = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './pppoe-client.html',
   styleUrls: ['./pppoe-client.scss'],
@@ -369,7 +379,9 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
 
   private async loadFixedIpv4Options() {
     try {
-      const response = await this.api.get<any>('isp/fixed-ipv4-addresses?status=1&limit=1000&offset=0');
+      const response = await this.api.get<any>(
+        'isp/fixed-ipv4-addresses?status=1&limit=1000&offset=0',
+      );
       const items = Array.isArray(response?.data?.items) ? response.data.items : [];
       const options = items.filter((item: any) => String(item?.If4Cidr ?? '').endsWith('/32'));
       this.fixedIpv4Options.set(options);

@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -20,6 +28,7 @@ import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
 import { IspGeoMapProject } from '../../../../models/isp-geomap-project.model';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 @Component({
   selector: 'app-isp-geomap-projects',
@@ -40,6 +49,7 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './projects.html',
   styleUrls: ['./projects.scss'],
@@ -212,9 +222,7 @@ export class IspGeoMapProjectsPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/geomap/projects/${item.IgpUUID}`);
-      this.dataSource.data = this.dataSource.data.filter(
-        (row) => row.IgpUUID !== item.IgpUUID,
-      );
+      this.dataSource.data = this.dataSource.data.filter((row) => row.IgpUUID !== item.IgpUUID);
     } catch (err) {
       console.error('Failed to delete project.', err);
       alert('Failed to delete project.');

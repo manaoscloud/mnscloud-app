@@ -41,6 +41,7 @@ import {
   openCrudTemplateDialog,
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type Employee = {
   EmployeeUUID: string;
@@ -87,6 +88,7 @@ type OptionItem = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './employees.html',

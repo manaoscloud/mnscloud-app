@@ -30,6 +30,7 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
 
 type DueDayStatus = 'active' | 'inactive';
 
@@ -65,6 +66,7 @@ type ErpFinInvDueDay = {
     MatProgressSpinnerModule,
     MatCheckboxModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './duedays.html',
   styleUrls: ['./duedays.scss'],

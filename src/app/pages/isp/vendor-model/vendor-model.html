@@ -32,7 +32,11 @@
         <button mat-stroked-button type="button" (click)="applySearchFilters(searchInput.value)">
           Apply
         </button>
-        <button mat-stroked-button type="button" (click)="searchInput.value=''; clearSearchFilters()">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="searchInput.value = ''; clearSearchFilters()"
+        >
           Clear
         </button>
       </div>
@@ -76,12 +80,7 @@
               <button mat-icon-button (click)="startEdit(row)" type="button" matTooltip="Edit">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button
-                mat-icon-button
-                color="warn"
-                (click)="deleteModel(row)"
-                matTooltip="Delete"
-              >
+              <button mat-icon-button color="warn" (click)="deleteModel(row)" matTooltip="Delete">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -89,7 +88,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
@@ -104,7 +103,6 @@
       [pageSizeOptions]="[10, 20, 50]"
       showFirstLastButtons
     ></mat-paginator>
-
   </mat-card>
 </section>
 
@@ -119,7 +117,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="modelForm" (ngSubmit)="saveModel()">
               <mat-form-field appearance="outline">

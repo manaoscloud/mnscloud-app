@@ -34,6 +34,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { getVpsDialogViewportConfig, updateVpsDialogViewport } from '../vps-dialog-viewport';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import type {
   HostingVpsInstance,
   HostingVpsInstanceConfig,
@@ -73,6 +74,7 @@ type CustomerOption = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './instances.html',
@@ -99,13 +101,13 @@ export class HostingVpsInstancesPage implements OnDestroy {
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
   readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers'
+    this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
   );
   readonly instanceEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/instances' : 'hosting/vps/instances'
+    this.isMaster() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
   );
   readonly planEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/plans' : 'hosting/vps/plans'
+    this.isMaster() ? 'system/hosting/vps/plans' : 'hosting/vps/plans',
   );
   readonly customerEndpoint = 'erp/customers';
 
@@ -126,7 +128,8 @@ export class HostingVpsInstancesPage implements OnDestroy {
     const status = this.appliedStatus();
     return this.vpsInstances().filter((item) => {
       const plan = this.planById(item.HostingVpsPlanHvpUUID);
-      const matchesSearch = !search ||
+      const matchesSearch =
+        !search ||
         item.HviName.toLowerCase().includes(search) ||
         (item.CustomerName ?? '').toLowerCase().includes(search) ||
         (item.HviStatus ?? '').toLowerCase().includes(search) ||
@@ -135,7 +138,8 @@ export class HostingVpsInstancesPage implements OnDestroy {
         (this.instanceImageValue(item) ?? '').toLowerCase().includes(search) ||
         this.providerNameById(item.HostingVpsProviderHvrUUID).toLowerCase().includes(search) ||
         this.planNameById(item.HostingVpsPlanHvpUUID).toLowerCase().includes(search);
-      const matchesStatus = status === '' ||
+      const matchesStatus =
+        status === '' ||
         (status === '1' && item.HviIsActive === 1) ||
         (status === '0' && item.HviIsActive !== 1);
       const matchesCustomer = !customerUUID || item.CustomerCusUUID === customerUUID;
@@ -202,16 +206,16 @@ export class HostingVpsInstancesPage implements OnDestroy {
   readonly availableSizes = computed(() => this.catalog()?.sizes ?? []);
   readonly availableImages = computed(() => this.catalog()?.images ?? []);
   readonly regionOptions = computed(() =>
-    this.withCurrentOption(this.availableRegions(), this.currentRegion())
+    this.withCurrentOption(this.availableRegions(), this.currentRegion()),
   );
   readonly sizeOptions = computed(() =>
-    this.withCurrentOption(this.availableSizes(), this.currentSize())
+    this.withCurrentOption(this.availableSizes(), this.currentSize()),
   );
   readonly imageOptions = computed(() =>
-    this.withCurrentOption(this.availableImages(), this.currentImage())
+    this.withCurrentOption(this.availableImages(), this.currentImage()),
   );
   readonly filteredImageOptions = computed(() =>
-    this.filterCatalogOptions(this.imageOptions(), this.imageSearch())
+    this.filterCatalogOptions(this.imageOptions(), this.imageSearch()),
   );
   readonly filteredCustomers = computed(() => {
     const search = this.customerSearch().trim().toLowerCase();
@@ -220,7 +224,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
     return items.filter((customer) =>
       [customer.Name, customer.Document]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(search))
+        .some((value) => String(value).toLowerCase().includes(search)),
     );
   });
   readonly changePlanOptions = computed(() => {
@@ -248,10 +252,10 @@ export class HostingVpsInstancesPage implements OnDestroy {
 
   constructor() {
     this.instanceForm.controls.planUUID.valueChanges.subscribe((value) =>
-      this.applySelectedPlan(value)
+      this.applySelectedPlan(value),
     );
     this.instanceForm.controls.image.valueChanges.subscribe((value) =>
-      this.currentImage.set(value ?? '')
+      this.currentImage.set(value ?? ''),
     );
     this.refreshList();
   }
@@ -412,8 +416,8 @@ export class HostingVpsInstancesPage implements OnDestroy {
   }
 
   instanceImageValue(item: HostingVpsInstance) {
-    const image = this.instanceConfigValue(item, 'providerImageId') ??
-      this.instancePlanValue(item, 'HvpImage');
+    const image =
+      this.instanceConfigValue(item, 'providerImageId') ?? this.instancePlanValue(item, 'HvpImage');
     return typeof image === 'string' ? image : null;
   }
 
@@ -678,14 +682,14 @@ export class HostingVpsInstancesPage implements OnDestroy {
     if (!this.canRetryProvision(item) || this.isRetrying(item)) return;
 
     const errorMessage = this.instanceConfigValue(item, 'provisionError');
-    const details = typeof errorMessage === 'string' && errorMessage.trim()
-      ? ` Last error: ${errorMessage.trim()}`
-      : '';
+    const details =
+      typeof errorMessage === 'string' && errorMessage.trim()
+        ? ` Last error: ${errorMessage.trim()}`
+        : '';
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
         title: 'Retry VPS provisioning',
-        message:
-          `Retry provider provisioning for "${item.HviName}"? This can create a VPS and may generate provider charges.${details}`,
+        message: `Retry provider provisioning for "${item.HviName}"? This can create a VPS and may generate provider charges.${details}`,
         confirmLabel: 'Retry provisioning',
       },
       panelClass: 'slow-confirm-dialog',
@@ -705,11 +709,11 @@ export class HostingVpsInstancesPage implements OnDestroy {
           rows.map((row) =>
             row.HviUUID === updated.HviUUID
               ? {
-                ...updated,
-                HviConfig: this.parseConfig<HostingVpsInstanceConfig>(updated.HviConfig),
-              }
-              : row
-          )
+                  ...updated,
+                  HviConfig: this.parseConfig<HostingVpsInstanceConfig>(updated.HviConfig),
+                }
+              : row,
+          ),
         );
       }
       await this.loadInstances();
@@ -778,8 +782,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
         title: 'Change VPS plan',
-        message:
-          `Queue plan change for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
+        message: `Queue plan change for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
         confirmLabel: 'Change plan',
       },
       panelClass: 'slow-confirm-dialog',
@@ -799,11 +802,11 @@ export class HostingVpsInstancesPage implements OnDestroy {
           rows.map((row) =>
             row.HviUUID === updated.HviUUID
               ? {
-                ...updated,
-                HviConfig: this.parseConfig<HostingVpsInstanceConfig>(updated.HviConfig),
-              }
-              : row
-          )
+                  ...updated,
+                  HviConfig: this.parseConfig<HostingVpsInstanceConfig>(updated.HviConfig),
+                }
+              : row,
+          ),
         );
       }
       await this.loadInstances();
@@ -867,8 +870,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
         title: 'Delete selected VPS instances',
-        message:
-          `Delete ${ids.length} selected VPS instance(s) from MNSCloud and destroy linked provider VPS resources?${suffix}`,
+        message: `Delete ${ids.length} selected VPS instance(s) from MNSCloud and destroy linked provider VPS resources?${suffix}`,
         confirmLabel: 'Delete selected',
       },
       panelClass: 'slow-confirm-dialog',
@@ -993,7 +995,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
         option.slug,
       ]
         .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value))
+        .some((field) => String(field).toLowerCase().includes(value)),
     );
   }
 
@@ -1014,11 +1016,9 @@ export class HostingVpsInstancesPage implements OnDestroy {
         (acc) =>
           acc.HvrProvider === plan.HvpProvider && acc.HvrIsActive === 1 && acc.HvrIsDefault === 1,
       )?.HvrUUID ??
-        this.providers().find((acc) =>
-          acc.HvrProvider === plan.HvpProvider && acc.HvrIsActive === 1
-        )
-          ?.HvrUUID ??
-        ''
+      this.providers().find((acc) => acc.HvrProvider === plan.HvpProvider && acc.HvrIsActive === 1)
+        ?.HvrUUID ??
+      ''
     );
   }
 

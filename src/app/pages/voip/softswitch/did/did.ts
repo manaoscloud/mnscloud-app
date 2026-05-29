@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -21,16 +29,44 @@ import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../../shared/dialog/crud-dialog.util';
+import {
+  CrudDialogBinding,
+  openCrudTemplateDialog,
+} from '../../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipSoftswitchAccount, VoipSoftswitchAccountService } from '../softswitch.service';
-import { VoipSoftswitchSubscriberItem, VoipSoftswitchSubscriberService } from '../subscriber/subscriber.service';
+import {
+  VoipSoftswitchSubscriberItem,
+  VoipSoftswitchSubscriberService,
+} from '../subscriber/subscriber.service';
 import { VoipSoftswitchDidItem, VoipSoftswitchDidService } from './did.service';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 @Component({
   selector: 'app-voip-softswitch-did',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatDialogModule, MatButtonModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatChipsModule, MatSlideToggleModule, MatTooltipModule, MatPaginatorModule, MatSortModule, MatProgressSpinnerModule, MatTabsModule, MatCheckboxModule, MatMenuModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatChipsModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatProgressSpinnerModule,
+    MatTabsModule,
+    TranslatePipe,
+    MatCheckboxModule,
+    MatMenuModule,
+  ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
   animations: [fadeIn],
@@ -52,7 +88,16 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
   readonly accountOptions = signal<VoipSoftswitchAccount[]>([]);
   readonly subscriberOptions = signal<VoipSoftswitchSubscriberItem[]>([]);
   readonly selectedDidUUIDs = new Set<string>();
-  readonly displayedColumns = ['select', 'number', 'softswitch', 'customer', 'domain', 'route', 'status', 'actions'];
+  readonly displayedColumns = [
+    'select',
+    'number',
+    'softswitch',
+    'customer',
+    'domain',
+    'route',
+    'status',
+    'actions',
+  ];
   readonly dataSource = new MatTableDataSource<VoipSoftswitchDidItem>([]);
   search = '';
   searchInput = '';
@@ -81,13 +126,20 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     this.dataSource.sort = this.sort ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
       switch (column) {
-        case 'number': return data.VsdNumber ?? '';
-        case 'softswitch': return data.SoftswitchName ?? '';
-        case 'customer': return data.CustomerName ?? '';
-        case 'domain': return data.DomainName ?? '';
-        case 'route': return this.routeLabel(data);
-        case 'status': return data.VsdEnabled ? 'active' : 'inactive';
-        default: return '';
+        case 'number':
+          return data.VsdNumber ?? '';
+        case 'softswitch':
+          return data.SoftswitchName ?? '';
+        case 'customer':
+          return data.CustomerName ?? '';
+        case 'domain':
+          return data.DomainName ?? '';
+        case 'route':
+          return this.routeLabel(data);
+        case 'status':
+          return data.VsdEnabled ? 'active' : 'inactive';
+        default:
+          return '';
       }
     };
     setTimeout(() => {
@@ -131,7 +183,9 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  refreshList() { return this.loadItems(); }
+  refreshList() {
+    return this.loadItems();
+  }
 
   startCreate() {
     this.resetForm();
@@ -185,7 +239,9 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  saveAndNew() { void this.submit(true); }
+  saveAndNew() {
+    void this.submit(true);
+  }
 
   cancelEdit() {
     this.resetForm();
@@ -193,7 +249,11 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
   }
 
   async removeItem(item: VoipSoftswitchDidItem) {
-    const confirmed = await this.confirmDelete('Delete DID', `Delete "${item.VsdNumber}"?`, 'Delete');
+    const confirmed = await this.confirmDelete(
+      'Delete DID',
+      `Delete "${item.VsdNumber}"?`,
+      'Delete',
+    );
     if (!confirmed) return;
     try {
       await this.api.remove(item.VsdUUID);
@@ -203,31 +263,57 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  get selectedCount() { return this.selectedDidUUIDs.size; }
-
-  visibleRows() {
-    const rows = this.dataSource.filteredData.length ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return rows;
-    return rows.slice(paginator.pageIndex * paginator.pageSize, paginator.pageIndex * paginator.pageSize + paginator.pageSize);
+  get selectedCount() {
+    return this.selectedDidUUIDs.size;
   }
 
-  isSelected(item: VoipSoftswitchDidItem) { return this.selectedDidUUIDs.has(item.VsdUUID); }
-  isAllVisibleSelected() { const rows = this.visibleRows(); return rows.length > 0 && rows.every((row) => this.isSelected(row)); }
-  isSomeVisibleSelected() { const rows = this.visibleRows(); return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected(); }
-  toggleSelection(item: VoipSoftswitchDidItem, checked: boolean) { if (checked) this.selectedDidUUIDs.add(item.VsdUUID); else this.selectedDidUUIDs.delete(item.VsdUUID); }
-  toggleVisibleSelection(checked: boolean) { this.visibleRows().forEach((row) => this.toggleSelection(row, checked)); }
+  visibleRows() {
+    const rows = this.dataSource.filteredData.length
+      ? this.dataSource.filteredData
+      : this.dataSource.data;
+    const paginator = this.dataSource.paginator;
+    if (!paginator) return rows;
+    return rows.slice(
+      paginator.pageIndex * paginator.pageSize,
+      paginator.pageIndex * paginator.pageSize + paginator.pageSize,
+    );
+  }
+
+  isSelected(item: VoipSoftswitchDidItem) {
+    return this.selectedDidUUIDs.has(item.VsdUUID);
+  }
+  isAllVisibleSelected() {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+  }
+  isSomeVisibleSelected() {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
+  }
+  toggleSelection(item: VoipSoftswitchDidItem, checked: boolean) {
+    if (checked) this.selectedDidUUIDs.add(item.VsdUUID);
+    else this.selectedDidUUIDs.delete(item.VsdUUID);
+  }
+  toggleVisibleSelection(checked: boolean) {
+    this.visibleRows().forEach((row) => this.toggleSelection(row, checked));
+  }
 
   async removeSelected() {
     const ids = Array.from(this.selectedDidUUIDs);
     if (!ids.length) return;
-    const confirmed = await this.confirmDelete('Delete Selected DIDs', `Delete ${ids.length} selected DID(s)?`, 'Delete selected');
+    const confirmed = await this.confirmDelete(
+      'Delete Selected DIDs',
+      `Delete ${ids.length} selected DID(s)?`,
+      'Delete selected',
+    );
     if (!confirmed) return;
     this.deletingSelected.set(true);
     try {
       const response = await this.api.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = new Set<string>((response?.data?.failed ?? []).map((item: any) => item.VsdUUID));
+      const failed = new Set<string>(
+        (response?.data?.failed ?? []).map((item: any) => item.VsdUUID),
+      );
       this.selectedDidUUIDs.clear();
       failed.forEach((uuid) => this.selectedDidUUIDs.add(uuid));
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VsdUUID));
@@ -247,32 +333,70 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
   filteredAccounts() {
     const value = this.accountSearch.trim().toLowerCase();
     if (!value) return this.accountOptions();
-    return this.accountOptions().filter((item) => [item.VssName, item.CustomerName, item.DomainName].some((field) => String(field ?? '').toLowerCase().includes(value)));
+    return this.accountOptions().filter((item) =>
+      [item.VssName, item.CustomerName, item.DomainName].some((field) =>
+        String(field ?? '')
+          .toLowerCase()
+          .includes(value),
+      ),
+    );
   }
 
   filteredSubscribers() {
     const value = this.subscriberSearch.trim().toLowerCase();
     const accountUUID = this.form.controls.accountUUID.value;
-    const items = this.subscriberOptions().filter((item) => !accountUUID || item.VoipSoftswitchAccountVssUUID === accountUUID);
+    const items = this.subscriberOptions().filter(
+      (item) => !accountUUID || item.VoipSoftswitchAccountVssUUID === accountUUID,
+    );
     if (!value) return items;
-    return items.filter((item) => [item.VsuUsername, item.VsuCallerIdName, item.CustomerName, item.DomainName].some((field) => String(field ?? '').toLowerCase().includes(value)));
+    return items.filter((item) =>
+      [item.VsuUsername, item.VsuCallerIdName, item.CustomerName, item.DomainName].some((field) =>
+        String(field ?? '')
+          .toLowerCase()
+          .includes(value),
+      ),
+    );
   }
 
-  setAccountSearch(value: string) { this.accountSearch = value; }
-  setSubscriberSearch(value: string) { this.subscriberSearch = value; }
-  clearAccountSearch(opened: boolean) { if (!opened) this.accountSearch = ''; }
-  clearSubscriberSearch(opened: boolean) { if (!opened) this.subscriberSearch = ''; }
+  setAccountSearch(value: string) {
+    this.accountSearch = value;
+  }
+  setSubscriberSearch(value: string) {
+    this.subscriberSearch = value;
+  }
+  clearAccountSearch(opened: boolean) {
+    if (!opened) this.accountSearch = '';
+  }
+  clearSubscriberSearch(opened: boolean) {
+    if (!opened) this.subscriberSearch = '';
+  }
 
   private resetForm() {
-    this.form.reset({ accountUUID: this.accountOptions()[0]?.VssUUID ?? '', subscriberUUID: '', number: '', direction: 'both', routeType: 'subscriber', routeValue: '', description: '', enabled: true });
+    this.form.reset({
+      accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
+      subscriberUUID: '',
+      number: '',
+      direction: 'both',
+      routeType: 'subscriber',
+      routeValue: '',
+      description: '',
+      enabled: true,
+    });
     this.editing.set(null);
   }
 
   private openDialog() {
     if (!this.didFormDialog || this.dialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(this.dialog, this.didFormDialog, 'voip-softswitch-did-form-dialog', { onEscape: () => this.cancelEdit() });
+    this.dialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.didFormDialog,
+      'voip-softswitch-did-form-dialog',
+      { onEscape: () => this.cancelEdit() },
+    );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef.keydownEvents().subscribe((event: KeyboardEvent) => { if (event.key === 'Escape') this.cancelEdit(); });
+    this.dialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+      if (event.key === 'Escape') this.cancelEdit();
+    });
   }
 
   private closeDialog() {
@@ -297,11 +421,17 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
 
   private reconcileSelection() {
     const valid = new Set(this.dataSource.data.map((row) => row.VsdUUID));
-    Array.from(this.selectedDidUUIDs).forEach((uuid) => { if (!valid.has(uuid)) this.selectedDidUUIDs.delete(uuid); });
+    Array.from(this.selectedDidUUIDs).forEach((uuid) => {
+      if (!valid.has(uuid)) this.selectedDidUUIDs.delete(uuid);
+    });
   }
 
   private async confirmDelete(title: string, message: string, confirmLabel: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, { data: { title, message, confirmLabel }, panelClass: 'slow-confirm-dialog', disableClose: true });
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: { title, message, confirmLabel },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
     return Boolean(await firstValueFrom(ref.afterClosed()));
   }
 }

@@ -42,6 +42,7 @@ import {
 } from '../media-files/media-files.service';
 import { PabxRoutingResource, VoipPabxRoutingService } from './routing.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
@@ -65,6 +66,7 @@ type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
     MatSelectModule,
     MatSortModule,
     MatTabsModule,
+    TranslatePipe,
     MatTableModule,
     MatTooltipModule,
     MatCheckboxModule,

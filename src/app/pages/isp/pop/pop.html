@@ -21,13 +21,22 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input #searchInput matInput placeholder="Search POPs" (input)="onSearchChange($any($event.target).value)" />
+        <input
+          #searchInput
+          matInput
+          placeholder="Search POPs"
+          (input)="onSearchChange($any($event.target).value)"
+        />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applySearchFilters(searchInput.value)">
           Apply
         </button>
-        <button mat-stroked-button type="button" (click)="searchInput.value=''; clearSearchFilters()">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="searchInput.value = ''; clearSearchFilters()"
+        >
           Clear
         </button>
       </div>
@@ -79,7 +88,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
@@ -89,8 +98,11 @@
       </table>
     </div>
 
-    <mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
-
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[10, 20, 50]"
+      showFirstLastButtons
+    ></mat-paginator>
   </mat-card>
 </section>
 
@@ -105,7 +117,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="popForm" (ngSubmit)="savePop()">
               <mat-form-field appearance="outline">

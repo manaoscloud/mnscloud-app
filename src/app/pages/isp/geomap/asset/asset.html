@@ -32,7 +32,11 @@
         <button mat-stroked-button type="button" (click)="applySearchFilters(searchInput.value)">
           Apply
         </button>
-        <button mat-stroked-button type="button" (click)="searchInput.value=''; clearSearchFilters()">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="searchInput.value = ''; clearSearchFilters()"
+        >
           Clear
         </button>
       </div>
@@ -84,7 +88,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
@@ -99,7 +103,6 @@
       [pageSizeOptions]="[10, 20, 50]"
       showFirstLastButtons
     ></mat-paginator>
-
   </mat-card>
 </section>
 
@@ -114,115 +117,117 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="assetForm" (ngSubmit)="saveAsset()">
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option value="ACTIVE">Active</mat-option>
-            <mat-option value="INACTIVE">Inactive</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Type</mat-label>
-          <mat-select
-            formControlName="assetTypeUUID"
-            (openedChange)="onTypeOpened($event)"
-            (selectionChange)="onTypeChange()"
-          >
-            <mat-option
-              class="select-search-option"
-              [value]="null"
-              (click)="$event.stopPropagation()"
-              (onSelectionChange)="$event.source.deselect()"
-            >
-              <mat-form-field appearance="outline" class="select-search-field">
-                <input
-                  matInput
-                  [value]="typeSearch"
-                  (input)="typeSearch = $any($event.target).value"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  placeholder="Search type"
-                  autocomplete="off"
-                />
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option value="ACTIVE">Active</mat-option>
+                  <mat-option value="INACTIVE">Inactive</mat-option>
+                </mat-select>
               </mat-form-field>
-            </mat-option>
-            @for (type of filteredAssetTypeOptions; track type.IatUUID) {
-              <mat-option [value]="type.IatUUID">{{ type.IatName }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Vendor</mat-label>
-          <mat-select
-            formControlName="vendorUUID"
-            (openedChange)="onVendorOpened($event)"
-            (selectionChange)="onVendorChange()"
-          >
-            <mat-option
-              class="select-search-option"
-              [value]="null"
-              (click)="$event.stopPropagation()"
-              (onSelectionChange)="$event.source.deselect()"
-            >
-              <mat-form-field appearance="outline" class="select-search-field">
-                <input
-                  matInput
-                  [value]="vendorSearch"
-                  (input)="vendorSearch = $any($event.target).value"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  placeholder="Search vendor"
-                  autocomplete="off"
-                />
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select
+                  formControlName="assetTypeUUID"
+                  (openedChange)="onTypeOpened($event)"
+                  (selectionChange)="onTypeChange()"
+                >
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="typeSearch"
+                        (input)="typeSearch = $any($event.target).value"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search type"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (type of filteredAssetTypeOptions; track type.IatUUID) {
+                    <mat-option [value]="type.IatUUID">{{ type.IatName }}</mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
-            </mat-option>
-            <mat-option value="">None</mat-option>
-            @for (vendor of filteredVendorOptions; track vendor.VendorUUID) {
-              <mat-option [value]="vendor.VendorUUID">{{ vendor.VendorName }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Vendor Model</mat-label>
-          <mat-select
-            formControlName="vendorModelUUID"
-            (openedChange)="onVendorModelOpened($event)"
-          >
-            <mat-option
-              class="select-search-option"
-              [value]="null"
-              (click)="$event.stopPropagation()"
-              (onSelectionChange)="$event.source.deselect()"
-            >
-              <mat-form-field appearance="outline" class="select-search-field">
-                <input
-                  matInput
-                  [value]="modelSearch"
-                  (input)="modelSearch = $any($event.target).value"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  placeholder="Search model"
-                  autocomplete="off"
-                />
+              <mat-form-field appearance="outline">
+                <mat-label>Vendor</mat-label>
+                <mat-select
+                  formControlName="vendorUUID"
+                  (openedChange)="onVendorOpened($event)"
+                  (selectionChange)="onVendorChange()"
+                >
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="vendorSearch"
+                        (input)="vendorSearch = $any($event.target).value"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search vendor"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  <mat-option value="">None</mat-option>
+                  @for (vendor of filteredVendorOptions; track vendor.VendorUUID) {
+                    <mat-option [value]="vendor.VendorUUID">{{ vendor.VendorName }}</mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
-            </mat-option>
-            <mat-option value="">None</mat-option>
-            @for (model of filteredVendorModelOptions; track model.VendorModelUUID) {
-              <mat-option [value]="model.VendorModelUUID">{{ model.VendorModelName }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline" class="span-4">
-          <mat-label>Notes</mat-label>
-          <input matInput placeholder="Optional notes" formControlName="notes" />
-        </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Vendor Model</mat-label>
+                <mat-select
+                  formControlName="vendorModelUUID"
+                  (openedChange)="onVendorModelOpened($event)"
+                >
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="modelSearch"
+                        (input)="modelSearch = $any($event.target).value"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search model"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  <mat-option value="">None</mat-option>
+                  @for (model of filteredVendorModelOptions; track model.VendorModelUUID) {
+                    <mat-option [value]="model.VendorModelUUID">{{
+                      model.VendorModelName
+                    }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>Notes</mat-label>
+                <input matInput placeholder="Optional notes" formControlName="notes" />
+              </mat-form-field>
             </form>
           </div>
         </mat-tab>
@@ -230,20 +235,20 @@
     </mat-dialog-content>
 
     <mat-dialog-actions class="form-actions">
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="saveAsset()"
-          [disabled]="assetForm.invalid || saving()"
-        >
-          <mat-icon>save</mat-icon>
-          Save
-        </button>
-        <button mat-stroked-button type="button" (click)="cancelAssetForm()">Cancel</button>
-        @if (error()) {
-          <span class="error">{{ error() }}</span>
-        }
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveAsset()"
+        [disabled]="assetForm.invalid || saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      <button mat-stroked-button type="button" (click)="cancelAssetForm()">Cancel</button>
+      @if (error()) {
+        <span class="error">{{ error() }}</span>
+      }
     </mat-dialog-actions>
   </div>
 </ng-template>

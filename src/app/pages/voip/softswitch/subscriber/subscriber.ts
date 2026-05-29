@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -21,10 +29,17 @@ import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../../shared/dialog/crud-dialog.util';
+import {
+  CrudDialogBinding,
+  openCrudTemplateDialog,
+} from '../../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipSoftswitchAccount, VoipSoftswitchAccountService } from '../softswitch.service';
-import { VoipSoftswitchSubscriberItem, VoipSoftswitchSubscriberService } from './subscriber.service';
+import {
+  VoipSoftswitchSubscriberItem,
+  VoipSoftswitchSubscriberService,
+} from './subscriber.service';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 @Component({
   selector: 'app-voip-softswitch-subscriber',
@@ -47,6 +62,7 @@ import { VoipSoftswitchSubscriberItem, VoipSoftswitchSubscriberService } from '.
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     MatCheckboxModule,
     MatMenuModule,
   ],
@@ -69,7 +85,16 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
   readonly editing = signal<VoipSoftswitchSubscriberItem | null>(null);
   readonly accountOptions = signal<VoipSoftswitchAccount[]>([]);
   readonly selectedSubscriberUUIDs = new Set<string>();
-  readonly displayedColumns = ['select', 'username', 'softswitch', 'customer', 'domain', 'register', 'status', 'actions'];
+  readonly displayedColumns = [
+    'select',
+    'username',
+    'softswitch',
+    'customer',
+    'domain',
+    'register',
+    'status',
+    'actions',
+  ];
   readonly dataSource = new MatTableDataSource<VoipSoftswitchSubscriberItem>([]);
   search = '';
   searchInput = '';
@@ -102,13 +127,20 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
     this.dataSource.sort = this.sort ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
       switch (column) {
-        case 'username': return data.VsuUsername ?? '';
-        case 'softswitch': return data.SoftswitchName ?? '';
-        case 'customer': return data.CustomerName ?? '';
-        case 'domain': return data.DomainName ?? '';
-        case 'register': return data.VsuRegisterEnabled ? 'yes' : 'no';
-        case 'status': return data.VsuEnabled ? 'active' : 'inactive';
-        default: return '';
+        case 'username':
+          return data.VsuUsername ?? '';
+        case 'softswitch':
+          return data.SoftswitchName ?? '';
+        case 'customer':
+          return data.CustomerName ?? '';
+        case 'domain':
+          return data.DomainName ?? '';
+        case 'register':
+          return data.VsuRegisterEnabled ? 'yes' : 'no';
+        case 'status':
+          return data.VsuEnabled ? 'active' : 'inactive';
+        default:
+          return '';
       }
     };
     setTimeout(() => {
@@ -219,7 +251,11 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
   }
 
   async removeItem(item: VoipSoftswitchSubscriberItem) {
-    const confirmed = await this.confirmDelete('Delete Subscriber', `Delete "${item.VsuUsername}"?`, 'Delete');
+    const confirmed = await this.confirmDelete(
+      'Delete Subscriber',
+      `Delete "${item.VsuUsername}"?`,
+      'Delete',
+    );
     if (!confirmed) return;
     try {
       await this.api.remove(item.VsuUUID);
@@ -234,10 +270,15 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
   }
 
   visibleRows() {
-    const rows = this.dataSource.filteredData.length ? this.dataSource.filteredData : this.dataSource.data;
+    const rows = this.dataSource.filteredData.length
+      ? this.dataSource.filteredData
+      : this.dataSource.data;
     const paginator = this.dataSource.paginator;
     if (!paginator) return rows;
-    return rows.slice(paginator.pageIndex * paginator.pageSize, paginator.pageIndex * paginator.pageSize + paginator.pageSize);
+    return rows.slice(
+      paginator.pageIndex * paginator.pageSize,
+      paginator.pageIndex * paginator.pageSize + paginator.pageSize,
+    );
   }
 
   isSelected(item: VoipSoftswitchSubscriberItem) {
@@ -266,19 +307,28 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
   async removeSelected() {
     const ids = Array.from(this.selectedSubscriberUUIDs);
     if (!ids.length) return;
-    const confirmed = await this.confirmDelete('Delete Selected Subscribers', `Delete ${ids.length} selected subscriber(s)?`, 'Delete selected');
+    const confirmed = await this.confirmDelete(
+      'Delete Selected Subscribers',
+      `Delete ${ids.length} selected subscriber(s)?`,
+      'Delete selected',
+    );
     if (!confirmed) return;
     this.deletingSelected.set(true);
     try {
       const response = await this.api.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = new Set<string>((response?.data?.failed ?? []).map((item: any) => item.VsuUUID));
+      const failed = new Set<string>(
+        (response?.data?.failed ?? []).map((item: any) => item.VsuUUID),
+      );
       this.selectedSubscriberUUIDs.clear();
       failed.forEach((uuid) => this.selectedSubscriberUUIDs.add(uuid));
       this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VsuUUID));
-      if (failed.size) this.error.set(`${failed.size} selected subscriber(s) could not be deleted.`);
+      if (failed.size)
+        this.error.set(`${failed.size} selected subscriber(s) could not be deleted.`);
     } catch (err: any) {
-      this.snack.error(err?.error?.error || err?.message || 'Failed to delete selected subscribers.');
+      this.snack.error(
+        err?.error?.error || err?.message || 'Failed to delete selected subscribers.',
+      );
     } finally {
       this.deletingSelected.set(false);
     }
@@ -289,7 +339,9 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
     if (!value) return this.accountOptions();
     return this.accountOptions().filter((item) =>
       [item.VssName, item.CustomerName, item.DomainName].some((field) =>
-        String(field ?? '').toLowerCase().includes(value),
+        String(field ?? '')
+          .toLowerCase()
+          .includes(value),
       ),
     );
   }
@@ -323,7 +375,12 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
 
   private openDialog() {
     if (!this.subscriberFormDialog || this.dialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(this.dialog, this.subscriberFormDialog, 'voip-softswitch-subscriber-form-dialog', { onEscape: () => this.cancelEdit() });
+    this.dialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.subscriberFormDialog,
+      'voip-softswitch-subscriber-form-dialog',
+      { onEscape: () => this.cancelEdit() },
+    );
     this.dialogRef = this.dialogBinding.ref;
     this.dialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();

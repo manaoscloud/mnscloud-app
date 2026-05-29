@@ -42,6 +42,7 @@ import {
   VoipPabxMediaFilesService,
 } from '../media-files/media-files.service';
 import { VoipPabxQueueItem, VoipPabxQueueMemberItem, VoipPabxQueueService } from './queue.service';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 
@@ -67,6 +68,7 @@ type Option = { value: string; label: string; pabxUUID?: string | null };
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './queue.html',

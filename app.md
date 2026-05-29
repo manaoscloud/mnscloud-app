@@ -175,7 +175,7 @@
 - Dialog structure:
   - header (`.dialog-header`)
   - content (`.dialog-content`) with `MatTabGroup`
-  - first tab label must use the translated `Data` key by default, because it contains the primary record fields; in supported locales it renders as `Data` (EN), `Dados` (PT), and `Datos` (ES). In Angular templates, prefer `[label]="'Data' | t"` rather than a literal `label="Data"` when the component imports `TranslatePipe`; use another first-tab label only when the domain has a documented, explicit reason.
+  - first tab label must be `Data` by default, because it contains the primary record fields; use another first-tab label only when the domain has a documented, explicit reason.
   - footer (`.form-actions`) with `Cancel`, `Save`, and create-only `Save/New` in the save split menu
   - footer must stay fixed at the bottom of dialog (`mat-dialog-actions` cannot move with content length)
 - Action labels:

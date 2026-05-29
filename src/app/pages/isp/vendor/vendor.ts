@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,6 +31,7 @@ import { ApiService } from '../../../services/api.service';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type SupplierOption = {
   value: string;
@@ -48,6 +57,7 @@ type SupplierOption = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     PhoneInputComponent,
   ],
   templateUrl: './vendor.html',

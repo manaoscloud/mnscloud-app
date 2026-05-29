@@ -130,7 +130,9 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">
+            Actions
+          </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
@@ -193,7 +195,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form id="softswitchForm" class="form-grid" (ngSubmit)="submit()" [formGroup]="form">
               <mat-form-field appearance="outline">
@@ -203,7 +205,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
-                <mat-select formControlName="providerUUID" (openedChange)="clearSelectSearch('provider', $event)">
+                <mat-select
+                  formControlName="providerUUID"
+                  (openedChange)="clearSelectSearch('provider', $event)"
+                >
                   <mat-option class="select-search-option">
                     <input
                       matInput
@@ -222,7 +227,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Server</mat-label>
-                <mat-select formControlName="serverUUID" (openedChange)="clearSelectSearch('server', $event)">
+                <mat-select
+                  formControlName="serverUUID"
+                  (openedChange)="clearSelectSearch('server', $event)"
+                >
                   <mat-option class="select-search-option">
                     <input
                       matInput
@@ -241,7 +249,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Customer</mat-label>
-                <mat-select formControlName="customerUUID" (openedChange)="clearSelectSearch('customer', $event)">
+                <mat-select
+                  formControlName="customerUUID"
+                  (openedChange)="clearSelectSearch('customer', $event)"
+                >
                   <mat-option class="select-search-option">
                     <input
                       matInput
@@ -252,7 +263,10 @@
                       (click)="$event.stopPropagation()"
                     />
                   </mat-option>
-                  <mat-option *ngFor="let option of filteredCustomers()" [value]="option.CustomerUUID">
+                  <mat-option
+                    *ngFor="let option of filteredCustomers()"
+                    [value]="option.CustomerUUID"
+                  >
                     {{ option.Name }}
                   </mat-option>
                 </mat-select>
@@ -260,7 +274,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Domain</mat-label>
-                <mat-select formControlName="domainUUID" (openedChange)="clearSelectSearch('domain', $event)">
+                <mat-select
+                  formControlName="domainUUID"
+                  (openedChange)="clearSelectSearch('domain', $event)"
+                >
                   <mat-option class="select-search-option">
                     <input
                       matInput

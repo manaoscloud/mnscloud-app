@@ -30,6 +30,7 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
 
 type PaymentMethod = {
   ErpFinPayMethodUUID: string;
@@ -60,6 +61,7 @@ type PaymentMethod = {
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './payment-method.html',
   styleUrls: ['./payment-method.scss'],

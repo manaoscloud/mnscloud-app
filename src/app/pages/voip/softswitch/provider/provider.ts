@@ -38,6 +38,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { VoipSoftswitchProviderItem, VoipSoftswitchProviderService } from './provider.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
 
@@ -62,6 +63,7 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     MatCheckboxModule,
     MatMenuModule,
   ],
@@ -83,7 +85,7 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
   readonly pageSubtitle = computed(() =>
     this.isMaster()
       ? 'Manage provider catalog used by all tenants.'
-      : 'Manage provider catalog used by your Softswitch accounts.'
+      : 'Manage provider catalog used by your Softswitch accounts.',
   );
 
   readonly loading = signal(false);
@@ -250,8 +252,8 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const { name, engine, baseUrl, defaultCodecs, apiKey, apiSecret, status } = this.form
-      .getRawValue();
+    const { name, engine, baseUrl, defaultCodecs, apiKey, apiSecret, status } =
+      this.form.getRawValue();
     const payload = {
       name: name.trim(),
       engine: this.normalizeEngine(engine),

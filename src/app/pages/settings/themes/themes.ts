@@ -41,6 +41,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type ThemeDomain = {
   ThemeUUID: string;
@@ -161,6 +162,7 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './themes.html',
@@ -343,7 +345,10 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
       };
 
       if (editingItem) {
-        await this.api.put<ThemeMutationResponse>(`settings/themes/${editingItem.ThemeUUID}`, payload);
+        await this.api.put<ThemeMutationResponse>(
+          `settings/themes/${editingItem.ThemeUUID}`,
+          payload,
+        );
         this.snack.success('Domain updated successfully.');
       } else {
         await this.api.post<ThemeMutationResponse>('settings/themes', payload);

@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -20,6 +28,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../../../services/api.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type PoolIpv6Item = {
   Ip6UUID: string;
@@ -54,6 +63,7 @@ type PoolIpv6NetworkItem = {
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './pool-ipv6.html',
   styleUrls: ['./pool-ipv6.scss'],
@@ -152,7 +162,8 @@ export class IspPoolIpv6Page implements AfterViewInit, OnDestroy {
       this.applySearchFilters();
       const selected = this.selectedPool();
       if (selected) {
-        const refreshed = this.poolDataSource.data.find((row) => row.Ip6UUID === selected.Ip6UUID) ?? null;
+        const refreshed =
+          this.poolDataSource.data.find((row) => row.Ip6UUID === selected.Ip6UUID) ?? null;
         this.selectedPool.set(refreshed);
       }
       if (this.selectedPool()) await this.loadNetworks();
@@ -253,7 +264,9 @@ export class IspPoolIpv6Page implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/ipv6-pools/${item.Ip6UUID}`);
-      this.poolDataSource.data = this.poolDataSource.data.filter((row) => row.Ip6UUID !== item.Ip6UUID);
+      this.poolDataSource.data = this.poolDataSource.data.filter(
+        (row) => row.Ip6UUID !== item.Ip6UUID,
+      );
       if (this.selectedPool()?.Ip6UUID === item.Ip6UUID) {
         this.selectedPool.set(null);
         this.networkDataSource.data = [];
@@ -320,7 +333,10 @@ export class IspPoolIpv6Page implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editingNetwork();
       if (editing) {
-        await this.api.put(`isp/ipv6-pools/${selected.Ip6UUID}/networks/${editing.I6nUUID}`, payload);
+        await this.api.put(
+          `isp/ipv6-pools/${selected.Ip6UUID}/networks/${editing.I6nUUID}`,
+          payload,
+        );
       } else {
         await this.api.post(`isp/ipv6-pools/${selected.Ip6UUID}/networks`, payload);
       }
@@ -361,7 +377,9 @@ export class IspPoolIpv6Page implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/ipv6-pools/${selected.Ip6UUID}/networks/${item.I6nUUID}`);
-      this.networkDataSource.data = this.networkDataSource.data.filter((row) => row.I6nUUID !== item.I6nUUID);
+      this.networkDataSource.data = this.networkDataSource.data.filter(
+        (row) => row.I6nUUID !== item.I6nUUID,
+      );
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to delete IPv6 network.'));
     }

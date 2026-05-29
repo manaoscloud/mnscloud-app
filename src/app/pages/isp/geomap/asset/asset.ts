@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -22,6 +30,7 @@ import { ApiService } from '../../../../services/api.service';
 import { IspVendor } from '../../../../models/isp-vendor.model';
 import { IspVendorModel } from '../../../../models/isp-vendor-model.model';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type GeoMapAssetTypeOption = {
   IatUUID: string;
@@ -64,6 +73,7 @@ type GeoMapAssetRegistryItem = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './asset.html',
   styleUrls: ['./asset.scss'],
@@ -149,12 +159,7 @@ export class IspGeoMapAssetPage implements AfterViewInit, OnDestroy {
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
-      return [
-        data.IatCode,
-        data.IatName,
-        data.VendorName,
-        data.VendorModelName,
-      ]
+      return [data.IatCode, data.IatName, data.VendorName, data.VendorModelName]
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
@@ -238,9 +243,17 @@ export class IspGeoMapAssetPage implements AfterViewInit, OnDestroy {
       const normalized = items
         .map((item: any) => ({
           IatUUID: item?.IatUUID,
-          IatCode: String(item?.IatCode ?? '').trim().toUpperCase(),
-          IatName: String(item?.IatName ?? '').trim() || String(item?.IatCode ?? '').trim().toUpperCase(),
-          IatSortOrder: Number.isFinite(Number(item?.IatSortOrder)) ? Number(item.IatSortOrder) : 100,
+          IatCode: String(item?.IatCode ?? '')
+            .trim()
+            .toUpperCase(),
+          IatName:
+            String(item?.IatName ?? '').trim() ||
+            String(item?.IatCode ?? '')
+              .trim()
+              .toUpperCase(),
+          IatSortOrder: Number.isFinite(Number(item?.IatSortOrder))
+            ? Number(item.IatSortOrder)
+            : 100,
         }))
         .filter((item: GeoMapAssetTypeOption) => item.IatUUID && item.IatCode)
         .sort((a: GeoMapAssetTypeOption, b: GeoMapAssetTypeOption) => {
@@ -331,7 +344,9 @@ export class IspGeoMapAssetPage implements AfterViewInit, OnDestroy {
       status: item.IgaStatus ?? 'ACTIVE',
       notes: item.IgaNotes ?? '',
     });
-    void this.loadVendorModels(item.IspVendorIveUUID ?? null).then(() => this.ensureVendorModelValid());
+    void this.loadVendorModels(item.IspVendorIveUUID ?? null).then(() =>
+      this.ensureVendorModelValid(),
+    );
     this.openAssetDialog();
   }
 
@@ -353,7 +368,10 @@ export class IspGeoMapAssetPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`isp/geomap/asset-models/${editing.IgaUUID}`, payload);
+        const response = await this.api.put<any>(
+          `isp/geomap/asset-models/${editing.IgaUUID}`,
+          payload,
+        );
         const item = response?.data?.item ?? null;
         if (item) {
           this.dataSource.data = this.dataSource.data.map((row) =>

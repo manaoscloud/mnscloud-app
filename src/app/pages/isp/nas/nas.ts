@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -22,6 +30,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { ApiService } from '../../../services/api.service';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type IspPopOption = {
   IppUUID: string;
@@ -70,6 +79,7 @@ type IspNasItem = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './nas.html',
   styleUrls: ['./nas.scss'],
@@ -145,9 +155,7 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
   get filteredPopOptions() {
     const value = this.popSearch.trim().toLowerCase();
     if (!value) return this.popOptions();
-    return this.popOptions().filter((pop) =>
-      (pop.IppName ?? '').toLowerCase().includes(value),
-    );
+    return this.popOptions().filter((pop) => (pop.IppName ?? '').toLowerCase().includes(value));
   }
 
   get filteredVendorOptions() {
@@ -210,7 +218,9 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
     try {
       const response = await this.api.get<any>('isp/pops');
       const items = response?.data?.items ?? [];
-      this.popOptions.set(items.map((pop: any) => ({ IppUUID: pop.IppUUID, IppName: pop.IppName })));
+      this.popOptions.set(
+        items.map((pop: any) => ({ IppUUID: pop.IppUUID, IppName: pop.IppName })),
+      );
       if (!this.nasForm.get('popUUID')?.value && items.length) {
         this.nasForm.patchValue({ popUUID: items[0].IppUUID });
       }
@@ -380,22 +390,25 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
 
   popNameFor(item: IspNasItem) {
     if (item.IppName) return item.IppName;
-    return this.popOptions().find((pop) => pop.IppUUID === item.IspPopIppUUID)?.IppName ?? 'Unknown';
+    return (
+      this.popOptions().find((pop) => pop.IppUUID === item.IspPopIppUUID)?.IppName ?? 'Unknown'
+    );
   }
 
   vendorNameFor(item: IspNasItem) {
     if (item.InsVendorName) return item.InsVendorName;
     return (
-      this.vendorOptions().find((vendor) => vendor.VendorUUID === item.IspVendorIveUUID)?.VendorName ??
-      'Unknown'
+      this.vendorOptions().find((vendor) => vendor.VendorUUID === item.IspVendorIveUUID)
+        ?.VendorName ?? 'Unknown'
     );
   }
 
   vendorModelNameFor(item: IspNasItem) {
     if (item.InsVendorModelName) return item.InsVendorModelName;
     return (
-      this.vendorModelOptions().find((model) => model.VendorModelUUID === item.IspVendorModelIvmUUID)
-        ?.VendorModelName ?? 'Unknown'
+      this.vendorModelOptions().find(
+        (model) => model.VendorModelUUID === item.IspVendorModelIvmUUID,
+      )?.VendorModelName ?? 'Unknown'
     );
   }
 

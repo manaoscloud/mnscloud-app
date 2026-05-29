@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -20,6 +28,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 
 type IspGeoMapAssetType = {
   IatUUID: string;
@@ -53,6 +62,7 @@ type IspGeoMapAssetType = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './asset-type.html',
   styleUrls: ['./asset-type.scss'],
@@ -198,7 +208,10 @@ export class IspGeoMapAssetTypePage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`isp/geomap/asset-types/${editing.IatUUID}`, payload);
+        const response = await this.api.put<any>(
+          `isp/geomap/asset-types/${editing.IatUUID}`,
+          payload,
+        );
         const item = response?.data?.item ?? null;
         if (item) {
           this.dataSource.data = this.dataSource.data.map((row) =>

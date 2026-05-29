@@ -25,12 +25,8 @@
       </mat-form-field>
 
       <div class="filter-actions">
-        <button mat-stroked-button (click)="applyFilters()" type="button">
-          Apply
-        </button>
-        <button mat-stroked-button (click)="clearFilters()" type="button">
-          Clear
-        </button>
+        <button mat-stroked-button (click)="applyFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearFilters()" type="button">Clear</button>
       </div>
     </div>
 
@@ -61,7 +57,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
@@ -76,49 +72,48 @@
       showFirstLastButtons
       aria-label="Select page of brands"
     ></mat-paginator>
-
   </mat-card>
 </section>
 
 <ng-template #brandFormDialog>
   <div class="crud-dialog">
-      <div class="form-header">
-        <div>
-          <h2>{{ editing() ? 'Edit brand' : 'New brand' }}</h2>
-          <p>Create a brand for catalog and sales.</p>
-        </div>
+    <div class="form-header">
+      <div>
+        <h2>{{ editing() ? 'Edit brand' : 'New brand' }}</h2>
+        <p>Create a brand for catalog and sales.</p>
       </div>
+    </div>
 
-      <mat-dialog-content class="dialog-content">
-        <mat-tab-group class="form-tabs">
-          <mat-tab label="Data">
-            <div class="tab-content">
-              <form class="form-grid" [formGroup]="brandForm" (ngSubmit)="saveBrand()">
-                <mat-form-field appearance="outline">
-                  <mat-label>Name</mat-label>
-                  <input matInput placeholder="e.g. mnscloud" formControlName="name" />
-                </mat-form-field>
-              </form>
-            </div>
-          </mat-tab>
-        </mat-tab-group>
-      </mat-dialog-content>
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group class="form-tabs">
+        <mat-tab [label]="'Data' | t">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="brandForm" (ngSubmit)="saveBrand()">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput placeholder="e.g. mnscloud" formControlName="name" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
 
-      <mat-dialog-actions class="form-actions">
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="saveBrand()"
-          [disabled]="brandForm.invalid || saving()"
-        >
-          <mat-icon>save</mat-icon>
-          Save
-        </button>
-        <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
-        @if (error()) {
-          <span class="error">{{ error() }}</span>
-        }
-      </mat-dialog-actions>
+    <mat-dialog-actions class="form-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveBrand()"
+        [disabled]="brandForm.invalid || saving()"
+      >
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+      @if (error()) {
+        <span class="error">{{ error() }}</span>
+      }
+    </mat-dialog-actions>
   </div>
 </ng-template>

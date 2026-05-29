@@ -54,7 +54,10 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Category</mat-label>
-        <mat-select formControlName="saleCategoryUUID" (openedChange)="onFilterCategoryOpened($event)">
+        <mat-select
+          formControlName="saleCategoryUUID"
+          (openedChange)="onFilterCategoryOpened($event)"
+        >
           <mat-option
             class="select-search-option"
             [value]="null"
@@ -133,12 +136,8 @@
       </mat-form-field>
 
       <div class="filter-actions">
-        <button mat-stroked-button (click)="applyFilters()" type="button">
-          Apply
-        </button>
-        <button mat-stroked-button (click)="clearFilters()" type="button">
-          Clear
-        </button>
+        <button mat-stroked-button (click)="applyFilters()" type="button">Apply</button>
+        <button mat-stroked-button (click)="clearFilters()" type="button">Clear</button>
       </div>
     </div>
 
@@ -193,13 +192,17 @@
 
         <ng-container matColumnDef="price">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
-          <td mat-cell *matCellDef="let row">{{ row.SprPrice | number : '1.2-2' }}</td>
+          <td mat-cell *matCellDef="let row">{{ row.SprPrice | number: '1.2-2' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
-            <span class="status-pill" [class.is-active]="row.SprStatus === 1" [class.is-inactive]="row.SprStatus !== 1">
+            <span
+              class="status-pill"
+              [class.is-active]="row.SprStatus === 1"
+              [class.is-inactive]="row.SprStatus !== 1"
+            >
               {{ statusLabel(row.SprStatus) }}
             </span>
           </td>
@@ -220,7 +223,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
@@ -236,7 +239,6 @@
       showFirstLastButtons
       aria-label="Select page of products"
     ></mat-paginator>
-
   </mat-card>
 </section>
 
@@ -251,7 +253,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <div class="form-section">
               <form class="form-grid" [formGroup]="productForm" (ngSubmit)="saveProduct()">
@@ -279,7 +281,12 @@
 
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Description</mat-label>
-                  <textarea matInput rows="3" placeholder="Product description" formControlName="description"></textarea>
+                  <textarea
+                    matInput
+                    rows="3"
+                    placeholder="Product description"
+                    formControlName="description"
+                  ></textarea>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -311,7 +318,10 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Category</mat-label>
-                  <mat-select formControlName="saleCategoryUUID" (openedChange)="onCategoryOpened($event)">
+                  <mat-select
+                    formControlName="saleCategoryUUID"
+                    (openedChange)="onCategoryOpened($event)"
+                  >
                     <mat-option
                       class="select-search-option"
                       [value]="null"
@@ -338,7 +348,10 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Brand</mat-label>
-                  <mat-select formControlName="saleBrandUUID" (openedChange)="onBrandOpened($event)">
+                  <mat-select
+                    formControlName="saleBrandUUID"
+                    (openedChange)="onBrandOpened($event)"
+                  >
                     <mat-option
                       class="select-search-option"
                       [value]="null"
@@ -401,10 +414,20 @@
                     <div class="image-card">
                       <img [src]="item.SpiUrl" alt="product image" />
                       <div class="image-card-actions">
-                        <button mat-icon-button (click)="setCover(item)" [disabled]="item.SpiIsCover === 1" matTooltip="Set cover">
+                        <button
+                          mat-icon-button
+                          (click)="setCover(item)"
+                          [disabled]="item.SpiIsCover === 1"
+                          matTooltip="Set cover"
+                        >
                           <mat-icon>star</mat-icon>
                         </button>
-                        <button mat-icon-button color="warn" (click)="deleteImage(item)" matTooltip="Delete">
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="deleteImage(item)"
+                          matTooltip="Delete"
+                        >
                           <mat-icon>delete</mat-icon>
                         </button>
                       </div>

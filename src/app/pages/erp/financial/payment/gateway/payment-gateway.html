@@ -204,7 +204,7 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
+        <mat-tab [label]="'Data' | t">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="gatewayForm" (ngSubmit)="submitGateway()">
               <mat-form-field appearance="outline">

@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -19,6 +27,7 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type CategoryItem = {
   ScaUUID: string;
@@ -45,6 +54,7 @@ type CategoryItem = {
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './category.html',
   styleUrls: ['./category.scss'],
@@ -160,7 +170,9 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
         const response = await this.api.put<any>(`sale/categories/${editing.ScaUUID}`, payload);
         const item = response?.data?.item ?? null;
         if (item) {
-          this.categories.update((items) => items.map((row) => (row.ScaUUID === item.ScaUUID ? item : row)));
+          this.categories.update((items) =>
+            items.map((row) => (row.ScaUUID === item.ScaUUID ? item : row)),
+          );
           this.dataSource.data = [...this.categories()];
         }
       } else {

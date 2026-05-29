@@ -35,6 +35,7 @@ import {
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipBlacklistItem, VoipBlacklistUiService } from '../blacklist.service';
+import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
 
 @Component({
   selector: 'app-voip-pabx-blacklist-list',
@@ -58,6 +59,7 @@ import { VoipBlacklistItem, VoipBlacklistUiService } from '../blacklist.service'
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    TranslatePipe,
     MatTooltipModule,
   ],
   templateUrl: './list.html',

@@ -162,7 +162,7 @@
       <form id="PABXResourceForm" class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
         <mat-tab-group class="form-tabs">
           @if (isTrunkResource()) {
-            <mat-tab label="Data">
+            <mat-tab [label]="'Data' | t">
               <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Status</mat-label>
@@ -334,7 +334,7 @@
               </div>
             </mat-tab>
           } @else {
-            <mat-tab label="Data">
+            <mat-tab [label]="'Data' | t">
               <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>PABX</mat-label>
@@ -361,7 +361,10 @@
                 @if (usesTrunk()) {
                   <mat-form-field appearance="outline" class="span-2">
                     <mat-label>Trunk{{ meta().trunkMode === 'required' ? ' *' : '' }}</mat-label>
-                    <mat-select formControlName="trunkUUID" (openedChange)="clearTrunkSearch($event)">
+                    <mat-select
+                      formControlName="trunkUUID"
+                      (openedChange)="clearTrunkSearch($event)"
+                    >
                       <mat-option class="select-search-option">
                         <input
                           matInput

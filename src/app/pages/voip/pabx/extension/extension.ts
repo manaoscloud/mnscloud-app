@@ -38,6 +38,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { VoipPabxService, VoipPabxAccount } from '../voip-pabx.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import {
   VoipPabxExtensionGeneratedCredential,
   VoipPabxExtensionItem,
@@ -75,6 +76,7 @@ type CreateMode = 'single' | 'range';
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     MatCheckboxModule,
     MatMenuModule,
   ],

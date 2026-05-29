@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, OnDestroy, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  TemplateRef,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -22,6 +31,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type IspRadiusServerItem = {
   IrsUUID: string;
@@ -57,6 +67,7 @@ type IspRadiusServerItem = {
     MatSlideToggleModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
   ],
   templateUrl: './radius-server.html',
   styleUrls: ['./radius-server.scss'],
@@ -81,7 +92,15 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
   readonly hideSecret = signal(true);
 
   readonly dataSource = new MatTableDataSource<IspRadiusServerItem>([]);
-  readonly displayedColumns = ['name', 'host', 'authPort', 'acctPort', 'status', 'default', 'actions'];
+  readonly displayedColumns = [
+    'name',
+    'host',
+    'authPort',
+    'acctPort',
+    'status',
+    'default',
+    'actions',
+  ];
   search = '';
   searchInput = '';
 

@@ -35,6 +35,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 type SaleQuotation = {
   SqtUUID: string;
@@ -92,6 +93,7 @@ type OptionItem = {
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    TranslatePipe,
     DateMaskDirective,
     CurrencyMaskDirective,
   ],
