@@ -12,6 +12,17 @@ export interface BillingProduct {
   ActivePrices?: number;
 }
 
+export interface BillingProductDefinition {
+  BpdUUID: string;
+  BpdCode: string;
+  BpdName: string;
+  BpdModule: string;
+  BpdBillingScope: 'SERVICE' | 'MODULE';
+  BpdDescription?: string | null;
+  BpdSortOrder?: number | null;
+  BpdStatus: number;
+}
+
 export interface BillingPrice {
   BpcUUID: string;
   BillingProductBprUUID: string;
@@ -97,6 +108,16 @@ export class BillingService {
     if (status !== null) params.set('status', String(status));
     const response = await this.api.get<ApiListResponse<BillingProduct>>(
       `system/billing/products${this.query(params)}`,
+    );
+    return response.data?.items ?? [];
+  }
+
+  async listProductDefinitions(search = '', status: number | null = 1) {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('search', search.trim());
+    if (status !== null) params.set('status', String(status));
+    const response = await this.api.get<ApiListResponse<BillingProductDefinition>>(
+      `system/billing/product-definitions${this.query(params)}`,
     );
     return response.data?.items ?? [];
   }

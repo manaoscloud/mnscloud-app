@@ -34,6 +34,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import {
   BillingPrice,
   BillingProduct,
+  BillingProductDefinition,
   BillingService,
   BillingSubscription,
 } from '../shared/billing.service';
@@ -89,6 +90,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly editingProduct = signal<BillingProduct | null>(null);
   readonly editingPrice = signal<BillingPrice | null>(null);
   readonly products = signal<BillingProduct[]>([]);
+  readonly productDefinitions = signal<BillingProductDefinition[]>([]);
 
   readonly productSource = new MatTableDataSource<BillingProduct>([]);
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
@@ -131,6 +133,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   subscriptionStatusFilter = '';
   priceProductSearchInput = '';
   priceFormProductSearchInput = '';
+  productCodeSearchInput = '';
 
   readonly selectedProductUUIDs = new Set<string>();
   readonly selectedPriceUUIDs = new Set<string>();
@@ -202,11 +205,13 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const [products, prices, subscriptions] = await Promise.all([
+      const [definitions, products, prices, subscriptions] = await Promise.all([
+        this.billing.listProductDefinitions(),
         this.billing.listProducts(this.searchInput, this.statusFilter),
         this.billing.listPrices(this.searchInput, this.priceProductFilter, this.statusFilter),
         this.billing.listSystemSubscriptions(this.searchInput, this.subscriptionStatusFilter),
       ]);
+      this.productDefinitions.set(definitions);
       this.products.set(products);
       this.productSource.data = products;
       this.priceSource.data = prices;
@@ -276,6 +281,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       status: row.BprStatus,
     });
     this.openDialog(this.productDialog, '760px');
+  }
+
+  onProductDefinitionChange(code: string) {
+    const definition = this.productDefinitions().find((item) => item.BpdCode === code);
+    if (!definition) return;
+    this.productForm.patchValue({
+      code: definition.BpdCode,
+      name: definition.BpdName,
+      module: definition.BpdModule,
+      billingScope: definition.BpdBillingScope,
+      description: definition.BpdDescription ?? '',
+    });
   }
 
   async saveProduct(keepOpen = false) {
@@ -462,9 +479,28 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     );
   }
 
+  filteredProductDefinitions(search: string) {
+    const term = search.trim().toLowerCase();
+    const existingCodes = new Set(
+      this.products()
+        .filter((product) => product.BprUUID !== this.editingProduct()?.BprUUID)
+        .map((product) => product.BprCode),
+    );
+    const definitions = this.productDefinitions().filter(
+      (definition) => !existingCodes.has(definition.BpdCode),
+    );
+    if (!term) return definitions;
+    return definitions.filter((definition) =>
+      [definition.BpdCode, definition.BpdName, definition.BpdModule, definition.BpdDescription]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(term)),
+    );
+  }
+
   clearProductSelectSearch() {
     this.priceProductSearchInput = '';
     this.priceFormProductSearchInput = '';
+    this.productCodeSearchInput = '';
   }
 
   closeDialog() {

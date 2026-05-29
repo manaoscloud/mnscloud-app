@@ -553,9 +553,39 @@
         <mat-tab label="Data">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="productForm">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Code' | t }}</mat-label>
-                <input matInput formControlName="code" />
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Product definition' | t }}</mat-label>
+                <mat-select
+                  formControlName="code"
+                  (selectionChange)="onProductDefinitionChange($event.value)"
+                  (openedChange)="!$event && clearProductSelectSearch()"
+                >
+                  <mat-option class="select-search-option">
+                    <mat-form-field
+                      appearance="outline"
+                      class="select-search-field"
+                      subscriptSizing="dynamic"
+                    >
+                      <mat-icon matPrefix>search</mat-icon>
+                      <input
+                        matInput
+                        [placeholder]="'Search products' | t"
+                        [(ngModel)]="productCodeSearchInput"
+                        [ngModelOptions]="{ standalone: true }"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (
+                    definition of filteredProductDefinitions(productCodeSearchInput);
+                    track definition.BpdCode
+                  ) {
+                    <mat-option [value]="definition.BpdCode">
+                      {{ definition.BpdCode }} - {{ definition.BpdName }}
+                    </mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Name' | t }}</mat-label>
