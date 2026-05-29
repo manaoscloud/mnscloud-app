@@ -975,7 +975,7 @@ export const routes: Routes = [
                 title: 'VoIP • PABX • External | mnscloud',
                 data: { resource: 'external' },
               },
-              ...(['trunks', 'inbound-routes', 'outbound-routes'] as const).map((resource) => ({
+              ...(['trunks', 'inbound-routes'] as const).map((resource) => ({
                 path: `voip/pabx/${resource}`,
                 loadComponent: () =>
                   import('./pages/voip/pabx/trunk-route/trunk-route').then(

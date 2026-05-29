@@ -1318,12 +1318,6 @@ export class MainLayout {
               icon: 'call_received',
               route: '/voip/pabx/inbound-routes',
             },
-            {
-              id: 'voip/pabx/outbound-routes',
-              label: 'Outbound Route',
-              icon: 'call_made',
-              route: '/voip/pabx/outbound-routes',
-            },
             { id: 'voip/pabx/ivr', label: 'IVR', icon: 'account_tree', route: '/voip/pabx/ivr' },
             {
               id: 'voip/pabx/group',

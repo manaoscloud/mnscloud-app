@@ -126,9 +126,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip"
               [class.is-active]="isActive(row)"
               [class.is-inactive]="!isActive(row)"
+              [class.chip-success]="isActive(row)"
+              [class.chip-failed]="!isActive(row)"
             >
               {{ isActive(row) ? 'ACTIVE' : 'INACTIVE' }}
             </mat-chip>
@@ -249,7 +251,10 @@
               <mat-label>Result</mat-label>
               <mat-select formControlName="resultType">
                 <mat-option value="outbound">Outbound</mat-option>
-                <mat-option value="internal">Internal</mat-option>
+                <mat-option value="extension">Extension</mat-option>
+                <mat-option value="blocked">Blocked</mat-option>
+                <mat-option value="emergency">Emergency</mat-option>
+                <mat-option value="feature_code">Feature code</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
@@ -270,6 +275,51 @@
                 <mat-option [value]="1">Yes</mat-option>
                 <mat-option [value]="0">No</mat-option>
               </mat-select>
+            </mat-form-field>
+          </form>
+        </mat-tab>
+        <mat-tab label="Routing">
+          <form class="tab-content form-grid" [formGroup]="form">
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Trunk</mat-label>
+              <mat-select formControlName="trunkUUID" (openedChange)="onTrunkSelectOpened($event)">
+                <mat-option class="select-search-option" disabled>
+                  <input
+                    class="select-search-field"
+                    placeholder="Search trunk"
+                    [value]="trunkSearch()"
+                    (input)="trunkSearch.set($any($event.target).value)"
+                    (click)="$event.stopPropagation()"
+                  />
+                </mat-option>
+                <mat-option value="">None</mat-option>
+                @for (trunk of filteredTrunks(); track trunk.uuid) {
+                  <mat-option [value]="trunk.uuid">
+                    {{ trunk.name }}{{ trunk.host ? ' - ' + trunk.host : '' }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Caller ID mode</mat-label>
+              <mat-select formControlName="callerIdMode">
+                <mat-option value="extension">Extension</mat-option>
+                <mat-option value="fixed">Fixed</mat-option>
+                <mat-option value="anonymous">Anonymous</mat-option>
+                <mat-option value="passthrough">Passthrough</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Caller ID value</mat-label>
+              <input matInput formControlName="callerIdValue" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>Fallback trunks</mat-label>
+              <input matInput formControlName="fallbackTrunks" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>Engine config</mat-label>
+              <textarea matInput formControlName="engineConfig" rows="2"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>

@@ -31,7 +31,25 @@ export type VoipPabxDialPlanRuleItem = {
   priority?: number | null;
   caseSensitive?: number | null;
   resultType: string;
+  trunkUUID?: string | null;
+  trunkRuntimeName?: string | null;
+  trunkName?: string | null;
+  callerIdMode?: string | null;
+  callerIdValue?: string | null;
+  fallbackTrunks?: string | null;
+  engineConfig?: string | null;
   description?: string | null;
+};
+
+export type VoipPabxTrunkOption = {
+  uuid: string;
+  id: string;
+  name: string;
+  enabled: number;
+  pabxUUID?: string | null;
+  pabxName?: string | null;
+  host?: string | null;
+  direction?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -69,6 +87,10 @@ export class VoipPabxDialPlanUiService {
     params: { search?: string; limit?: number; offset?: number; dialPlanUUID?: string } = {},
   ) {
     return this.list('dial-plan-rules', params);
+  }
+
+  listTrunks(params: { search?: string; limit?: number; offset?: number; status?: number } = {}) {
+    return this.list('trunks', params);
   }
 
   createRule(payload: Record<string, unknown>) {

@@ -94,9 +94,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip"
               [class.is-active]="isActive(row)"
               [class.is-inactive]="!isActive(row)"
+              [class.chip-success]="isActive(row)"
+              [class.chip-failed]="!isActive(row)"
             >
               {{ statusLabel(row) }}
             </mat-chip>
@@ -438,23 +440,6 @@
                         {{ option.name }}
                       </mat-option>
                     </mat-select>
-                  </mat-form-field>
-                } @else if (isOutboundRouteResource()) {
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ meta().primary }}</mat-label>
-                    <input matInput formControlName="primary" />
-                  </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ meta().secondary }}</mat-label>
-                    <input matInput formControlName="secondary" />
-                  </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>Strip digits</mat-label>
-                    <input matInput type="number" min="0" formControlName="stripDigits" />
-                  </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>Priority</mat-label>
-                    <input matInput type="number" min="1" formControlName="priority" />
                   </mat-form-field>
                 }
                 <div class="toggle-row">

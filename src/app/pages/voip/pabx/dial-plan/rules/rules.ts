@@ -38,6 +38,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import {
   VoipPabxDialPlanItem,
   VoipPabxDialPlanRuleItem,
+  VoipPabxTrunkOption,
   VoipPabxDialPlanUiService,
 } from '../dial-plan.service';
 
@@ -82,14 +83,29 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   readonly search = signal('');
   readonly dialPlanFilter = signal('');
   readonly dialPlanSearch = signal('');
+  readonly trunkSearch = signal('');
   readonly editing = signal<VoipPabxDialPlanRuleItem | null>(null);
   readonly selectedUUIDs = signal<Set<string>>(new Set());
   readonly dialPlans = signal<VoipPabxDialPlanItem[]>([]);
+  readonly trunks = signal<VoipPabxTrunkOption[]>([]);
   readonly filteredDialPlans = computed(() => {
     const term = this.dialPlanSearch().trim().toLowerCase();
     if (!term) return this.dialPlans();
     return this.dialPlans().filter((item) =>
       `${item.name} ${item.code}`.toLowerCase().includes(term),
+    );
+  });
+  readonly filteredTrunks = computed(() => {
+    const term = this.trunkSearch().trim().toLowerCase();
+    const rows = this.trunks().filter((item) => {
+      const direction = String(item.direction ?? '').toLowerCase();
+      return Number(item.enabled ?? 0) === 1 && ['outbound', 'both'].includes(direction);
+    });
+    if (!term) return rows;
+    return rows.filter((item) =>
+      `${item.name} ${item.host ?? ''} ${item.pabxName ?? ''} ${item.direction ?? ''}`
+        .toLowerCase()
+        .includes(term),
     );
   });
   readonly dataSource = new MatTableDataSource<VoipPabxDialPlanRuleItem>([]);
@@ -117,6 +133,11 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     priority: [100],
     caseSensitive: [0],
     resultType: ['outbound', [Validators.required]],
+    trunkUUID: [''],
+    callerIdMode: ['extension'],
+    callerIdValue: [''],
+    fallbackTrunks: [''],
+    engineConfig: [''],
     description: [''],
     enabled: [1],
   });
@@ -138,7 +159,7 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   }
 
   async bootstrap() {
-    await this.loadDialPlans();
+    await Promise.all([this.loadDialPlans(), this.loadTrunks()]);
     await this.loadItems();
   }
 
@@ -162,9 +183,18 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     if (!opened) this.dialPlanSearch.set('');
   }
 
+  onTrunkSelectOpened(opened: boolean) {
+    if (!opened) this.trunkSearch.set('');
+  }
+
   async loadDialPlans() {
     const response = await this.api.listPlans({ limit: this.listLimit });
     this.dialPlans.set((response?.data?.items ?? []) as VoipPabxDialPlanItem[]);
+  }
+
+  async loadTrunks() {
+    const response = await this.api.listTrunks({ limit: this.listLimit, status: 1 });
+    this.trunks.set((response?.data?.items ?? []) as VoipPabxTrunkOption[]);
   }
 
   async loadItems() {
@@ -201,6 +231,11 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
       priority: 100,
       caseSensitive: 0,
       resultType: 'outbound',
+      trunkUUID: '',
+      callerIdMode: 'extension',
+      callerIdValue: '',
+      fallbackTrunks: '',
+      engineConfig: '',
       description: '',
       enabled: 1,
     });
@@ -221,6 +256,11 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
       priority: Number(item.priority ?? 100),
       caseSensitive: item.caseSensitive === 1 ? 1 : 0,
       resultType: item.resultType || 'outbound',
+      trunkUUID: item.trunkUUID ?? '',
+      callerIdMode: item.callerIdMode ?? 'extension',
+      callerIdValue: item.callerIdValue ?? '',
+      fallbackTrunks: item.fallbackTrunks ?? '',
+      engineConfig: item.engineConfig ?? '',
       description: item.description ?? '',
       enabled: item.enabled === 1 ? 1 : 0,
     });
@@ -230,6 +270,11 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   async saveItem(saveAndNew = false) {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
+    const isOutbound = value.direction === 'outbound' && value.resultType === 'outbound';
+    if (isOutbound && !value.trunkUUID) {
+      this.snack.error('Outbound dial plan rule trunk is required.');
+      return;
+    }
     const payload = {
       dialPlanUUID: value.dialPlanUUID,
       name: value.name.trim(),
@@ -242,6 +287,11 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
       priority: Number(value.priority ?? 100),
       caseSensitive: value.caseSensitive === 1,
       resultType: value.resultType,
+      trunkUUID: value.trunkUUID || null,
+      callerIdMode: value.callerIdMode || 'extension',
+      callerIdValue: value.callerIdValue.trim() || null,
+      fallbackTrunks: value.fallbackTrunks.trim() || null,
+      engineConfig: value.engineConfig.trim() || null,
       description: value.description.trim() || null,
       enabled: value.enabled === 1,
     };
@@ -363,6 +413,12 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   dialPlanLabel(uuid: string) {
     const plan = this.dialPlans().find((item) => item.uuid === uuid);
     return plan ? `${plan.name} (${plan.code})` : uuid || '-';
+  }
+
+  trunkLabel(uuid?: string | null) {
+    if (!uuid) return '-';
+    const trunk = this.trunks().find((item) => item.uuid === uuid);
+    return trunk ? `${trunk.name}${trunk.host ? ` - ${trunk.host}` : ''}` : uuid;
   }
 
   isActive(item: VoipPabxDialPlanRuleItem) {

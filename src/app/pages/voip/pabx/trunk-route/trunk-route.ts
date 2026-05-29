@@ -39,7 +39,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxTrunkRouteUiService } from './trunk-route.service';
 
-type ResourceKind = 'trunks' | 'inbound-routes' | 'outbound-routes';
+type ResourceKind = 'trunks' | 'inbound-routes';
 type ResourceRow = {
   uuid: string;
   id: string;
@@ -102,21 +102,6 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
       enabled: true,
     },
     trunkMode: 'optional',
-  },
-  'outbound-routes': {
-    title: 'PABX Outbound Routes',
-    subtitle: 'Route extension outbound calls through SIP trunks by dialing pattern.',
-    primary: 'Pattern',
-    primaryKey: 'pattern',
-    secondary: 'Prepend',
-    secondaryKey: 'prepend',
-    defaults: {
-      priority: 100,
-      stripDigits: 0,
-      callerIdMode: 'extension',
-      enabled: true,
-    },
-    trunkMode: 'required',
   },
 };
 
@@ -410,7 +395,7 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map(
-          (item: any) => item.uuid ?? item.VptUUID ?? item.VriUUID ?? item.VroUUID,
+          (item: any) => item.uuid ?? item.VptUUID ?? item.VriUUID,
         ),
       );
       this.selectedIds.clear();
@@ -437,9 +422,7 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     const rows = this.trunkOptions().filter((item) => {
       const direction = String(item['direction'] ?? '').toLowerCase();
       const belongsToSelectedPabx = !selectedPabxUUID || item.pabxUUID === selectedPabxUUID;
-      const supportsOutbound =
-        !this.isOutboundRouteResource() || direction === 'outbound' || direction === 'both';
-      return item.enabled === 1 && belongsToSelectedPabx && supportsOutbound;
+      return item.enabled === 1 && belongsToSelectedPabx;
     });
     if (!value) return rows;
     return rows.filter((item) =>
@@ -519,16 +502,13 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     return this.videoCodecOptions.filter((codec) => codec.toLowerCase().includes(value));
   }
   usesTrunk() {
-    return this.resource() === 'outbound-routes';
+    return false;
   }
   isTrunkResource() {
     return this.resource() === 'trunks';
   }
   isInboundRouteResource() {
     return this.resource() === 'inbound-routes';
-  }
-  isOutboundRouteResource() {
-    return this.resource() === 'outbound-routes';
   }
   primaryValue(row: ResourceRow) {
     return String(row[this.meta().primaryKey] ?? row.name ?? '');
@@ -543,10 +523,6 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     return Number(row.enabled ?? 0) === 1;
   }
   onPabxChange() {
-    if (this.isOutboundRouteResource()) {
-      this.form.patchValue({ trunkUUID: '' });
-      return;
-    }
     if (!this.isInboundRouteResource()) return;
     this.form.patchValue({ didUUID: '', routeTargetUUID: '' });
     this.didOptions.set([]);
@@ -601,10 +577,6 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       payload['allowedCidrs'] = this.payloadText(value.allowedCidrs);
       payload['priority'] = value.priority;
       payload['codecs'] = this.formatCodecs([...value.audioCodecs, ...value.videoCodecs]);
-    }
-    if (this.isOutboundRouteResource()) {
-      payload['priority'] = value.priority;
-      payload['stripDigits'] = value.stripDigits;
     }
     return payload;
   }
