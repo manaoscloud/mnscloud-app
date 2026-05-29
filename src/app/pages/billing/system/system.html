@@ -809,30 +809,40 @@
     </div>
     <mat-dialog-content class="dialog-content">
       <form class="form-grid" [formGroup]="creditForm">
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Tenant' | t }}</mat-label>
-          <input
-            matInput
-            formControlName="tenantSearch"
-            [matAutocomplete]="tenantAutocomplete"
-            (input)="searchCreditTenants($any($event.target).value)"
-          />
-          <mat-autocomplete
-            #tenantAutocomplete="matAutocomplete"
-            [displayWith]="tenantAutocompleteLabel"
-            (optionSelected)="selectCreditTenant($event.option.value)"
+        <div class="tenant-search-row span-2">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Tenant email, name or UUID' | t }}</mat-label>
+            <input
+              matInput
+              formControlName="tenantSearch"
+              (input)="clearCreditTenantSelection()"
+              (keydown.enter)="searchCreditTenants(); $event.preventDefault()"
+            />
+          </mat-form-field>
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="searchCreditTenants()"
+            [disabled]="tenantSearchLoading()"
           >
+            <mat-icon>search</mat-icon>
+            {{ tenantSearchLoading() ? ('Searching' | t) : ('Search' | t) }}
+          </button>
+        </div>
+        <input type="hidden" formControlName="environmentUUID" />
+        @if (tenantOptions().length > 0 && !selectedCreditTenant()) {
+          <div class="tenant-result-list span-2">
             @for (tenant of tenantOptions(); track tenant.EnvironmentUUID) {
-              <mat-option [value]="tenant">
+              <button type="button" class="tenant-result" (click)="selectCreditTenant(tenant)">
                 <span class="option-title">{{ tenant.EnvironmentName || tenant.TenantEmail }}</span>
                 <span class="option-subtitle">
                   {{ tenant.TenantEmail }} · {{ tenant.WalletSummary || 'No wallet' }}
                 </span>
-              </mat-option>
+              </button>
             }
-          </mat-autocomplete>
-        </mat-form-field>
-        <input type="hidden" formControlName="environmentUUID" />
+          </div>
+        }
         @if (selectedCreditTenant(); as tenant) {
           <div class="selected-tenant span-2">
             <mat-icon>verified_user</mat-icon>

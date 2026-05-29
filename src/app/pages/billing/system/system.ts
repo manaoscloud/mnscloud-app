@@ -10,7 +10,6 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -52,7 +51,6 @@ export const BILLING_SYSTEM_IMPORTS = [
   FormsModule,
   ReactiveFormsModule,
   MatButtonModule,
-  MatAutocompleteModule,
   MatCardModule,
   MatCheckboxModule,
   MatDialogModule,
@@ -94,6 +92,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly products = signal<BillingProduct[]>([]);
   readonly tenantOptions = signal<BillingTenantLookupItem[]>([]);
   readonly selectedCreditTenant = signal<BillingTenantLookupItem | null>(null);
+  readonly tenantSearchLoading = signal(false);
 
   readonly productSource = new MatTableDataSource<BillingProduct>([]);
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
@@ -187,10 +186,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   @ViewChild('subscriptionSort') subscriptionSort?: MatSort;
   private activeDialogRef: MatDialogRef<unknown> | null = null;
   private activeDialogBinding: CrudDialogBinding | null = null;
-  private creditTenantSearchTimer: ReturnType<typeof setTimeout> | null = null;
-  private creditTenantLastTerm = '';
-  private creditTenantSearchSequence = 0;
-  private creditTenantSearchCooldownUntil = 0;
 
   ngAfterViewInit() {
     this.productSource.paginator = this.productPaginator ?? null;
@@ -206,7 +201,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.clearCreditTenantSearchTimer();
     this.closeActiveDialog();
   }
 
@@ -425,10 +419,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   openCreditDialog() {
-    this.clearCreditTenantSearchTimer();
-    this.creditTenantLastTerm = '';
-    this.creditTenantSearchSequence = 0;
-    this.creditTenantSearchCooldownUntil = 0;
     this.creditForm.reset({
       tenantSearch: '',
       environmentUUID: '',
@@ -440,53 +430,41 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     });
     this.selectedCreditTenant.set(null);
     this.tenantOptions.set([]);
+    this.tenantSearchLoading.set(false);
     this.openDialog(this.creditDialog, '720px');
   }
 
-  searchCreditTenants(value: string) {
-    const term = value.trim();
-    const selectedTenant = this.selectedCreditTenant();
-    if (selectedTenant && term === this.tenantLabel(selectedTenant)) return;
-
-    this.clearCreditTenantSearchTimer();
+  clearCreditTenantSelection() {
     this.selectedCreditTenant.set(null);
     this.creditForm.controls.environmentUUID.setValue('');
+  }
+
+  async searchCreditTenants() {
+    const term = this.creditForm.controls.tenantSearch.value.trim();
 
     if (term.length < 3) {
       this.tenantOptions.set([]);
-      this.creditTenantLastTerm = '';
+      this.snack.error('Type at least 3 characters to search tenants.');
       return;
     }
 
-    if (term === this.creditTenantLastTerm && this.tenantOptions().length > 0) return;
-
-    const now = Date.now();
-    if (now < this.creditTenantSearchCooldownUntil) return;
-
-    this.creditTenantSearchTimer = setTimeout(() => {
-      void this.loadCreditTenantOptions(term);
-    }, 450);
-  }
-
-  private async loadCreditTenantOptions(term: string) {
-    const sequence = ++this.creditTenantSearchSequence;
+    this.clearCreditTenantSelection();
+    this.tenantSearchLoading.set(true);
     try {
       const tenants = await this.billing.searchTenants(term);
-      if (sequence !== this.creditTenantSearchSequence) return;
-      this.creditTenantLastTerm = term;
       this.tenantOptions.set(tenants);
-    } catch (error) {
-      if (sequence !== this.creditTenantSearchSequence) return;
-      this.tenantOptions.set([]);
-      if (error instanceof Error && error.message.toLowerCase().includes('too many requests')) {
-        this.creditTenantSearchCooldownUntil = Date.now() + 30_000;
-        this.snack.error('Tenant search was rate limited. Wait a moment and type again.');
+      if (tenants.length === 0) {
+        this.snack.error('No tenant found for this search.');
       }
+    } catch (error) {
+      this.tenantOptions.set([]);
+      this.snack.error(error instanceof Error ? error.message : 'Failed to search tenants.');
+    } finally {
+      this.tenantSearchLoading.set(false);
     }
   }
 
   selectCreditTenant(tenant: BillingTenantLookupItem) {
-    this.clearCreditTenantSearchTimer();
     this.selectedCreditTenant.set(tenant);
     this.creditForm.patchValue({
       tenantSearch: this.tenantLabel(tenant),
@@ -498,17 +476,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   tenantLabel(tenant: BillingTenantLookupItem) {
     const name = tenant.EnvironmentName?.trim() || 'Tenant';
     return `${name} - ${tenant.TenantEmail ?? tenant.EnvironmentUUID}`;
-  }
-
-  tenantAutocompleteLabel = (value: BillingTenantLookupItem | string | null) => {
-    if (!value) return '';
-    return typeof value === 'string' ? value : this.tenantLabel(value);
-  };
-
-  private clearCreditTenantSearchTimer() {
-    if (!this.creditTenantSearchTimer) return;
-    clearTimeout(this.creditTenantSearchTimer);
-    this.creditTenantSearchTimer = null;
   }
 
   async saveManualCredit() {
