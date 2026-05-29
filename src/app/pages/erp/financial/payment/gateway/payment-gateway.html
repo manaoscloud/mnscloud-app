@@ -194,7 +194,7 @@
       <div class="header-actions">
         <button mat-stroked-button type="button" (click)="toggleAdvancedJsonMode()">
           <mat-icon>tune</mat-icon>
-          {{ advancedJsonMode() ? 'Use Structured Fields' : 'Use Advanced JSON' }}
+          {{ advancedJsonMode() ? 'Fields' : 'JSON' }}
         </button>
       </div>
       @if (editingGateway()) {
@@ -216,6 +216,14 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
+                <mat-label>Default</mat-label>
+                <mat-select formControlName="isDefault">
+                  <mat-option [value]="true">Yes</mat-option>
+                  <mat-option [value]="false">No</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
                 <mat-select formControlName="provider">
                   @for (provider of providerOptions; track provider.value) {
@@ -224,14 +232,10 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
                 <input matInput formControlName="name" placeholder="Default Gateway" />
               </mat-form-field>
-
-              <div class="toggle-row span-4">
-                <mat-slide-toggle formControlName="isDefault">Default</mat-slide-toggle>
-              </div>
             </form>
           </div>
         </mat-tab>
@@ -293,7 +297,7 @@
                     @if (field.kind === 'textarea') {
                       <textarea
                         matInput
-                        rows="4"
+                        rows="2"
                         [formControlName]="field.controlName"
                         [placeholder]="field.placeholder ?? ''"
                       ></textarea>

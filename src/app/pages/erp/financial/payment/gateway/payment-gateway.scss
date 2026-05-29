@@ -38,12 +38,6 @@
   }
 }
 
-.toggle-row {
-  display: flex;
-  align-items: center;
-  min-height: var(--form-control-height);
-}
-
 @media (max-width: 1400px) {
   .provider-fields-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
