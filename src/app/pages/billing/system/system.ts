@@ -86,6 +86,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly editingProduct = signal<BillingProduct | null>(null);
   readonly editingPrice = signal<BillingPrice | null>(null);
   readonly products = signal<BillingProduct[]>([]);
 
@@ -93,7 +94,17 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
   readonly subscriptionSource = new MatTableDataSource<BillingSubscription>([]);
 
-  readonly productColumns = ['code', 'name', 'module', 'scope', 'prices', 'status'];
+  readonly productColumns = [
+    'select',
+    'code',
+    'name',
+    'module',
+    'scope',
+    'prices',
+    'sortOrder',
+    'status',
+    'actions',
+  ];
   readonly priceColumns = [
     'select',
     'product',
@@ -122,8 +133,19 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   priceProductSearchInput = '';
   priceFormProductSearchInput = '';
 
+  readonly selectedProductUUIDs = new Set<string>();
   readonly selectedPriceUUIDs = new Set<string>();
   readonly selectedSubscriptionUUIDs = new Set<string>();
+
+  readonly productForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(2)]],
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    module: ['', [Validators.required, Validators.minLength(2)]],
+    billingScope: ['SERVICE', [Validators.required]],
+    description: [''],
+    sortOrder: [1000, [Validators.required, Validators.min(0)]],
+    status: [1],
+  });
 
   readonly priceForm = this.fb.nonNullable.group({
     productUUID: ['', [Validators.required]],
@@ -148,6 +170,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     idempotencyKey: [''],
   });
 
+  @ViewChild('productDialog') productDialog?: TemplateRef<unknown>;
   @ViewChild('priceDialog') priceDialog?: TemplateRef<unknown>;
   @ViewChild('creditDialog') creditDialog?: TemplateRef<unknown>;
   @ViewChild('productPaginator') productPaginator?: MatPaginator;
@@ -229,6 +252,87 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   get tenantSubscriptionCount() {
     return new Set(this.subscriptionSource.data.map((row) => row.EnvironmentUUID).filter(Boolean))
       .size;
+  }
+
+  openProductCreate() {
+    this.editingProduct.set(null);
+    this.resetProductForm();
+    this.productForm.controls.code.enable({ emitEvent: false });
+    this.openDialog(this.productDialog, '820px');
+  }
+
+  openProductEdit(row: BillingProduct) {
+    this.editingProduct.set(row);
+    this.productForm.reset({
+      code: row.BprCode,
+      name: row.BprName,
+      module: row.BprModule,
+      billingScope: row.BprBillingScope,
+      description: row.BprDescription ?? '',
+      sortOrder: Number(row.BpdSortOrder ?? 1000),
+      status: row.BprStatus,
+    });
+    this.productForm.controls.code.disable({ emitEvent: false });
+    this.openDialog(this.productDialog, '820px');
+  }
+
+  async saveProduct(keepOpen = false) {
+    if (this.productForm.invalid || this.saving()) return;
+    this.saving.set(true);
+    const value = this.productForm.getRawValue();
+    const payload = {
+      code: value.code,
+      name: value.name,
+      module: value.module,
+      billingScope: value.billingScope,
+      description: this.emptyToNull(value.description),
+      sortOrder: Number(value.sortOrder),
+      status: Number(value.status),
+    };
+    try {
+      const current = this.editingProduct();
+      if (current) {
+        if (!current.BpdUUID) throw new Error('Product definition UUID is missing.');
+        await this.billing.updateProductDefinition(current.BpdUUID, payload);
+      } else {
+        await this.billing.createProductDefinition(payload);
+      }
+      this.snack.success(current ? 'Product updated.' : 'Product created.');
+      if (!keepOpen) this.closeActiveDialog();
+      await this.refresh();
+      if (keepOpen && !current) this.resetProductForm();
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : 'Failed to save product.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async saveAndNewProduct() {
+    await this.saveProduct(true);
+  }
+
+  async deleteProduct(row: BillingProduct) {
+    if (!row.BpdUUID) {
+      this.snack.error('Product definition UUID is missing.');
+      return;
+    }
+    if (
+      !(await this.confirm(
+        'Delete product',
+        `Delete ${row.BprName}? Products with prices or subscriptions must be set inactive instead.`,
+        'Delete',
+      ))
+    )
+      return;
+    try {
+      await this.billing.deleteProductDefinition(row.BpdUUID);
+      this.selectedProductUUIDs.delete(row.BpdUUID);
+      this.snack.success('Product deleted.');
+      await this.refresh();
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : 'Failed to delete product.');
+    }
   }
 
   openPriceCreate() {
@@ -381,6 +485,10 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.closeActiveDialog();
   }
 
+  get selectedProductCount() {
+    return this.selectedProductUUIDs.size;
+  }
+
   get selectedPriceCount() {
     return this.selectedPriceUUIDs.size;
   }
@@ -393,8 +501,17 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return this.visibleRows(this.priceSource);
   }
 
+  productVisibleRows() {
+    return this.visibleRows(this.productSource).filter((row) => !!this.productSelectionUUID(row));
+  }
+
   subscriptionVisibleRows() {
     return this.visibleRows(this.subscriptionSource).filter((row) => row.BsuStatus !== 'CANCELED');
+  }
+
+  isProductSelected(row: BillingProduct) {
+    const uuid = this.productSelectionUUID(row);
+    return !!uuid && this.selectedProductUUIDs.has(uuid);
   }
 
   isPriceSelected(row: BillingPrice) {
@@ -408,6 +525,16 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   isAllVisiblePricesSelected() {
     const rows = this.priceVisibleRows();
     return rows.length > 0 && rows.every((row) => this.isPriceSelected(row));
+  }
+
+  isAllVisibleProductsSelected() {
+    const rows = this.productVisibleRows();
+    return rows.length > 0 && rows.every((row) => this.isProductSelected(row));
+  }
+
+  isSomeVisibleProductsSelected() {
+    const rows = this.productVisibleRows();
+    return rows.some((row) => this.isProductSelected(row)) && !this.isAllVisibleProductsSelected();
   }
 
   isSomeVisiblePricesSelected() {
@@ -433,9 +560,20 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     else this.selectedPriceUUIDs.delete(row.BpcUUID);
   }
 
+  toggleProductSelection(row: BillingProduct, checked: boolean) {
+    const uuid = this.productSelectionUUID(row);
+    if (!uuid) return;
+    if (checked) this.selectedProductUUIDs.add(uuid);
+    else this.selectedProductUUIDs.delete(uuid);
+  }
+
   toggleSubscriptionSelection(row: BillingSubscription, checked: boolean) {
     if (checked) this.selectedSubscriptionUUIDs.add(row.BsuUUID);
     else this.selectedSubscriptionUUIDs.delete(row.BsuUUID);
+  }
+
+  toggleVisibleProducts(checked: boolean) {
+    this.productVisibleRows().forEach((row) => this.toggleProductSelection(row, checked));
   }
 
   toggleVisiblePrices(checked: boolean) {
@@ -469,6 +607,36 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       (uuid) => this.billing.deletePrice(uuid),
       this.selectedPriceUUIDs,
       'price',
+      'deleted',
+    );
+  }
+
+  async deleteSelectedProducts() {
+    const ids = Array.from(this.selectedProductUUIDs);
+    if (!ids.length) return;
+    const labels = this.productSource.data
+      .filter((row) => {
+        const uuid = this.productSelectionUUID(row);
+        return uuid ? this.selectedProductUUIDs.has(uuid) : false;
+      })
+      .slice(0, 3)
+      .map((row) => row.BprName);
+    const detail = labels.length
+      ? ` Selected: ${labels.join(', ')}${ids.length > 3 ? ', ...' : ''}`
+      : '';
+    if (
+      !(await this.confirm(
+        'Delete selected products',
+        `Delete ${ids.length} selected product record(s)? Products with prices or subscriptions will be blocked.${detail}`,
+        'Delete selected',
+      ))
+    )
+      return;
+    await this.runBulkAction(
+      ids,
+      (uuid) => this.billing.deleteProductDefinition(uuid),
+      this.selectedProductUUIDs,
+      'product',
       'deleted',
     );
   }
@@ -557,6 +725,20 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     });
   }
 
+  private resetProductForm() {
+    this.editingProduct.set(null);
+    this.productForm.controls.code.enable({ emitEvent: false });
+    this.productForm.reset({
+      code: '',
+      name: '',
+      module: '',
+      billingScope: 'SERVICE',
+      description: '',
+      sortOrder: 1000,
+      status: 1,
+    });
+  }
+
   private visibleRows<T>(source: MatTableDataSource<T>) {
     const filtered = source.filter ? source.filteredData : source.data;
     const paginator = source.paginator;
@@ -596,6 +778,11 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   private reconcileSelections() {
+    this.keepValidSelection(
+      this.selectedProductUUIDs,
+      this.productSource.data.filter((row) => !!this.productSelectionUUID(row)),
+      (row) => this.productSelectionUUID(row) ?? '',
+    );
     this.keepValidSelection(this.selectedPriceUUIDs, this.priceSource.data, (row) => row.BpcUUID);
     this.keepValidSelection(
       this.selectedSubscriptionUUIDs,
@@ -609,6 +796,10 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     Array.from(selection).forEach((uuid) => {
       if (!valid.has(uuid)) selection.delete(uuid);
     });
+  }
+
+  private productSelectionUUID(row: BillingProduct) {
+    return row.BpdUUID ?? null;
   }
 
   private async finishLoading(startedAt: number) {
@@ -634,8 +825,24 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   private sortValue(row: any, column: string) {
-    return String(
-      row?.[column] ?? row?.BprName ?? row?.BpcName ?? row?.EnvironmentName ?? '',
-    ).toLowerCase();
+    const productColumns: Record<string, unknown> = {
+      code: row?.BprCode,
+      name: row?.BprName ?? row?.BpcName,
+      module: row?.BprModule,
+      scope: row?.BprBillingScope,
+      prices: row?.PriceCount ?? row?.ActivePrices ?? 0,
+      sortOrder: row?.BpdSortOrder ?? 0,
+      status: row?.BprStatus ?? row?.BpcStatus ?? row?.BsuStatus,
+      product: row?.BprName ?? row?.BprCode,
+      tenant: row?.EnvironmentName ?? row?.EnvironmentUUID,
+      resource: row?.BsuResourceLabel ?? row?.BsuResourceType,
+      quantity: row?.BsuQuantity,
+      price: row?.BsuUnitPriceSnapshot,
+      mode: row?.BpcBillingMode,
+      unitPrice: row?.BpcUnitPrice,
+      setup: row?.BpcSetupAmount,
+    };
+    const value = productColumns[column] ?? row?.[column] ?? '';
+    return String(value).toLowerCase();
   }
 }

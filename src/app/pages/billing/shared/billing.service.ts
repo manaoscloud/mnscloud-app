@@ -3,13 +3,16 @@ import { ApiService } from '../../../services/api.service';
 
 export interface BillingProduct {
   BprUUID: string;
+  BpdUUID?: string | null;
   BprCode: string;
   BprName: string;
   BprModule: string;
   BprBillingScope: 'SERVICE' | 'MODULE';
   BprDescription?: string | null;
+  BpdSortOrder?: number | null;
   BprStatus: number;
   ActivePrices?: number;
+  PriceCount?: number;
 }
 
 export interface BillingPrice {
@@ -90,6 +93,26 @@ export class BillingService {
       `system/billing/products${this.query(params)}`,
     );
     return response.data?.items ?? [];
+  }
+
+  async createProductDefinition(payload: Record<string, unknown>) {
+    const response = await this.api.post<ApiListResponse<BillingProduct>>(
+      'system/billing/product-definitions',
+      payload,
+    );
+    return response.data?.item ?? null;
+  }
+
+  async updateProductDefinition(uuid: string, payload: Record<string, unknown>) {
+    const response = await this.api.put<ApiListResponse<BillingProduct>>(
+      `system/billing/product-definitions/${uuid}`,
+      payload,
+    );
+    return response.data?.item ?? null;
+  }
+
+  async deleteProductDefinition(uuid: string) {
+    await this.api.delete(`system/billing/product-definitions/${uuid}`);
   }
 
   async listPrices(search = '', productUUID = '', status: number | null = null) {
