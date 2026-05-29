@@ -157,65 +157,44 @@
       }
     </div>
     <mat-dialog-content class="dialog-content">
-      <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
-          <div class="tab-content">
-            <form id="PABXResourceForm" class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>PABX</mat-label>
-                <mat-select
-                  formControlName="pabxUUID"
-                  (selectionChange)="onPabxChange()"
-                  (openedChange)="clearAccountSearch($event)"
-                >
-                  <mat-option class="select-search-option">
-                    <input
-                      matInput
-                      class="select-search-field"
-                      placeholder="Search PABX"
-                      [value]="accountSearch"
-                      (input)="setAccountSearch($any($event.target).value)"
-                      (click)="$event.stopPropagation()"
-                    />
-                  </mat-option>
-                  <mat-option *ngFor="let option of filteredAccounts()" [value]="option.VpaUUID">
-                    {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-              @if (usesTrunk()) {
+      <form id="PABXResourceForm" class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
+        <mat-tab-group class="form-tabs">
+          @if (isTrunkResource()) {
+            <mat-tab label="Data">
+              <div class="tab-content form-grid">
+                <div class="toggle-row span-1">
+                  <mat-slide-toggle formControlName="status">Active</mat-slide-toggle>
+                </div>
+                <div class="toggle-row span-1">
+                  <mat-slide-toggle formControlName="registerEnabled">Register</mat-slide-toggle>
+                </div>
                 <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>Trunk{{ meta().trunkMode === 'required' ? ' *' : '' }}</mat-label>
-                  <mat-select formControlName="trunkUUID" (openedChange)="clearTrunkSearch($event)">
+                  <mat-label>Name</mat-label>
+                  <input matInput formControlName="name" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>PABX</mat-label>
+                  <mat-select
+                    formControlName="pabxUUID"
+                    (selectionChange)="onPabxChange()"
+                    (openedChange)="clearAccountSearch($event)"
+                  >
                     <mat-option class="select-search-option">
                       <input
                         matInput
                         class="select-search-field"
-                        placeholder="Search trunk"
-                        [value]="trunkSearch"
-                        (input)="setTrunkSearch($any($event.target).value)"
+                        placeholder="Search PABX"
+                        [value]="accountSearch"
+                        (input)="setAccountSearch($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                       />
                     </mat-option>
-                    <mat-option value="">None</mat-option>
-                    <mat-option *ngFor="let option of filteredTrunks()" [value]="option.uuid">
-                      {{ option.name }} - {{ option['host'] || option['direction'] || 'No host' }}
+                    <mat-option *ngFor="let option of filteredAccounts()" [value]="option.VpaUUID">
+                      {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
-              }
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
-              </mat-form-field>
-              @if (!isInboundRouteResource()) {
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ meta().primary }}</mat-label>
-                  <input matInput formControlName="primary" />
-                </mat-form-field>
-              }
-              @if (isTrunkResource()) {
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Direction</mat-label>
                   <mat-select formControlName="secondary">
                     <mat-option *ngFor="let option of directionOptions" [value]="option">
@@ -223,15 +202,15 @@
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Auth Mode</mat-label>
-                  <mat-select formControlName="authMode">
-                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
-                  </mat-select>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Priority</mat-label>
+                  <input matInput type="number" min="1" formControlName="priority" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>{{ meta().primary }}</mat-label>
+                  <input matInput formControlName="primary" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Transport</mat-label>
                   <mat-select formControlName="transport">
                     <mat-option *ngFor="let option of transportOptions" [value]="option">
@@ -239,15 +218,27 @@
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Port</mat-label>
                   <input matInput type="number" min="1" max="65535" formControlName="port" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+              </div>
+            </mat-tab>
+            <mat-tab label="Authentication">
+              <div class="tab-content form-grid">
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Auth Mode</mat-label>
+                  <mat-select formControlName="authMode">
+                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Username</mat-label>
                   <input matInput formControlName="username" autocomplete="off" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Password</mat-label>
                   <input
                     matInput
@@ -266,103 +257,27 @@
                     <mat-icon>{{ passwordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
                   </button>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Realm</mat-label>
                   <input matInput formControlName="realm" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-2">
                   <mat-label>From Domain</mat-label>
                   <input matInput formControlName="fromDomain" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-2">
                   <mat-label>From User</mat-label>
                   <input matInput formControlName="fromUser" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="span-2">
+                <mat-form-field appearance="outline" class="span-4">
                   <mat-label>Allowed CIDRs</mat-label>
                   <input matInput formControlName="allowedCidrs" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Priority</mat-label>
-                  <input matInput type="number" min="1" formControlName="priority" />
-                </mat-form-field>
-                <div class="toggle-row">
-                  <mat-slide-toggle formControlName="registerEnabled">Register</mat-slide-toggle>
-                </div>
-              } @else if (isInboundRouteResource()) {
-                <mat-form-field appearance="outline" class="start-new-row">
-                  <mat-label>Registered DID</mat-label>
-                  <mat-select
-                    formControlName="didUUID"
-                    (selectionChange)="onDidChange($event.value)"
-                    (openedChange)="clearDidSearch($event)"
-                  >
-                    <mat-option class="select-search-option">
-                      <input
-                        matInput
-                        class="select-search-field"
-                        placeholder="Search DID"
-                        [value]="didSearch"
-                        (input)="setDidSearch($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    <mat-option *ngFor="let option of filteredDids()" [value]="option.VddUUID">
-                      {{ option.VddNumber }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ meta().primary }}</mat-label>
-                  <input matInput formControlName="primary" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Route Type</mat-label>
-                  <mat-select formControlName="secondary" (selectionChange)="onRouteTypeChange()">
-                    <mat-option value="extension">extension</mat-option>
-                    <mat-option value="external">external</mat-option>
-                    <mat-option value="group">group</mat-option>
-                    <mat-option value="queue">queue</mat-option>
-                    <mat-option value="ivr">ivr</mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Destination</mat-label>
-                  <mat-select
-                    formControlName="routeTargetUUID"
-                    (openedChange)="clearTargetSearch($event)"
-                  >
-                    <mat-option class="select-search-option">
-                      <input
-                        matInput
-                        class="select-search-field"
-                        placeholder="Search destination"
-                        [value]="targetSearch"
-                        (input)="setTargetSearch($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    <mat-option *ngFor="let option of filteredTargets()" [value]="option.uuid">
-                      {{ option.name }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-              } @else if (isOutboundRouteResource()) {
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ meta().secondary }}</mat-label>
-                  <input matInput formControlName="secondary" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Strip digits</mat-label>
-                  <input matInput type="number" min="0" formControlName="stripDigits" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Priority</mat-label>
-                  <input matInput type="number" min="1" formControlName="priority" />
-                </mat-form-field>
-              }
-              @if (isTrunkResource()) {
-                <mat-form-field appearance="outline">
+              </div>
+            </mat-tab>
+            <mat-tab label="Codecs">
+              <div class="tab-content form-grid">
+                <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Audio Codecs</mat-label>
                   <mat-select
                     formControlName="audioCodecs"
@@ -384,7 +299,7 @@
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Video Codecs</mat-label>
                   <mat-select
                     formControlName="videoCodecs"
@@ -406,14 +321,142 @@
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
-              }
-              <div class="toggle-row">
-                <mat-slide-toggle formControlName="status">Active</mat-slide-toggle>
               </div>
-            </form>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
+            </mat-tab>
+          } @else {
+            <mat-tab label="Data">
+              <div class="tab-content form-grid">
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>PABX</mat-label>
+                  <mat-select
+                    formControlName="pabxUUID"
+                    (selectionChange)="onPabxChange()"
+                    (openedChange)="clearAccountSearch($event)"
+                  >
+                    <mat-option class="select-search-option">
+                      <input
+                        matInput
+                        class="select-search-field"
+                        placeholder="Search PABX"
+                        [value]="accountSearch"
+                        (input)="setAccountSearch($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
+                    <mat-option *ngFor="let option of filteredAccounts()" [value]="option.VpaUUID">
+                      {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                @if (usesTrunk()) {
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>Trunk{{ meta().trunkMode === 'required' ? ' *' : '' }}</mat-label>
+                    <mat-select formControlName="trunkUUID" (openedChange)="clearTrunkSearch($event)">
+                      <mat-option class="select-search-option">
+                        <input
+                          matInput
+                          class="select-search-field"
+                          placeholder="Search trunk"
+                          [value]="trunkSearch"
+                          (input)="setTrunkSearch($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                        />
+                      </mat-option>
+                      <mat-option value="">None</mat-option>
+                      <mat-option *ngFor="let option of filteredTrunks()" [value]="option.uuid">
+                        {{ option.name }} - {{ option['host'] || option['direction'] || 'No host' }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                }
+                <mat-form-field appearance="outline">
+                  <mat-label>Name</mat-label>
+                  <input matInput formControlName="name" />
+                </mat-form-field>
+                @if (isInboundRouteResource()) {
+                  <mat-form-field appearance="outline" class="start-new-row">
+                    <mat-label>Registered DID</mat-label>
+                    <mat-select
+                      formControlName="didUUID"
+                      (selectionChange)="onDidChange($event.value)"
+                      (openedChange)="clearDidSearch($event)"
+                    >
+                      <mat-option class="select-search-option">
+                        <input
+                          matInput
+                          class="select-search-field"
+                          placeholder="Search DID"
+                          [value]="didSearch"
+                          (input)="setDidSearch($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                        />
+                      </mat-option>
+                      <mat-option *ngFor="let option of filteredDids()" [value]="option.VddUUID">
+                        {{ option.VddNumber }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ meta().primary }}</mat-label>
+                    <input matInput formControlName="primary" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Route Type</mat-label>
+                    <mat-select formControlName="secondary" (selectionChange)="onRouteTypeChange()">
+                      <mat-option value="extension">extension</mat-option>
+                      <mat-option value="external">external</mat-option>
+                      <mat-option value="group">group</mat-option>
+                      <mat-option value="queue">queue</mat-option>
+                      <mat-option value="ivr">ivr</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Destination</mat-label>
+                    <mat-select
+                      formControlName="routeTargetUUID"
+                      (openedChange)="clearTargetSearch($event)"
+                    >
+                      <mat-option class="select-search-option">
+                        <input
+                          matInput
+                          class="select-search-field"
+                          placeholder="Search destination"
+                          [value]="targetSearch"
+                          (input)="setTargetSearch($any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                        />
+                      </mat-option>
+                      <mat-option *ngFor="let option of filteredTargets()" [value]="option.uuid">
+                        {{ option.name }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                } @else if (isOutboundRouteResource()) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ meta().primary }}</mat-label>
+                    <input matInput formControlName="primary" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ meta().secondary }}</mat-label>
+                    <input matInput formControlName="secondary" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Strip digits</mat-label>
+                    <input matInput type="number" min="0" formControlName="stripDigits" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Priority</mat-label>
+                    <input matInput type="number" min="1" formControlName="priority" />
+                  </mat-form-field>
+                }
+                <div class="toggle-row">
+                  <mat-slide-toggle formControlName="status">Active</mat-slide-toggle>
+                </div>
+              </div>
+            </mat-tab>
+          }
+        </mat-tab-group>
+      </form>
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">

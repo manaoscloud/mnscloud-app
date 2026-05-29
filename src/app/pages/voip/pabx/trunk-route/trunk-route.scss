@@ -4,8 +4,17 @@
   }
 }
 
+.dialog-form {
+  height: 100%;
+  min-height: 0;
+}
+
 .form-grid {
   .start-new-row {
     grid-column: 1;
+  }
+
+  .span-1 {
+    grid-column: span 1;
   }
 }
