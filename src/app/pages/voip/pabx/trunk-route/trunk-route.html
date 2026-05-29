@@ -162,15 +162,35 @@
           @if (isTrunkResource()) {
             <mat-tab label="Data">
               <div class="tab-content form-grid">
-                <div class="toggle-row span-1">
-                  <mat-slide-toggle formControlName="status">Active</mat-slide-toggle>
-                </div>
-                <div class="toggle-row span-1">
-                  <mat-slide-toggle formControlName="registerEnabled">Register</mat-slide-toggle>
-                </div>
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>Name</mat-label>
-                  <input matInput formControlName="name" />
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="status">
+                    <mat-option [value]="true">Active</mat-option>
+                    <mat-option [value]="false">Inactive</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Register</mat-label>
+                  <mat-select formControlName="registerEnabled">
+                    <mat-option [value]="true">Yes</mat-option>
+                    <mat-option [value]="false">No</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Auth Mode</mat-label>
+                  <mat-select formControlName="authMode">
+                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Direction</mat-label>
+                  <mat-select formControlName="secondary">
+                    <mat-option *ngFor="let option of directionOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>PABX</mat-label>
@@ -195,19 +215,19 @@
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Direction</mat-label>
-                  <mat-select formControlName="secondary">
-                    <mat-option *ngFor="let option of directionOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
-                  </mat-select>
+                  <mat-label>Name</mat-label>
+                  <input matInput formControlName="name" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Priority</mat-label>
                   <input matInput type="number" min="1" formControlName="priority" />
                 </mat-form-field>
+              </div>
+            </mat-tab>
+            <mat-tab label="Authentication">
+              <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>{{ meta().primary }}</mat-label>
+                  <mat-label>Domain / Proxy</mat-label>
                   <input matInput formControlName="primary" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
@@ -221,18 +241,6 @@
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Port</mat-label>
                   <input matInput type="number" min="1" max="65535" formControlName="port" />
-                </mat-form-field>
-              </div>
-            </mat-tab>
-            <mat-tab label="Authentication">
-              <div class="tab-content form-grid">
-                <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Auth Mode</mat-label>
-                  <mat-select formControlName="authMode">
-                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
-                  </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Username</mat-label>
