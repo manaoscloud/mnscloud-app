@@ -144,6 +144,11 @@ export class MainLayout {
   readonly compactChildFlyoutTop = signal(8);
   readonly compactGrandFlyoutTop = signal(8);
   readonly compactFlyoutLeft = signal(92);
+  readonly compactChildFlyoutLeft = signal(334);
+  readonly compactGrandFlyoutLeft = signal(576);
+  readonly compactRootFlyoutMaxHeight = signal(560);
+  readonly compactChildFlyoutMaxHeight = signal(560);
+  readonly compactGrandFlyoutMaxHeight = signal(560);
   readonly menuSearch = signal('');
   readonly isSearching = computed(() => this.menuSearch().trim().length > 0);
   readonly isHandset = signal(this.checkHandset());
@@ -393,8 +398,10 @@ export class MainLayout {
     this.compactHoverRootId.set(item.id);
     this.compactHoverChildId.set(null);
     this.compactHoverGrandId.set(null);
-    this.compactRootFlyoutTop.set(this.computeFlyoutTop(event, item.children?.length ?? 0));
-    this.compactFlyoutLeft.set(this.computeFlyoutLeft(event));
+    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    this.compactRootFlyoutTop.set(placement.top);
+    this.compactFlyoutLeft.set(placement.left);
+    this.compactRootFlyoutMaxHeight.set(placement.maxHeight);
   }
 
   onCompactRootLeave() {
@@ -412,7 +419,10 @@ export class MainLayout {
 
     this.compactHoverChildId.set(item.id);
     this.compactHoverGrandId.set(null);
-    this.compactChildFlyoutTop.set(this.computeFlyoutTop(event, item.children?.length ?? 0));
+    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    this.compactChildFlyoutTop.set(placement.top);
+    this.compactChildFlyoutLeft.set(placement.left);
+    this.compactChildFlyoutMaxHeight.set(placement.maxHeight);
   }
 
   onCompactGrandEnter(item: NavItem, event?: MouseEvent) {
@@ -424,7 +434,10 @@ export class MainLayout {
     }
 
     this.compactHoverGrandId.set(item.id);
-    this.compactGrandFlyoutTop.set(this.computeFlyoutTop(event, item.children?.length ?? 0));
+    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    this.compactGrandFlyoutTop.set(placement.top);
+    this.compactGrandFlyoutLeft.set(placement.left);
+    this.compactGrandFlyoutMaxHeight.set(placement.maxHeight);
   }
 
   onCompactFlyoutEnter() {
@@ -440,24 +453,42 @@ export class MainLayout {
     this.closeCompactFlyouts();
   }
 
-  private computeFlyoutTop(event: MouseEvent | undefined, itemCount: number): number {
+  private computeFlyoutPlacement(event: MouseEvent | undefined, itemCount: number) {
     const target = event?.currentTarget as HTMLElement | null;
-    if (!target || typeof window === 'undefined') return this.compactRootFlyoutTop();
+    if (!target || typeof window === 'undefined') {
+      return {
+        top: this.compactRootFlyoutTop(),
+        left: this.compactFlyoutLeft(),
+        maxHeight: this.compactRootFlyoutMaxHeight(),
+      };
+    }
 
+    const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const maxFlyoutHeight = Math.min(Math.floor(viewportHeight * 0.7), 560);
-    const estimatedHeight = Math.min(Math.max(itemCount * 40 + 16, 112), maxFlyoutHeight);
+    const margin = 16;
+    const gap = 8;
+    const flyoutWidth = 234;
+    const maxFlyoutHeight = Math.min(560, Math.max(112, viewportHeight - margin * 2));
+    const estimatedHeight = Math.min(Math.max(itemCount * 42 + 18, 112), maxFlyoutHeight);
     const targetRect = target.getBoundingClientRect();
+    const sidenav = target.closest('mat-sidenav') as HTMLElement | null;
+    const sidenavRect = sidenav?.getBoundingClientRect();
     const preferredTop = targetRect.top;
-    const maxTop = Math.max(8, viewportHeight - estimatedHeight - 8);
-    return Math.max(8, Math.min(preferredTop, maxTop));
-  }
+    const maxTop = Math.max(margin, viewportHeight - estimatedHeight - margin);
+    const preferredLeft = target.classList.contains('root-item') && sidenavRect
+      ? sidenavRect.right + gap
+      : targetRect.right + gap;
+    const fallbackLeft = targetRect.left - flyoutWidth - gap;
+    const maxLeft = Math.max(margin, viewportWidth - flyoutWidth - margin);
+    const left = preferredLeft <= maxLeft
+      ? preferredLeft
+      : Math.max(margin, Math.min(fallbackLeft, maxLeft));
 
-  private computeFlyoutLeft(event?: MouseEvent): number {
-    const target = event?.currentTarget as HTMLElement | null;
-    const sidenav = target?.closest('mat-sidenav') as HTMLElement | null;
-    if (!sidenav) return this.compactFlyoutLeft();
-    return Math.round(sidenav.getBoundingClientRect().right + 8);
+    return {
+      top: Math.round(Math.max(margin, Math.min(preferredTop, maxTop))),
+      left: Math.round(left),
+      maxHeight: Math.round(maxFlyoutHeight),
+    };
   }
 
   private scheduleCompactClose() {

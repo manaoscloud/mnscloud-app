@@ -156,6 +156,7 @@
           class="compact-flyout compact-flyout-root"
           [style.top.px]="compactRootFlyoutTop()"
           [style.left.px]="compactFlyoutLeft()"
+          [style.max-height.px]="compactRootFlyoutMaxHeight()"
           (mouseenter)="onCompactFlyoutEnter()"
           (mouseleave)="onCompactFlyoutLeave()"
         >
@@ -190,7 +191,8 @@
         <div
           class="compact-flyout compact-flyout-child"
           [style.top.px]="compactChildFlyoutTop()"
-          [style.left.px]="compactFlyoutLeft() + 242"
+          [style.left.px]="compactChildFlyoutLeft()"
+          [style.max-height.px]="compactChildFlyoutMaxHeight()"
           (mouseenter)="onCompactFlyoutEnter()"
           (mouseleave)="onCompactFlyoutLeave()"
         >
@@ -225,7 +227,8 @@
         <div
           class="compact-flyout compact-flyout-grand"
           [style.top.px]="compactGrandFlyoutTop()"
-          [style.left.px]="compactFlyoutLeft() + 484"
+          [style.left.px]="compactGrandFlyoutLeft()"
+          [style.max-height.px]="compactGrandFlyoutMaxHeight()"
           (mouseenter)="onCompactFlyoutEnter()"
           (mouseleave)="onCompactFlyoutLeave()"
         >

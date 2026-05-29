@@ -221,8 +221,9 @@ mat-sidenav.sidenav.compact {
   position: fixed;
   z-index: 1202;
   width: 234px;
-  max-height: min(70vh, 560px);
+  max-height: calc(100vh - 32px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--mat-sys-color-outline-variant);
   border-radius: 12px;
   background: var(--mat-sys-color-surface-container-high);
