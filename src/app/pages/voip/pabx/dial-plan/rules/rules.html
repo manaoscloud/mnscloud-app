@@ -186,7 +186,14 @@
       <mat-tab-group class="form-tabs">
         <mat-tab label="Data">
           <form class="tab-content form-grid" [formGroup]="form">
-            <mat-form-field appearance="outline" class="span-2">
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="enabled">
+                <mat-option [value]="1">Active</mat-option>
+                <mat-option [value]="0">Inactive</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>Dial Plan</mat-label>
               <mat-select
                 formControlName="dialPlanUUID"
@@ -206,11 +213,15 @@
                 }
               </mat-select>
             </mat-form-field>
-            <mat-form-field appearance="outline" class="span-2">
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Priority</mat-label>
+              <input matInput type="number" formControlName="priority" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>Name</mat-label>
               <input matInput formControlName="name" />
             </mat-form-field>
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>Direction</mat-label>
               <mat-select formControlName="direction">
                 <mat-option value="outbound">Outbound</mat-option>
@@ -218,7 +229,7 @@
                 <mat-option value="internal">Internal</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>Operator</mat-label>
               <mat-select formControlName="operator">
                 <mat-option value="regex">Regex</mat-option>
@@ -226,49 +237,38 @@
                 <mat-option value="exact">Exact</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field appearance="outline" class="span-2">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>Expression</mat-label>
               <input matInput formControlName="pattern" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Priority</mat-label>
-              <input matInput type="number" formControlName="priority" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
-                <mat-option [value]="1">Active</mat-option>
-                <mat-option [value]="0">Inactive</mat-option>
-              </mat-select>
             </mat-form-field>
           </form>
         </mat-tab>
         <mat-tab label="Transform">
           <form class="tab-content form-grid" [formGroup]="form">
-            <mat-form-field appearance="outline">
-              <mat-label>Strip digits</mat-label>
-              <input matInput type="number" formControlName="stripDigits" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Prepend</mat-label>
-              <input matInput formControlName="prepend" />
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Replacement</mat-label>
-              <input matInput formControlName="replacement" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Case sensitive</mat-label>
-              <mat-select formControlName="caseSensitive">
-                <mat-option [value]="1">Yes</mat-option>
-                <mat-option [value]="0">No</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>Result</mat-label>
               <mat-select formControlName="resultType">
                 <mat-option value="outbound">Outbound</mat-option>
                 <mat-option value="internal">Internal</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Strip digits</mat-label>
+              <input matInput type="number" formControlName="stripDigits" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Prepend</mat-label>
+              <input matInput formControlName="prepend" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Replacement</mat-label>
+              <input matInput formControlName="replacement" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>Case sensitive</mat-label>
+              <mat-select formControlName="caseSensitive">
+                <mat-option [value]="1">Yes</mat-option>
+                <mat-option [value]="0">No</mat-option>
               </mat-select>
             </mat-form-field>
           </form>
@@ -277,7 +277,7 @@
           <form class="tab-content form-grid" [formGroup]="form">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Description</mat-label>
-              <textarea matInput formControlName="description" rows="4"></textarea>
+              <textarea matInput formControlName="description" rows="2"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>

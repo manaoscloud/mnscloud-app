@@ -305,6 +305,10 @@
   gap: 0.5rem 0.75rem;
   margin-bottom: 0.35rem;
 
+  .span-1 {
+    grid-column: span 1;
+  }
+
   .span-2 {
     grid-column: span 2;
   }
@@ -451,6 +455,7 @@
   .form-grid {
     grid-template-columns: 1fr;
 
+    .span-1,
     .span-2,
     .span-3,
     .span-4 {
