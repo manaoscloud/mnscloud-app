@@ -294,6 +294,14 @@
   grid-column: span 2;
 }
 
+.credit-form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  .span-4 {
+    grid-column: span 4;
+  }
+}
+
 .form-actions {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -361,22 +369,6 @@
   width: 100%;
 }
 
-.tenant-search-row {
-  display: grid;
-  align-items: start;
-  gap: 0.75rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-
-  mat-form-field {
-    min-width: 0;
-  }
-
-  button {
-    min-height: 56px;
-    white-space: nowrap;
-  }
-}
-
 .tenant-result-list {
   display: grid;
   gap: 0.5rem;
@@ -439,16 +431,13 @@
     flex-direction: column;
   }
 
-  .tenant-search-row {
-    grid-template-columns: 1fr;
-  }
-
   .filter-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .span-2 {
+  .span-2,
+  .credit-form-grid .span-4 {
     grid-column: auto;
   }
 
