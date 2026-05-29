@@ -214,11 +214,11 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <mat-tab-group class="form-tabs">
-        <mat-tab label="Data">
-          <div class="tab-content">
-            <form id="voipPabxForm" class="form-grid" (ngSubmit)="saveAccount()" [formGroup]="form">
-              <mat-form-field appearance="outline">
+      <form id="voipPabxForm" class="dialog-form" (ngSubmit)="saveAccount()" [formGroup]="form">
+        <mat-tab-group class="form-tabs">
+          <mat-tab label="Data">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Status</mat-label>
                 <mat-select formControlName="isActive">
                   @for (option of statusOptions; track option.value) {
@@ -227,7 +227,21 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>Default</mat-label>
+                <mat-select formControlName="isDefault">
+                  @for (option of defaultOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="Account name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Server</mat-label>
                 <mat-select
                   formControlName="serverUUID"
@@ -258,34 +272,7 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Domain</mat-label>
-                <mat-select formControlName="domainUUID" (openedChange)="onDomainOpened($event)">
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        [value]="domainSearch()"
-                        (input)="domainSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search domain"
-                        autocomplete="off"
-                      />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (option of filteredDomainOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Customer</mat-label>
                 <mat-select
                   formControlName="customerUUID"
@@ -315,7 +302,34 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Domain</mat-label>
+                <mat-select formControlName="domainUUID" (openedChange)="onDomainOpened($event)">
+                  <mat-option
+                    class="select-search-option"
+                    [value]="null"
+                    (click)="$event.stopPropagation()"
+                    (onSelectionChange)="$event.source.deselect()"
+                  >
+                    <mat-form-field appearance="outline" class="select-search-field">
+                      <input
+                        matInput
+                        [value]="domainSearch()"
+                        (input)="domainSearch.set($any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                        (keydown)="$event.stopPropagation()"
+                        placeholder="Search domain"
+                        autocomplete="off"
+                      />
+                    </mat-form-field>
+                  </mat-option>
+                  @for (option of filteredDomainOptions(); track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Dial Plan</mat-label>
                 <mat-select
                   formControlName="dialPlanUUID"
@@ -344,8 +358,12 @@
                   }
                 </mat-select>
               </mat-form-field>
+            </div>
+          </mat-tab>
 
-              <mat-form-field appearance="outline">
+          <mat-tab label="Routing">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Inbound blacklist</mat-label>
                 <mat-select
                   formControlName="blacklistUUID"
@@ -376,30 +394,7 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Account name" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Default audio codecs</mat-label>
-                <mat-select formControlName="defaultAudioCodecs" multiple>
-                  @for (codec of audioCodecOptions; track codec) {
-                    <mat-option [value]="codec">{{ codec }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Default video codecs</mat-label>
-                <mat-select formControlName="defaultVideoCodecs" multiple>
-                  @for (codec of videoCodecOptions; track codec) {
-                    <mat-option [value]="codec">{{ codec }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Timezone</mat-label>
                 <input
                   matInput
@@ -408,17 +403,34 @@
                   autocomplete="off"
                 />
               </mat-form-field>
+            </div>
+          </mat-tab>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Default</mat-label>
-                <mat-select formControlName="isDefault">
-                  @for (option of defaultOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          <mat-tab label="Codecs">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Default audio codecs</mat-label>
+                <mat-select formControlName="defaultAudioCodecs" multiple>
+                  @for (codec of audioCodecOptions; track codec) {
+                    <mat-option [value]="codec">{{ codec }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Default video codecs</mat-label>
+                <mat-select formControlName="defaultVideoCodecs" multiple>
+                  @for (codec of videoCodecOptions; track codec) {
+                    <mat-option [value]="codec">{{ codec }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Recording">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Recording storage</mat-label>
                 <mat-select
                   formControlName="recordingStorageMode"
@@ -431,7 +443,7 @@
               </mat-form-field>
 
               @if (recordingStorageMode() === 'storage') {
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-3">
                   <mat-label>Storage account</mat-label>
                   <mat-select
                     formControlName="storageAccountUUID"
@@ -464,12 +476,16 @@
                 </mat-form-field>
               }
 
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Recording path</mat-label>
                 <input matInput [value]="recordingPathPreview()" readonly />
               </mat-form-field>
+            </div>
+          </mat-tab>
 
-              <mat-form-field appearance="outline">
+          <mat-tab label="Media Files">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Media file storage</mat-label>
                 <mat-select
                   formControlName="mediaStorageMode"
@@ -482,7 +498,7 @@
               </mat-form-field>
 
               @if (mediaStorageMode() === 'storage') {
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Media storage account</mat-label>
                   <mat-select
                     formControlName="mediaStorageAccountUUID"
@@ -515,7 +531,7 @@
                 </mat-form-field>
               }
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Media delivery</mat-label>
                 <mat-select formControlName="mediaDeliveryMode">
                   @for (option of mediaDeliveryModeOptions; track option.value) {
@@ -523,10 +539,10 @@
                   }
                 </mat-select>
               </mat-form-field>
-            </form>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </form>
     </mat-dialog-content>
 
     <mat-dialog-actions class="form-actions">

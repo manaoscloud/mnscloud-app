@@ -157,6 +157,10 @@ mat-paginator {
   gap: 0.5rem 0.75rem;
   margin-bottom: 0.35rem;
 
+  .span-1 {
+    grid-column: span 1;
+  }
+
   .span-2 {
     grid-column: span 2;
   }
@@ -222,6 +226,13 @@ mat-paginator {
   min-height: 0;
   height: 100%;
   margin-bottom: 1.25rem;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 .tab-content {
@@ -418,6 +429,7 @@ mat-paginator {
   .form-grid {
     grid-template-columns: 1fr;
 
+    .span-1,
     .span-2,
     .span-3,
     .span-4 {
