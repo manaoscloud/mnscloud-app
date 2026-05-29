@@ -19,11 +19,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -34,6 +35,10 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { fadeIn } from '../../../../../shared/animations/fade.animation';
+import {
+  CrudDialogBinding,
+  openCrudTemplateDialog,
+} from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type PaymentGatewayProvider = 'pagarme' | 'asaas' | 'stripe' | 'efi' | 'inter_business';
@@ -203,11 +208,12 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatSelectModule,
     MatSlideToggleModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
     MatDialogModule,
+    MatMenuModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
@@ -249,6 +255,7 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   readonly validatingGatewayUUID = signal<string | null>(null);
 
   readonly advancedJsonMode = signal<boolean>(false);
+  readonly selectedGatewayUUIDs = signal<Set<string>>(new Set());
 
   readonly editingGateway = signal<PaymentGatewayAccount | null>(null);
 
@@ -276,7 +283,15 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   ];
 
   dataSource = new MatTableDataSource<PaymentGatewayAccount>([]);
-  displayedColumns: string[] = ['name', 'provider', 'config', 'status', 'default', 'actions'];
+  displayedColumns: string[] = [
+    'select',
+    'name',
+    'provider',
+    'config',
+    'status',
+    'default',
+    'actions',
+  ];
   search = '';
   searchInput = '';
 
@@ -284,7 +299,7 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   @ViewChild(MatSort) sort?: MatSort;
   @ViewChild('gatewayFormDialog') gatewayFormDialog?: TemplateRef<unknown>;
   private gatewayFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
+  private dialogBinding: CrudDialogBinding | null = null;
 
   ngOnInit() {
     this.cancelEditGateway();
@@ -292,7 +307,6 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   }
 
   ngOnDestroy() {
-    this.stopDialogViewportObserver();
     this.closeGatewayDialog();
   }
 
@@ -505,6 +519,10 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
     return item.EfgIsActive === 1 ? 'Active' : 'Inactive';
   }
 
+  gatewayStatusChipClass(item: PaymentGatewayAccount) {
+    return item.EfgIsActive === 1 ? 'chip-success' : 'chip-skipped';
+  }
+
   gatewayIsDefault(item: PaymentGatewayAccount) {
     return item.EfgIsDefault === 1;
   }
@@ -518,6 +536,60 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
     const text = JSON.stringify(config);
     if (!text || text === '{}') return '—';
     return text.length > 140 ? `${text.slice(0, 140)}...` : text;
+  }
+
+  selectedGatewayCount() {
+    return this.selectedGatewayUUIDs().size;
+  }
+
+  isGatewaySelected(item: PaymentGatewayAccount) {
+    return this.selectedGatewayUUIDs().has(item.EfgUUID);
+  }
+
+  visibleRows(): PaymentGatewayAccount[] {
+    const rows = this.dataSource.filteredData.length
+      ? this.dataSource.filteredData
+      : this.dataSource.data;
+    const paginator = this.dataSource.paginator;
+    if (!paginator) return rows;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return rows.slice(start, start + paginator.pageSize);
+  }
+
+  allVisibleRowsSelected() {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.selectedGatewayUUIDs().has(row.EfgUUID));
+  }
+
+  someVisibleRowsSelected() {
+    const rows = this.visibleRows();
+    if (rows.length === 0) return false;
+    const selected = rows.filter((row) => this.selectedGatewayUUIDs().has(row.EfgUUID)).length;
+    return selected > 0 && selected < rows.length;
+  }
+
+  toggleGatewaySelection(item: PaymentGatewayAccount) {
+    const next = new Set(this.selectedGatewayUUIDs());
+    if (next.has(item.EfgUUID)) next.delete(item.EfgUUID);
+    else next.add(item.EfgUUID);
+    this.selectedGatewayUUIDs.set(next);
+  }
+
+  toggleVisibleSelection() {
+    const rows = this.visibleRows();
+    const next = new Set(this.selectedGatewayUUIDs());
+    const shouldSelect = !this.allVisibleRowsSelected();
+    rows.forEach((row) => {
+      if (shouldSelect) next.add(row.EfgUUID);
+      else next.delete(row.EfgUUID);
+    });
+    this.selectedGatewayUUIDs.set(next);
+  }
+
+  private reconcileSelection() {
+    const valid = new Set(this.dataSource.data.map((row) => row.EfgUUID));
+    const next = new Set([...this.selectedGatewayUUIDs()].filter((uuid) => valid.has(uuid)));
+    this.selectedGatewayUUIDs.set(next);
   }
 
   async loadPaymentGateways() {
@@ -539,11 +611,13 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
 
       this.paymentGateways.set(normalized);
       this.dataSource.data = [...normalized];
+      this.reconcileSelection();
       this.applySearchFilters();
     } catch (error) {
       this.showGatewayError(this.friendlyError(error, 'Failed to load payment gateways.'));
       this.paymentGateways.set([]);
       this.dataSource.data = [];
+      this.selectedGatewayUUIDs.set(new Set());
     } finally {
       const elapsed = performance.now() - start;
       const minMs = 600;
@@ -723,6 +797,62 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
     }
   }
 
+  async removeManyGateways() {
+    const ids = [...this.selectedGatewayUUIDs()];
+    if (ids.length === 0) return;
+
+    const selectedRows = this.dataSource.data.filter((row) => ids.includes(row.EfgUUID));
+    const sample = selectedRows
+      .slice(0, 3)
+      .map((row) => row.EfgName)
+      .join(', ');
+    const suffix = sample ? ` (${sample}${selectedRows.length > 3 ? ', ...' : ''})` : '';
+
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: {
+        title: 'Delete selected payment gateways',
+        message: `Delete ${ids.length} selected payment gateway${ids.length === 1 ? '' : 's'}${suffix}?`,
+        confirmLabel: 'Delete selected',
+      },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+    const confirmed = await firstValueFrom(ref.afterClosed());
+    if (!confirmed) return;
+
+    try {
+      const response = await this.api.delete<{
+        deleted?: string[];
+        failed?: { EfgUUID?: string; message?: string }[];
+      }>(`${this.baseEndpoint()}/bulk`, { ids });
+      const deleted = new Set(response?.deleted ?? []);
+      const failed = response?.failed ?? [];
+
+      if (deleted.size > 0) {
+        this.selectedGatewayUUIDs.set(
+          new Set([...this.selectedGatewayUUIDs()].filter((uuid) => !deleted.has(uuid))),
+        );
+      }
+
+      await this.loadPaymentGateways();
+
+      if (failed.length > 0) {
+        const failedIds = new Set(
+          failed.map((item) => item.EfgUUID).filter((uuid): uuid is string => Boolean(uuid)),
+        );
+        this.selectedGatewayUUIDs.set(failedIds);
+        this.showGatewayError(`${failed.length} selected payment gateway(s) could not be deleted.`);
+        return;
+      }
+
+      this.showGatewaySuccess('Selected payment gateways deleted.');
+    } catch (error) {
+      this.showGatewayError(
+        this.friendlyError(error, 'Failed to delete selected payment gateways.'),
+      );
+    }
+  }
+
   isValidatingGateway(item: PaymentGatewayAccount) {
     return this.validatingGatewayUUID() === item.EfgUUID;
   }
@@ -757,98 +887,27 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
 
   private openGatewayDialog() {
     if (!this.gatewayFormDialog || this.gatewayFormDialogRef) return;
-    this.gatewayFormDialogRef = this.dialog.open(this.gatewayFormDialog, {
-      ...this.getGatewayDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'erp-payment-gateway-form-dialog',
-    });
-    this.gatewayFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelGatewayForm();
-      }
-    });
-    this.startDialogViewportObserver();
+    this.dialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.gatewayFormDialog,
+      'crud-dialog-panel',
+      {
+        onEscape: () => this.cancelGatewayForm(),
+      },
+    );
+    this.gatewayFormDialogRef = this.dialogBinding.ref;
     this.gatewayFormDialogRef.afterClosed().subscribe(() => {
-      this.stopDialogViewportObserver();
+      this.dialogBinding?.stop();
+      this.dialogBinding = null;
       this.gatewayFormDialogRef = null;
     });
   }
 
   private closeGatewayDialog() {
     if (!this.gatewayFormDialogRef) return;
-    this.stopDialogViewportObserver();
+    this.dialogBinding?.stop();
+    this.dialogBinding = null;
     this.gatewayFormDialogRef.close();
     this.gatewayFormDialogRef = null;
-  }
-
-  private getGatewayDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: '100vw',
-        maxWidth: '100vw',
-        maxHeight: '100dvh',
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.gatewayFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateGatewayDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateGatewayDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateGatewayDialogViewport() {
-    if (!this.gatewayFormDialogRef) return;
-    const config = this.getGatewayDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const maxHeight = typeof config.maxHeight === 'string' ? config.maxHeight : '';
-    this.gatewayFormDialogRef.updateSize(width, maxHeight);
-    if (config.position) {
-      this.gatewayFormDialogRef.updatePosition(config.position);
-    } else {
-      this.gatewayFormDialogRef.updatePosition();
-    }
   }
 }

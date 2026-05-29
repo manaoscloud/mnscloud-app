@@ -34,12 +34,25 @@
         />
       </mat-form-field>
       <div class="filter-actions">
-        <button mat-stroked-button type="button" (click)="applySearchFilters()">Apply</button>
-        <button mat-stroked-button type="button" (click)="clearSearchFilters()">Clear</button>
+        @if (selectedGatewayCount() > 0) {
+          <span class="selection-count">{{ selectedGatewayCount() }} selected</span>
+          <button mat-stroked-button color="warn" type="button" (click)="removeManyGateways()">
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          Apply
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          Clear
+        </button>
       </div>
     </div>
 
-    <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loadingGateways()">
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loadingGateways()">
       @if (loadingGateways()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
@@ -47,6 +60,25 @@
       }
 
       <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="allVisibleRowsSelected()"
+              [indeterminate]="someVisibleRowsSelected()"
+              (change)="toggleVisibleSelection()"
+              aria-label="Select visible payment gateways"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isGatewaySelected(row)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleGatewaySelection(row)"
+              aria-label="Select payment gateway"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
           <td mat-cell *matCellDef="let row">{{ row.EfgName }}</td>
@@ -65,13 +97,14 @@
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
-            <mat-chip
-              class="status-pill"
+            <span
+              class="status-pill status-chip state-chip"
+              [ngClass]="gatewayStatusChipClass(row)"
               [class.is-active]="row.EfgIsActive === 1"
               [class.is-inactive]="row.EfgIsActive !== 1"
             >
               {{ gatewayStatusLabel(row) }}
-            </mat-chip>
+            </span>
           </td>
         </ng-container>
 
@@ -79,7 +112,9 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="default-col">Default</th>
           <td mat-cell *matCellDef="let row" class="default-col">
             @if (gatewayIsDefault(row)) {
-              <mat-chip class="default-chip">Default</mat-chip>
+              <span class="status-pill status-chip state-chip chip-queued default-chip"
+                >Default</span
+              >
             } @else {
               -
             }
@@ -87,7 +122,9 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">
+            Actions
+          </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               @if (row.EfgProvider === 'inter_business') {
@@ -148,8 +185,8 @@
 </section>
 
 <ng-template #gatewayFormDialog>
-  <div class="payment-gateway-dialog">
-    <div class="form-header">
+  <div class="crud-dialog payment-gateway-dialog">
+    <div class="dialog-header">
       <div>
         <h2>{{ editingGateway() ? 'Edit gateway' : 'New gateway' }}</h2>
         <p>Configure payment gateway settings and credentials.</p>
@@ -290,29 +327,42 @@
     </mat-dialog-content>
 
     <mat-dialog-actions class="form-actions">
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        (click)="submitGateway()"
-        [disabled]="savingGateway()"
-      >
-        <mat-icon>save</mat-icon>
-        Save
-      </button>
-      @if (!editingGateway()) {
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="cancelGatewayForm()">Cancel</button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editingGateway()">
         <button
-          mat-stroked-button
+          class="save-main-button"
+          mat-flat-button
           color="primary"
           type="button"
-          (click)="saveAndNewGateway()"
+          (click)="submitGateway()"
           [disabled]="savingGateway()"
         >
-          <mat-icon>post_add</mat-icon>
-          Save and new
+          <mat-icon>save</mat-icon>
+          Save
         </button>
-      }
-      <button mat-stroked-button type="button" (click)="cancelGatewayForm()">Cancel</button>
+        @if (!editingGateway()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            [matMenuTriggerFor]="gatewaySaveMenu"
+            [disabled]="savingGateway()"
+            aria-label="More save actions"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
+      </div>
+      <mat-menu #gatewaySaveMenu="matMenu" xPosition="before" yPosition="below">
+        <button mat-menu-item type="button" (click)="saveAndNewGateway()">
+          <mat-icon>post_add</mat-icon>
+          <span>Save/New</span>
+        </button>
+      </mat-menu>
     </mat-dialog-actions>
   </div>
 </ng-template>
