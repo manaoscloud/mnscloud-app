@@ -96,6 +96,7 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   readonly displayedColumns = [
     'select',
     'name',
+    'code',
     'dialPlan',
     'direction',
     'operator',
@@ -108,6 +109,10 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   readonly form = this.fb.nonNullable.group({
     dialPlanUUID: ['', [Validators.required]],
     name: ['', [Validators.required, Validators.minLength(2)]],
+    code: [
+      '',
+      [Validators.required, Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9_-]{1,39}$/)],
+    ],
     direction: ['outbound', [Validators.required]],
     operator: ['regex', [Validators.required]],
     pattern: ['', [Validators.required]],
@@ -192,6 +197,7 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     this.form.reset({
       dialPlanUUID: this.dialPlanFilter() || this.dialPlans()[0]?.uuid || '',
       name: '',
+      code: '',
       direction: 'outbound',
       operator: 'regex',
       pattern: '',
@@ -212,6 +218,7 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     this.form.reset({
       dialPlanUUID: item.dialPlanUUID,
       name: item.name,
+      code: item.code,
       direction: item.direction || 'outbound',
       operator: item.operator || 'regex',
       pattern: item.pattern,
@@ -233,6 +240,7 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     const payload = {
       dialPlanUUID: value.dialPlanUUID,
       name: value.name.trim(),
+      code: value.code.trim().toUpperCase(),
       direction: value.direction,
       operator: value.operator,
       pattern: value.pattern.trim(),
