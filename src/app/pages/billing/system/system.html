@@ -819,6 +819,7 @@
           />
           <mat-autocomplete
             #tenantAutocomplete="matAutocomplete"
+            [displayWith]="tenantAutocompleteLabel"
             (optionSelected)="selectCreditTenant($event.option.value)"
           >
             @for (tenant of tenantOptions(); track tenant.EnvironmentUUID) {
