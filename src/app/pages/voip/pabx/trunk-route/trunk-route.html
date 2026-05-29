@@ -170,27 +170,8 @@
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Register</mat-label>
-                  <mat-select formControlName="registerEnabled">
-                    <mat-option [value]="true">Yes</mat-option>
-                    <mat-option [value]="false">No</mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Auth Mode</mat-label>
-                  <mat-select formControlName="authMode">
-                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Direction</mat-label>
-                  <mat-select formControlName="secondary">
-                    <mat-option *ngFor="let option of directionOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
-                  </mat-select>
+                  <mat-label>Name</mat-label>
+                  <input matInput formControlName="name" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>PABX</mat-label>
@@ -215,8 +196,27 @@
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Name</mat-label>
-                  <input matInput formControlName="name" />
+                  <mat-label>Direction</mat-label>
+                  <mat-select formControlName="secondary">
+                    <mat-option *ngFor="let option of directionOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Auth Mode</mat-label>
+                  <mat-select formControlName="authMode">
+                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Register</mat-label>
+                  <mat-select formControlName="registerEnabled">
+                    <mat-option [value]="true">Yes</mat-option>
+                    <mat-option [value]="false">No</mat-option>
+                  </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Priority</mat-label>
@@ -226,22 +226,6 @@
             </mat-tab>
             <mat-tab label="Authentication">
               <div class="tab-content form-grid">
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>Domain / Proxy</mat-label>
-                  <input matInput formControlName="primary" />
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Transport</mat-label>
-                  <mat-select formControlName="transport">
-                    <mat-option *ngFor="let option of transportOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="span-1">
-                  <mat-label>Port</mat-label>
-                  <input matInput type="number" min="1" max="65535" formControlName="port" />
-                </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Username</mat-label>
                   <input matInput formControlName="username" autocomplete="off" />
@@ -266,14 +250,30 @@
                   </button>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Domain / Proxy</mat-label>
+                  <input matInput formControlName="primary" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Realm</mat-label>
                   <input matInput formControlName="realm" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="span-2">
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Transport</mat-label>
+                  <mat-select formControlName="transport">
+                    <mat-option *ngFor="let option of transportOptions" [value]="option">
+                      {{ option }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>Port</mat-label>
+                  <input matInput type="number" min="1" max="65535" formControlName="port" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>From Domain</mat-label>
                   <input matInput formControlName="fromDomain" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="span-2">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>From User</mat-label>
                   <input matInput formControlName="fromUser" />
                 </mat-form-field>
