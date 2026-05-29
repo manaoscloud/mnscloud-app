@@ -40,6 +40,16 @@ export interface BillingWallet {
   BwaStatus: number;
 }
 
+export interface BillingTenantLookupItem {
+  EnvironmentUUID: string;
+  EnvironmentName?: string | null;
+  TenantEmail?: string | null;
+  TenantStatus: number;
+  DefaultCurrency?: string | null;
+  WalletCount?: number | null;
+  WalletSummary?: string | null;
+}
+
 export interface BillingLedgerEntry {
   BleUUID: string;
   BleType: string;
@@ -51,6 +61,20 @@ export interface BillingLedgerEntry {
   BleReference?: string | null;
   BleReason?: string | null;
   BleDateCreated?: string | null;
+}
+
+export interface BillingPaymentIntent {
+  BpiUUID: string;
+  BpiID: string;
+  UserUsrUUID: string;
+  BpiAmount: number;
+  BpiCurrency: string;
+  BpiStatus: string;
+  BpiProvider?: string | null;
+  BpiCheckoutUrl?: string | null;
+  BpiReference?: string | null;
+  BpiExpiresAt?: string | null;
+  BpiDateCreated?: string | null;
 }
 
 export interface BillingSubscription {
@@ -154,6 +178,15 @@ export class BillingService {
     return response.data?.item ?? null;
   }
 
+  async searchTenants(search = '') {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('search', search.trim());
+    const response = await this.api.get<ApiListResponse<BillingTenantLookupItem>>(
+      `system/billing/tenants${this.query(params)}`,
+    );
+    return response.data?.items ?? [];
+  }
+
   async listSystemSubscriptions(search = '', status = '') {
     const params = new URLSearchParams();
     if (search.trim()) params.set('search', search.trim());
@@ -177,6 +210,23 @@ export class BillingService {
       `billing/ledger${this.query(params)}`,
     );
     return response.data?.items ?? [];
+  }
+
+  async listTopups(status = '') {
+    const params = new URLSearchParams();
+    if (status.trim()) params.set('status', status.trim());
+    const response = await this.api.get<ApiListResponse<BillingPaymentIntent>>(
+      `billing/topups${this.query(params)}`,
+    );
+    return response.data?.items ?? [];
+  }
+
+  async createTopup(payload: Record<string, unknown>) {
+    const response = await this.api.post<ApiListResponse<BillingPaymentIntent>>(
+      'billing/topups',
+      payload,
+    );
+    return response.data?.item ?? null;
   }
 
   async listCatalog(search = '') {

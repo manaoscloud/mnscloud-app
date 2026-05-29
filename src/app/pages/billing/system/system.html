@@ -810,9 +810,37 @@
     <mat-dialog-content class="dialog-content">
       <form class="form-grid" [formGroup]="creditForm">
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Tenant UUID' | t }}</mat-label>
-          <input matInput formControlName="environmentUUID" />
+          <mat-label>{{ 'Tenant' | t }}</mat-label>
+          <input
+            matInput
+            formControlName="tenantSearch"
+            [matAutocomplete]="tenantAutocomplete"
+            (input)="searchCreditTenants($any($event.target).value)"
+          />
+          <mat-autocomplete
+            #tenantAutocomplete="matAutocomplete"
+            (optionSelected)="selectCreditTenant($event.option.value)"
+          >
+            @for (tenant of tenantOptions(); track tenant.EnvironmentUUID) {
+              <mat-option [value]="tenant">
+                <span class="option-title">{{ tenant.EnvironmentName || tenant.TenantEmail }}</span>
+                <span class="option-subtitle">
+                  {{ tenant.TenantEmail }} · {{ tenant.WalletSummary || 'No wallet' }}
+                </span>
+              </mat-option>
+            }
+          </mat-autocomplete>
         </mat-form-field>
+        <input type="hidden" formControlName="environmentUUID" />
+        @if (selectedCreditTenant(); as tenant) {
+          <div class="selected-tenant span-2">
+            <mat-icon>verified_user</mat-icon>
+            <span>
+              <strong>{{ tenant.EnvironmentName || tenant.TenantEmail }}</strong>
+              {{ tenant.TenantEmail }} · {{ tenant.EnvironmentUUID }}
+            </span>
+          </div>
+        }
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Amount' | t }}</mat-label>
           <input matInput type="number" step="0.000001" formControlName="amount" />

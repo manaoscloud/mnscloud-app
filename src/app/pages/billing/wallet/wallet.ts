@@ -34,6 +34,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import {
   BillingCatalogItem,
   BillingLedgerEntry,
+  BillingPaymentIntent,
   BillingService,
   BillingSubscription,
   BillingWallet,
@@ -83,6 +84,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly wallets = signal<BillingWallet[]>([]);
+  readonly topups = signal<BillingPaymentIntent[]>([]);
   readonly selectedCatalogItem = signal<BillingCatalogItem | null>(null);
 
   readonly catalogSource = new MatTableDataSource<BillingCatalogItem>([]);
@@ -114,7 +116,15 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     resourceLabel: [''],
   });
 
+  readonly topupForm = this.fb.nonNullable.group({
+    amount: [0, [Validators.required, Validators.min(0.000001)]],
+    currency: [''],
+    reference: [''],
+    idempotencyKey: [''],
+  });
+
   @ViewChild('subscriptionDialog') subscriptionDialog?: TemplateRef<unknown>;
+  @ViewChild('topupDialog') topupDialog?: TemplateRef<unknown>;
   @ViewChild('catalogPaginator') catalogPaginator?: MatPaginator;
   @ViewChild('subscriptionPaginator') subscriptionPaginator?: MatPaginator;
   @ViewChild('ledgerPaginator') ledgerPaginator?: MatPaginator;
@@ -146,13 +156,15 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const [wallets, catalog, subscriptions, ledger] = await Promise.all([
+      const [wallets, catalog, subscriptions, ledger, topups] = await Promise.all([
         this.billing.listWallets(),
         this.billing.listCatalog(this.searchInput),
         this.billing.listSubscriptions(this.searchInput, this.statusFilter),
         this.billing.listLedger(this.ledgerSearchInput),
+        this.billing.listTopups('PENDING'),
       ]);
       this.wallets.set(wallets);
+      this.topups.set(topups);
       this.catalogSource.data = catalog;
       this.subscriptionSource.data = subscriptions;
       this.ledgerSource.data = ledger;
@@ -189,6 +201,58 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
 
   get ledgerEntryCount() {
     return this.ledgerSource.data.length;
+  }
+
+  get pendingTopupCount() {
+    return this.topups().filter((row) => row.BpiStatus === 'PENDING').length;
+  }
+
+  openTopupDialog() {
+    this.topupForm.reset({
+      amount: 0,
+      currency: this.wallets()[0]?.BwaCurrency ?? '',
+      reference: '',
+      idempotencyKey: crypto.randomUUID(),
+    });
+    if (!this.topupDialog) return;
+    this.closeSubscriptionDialog();
+    this.subscriptionDialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      this.topupDialog,
+      'crud-dialog-panel',
+      { onEscape: () => this.closeSubscriptionDialog() },
+    );
+    this.subscriptionDialogRef = this.subscriptionDialogBinding.ref;
+    if (window.innerWidth > 900) this.subscriptionDialogRef.updateSize('640px', 'min(92vh, 620px)');
+    this.subscriptionDialogRef.afterClosed().subscribe(() => {
+      this.subscriptionDialogBinding?.stop();
+      this.subscriptionDialogBinding = null;
+      this.subscriptionDialogRef = null;
+      this.saving.set(false);
+    });
+  }
+
+  async saveTopupIntent() {
+    if (this.topupForm.invalid || this.saving()) return;
+    this.saving.set(true);
+    const value = this.topupForm.getRawValue();
+    try {
+      await this.billing.createTopup({
+        amount: Number(value.amount),
+        currency: this.emptyToNull(value.currency),
+        reference: this.emptyToNull(value.reference),
+        idempotencyKey: this.emptyToNull(value.idempotencyKey),
+      });
+      this.snack.success(
+        'Top-up request created. Credit will be applied after payment confirmation.',
+      );
+      this.closeSubscriptionDialog();
+      await this.refresh();
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : 'Failed to create top-up request.');
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   openSubscribeDialog(row: BillingCatalogItem) {

@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -36,6 +37,7 @@ import {
   BillingProduct,
   BillingService,
   BillingSubscription,
+  BillingTenantLookupItem,
 } from '../shared/billing.service';
 
 export type BillingSystemSection =
@@ -50,6 +52,7 @@ export const BILLING_SYSTEM_IMPORTS = [
   FormsModule,
   ReactiveFormsModule,
   MatButtonModule,
+  MatAutocompleteModule,
   MatCardModule,
   MatCheckboxModule,
   MatDialogModule,
@@ -89,6 +92,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly editingProduct = signal<BillingProduct | null>(null);
   readonly editingPrice = signal<BillingPrice | null>(null);
   readonly products = signal<BillingProduct[]>([]);
+  readonly tenantOptions = signal<BillingTenantLookupItem[]>([]);
+  readonly selectedCreditTenant = signal<BillingTenantLookupItem | null>(null);
 
   readonly productSource = new MatTableDataSource<BillingProduct>([]);
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
@@ -162,6 +167,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   });
 
   readonly creditForm = this.fb.nonNullable.group({
+    tenantSearch: ['', [Validators.required]],
     environmentUUID: ['', [Validators.required]],
     amount: [0, [Validators.required, Validators.min(0.000001)]],
     currency: [''],
@@ -415,6 +421,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   openCreditDialog() {
     this.creditForm.reset({
+      tenantSearch: '',
       environmentUUID: '',
       amount: 0,
       currency: '',
@@ -422,7 +429,38 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       reference: '',
       idempotencyKey: crypto.randomUUID(),
     });
+    this.selectedCreditTenant.set(null);
+    this.tenantOptions.set([]);
     this.openDialog(this.creditDialog, '720px');
+  }
+
+  async searchCreditTenants(value: string) {
+    const term = value.trim();
+    this.selectedCreditTenant.set(null);
+    this.creditForm.controls.environmentUUID.setValue('');
+    if (term.length < 2) {
+      this.tenantOptions.set([]);
+      return;
+    }
+    try {
+      this.tenantOptions.set(await this.billing.searchTenants(term));
+    } catch {
+      this.tenantOptions.set([]);
+    }
+  }
+
+  selectCreditTenant(tenant: BillingTenantLookupItem) {
+    this.selectedCreditTenant.set(tenant);
+    this.creditForm.patchValue({
+      tenantSearch: this.tenantLabel(tenant),
+      environmentUUID: tenant.EnvironmentUUID,
+      currency: tenant.DefaultCurrency ?? this.creditForm.controls.currency.value,
+    });
+  }
+
+  tenantLabel(tenant: BillingTenantLookupItem) {
+    const name = tenant.EnvironmentName?.trim() || 'Tenant';
+    return `${name} - ${tenant.TenantEmail ?? tenant.EnvironmentUUID}`;
   }
 
   async saveManualCredit() {
