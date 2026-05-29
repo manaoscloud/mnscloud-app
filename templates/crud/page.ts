@@ -31,6 +31,7 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type Entity = {
@@ -62,6 +63,7 @@ type Entity = {
     MatTabsModule,
     MatMenuModule,
     MatChipsModule,
+    TranslatePipe,
   ],
   templateUrl: './page.html',
   styleUrls: ['./page.scss'],
