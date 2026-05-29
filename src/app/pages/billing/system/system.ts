@@ -34,7 +34,6 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import {
   BillingPrice,
   BillingProduct,
-  BillingProductDefinition,
   BillingService,
   BillingSubscription,
 } from '../shared/billing.service';
@@ -87,25 +86,14 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
-  readonly editingProduct = signal<BillingProduct | null>(null);
   readonly editingPrice = signal<BillingPrice | null>(null);
   readonly products = signal<BillingProduct[]>([]);
-  readonly productDefinitions = signal<BillingProductDefinition[]>([]);
 
   readonly productSource = new MatTableDataSource<BillingProduct>([]);
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
   readonly subscriptionSource = new MatTableDataSource<BillingSubscription>([]);
 
-  readonly productColumns = [
-    'select',
-    'code',
-    'name',
-    'module',
-    'scope',
-    'prices',
-    'status',
-    'actions',
-  ];
+  readonly productColumns = ['code', 'name', 'module', 'scope', 'prices', 'status'];
   readonly priceColumns = [
     'select',
     'product',
@@ -133,20 +121,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   subscriptionStatusFilter = '';
   priceProductSearchInput = '';
   priceFormProductSearchInput = '';
-  productCodeSearchInput = '';
 
-  readonly selectedProductUUIDs = new Set<string>();
   readonly selectedPriceUUIDs = new Set<string>();
   readonly selectedSubscriptionUUIDs = new Set<string>();
-
-  readonly productForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.minLength(2)]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    module: ['', [Validators.required]],
-    billingScope: ['SERVICE', [Validators.required]],
-    description: [''],
-    status: [1],
-  });
 
   readonly priceForm = this.fb.nonNullable.group({
     productUUID: ['', [Validators.required]],
@@ -171,7 +148,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     idempotencyKey: [''],
   });
 
-  @ViewChild('productDialog') productDialog?: TemplateRef<unknown>;
   @ViewChild('priceDialog') priceDialog?: TemplateRef<unknown>;
   @ViewChild('creditDialog') creditDialog?: TemplateRef<unknown>;
   @ViewChild('productPaginator') productPaginator?: MatPaginator;
@@ -205,13 +181,11 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const [definitions, products, prices, subscriptions] = await Promise.all([
-        this.billing.listProductDefinitions(),
+      const [products, prices, subscriptions] = await Promise.all([
         this.billing.listProducts(this.searchInput, this.statusFilter),
         this.billing.listPrices(this.searchInput, this.priceProductFilter, this.statusFilter),
         this.billing.listSystemSubscriptions(this.searchInput, this.subscriptionStatusFilter),
       ]);
-      this.productDefinitions.set(definitions);
       this.products.set(products);
       this.productSource.data = products;
       this.priceSource.data = prices;
@@ -255,87 +229,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   get tenantSubscriptionCount() {
     return new Set(this.subscriptionSource.data.map((row) => row.EnvironmentUUID).filter(Boolean))
       .size;
-  }
-
-  openProductCreate() {
-    this.editingProduct.set(null);
-    this.productForm.reset({
-      code: '',
-      name: '',
-      module: '',
-      billingScope: 'SERVICE',
-      description: '',
-      status: 1,
-    });
-    this.openDialog(this.productDialog, '760px');
-  }
-
-  openProductEdit(row: BillingProduct) {
-    this.editingProduct.set(row);
-    this.productForm.reset({
-      code: row.BprCode,
-      name: row.BprName,
-      module: row.BprModule,
-      billingScope: row.BprBillingScope,
-      description: row.BprDescription ?? '',
-      status: row.BprStatus,
-    });
-    this.openDialog(this.productDialog, '760px');
-  }
-
-  onProductDefinitionChange(code: string) {
-    const definition = this.productDefinitions().find((item) => item.BpdCode === code);
-    if (!definition) return;
-    this.productForm.patchValue({
-      code: definition.BpdCode,
-      name: definition.BpdName,
-      module: definition.BpdModule,
-      billingScope: definition.BpdBillingScope,
-      description: definition.BpdDescription ?? '',
-    });
-  }
-
-  async saveProduct(keepOpen = false) {
-    if (this.productForm.invalid || this.saving()) return;
-    this.saving.set(true);
-    const value = this.productForm.getRawValue();
-    const payload = {
-      code: value.code,
-      name: value.name,
-      module: value.module,
-      billingScope: value.billingScope,
-      description: this.emptyToNull(value.description),
-      status: Number(value.status),
-    };
-    try {
-      const current = this.editingProduct();
-      if (current) await this.billing.updateProduct(current.BprUUID, payload);
-      else await this.billing.createProduct(payload);
-      this.snack.success(current ? 'Product updated.' : 'Product created.');
-      if (!keepOpen) this.closeActiveDialog();
-      await this.refresh();
-      if (keepOpen && !current) this.resetProductForm();
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to save product.');
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async saveAndNewProduct() {
-    await this.saveProduct(true);
-  }
-
-  async deleteProduct(row: BillingProduct) {
-    if (!(await this.confirm('Delete product', `Delete ${row.BprName}?`, 'Delete'))) return;
-    try {
-      await this.billing.deleteProduct(row.BprUUID);
-      this.selectedProductUUIDs.delete(row.BprUUID);
-      this.snack.success('Product deleted.');
-      await this.refresh();
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to delete product.');
-    }
   }
 
   openPriceCreate() {
@@ -479,36 +372,13 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     );
   }
 
-  filteredProductDefinitions(search: string) {
-    const term = search.trim().toLowerCase();
-    const existingCodes = new Set(
-      this.products()
-        .filter((product) => product.BprUUID !== this.editingProduct()?.BprUUID)
-        .map((product) => product.BprCode),
-    );
-    const definitions = this.productDefinitions().filter(
-      (definition) => !existingCodes.has(definition.BpdCode),
-    );
-    if (!term) return definitions;
-    return definitions.filter((definition) =>
-      [definition.BpdCode, definition.BpdName, definition.BpdModule, definition.BpdDescription]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term)),
-    );
-  }
-
   clearProductSelectSearch() {
     this.priceProductSearchInput = '';
     this.priceFormProductSearchInput = '';
-    this.productCodeSearchInput = '';
   }
 
   closeDialog() {
     this.closeActiveDialog();
-  }
-
-  get selectedProductCount() {
-    return this.selectedProductUUIDs.size;
   }
 
   get selectedPriceCount() {
@@ -519,10 +389,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return this.selectedSubscriptionUUIDs.size;
   }
 
-  productVisibleRows() {
-    return this.visibleRows(this.productSource);
-  }
-
   priceVisibleRows() {
     return this.visibleRows(this.priceSource);
   }
@@ -531,26 +397,12 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return this.visibleRows(this.subscriptionSource).filter((row) => row.BsuStatus !== 'CANCELED');
   }
 
-  isProductSelected(row: BillingProduct) {
-    return this.selectedProductUUIDs.has(row.BprUUID);
-  }
-
   isPriceSelected(row: BillingPrice) {
     return this.selectedPriceUUIDs.has(row.BpcUUID);
   }
 
   isSubscriptionSelected(row: BillingSubscription) {
     return this.selectedSubscriptionUUIDs.has(row.BsuUUID);
-  }
-
-  isAllVisibleProductsSelected() {
-    const rows = this.productVisibleRows();
-    return rows.length > 0 && rows.every((row) => this.isProductSelected(row));
-  }
-
-  isSomeVisibleProductsSelected() {
-    const rows = this.productVisibleRows();
-    return rows.some((row) => this.isProductSelected(row)) && !this.isAllVisibleProductsSelected();
   }
 
   isAllVisiblePricesSelected() {
@@ -576,11 +428,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     );
   }
 
-  toggleProductSelection(row: BillingProduct, checked: boolean) {
-    if (checked) this.selectedProductUUIDs.add(row.BprUUID);
-    else this.selectedProductUUIDs.delete(row.BprUUID);
-  }
-
   togglePriceSelection(row: BillingPrice, checked: boolean) {
     if (checked) this.selectedPriceUUIDs.add(row.BpcUUID);
     else this.selectedPriceUUIDs.delete(row.BpcUUID);
@@ -591,43 +438,12 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     else this.selectedSubscriptionUUIDs.delete(row.BsuUUID);
   }
 
-  toggleVisibleProducts(checked: boolean) {
-    this.productVisibleRows().forEach((row) => this.toggleProductSelection(row, checked));
-  }
-
   toggleVisiblePrices(checked: boolean) {
     this.priceVisibleRows().forEach((row) => this.togglePriceSelection(row, checked));
   }
 
   toggleVisibleSubscriptions(checked: boolean) {
     this.subscriptionVisibleRows().forEach((row) => this.toggleSubscriptionSelection(row, checked));
-  }
-
-  async deleteSelectedProducts() {
-    const ids = Array.from(this.selectedProductUUIDs);
-    if (!ids.length) return;
-    const labels = this.productSource.data
-      .filter((row) => this.selectedProductUUIDs.has(row.BprUUID))
-      .slice(0, 3)
-      .map((row) => row.BprName);
-    const detail = labels.length
-      ? ` Selected: ${labels.join(', ')}${ids.length > 3 ? ', ...' : ''}`
-      : '';
-    if (
-      !(await this.confirm(
-        'Delete selected products',
-        `Delete ${ids.length} selected product record(s)?${detail}`,
-        'Delete selected',
-      ))
-    )
-      return;
-    await this.runBulkAction(
-      ids,
-      (uuid) => this.billing.deleteProduct(uuid),
-      this.selectedProductUUIDs,
-      'product',
-      'deleted',
-    );
   }
 
   async deleteSelectedPrices() {
@@ -724,18 +540,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.activeDialogRef = null;
   }
 
-  private resetProductForm() {
-    this.editingProduct.set(null);
-    this.productForm.reset({
-      code: '',
-      name: '',
-      module: '',
-      billingScope: 'SERVICE',
-      description: '',
-      status: 1,
-    });
-  }
-
   private resetPriceForm() {
     this.editingPrice.set(null);
     this.priceForm.reset({
@@ -792,11 +596,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   private reconcileSelections() {
-    this.keepValidSelection(
-      this.selectedProductUUIDs,
-      this.productSource.data,
-      (row) => row.BprUUID,
-    );
     this.keepValidSelection(this.selectedPriceUUIDs, this.priceSource.data, (row) => row.BpcUUID);
     this.keepValidSelection(
       this.selectedSubscriptionUUIDs,

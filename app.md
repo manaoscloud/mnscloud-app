@@ -106,6 +106,8 @@
 
 - Use bulk delete by default on every ERP-style CRUD list page.
 - Exception: remove bulk delete only when the resource has a documented explicit reason, and record that exception in the page notes/refactor briefing.
+- Current documented exception: System Billing Products is a read-only catalog synchronized from
+  official billing product definitions; it has no create, edit, delete, or bulk delete actions.
 - Table selection:
   - Add a leading `select` column with `mat-checkbox`.
   - Row checkbox toggles one record by UUID.

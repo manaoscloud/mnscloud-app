@@ -12,17 +12,6 @@ export interface BillingProduct {
   ActivePrices?: number;
 }
 
-export interface BillingProductDefinition {
-  BpdUUID: string;
-  BpdCode: string;
-  BpdName: string;
-  BpdModule: string;
-  BpdBillingScope: 'SERVICE' | 'MODULE';
-  BpdDescription?: string | null;
-  BpdSortOrder?: number | null;
-  BpdStatus: number;
-}
-
 export interface BillingPrice {
   BpcUUID: string;
   BillingProductBprUUID: string;
@@ -80,15 +69,6 @@ export interface BillingSubscription {
   BpcName?: string | null;
 }
 
-export type BillingProductPayload = {
-  code: string;
-  name: string;
-  module: string;
-  billingScope: string;
-  description?: string | null;
-  status: number;
-};
-
 export type BillingCatalogItem = BillingProduct & Omit<BillingPrice, 'BprCode' | 'BprName'>;
 
 interface ApiListResponse<T> {
@@ -110,36 +90,6 @@ export class BillingService {
       `system/billing/products${this.query(params)}`,
     );
     return response.data?.items ?? [];
-  }
-
-  async listProductDefinitions(search = '', status: number | null = 1) {
-    const params = new URLSearchParams();
-    if (search.trim()) params.set('search', search.trim());
-    if (status !== null) params.set('status', String(status));
-    const response = await this.api.get<ApiListResponse<BillingProductDefinition>>(
-      `system/billing/product-definitions${this.query(params)}`,
-    );
-    return response.data?.items ?? [];
-  }
-
-  async createProduct(payload: BillingProductPayload) {
-    const response = await this.api.post<ApiListResponse<BillingProduct>>(
-      'system/billing/products',
-      payload,
-    );
-    return response.data?.item ?? null;
-  }
-
-  async updateProduct(uuid: string, payload: BillingProductPayload) {
-    const response = await this.api.put<ApiListResponse<BillingProduct>>(
-      `system/billing/products/${uuid}`,
-      payload,
-    );
-    return response.data?.item ?? null;
-  }
-
-  async deleteProduct(uuid: string) {
-    await this.api.delete(`system/billing/products/${uuid}`);
   }
 
   async listPrices(search = '', productUUID = '', status: number | null = null) {

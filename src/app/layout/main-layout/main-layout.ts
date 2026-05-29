@@ -809,7 +809,7 @@ export class MainLayout {
         },
         {
           id: 'billing/catalog-products',
-          label: 'Catalog',
+          label: 'Products',
           icon: 'storefront',
           route: '/billing/catalog',
           masterRoute: '/system/billing/products',

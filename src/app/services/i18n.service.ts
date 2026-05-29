@@ -585,6 +585,8 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
     'Saldo pré-pago, catálogo de serviços, assinaturas e extrato.',
   'Global products, price book, subscriptions and prepaid credit operations.':
     'Produtos globais, tabela de preços, assinaturas e operações de crédito pré-pago.',
+  'Official products, price book, subscriptions and prepaid credit operations.':
+    'Produtos oficiais, tabela de preços, assinaturas e operações de crédito pré-pago.',
   'Active products': 'Produtos ativos',
   'Active prices': 'Preços ativos',
   'Active subscriptions': 'Assinaturas ativas',
@@ -601,6 +603,7 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Apply audited prepaid credits to tenant wallets.':
     'Aplique créditos pré-pagos auditados nas carteiras dos ambientes.',
   Catalog: 'Catálogo',
+  Products: 'Produtos',
   Subscriptions: 'Assinaturas',
   Ledger: 'Extrato',
   'Search products': 'Buscar produtos',
@@ -1162,6 +1165,8 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
     'Saldo prepago, catálogo de servicios, suscripciones y extracto.',
   'Global products, price book, subscriptions and prepaid credit operations.':
     'Productos globales, lista de precios, suscripciones y operaciones de crédito prepago.',
+  'Official products, price book, subscriptions and prepaid credit operations.':
+    'Productos oficiales, lista de precios, suscripciones y operaciones de crédito prepago.',
   'Active products': 'Productos activos',
   'Active prices': 'Precios activos',
   'Active subscriptions': 'Suscripciones activas',
@@ -1178,6 +1183,7 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Apply audited prepaid credits to tenant wallets.':
     'Aplique créditos prepagos auditados a las carteras de los entornos.',
   Catalog: 'Catálogo',
+  Products: 'Productos',
   Subscriptions: 'Suscripciones',
   Ledger: 'Extracto',
   'Search products': 'Buscar productos',
