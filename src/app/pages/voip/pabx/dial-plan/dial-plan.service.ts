@@ -18,7 +18,6 @@ export type VoipPabxDialPlanRuleItem = {
   uuid: string;
   id: string;
   name: string;
-  code: string;
   enabled: number;
   domainUUID?: string | null;
   dialPlanUUID: string;
