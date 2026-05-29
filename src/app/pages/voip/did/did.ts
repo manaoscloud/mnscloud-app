@@ -90,6 +90,9 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   readonly skippedExisting = signal<Array<{ number: string; reason: string }>>([]);
   readonly failedBulkItems = signal<Array<{ number: string; message: string }>>([]);
   readonly isMasterScope = signal(false);
+  readonly availableDids = signal<VoipDidItem[]>([]);
+  readonly availableLoading = signal(false);
+  readonly claimingUUID = signal<string | null>(null);
 
   readonly operators = signal<OperatorOption[]>([]);
   readonly operatorMap = signal<Map<string, VoipDidOperatorItem>>(new Map());
@@ -97,9 +100,11 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
 
   readonly dataSource = new MatTableDataSource<VoipDidItem>([]);
   private readonly masterDisplayedColumns = ['select', 'number', 'operator', 'status', 'actions'];
-  private readonly tenantDisplayedColumns = ['number', 'operator', 'status'];
+  private readonly tenantDisplayedColumns = ['number', 'operator', 'status', 'actions'];
   search = '';
   searchInput = '';
+  availableSearch = '';
+  availableSearchInput = '';
 
   readonly statusOptions = [
     { value: 1, label: 'Active' },
@@ -117,7 +122,9 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
   @ViewChild('didFormDialog') didFormDialog?: TemplateRef<unknown>;
+  @ViewChild('availableDidDialog') availableDidDialog?: TemplateRef<unknown>;
   private didFormDialogRef: MatDialogRef<unknown> | null = null;
+  private availableDidDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   get displayedColumns() {
@@ -155,6 +162,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.closeDidDialog();
+    this.closeAvailableDidDialog();
   }
 
   onSearchChange(value: string) {
@@ -278,6 +286,79 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   async refreshList() {
     await this.loadOperators();
     await this.loadDids();
+  }
+
+  async openAvailableDids() {
+    if (this.isMasterScope() || !this.availableDidDialog || this.availableDidDialogRef) return;
+    this.availableDidDialogRef = this.dialog.open(this.availableDidDialog, {
+      panelClass: ['crud-dialog-panel', 'voip-did-available-dialog-panel'],
+      width: 'min(960px, calc(100vw - 32px))',
+      maxWidth: 'calc(100vw - 32px)',
+      maxHeight: '90vh',
+      autoFocus: false,
+      restoreFocus: false,
+    });
+    this.availableDidDialogRef.afterClosed().subscribe(() => {
+      this.availableDidDialogRef = null;
+      this.availableSearchInput = '';
+      this.availableSearch = '';
+      this.availableDids.set([]);
+      this.claimingUUID.set(null);
+    });
+    await this.loadAvailableDids();
+  }
+
+  closeAvailableDidDialog() {
+    this.availableDidDialogRef?.close();
+    this.availableDidDialogRef = null;
+  }
+
+  onAvailableSearchChange(value: string) {
+    this.availableSearchInput = value;
+  }
+
+  applyAvailableSearchFilters() {
+    this.availableSearch = this.availableSearchInput.trim();
+    void this.loadAvailableDids();
+  }
+
+  clearAvailableSearchFilters() {
+    this.availableSearchInput = '';
+    this.availableSearch = '';
+    void this.loadAvailableDids();
+  }
+
+  async loadAvailableDids() {
+    if (this.isMasterScope()) return;
+    this.availableLoading.set(true);
+    try {
+      const response = await this.api.available({
+        search: this.availableSearch || undefined,
+        limit: this.listLimit,
+      });
+      this.availableDids.set(response?.data?.items ?? []);
+    } catch (err: any) {
+      this.snack.error(this.extractErrorMessage(err, 'Failed to load available DIDs.'));
+    } finally {
+      this.availableLoading.set(false);
+    }
+  }
+
+  async claimDid(item: VoipDidItem) {
+    if (this.isMasterScope() || this.claimingUUID()) return;
+
+    this.claimingUUID.set(item.VddUUID);
+    try {
+      await this.api.claim(item.VddUUID);
+      this.snack.success('DID contracted successfully.');
+      this.availableDids.set(this.availableDids().filter((row) => row.VddUUID !== item.VddUUID));
+      await this.loadDids();
+    } catch (err: any) {
+      this.snack.error(this.extractErrorMessage(err, 'Failed to contract DID.'));
+      await this.loadAvailableDids();
+    } finally {
+      this.claimingUUID.set(null);
+    }
   }
 
   startCreate() {
@@ -417,6 +498,31 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
       this.snack.success('DID deleted successfully.');
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete DID.'));
+    }
+  }
+
+  async releaseDid(item: VoipDidItem) {
+    if (this.isMasterScope()) return;
+
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: {
+        title: 'Release DID',
+        message: `Release "${item.VddNumber}" from this tenant? Billing for this DID will be cancelled when the release succeeds.`,
+        confirmLabel: 'Release',
+      },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+
+    const confirmed = await firstValueFrom(ref.afterClosed());
+    if (!confirmed) return;
+
+    try {
+      await this.api.release(item.VddUUID);
+      this.dataSource.data = this.dataSource.data.filter((row) => row.VddUUID !== item.VddUUID);
+      this.snack.success('DID released successfully.');
+    } catch (err: any) {
+      this.snack.error(this.extractErrorMessage(err, 'Failed to release DID.'));
     }
   }
 

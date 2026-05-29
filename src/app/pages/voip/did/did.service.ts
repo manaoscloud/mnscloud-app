@@ -13,6 +13,7 @@ export type VoipDidItem = {
   CustomerName?: string | null;
   IsAvailable?: number;
   UserUsrUUID?: string | null;
+  BillingSubscriptionBsuUUID?: string | null;
   VddDateCreated?: string | null;
   VddDateUpdated?: string | null;
 };
@@ -46,6 +47,23 @@ export class VoipDidService {
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();
     return this.api.get<any>(`${this.basePath(system)}${suffix ? `?${suffix}` : ''}`);
+  }
+
+  available(params: { search?: string; limit?: number; offset?: number } = {}) {
+    const query = new URLSearchParams();
+    if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const suffix = query.toString();
+    return this.api.get<any>(`${this.basePath(false)}/available${suffix ? `?${suffix}` : ''}`);
+  }
+
+  claim(uuid: string, payload: { customerUUID?: string | null } = {}) {
+    return this.api.post<any>(`${this.basePath(false)}/${uuid}/claim`, payload);
+  }
+
+  release(uuid: string) {
+    return this.api.delete<any>(`${this.basePath(false)}/${uuid}/release`);
   }
 
   create(payload: { number: string; operatorUUID: string; status: number }, system = false) {

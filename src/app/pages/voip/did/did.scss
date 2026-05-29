@@ -199,6 +199,75 @@ mat-paginator {
   max-height: min(92vh, 1100px);
 }
 
+.available-did-dialog {
+  width: 100%;
+  max-width: 100%;
+  padding: 1.5rem 1.75rem 1.25rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 900px);
+}
+
+.available-dialog-content {
+  overflow: auto;
+  padding: 0 !important;
+}
+
+.compact-filter-grid {
+  grid-template-columns: minmax(0, 1fr);
+  margin-bottom: 0.75rem;
+}
+
+.available-list {
+  position: relative;
+  min-height: 180px;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.available-list.is-loading .table-loading {
+  opacity: 1;
+}
+
+.available-did-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.5rem;
+  background: var(--mat-sys-color-surface-container);
+}
+
+.available-did-info {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+
+  strong,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    font-size: 0.85rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+.empty-state {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  color: var(--mat-sys-color-on-surface-variant);
+  border: 1px dashed var(--mat-sys-color-outline-variant);
+  border-radius: 0.5rem;
+}
+
 @media (min-width: 901px) {
   .did-dialog {
     height: 100%;
@@ -475,6 +544,16 @@ mat-paginator {
     padding: 1rem 1rem 0.25rem;
     height: 100%;
     min-height: 0;
+  }
+
+  .available-did-dialog {
+    padding: 1rem 1rem 0.25rem;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .available-did-row {
+    grid-template-columns: 1fr;
   }
 
   .dialog-content {

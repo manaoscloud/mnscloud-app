@@ -18,6 +18,11 @@
             <mat-icon>add</mat-icon>
             New
           </button>
+        } @else {
+          <button mat-stroked-button color="primary" (click)="openAvailableDids()" type="button">
+            <mat-icon>add_shopping_cart</mat-icon>
+            Contract DID
+          </button>
         }
       </div>
     </header>
@@ -104,14 +109,32 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
-            <div class="actions-col" *ngIf="isMasterScope()">
-              <button mat-icon-button (click)="editDid(row)" type="button" matTooltip="Edit DID">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="removeDid(row)" matTooltip="Delete DID">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
+            @if (isMasterScope()) {
+              <div class="actions-col">
+                <button mat-icon-button (click)="editDid(row)" type="button" matTooltip="Edit DID">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="removeDid(row)"
+                  matTooltip="Delete DID"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <div class="actions-col">
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="releaseDid(row)"
+                  matTooltip="Release DID"
+                >
+                  <mat-icon>link_off</mat-icon>
+                </button>
+              </div>
+            }
           </td>
         </ng-container>
 
@@ -326,6 +349,83 @@
           type="button"
         >
           Cancel
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #availableDidDialog>
+  <div class="available-did-dialog crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>Contract DID</h2>
+        <p>Select an available global DID for this tenant.</p>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content available-dialog-content">
+      <div class="filter-grid compact-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            [ngModel]="availableSearchInput"
+            (ngModelChange)="onAvailableSearchChange($event)"
+            placeholder="Search available DIDs"
+          />
+        </mat-form-field>
+        <div class="filter-actions">
+          <button mat-stroked-button type="button" (click)="applyAvailableSearchFilters()">
+            Apply
+          </button>
+          <button mat-stroked-button type="button" (click)="clearAvailableSearchFilters()">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="available-list" [class.is-loading]="availableLoading()">
+        @if (availableLoading()) {
+          <div class="table-loading" aria-live="polite" aria-busy="true">
+            <mat-progress-spinner diameter="32" mode="indeterminate"></mat-progress-spinner>
+          </div>
+        }
+
+        @if (availableDids().length) {
+          @for (item of availableDids(); track item.VddUUID) {
+            <div class="available-did-row">
+              <div class="available-did-info">
+                <strong>{{ item.VddNumber }}</strong>
+                <span>{{ operatorLabel(item.VoipDidOperatorVdoUUID) }}</span>
+              </div>
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                (click)="claimDid(item)"
+                [disabled]="claimingUUID() === item.VddUUID"
+              >
+                <mat-icon>add_link</mat-icon>
+                Contract
+              </button>
+            </div>
+          }
+        } @else if (!availableLoading()) {
+          <div class="empty-state">No available DIDs found.</div>
+        }
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          (click)="closeAvailableDidDialog()"
+          type="button"
+        >
+          Close
         </button>
       </div>
     </mat-dialog-actions>
