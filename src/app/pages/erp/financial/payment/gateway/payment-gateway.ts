@@ -48,7 +48,7 @@ type PaymentGatewayAccount = {
 };
 
 type ProviderFieldSection = 'config' | 'credentials';
-type ProviderFieldKind = 'text' | 'password' | 'textarea';
+type ProviderFieldKind = 'text' | 'password' | 'textarea' | 'select';
 
 type ProviderFieldDefinition = {
   key: string;
@@ -57,6 +57,7 @@ type ProviderFieldDefinition = {
   kind?: ProviderFieldKind;
   required?: boolean;
   placeholder?: string;
+  options?: { value: string; label: string }[];
 };
 
 type ProviderFieldView = ProviderFieldDefinition & { controlName: string };
@@ -112,9 +113,20 @@ const PROVIDER_FIELD_DEFINITIONS: Record<PaymentGatewayProvider, ProviderFieldDe
   ],
   inter_business: [
     {
+      key: 'sandbox',
+      label: 'Sandbox',
+      section: 'config',
+      kind: 'select',
+      options: [
+        { value: 'false', label: 'No' },
+        { value: 'true', label: 'Yes' },
+      ],
+    },
+    {
       key: 'scope',
       label: 'OAuth Scope',
       section: 'config',
+      required: true,
       placeholder: 'boleto-cobranca.read boleto-cobranca.write',
     },
     {
@@ -149,8 +161,20 @@ const PROVIDER_FIELD_DEFINITIONS: Record<PaymentGatewayProvider, ProviderFieldDe
       required: true,
       kind: 'password',
     },
-    { key: 'certPem', label: 'Certificate PEM', section: 'credentials', kind: 'textarea' },
-    { key: 'keyPem', label: 'Private Key PEM', section: 'credentials', kind: 'textarea' },
+    {
+      key: 'certPem',
+      label: 'Certificate PEM',
+      section: 'credentials',
+      kind: 'textarea',
+      required: true,
+    },
+    {
+      key: 'keyPem',
+      label: 'Private Key PEM',
+      section: 'credentials',
+      kind: 'textarea',
+      required: true,
+    },
   ],
 };
 

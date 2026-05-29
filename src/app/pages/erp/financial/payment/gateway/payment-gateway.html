@@ -213,6 +213,12 @@
                         [formControlName]="field.controlName"
                         [placeholder]="field.placeholder ?? ''"
                       ></textarea>
+                    } @else if (field.kind === 'select') {
+                      <mat-select [formControlName]="field.controlName">
+                        @for (option of field.options ?? []; track option.value) {
+                          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        }
+                      </mat-select>
                     } @else {
                       <input
                         matInput
