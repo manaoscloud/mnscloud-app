@@ -1,0 +1,238 @@
+<section class="erp-page" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'Time Clock Accounts' | t }}</h1>
+        <p>{{ 'Generate secure Pulse access for HR employees.' | t }}</p>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | t }}
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          {{ 'New' | t }}
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Search' | t }}</mat-label>
+        <input
+          matInput
+          [ngModel]="searchInput()"
+          (ngModelChange)="searchInput.set($event)"
+          [placeholder]="'Employee or login code' | t"
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Status' | t }}</mat-label>
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <mat-option [value]="null">{{ 'All' | t }}</mat-option>
+          <mat-option value="active">{{ 'Active' | t }}</mat-option>
+          <mat-option value="inactive">{{ 'Inactive' | t }}</mat-option>
+          <mat-option value="blocked">{{ 'Blocked' | t }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | t }}
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | t }}
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading">
+          <mat-spinner diameter="38"></mat-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="EmployeeName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Employee' | t }}</th>
+          <td mat-cell *matCellDef="let row">
+            <strong>{{ row.EmployeeName || '-' }}</strong>
+            <small>{{ row.EmployeeEmail || '-' }}</small>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="LoginCode">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Login code' | t }}</th>
+          <td mat-cell *matCellDef="let row">
+            <code>{{ row.LoginCode }}</code>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip class="status-pill" [class.inactive]="row.Status !== 'active'">
+              {{ statusLabel(row.Status) | t }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="MustChangePassword">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Temporary' | t }}</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.MustChangePassword ? ('Yes' | t) : ('No' | t) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="LastLoginAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Last login' | t }}</th>
+          <td mat-cell *matCellDef="let row">{{ formatDate(row.LastLoginAt) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="'Reset password' | t"
+                (click)="resetPassword(row)"
+              >
+                <mat-icon>key</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="row.Status === 'blocked' ? ('Activate' | t) : ('Block' | t)"
+                (click)="setStatus(row, row.Status === 'blocked' ? 'active' : 'blocked')"
+              >
+                <mat-icon>{{ row.Status === 'blocked' ? 'lock_open' : 'lock' }}</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                [matTooltip]="'Deactivate' | t"
+                (click)="setStatus(row, 'inactive')"
+              >
+                <mat-icon>person_off</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{ 'No time clock accounts found.' | t }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</section>
+
+<ng-template #accountDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ 'New time clock account' | t }}</h2>
+        <p>{{ 'Create a random Pulse login and one-time temporary password.' | t }}</p>
+      </div>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <mat-tab-group>
+        <mat-tab [label]="'Data' | t">
+          <form class="form-grid" [formGroup]="form">
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>{{ 'Employee' | t }}</mat-label>
+              <mat-select formControlName="employeeUUID">
+                @for (employee of employees(); track employee.EmployeeUUID) {
+                  <mat-option [value]="employee.EmployeeUUID">
+                    {{ employee.Name }}{{ employee.Email ? ' - ' + employee.Email : '' }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'Status' | t }}</mat-label>
+              <mat-select formControlName="status">
+                <mat-option value="active">{{ 'Active' | t }}</mat-option>
+                <mat-option value="inactive">{{ 'Inactive' | t }}</mat-option>
+                <mat-option value="blocked">{{ 'Blocked' | t }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>{{ 'Notes' | t }}</mat-label>
+              <textarea matInput rows="3" formControlName="notes"></textarea>
+            </mat-form-field>
+          </form>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-dialog-content>
+    <mat-dialog-actions class="form-actions" align="end">
+      <button mat-stroked-button type="button" (click)="closeDialogs()">{{ 'Cancel' | t }}</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="saveAccount()"
+        [disabled]="saving()"
+      >
+        <mat-icon>save</mat-icon>
+        {{ 'Save' | t }}
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
+
+<ng-template #credentialDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ 'Temporary credentials' | t }}</h2>
+        <p>
+          {{
+            'Show these credentials to the employee securely. The password is not stored here.' | t
+          }}
+        </p>
+      </div>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'Login code' | t }}</mat-label>
+          <input matInput readonly [value]="lastCredential()?.LoginCode || ''" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'Temporary password' | t }}</mat-label>
+          <input matInput readonly [value]="lastCredential()?.TemporaryPassword || ''" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'Expires at' | t }}</mat-label>
+          <input
+            matInput
+            readonly
+            [value]="formatDate(lastCredential()?.TemporaryPasswordExpiresAt)"
+          />
+        </mat-form-field>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions class="form-actions" align="end">
+      <button mat-flat-button color="primary" type="button" (click)="closeDialogs()">
+        {{ 'Close' | t }}
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

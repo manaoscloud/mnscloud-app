@@ -280,6 +280,14 @@ export const routes: Routes = [
                   ),
                 title: 'ERP • Human Resources • Employees | mnscloud',
               },
+              {
+                path: 'erp/human-resources/time-clock-accounts',
+                loadComponent: () =>
+                  import('./pages/erp/human-resources/time-clock-accounts/time-clock-accounts').then(
+                    (m) => m.ErpHumanResourcesTimeClockAccountsPage,
+                  ),
+                title: 'ERP • Human Resources • Time Clock Accounts | mnscloud',
+              },
 
               // Financeiro
               {

@@ -475,14 +475,14 @@ export class MainLayout {
     const sidenavRect = sidenav?.getBoundingClientRect();
     const preferredTop = targetRect.top;
     const maxTop = Math.max(margin, viewportHeight - estimatedHeight - margin);
-    const preferredLeft = target.classList.contains('root-item') && sidenavRect
-      ? sidenavRect.right + gap
-      : targetRect.right + gap;
+    const preferredLeft =
+      target.classList.contains('root-item') && sidenavRect
+        ? sidenavRect.right + gap
+        : targetRect.right + gap;
     const fallbackLeft = targetRect.left - flyoutWidth - gap;
     const maxLeft = Math.max(margin, viewportWidth - flyoutWidth - margin);
-    const left = preferredLeft <= maxLeft
-      ? preferredLeft
-      : Math.max(margin, Math.min(fallbackLeft, maxLeft));
+    const left =
+      preferredLeft <= maxLeft ? preferredLeft : Math.max(margin, Math.min(fallbackLeft, maxLeft));
 
     return {
       top: Math.round(Math.max(margin, Math.min(preferredTop, maxTop))),
@@ -985,6 +985,12 @@ export class MainLayout {
               label: 'Employees',
               icon: 'badge',
               route: '/erp/human-resources/employees',
+            },
+            {
+              id: 'erp/human-resources/time-clock-accounts',
+              label: 'Time Clock Accounts',
+              icon: 'schedule',
+              route: '/erp/human-resources/time-clock-accounts',
             },
             {
               id: 'erp/human-resources/departments',
