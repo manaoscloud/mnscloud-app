@@ -467,24 +467,30 @@
       </div>
     </div>
     <mat-dialog-content class="dialog-content">
-      <form class="form-grid" [formGroup]="topupForm">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'Amount' | t }}</mat-label>
-          <input matInput type="number" step="0.000001" formControlName="amount" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'Currency' | t }}</mat-label>
-          <input matInput maxlength="3" formControlName="currency" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Reference' | t }}</mat-label>
-          <input matInput formControlName="reference" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Idempotency key' | t }}</mat-label>
-          <input matInput formControlName="idempotencyKey" />
-        </mat-form-field>
-      </form>
+      <mat-tab-group class="form-tabs">
+        <mat-tab [label]="'Data' | t">
+          <div class="tab-content">
+            <form class="form-grid topup-form-grid" [formGroup]="topupForm">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Amount' | t }}</mat-label>
+                <input matInput type="number" step="0.000001" formControlName="amount" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Currency' | t }}</mat-label>
+                <input matInput maxlength="3" formControlName="currency" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Reference' | t }}</mat-label>
+                <input matInput formControlName="reference" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Idempotency key' | t }}</mat-label>
+                <input matInput formControlName="idempotencyKey" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">

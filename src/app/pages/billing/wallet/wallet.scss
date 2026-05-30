@@ -282,6 +282,14 @@ td span {
   gap: 0.75rem;
 }
 
+.topup-form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
 .form-actions {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -344,6 +352,10 @@ td span {
   .filter-grid,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: auto;
   }
 
   .billing-dialog {
