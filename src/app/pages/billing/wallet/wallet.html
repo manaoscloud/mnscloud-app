@@ -6,7 +6,7 @@
         <p>Prepaid balance, service catalog, subscriptions and ledger.</p>
       </div>
       <div class="header-actions">
-        @if (isSection('dashboard')) {
+        @if (!isSection('dashboard')) {
           <button mat-stroked-button color="primary" type="button" (click)="openTopupDialog()">
             <mat-icon>add_card</mat-icon>
             Add balance
