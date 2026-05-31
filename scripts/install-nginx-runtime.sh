@@ -7,6 +7,7 @@ APP_LISTEN_ADDR="${APP_LISTEN_ADDR:-0.0.0.0}"
 APP_LISTEN_PORT="${APP_LISTEN_PORT:-8080}"
 APP_SERVER_NAME="${APP_SERVER_NAME:-_}"
 APP_API_BASE_URL="${APP_API_BASE_URL:-}"
+MNSCLOUD_EDGE_ALLOWED_CIDRS="${MNSCLOUD_EDGE_ALLOWED_CIDRS:-}"
 NGINX_CONF_PATH="${NGINX_CONF_PATH:-/etc/nginx/conf.d/${APP_NAME}.conf}"
 DISABLE_DEFAULT_NGINX_CONF="${DISABLE_DEFAULT_NGINX_CONF:-1}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
@@ -137,6 +138,70 @@ reload_nginx() {
   fi
 }
 
+configure_edge_firewall() {
+  local allowed="${MNSCLOUD_EDGE_ALLOWED_CIDRS:-}"
+  local table="mnscloud_app_edge_guard"
+  local nft_dir="/etc/nftables.d"
+  local nft_file="${nft_dir}/${table}.nft"
+  local cidr
+
+  [[ -n "${allowed}" ]] || {
+    log "edge firewall allowlist not configured; skipping app listener restriction"
+    return 0
+  }
+
+  if ! command -v nft >/dev/null 2>&1; then
+    if [[ "${OS_FAMILY}" == "debian" ]]; then
+      apt-get update -y
+      apt-get install -y --no-install-recommends nftables
+    else
+      dnf install -y nftables
+    fi
+  fi
+
+  systemctl enable --now nftables >/dev/null 2>&1 || true
+  install -d -m 0755 "${nft_dir}"
+
+  {
+    cat <<EOF
+table inet ${table} {
+  chain input {
+    type filter hook input priority filter - 5; policy accept;
+    iifname lo tcp dport ${APP_LISTEN_PORT} accept
+EOF
+
+    allowed="${allowed//,/ }"
+    for cidr in ${allowed}; do
+      [[ -n "${cidr}" ]] || continue
+      if [[ "${cidr}" == *:* ]]; then
+        printf '    ip6 saddr %s tcp dport %s accept\n' "${cidr}" "${APP_LISTEN_PORT}"
+      else
+        printf '    ip saddr %s tcp dport %s accept\n' "${cidr}" "${APP_LISTEN_PORT}"
+      fi
+    done
+
+    cat <<EOF
+    tcp dport ${APP_LISTEN_PORT} drop
+  }
+}
+EOF
+  } > "${nft_file}"
+
+  if [[ ! -f /etc/nftables.conf ]]; then
+    cat > /etc/nftables.conf <<'EOF'
+#!/usr/sbin/nft -f
+flush ruleset
+include "/etc/nftables.d/*.nft"
+EOF
+  elif ! grep -q '/etc/nftables.d/\*.nft' /etc/nftables.conf; then
+    printf '\ninclude "/etc/nftables.d/*.nft"\n' >> /etc/nftables.conf
+  fi
+
+  nft delete table inet "${table}" >/dev/null 2>&1 || true
+  nft -f "${nft_file}"
+  log "restricted app listener port ${APP_LISTEN_PORT} to edge allowlist: ${allowed}"
+}
+
 require_root
 detect_os
 log "detected ${OS_PRETTY_NAME}"
@@ -208,6 +273,7 @@ server {
 EOF
 
 reload_nginx
+configure_edge_firewall
 
 echo "${APP_NAME} installed at ${APP_WEB_ROOT}"
 echo "Nginx site: ${NGINX_CONF_PATH}"
