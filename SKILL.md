@@ -33,10 +33,10 @@ For bare-metal production runtime validation, the installer is:
 sudo ./scripts/install-nginx-runtime.sh
 ```
 
-It supports Debian 12/13 and RHEL/Rocky/AlmaLinux 9/10, configures the official stable nginx.org
-package repository, installs Nginx with the host package manager, installs Node.js 24 from
-NodeSource when needed, builds the app, deploys `dist/app/browser`, writes runtime `env.js`, and
-creates `/etc/nginx/conf.d/mnscloud-app.conf`. The app runtime listens on `0.0.0.0:8080` by
+It supports Debian 12/13 and RHEL/Rocky/AlmaLinux 9/10, uses `mnscloud-runtime-kit` for the base
+Nginx package installation, installs Node.js 24 from NodeSource when needed, builds the app,
+deploys `dist/app/browser`, writes runtime `env.js`, and creates
+`/etc/nginx/conf.d/mnscloud-app.conf`. The app runtime listens on `0.0.0.0:8080` by
 default so a separate `mnscloud-nginx` edge host can reach it; use mnscloud-agent/cyber security
 network policies to restrict access to the edge host, or use `APP_LISTEN_ADDR=127.0.0.1` for
 same-host edge deployments. Do not manage nftables in this installer.

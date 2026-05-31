@@ -218,8 +218,7 @@ Supported operating systems match the `mnscloud-nginx` edge module:
 
 The installer:
 
-- configures the official stable nginx.org package repository;
-- installs Nginx with `apt` or `dnf`;
+- uses `mnscloud-runtime-kit` for the base Nginx package installation;
 - installs Node.js 24 from NodeSource when needed;
 - runs `npm ci` and `npm run build`;
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;

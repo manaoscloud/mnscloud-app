@@ -11,6 +11,9 @@ NGINX_CONF_PATH="${NGINX_CONF_PATH:-/etc/nginx/conf.d/${APP_NAME}.conf}"
 DISABLE_DEFAULT_NGINX_CONF="${DISABLE_DEFAULT_NGINX_CONF:-1}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
 NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION:-24}"
+APP_RUNTIME_KIT_DIR="${APP_RUNTIME_KIT_DIR:-/opt/mnscloud/runtime-kit}"
+APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaoscloud/mnscloud-runtime-kit.git}"
+APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-v0.1.4}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/dist/app/browser"
@@ -35,61 +38,37 @@ detect_os() {
   esac
 }
 
-install_nginx_org_repository() {
+install_packages() {
   if [[ "${OS_FAMILY}" == "debian" ]]; then
     apt-get update -y
-    apt-get install -y --no-install-recommends curl gnupg2 ca-certificates lsb-release debian-archive-keyring
-
-    curl -fsSL https://nginx.org/keys/nginx_signing.key \
-      | gpg --dearmor \
-      | tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
-
-    local codename="${OS_VERSION_CODENAME:-}"
-    if [[ -z "${codename}" ]]; then
-      codename="$(lsb_release -cs)"
-    fi
-
-    cat > /etc/apt/sources.list.d/nginx.list <<EOF
-deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian ${codename} nginx
-EOF
-
-    cat > /etc/apt/preferences.d/99nginx <<'EOF'
-Package: *
-Pin: origin nginx.org
-Pin: release o=nginx
-Pin-Priority: 900
-EOF
+    apt-get install -y --no-install-recommends ca-certificates curl git rsync
   else
-    dnf install -y yum-utils ca-certificates curl
-    cat > /etc/yum.repos.d/nginx.repo <<'EOF'
-[nginx-stable]
-name=nginx stable repo
-baseurl=https://nginx.org/packages/centos/$releasever/$basearch/
-gpgcheck=1
-enabled=1
-gpgkey=https://nginx.org/keys/nginx_signing.key
-module_hotfixes=true
-
-[nginx-mainline]
-name=nginx mainline repo
-baseurl=https://nginx.org/packages/mainline/centos/$releasever/$basearch/
-gpgcheck=1
-enabled=0
-gpgkey=https://nginx.org/keys/nginx_signing.key
-module_hotfixes=true
-EOF
+    dnf install -y ca-certificates curl git rsync
   fi
 }
 
-install_packages() {
-  install_nginx_org_repository
-
-  if [[ "${OS_FAMILY}" == "debian" ]]; then
-    apt-get update -y
-    apt-get install -y --no-install-recommends nginx ca-certificates rsync
+load_runtime_kit() {
+  if [[ -d "${APP_RUNTIME_KIT_DIR}/.git" ]]; then
+    log "updating runtime kit in ${APP_RUNTIME_KIT_DIR}"
+    git -C "$APP_RUNTIME_KIT_DIR" fetch --all --tags --prune
   else
-    dnf install -y nginx ca-certificates rsync
+    log "installing runtime kit in ${APP_RUNTIME_KIT_DIR}"
+    install -d -m 0755 "$(dirname "$APP_RUNTIME_KIT_DIR")"
+    git clone "$APP_RUNTIME_KIT_REPO_URL" "$APP_RUNTIME_KIT_DIR"
   fi
+
+  git -C "$APP_RUNTIME_KIT_DIR" -c advice.detachedHead=false checkout "$APP_RUNTIME_KIT_REF"
+  git -C "$APP_RUNTIME_KIT_DIR" pull --ff-only origin "$APP_RUNTIME_KIT_REF" 2>/dev/null || true
+  [[ -r "${APP_RUNTIME_KIT_DIR}/lib/packages.sh" ]] || die "runtime kit packages library not found"
+
+  export MNSCLOUD_RUNTIME_KIT_LOG_PREFIX="mnscloud-app/runtime-kit"
+  # shellcheck disable=SC1091
+  source "${APP_RUNTIME_KIT_DIR}/lib/packages.sh"
+}
+
+install_nginx_package() {
+  load_runtime_kit
+  mrtk_install_nginx_package
 }
 
 node_major_version() {
@@ -141,6 +120,7 @@ require_root
 detect_os
 log "detected ${OS_PRETTY_NAME}"
 install_packages
+install_nginx_package
 install_nodejs
 
 if [[ "${SKIP_BUILD}" != "1" ]]; then
