@@ -13,7 +13,7 @@ SKIP_BUILD="${SKIP_BUILD:-0}"
 NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION:-24}"
 APP_RUNTIME_KIT_DIR="${APP_RUNTIME_KIT_DIR:-/opt/mnscloud/runtime-kit}"
 APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaoscloud/mnscloud-runtime-kit.git}"
-APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-v0.1.4}"
+APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-v0.1.6}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/dist/app/browser"
