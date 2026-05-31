@@ -33,7 +33,7 @@ The bare-metal Nginx runtime installer installs Node.js 24 automatically when a 
 - Bare-metal runtime config: `/var/www/mnscloud-app/env.js`
 - Bare-metal Nginx config: `/etc/nginx/conf.d/mnscloud-app.conf`
 - Bare-metal service: `nginx.service`
-- Bare-metal listen address: `0.0.0.0:8080`, restricted to the edge allowlist when configured
+- Bare-metal listen address: `0.0.0.0:8080`, protected by agent-managed network policy
 
 ## Repository Access
 
@@ -200,16 +200,14 @@ Useful options:
 ```bash
 sudo APP_LISTEN_ADDR=0.0.0.0 \
   APP_LISTEN_PORT=8080 \
-  MNSCLOUD_EDGE_ALLOWED_CIDRS=10.0.10.5/32 \
   APP_API_BASE_URL="" \
   ./scripts/install-nginx-runtime.sh
 ```
 
 Use `APP_LISTEN_ADDR=127.0.0.1` only when the app runtime and the edge gateway are on the same host.
-When the edge is on another host, keep the listener on the private interface and set
-`MNSCLOUD_EDGE_ALLOWED_CIDRS` to the edge IP/CIDR. The installer will create an `nftables` guard so
-only the edge can connect to the app runtime port. The guard is persisted in
-`/etc/nftables.d/mnscloud_app_edge_guard.nft`.
+When the edge is on another host, keep the listener on the private interface and use
+mnscloud-agent/cyber security network policies so only the edge can connect to the app runtime port.
+Firewall/nftables ownership stays with the agent/security layer, not this app installer.
 
 Supported operating systems match the `mnscloud-nginx` edge module:
 
@@ -227,7 +225,6 @@ The installer:
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;
 - creates `/etc/nginx/conf.d/mnscloud-app.conf`;
-- optionally restricts the app listener to `MNSCLOUD_EDGE_ALLOWED_CIDRS` with `nftables`;
 - removes the official Nginx `default.conf` unless `DISABLE_DEFAULT_NGINX_CONF=0`;
 - validates and reloads Nginx.
 

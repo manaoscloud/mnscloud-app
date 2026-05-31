@@ -37,9 +37,9 @@ It supports Debian 12/13 and RHEL/Rocky/AlmaLinux 9/10, configures the official 
 package repository, installs Nginx with the host package manager, installs Node.js 24 from
 NodeSource when needed, builds the app, deploys `dist/app/browser`, writes runtime `env.js`, and
 creates `/etc/nginx/conf.d/mnscloud-app.conf`. The app runtime listens on `0.0.0.0:8080` by
-default so a separate `mnscloud-nginx` edge host can reach it; set `MNSCLOUD_EDGE_ALLOWED_CIDRS` to
-restrict that listener to the edge host, or use `APP_LISTEN_ADDR=127.0.0.1` for same-host edge
-deployments.
+default so a separate `mnscloud-nginx` edge host can reach it; use mnscloud-agent/cyber security
+network policies to restrict access to the edge host, or use `APP_LISTEN_ADDR=127.0.0.1` for
+same-host edge deployments. Do not manage nftables in this installer.
 
 After a repository commit has been pushed, update an existing app host with:
 
