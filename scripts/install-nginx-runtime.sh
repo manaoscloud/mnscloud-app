@@ -13,7 +13,8 @@ SKIP_BUILD="${SKIP_BUILD:-0}"
 NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION:-24}"
 APP_RUNTIME_KIT_DIR="${APP_RUNTIME_KIT_DIR:-/opt/mnscloud/runtime-kit}"
 APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaoscloud/mnscloud-runtime-kit.git}"
-APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-v0.1.6}"
+APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
+APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/dist/app/browser"
@@ -57,6 +58,11 @@ load_runtime_kit() {
     git clone "$APP_RUNTIME_KIT_REPO_URL" "$APP_RUNTIME_KIT_DIR"
   fi
 
+  if [[ -z "$APP_RUNTIME_KIT_REF" ]]; then
+    APP_RUNTIME_KIT_REF="$(resolve_runtime_kit_ref "$APP_RUNTIME_KIT_DIR" "$APP_RUNTIME_KIT_CHANNEL")"
+    log "resolved runtime kit ${APP_RUNTIME_KIT_CHANNEL} channel to ${APP_RUNTIME_KIT_REF}"
+  fi
+
   git -C "$APP_RUNTIME_KIT_DIR" -c advice.detachedHead=false checkout "$APP_RUNTIME_KIT_REF"
   git -C "$APP_RUNTIME_KIT_DIR" pull --ff-only origin "$APP_RUNTIME_KIT_REF" 2>/dev/null || true
   [[ -r "${APP_RUNTIME_KIT_DIR}/lib/packages.sh" ]] || die "runtime kit packages library not found"
@@ -64,6 +70,28 @@ load_runtime_kit() {
   export MNSCLOUD_RUNTIME_KIT_LOG_PREFIX="mnscloud-app/runtime-kit"
   # shellcheck disable=SC1091
   source "${APP_RUNTIME_KIT_DIR}/lib/packages.sh"
+}
+
+resolve_runtime_kit_ref() {
+  local kit_dir="$1"
+  local channel="$2"
+  local manifest ref
+
+  manifest="$(git -C "$kit_dir" show "origin/main:releases/manifest.json" 2>/dev/null)" ||
+    die "cannot read runtime kit release manifest from origin/main"
+  ref="$(printf '%s\n' "$manifest" | awk -v channel="$channel" '
+    $0 ~ "\"" channel "\"" { in_channel = 1; next }
+    in_channel && /"ref"[[:space:]]*:/ {
+      gsub(/.*"ref"[[:space:]]*:[[:space:]]*"/, "")
+      gsub(/".*/, "")
+      print
+      exit
+    }
+    in_channel && /^[[:space:]]*}/ { in_channel = 0 }
+  ')"
+  [[ "$ref" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] ||
+    die "invalid runtime kit ref for channel ${channel}: ${ref:-empty}"
+  printf '%s\n' "$ref"
 }
 
 install_nginx_package() {
