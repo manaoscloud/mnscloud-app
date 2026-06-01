@@ -6,6 +6,10 @@ APP_WEB_ROOT="${APP_WEB_ROOT:-/var/www/mnscloud-app}"
 APP_LISTEN_ADDR="${APP_LISTEN_ADDR:-0.0.0.0}"
 APP_LISTEN_PORT="${APP_LISTEN_PORT:-8080}"
 APP_SERVER_NAME="${APP_SERVER_NAME:-_}"
+APP_API_BASE_URL_PROVIDED=0
+if [[ "${APP_API_BASE_URL+x}" == "x" ]]; then
+  APP_API_BASE_URL_PROVIDED=1
+fi
 APP_API_BASE_URL="${APP_API_BASE_URL:-}"
 NGINX_CONF_PATH="${NGINX_CONF_PATH:-/etc/nginx/conf.d/${APP_NAME}.conf}"
 DISABLE_DEFAULT_NGINX_CONF="${DISABLE_DEFAULT_NGINX_CONF:-1}"
@@ -110,6 +114,33 @@ install_nodejs() {
   mrtk_ensure_nodejs
 }
 
+read_public_env_api_base_url() {
+  local env_file="${REPO_ROOT}/public/env.js"
+  [[ -f "$env_file" ]] || return 0
+
+  node - "$env_file" <<'NODE' 2>/dev/null || true
+const fs = require("node:fs");
+const vm = require("node:vm");
+
+const envFile = process.argv[2];
+const source = fs.readFileSync(envFile, "utf8");
+const sandbox = { window: {} };
+sandbox.window.window = sandbox.window;
+new vm.Script(source, { filename: envFile }).runInNewContext(sandbox, { timeout: 1000 });
+const value = sandbox.window.MNSCLOUD_APP_CONFIG?.apiBaseUrl;
+if (typeof value === "string") process.stdout.write(value.trim());
+NODE
+}
+
+resolve_app_api_base_url() {
+  if [[ "$APP_API_BASE_URL_PROVIDED" == "1" ]]; then
+    printf '%s\n' "$APP_API_BASE_URL"
+    return 0
+  fi
+
+  read_public_env_api_base_url
+}
+
 reload_nginx() {
   nginx -t
 
@@ -127,6 +158,13 @@ log "detected ${OS_PRETTY_NAME}"
 install_packages
 install_nginx_package
 install_nodejs
+
+APP_API_BASE_URL="$(resolve_app_api_base_url)"
+if [[ -n "$APP_API_BASE_URL" ]]; then
+  log "using API base URL from runtime configuration"
+else
+  log "using same-origin API base URL /api/v1"
+fi
 
 if [[ "${SKIP_BUILD}" != "1" ]]; then
   log "installing dependencies"

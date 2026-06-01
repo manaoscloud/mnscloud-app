@@ -73,6 +73,8 @@ Do not commit tenant, partner, staging, or production API URLs into `public/env.
 these environment-specific mechanisms instead:
 
 - Local development: copy `public/env.example.js` to `public/env.js` and edit only the local file.
+- Bare-metal installer: either edit local `public/env.js` before running
+  `scripts/install-nginx-runtime.sh`, or pass `APP_API_BASE_URL` explicitly.
 - GitHub static build: pass `api_base_url` when manually running the `CI` workflow, or configure the
   `MNSCLOUD_API_BASE_URL` GitHub Actions variable.
 - Docker production runtime: keep `apiBaseUrl` empty for same-origin `/api/v1`, or mount an
@@ -226,9 +228,13 @@ The installer:
 - removes the official Nginx `default.conf` unless `DISABLE_DEFAULT_NGINX_CONF=0`;
 - validates and reloads Nginx.
 
-When `APP_API_BASE_URL` is empty, the app uses same-origin `/api/v1`. That is the preferred setup
-when the edge gateway exposes both the app and `/api` on the public domain. If the app must call a
-separate API origin, pass the full API v1 URL:
+When `APP_API_BASE_URL` is not provided, the installer reads `public/env.js` and publishes that
+value to `/var/www/mnscloud-app/env.js`. If `APP_API_BASE_URL` is provided, it takes precedence,
+including an explicit empty value.
+
+When the final `apiBaseUrl` is empty, the app uses same-origin `/api/v1`. That is the preferred
+setup when the edge gateway exposes both the app and `/api` on the public domain. If the app must
+call a separate API origin, pass the full API v1 URL:
 
 ```bash
 sudo APP_API_BASE_URL=https://api.example.com/api/v1 ./scripts/install-nginx-runtime.sh
