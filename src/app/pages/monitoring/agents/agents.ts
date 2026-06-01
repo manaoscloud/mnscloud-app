@@ -107,6 +107,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   readonly agents = signal<MonitoringAgent[]>([]);
   readonly editing = signal<MonitoringAgent | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
+  readonly updatingIds = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
@@ -320,6 +321,31 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     }
   }
 
+  async queueAgentUpdate(row: MonitoringAgent) {
+    if (!this.canUpdate(row)) return;
+    const target = row.latestVersion ? `v${row.latestVersion}` : 'the latest release';
+    const ok = await this.confirm(
+      'Update agent',
+      `Queue remote update for ${row.name || row.uuid} to ${target}? The Agent will update by explicit release tag and confirm the new version on the next heartbeat.`,
+      'Queue update',
+    );
+    if (!ok) return;
+    const next = new Set(this.updatingIds());
+    next.add(row.uuid);
+    this.updatingIds.set(next);
+    try {
+      await this.api.post(`monitoring/agents/${row.uuid}/update`, {});
+      this.snack.success('Agent update queued.');
+      await this.load();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to queue agent update.'));
+    } finally {
+      const current = new Set(this.updatingIds());
+      current.delete(row.uuid);
+      this.updatingIds.set(current);
+    }
+  }
+
   async deleteAgent(row: MonitoringAgent) {
     const ok = await this.confirm(
       'Confirm delete',
@@ -447,6 +473,14 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     if (status === 'outdated') return 'chip-warning';
     if (status === 'unsupported') return 'chip-danger';
     return 'chip-skipped is-inactive';
+  }
+
+  canUpdate(row: MonitoringAgent) {
+    return row.connectionStatus === 'online' && row.updateStatus === 'outdated';
+  }
+
+  isUpdating(row: MonitoringAgent) {
+    return this.updatingIds().has(row.uuid);
   }
 
   shortBuildRef(value: string | null | undefined) {

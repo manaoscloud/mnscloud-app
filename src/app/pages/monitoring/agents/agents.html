@@ -181,6 +181,18 @@
               >
                 <mat-icon>terminal</mat-icon>
               </button>
+              @if (canUpdate(row)) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="queueAgentUpdate(row)"
+                  [disabled]="isUpdating(row)"
+                  aria-label="Queue agent update"
+                  matTooltip="Queue agent update"
+                >
+                  <mat-icon>{{ isUpdating(row) ? 'hourglass_empty' : 'system_update_alt' }}</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 color="warn"
