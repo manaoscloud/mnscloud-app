@@ -49,6 +49,10 @@ install_packages() {
 }
 
 load_runtime_kit() {
+  if [[ "${APP_RUNTIME_KIT_LOADED:-0}" == "1" ]]; then
+    return 0
+  fi
+
   if [[ -d "${APP_RUNTIME_KIT_DIR}/.git" ]]; then
     log "updating runtime kit in ${APP_RUNTIME_KIT_DIR}"
     git -C "$APP_RUNTIME_KIT_DIR" fetch --all --tags --prune
@@ -70,6 +74,7 @@ load_runtime_kit() {
   export MNSCLOUD_RUNTIME_KIT_LOG_PREFIX="mnscloud-app/runtime-kit"
   # shellcheck disable=SC1091
   source "${APP_RUNTIME_KIT_DIR}/lib/packages.sh"
+  APP_RUNTIME_KIT_LOADED=1
 }
 
 resolve_runtime_kit_ref() {
@@ -99,38 +104,10 @@ install_nginx_package() {
   mrtk_install_nginx_package
 }
 
-node_major_version() {
-  if ! command -v node >/dev/null 2>&1; then
-    printf '0'
-    return 0
-  fi
-
-  node -p 'Number(process.versions.node.split(".")[0])' 2>/dev/null || printf '0'
-}
-
-nodejs_is_usable() {
-  local major
-  major="$(node_major_version)"
-  [[ "${major}" -ge "${NODE_MAJOR_VERSION}" ]] && command -v npm >/dev/null 2>&1
-}
-
 install_nodejs() {
-  if nodejs_is_usable; then
-    log "Node.js $(node -v) and npm $(npm -v) already available"
-    return 0
-  fi
-
-  log "installing Node.js ${NODE_MAJOR_VERSION}.x runtime"
-  if [[ "${OS_FAMILY}" == "debian" ]]; then
-    curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR_VERSION}.x" | bash -
-    apt-get install -y --no-install-recommends nodejs
-  else
-    curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR_VERSION}.x" | bash -
-    dnf install -y nodejs
-  fi
-
-  nodejs_is_usable || die "Node.js ${NODE_MAJOR_VERSION}.x with npm is required before building ${APP_NAME}"
-  log "using Node.js $(node -v) and npm $(npm -v)"
+  load_runtime_kit
+  export MNSCLOUD_NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION}"
+  mrtk_ensure_nodejs
 }
 
 reload_nginx() {

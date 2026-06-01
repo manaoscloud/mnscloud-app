@@ -10,8 +10,8 @@ the business core stays in the API/control plane.
 - npm
 - Access to an MNSCloud API endpoint
 
-The bare-metal Nginx runtime installer installs Node.js 24 automatically when a suitable `node` and
-`npm` are not already available.
+The bare-metal Nginx runtime installer uses `mnscloud-runtime-kit` to install Node.js 24
+automatically when a suitable `node` and `npm` are not already available.
 
 ## Contract
 
@@ -218,8 +218,7 @@ Supported operating systems match the `mnscloud-nginx` edge module:
 
 The installer:
 
-- uses `mnscloud-runtime-kit` for the base Nginx package installation;
-- installs Node.js 24 from NodeSource when needed;
+- uses `mnscloud-runtime-kit` for the base Nginx package and Node.js installation;
 - runs `npm ci` and `npm run build`;
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;
