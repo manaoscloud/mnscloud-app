@@ -54,6 +54,7 @@ type MonitoringAgent = {
   latestVersion?: string | null;
   latestBuildRef?: string | null;
   updateStatus?: 'current' | 'outdated' | 'unsupported' | 'unknown' | string | null;
+  remoteUpdateSupported?: boolean | null;
   status?: number | null;
   connectionStatus: 'online' | 'offline';
   lastHeartbeatAt?: string | null;
@@ -462,6 +463,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   updateLabel(row: MonitoringAgent) {
     const status = row.updateStatus || 'unknown';
     if (status === 'current') return 'Atualizado';
+    if (status === 'outdated' && row.remoteUpdateSupported === false) {
+      return 'Atualização manual necessária';
+    }
     if (status === 'outdated') return 'Atualização disponível';
     if (status === 'unsupported') return 'Sem suporte';
     return 'Versão desconhecida';
@@ -476,7 +480,11 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   canUpdate(row: MonitoringAgent) {
-    return row.connectionStatus === 'online' && row.updateStatus === 'outdated';
+    return (
+      row.connectionStatus === 'online' &&
+      row.updateStatus === 'outdated' &&
+      row.remoteUpdateSupported === true
+    );
   }
 
   isUpdating(row: MonitoringAgent) {
