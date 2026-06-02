@@ -499,12 +499,10 @@ mat-card.erp-card,
 
 .table-loading {
   position: absolute;
-  inset: 0 0 auto;
+  inset: 0;
   z-index: 3;
   display: grid;
   place-items: center;
-  height: clamp(240px, 48vh, 420px);
-  max-height: 100%;
   background: color-mix(in srgb, var(--mat-sys-color-surface-container) 70%, transparent);
   border-radius: inherit;
   opacity: 0;

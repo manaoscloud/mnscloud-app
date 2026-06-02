@@ -81,6 +81,13 @@
   color: #ff6b7a;
 }
 
+.table-wrapper .table-loading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: center;
+  padding-top: clamp(10rem, 30vh, 18rem);
+}
+
 .agent-token-dialog {
   max-width: 100%;
 }
