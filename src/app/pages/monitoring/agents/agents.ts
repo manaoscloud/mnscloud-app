@@ -513,6 +513,12 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return target && this.canUpdateTarget(row, target) ? target : null;
   }
 
+  platformUpdateTargets(row: MonitoringAgent) {
+    return this.runtimeUpdateTargets(row).filter((target) =>
+      target.product !== 'mnscloud-agent' && this.canUpdateTarget(row, target)
+    );
+  }
+
   canUpdateTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
     const hasRole =
       target.product === 'mnscloud-agent' ? this.canUpdateTenantAgent() : this.isMaster();

@@ -188,6 +188,18 @@
               <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
                 <mat-icon>edit</mat-icon>
               </button>
+              @if (platformUpdateTargets(row).length) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matMenuTriggerFor]="runtimeUpdateMenu"
+                  [matMenuTriggerData]="{ row: row }"
+                  aria-label="Runtime updates"
+                  matTooltip="Runtime updates"
+                >
+                  <mat-icon>system_update_alt</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 type="button"
@@ -209,6 +221,24 @@
             </div>
           </td>
         </ng-container>
+
+        <mat-menu #runtimeUpdateMenu="matMenu">
+          <ng-template matMenuContent let-row="row">
+            @for (target of platformUpdateTargets(row); track target.product) {
+              <button
+                mat-menu-item
+                type="button"
+                (click)="queueRuntimeUpdate(row, target)"
+                [disabled]="isUpdatingTarget(row, target)"
+              >
+                <mat-icon>{{
+                  isUpdatingTarget(row, target) ? 'hourglass_empty' : 'system_update_alt'
+                }}</mat-icon>
+                <span>Update {{ target.label }} to {{ target.targetRef || target.latestVersion }}</span>
+              </button>
+            }
+          </ng-template>
+        </mat-menu>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
