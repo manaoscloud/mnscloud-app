@@ -29,6 +29,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
+import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -55,10 +56,23 @@ type MonitoringAgent = {
   latestBuildRef?: string | null;
   updateStatus?: 'current' | 'outdated' | 'unsupported' | 'unknown' | string | null;
   remoteUpdateSupported?: boolean | null;
+  runtimeUpdates?: RuntimeUpdateTarget[] | null;
   status?: number | null;
   connectionStatus: 'online' | 'offline';
   lastHeartbeatAt?: string | null;
   uptimeSeconds?: number | null;
+};
+
+type RuntimeUpdateTarget = {
+  product: 'mnscloud-agent' | 'mnscloud-api' | 'mnscloud-app' | string;
+  label: string;
+  capability: string;
+  hasCapability: boolean;
+  latestVersion?: string | null;
+  latestBuildRef?: string | null;
+  targetRef?: string | null;
+  updateStatus?: string | null;
+  available?: boolean | null;
 };
 
 @Component({
@@ -91,6 +105,7 @@ type MonitoringAgent = {
 })
 export class MonitoringAgentsPage implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -110,6 +125,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly updatingIds = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly isMaster = computed(() => this.auth.user()?.role === 'MASTER');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
@@ -134,6 +150,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   readonly typeOptions = [
     '',
     'linux.status',
+    'mnscloud.agent.update',
+    'mnscloud.api.update',
+    'mnscloud.app.update',
     'security.nftables.manage',
     'security.crowdsec.manage',
     'security.logs.read',
@@ -322,27 +341,30 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     }
   }
 
-  async queueAgentUpdate(row: MonitoringAgent) {
-    if (!this.canUpdate(row)) return;
-    const target = row.latestVersion ? `v${row.latestVersion}` : 'the latest release';
+  async queueRuntimeUpdate(row: MonitoringAgent, target: RuntimeUpdateTarget) {
+    if (!this.canUpdateTarget(row, target)) return;
+    const targetRef =
+      target.targetRef || (target.latestVersion ? `v${target.latestVersion}` : null);
     const ok = await this.confirm(
-      'Update agent',
-      `Queue remote update for ${row.name || row.uuid} to ${target}? The Agent will update by explicit release tag and confirm the new version on the next heartbeat.`,
+      `Update ${target.label}`,
+      `Queue remote update for ${row.name || row.uuid} to ${
+        targetRef || 'the latest release'
+      }? The selected runtime will update by explicit release tag.`,
       'Queue update',
     );
     if (!ok) return;
     const next = new Set(this.updatingIds());
-    next.add(row.uuid);
+    next.add(this.updateKey(row, target));
     this.updatingIds.set(next);
     try {
-      await this.api.post(`monitoring/agents/${row.uuid}/update`, {});
-      this.snack.success('Agent update queued.');
+      await this.api.post(`monitoring/agents/${row.uuid}/update`, { product: target.product });
+      this.snack.success(`${target.label} update queued.`);
       await this.load();
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to queue agent update.'));
+      this.snack.error(this.errorMessage(error, `Failed to queue ${target.label} update.`));
     } finally {
       const current = new Set(this.updatingIds());
-      current.delete(row.uuid);
+      current.delete(this.updateKey(row, target));
       this.updatingIds.set(current);
     }
   }
@@ -479,16 +501,26 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return 'chip-skipped is-inactive';
   }
 
-  canUpdate(row: MonitoringAgent) {
+  runtimeUpdateTargets(row: MonitoringAgent) {
+    return (row.runtimeUpdates ?? []).filter((target) => target.available);
+  }
+
+  canUpdateTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
     return (
+      this.isMaster() &&
       row.connectionStatus === 'online' &&
-      row.updateStatus === 'outdated' &&
-      row.remoteUpdateSupported === true
+      row.remoteUpdateSupported === true &&
+      target.available === true &&
+      target.hasCapability === true
     );
   }
 
-  isUpdating(row: MonitoringAgent) {
-    return this.updatingIds().has(row.uuid);
+  isUpdatingTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
+    return this.updatingIds().has(this.updateKey(row, target));
+  }
+
+  private updateKey(row: MonitoringAgent, target: RuntimeUpdateTarget) {
+    return `${row.uuid}:${target.product}`;
   }
 
   shortBuildRef(value: string | null | undefined) {

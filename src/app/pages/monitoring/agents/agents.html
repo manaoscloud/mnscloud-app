@@ -181,17 +181,31 @@
               >
                 <mat-icon>terminal</mat-icon>
               </button>
-              @if (canUpdate(row)) {
+              @if (isMaster() && runtimeUpdateTargets(row).length > 0) {
                 <button
                   mat-icon-button
                   type="button"
-                  (click)="queueAgentUpdate(row)"
-                  [disabled]="isUpdating(row)"
-                  aria-label="Queue agent update"
-                  matTooltip="Queue agent update"
+                  [matMenuTriggerFor]="runtimeUpdateMenu"
+                  aria-label="Queue runtime update"
+                  matTooltip="Queue runtime update"
                 >
-                  <mat-icon>{{ isUpdating(row) ? 'hourglass_empty' : 'system_update_alt' }}</mat-icon>
+                  <mat-icon>system_update_alt</mat-icon>
                 </button>
+                <mat-menu #runtimeUpdateMenu="matMenu">
+                  @for (target of runtimeUpdateTargets(row); track target.product) {
+                    <button
+                      mat-menu-item
+                      type="button"
+                      (click)="queueRuntimeUpdate(row, target)"
+                      [disabled]="isUpdatingTarget(row, target)"
+                    >
+                      <mat-icon>{{
+                        isUpdatingTarget(row, target) ? 'hourglass_empty' : 'system_update_alt'
+                      }}</mat-icon>
+                      <span>{{ target.label }} {{ target.targetRef || '' }}</span>
+                    </button>
+                  }
+                </mat-menu>
               }
               <button
                 mat-icon-button
