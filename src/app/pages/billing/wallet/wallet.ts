@@ -99,6 +99,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     'quantity',
     'status',
     'price',
+    'reserved',
     'actions',
   ];
   readonly ledgerColumns = ['date', 'type', 'direction', 'amount', 'balance', 'reason'];
@@ -413,7 +414,18 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   }
 
   private sortValue(row: any, column: string) {
-    return String(row?.[column] ?? row?.BprName ?? row?.BleDateCreated ?? '').toLowerCase();
+    const mapped: Record<string, unknown> = {
+      product: row?.BprName ?? row?.BprCode,
+      resource: row?.BsuResourceLabel ?? row?.BsuResourceType,
+      quantity: row?.BsuQuantity,
+      price: row?.BsuUnitPriceSnapshot,
+      reserved: row?.BsuReservedAmountSnapshot,
+      date: row?.BleDateCreated,
+      amount: row?.BleAmount,
+      balance: row?.BleBalanceAfter,
+    };
+    return String(mapped[column] ?? row?.[column] ?? row?.BprName ?? row?.BleDateCreated ?? '')
+      .toLowerCase();
   }
 
   private emptyToNull(value: unknown) {

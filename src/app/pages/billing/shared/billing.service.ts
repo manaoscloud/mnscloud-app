@@ -85,6 +85,7 @@ export interface BillingSubscription {
   BsuBillingModeSnapshot: string;
   BsuUnitPriceSnapshot: number;
   BsuSetupAmountSnapshot: number;
+  BsuReservedAmountSnapshot: number;
   BsuResourceType?: string | null;
   BsuResourceUUID?: string | null;
   BsuResourceLabel?: string | null;

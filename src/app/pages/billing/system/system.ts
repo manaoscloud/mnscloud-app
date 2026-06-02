@@ -127,6 +127,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     'quantity',
     'status',
     'price',
+    'reserved',
     'actions',
   ];
 
@@ -891,6 +892,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       resource: row?.BsuResourceLabel ?? row?.BsuResourceType,
       quantity: row?.BsuQuantity,
       price: row?.BsuUnitPriceSnapshot,
+      reserved: row?.BsuReservedAmountSnapshot,
       mode: row?.BpcBillingMode,
       unitPrice: row?.BpcUnitPrice,
       setup: row?.BpcSetupAmount,
