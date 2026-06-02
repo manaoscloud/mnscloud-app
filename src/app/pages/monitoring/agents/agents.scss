@@ -29,6 +29,7 @@
 .version-chip {
   font-size: 0.68rem;
   min-height: 1.4rem;
+  max-width: 8.25rem;
   padding: 0 0.55rem;
 }
 
@@ -39,6 +40,13 @@
   display: inline-flex;
   font: inherit;
   gap: 0.25rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.version-chip-action span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .version-chip-action mat-icon {

@@ -489,11 +489,11 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     const status = row.updateStatus || 'unknown';
     if (status === 'current') return 'Atualizado';
     if (status === 'outdated' && row.remoteUpdateSupported === false) {
-      return 'Atualização manual necessária';
+      return 'Manual';
     }
-    if (status === 'outdated') return 'Atualização disponível';
+    if (status === 'outdated') return 'Atualizar';
     if (status === 'unsupported') return 'Sem suporte';
-    return 'Versão desconhecida';
+    return 'Desconhecida';
   }
 
   updateChipClass(row: MonitoringAgent) {
