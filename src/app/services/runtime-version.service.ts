@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { APP_BUILD_INFO } from '../app-build-info';
+import { resolveApiUrl } from '../shared/runtime/app-runtime-config';
 
 type RuntimeReleaseInfo = {
   product?: string | null;
@@ -11,9 +12,9 @@ type RuntimeReleaseInfo = {
   releasedAt?: string | null;
 };
 
-type GitHubReleaseResponse = {
-  tag_name?: string | null;
-  published_at?: string | null;
+type RuntimeReleaseApiResponse = {
+  status?: string;
+  data?: RuntimeReleaseInfo | null;
 };
 
 export type AppRuntimeVersionInfo = {
@@ -45,23 +46,14 @@ export class RuntimeVersionService {
 
   async refresh() {
     try {
-      const release = await firstValueFrom(
-        this.http.get<GitHubReleaseResponse>(
-          'https://api.github.com/repos/manaoscloud/mnscloud-app/releases/latest',
+      const response = await firstValueFrom(
+        this.http.get<RuntimeReleaseApiResponse>(
+          resolveApiUrl('runtime/releases/latest?product=mnscloud-app'),
         ),
       );
-      const version = release.tag_name?.trim().replace(/^v/i, '') || null;
-      this.latestAppRelease.set(
-        version
-          ? {
-              product: 'mnscloud-app',
-              version,
-              ref: release.tag_name?.trim() || `v${version}`,
-              buildRef: null,
-              releasedAt: release.published_at ?? null,
-            }
-          : null,
-      );
+      const release = response.data ?? null;
+      const version = release?.version?.trim() || null;
+      this.latestAppRelease.set(version ? release : null);
     } catch {
       this.latestAppRelease.set(null);
     }
