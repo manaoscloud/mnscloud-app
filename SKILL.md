@@ -45,15 +45,21 @@ After a repository commit has been pushed, update an existing app host with:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-nginx-runtime.sh
+sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0
 sudo ./scripts/validate-nginx-runtime.sh
 curl -I http://127.0.0.1:8080
 ```
 
-The update script pulls the latest code, rebuilds the Angular bundle, deploys it to
-`/var/www/mnscloud-app`, writes runtime `env.js`, validates Nginx, and reloads the service. Use
-`sudo ./scripts/update-nginx-runtime.sh --ref <tag-or-commit>` for controlled production releases
-and `sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-tag-or-commit>` for rollback.
+The update script requires an explicit semver release tag, checks out that release, rebuilds the
+Angular bundle, deploys it to `/var/www/mnscloud-app`, writes runtime `env.js` and `build.json`,
+validates Nginx, reloads the service, and restores the previous commit if validation fails. Use
+`sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-release-tag>` for rollback.
+
+Maintainers create release metadata with:
+
+```bash
+./scripts/release-app.sh --version 0.1.1 --channel stable
+```
 
 ## Contribution Governance
 

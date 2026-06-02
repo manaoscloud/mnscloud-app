@@ -29,6 +29,8 @@ automatically when a suitable `node` and `npm` are not already available.
 - Bare-metal update command: `scripts/update-nginx-runtime.sh`
 - Bare-metal rollback command: `scripts/rollback-nginx-runtime.sh`
 - Bare-metal validation command: `scripts/validate-nginx-runtime.sh`
+- Release manifest: `releases/manifest.json`
+- Installed build metadata: `/var/www/mnscloud-app/build.json`
 - Bare-metal web root: `/var/www/mnscloud-app`
 - Bare-metal runtime config: `/var/www/mnscloud-app/env.js`
 - Bare-metal Nginx config: `/etc/nginx/conf.d/mnscloud-app.conf`
@@ -244,21 +246,22 @@ Update and validate the runtime later:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-nginx-runtime.sh
+sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0
 sudo ./scripts/validate-nginx-runtime.sh
 ```
 
-Use this same update flow for development, staging, and production app hosts after a change has been
-committed and pushed to this repository. The command pulls the latest code, installs dependencies,
-builds the Angular browser bundle, publishes it to `/var/www/mnscloud-app`, refreshes
-`/var/www/mnscloud-app/env.js`, validates Nginx, and reloads the app runtime.
+Use this same update flow for development, staging, and production app hosts after a release tag has
+been created and pushed. The command checks out the requested release, installs dependencies, builds
+the Angular browser bundle, publishes it to `/var/www/mnscloud-app`, refreshes
+`/var/www/mnscloud-app/env.js`, writes `/var/www/mnscloud-app/build.json`, validates Nginx, and
+reloads the app runtime. If install or validation fails, the script restores the previous commit.
 
 Recommended operator flow after a repository commit:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
 git status --short
-sudo ./scripts/update-nginx-runtime.sh
+sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0
 sudo ./scripts/validate-nginx-runtime.sh
 curl -I http://127.0.0.1:8080
 ```
@@ -267,19 +270,23 @@ The `curl -I` response should show a fresh `Last-Modified` timestamp for the new
 browser bundle. If the app host is behind the `mnscloud-nginx` edge, validate the public route from a
 browser or with `curl` against the edge domain after the local validation passes.
 
-Deploy a specific tag or commit:
+Create release metadata from a clean maintainer workstation:
 
 ```bash
-sudo ./scripts/update-nginx-runtime.sh --ref v1.4.0
+./scripts/release-app.sh --version 0.1.1 --channel stable
+git push origin main --tags
 ```
 
-Use `--ref` for controlled releases when production should deploy a known tag or commit instead of
-whatever is currently on `main`.
+Deploy a specific release:
+
+```bash
+sudo ./scripts/update-nginx-runtime.sh --ref v0.1.1
+```
 
 Rollback to a known-good tag or commit:
 
 ```bash
-sudo ./scripts/rollback-nginx-runtime.sh --ref v1.3.2
+sudo ./scripts/rollback-nginx-runtime.sh --ref v0.1.0
 ```
 
 Example edge proxy to the app runtime:

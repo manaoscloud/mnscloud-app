@@ -19,6 +19,7 @@ APP_RUNTIME_KIT_DIR="${APP_RUNTIME_KIT_DIR:-/opt/mnscloud/runtime-kit}"
 APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaoscloud/mnscloud-runtime-kit.git}"
 APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
 APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
+APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/dist/app/browser"
@@ -26,6 +27,30 @@ BUILD_DIR="${REPO_ROOT}/dist/app/browser"
 log() { printf '[mnscloud-app] %s\n' "$*"; }
 die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
 require_root() { [[ "${EUID}" -eq 0 ]] || die "this command must run as root"; }
+
+write_build_metadata() {
+  local version build_ref build_date git_ref metadata
+
+  version="0.0.0"
+  [[ -r "${REPO_ROOT}/VERSION" ]] && version="$(tr -d '[:space:]' < "${REPO_ROOT}/VERSION")"
+  build_ref="$(git -C "$REPO_ROOT" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown')"
+  build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  git_ref="$(git -C "$REPO_ROOT" describe --tags --exact-match 2>/dev/null || printf '%s' "$build_ref")"
+  metadata="$(cat <<EOF
+{
+  "product": "mnscloud-app",
+  "version": "${version}",
+  "buildRef": "${build_ref}",
+  "buildDate": "${build_date}",
+  "updateChannel": "${APP_UPDATE_CHANNEL}",
+  "gitRef": "${git_ref}"
+}
+EOF
+)"
+
+  printf '%s\n' "$metadata" > "${REPO_ROOT}/build.json"
+  printf '%s\n' "$metadata" > "${APP_WEB_ROOT}/build.json"
+}
 
 detect_os() {
   [[ -r /etc/os-release ]] || die "/etc/os-release not found"
@@ -180,6 +205,7 @@ fi
 log "deploying browser files to ${APP_WEB_ROOT}"
 install -d -m 0755 "${APP_WEB_ROOT}"
 rsync -a --delete "${BUILD_DIR}/" "${APP_WEB_ROOT}/"
+write_build_metadata
 
 APP_API_BASE_URL="${APP_API_BASE_URL}" node <<'NODE' > "${APP_WEB_ROOT}/env.js"
 const apiBaseUrl = process.env.APP_API_BASE_URL || "";

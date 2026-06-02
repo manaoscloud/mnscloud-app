@@ -1,0 +1,20 @@
+{
+  "product": "mnscloud-app",
+  "channels": {
+    "stable": {
+      "version": "0.1.0",
+      "ref": "v0.1.0",
+      "releasedAt": "2026-06-02T00:00:00Z",
+      "minimumVersion": "0.1.0",
+      "autoUpdate": false
+    },
+    "candidate": {
+      "version": "0.1.0",
+      "ref": "v0.1.0",
+      "releasedAt": "2026-06-02T00:00:00Z",
+      "minimumVersion": "0.1.0",
+      "autoUpdate": false
+    }
+  },
+  "repository": "manaoscloud/mnscloud-app"
+}
