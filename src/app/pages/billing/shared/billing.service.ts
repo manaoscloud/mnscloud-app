@@ -71,7 +71,12 @@ export interface BillingPaymentIntent {
   BpiCurrency: string;
   BpiStatus: string;
   BpiProvider?: string | null;
+  ErpFinPayGatewayAccountEfgUUID?: string | null;
+  BpiGatewaySource?: string | null;
+  BpiProviderReference?: string | null;
   BpiCheckoutUrl?: string | null;
+  BpiGatewayPayload?: string | null;
+  BpiGatewayResponse?: string | null;
   BpiReference?: string | null;
   BpiExpiresAt?: string | null;
   BpiDateCreated?: string | null;
