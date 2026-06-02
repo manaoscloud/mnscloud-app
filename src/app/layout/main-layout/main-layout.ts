@@ -160,11 +160,6 @@ export class MainLayout {
   readonly currentLanguageOption = this.i18n.selectedLanguageOption;
   readonly languageOptions = this.i18n.languageOptions;
   readonly appVersion = this.runtimeVersion.appVersion;
-  readonly appVersionTooltip = computed(() => {
-    const version = this.appVersion();
-    const latest = version.latestVersion ? `Latest ${version.latestVersion}` : 'Latest unknown';
-    return `App ${version.version} · ${latest}`;
-  });
 
   // =======================================================
   // Tenant Signals
