@@ -3,84 +3,34 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-log() { printf '[mnscloud-app] %s\n' "$*"; }
-die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
-
-usage() {
-  cat <<'EOF'
-Usage:
-  ./scripts/release-app.sh --version <x.y.z> [--channel stable|candidate]
-
-Creates release metadata, validates the Angular build, commits VERSION + manifest, and tags v<x.y.z>.
-
-Push with:
-  git push origin main
-  git push origin vX.Y.Z
-  gh release create vX.Y.Z --title "mnscloud-app vX.Y.Z" --generate-notes
-EOF
+find_runtime_kit() {
+  local candidate
+  for candidate in \
+    "${MNSCLOUD_RUNTIME_KIT_DIR:-}" \
+    "${REPO_ROOT}/../mnscloud-runtime-kit" \
+    "/opt/mnscloud/runtime-kit" \
+    "/opt/mnscloud/repos/mnscloud-runtime-kit"; do
+    [[ -n "$candidate" && -r "${candidate}/lib/release.sh" ]] || continue
+    printf '%s\n' "$candidate"
+    return 0
+  done
+  return 1
 }
-
-VERSION=""
-CHANNEL="stable"
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --version) VERSION="${2:-}"; shift 2 ;;
-    --channel) CHANNEL="${2:-}"; shift 2 ;;
-    --help|-h) usage; exit 0 ;;
-    *) die "unknown argument: $1" ;;
-  esac
-done
-
-[[ "$VERSION" =~ ^[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] || { usage; die "invalid version: ${VERSION:-empty}"; }
-[[ "$CHANNEL" =~ ^(stable|candidate)$ ]] || die "invalid channel: $CHANNEL"
 
 cd "$REPO_ROOT"
-[[ -z "$(git status --short)" ]] || die "working tree must be clean before release"
-
-TAG="v${VERSION}"
-git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null && die "tag already exists: ${TAG}"
-
-printf '%s\n' "$VERSION" > VERSION
-node - "$VERSION" <<'NODE'
-const fs = require("node:fs");
-const version = process.argv[2];
-for (const file of ["package.json", "package-lock.json"]) {
-  const data = JSON.parse(fs.readFileSync(file, "utf8"));
-  data.version = version;
-  if (data.packages?.[""]) data.packages[""].version = version;
-  fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`);
+RUNTIME_KIT_DIR="$(find_runtime_kit)" || {
+  printf '[mnscloud-app] ERROR: mnscloud-runtime-kit lib/release.sh not found\n' >&2
+  exit 1
 }
-NODE
 
-mkdir -p releases
-node - releases/manifest.json "$CHANNEL" "$VERSION" <<'NODE'
-const fs = require("node:fs");
-const [manifestPath, channel, version] = process.argv.slice(2);
-const now = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-let manifest = {};
-if (fs.existsSync(manifestPath)) {
-  const raw = fs.readFileSync(manifestPath, "utf8").trim();
-  if (raw) manifest = JSON.parse(raw);
-}
-manifest.product = "mnscloud-app";
-manifest.repository = "manaoscloud/mnscloud-app";
-manifest.channels ??= {};
-manifest.channels[channel] = {
-  version,
-  ref: `v${version}`,
-  releasedAt: now,
-  minimumVersion: manifest.channels[channel]?.minimumVersion ?? "0.1.0",
-  autoUpdate: false,
-};
-fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-NODE
+# shellcheck source=/opt/mnscloud/runtime-kit/lib/release.sh
+source "${RUNTIME_KIT_DIR}/lib/release.sh"
 
-bash -n scripts/*.sh
-npm run build
-
-git add VERSION package.json package-lock.json releases/manifest.json
-git commit -m "Release mnscloud-app ${TAG}"
-git tag -a "$TAG" -m "Release mnscloud-app ${TAG}"
-log "release metadata committed and tag created: ${TAG}"
-log "after pushing main and ${TAG}, publish GitHub Release:"
-log "gh release create ${TAG} --title \"mnscloud-app ${TAG}\" --generate-notes"
+mrtk_release_prepare \
+  --product mnscloud-app \
+  --repository manaoscloud/mnscloud-app \
+  --minimum-version 0.1.0 \
+  --sync-package-json \
+  --validate 'bash -n scripts/*.sh' \
+  --validate 'npm run build' \
+  "$@"
