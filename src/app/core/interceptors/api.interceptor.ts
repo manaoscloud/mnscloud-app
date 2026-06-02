@@ -9,7 +9,21 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
 
+function isExternalRequest(url: string) {
+    if (!/^https?:\/\//i.test(url)) return false;
+    if (typeof window === 'undefined') return true;
+    try {
+        return new URL(url).origin !== window.location.origin;
+    } catch {
+        return false;
+    }
+}
+
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
+    if (isExternalRequest(req.url)) {
+        return next(req);
+    }
+
     const auth = inject(AuthService);
     const router = inject(Router);
     const snack = inject(SnackbarService);
