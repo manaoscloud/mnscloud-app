@@ -36,6 +36,7 @@ import { NetworkService } from '../../services/network.service';
 import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
 import { I18nService, AppLanguage, LanguageOptionCode } from '../../services/i18n.service';
+import { RuntimeVersionService } from '../../services/runtime-version.service';
 import { TranslatePipe } from '../../shared/i18n/translate.pipe';
 import {
   extractEnvironmentAccess,
@@ -125,6 +126,7 @@ export class MainLayout {
   private readonly session = inject(SessionService);
   private readonly api = inject(ApiService);
   private readonly i18n = inject(I18nService);
+  private readonly runtimeVersion = inject(RuntimeVersionService);
   private readonly destroyRef = inject(DestroyRef);
 
   // =======================================================
@@ -157,6 +159,12 @@ export class MainLayout {
   readonly currentLanguage = this.i18n.language;
   readonly currentLanguageOption = this.i18n.selectedLanguageOption;
   readonly languageOptions = this.i18n.languageOptions;
+  readonly appVersion = this.runtimeVersion.appVersion;
+  readonly appVersionTooltip = computed(() => {
+    const version = this.appVersion();
+    const latest = version.latestVersion ? `Latest ${version.latestVersion}` : 'Latest unknown';
+    return `App ${version.version} · ${latest}`;
+  });
 
   // =======================================================
   // Tenant Signals
@@ -239,6 +247,7 @@ export class MainLayout {
 
     // Carrega environments (tenants)
     this.initEnvironments();
+    void this.runtimeVersion.refresh();
   }
 
   // =======================================================

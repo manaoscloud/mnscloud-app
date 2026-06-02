@@ -530,6 +530,69 @@ mat-card.erp-card,
   margin-top: 0.75rem;
 }
 
+.sidenav-version {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.12rem;
+  margin: 0.5rem 0.75rem calc(0.75rem + env(safe-area-inset-bottom));
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 72%, transparent);
+  color: var(--mat-sys-color-on-surface-variant);
+  line-height: 1.1;
+  overflow: hidden;
+}
+
+.sidenav-version.has-update {
+  border-color: color-mix(in srgb, #ffca5d 68%, transparent);
+  color: #ffca5d;
+}
+
+.version-product {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.version-current {
+  color: var(--mat-sys-color-on-surface);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.sidenav-version.has-update .version-current {
+  color: #ffca5d;
+}
+
+.version-latest {
+  max-width: 100%;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.66rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidenav.compact .sidenav-version {
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin: 0.5rem auto calc(0.75rem + env(safe-area-inset-bottom));
+  padding: 0.35rem 0.2rem;
+  width: 48px;
+}
+
+.sidenav.compact .version-product,
+.sidenav.compact .version-latest {
+  display: none;
+}
+
+.sidenav.compact .version-current {
+  font-size: 0.66rem;
+}
+
 .actions-col {
   display: inline-flex;
   align-items: center;

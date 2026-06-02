@@ -31,6 +31,8 @@ mrtk_release_prepare \
   --repository manaoscloud/mnscloud-app \
   --minimum-version 0.1.0 \
   --sync-package-json \
+  --add-path src/app/app-build-info.ts \
   --validate 'bash -n scripts/*.sh' \
+  --validate 'deno run --allow-read --allow-write scripts/write-app-build-info.ts' \
   --validate 'npm run build' \
   "$@"

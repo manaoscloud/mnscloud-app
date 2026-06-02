@@ -250,6 +250,21 @@
         </div>
       }
     </div>
+
+    <div
+      class="sidenav-version"
+      [class.has-update]="appVersion().updateAvailable"
+      [matTooltip]="appVersionTooltip()"
+      matTooltipPosition="right"
+    >
+      <span class="version-product">APP</span>
+      <span class="version-current">v{{ appVersion().version }}</span>
+      @if (!isDesktopCompact()) {
+        <span class="version-latest">
+          Latest {{ appVersion().latestVersion || '-' }}
+        </span>
+      }
+    </div>
   </mat-sidenav>
 
   <!-- CONTENT AREA -->
