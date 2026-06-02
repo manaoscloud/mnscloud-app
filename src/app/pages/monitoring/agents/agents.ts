@@ -360,8 +360,17 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     next.add(this.updateKey(row, target));
     this.updatingIds.set(next);
     try {
-      await this.api.post(`monitoring/agents/${row.uuid}/update`, { product: target.product });
-      this.snack.success(`${target.label} update queued.`);
+      const response = await this.api.post<any>(`monitoring/agents/${row.uuid}/update`, {
+        product: target.product,
+      });
+      const status = response?.data?.status;
+      if (status === 'current') {
+        this.snack.success(`${target.label} is already up to date.`);
+      } else if (status === 'pending') {
+        this.snack.success(`${target.label} update is already pending.`);
+      } else {
+        this.snack.success(`${target.label} update queued.`);
+      }
       await this.load();
     } catch (error) {
       this.snack.error(this.errorMessage(error, `Failed to queue ${target.label} update.`));
