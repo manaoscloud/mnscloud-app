@@ -29,15 +29,17 @@
 .version-chip {
   --mdc-chip-container-height: 20px;
 
+  align-items: center;
   font-size: 0.62rem;
   font-weight: 600;
   height: 20px;
+  justify-content: center;
   letter-spacing: 0;
   line-height: 1;
-  max-width: 6.5rem;
+  max-width: 5.75rem;
   min-height: 20px;
-  min-width: 0;
-  padding: 0 0.38rem;
+  min-width: 4.9rem;
+  padding: 0 0.45rem;
   text-transform: none;
 }
 
@@ -47,7 +49,6 @@
   cursor: pointer;
   display: inline-flex;
   font: inherit;
-  gap: 0.18rem;
   height: 100%;
   line-height: 1;
   overflow: hidden;
@@ -57,13 +58,6 @@
 .version-chip-action span {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.version-chip-action mat-icon {
-  font-size: 0.78rem !important;
-  height: 0.78rem !important;
-  line-height: 0.78rem !important;
-  width: 0.78rem !important;
 }
 
 .version-chip-action:disabled {

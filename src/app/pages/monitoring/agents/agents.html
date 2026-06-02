@@ -155,9 +155,6 @@
                   [disabled]="isUpdatingTarget(row, target)"
                   matTooltip="Atualizar agent"
                 >
-                  <mat-icon>{{
-                    isUpdatingTarget(row, target) ? 'hourglass_empty' : 'system_update_alt'
-                  }}</mat-icon>
                   <span>{{ updateLabel(row) }}</span>
                 </button>
               } @else {
