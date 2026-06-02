@@ -68,6 +68,8 @@ type RuntimeUpdateTarget = {
   label: string;
   capability: string;
   hasCapability: boolean;
+  installedVersion?: string | null;
+  installedBuildRef?: string | null;
   latestVersion?: string | null;
   latestBuildRef?: string | null;
   targetRef?: string | null;
@@ -536,8 +538,38 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
       row.connectionStatus === 'online' &&
       row.remoteUpdateSupported === true &&
       target.available === true &&
-      target.hasCapability === true
+      target.hasCapability === true &&
+      this.isRuntimeTargetNewer(target)
     );
+  }
+
+  private isRuntimeTargetNewer(target: RuntimeUpdateTarget) {
+    const installedVersion = target.installedVersion?.trim();
+    const latestVersion = target.latestVersion?.trim();
+    if (!installedVersion || !latestVersion) return true;
+    const versionDiff = this.compareSemver(latestVersion, installedVersion);
+    if (versionDiff !== 0) return versionDiff > 0;
+    const latestBuildRef = target.latestBuildRef?.trim();
+    const installedBuildRef = target.installedBuildRef?.trim();
+    return Boolean(latestBuildRef && latestBuildRef !== installedBuildRef);
+  }
+
+  private compareSemver(left: string, right: string) {
+    const leftParts = left
+      .replace(/^v/i, '')
+      .split(/[+-]/)[0]
+      .split('.')
+      .map((item) => Number(item));
+    const rightParts = right
+      .replace(/^v/i, '')
+      .split(/[+-]/)[0]
+      .split('.')
+      .map((item) => Number(item));
+    for (let index = 0; index < 3; index += 1) {
+      const diff = (leftParts[index] || 0) - (rightParts[index] || 0);
+      if (diff !== 0) return diff;
+    }
+    return 0;
   }
 
   isUpdatingTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
