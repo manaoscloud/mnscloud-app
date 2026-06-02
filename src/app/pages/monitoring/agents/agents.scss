@@ -32,6 +32,26 @@
   padding: 0 0.55rem;
 }
 
+.version-chip-action {
+  align-items: center;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  gap: 0.25rem;
+}
+
+.version-chip-action mat-icon {
+  font-size: 0.95rem;
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.version-chip-action:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
 .version-chip.chip-warning {
   border-color: rgba(255, 202, 93, 0.64);
   color: #ffca5d;

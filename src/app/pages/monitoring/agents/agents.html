@@ -146,9 +146,25 @@
                 >Latest {{ row.latestVersion || '-' }} ·
                 {{ shortBuildRef(row.latestBuildRef) }}</small
               >
-              <span class="status-pill version-chip" [ngClass]="updateChipClass(row)">
-                {{ updateLabel(row) }}
-              </span>
+              @if (agentUpdateTarget(row); as target) {
+                <button
+                  class="status-pill version-chip version-chip-action"
+                  type="button"
+                  [ngClass]="updateChipClass(row)"
+                  (click)="queueRuntimeUpdate(row, target)"
+                  [disabled]="isUpdatingTarget(row, target)"
+                  matTooltip="Queue agent update"
+                >
+                  <mat-icon>{{
+                    isUpdatingTarget(row, target) ? 'hourglass_empty' : 'system_update_alt'
+                  }}</mat-icon>
+                  {{ updateLabel(row) }}
+                </button>
+              } @else {
+                <span class="status-pill version-chip" [ngClass]="updateChipClass(row)">
+                  {{ updateLabel(row) }}
+                </span>
+              }
             </div>
           </td>
         </ng-container>
@@ -181,32 +197,6 @@
               >
                 <mat-icon>terminal</mat-icon>
               </button>
-              @if (isMaster() && runtimeUpdateTargets(row).length > 0) {
-                <button
-                  mat-icon-button
-                  type="button"
-                  [matMenuTriggerFor]="runtimeUpdateMenu"
-                  aria-label="Queue runtime update"
-                  matTooltip="Queue runtime update"
-                >
-                  <mat-icon>system_update_alt</mat-icon>
-                </button>
-                <mat-menu #runtimeUpdateMenu="matMenu">
-                  @for (target of runtimeUpdateTargets(row); track target.product) {
-                    <button
-                      mat-menu-item
-                      type="button"
-                      (click)="queueRuntimeUpdate(row, target)"
-                      [disabled]="isUpdatingTarget(row, target)"
-                    >
-                      <mat-icon>{{
-                        isUpdatingTarget(row, target) ? 'hourglass_empty' : 'system_update_alt'
-                      }}</mat-icon>
-                      <span>{{ target.label }} {{ target.targetRef || '' }}</span>
-                    </button>
-                  }
-                </mat-menu>
-              }
               <button
                 mat-icon-button
                 color="warn"

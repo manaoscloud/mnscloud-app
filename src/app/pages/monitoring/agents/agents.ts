@@ -505,6 +505,11 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return (row.runtimeUpdates ?? []).filter((target) => target.available);
   }
 
+  agentUpdateTarget(row: MonitoringAgent) {
+    const target = this.runtimeUpdateTargets(row).find((item) => item.product === 'mnscloud-agent');
+    return target && this.canUpdateTarget(row, target) ? target : null;
+  }
+
   canUpdateTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
     return (
       this.isMaster() &&
