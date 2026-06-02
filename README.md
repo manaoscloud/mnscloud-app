@@ -275,6 +275,7 @@ Create release metadata from a clean maintainer workstation:
 ```bash
 ./scripts/release-app.sh --version 0.1.1 --channel stable
 git push origin main --tags
+gh release create v0.1.1 --title "mnscloud-app v0.1.1" --generate-notes
 ```
 
 Deploy a specific release:

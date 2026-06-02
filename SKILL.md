@@ -59,7 +59,11 @@ Maintainers create release metadata with:
 
 ```bash
 ./scripts/release-app.sh --version 0.1.1 --channel stable
+git push origin main --tags
+gh release create v0.1.1 --title "mnscloud-app v0.1.1" --generate-notes
 ```
+
+Do not mark a new App version as available to operators until the matching GitHub Release exists.
 
 ## Contribution Governance
 

@@ -12,6 +12,11 @@ Usage:
   ./scripts/release-app.sh --version <x.y.z> [--channel stable|candidate]
 
 Creates release metadata, validates the Angular build, commits VERSION + manifest, and tags v<x.y.z>.
+
+Push with:
+  git push origin main
+  git push origin vX.Y.Z
+  gh release create vX.Y.Z --title "mnscloud-app vX.Y.Z" --generate-notes
 EOF
 }
 
@@ -77,3 +82,5 @@ git add VERSION package.json package-lock.json releases/manifest.json
 git commit -m "Release mnscloud-app ${TAG}"
 git tag -a "$TAG" -m "Release mnscloud-app ${TAG}"
 log "release metadata committed and tag created: ${TAG}"
+log "after pushing main and ${TAG}, publish GitHub Release:"
+log "gh release create ${TAG} --title \"mnscloud-app ${TAG}\" --generate-notes"
