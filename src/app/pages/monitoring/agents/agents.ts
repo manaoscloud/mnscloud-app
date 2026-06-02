@@ -126,6 +126,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   readonly updatingIds = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly isMaster = computed(() => this.auth.user()?.role === 'MASTER');
+  readonly canUpdateTenantAgent = computed(() =>
+    ['MASTER', 'OWNER', 'ADMIN'].includes(this.auth.user()?.role ?? ''),
+  );
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
@@ -511,8 +514,10 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   canUpdateTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
+    const hasRole =
+      target.product === 'mnscloud-agent' ? this.canUpdateTenantAgent() : this.isMaster();
     return (
-      this.isMaster() &&
+      hasRole &&
       row.connectionStatus === 'online' &&
       row.remoteUpdateSupported === true &&
       target.available === true &&
