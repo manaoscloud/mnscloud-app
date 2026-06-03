@@ -55,11 +55,11 @@ jobs:
       MIGRATION: ${{ github.event.inputs.migration || github.event.client_payload.migration || '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.ref || github.event.client_payload.app_ref || github.ref }}
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
@@ -81,7 +81,7 @@ jobs:
       - name: Build
         run: npm run build
       - name: Upload browser build
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: mnscloud-app-browser-${{ github.sha }}
           path: dist/app/browser
