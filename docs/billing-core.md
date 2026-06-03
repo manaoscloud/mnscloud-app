@@ -29,11 +29,17 @@ The master page shows:
 
 Product, price, and manual credit actions use `MatDialog` CRUD flows. Manual credit requires a target tenant UUID, amount, reason, and optional idempotency key/reference.
 
+Products expose open master-managed fields for canonical codes, entitlement patterns, prerequisite
+entitlements, resource type, and public catalog metadata. The frontend only captures those values;
+DB/API remain responsible for validating codes, evaluating entitlements, enforcing prepaid credit,
+and publishing sanitized public offer data.
+
 ## API Contract
 
 The page consumes only the Billing API:
 
 - Tenant: `/billing/*`
 - Master: `/system/billing/*`
+- Public website/catalog: `/public/billing/offers`
 
 No pricing authority, ledger mutation, token generation, or balance arithmetic is implemented in the frontend.

@@ -579,8 +579,9 @@
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Billing scope' | t }}</mat-label>
                 <mat-select formControlName="billingScope">
-                  <mat-option value="SERVICE">{{ 'Service' | t }}</mat-option>
                   <mat-option value="MODULE">{{ 'Module' | t }}</mat-option>
+                  <mat-option value="RESOURCE">{{ 'Resource' | t }}</mat-option>
+                  <mat-option value="USAGE">{{ 'Usage' | t }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
@@ -595,6 +596,66 @@
                   maxlength="500"
                   formControlName="description"
                 ></textarea>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+        <mat-tab [label]="'Access' | t">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="productForm">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Entitlement pattern' | t }}</mat-label>
+                <input matInput maxlength="190" formControlName="entitlementPattern" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Requires entitlement' | t }}</mat-label>
+                <input matInput maxlength="160" formControlName="requiresEntitlementCode" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Resource type' | t }}</mat-label>
+                <input matInput maxlength="120" formControlName="resourceType" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+        <mat-tab [label]="'Public catalog' | t">
+          <div class="tab-content">
+            <form class="form-grid" [formGroup]="productForm">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'Public' | t }}</mat-label>
+                <mat-select formControlName="isPublic">
+                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'Public sort order' | t }}</mat-label>
+                <input matInput type="number" min="0" step="1" formControlName="publicSortOrder" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Public slug' | t }}</mat-label>
+                <input matInput maxlength="160" formControlName="publicSlug" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Public name' | t }}</mat-label>
+                <input matInput maxlength="160" formControlName="publicName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Public summary' | t }}</mat-label>
+                <input matInput maxlength="255" formControlName="publicSummary" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Public description' | t }}</mat-label>
+                <textarea
+                  matInput
+                  rows="3"
+                  maxlength="700"
+                  formControlName="publicDescription"
+                ></textarea>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Public features JSON' | t }}</mat-label>
+                <textarea matInput rows="4" formControlName="publicFeaturesJson"></textarea>
               </mat-form-field>
             </form>
           </div>

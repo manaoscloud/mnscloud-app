@@ -146,8 +146,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     code: ['', [Validators.required, Validators.minLength(2)]],
     name: ['', [Validators.required, Validators.minLength(2)]],
     module: ['', [Validators.required, Validators.minLength(2)]],
-    billingScope: ['SERVICE', [Validators.required]],
+    billingScope: ['RESOURCE', [Validators.required]],
     description: [''],
+    entitlementPattern: [''],
+    requiresEntitlementCode: [''],
+    resourceType: [''],
+    isPublic: [0],
+    publicSlug: [''],
+    publicName: [''],
+    publicSummary: [''],
+    publicDescription: [''],
+    publicFeaturesJson: [''],
+    publicSortOrder: [1000, [Validators.required, Validators.min(0)]],
     sortOrder: [1000, [Validators.required, Validators.min(0)]],
     status: [1],
   });
@@ -264,7 +274,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.editingProduct.set(null);
     this.resetProductForm();
     this.productForm.controls.code.enable({ emitEvent: false });
-    this.openDialog(this.productDialog, '820px');
+    this.openDialog(this.productDialog, '980px');
   }
 
   openProductEdit(row: BillingProduct) {
@@ -275,23 +285,49 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       module: row.BprModule,
       billingScope: row.BprBillingScope,
       description: row.BprDescription ?? '',
+      entitlementPattern: row.BprEntitlementPattern ?? row.BprCode,
+      requiresEntitlementCode: row.BprRequiresEntitlementCode ?? '',
+      resourceType: row.BprResourceType ?? '',
+      isPublic: Number(row.BprIsPublic ?? 0),
+      publicSlug: row.BprPublicSlug ?? '',
+      publicName: row.BprPublicName ?? '',
+      publicSummary: row.BprPublicSummary ?? '',
+      publicDescription: row.BprPublicDescription ?? '',
+      publicFeaturesJson: row.BprPublicFeaturesJson ?? '',
+      publicSortOrder: Number(row.BprPublicSortOrder ?? row.BpdSortOrder ?? 1000),
       sortOrder: Number(row.BpdSortOrder ?? 1000),
       status: row.BprStatus,
     });
     this.productForm.controls.code.disable({ emitEvent: false });
-    this.openDialog(this.productDialog, '820px');
+    this.openDialog(this.productDialog, '980px');
   }
 
   async saveProduct(keepOpen = false) {
     if (this.productForm.invalid || this.saving()) return;
     this.saving.set(true);
     const value = this.productForm.getRawValue();
+    const publicFeatures = this.parseJson(value.publicFeaturesJson);
+    if (publicFeatures === false) {
+      this.saving.set(false);
+      this.snack.error('Public features JSON is invalid.');
+      return;
+    }
     const payload = {
       code: value.code,
       name: value.name,
       module: value.module,
       billingScope: value.billingScope,
       description: this.emptyToNull(value.description),
+      entitlementPattern: this.emptyToNull(value.entitlementPattern),
+      requiresEntitlementCode: this.emptyToNull(value.requiresEntitlementCode),
+      resourceType: this.emptyToNull(value.resourceType),
+      isPublic: Number(value.isPublic),
+      publicSlug: this.emptyToNull(value.publicSlug),
+      publicName: this.emptyToNull(value.publicName),
+      publicSummary: this.emptyToNull(value.publicSummary),
+      publicDescription: this.emptyToNull(value.publicDescription),
+      publicFeatures,
+      publicSortOrder: Number(value.publicSortOrder),
       sortOrder: Number(value.sortOrder),
       status: Number(value.status),
     };
@@ -786,8 +822,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       code: '',
       name: '',
       module: '',
-      billingScope: 'SERVICE',
+      billingScope: 'RESOURCE',
       description: '',
+      entitlementPattern: '',
+      requiresEntitlementCode: '',
+      resourceType: '',
+      isPublic: 0,
+      publicSlug: '',
+      publicName: '',
+      publicSummary: '',
+      publicDescription: '',
+      publicFeaturesJson: '',
+      publicSortOrder: 1000,
       sortOrder: 1000,
       status: 1,
     });
@@ -884,6 +930,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       name: row?.BprName ?? row?.BpcName,
       module: row?.BprModule,
       scope: row?.BprBillingScope,
+      entitlement: row?.BprEntitlementPattern,
+      resourceType: row?.BprResourceType,
+      public: row?.BprIsPublic,
       prices: row?.PriceCount ?? row?.ActivePrices ?? 0,
       sortOrder: row?.BpdSortOrder ?? 0,
       status: row?.BprStatus ?? row?.BpcStatus ?? row?.BsuStatus,
