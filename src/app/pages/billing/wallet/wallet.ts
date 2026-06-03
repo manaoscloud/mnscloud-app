@@ -121,6 +121,11 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     amount: [0, [Validators.required, Validators.min(0.000001)]],
     currency: [''],
     reference: [''],
+    payerName: ['', Validators.required],
+    payerDocument: ['', Validators.required],
+    payerEmail: ['', [Validators.required, Validators.email]],
+    payerType: ['FISICA'],
+    dueDate: [''],
     idempotencyKey: [''],
   });
 
@@ -213,6 +218,11 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       amount: 0,
       currency: this.wallets()[0]?.BwaCurrency ?? '',
       reference: '',
+      payerName: '',
+      payerDocument: '',
+      payerEmail: '',
+      payerType: 'FISICA',
+      dueDate: '',
       idempotencyKey: crypto.randomUUID(),
     });
     if (!this.topupDialog) return;
@@ -242,6 +252,13 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
         amount: Number(value.amount),
         currency: this.emptyToNull(value.currency),
         reference: this.emptyToNull(value.reference),
+        dueDate: this.emptyToNull(value.dueDate),
+        payer: {
+          nome: value.payerName,
+          cpfCnpj: value.payerDocument.replace(/\D/g, ''),
+          email: value.payerEmail,
+          tipoPessoa: value.payerType,
+        },
         idempotencyKey: this.emptyToNull(value.idempotencyKey),
       });
       this.snack.success(

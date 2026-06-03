@@ -490,6 +490,29 @@
                 <input matInput formControlName="reference" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Payer name' | t }}</mat-label>
+                <input matInput formControlName="payerName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Payer document' | t }}</mat-label>
+                <input matInput formControlName="payerDocument" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Payer email' | t }}</mat-label>
+                <input matInput type="email" formControlName="payerEmail" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Payer type' | t }}</mat-label>
+                <mat-select formControlName="payerType">
+                  <mat-option value="FISICA">{{ 'Individual' | t }}</mat-option>
+                  <mat-option value="JURIDICA">{{ 'Company' | t }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Due date' | t }}</mat-label>
+                <input matInput type="date" formControlName="dueDate" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Idempotency key' | t }}</mat-label>
                 <input matInput formControlName="idempotencyKey" />
               </mat-form-field>
