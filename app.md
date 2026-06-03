@@ -14,6 +14,14 @@
   keys, private business rules, or hidden API bypasses.
 - Browser-side authorization is UX only. The API remains the source of truth for roles, tenant scope,
   environment scope, billing, routing ownership, policy decisions, and secret resolution.
+- Business rules must not live in the Angular app. The app may format values, validate obvious form
+  shape before submit, show/hide actions for UX, and render API-provided URLs/data safely; it must
+  not decide whether a user/tenant can access a resource, whether credit is sufficient, which
+  provider/storage/bucket/path is used, how signed URLs are generated, which release can be
+  installed, or when a workflow state is valid. Those decisions belong to DB/API contracts.
+- When the API returns an authorized artifact such as a short-lived signed URL, the app must consume
+  it as-is. Do not mutate signed URLs, storage object keys, tenant-scoped paths, or authorization
+  material in frontend code; ask the API for a new authorized value instead.
 - Tokens stored by the app are user/session tokens obtained after login. Do not add permanent service
   credentials, storage credentials, signing secrets, or master tokens to frontend code, assets, docs,
   examples, or build-time environment files.
