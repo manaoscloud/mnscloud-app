@@ -498,13 +498,13 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
 
   updateLabel(row: MonitoringAgent) {
     const status = row.updateStatus || 'unknown';
-    if (status === 'current') return 'Atualizado';
+    if (status === 'current') return 'Up to date';
     if (status === 'outdated' && row.remoteUpdateSupported === false) {
       return 'Manual';
     }
-    if (status === 'outdated') return 'Atualizar';
-    if (status === 'unsupported') return 'Sem suporte';
-    return 'Desconhecida';
+    if (status === 'outdated') return 'Update';
+    if (status === 'unsupported') return 'Unsupported';
+    return 'Unknown';
   }
 
   updateChipClass(row: MonitoringAgent) {

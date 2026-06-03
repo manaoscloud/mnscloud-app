@@ -141,9 +141,9 @@
           <td mat-cell *matCellDef="let row">
             <div class="version-cell">
               <span>{{ row.version || '-' }}</span>
-              <small>Build {{ shortBuildRef(row.buildRef) }}</small>
+              <small>{{ 'Build' | t }} {{ shortBuildRef(row.buildRef) }}</small>
               <small
-                >Latest {{ row.latestVersion || '-' }} ·
+                >{{ 'Latest' | t }} {{ row.latestVersion || '-' }} ·
                 {{ shortBuildRef(row.latestBuildRef) }}</small
               >
               @if (agentUpdateTarget(row); as target) {
@@ -154,11 +154,11 @@
                   (click)="queueRuntimeUpdate(row, target)"
                   [disabled]="isUpdatingTarget(row, target)"
                 >
-                  <span>{{ updateLabel(row) }}</span>
+                  <span>{{ updateLabel(row) | t }}</span>
                 </button>
               } @else {
                 <span class="status-pill version-chip" [ngClass]="updateChipClass(row)">
-                  {{ updateLabel(row) }}
+                  {{ updateLabel(row) | t }}
                 </span>
               }
             </div>
