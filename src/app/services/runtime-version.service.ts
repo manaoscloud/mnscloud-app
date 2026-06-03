@@ -40,7 +40,9 @@ export class RuntimeVersionService {
       channel: APP_BUILD_INFO.channel,
       latestVersion,
       latestBuildRef: latest?.buildRef?.trim() || null,
-      updateAvailable: Boolean(latestVersion && latestVersion !== APP_BUILD_INFO.version),
+      updateAvailable: Boolean(
+        latestVersion && compareSemver(latestVersion, APP_BUILD_INFO.version) > 0,
+      ),
     };
   });
 
@@ -58,4 +60,22 @@ export class RuntimeVersionService {
       this.latestAppRelease.set(null);
     }
   }
+}
+
+function compareSemver(left: string, right: string) {
+  const leftParts = left
+    .replace(/^v/i, '')
+    .split(/[+-]/)[0]
+    .split('.')
+    .map((item) => Number(item));
+  const rightParts = right
+    .replace(/^v/i, '')
+    .split(/[+-]/)[0]
+    .split('.')
+    .map((item) => Number(item));
+  for (let index = 0; index < 3; index += 1) {
+    const diff = (leftParts[index] || 0) - (rightParts[index] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
 }
