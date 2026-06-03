@@ -270,11 +270,11 @@ The `curl -I` response should show a fresh `Last-Modified` timestamp for the new
 browser bundle. If the app host is behind the `mnscloud-nginx` edge, validate the public route from a
 browser or with `curl` against the edge domain after the local validation passes.
 
-Create release metadata from a clean maintainer workstation:
-
-```bash
-./scripts/release-app.sh --version 0.1.1 --channel stable --publish
-```
+Production App releases are published by the repository `Auto Release` GitHub
+Actions workflow after validated changes are committed and pushed to `main`.
+The workflow uses `scripts/release-app.sh` as the canonical release engine,
+updates release metadata, creates the tag, and publishes the GitHub Release.
+Run the script manually only as a break-glass maintainer operation.
 
 Deploy a specific release:
 

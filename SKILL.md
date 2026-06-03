@@ -55,13 +55,10 @@ Angular bundle, deploys it to `/var/www/mnscloud-app`, writes runtime `env.js` a
 validates Nginx, reloads the service, and restores the previous commit if validation fails. Use
 `sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-release-tag>` for rollback.
 
-Maintainers create release metadata with:
-
-```bash
-./scripts/release-app.sh --version 0.1.1 --channel stable --publish
-```
-
-Do not mark a new App version as available to operators until the matching GitHub Release exists.
+Production App releases are created by the repository `Auto Release` GitHub Actions workflow after
+validated changes are committed and pushed to `main`. The workflow uses
+`scripts/release-app.sh` as the canonical release engine. Do not mark a new App version as available
+to operators until the matching release commit, Git tag, and GitHub Release exist on GitHub.
 
 ## Contribution Governance
 
