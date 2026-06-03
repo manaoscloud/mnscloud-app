@@ -294,6 +294,14 @@
   grid-column: span 2;
 }
 
+.span-4 {
+  grid-column: span 4;
+}
+
+.product-form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .credit-form-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 
