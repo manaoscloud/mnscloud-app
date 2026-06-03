@@ -29,6 +29,7 @@ import { MatDividerModule } from '@angular/material/divider';
 // Services
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
+import { isSignedStorageUrl } from '../../../shared/storage/signed-url';
 
 // Models
 import { UserProfile } from '../../../models/user-profile.model';
@@ -83,6 +84,7 @@ export class UserProfileComponent {
         const url = this.effectiveAvatarUrl();
         if (!url) return null;
         if (url.startsWith('data:')) return url;
+        if (isSignedStorageUrl(url)) return url;
 
         const v = this.avatarVersion();
         const separator = url.includes('?') ? '&' : '?';

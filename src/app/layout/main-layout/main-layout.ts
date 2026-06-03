@@ -20,6 +20,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 
 // Shared
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
+import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 
 // Material
 import { MatIconModule } from '@angular/material/icon';
@@ -653,6 +654,7 @@ export class MainLayout {
   readonly avatarUrl = computed(() => {
     const u = this.user();
     if (!u?.avatarUrl) return null;
+    if (isSignedStorageUrl(u.avatarUrl)) return u.avatarUrl;
     const version = u.avatarVersion ?? 0;
     return `${u.avatarUrl}${u.avatarUrl.includes('?') ? '&' : '?'}v=${version}`;
   });
