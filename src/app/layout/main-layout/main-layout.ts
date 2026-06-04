@@ -38,6 +38,7 @@ import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
 import { I18nService, AppLanguage, LanguageOptionCode } from '../../services/i18n.service';
 import { RuntimeVersionService } from '../../services/runtime-version.service';
+import { BillingService } from '../../pages/billing/shared/billing.service';
 import { TranslatePipe } from '../../shared/i18n/translate.pipe';
 import {
   extractEnvironmentAccess,
@@ -58,6 +59,7 @@ interface NavItem {
   route?: string;
   masterRoute?: string;
   scope?: MenuScope;
+  entitlementCode?: string;
   children?: NavItem[];
 
   // ✅ Controle de visibilidade por role
@@ -128,6 +130,7 @@ export class MainLayout {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(I18nService);
   private readonly runtimeVersion = inject(RuntimeVersionService);
+  private readonly billing = inject(BillingService);
   private readonly destroyRef = inject(DestroyRef);
 
   // =======================================================
@@ -167,6 +170,7 @@ export class MainLayout {
   // =======================================================
   readonly environments = signal<UserEnvironment[]>([]);
   readonly activeEnvironmentId = signal<string | null>(null);
+  readonly commercialEntitlements = signal<string[]>([]);
   readonly loadingEnvironments = signal<boolean>(false);
   readonly contextMode = signal<ContextMode>(this.readInitialContextMode());
   readonly isMasterUser = computed(() => this.user()?.role === 'MASTER');
@@ -543,6 +547,7 @@ export class MainLayout {
       localStorage.setItem(MainLayout.CONTEXT_MODE_STORAGE_KEY, mode);
     }
     this.closeCompactFlyouts();
+    void this.refreshCommercialEntitlements();
     this.scheduleAutoExpandSections();
   }
 
@@ -597,24 +602,50 @@ export class MainLayout {
     return inheritedScope ?? 'public';
   }
 
-  private filterMenu(items: NavItem[], inheritedScope?: MenuScope): NavItem[] {
+  private hasCommercialEntitlement(required?: string): boolean {
+    if (!required) return true;
+    if (this.isMasterUser() && this.effectiveContextMode() === 'master') return true;
+
+    const normalizedRequired = required.toLowerCase();
+    return this.commercialEntitlements().some((grant) => {
+      const normalizedGrant = grant.toLowerCase();
+      if (normalizedGrant === normalizedRequired) return true;
+      if (!normalizedGrant.includes('*')) return false;
+      const pattern = `^${normalizedGrant
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*')}$`;
+      return new RegExp(pattern).test(normalizedRequired);
+    });
+  }
+
+  private filterMenu(
+    items: NavItem[],
+    inheritedScope?: MenuScope,
+    inheritedEntitlement?: string,
+  ): NavItem[] {
     return items
       .map((i) => {
         const scope = this.resolveMenuScope(i, inheritedScope);
+        const entitlementCode = i.entitlementCode ?? inheritedEntitlement;
         const scopedItem = { ...i, scope };
 
         // 1) Role
         if (!this.hasRole(scopedItem)) return null;
 
-        // 2) Filtra filhos antes do escopo do grupo, porque grupos tenant podem conter filhos both.
+        // 2) Commercial entitlement projection. API remains the source of truth.
+        if (scope === 'tenant' || scope === 'both') {
+          if (!this.hasCommercialEntitlement(entitlementCode)) return null;
+        }
+
+        // 3) Filtra filhos antes do escopo do grupo, porque grupos tenant podem conter filhos both.
         const children = scopedItem.children
-          ? this.filterMenu(scopedItem.children, scope)
+          ? this.filterMenu(scopedItem.children, scope, entitlementCode)
           : undefined;
 
         // Se era grupo e perdeu todos os filhos, remove
         if (scopedItem.children?.length && (!children || children.length === 0)) return null;
 
-        // 3) Escopo/contexto
+        // 4) Escopo/contexto
         if (!scopedItem.children?.length && !this.canShowByEnvironment(scopedItem)) return null;
 
         return { ...scopedItem, children };
@@ -747,6 +778,7 @@ export class MainLayout {
           this.auth.user()?.role ??
           'USER',
       });
+      await this.refreshCommercialEntitlements();
     } catch (e) {
       console.error('❌ Failed to load environments:', e);
       this.environments.set([]);
@@ -756,13 +788,16 @@ export class MainLayout {
       this.activeEnvironmentId.set(preservedEnv);
       if (preservedEnv) {
         this.auth.updateUser({ EnvironmentUUID: preservedEnv });
+        await this.refreshCommercialEntitlements();
+      } else {
+        this.commercialEntitlements.set([]);
       }
     } finally {
       this.loadingEnvironments.set(false);
     }
   }
 
-  switchEnvironment(env: UserEnvironment) {
+  async switchEnvironment(env: UserEnvironment) {
     const environmentUUID = normalizeEnvironmentUUID(env?.EnvironmentUUID);
     if (!environmentUUID || environmentUUID === this.activeEnvironmentId()) return;
 
@@ -782,7 +817,28 @@ export class MainLayout {
         this.auth.user()?.role ??
         'USER',
     });
+    await this.refreshCommercialEntitlements();
     this.router.navigate(['/dashboard']);
+  }
+
+  private async refreshCommercialEntitlements() {
+    if (!this.activeEnvironmentId()) {
+      this.commercialEntitlements.set([]);
+      return;
+    }
+    if (this.isMasterUser() && this.effectiveContextMode() === 'master') {
+      this.commercialEntitlements.set([]);
+      return;
+    }
+    try {
+      const grants = await this.billing.listEntitlementGrants();
+      this.commercialEntitlements.set(
+        grants.map((grant) => grant.entitlementCode).filter(Boolean),
+      );
+    } catch (error) {
+      console.error('❌ Failed to load commercial entitlements:', error);
+      this.commercialEntitlements.set([]);
+    }
   }
 
   async setDefaultEnvironment(env: UserEnvironment, event?: Event) {
@@ -888,6 +944,7 @@ export class MainLayout {
       id: 'erp',
       label: 'ERP',
       icon: 'apps',
+      entitlementCode: 'module.erp.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
@@ -1020,6 +1077,7 @@ export class MainLayout {
       id: 'isp',
       label: 'ISP',
       icon: 'network_check',
+      entitlementCode: 'module.isp.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
@@ -1145,6 +1203,7 @@ export class MainLayout {
       id: 'voip',
       label: 'VoIP',
       icon: 'call',
+      entitlementCode: 'module.voip.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
@@ -1453,6 +1512,7 @@ export class MainLayout {
       id: 'hosting',
       label: 'Hosting',
       icon: 'dns',
+      entitlementCode: 'module.hosting.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
@@ -1637,6 +1697,7 @@ export class MainLayout {
       id: 'support',
       label: 'Support',
       icon: 'support_agent',
+      entitlementCode: 'module.support.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
@@ -1806,6 +1867,7 @@ export class MainLayout {
       id: 'sale',
       label: 'Sale',
       icon: 'point_of_sale',
+      entitlementCode: 'module.sale.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [

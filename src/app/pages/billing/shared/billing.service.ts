@@ -110,6 +110,14 @@ export interface BillingSubscription {
   BpcName?: string | null;
 }
 
+export interface BillingEntitlementGrant {
+  entitlementCode: string;
+  productCode?: string | null;
+  module?: string | null;
+  billingScope?: string | null;
+  resourceType?: string | null;
+}
+
 export type BillingCatalogItem = BillingProduct & Omit<BillingPrice, 'BprCode' | 'BprName'>;
 
 interface ApiListResponse<T> {
@@ -213,6 +221,13 @@ export class BillingService {
 
   async listWallets() {
     const response = await this.api.get<ApiListResponse<BillingWallet>>('billing/wallet');
+    return response.data?.items ?? [];
+  }
+
+  async listEntitlementGrants() {
+    const response = await this.api.get<ApiListResponse<BillingEntitlementGrant>>(
+      'billing/entitlements/grants',
+    );
     return response.data?.items ?? [];
   }
 
