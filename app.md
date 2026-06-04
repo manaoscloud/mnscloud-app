@@ -35,6 +35,22 @@
   - `src/app/layout/main-layout/main-layout.ts`
   - `src/app/layout/main-layout/main-layout.html`
 
+## Commercial Menu Projection
+
+- The app may hide tenant-facing commercial modules based on API-provided billing grants, but this is
+  UX only. DB/API remains the authorization and billing enforcement boundary.
+- New commercial menu groups or entries must set an `entitlementCode` that matches the backend
+  entitlement contract, for example `module.isp.*`, `module.voip.pabx.account`, or
+  `module.hosting.vps.instance`.
+- The app must obtain grants from `/api/v1/billing/entitlements/grants`; do not hardcode tenant
+  commercial access, product prices, subscription state, or free module exceptions in frontend code.
+- If a feature is intentionally free/base, it must still come from an explicit API/DB grant backed
+  by a zero-value product/price/subscription. Do not show commercial menus because a product/policy
+  is missing.
+- Adding a visible commercial route in `app.routes.ts` or `main-layout` is incomplete until the
+  related API route, `BillingEntitlementPolicy`, product definition, price, OpenAPI contract, and
+  backend entitlement assert behavior are present.
+
 ## Public Theme Runtime
 
 - The app loads tenant branding at bootstrap through `PublicThemeContextService`.
