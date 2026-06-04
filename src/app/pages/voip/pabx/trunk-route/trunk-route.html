@@ -162,7 +162,7 @@
       <form id="PABXResourceForm" class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
         <mat-tab-group class="form-tabs">
           @if (isTrunkResource()) {
-            <mat-tab [label]="'Data' | t">
+            <mat-tab [label]="'Record' | t">
               <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Status</mat-label>
@@ -334,7 +334,7 @@
               </div>
             </mat-tab>
           } @else {
-            <mat-tab [label]="'Data' | t">
+            <mat-tab [label]="'Record' | t">
               <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>PABX</mat-label>

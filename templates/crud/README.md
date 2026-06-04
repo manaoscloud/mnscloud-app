@@ -29,8 +29,8 @@ How to use:
 14. Use `SnackbarService` for transient success/error/warning/info feedback. Do not render CRUD operation messages inline in the page, table, dialog body, or dialog footer.
 15. Keep create/edit in `MatDialog`; never convert this template to an inline form section.
 16. Preserve the dialog viewport fallback: `updateSize(width, height || maxHeight)` so desktop dialogs do not collapse.
-17. Keep the first dialog tab label as the translated `Data` key (`[label]="'Data' | t`) by default; change it only when the resource domain has a documented, explicit reason.
-18. Whenever the form has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent annotation), keep it in a dedicated `mat-tab label="Notes"` with a full-row textarea; never mix notes into `Data`, `Config`, `Pricing`, or `Provision`.
+17. Keep the first dialog tab label as the translated `Record` key (`[label]="'Record' | t`) by default. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
+18. Whenever the form has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent annotation), keep it in a dedicated `mat-tab label="Notes"` with a full-row textarea; never mix notes into `Record`, `Config`, `Pricing`, or `Provision`.
 19. Keep the dialog visual contract aligned with this CRUD template and `app.md`: root padding `1.5rem 1.75rem 1.25rem`, compact tab content, sticky translucent `.form-actions` with `margin: auto 0 0`, internal horizontal padding, blur/shadow, desktop Cancel left and Save split right, mobile Save first and Cancel second.
 20. For currency defaults, resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`; tenant parameters must win and master parameters are the fallback. Do not hardcode `BRL`/`USD` as the source of truth for create/reset flows.
 21. Add the dialog `panelClass` to global overlay styles in `src/styles.scss` when the page uses a new panel class, so `.mat-mdc-dialog-surface`, content, and actions match the shared CRUD surface.

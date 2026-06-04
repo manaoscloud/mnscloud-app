@@ -60,7 +60,7 @@ const htmlRules = [
   ['dialog header', 'dialog-header'],
   ['dialog content', 'dialog-content'],
   ['form tabs', 'form-tabs'],
-  ['translated data tab label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*t"/],
+  ['translated record tab label', /<mat-tab[^>]*\[label\]="'Record'\s*\|\s*t"/],
   ['tab content', 'tab-content'],
   ['form actions', 'form-actions'],
   ['secondary actions', 'secondary-actions'],
@@ -86,6 +86,8 @@ const tsRules = [
 
 const forbiddenHtmlRules = [
   ['raw column label', /\{\{\s*column\s*\}\}/],
+  ['legacy data tab label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*t"/],
+  ['legacy details tab label', /<mat-tab[^>]*\[label\]="'Details'\s*\|\s*t"/],
   ['old inactive status class', /\[class\.inactive\]/],
   ['inline notes tab hack', /config\(\)\.fields\s*\|\s*json/],
   ['browser confirm', /\bconfirm\s*\(/],

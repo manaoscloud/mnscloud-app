@@ -183,7 +183,7 @@
 - Dialog structure:
   - header (`.dialog-header`)
   - content (`.dialog-content`) with `MatTabGroup`
-  - first tab label must be `Data` by default, because it contains the primary record fields; use another first-tab label only when the domain has a documented, explicit reason.
+  - first tab label must be the translated `Record` key (`[label]="'Record' | t`) by default, because it contains the primary record fields. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
   - footer (`.form-actions`) with `Cancel`, `Save`, and create-only `Save/New` in the save split menu
   - footer must stay fixed at the bottom of dialog (`mat-dialog-actions` cannot move with content length)
 - Action labels:
@@ -434,10 +434,10 @@ npm run check:crud -- src/app/pages/<area>/<component>
   - avoid `Name` or `Street` full-width by default when 4-column grid is available; use `span-2` unless business context requires full row.
 - Notes/anotações rule:
   - whenever a CRUD dialog has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent free-text annotation), render it in its own `mat-tab label="Notes"`.
-  - do not place notes fields in `Data`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
+  - do not place notes fields in `Record`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
   - the notes field should normally use a full-row textarea (`mat-form-field.span-4`) inside that tab.
 - Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`):
-  - Data tab desktop row pattern:
+  - Record tab desktop row pattern:
     - row 1: `Type`, `Status`, `Name (span-2)`
     - row 2: `Document (span-2)`, `Email`, `Phone`
   - Notes tab:

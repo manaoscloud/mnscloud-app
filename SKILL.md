@@ -14,6 +14,8 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - API calls must go through `src/app/services/api.service.ts`.
 - Runtime URL resolution must stay in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD pages must follow `app.md`.
+- CRUD dialog primary record tabs must use the translated `Record` key (`[label]="'Record' | t`).
+  Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
 - File uploads must use the shared upload progress helpers in `src/app/shared/upload/`.
 - Browser-side permission checks are UX only; enforcement belongs to the API.
 
