@@ -102,6 +102,17 @@ mat-form-field {
     font-weight: 600;
 }
 
+.captcha-row {
+    display: flex;
+    justify-content: center;
+    margin: 0.25rem 0 1rem;
+    min-height: 68px;
+}
+
+.captcha-container {
+    max-width: 100%;
+}
+
 /* Mensagem de erro da API */
 .api-error,
 .api-success {

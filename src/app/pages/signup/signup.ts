@@ -1,4 +1,13 @@
-import { Component, signal, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,15 +26,21 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 
 import { ApiService } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { PhoneInputComponent } from '../../shared/phone-input/phone-input.component';
 import { DateMaskDirective } from '../../shared/date-mask/date-mask.directive';
+
+type SignupPolicy = {
+  captchaEnabled: boolean;
+  captchaProvider: 'turnstile' | 'hcaptcha' | null;
+  captchaSiteKey: string | null;
+};
 
 @Component({
   selector: 'app-signup',
   standalone: true,
   imports: [
+    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
@@ -43,12 +58,13 @@ import { DateMaskDirective } from '../../shared/date-mask/date-mask.directive';
   styleUrls: ['./signup.scss'],
   animations: [fadeIn],
 })
-export class Signup {
+export class Signup implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
-  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
+
+  @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
 
   readonly form: FormGroup = this.fb.group({
     firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -64,6 +80,12 @@ export class Signup {
   readonly apiError = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly emailError = signal('');
+  readonly signupPolicy = signal<SignupPolicy>({
+    captchaEnabled: false,
+    captchaProvider: null,
+    captchaSiteKey: null,
+  });
+  readonly captchaToken = signal<string | null>(null);
 
   constructor() {
     merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
@@ -71,8 +93,18 @@ export class Signup {
       .subscribe(() => this.updateEmailError());
   }
 
+  ngOnInit() {
+    void this.loadSignupPolicy();
+  }
+
+  ngAfterViewInit() {
+    queueMicrotask(() => void this.renderCaptcha());
+  }
+
   get canSubmit(): boolean {
-    return this.form.valid && !this.isLoading();
+    const policy = this.signupPolicy();
+    const captchaReady = !policy.captchaEnabled || !!this.captchaToken();
+    return this.form.valid && captchaReady && !this.isLoading();
   }
 
   async onSubmit(event?: Event) {
@@ -99,29 +131,21 @@ export class Signup {
         email: value.email,
         password: value.password,
         dateBirth: dateBirthStr,
+        captchaToken: this.captchaToken(),
       });
 
       if (!result?.message) {
         throw new Error('Invalid API response.');
       }
 
-      this.successMessage.set('Account created successfully. Logging you in...');
-      this.snack.success('Account created successfully!');
-
-      // Faz login automático
-      const login = await this.api.post<any>('auth/signin', {
-        email: value.email,
-        password: value.password,
-      });
-
-      const jwt = login?.data?.jwt;
-      if (!jwt) {
-        throw new Error('Could not complete automatic sign-in.');
-      }
-
-      await this.auth.login(jwt, login?.data?.user ?? null, this.api);
-      this.snack.success('Welcome!');
-      await this.router.navigate(['/dashboard']);
+      const message =
+        result?.message ?? 'Account created. Check your email to verify your account.';
+      this.successMessage.set(message);
+      this.snack.success(message);
+      this.form.reset();
+      this.captchaToken.set(null);
+      await this.renderCaptcha(true);
+      setTimeout(() => void this.router.navigate(['/signin']), 2500);
     } catch (err: any) {
       const msg = err?.error?.error || err?.message || 'Registration failed.';
       this.apiError.set(msg);
@@ -146,5 +170,85 @@ export class Signup {
     } else {
       this.emailError.set('');
     }
+  }
+
+  private async loadSignupPolicy() {
+    try {
+      const result = await this.api.get<any>('auth/signup/policy');
+      const data = result?.data ?? {};
+      this.signupPolicy.set({
+        captchaEnabled: data.captchaEnabled === true,
+        captchaProvider:
+          data.captchaProvider === 'turnstile' || data.captchaProvider === 'hcaptcha'
+            ? data.captchaProvider
+            : null,
+        captchaSiteKey: typeof data.captchaSiteKey === 'string' ? data.captchaSiteKey : null,
+      });
+      await this.renderCaptcha();
+    } catch {
+      this.signupPolicy.set({ captchaEnabled: false, captchaProvider: null, captchaSiteKey: null });
+    }
+  }
+
+  private async renderCaptcha(forceReset = false) {
+    const policy = this.signupPolicy();
+    const container = this.captchaContainer?.nativeElement;
+    if (!policy.captchaEnabled || !policy.captchaProvider || !policy.captchaSiteKey || !container) {
+      return;
+    }
+
+    if (forceReset) {
+      container.innerHTML = '';
+    }
+
+    if (container.dataset['rendered'] === 'true' && !forceReset) return;
+
+    const api = await this.loadCaptchaApi(policy.captchaProvider);
+    container.innerHTML = '';
+    container.dataset['rendered'] = 'true';
+
+    const options = {
+      sitekey: policy.captchaSiteKey,
+      callback: (token: string) => this.captchaToken.set(token),
+      'expired-callback': () => this.captchaToken.set(null),
+      'error-callback': () => this.captchaToken.set(null),
+      theme: 'dark',
+    };
+
+    api.render(container, options);
+  }
+
+  private loadCaptchaApi(provider: 'turnstile' | 'hcaptcha'): Promise<any> {
+    const globalName = provider === 'turnstile' ? 'turnstile' : 'hcaptcha';
+    const existing = (window as any)[globalName];
+    if (existing?.render) return Promise.resolve(existing);
+
+    const scriptId = `mnscloud-${provider}-captcha`;
+    const existingScript = document.getElementById(scriptId);
+    if (existingScript) {
+      return new Promise((resolve) => {
+        const timer = window.setInterval(() => {
+          const loaded = (window as any)[globalName];
+          if (loaded?.render) {
+            window.clearInterval(timer);
+            resolve(loaded);
+          }
+        }, 100);
+      });
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.async = true;
+      script.defer = true;
+      script.src =
+        provider === 'turnstile'
+          ? 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+          : 'https://js.hcaptcha.com/1/api.js?render=explicit';
+      script.onload = () => resolve((window as any)[globalName]);
+      script.onerror = () => reject(new Error('Could not load captcha challenge.'));
+      document.head.appendChild(script);
+    });
   }
 }

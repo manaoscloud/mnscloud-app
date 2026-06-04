@@ -198,6 +198,140 @@
             </form>
           </mat-tab>
 
+          @if (isMaster()) {
+            <mat-tab label="Signup">
+              <form class="tab-content form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Trial Credit Amount</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [ngModel]="item().billingSignupTrialAmount"
+                    (ngModelChange)="updateItem({ billingSignupTrialAmount: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Trial Credit Currency</mat-label>
+                  <input
+                    matInput
+                    maxlength="3"
+                    [ngModel]="item().billingSignupTrialCurrency"
+                    (ngModelChange)="updateItem({ billingSignupTrialCurrency: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="BRL"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Trial Expires Days</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="1"
+                    max="365"
+                    [ngModel]="item().billingSignupTrialExpiresDays"
+                    (ngModelChange)="updateItem({ billingSignupTrialExpiresDays: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Max Accounts per IP/Day</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="1"
+                    max="100"
+                    [ngModel]="item().signupMaxAccountsPerIpDay"
+                    (ngModelChange)="updateItem({ signupMaxAccountsPerIpDay: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Captcha Provider</mat-label>
+                  <mat-select
+                    [ngModel]="item().signupCaptchaProvider"
+                    (ngModelChange)="updateItem({ signupCaptchaProvider: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <mat-option value="">None</mat-option>
+                    <mat-option value="turnstile">Cloudflare Turnstile</mat-option>
+                    <mat-option value="hcaptcha">hCaptcha</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-3">
+                  <mat-label>Captcha Site Key</mat-label>
+                  <input
+                    matInput
+                    [ngModel]="item().signupCaptchaSiteKey"
+                    (ngModelChange)="updateItem({ signupCaptchaSiteKey: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Public site key"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="span-4">
+                  <mat-label>Captcha Secret</mat-label>
+                  <input
+                    matInput
+                    [type]="showSignupCaptchaSecret() ? 'text' : 'password'"
+                    [ngModel]="item().signupCaptchaSecret"
+                    (ngModelChange)="updateItem({ signupCaptchaSecret: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Private validation secret"
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    [attr.aria-label]="
+                      showSignupCaptchaSecret() ? 'Hide captcha secret' : 'Show captcha secret'
+                    "
+                    (click)="showSignupCaptchaSecret.set(!showSignupCaptchaSecret())"
+                  >
+                    <mat-icon>{{
+                      showSignupCaptchaSecret() ? 'visibility_off' : 'visibility'
+                    }}</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <div class="toggle-grid span-4">
+                  <mat-slide-toggle
+                    [ngModel]="item().billingSignupTrialEnabled"
+                    (ngModelChange)="updateItem({ billingSignupTrialEnabled: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    Trial Credit Active
+                  </mat-slide-toggle>
+
+                  <mat-slide-toggle
+                    [ngModel]="item().billingSignupTrialRequireEmailVerified"
+                    (ngModelChange)="
+                      updateItem({ billingSignupTrialRequireEmailVerified: $event })
+                    "
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    Require Verified Email
+                  </mat-slide-toggle>
+
+                  <mat-slide-toggle
+                    [ngModel]="item().signupCaptchaEnabled"
+                    (ngModelChange)="updateItem({ signupCaptchaEnabled: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    Captcha Active
+                  </mat-slide-toggle>
+                </div>
+              </form>
+            </mat-tab>
+          }
+
           <mat-tab label="VoIP">
             <mat-tab-group class="nested-tabs">
               <mat-tab label="SBC">

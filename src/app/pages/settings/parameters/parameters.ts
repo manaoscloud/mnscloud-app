@@ -41,6 +41,16 @@ type SystemParametersItem = {
   voipPabxMediaDeliveryModeIsActive: boolean;
   voipPabxRemoteCommandExecutor: 'agent' | 'esl_ami' | '';
   voipPabxRemoteCommandExecutorIsActive: boolean;
+  billingSignupTrialEnabled: boolean;
+  billingSignupTrialAmount: number;
+  billingSignupTrialCurrency: string;
+  billingSignupTrialExpiresDays: number;
+  billingSignupTrialRequireEmailVerified: boolean;
+  signupCaptchaEnabled: boolean;
+  signupCaptchaProvider: 'turnstile' | 'hcaptcha' | '';
+  signupCaptchaSiteKey: string;
+  signupCaptchaSecret: string;
+  signupMaxAccountsPerIpDay: number;
 };
 
 type StorageAccountItem = {
@@ -74,6 +84,16 @@ const DEFAULT_ITEM: SystemParametersItem = {
   voipPabxMediaDeliveryModeIsActive: true,
   voipPabxRemoteCommandExecutor: '',
   voipPabxRemoteCommandExecutorIsActive: true,
+  billingSignupTrialEnabled: false,
+  billingSignupTrialAmount: 0,
+  billingSignupTrialCurrency: 'BRL',
+  billingSignupTrialExpiresDays: 15,
+  billingSignupTrialRequireEmailVerified: true,
+  signupCaptchaEnabled: false,
+  signupCaptchaProvider: '',
+  signupCaptchaSiteKey: '',
+  signupCaptchaSecret: '',
+  signupMaxAccountsPerIpDay: 3,
 };
 
 @Component({
@@ -137,6 +157,7 @@ export class SettingsParametersPage implements OnInit {
   readonly showGoogleMapsEmbedApiKey = signal(false);
   readonly showMapboxToken = signal(false);
   readonly showSignalWireRepoToken = signal(false);
+  readonly showSignupCaptchaSecret = signal(false);
   readonly item = signal<SystemParametersItem>({ ...DEFAULT_ITEM });
   readonly baselineItem = signal<SystemParametersItem>({ ...DEFAULT_ITEM });
   readonly storageAccounts = signal<StorageAccountItem[]>([]);
@@ -306,6 +327,17 @@ export class SettingsParametersPage implements OnInit {
         raw?.voipPabxRemoteCommandExecutor,
       ),
       voipPabxRemoteCommandExecutorIsActive: raw?.voipPabxRemoteCommandExecutorIsActive !== false,
+      billingSignupTrialEnabled: raw?.billingSignupTrialEnabled === true,
+      billingSignupTrialAmount: this.normalizeNumber(raw?.billingSignupTrialAmount, 0),
+      billingSignupTrialCurrency: String(raw?.billingSignupTrialCurrency ?? 'BRL') || 'BRL',
+      billingSignupTrialExpiresDays: this.normalizeInteger(raw?.billingSignupTrialExpiresDays, 15),
+      billingSignupTrialRequireEmailVerified:
+        raw?.billingSignupTrialRequireEmailVerified !== false,
+      signupCaptchaEnabled: raw?.signupCaptchaEnabled === true,
+      signupCaptchaProvider: this.normalizeCaptchaProvider(raw?.signupCaptchaProvider),
+      signupCaptchaSiteKey: String(raw?.signupCaptchaSiteKey ?? ''),
+      signupCaptchaSecret: String(raw?.signupCaptchaSecret ?? ''),
+      signupMaxAccountsPerIpDay: this.normalizeInteger(raw?.signupMaxAccountsPerIpDay, 3),
     };
   }
 
@@ -328,6 +360,13 @@ export class SettingsParametersPage implements OnInit {
         value.voipPabxMediaStorageMode === 'storage' ? value.voipPabxMediaStorageAccountUUID : '',
       voipPabxMediaDeliveryMode: value.voipPabxMediaDeliveryMode,
       voipPabxRemoteCommandExecutor: value.voipPabxRemoteCommandExecutor,
+      billingSignupTrialAmount: Math.max(Number(value.billingSignupTrialAmount || 0), 0),
+      billingSignupTrialCurrency: (value.billingSignupTrialCurrency.trim() || 'BRL').toUpperCase(),
+      billingSignupTrialExpiresDays: this.clampInteger(value.billingSignupTrialExpiresDays, 1, 365),
+      signupCaptchaProvider: value.signupCaptchaProvider,
+      signupCaptchaSiteKey: value.signupCaptchaSiteKey.trim(),
+      signupCaptchaSecret: value.signupCaptchaSecret.trim(),
+      signupMaxAccountsPerIpDay: this.clampInteger(value.signupMaxAccountsPerIpDay, 1, 100),
     };
   }
 
@@ -355,6 +394,16 @@ export class SettingsParametersPage implements OnInit {
       voipPabxMediaDeliveryModeIsActive: value.voipPabxMediaDeliveryModeIsActive,
       voipPabxRemoteCommandExecutor: value.voipPabxRemoteCommandExecutor,
       voipPabxRemoteCommandExecutorIsActive: value.voipPabxRemoteCommandExecutorIsActive,
+      billingSignupTrialEnabled: value.billingSignupTrialEnabled,
+      billingSignupTrialAmount: value.billingSignupTrialAmount,
+      billingSignupTrialCurrency: value.billingSignupTrialCurrency,
+      billingSignupTrialExpiresDays: value.billingSignupTrialExpiresDays,
+      billingSignupTrialRequireEmailVerified: value.billingSignupTrialRequireEmailVerified,
+      signupCaptchaEnabled: value.signupCaptchaEnabled,
+      signupCaptchaProvider: value.signupCaptchaProvider,
+      signupCaptchaSiteKey: value.signupCaptchaSiteKey,
+      signupCaptchaSecret: value.signupCaptchaSecret,
+      signupMaxAccountsPerIpDay: value.signupMaxAccountsPerIpDay,
     });
   }
 
@@ -390,6 +439,28 @@ export class SettingsParametersPage implements OnInit {
       .trim()
       .toLowerCase();
     return normalized === 'agent' || normalized === 'esl_ami' ? normalized : '';
+  }
+
+  private normalizeCaptchaProvider(value: unknown): 'turnstile' | 'hcaptcha' | '' {
+    const normalized = String(value ?? '')
+      .trim()
+      .toLowerCase();
+    return normalized === 'turnstile' || normalized === 'hcaptcha' ? normalized : '';
+  }
+
+  private normalizeNumber(value: unknown, fallback: number): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  private normalizeInteger(value: unknown, fallback: number): number {
+    const parsed = Math.trunc(Number(value));
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  private clampInteger(value: unknown, min: number, max: number): number {
+    const parsed = this.normalizeInteger(value, min);
+    return Math.min(Math.max(parsed, min), max);
   }
 
   private friendlyError(error: unknown, fallback: string) {
