@@ -600,6 +600,24 @@
             </form>
           </div>
         </mat-tab>
+        <mat-tab [label]="'Entitlements' | t">
+          <div class="tab-content">
+            <form class="form-grid product-form-grid" [formGroup]="productForm">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Entitlement pattern' | t }}</mat-label>
+                <input matInput maxlength="160" formControlName="entitlementPattern" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Requires entitlement code' | t }}</mat-label>
+                <input matInput maxlength="160" formControlName="requiresEntitlementCode" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Resource type' | t }}</mat-label>
+                <input matInput maxlength="80" formControlName="resourceType" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
         <mat-tab [label]="'Public Catalog' | t">
           <div class="tab-content">
             <form class="form-grid product-form-grid" [formGroup]="productForm">
