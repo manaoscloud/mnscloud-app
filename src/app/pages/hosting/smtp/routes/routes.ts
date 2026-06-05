@@ -57,6 +57,17 @@ type SmtpRoute = {
   HspProvider?: string;
 };
 
+type SmtpEventType = {
+  code: string;
+  label: string;
+  description: string;
+};
+
+type SmtpEventTypeResponse = {
+  status: string;
+  data: SmtpEventType[];
+};
+
 @Component({
   selector: 'app-hosting-smtp-routes',
   standalone: true,
@@ -112,6 +123,7 @@ export class HostingSmtpRoutesPage implements OnDestroy {
   readonly testing = signal(false);
   readonly routes = signal<SmtpRoute[]>([]);
   readonly accounts = signal<SmtpAccount[]>([]);
+  readonly eventTypes = signal<SmtpEventType[]>([]);
   readonly editing = signal<SmtpRoute | null>(null);
   readonly testingRoute = signal<SmtpRoute | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
@@ -143,14 +155,6 @@ export class HostingSmtpRoutesPage implements OnDestroy {
     subject: ['MNSCloud SMTP route test'],
     html: ['<p>This is a test email sent from an MNSCloud SMTP route.</p>'],
   });
-
-  readonly eventTypeOptions = [
-    'general',
-    'welcome',
-    'resetPassword',
-    'userAccessInvite',
-    'userAccessAccept',
-  ];
 
   readonly filteredAccountOptions = computed(() => {
     const term = this.accountSearch().trim().toLowerCase();
@@ -203,6 +207,7 @@ export class HostingSmtpRoutesPage implements OnDestroy {
       const [accounts, routes] = await Promise.all([
         this.api.get<SmtpAccount[]>(`${this.rootEndpoint()}/accounts`),
         this.api.get<SmtpRoute[]>(this.endpoint()),
+        this.loadEventTypes(),
       ]);
       this.accounts.set(Array.isArray(accounts) ? accounts : []);
       this.routes.set(Array.isArray(routes) ? routes : []);
@@ -239,6 +244,14 @@ export class HostingSmtpRoutesPage implements OnDestroy {
 
   resetAccountSearch(opened: boolean) {
     if (!opened) this.accountSearch.set('');
+  }
+
+  private async loadEventTypes() {
+    const response = await this.api.get<SmtpEventTypeResponse | SmtpEventType[]>(
+      `${this.rootEndpoint()}/event-types`,
+    );
+    const rows = Array.isArray(response) ? response : response.data;
+    this.eventTypes.set(Array.isArray(rows) ? rows : []);
   }
 
   startCreate() {

@@ -195,8 +195,8 @@
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Event Type</mat-label>
               <mat-select formControlName="eventType">
-                @for (event of eventTypeOptions; track event) {
-                  <mat-option [value]="event">{{ event }}</mat-option>
+                @for (event of eventTypes(); track event.code) {
+                  <mat-option [value]="event.code">{{ event.label }} · {{ event.code }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
