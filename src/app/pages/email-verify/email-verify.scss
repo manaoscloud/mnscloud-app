@@ -10,6 +10,9 @@
 .auth-card {
   width: 100%;
   max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 2rem;
   border-radius: 1.25rem;
   text-align: center;
@@ -21,18 +24,22 @@
 .status-mark {
   width: 64px;
   height: 64px;
-  display: inline-grid;
+  display: grid;
   place-items: center;
-  margin-bottom: 1.25rem;
+  margin: 0 auto 1.25rem;
   border-radius: 50%;
   color: var(--mat-sys-color-primary);
   background: color-mix(in srgb, var(--mat-sys-color-primary) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--mat-sys-color-primary) 42%, transparent);
+  flex: 0 0 auto;
 
   mat-icon {
     width: 32px;
     height: 32px;
+    display: inline-grid;
+    place-items: center;
     font-size: 32px;
+    line-height: 32px;
   }
 
   &.success {
