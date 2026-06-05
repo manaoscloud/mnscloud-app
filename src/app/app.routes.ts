@@ -38,6 +38,11 @@ export const routes: Routes = [
       import('./pages/reset-password/reset-password').then((m) => m.ResetPasswordComponent),
     title: 'Reset Password | mnscloud',
   },
+  {
+    path: 'auth/email/verify',
+    loadComponent: () => import('./pages/email-verify/email-verify').then((m) => m.EmailVerifyPage),
+    title: 'Verify Email | mnscloud',
+  },
 
   // Invite (público)
   {

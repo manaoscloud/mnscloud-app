@@ -1,0 +1,50 @@
+<main class="page-wrapper" @fadeIn>
+  <mat-card class="auth-card">
+    <div
+      class="status-mark"
+      [class.success]="state() === 'success'"
+      [class.error]="state() === 'error'"
+    >
+      @if (state() === 'loading') {
+        <mat-spinner diameter="34"></mat-spinner>
+      } @else {
+        <mat-icon>{{ state() === 'success' ? 'check' : 'priority_high' }}</mat-icon>
+      }
+    </div>
+
+    @if (state() === 'loading') {
+      <h1 class="mat-headline-small title">Verifying email</h1>
+      <p class="subtitle mat-body-medium">Please wait while we confirm your account.</p>
+    } @else if (state() === 'success') {
+      <h1 class="mat-headline-small title">Email verified</h1>
+      <p class="subtitle mat-body-medium">
+        Your account is ready. You will be redirected to sign in shortly.
+      </p>
+    } @else {
+      <h1 class="mat-headline-small title">Verification failed</h1>
+      <p class="subtitle mat-body-medium">We could not confirm this email verification link.</p>
+    }
+
+    <p class="result-message">{{ message() }}</p>
+
+    @if (state() === 'success') {
+      <p class="redirect-note">Redirecting to sign in in {{ countdown() }}s.</p>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="submit-btn"
+        (click)="goToSignIn()"
+      >
+        Go to Sign In
+      </button>
+    } @else if (state() === 'error') {
+      <button mat-flat-button color="primary" type="button" class="submit-btn" routerLink="/signin">
+        Go to Sign In
+      </button>
+      <p class="link-row">
+        <a routerLink="/signup">Create a new account</a>
+      </p>
+    }
+  </mat-card>
+</main>
