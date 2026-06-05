@@ -51,6 +51,10 @@ type SystemParametersItem = {
   signupCaptchaSiteKey: string;
   signupCaptchaSecret: string;
   signupMaxAccountsPerIpDay: number;
+  loginCaptchaEnabled: boolean;
+  authRememberMeEnabled: boolean;
+  authSessionHours: number;
+  authRememberMeHours: number;
 };
 
 type StorageAccountItem = {
@@ -94,6 +98,10 @@ const DEFAULT_ITEM: SystemParametersItem = {
   signupCaptchaSiteKey: '',
   signupCaptchaSecret: '',
   signupMaxAccountsPerIpDay: 3,
+  loginCaptchaEnabled: false,
+  authRememberMeEnabled: true,
+  authSessionHours: 12,
+  authRememberMeHours: 720,
 };
 
 @Component({
@@ -338,6 +346,10 @@ export class SettingsParametersPage implements OnInit {
       signupCaptchaSiteKey: String(raw?.signupCaptchaSiteKey ?? ''),
       signupCaptchaSecret: String(raw?.signupCaptchaSecret ?? ''),
       signupMaxAccountsPerIpDay: this.normalizeInteger(raw?.signupMaxAccountsPerIpDay, 3),
+      loginCaptchaEnabled: raw?.loginCaptchaEnabled === true,
+      authRememberMeEnabled: raw?.authRememberMeEnabled !== false,
+      authSessionHours: this.normalizeInteger(raw?.authSessionHours, 12),
+      authRememberMeHours: this.normalizeInteger(raw?.authRememberMeHours, 720),
     };
   }
 
@@ -367,6 +379,8 @@ export class SettingsParametersPage implements OnInit {
       signupCaptchaSiteKey: value.signupCaptchaSiteKey.trim(),
       signupCaptchaSecret: value.signupCaptchaSecret.trim(),
       signupMaxAccountsPerIpDay: this.clampInteger(value.signupMaxAccountsPerIpDay, 1, 100),
+      authSessionHours: this.clampInteger(value.authSessionHours, 1, 168),
+      authRememberMeHours: this.clampInteger(value.authRememberMeHours, 1, 2160),
     };
   }
 
@@ -404,6 +418,10 @@ export class SettingsParametersPage implements OnInit {
       signupCaptchaSiteKey: value.signupCaptchaSiteKey,
       signupCaptchaSecret: value.signupCaptchaSecret,
       signupMaxAccountsPerIpDay: value.signupMaxAccountsPerIpDay,
+      loginCaptchaEnabled: value.loginCaptchaEnabled,
+      authRememberMeEnabled: value.authRememberMeEnabled,
+      authSessionHours: value.authSessionHours,
+      authRememberMeHours: value.authRememberMeHours,
     });
   }
 

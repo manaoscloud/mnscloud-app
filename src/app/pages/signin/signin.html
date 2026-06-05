@@ -52,10 +52,20 @@
         </button>
       </mat-form-field>
 
-      <!-- 🔹 FORGOT PASSWORD LINK -->
-      <p class="forgot-row">
+      <div class="signin-options">
+        @if (signinPolicy().rememberMeEnabled) {
+          <mat-checkbox formControlName="rememberMe">{{ 'signin.rememberMe' | t }}</mat-checkbox>
+        }
         <a routerLink="/auth/forgot-password">{{ 'signin.forgotPassword' | t }}</a>
-      </p>
+      </div>
+
+      @if (signinPolicy().captchaEnabled) {
+        <div class="captcha-row">
+          <div #captchaContainer class="captcha-container"></div>
+        </div>
+      }
+
+      <!-- 🔹 FORGOT PASSWORD LINK -->
 
       <!-- API ERROR -->
       @if (apiError()) {

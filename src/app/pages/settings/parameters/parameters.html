@@ -253,6 +253,32 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
+                  <mat-label>Session Hours</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="1"
+                    max="168"
+                    [ngModel]="item().authSessionHours"
+                    (ngModelChange)="updateItem({ authSessionHours: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Remember Me Hours</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="1"
+                    max="2160"
+                    [ngModel]="item().authRememberMeHours"
+                    (ngModelChange)="updateItem({ authRememberMeHours: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
                   <mat-label>Captcha Provider</mat-label>
                   <mat-select
                     [ngModel]="item().signupCaptchaProvider"
@@ -325,7 +351,23 @@
                     (ngModelChange)="updateItem({ signupCaptchaEnabled: $event })"
                     [ngModelOptions]="{ standalone: true }"
                   >
-                    Captcha Active
+                    Signup Captcha Active
+                  </mat-slide-toggle>
+
+                  <mat-slide-toggle
+                    [ngModel]="item().loginCaptchaEnabled"
+                    (ngModelChange)="updateItem({ loginCaptchaEnabled: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    Login Captcha Active
+                  </mat-slide-toggle>
+
+                  <mat-slide-toggle
+                    [ngModel]="item().authRememberMeEnabled"
+                    (ngModelChange)="updateItem({ authRememberMeEnabled: $event })"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    Remember Me Active
                   </mat-slide-toggle>
                 </div>
               </form>

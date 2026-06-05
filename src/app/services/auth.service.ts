@@ -10,6 +10,39 @@ const AUTH_STATE = 'mnscloud_auth';
 const JWT_KEY = 'mnscloud_jwt';
 const USER_KEY = 'mnscloud_user';
 
+function storageAvailable(storage: Storage | undefined): storage is Storage {
+  return typeof storage !== 'undefined';
+}
+
+function readAuthValue(key: string): string | null {
+  const localStore = globalThis.localStorage;
+  const sessionStore = globalThis.sessionStorage;
+  if (storageAvailable(localStore)) {
+    const local = localStore.getItem(key);
+    if (local !== null) return local;
+  }
+  return storageAvailable(sessionStore) ? sessionStore.getItem(key) : null;
+}
+
+function writeAuthValue(key: string, value: string, rememberMe: boolean) {
+  const target = rememberMe ? globalThis.localStorage : globalThis.sessionStorage;
+  const other = rememberMe ? globalThis.sessionStorage : globalThis.localStorage;
+  if (storageAvailable(target)) target.setItem(key, value);
+  if (storageAvailable(other)) other.removeItem(key);
+}
+
+function removeAuthValue(key: string) {
+  const localStore = globalThis.localStorage;
+  const sessionStore = globalThis.sessionStorage;
+  if (storageAvailable(localStore)) localStore.removeItem(key);
+  if (storageAvailable(sessionStore)) sessionStore.removeItem(key);
+}
+
+function isRememberedSession(): boolean {
+  const localStore = globalThis.localStorage;
+  return storageAvailable(localStore) && localStore.getItem(JWT_KEY) !== null;
+}
+
 export type AppRole = 'MASTER' | 'OWNER' | 'ADMIN' | 'USER';
 
 export interface AuthUser {
@@ -44,16 +77,15 @@ export class AuthService {
   constructor() {}
 
   private readInitialState(): boolean {
-    if (typeof localStorage === 'undefined') return false;
-    return localStorage.getItem(JWT_KEY) !== null;
+    return readAuthValue(JWT_KEY) !== null;
   }
 
   // ---------------------------------------------------------
   // LOGIN – salva JWT e carrega perfil completo + role (/user/me)
   // ---------------------------------------------------------
-  async login(jwt: string, initialUser: any, api: ApiService) {
-    localStorage.setItem(JWT_KEY, jwt);
-    localStorage.setItem(AUTH_STATE, 'true');
+  async login(jwt: string, initialUser: any, api: ApiService, rememberMe = false) {
+    writeAuthValue(JWT_KEY, jwt, rememberMe);
+    writeAuthValue(AUTH_STATE, 'true', rememberMe);
     this._loggedIn.set(true);
 
     const initialEnvironmentUUID = normalizeEnvironmentUUID(initialUser?.EnvironmentUUID);
@@ -72,7 +104,7 @@ export class AuthService {
         EnvironmentUUID: initialEnvironmentUUID,
       };
 
-      localStorage.setItem(USER_KEY, JSON.stringify(seedUser));
+      writeAuthValue(USER_KEY, JSON.stringify(seedUser), rememberMe);
       this._user.set(seedUser);
     }
 
@@ -87,9 +119,9 @@ export class AuthService {
   // LOGOUT
   // ---------------------------------------------------------
   logout() {
-    localStorage.removeItem(JWT_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(AUTH_STATE);
+    removeAuthValue(JWT_KEY);
+    removeAuthValue(USER_KEY);
+    removeAuthValue(AUTH_STATE);
     writeStoredEnvironmentUUID(null);
 
     this._user.set(null);
@@ -100,7 +132,7 @@ export class AuthService {
   // TOKEN
   // ---------------------------------------------------------
   getJwt(): string | null {
-    return localStorage.getItem(JWT_KEY);
+    return readAuthValue(JWT_KEY);
   }
 
   getToken(): string | null {
@@ -111,7 +143,7 @@ export class AuthService {
   // USER (LOCAL)
   // ---------------------------------------------------------
   getUser(): AuthUser | null {
-    const raw = localStorage.getItem(USER_KEY);
+    const raw = readAuthValue(USER_KEY);
     return raw ? (JSON.parse(raw) as AuthUser) : null;
   }
 
@@ -155,7 +187,7 @@ export class AuthService {
           readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(prev?.EnvironmentUUID) ?? null,
       };
 
-      localStorage.setItem(USER_KEY, JSON.stringify(updated));
+      writeAuthValue(USER_KEY, JSON.stringify(updated), isRememberedSession());
       this._user.set(updated);
       this._loggedIn.set(true);
 
@@ -191,7 +223,7 @@ export class AuthService {
           null,
       };
 
-      localStorage.setItem(USER_KEY, JSON.stringify(merged));
+      writeAuthValue(USER_KEY, JSON.stringify(merged), isRememberedSession());
       this._user.set(merged);
       return true;
     } catch (err) {
@@ -209,7 +241,7 @@ export class AuthService {
 
     const merged: AuthUser = { ...current, ...patch };
 
-    localStorage.setItem(USER_KEY, JSON.stringify(merged));
+    writeAuthValue(USER_KEY, JSON.stringify(merged), isRememberedSession());
     this._user.set(merged);
   }
 }
