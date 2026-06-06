@@ -936,6 +936,12 @@ export class MainLayout {
       icon: 'person',
       children: [
         { id: 'user/profile', label: 'My Profile', icon: 'badge', route: '/user/profile' },
+        {
+          id: 'user/governance',
+          label: 'Governance',
+          icon: 'manage_accounts',
+          masterRoute: '/system/governance/users',
+        },
       ],
     },
 

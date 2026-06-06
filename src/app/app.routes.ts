@@ -1063,6 +1063,15 @@ export const routes: Routes = [
                 title: 'System Monitoring • Agents | mnscloud',
               },
               {
+                path: 'governance/users',
+                loadComponent: () =>
+                  import('./pages/system/governance/users/users').then(
+                    (m) => m.SystemGovernanceUsersPage,
+                  ),
+                title: 'System Governance • Users | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'cyber-security',
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
