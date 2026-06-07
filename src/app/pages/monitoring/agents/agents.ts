@@ -230,12 +230,19 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     this.loadingStarted = performance.now();
     this.loading.set(true);
     try {
-      const [response, runtimeProductsResponse] = await Promise.all([
+      const [agentsResult, runtimeProductsResult] = await Promise.allSettled([
         this.api.get<any>(`monitoring/agents${this.queryString()}`),
         this.api.get<any>('monitoring/agents/runtime-products'),
       ]);
+      if (agentsResult.status === 'rejected') throw agentsResult.reason;
+      const response = agentsResult.value;
       this.agents.set(response?.data?.items ?? []);
-      this.runtimeProducts.set(runtimeProductsResponse?.data ?? []);
+      if (runtimeProductsResult.status === 'fulfilled') {
+        this.runtimeProducts.set(runtimeProductsResult.value?.data ?? []);
+      } else if (this.runtimeProducts().length === 0) {
+        this.runtimeProducts.set([]);
+        this.snack.error(this.errorMessage(runtimeProductsResult.reason, 'Failed to load runtime products.'));
+      }
       this.dataSource.data = this.agents();
       this.pageIndex.set(0);
       this.reconcileSelection();
