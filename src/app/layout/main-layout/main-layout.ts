@@ -1746,6 +1746,7 @@ export class MainLayout {
       id: 'monitoring',
       label: 'Monitoring',
       icon: 'monitor_heart',
+      entitlementCode: 'module.monitoring.*',
       children: [
         {
           id: 'monitoring/agents',
@@ -1771,6 +1772,7 @@ export class MainLayout {
       id: 'cyber-security',
       label: 'Cyber Security',
       icon: 'security',
+      entitlementCode: 'module.cyber-security.*',
       roles: ['OWNER', 'ADMIN'],
       requiresEnvironment: true,
       masterRoute: '/system/cyber-security',
@@ -1904,6 +1906,7 @@ export class MainLayout {
       id: 'clinic',
       label: 'Clinica',
       icon: 'local_hospital',
+      entitlementCode: 'module.clinic.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
     },
@@ -1913,6 +1916,7 @@ export class MainLayout {
       id: 'laboratory',
       label: 'Laboratório',
       icon: 'biotech',
+      entitlementCode: 'module.laboratory.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
     },
@@ -1922,6 +1926,7 @@ export class MainLayout {
       id: 'crm',
       label: 'CRM',
       icon: 'contact_page',
+      entitlementCode: 'module.erp.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
