@@ -1,0 +1,189 @@
+.voip-dashboard {
+  .dashboard-content {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .dashboard-filters {
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  }
+
+  .kpi-grid,
+  .dashboard-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi-tile,
+  .dashboard-panel {
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    border-radius: 8px;
+    background: var(--mat-sys-color-surface);
+  }
+
+  .kpi-tile {
+    display: grid;
+    min-width: 0;
+    gap: 0.35rem;
+    padding: 0.9rem;
+
+    mat-icon {
+      color: var(--mat-sys-color-primary);
+    }
+
+    span {
+      color: var(--mat-sys-color-on-surface-variant);
+      font-size: 0.78rem;
+      line-height: 1.1rem;
+    }
+
+    strong {
+      font-size: 1.25rem;
+      line-height: 1.35rem;
+    }
+  }
+
+  .dashboard-panel {
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.2rem;
+    }
+
+    p,
+    small {
+      margin: 0.25rem 0 0;
+      color: var(--mat-sys-color-on-surface-variant);
+      font-size: 0.82rem;
+      line-height: 1.18rem;
+    }
+  }
+
+  .module-list,
+  .runtime-list,
+  .metric-stack {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .module-row,
+  .runtime-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 1rem;
+    min-height: 64px;
+    padding: 0.75rem;
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    border-radius: 8px;
+    background: var(--mat-sys-color-surface-container-low);
+
+    strong,
+    small,
+    span {
+      display: block;
+    }
+
+    small {
+      color: var(--mat-sys-color-on-surface-variant);
+      font-size: 0.78rem;
+      line-height: 1.1rem;
+    }
+  }
+
+  .status-chip {
+    min-width: 104px;
+    justify-content: center;
+    font-size: 0.78rem;
+  }
+
+  .metric-row {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) 56px;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 34px;
+
+    span {
+      color: var(--mat-sys-color-on-surface-variant);
+      font-size: 0.78rem;
+    }
+
+    strong {
+      text-align: right;
+    }
+  }
+
+  .metric-track {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--mat-sys-color-surface-container-highest);
+
+    i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: #2dd4bf;
+    }
+
+    &.is-warning i {
+      background: #fbbf24;
+    }
+
+    &.is-danger i {
+      background: #f87171;
+    }
+  }
+
+  .empty-state {
+    margin: 0;
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .voip-dashboard {
+    .kpi-grid,
+    .dashboard-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .voip-dashboard {
+    .dashboard-filters,
+    .kpi-grid,
+    .dashboard-grid,
+    .module-row,
+    .runtime-row {
+      grid-template-columns: 1fr;
+    }
+
+    .status-chip {
+      width: 100%;
+    }
+  }
+}

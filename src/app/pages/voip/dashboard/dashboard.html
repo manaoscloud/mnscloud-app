@@ -1,0 +1,153 @@
+<section class="erp-page voip-dashboard" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'VoIP Dashboard' | t }}</h1>
+        <p>
+          {{ 'Unified operational view for domains, DID, PABX, SBC, WebRTC and Softswitch.' | t }}
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | t }}
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid dashboard-filters">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Period' | t }}</mat-label>
+        <mat-select [ngModel]="period()" (ngModelChange)="period.set($event)">
+          @for (option of periodOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label | t }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | t }}
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | t }}
+        </button>
+      </div>
+    </div>
+
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <div class="kpi-grid">
+        @for (item of kpis(); track item.label) {
+          <article class="kpi-tile">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label | t }}</span>
+            <strong>{{ item.value }}</strong>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Module Readiness' | t }}</h2>
+              <p>{{ 'Commercial and runtime submodules currently configured in VoIP.' | t }}</p>
+            </div>
+          </div>
+
+          <div class="module-list">
+            @for (item of modules(); track item.module) {
+              <article class="module-row" [class.state-warning]="item.health === 'warning'">
+                <div>
+                  <strong>{{ item.label | t }}</strong>
+                  <small>{{ item.status | t }}</small>
+                </div>
+                <span>{{ item.primaryValue || 0 }}/{{ item.secondaryValue || 0 }}</span>
+                <span
+                  class="status-pill status-chip state-chip"
+                  [class.chip-success]="item.health === 'ok'"
+                  [class.chip-running]="item.health === 'warning'"
+                  [class.chip-skipped]="item.health !== 'ok' && item.health !== 'warning'"
+                  [class.is-active]="item.health === 'ok'"
+                  [class.is-inactive]="item.health !== 'ok'"
+                  >{{ healthLabel(item.health) | t }}</span
+                >
+              </article>
+            } @empty {
+              <p class="empty-state">{{ 'No VoIP modules found.' | t }}</p>
+            }
+          </div>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Runtime Readiness' | t }}</h2>
+              <p>{{ 'Online state reported by VoIP infrastructure servers.' | t }}</p>
+            </div>
+          </div>
+
+          <div class="runtime-list">
+            @for (item of runtimeBreakdown(); track item.component) {
+              <article class="runtime-row">
+                <div>
+                  <strong>{{ item.component | t }}</strong>
+                  <small>{{ item.online || 0 }}/{{ item.total || 0 }} {{ 'online' | t }}</small>
+                </div>
+                <span
+                  class="status-pill status-chip state-chip"
+                  [class.chip-success]="runtimeHealth(item) === 'ok'"
+                  [class.chip-running]="runtimeHealth(item) === 'warning'"
+                  [class.chip-failed]="runtimeHealth(item) === 'critical'"
+                  [class.chip-skipped]="runtimeHealth(item) === 'empty'"
+                  [class.is-active]="runtimeHealth(item) === 'ok'"
+                  [class.is-inactive]="runtimeHealth(item) !== 'ok'"
+                  >{{ healthLabel(runtimeHealth(item)) | t }}</span
+                >
+              </article>
+            } @empty {
+              <p class="empty-state">{{ 'No VoIP runtime components found.' | t }}</p>
+            }
+          </div>
+        </section>
+      </div>
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'Call Outcome' | t }}</h2>
+            <p>{{ 'Aggregated PABX and Softswitch call activity for the selected period.' | t }}</p>
+          </div>
+          @if (generatedAt()) {
+            <small>{{ 'Last generated' | t }}: {{ generatedAt() | date: 'short' }}</small>
+          }
+        </div>
+
+        <div class="metric-stack">
+          @for (item of callBreakdown(); track item.label) {
+            <div class="metric-row">
+              <span>{{ item.label | t }}</span>
+              <div
+                class="metric-track"
+                [class.is-danger]="item.label === 'Failed'"
+                [class.is-warning]="item.label === 'Other'"
+              >
+                <i [style.width.%]="metricPercent(item, callBreakdown())"></i>
+              </div>
+              <strong>{{ item.value || 0 }}</strong>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  </mat-card>
+</section>

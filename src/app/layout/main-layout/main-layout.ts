@@ -1212,6 +1212,14 @@ export class MainLayout {
       requiresEnvironment: true,
       children: [
         {
+          id: 'voip/dashboard',
+          label: 'Dashboard',
+          icon: 'dashboard',
+          route: '/voip',
+          masterRoute: '/system/voip',
+          scope: 'both',
+        },
+        {
           id: 'voip/domain',
           label: 'Domain',
           icon: 'language',

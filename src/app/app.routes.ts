@@ -868,6 +868,13 @@ export const routes: Routes = [
 
               // VoIP
               {
+                path: 'voip',
+                loadComponent: () =>
+                  import('./pages/voip/dashboard/dashboard').then((m) => m.VoipDashboardPage),
+                title: 'VoIP Dashboard | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
                 path: 'voip/domain',
                 loadComponent: () =>
                   import('./pages/voip/domain/domain').then((m) => m.VoipDomainPage),
@@ -1248,6 +1255,13 @@ export const routes: Routes = [
                   ),
                 title: 'System Billing • Wallets | mnscloud',
                 data: { scope: 'master' },
+              },
+              {
+                path: 'voip',
+                loadComponent: () =>
+                  import('./pages/voip/dashboard/dashboard').then((m) => m.VoipDashboardPage),
+                title: 'System VoIP Dashboard | mnscloud',
+                data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'softswitch',

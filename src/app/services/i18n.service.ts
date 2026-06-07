@@ -367,6 +367,36 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Failed to load Storage dashboard.': 'Falha ao carregar o painel Storage.',
   'Some Storage dashboard sections could not be loaded.':
     'Algumas seções do painel Storage não puderam ser carregadas.',
+  'VoIP Dashboard': 'Painel VoIP',
+  'Unified operational view for domains, DID, PABX, SBC, WebRTC and Softswitch.':
+    'Visão operacional unificada para domínios, DID, PABX, SBC, WebRTC e Softswitch.',
+  'Active domains': 'Domínios ativos',
+  'Assigned DIDs': 'DIDs atribuídos',
+  'Active PABX': 'PABX ativos',
+  'WebRTC online': 'WebRTC online',
+  'Answered calls': 'Chamadas atendidas',
+  'Failed calls': 'Chamadas com falha',
+  'Module Readiness': 'Prontidão dos Módulos',
+  'Commercial and runtime submodules currently configured in VoIP.':
+    'Submódulos comerciais e de runtime configurados atualmente em VoIP.',
+  'Runtime Readiness': 'Prontidão do Runtime',
+  'Online state reported by VoIP infrastructure servers.':
+    'Estado online reportado pelos servidores de infraestrutura VoIP.',
+  'PABX Servers': 'Servidores PABX',
+  'SBC Servers': 'Servidores SBC',
+  'WebRTC Servers': 'Servidores WebRTC',
+  'Softswitch Servers': 'Servidores Softswitch',
+  'Not configured': 'Não configurado',
+  'Active / total': 'Ativo / total',
+  'Assigned / total': 'Atribuído / total',
+  'Trunks / routes': 'Troncos / rotas',
+  'Active domains / total': 'Domínios ativos / total',
+  'Aggregated PABX and Softswitch call activity for the selected period.':
+    'Atividade de chamadas PABX e Softswitch agregada para o período selecionado.',
+  'Last generated': 'Gerado em',
+  'No VoIP modules found.': 'Nenhum módulo VoIP encontrado.',
+  'No VoIP runtime components found.': 'Nenhum componente de runtime VoIP encontrado.',
+  'Failed to load VoIP dashboard.': 'Falha ao carregar o painel VoIP.',
   'PABX Dashboard': 'Painel PABX',
   'Operational health, capacity, queues, agents, trunks and call activity.':
     'Saúde operacional, capacidade, filas, agentes, troncos e atividade de chamadas.',
@@ -1331,6 +1361,36 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Failed to load Storage dashboard.': 'Error al cargar el panel Storage.',
   'Some Storage dashboard sections could not be loaded.':
     'Algunas secciones del panel Storage no se pudieron cargar.',
+  'VoIP Dashboard': 'Panel VoIP',
+  'Unified operational view for domains, DID, PABX, SBC, WebRTC and Softswitch.':
+    'Vista operativa unificada de dominios, DID, PABX, SBC, WebRTC y Softswitch.',
+  'Active domains': 'Dominios activos',
+  'Assigned DIDs': 'DIDs asignados',
+  'Active PABX': 'PABX activos',
+  'WebRTC online': 'WebRTC en línea',
+  'Answered calls': 'Llamadas contestadas',
+  'Failed calls': 'Llamadas fallidas',
+  'Module Readiness': 'Preparación de Módulos',
+  'Commercial and runtime submodules currently configured in VoIP.':
+    'Submódulos comerciales y de runtime configurados actualmente en VoIP.',
+  'Runtime Readiness': 'Preparación del Runtime',
+  'Online state reported by VoIP infrastructure servers.':
+    'Estado en línea reportado por los servidores de infraestructura VoIP.',
+  'PABX Servers': 'Servidores PABX',
+  'SBC Servers': 'Servidores SBC',
+  'WebRTC Servers': 'Servidores WebRTC',
+  'Softswitch Servers': 'Servidores Softswitch',
+  'Not configured': 'No configurado',
+  'Active / total': 'Activo / total',
+  'Assigned / total': 'Asignado / total',
+  'Trunks / routes': 'Troncales / rutas',
+  'Active domains / total': 'Dominios activos / total',
+  'Aggregated PABX and Softswitch call activity for the selected period.':
+    'Actividad de llamadas PABX y Softswitch agregada para el período seleccionado.',
+  'Last generated': 'Generado en',
+  'No VoIP modules found.': 'No se encontraron módulos VoIP.',
+  'No VoIP runtime components found.': 'No se encontraron componentes de runtime VoIP.',
+  'Failed to load VoIP dashboard.': 'Error al cargar el panel VoIP.',
   'PABX Dashboard': 'Panel PABX',
   'Operational health, capacity, queues, agents, trunks and call activity.':
     'Salud operativa, capacidad, colas, agentes, troncales y actividad de llamadas.',
