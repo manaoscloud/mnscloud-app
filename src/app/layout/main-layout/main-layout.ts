@@ -1523,6 +1523,15 @@ export class MainLayout {
       requiresEnvironment: true,
       children: [
         {
+          id: 'hosting/dashboard',
+          label: 'Dashboard',
+          icon: 'dashboard',
+          route: '/hosting',
+          masterRoute: '/system/hosting',
+          roles: ['OWNER', 'ADMIN', 'USER'],
+          requiresEnvironment: true,
+        },
+        {
           id: 'hosting/dns',
           label: 'DNS',
           icon: 'language',

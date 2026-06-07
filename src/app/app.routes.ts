@@ -595,6 +595,13 @@ export const routes: Routes = [
 
               // Hosting
               {
+                path: 'hosting',
+                loadComponent: () =>
+                  import('./pages/hosting/dashboard/dashboard').then((m) => m.HostingDashboardPage),
+                title: 'Hosting | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
+              },
+              {
                 path: 'hosting/dns/domains',
                 loadComponent: () =>
                   import('./pages/hosting/dns/domains/domains').then(
@@ -1267,6 +1274,13 @@ export const routes: Routes = [
                   import('./pages/voip/did/external/external').then((m) => m.VoipDidExternalPage),
                 title: 'System DID External | mnscloud',
                 data: { scope: 'master' },
+              },
+              {
+                path: 'hosting',
+                loadComponent: () =>
+                  import('./pages/hosting/dashboard/dashboard').then((m) => m.HostingDashboardPage),
+                title: 'System Hosting | mnscloud',
+                data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'hosting/smtp',
