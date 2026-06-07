@@ -10,6 +10,10 @@
 - The Angular app is a public API client. By default it consumes same-origin `/api/v1`, and in
   standalone/public deployments it may point to any authorized MNSCloud API through
   `window.MNSCLOUD_APP_CONFIG.apiBaseUrl` loaded from `/env.js`.
+- When the app is published behind `mnscloud-nginx`, the effective browser-facing `/env.js` may be
+  served by the edge gateway from `/etc/nginx/mnscloud/runtime/env.js`, not by the app node. The
+  canonical value for multi-tenant edge deployments is an explicit empty string (`apiBaseUrl: ""`)
+  so every tenant/domain calls its own same-origin `/api/v1` path.
 - The app must not contain server-side secrets, provider credentials, database credentials, master
   keys, private business rules, or hidden API bypasses.
 - Browser-side authorization is UX only. The API remains the source of truth for roles, tenant scope,

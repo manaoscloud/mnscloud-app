@@ -7,6 +7,9 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - Configure the API through `public/env.js`.
 - Use `window.MNSCLOUD_APP_CONFIG.apiBaseUrl` for the API v1 base URL.
 - Leave `apiBaseUrl` empty only when the app is served by the same origin as `/api/v1`.
+- In edge-served environments, the browser may receive `/env.js` from `mnscloud-nginx` instead of
+  the app node. Keep both app runtime and edge runtime `env.js` explicit and same-origin by default:
+  `apiBaseUrl: ""`.
 - Do not hardcode tenant domains, production API URLs, tokens, or private infrastructure details.
 
 ## Development Rules

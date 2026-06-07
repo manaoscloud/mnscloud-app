@@ -71,6 +71,11 @@ window.MNSCLOUD_APP_CONFIG = {
 If `apiBaseUrl` is empty, the app falls back to same-origin `/api/v1`. This is the recommended
 production default when an edge gateway serves the app and proxies `/api` to MNSCloud API.
 
+When the app is accessed through `mnscloud-nginx`, the browser-facing `/env.js` is served by the
+edge gateway from `/etc/nginx/mnscloud/runtime/env.js`. That edge runtime file must also keep
+`apiBaseUrl` empty unless the deployment intentionally uses a separate public API origin. Do not use
+private host DNS names, internal IPs, or edge hostnames in browser-facing `env.js`.
+
 Do not commit tenant, partner, staging, or production API URLs into `public/env.js`. Use one of
 these environment-specific mechanisms instead:
 
