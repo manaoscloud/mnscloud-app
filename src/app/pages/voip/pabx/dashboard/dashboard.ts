@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
+import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
 import { VoipDomainItem, VoipDomainService } from '../../domain/domain.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxServerItem, VoipPabxServerService } from '../server/server.service';
@@ -51,6 +52,7 @@ type SelectOption = {
     MatSortModule,
     MatTableModule,
     MatTooltipModule,
+    TranslatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -61,6 +63,7 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   private readonly pabxApi = inject(VoipPabxService);
   private readonly serverApi = inject(VoipPabxServerService);
   private readonly domainApi = inject(VoipDomainService);
+  private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 5000;
 
@@ -74,6 +77,8 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   readonly domainSearch = signal('');
   readonly generatedAt = signal<string | null>(null);
   readonly startAt = signal<string | null>(null);
+  readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  readonly isMaster = computed(() => this.scope() === 'master');
   readonly summary = signal<PabxDashboardSummary>({});
   readonly callBreakdown = signal<PabxDashboardMetric[]>([]);
   readonly agentBreakdown = signal<PabxDashboardMetric[]>([]);
@@ -202,7 +207,7 @@ export class VoipPabxDashboardPage implements AfterViewInit {
         pabxUUID: this.pabxUUID(),
         serverUUID: this.serverUUID(),
         domainUUID: this.domainUUID(),
-      });
+      }, this.isMaster());
       const data = response?.data;
       this.summary.set(data?.summary ?? {});
       this.generatedAt.set(data?.generatedAt ?? null);
@@ -221,20 +226,21 @@ export class VoipPabxDashboardPage implements AfterViewInit {
 
   private async loadOptions() {
     try {
-      const [pabxResponse, serverResponse, domainResponse] = await Promise.all([
-        this.pabxApi.list({ limit: this.listLimit }),
-        this.serverApi.list(false, { limit: this.listLimit }),
-        this.domainApi.list({ limit: this.listLimit }),
+      const [pabxResponse, serverResponse, domainResponse] = await Promise.allSettled([
+        this.pabxApi.list({ limit: this.listLimit }, this.isMaster()),
+        this.serverApi.list(this.isMaster(), { limit: this.listLimit }),
+        this.domainApi.list({ limit: this.listLimit }, this.isMaster() ? 'master' : 'tenant'),
       ]);
-      this.pabxOptions = (pabxResponse?.data?.items ?? []).map((item: VoipPabxAccount) => ({
+
+      this.pabxOptions = this.items<VoipPabxAccount>(pabxResponse).map((item) => ({
         value: item.VpaUUID,
         label: item.VpaName,
       }));
-      this.serverOptions = (serverResponse?.data?.items ?? []).map((item: VoipPabxServerItem) => ({
+      this.serverOptions = this.items<VoipPabxServerItem>(serverResponse).map((item) => ({
         value: item.VpsUUID,
         label: `${item.VpsName} (${item.VpsEngine})`,
       }));
-      this.domainOptions = (domainResponse?.data?.items ?? []).map((item: VoipDomainItem) => ({
+      this.domainOptions = this.items<VoipDomainItem>(domainResponse).map((item) => ({
         value: item.VdmUUID,
         label: item.VdmName,
       }));
@@ -271,5 +277,15 @@ export class VoipPabxDashboardPage implements AfterViewInit {
 
   private number(value?: number | null) {
     return String(Number(value ?? 0));
+  }
+
+  private items<T>(result: PromiseSettledResult<any>): T[] {
+    if (result.status !== 'fulfilled') return [];
+    const response = result.value;
+    if (Array.isArray(response)) return response as T[];
+    if (Array.isArray(response?.items)) return response.items as T[];
+    if (Array.isArray(response?.data)) return response.data as T[];
+    if (Array.isArray(response?.data?.items)) return response.data.items as T[];
+    return [];
   }
 }

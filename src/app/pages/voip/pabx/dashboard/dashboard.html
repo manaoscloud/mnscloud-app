@@ -2,41 +2,41 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>PABX Dashboard</h1>
-        <p>Operational health, capacity, queues, agents, trunks and call activity.</p>
+        <h1>{{ 'PABX Dashboard' | t }}</h1>
+        <p>{{ 'Operational health, capacity, queues, agents, trunks and call activity.' | t }}</p>
       </div>
 
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
           <mat-icon>refresh</mat-icon>
-          Refresh
+          {{ 'Refresh' | t }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid dashboard-filters">
       <mat-form-field appearance="outline">
-        <mat-label>Period</mat-label>
+        <mat-label>{{ 'Period' | t }}</mat-label>
         <mat-select [ngModel]="period()" (ngModelChange)="period.set($event)">
           @for (option of periodOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            <mat-option [value]="option.value">{{ option.label | t }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>PABX</mat-label>
+        <mat-label>{{ 'PABX' | t }}</mat-label>
         <mat-select
           [ngModel]="pabxUUID()"
           (ngModelChange)="pabxUUID.set($event)"
           (openedChange)="onPabxSelectOpened($event)"
         >
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | t }}</mat-option>
           <mat-option class="select-search-option" disabled>
             <input
               class="select-search-field"
               matInput
-              placeholder="Search PABX"
+              [placeholder]="'Search PABX' | t"
               [ngModel]="pabxSearch()"
               [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="pabxSearch.set($event)"
@@ -51,18 +51,18 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Server</mat-label>
+        <mat-label>{{ 'Server' | t }}</mat-label>
         <mat-select
           [ngModel]="serverUUID()"
           (ngModelChange)="serverUUID.set($event)"
           (openedChange)="onServerSelectOpened($event)"
         >
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | t }}</mat-option>
           <mat-option class="select-search-option" disabled>
             <input
               class="select-search-field"
               matInput
-              placeholder="Search server"
+              [placeholder]="'Search server' | t"
               [ngModel]="serverSearch()"
               [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="serverSearch.set($event)"
@@ -77,18 +77,18 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Domain</mat-label>
+        <mat-label>{{ 'Domain' | t }}</mat-label>
         <mat-select
           [ngModel]="domainUUID()"
           (ngModelChange)="domainUUID.set($event)"
           (openedChange)="onDomainSelectOpened($event)"
         >
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | t }}</mat-option>
           <mat-option class="select-search-option" disabled>
             <input
               class="select-search-field"
               matInput
-              placeholder="Search domain"
+              [placeholder]="'Search domain' | t"
               [ngModel]="domainSearch()"
               [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="domainSearch.set($event)"
@@ -105,11 +105,11 @@
       <div class="filter-actions">
         <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
           <mat-icon>filter_alt</mat-icon>
-          Apply
+          {{ 'Apply' | t }}
         </button>
         <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
           <mat-icon>backspace</mat-icon>
-          Clear
+          {{ 'Clear' | t }}
         </button>
       </div>
     </div>
@@ -125,7 +125,7 @@
         @for (item of kpis(); track item.label) {
           <article class="kpi-tile">
             <mat-icon>{{ item.icon }}</mat-icon>
-            <span>{{ item.label }}</span>
+            <span>{{ item.label | t }}</span>
             <strong>{{ item.value }}</strong>
           </article>
         }
@@ -133,10 +133,10 @@
 
       <div class="dashboard-grid">
         <section class="dashboard-panel">
-          <h2>Agent Status</h2>
+          <h2>{{ 'Agent Status' | t }}</h2>
           @for (item of agentBreakdown(); track item.label) {
             <div class="metric-row">
-              <span>{{ item.label }}</span>
+              <span>{{ item.label | t }}</span>
               <div class="metric-track">
                 <i [style.width.%]="metricPercent(item, agentBreakdown())"></i>
               </div>
@@ -146,10 +146,10 @@
         </section>
 
         <section class="dashboard-panel">
-          <h2>Call Outcome</h2>
+          <h2>{{ 'Call Outcome' | t }}</h2>
           @for (item of callBreakdown(); track item.label) {
             <div class="metric-row">
-              <span>{{ item.label }}</span>
+              <span>{{ item.label | t }}</span>
               <div class="metric-track">
                 <i [style.width.%]="metricPercent(item, callBreakdown())"></i>
               </div>
@@ -160,11 +160,11 @@
       </div>
 
       <section class="dashboard-panel">
-        <h2>Server Health</h2>
+        <h2>{{ 'Server Health' | t }}</h2>
         <div class="table-wrapper mat-elevation-z8">
           <table mat-table [dataSource]="serverDataSource" matSort #serverSort="matSort">
             <ng-container matColumnDef="health">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
               <td mat-cell *matCellDef="let row">
                 <span
                   class="status-pill status-chip state-chip"
@@ -178,23 +178,23 @@
               </td>
             </ng-container>
             <ng-container matColumnDef="name"
-              ><th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
               <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
             >
             <ng-container matColumnDef="engine"
-              ><th mat-header-cell *matHeaderCellDef mat-sort-header>Engine</th>
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Engine' | t }}</th>
               <td mat-cell *matCellDef="let row">{{ row.engine }}</td></ng-container
             >
             <ng-container matColumnDef="hostname"
-              ><th mat-header-cell *matHeaderCellDef mat-sort-header>Host</th>
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | t }}</th>
               <td mat-cell *matCellDef="let row">{{ row.hostname || '-' }}</td></ng-container
             >
             <ng-container matColumnDef="pabxAccounts"
-              ><th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | t }}</th>
               <td mat-cell *matCellDef="let row">{{ row.pabxAccounts || 0 }}</td></ng-container
             >
             <ng-container matColumnDef="lastSeenAt"
-              ><th mat-header-cell *matHeaderCellDef mat-sort-header>Last Seen</th>
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Last Seen' | t }}</th>
               <td mat-cell *matCellDef="let row">
                 {{ row.lastSeenAt ? (row.lastSeenAt | date: 'short') : '-' }}
               </td></ng-container
@@ -202,7 +202,9 @@
             <tr mat-header-row *matHeaderRowDef="serverColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: serverColumns"></tr>
             <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="serverColumns.length">No servers found.</td>
+              <td class="mat-cell" [attr.colspan]="serverColumns.length">
+                {{ 'No servers found.' | t }}
+              </td>
             </tr>
           </table>
         </div>
@@ -216,39 +218,41 @@
 
       <div class="dashboard-grid">
         <section class="dashboard-panel">
-          <h2>Queues</h2>
+          <h2>{{ 'Queues' | t }}</h2>
           <div class="table-wrapper mat-elevation-z8">
             <table mat-table [dataSource]="queueDataSource" matSort #queueSort="matSort">
               <ng-container matColumnDef="name"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
               >
               <ng-container matColumnDef="pabxName"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.pabxName }}</td></ng-container
               >
               <ng-container matColumnDef="strategy"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Strategy</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Strategy' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.strategy }}</td></ng-container
               >
               <ng-container matColumnDef="members"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Members</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Members' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.members || 0 }}</td></ng-container
               >
               <ng-container matColumnDef="availableAgents"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Available</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Available' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.availableAgents || 0 }}</td></ng-container
               >
               <ng-container matColumnDef="status"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
                 <td mat-cell *matCellDef="let row">
-                  {{ row.status === 1 ? 'Active' : 'Inactive' }}
+                  {{ (row.status === 1 ? 'Active' : 'Inactive') | t }}
                 </td></ng-container
               >
               <tr mat-header-row *matHeaderRowDef="queueColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: queueColumns"></tr>
               <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="queueColumns.length">No queues found.</td>
+                <td class="mat-cell" [attr.colspan]="queueColumns.length">
+                  {{ 'No queues found.' | t }}
+                </td>
               </tr>
             </table>
           </div>
@@ -261,39 +265,41 @@
         </section>
 
         <section class="dashboard-panel">
-          <h2>Trunks</h2>
+          <h2>{{ 'Trunks' | t }}</h2>
           <div class="table-wrapper mat-elevation-z8">
             <table mat-table [dataSource]="trunkDataSource" matSort #trunkSort="matSort">
               <ng-container matColumnDef="name"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
               >
               <ng-container matColumnDef="pabxName"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.pabxName }}</td></ng-container
               >
               <ng-container matColumnDef="direction"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Direction</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Direction' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.direction }}</td></ng-container
               >
               <ng-container matColumnDef="host"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Host</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.host }}</td></ng-container
               >
               <ng-container matColumnDef="transport"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Transport</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Transport' | t }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.transport }}</td></ng-container
               >
               <ng-container matColumnDef="status"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
                 <td mat-cell *matCellDef="let row">
-                  {{ row.status === 1 ? 'Active' : 'Inactive' }}
+                  {{ (row.status === 1 ? 'Active' : 'Inactive') | t }}
                 </td></ng-container
               >
               <tr mat-header-row *matHeaderRowDef="trunkColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: trunkColumns"></tr>
               <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="trunkColumns.length">No trunks found.</td>
+                <td class="mat-cell" [attr.colspan]="trunkColumns.length">
+                  {{ 'No trunks found.' | t }}
+                </td>
               </tr>
             </table>
           </div>

@@ -991,16 +991,16 @@ export const routes: Routes = [
               })),
               {
                 path: 'voip/pabx',
-                loadComponent: () => import('./pages/voip/pabx/pabx').then((m) => m.VoipPabxPage),
-                title: 'VoIP • PABX | mnscloud',
-              },
-              {
-                path: 'voip/pabx/dashboard',
                 loadComponent: () =>
                   import('./pages/voip/pabx/dashboard/dashboard').then(
                     (m) => m.VoipPabxDashboardPage,
                   ),
-                title: 'VoIP • PABX • Dashboard | mnscloud',
+                title: 'VoIP • PABX | mnscloud',
+              },
+              {
+                path: 'voip/pabx/accounts',
+                loadComponent: () => import('./pages/voip/pabx/pabx').then((m) => m.VoipPabxPage),
+                title: 'VoIP • PABX • Accounts | mnscloud',
               },
               {
                 path: 'voip/pabx/extension',
@@ -1299,6 +1299,15 @@ export const routes: Routes = [
                         : 'parameters',
                 },
               })) as any),
+              {
+                path: 'pabx',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/dashboard/dashboard').then(
+                    (m) => m.VoipPabxDashboardPage,
+                  ),
+                title: 'System PABX Dashboard | mnscloud',
+                data: { scope: 'master' },
+              },
               {
                 path: 'pabx/server',
                 loadComponent: () =>

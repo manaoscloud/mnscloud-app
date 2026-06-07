@@ -44,15 +44,17 @@ export type VoipPabxAccount = {
 export class VoipPabxService {
   private readonly api = inject(ApiService);
 
-  private readonly basePath = 'voip/pabx/accounts';
+  private basePath(system = false) {
+    return system ? 'system/voip/pabx/accounts' : 'voip/pabx/accounts';
+  }
 
-  list(params: { search?: string; limit?: number; offset?: number } = {}) {
+  list(params: { search?: string; limit?: number; offset?: number } = {}, system = false) {
     const query = new URLSearchParams();
     if (params.search) query.set('search', params.search);
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();
-    return this.api.get<any>(`${this.basePath}${suffix ? `?${suffix}` : ''}`);
+    return this.api.get<any>(`${this.basePath(system)}${suffix ? `?${suffix}` : ''}`);
   }
 
   create(payload: {
@@ -73,7 +75,7 @@ export class VoipPabxService {
     isActive?: boolean;
     isDefault?: boolean;
   }) {
-    return this.api.post<any>(this.basePath, payload);
+    return this.api.post<any>(this.basePath(), payload);
   }
 
   update(
@@ -97,15 +99,15 @@ export class VoipPabxService {
       isDefault?: boolean;
     },
   ) {
-    return this.api.put<any>(`${this.basePath}/${uuid}`, payload);
+    return this.api.put<any>(`${this.basePath()}/${uuid}`, payload);
   }
 
   remove(uuid: string) {
-    return this.api.delete<any>(`${this.basePath}/${uuid}`);
+    return this.api.delete<any>(`${this.basePath()}/${uuid}`);
   }
 
   removeMany(ids: string[]) {
-    return this.api.delete<any>(`${this.basePath}/bulk`, { ids });
+    return this.api.delete<any>(`${this.basePath()}/bulk`, { ids });
   }
 
   resolveDefault() {

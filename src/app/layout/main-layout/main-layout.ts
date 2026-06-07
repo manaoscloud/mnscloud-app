@@ -1399,7 +1399,8 @@ export class MainLayout {
               id: 'voip/pabx/dashboard',
               label: 'Dashboard',
               icon: 'dashboard',
-              route: '/voip/pabx/dashboard',
+              route: '/voip/pabx',
+              masterRoute: '/system/pabx',
             },
             {
               id: 'voip/pabx/server',
@@ -1413,7 +1414,7 @@ export class MainLayout {
               id: 'voip/pabx/registry',
               label: 'PABX',
               icon: 'settings_phone',
-              route: '/voip/pabx',
+              route: '/voip/pabx/accounts',
             },
             {
               id: 'voip/pabx/trunks',

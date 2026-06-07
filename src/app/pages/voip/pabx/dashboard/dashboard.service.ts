@@ -76,9 +76,12 @@ export type PabxDashboardFilters = {
 @Injectable({ providedIn: 'root' })
 export class VoipPabxDashboardService {
   private readonly api = inject(ApiService);
-  private readonly basePath = 'voip/pabx/dashboard';
 
-  get(filters: PabxDashboardFilters = {}) {
+  private basePath(system = false) {
+    return system ? 'system/voip/pabx/dashboard' : 'voip/pabx/dashboard';
+  }
+
+  get(filters: PabxDashboardFilters = {}, system = false) {
     const query = new URLSearchParams();
     if (filters.period) query.set('period', filters.period);
     if (filters.pabxUUID) query.set('pabxUUID', filters.pabxUUID);
@@ -86,7 +89,7 @@ export class VoipPabxDashboardService {
     if (filters.domainUUID) query.set('domainUUID', filters.domainUUID);
     const suffix = query.toString();
     return this.api.get<{ data: PabxDashboardData }>(
-      `${this.basePath}${suffix ? `?${suffix}` : ''}`,
+      `${this.basePath(system)}${suffix ? `?${suffix}` : ''}`,
     );
   }
 }
