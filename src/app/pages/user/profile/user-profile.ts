@@ -1,18 +1,5 @@
-import {
-    Component,
-    inject,
-    signal,
-    computed,
-    ViewChild,
-    ElementRef,
-} from '@angular/core';
-
-import {
-    ReactiveFormsModule,
-    FormBuilder,
-    FormGroup,
-    Validators,
-} from '@angular/forms';
+import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -21,15 +8,18 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTabsModule } from '@angular/material/tabs';
 
 // Services
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 import { isSignedStorageUrl } from '../../../shared/storage/signed-url';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 // Models
 import { UserProfile } from '../../../models/user-profile.model';
@@ -51,7 +41,9 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatButtonModule,
-    MatDividerModule
+    MatDividerModule,
+    MatTabsModule,
+    TranslatePipe,
 ],
     templateUrl: './user-profile.html',
     styleUrls: ['./user-profile.scss'],
@@ -61,7 +53,7 @@ export class UserProfileComponent {
     private readonly fb = inject(FormBuilder);
     private readonly api = inject(ApiService);
     private readonly auth = inject(AuthService);
-    private readonly snack = inject(MatSnackBar);
+    private readonly snack = inject(SnackbarService);
 
     readonly loading = signal(true);
     readonly saving = signal(false);
@@ -151,6 +143,7 @@ export class UserProfileComponent {
         } catch (err) {
             console.error('❌ load profile error:', err);
             this.apiError.set('Failed to load your profile.');
+            this.snack.error('Failed to load your profile.');
         }
 
         this.loading.set(false);
@@ -184,17 +177,13 @@ export class UserProfileComponent {
         const file = input.files[0];
 
         if (!file.type.startsWith('image/')) {
-            this.snack.open('Only image files are allowed.', 'OK', {
-                duration: 2500,
-            });
+            this.snack.warning('Only image files are allowed.');
             input.value = '';
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            this.snack.open('Image is too large. Maximum is 5MB.', 'OK', {
-                duration: 2500,
-            });
+            this.snack.warning('Image is too large. Maximum is 5MB.');
             input.value = '';
             return;
         }
@@ -254,12 +243,10 @@ export class UserProfileComponent {
                 avatarVersion: newVersion,
             });
 
-            this.snack.open('Avatar updated successfully!', 'OK', {
-                duration: 2500,
-            });
+            this.snack.success('Avatar updated successfully.');
         } catch (err) {
             console.error('❌ save avatar error:', err);
-            this.apiError.set('Failed to update avatar.');
+            this.snack.error('Failed to update avatar.');
         } finally {
             this.savingAvatar.set(false);
         }
@@ -300,14 +287,12 @@ export class UserProfileComponent {
                 lastName: body.lastName,
             });
 
-            this.snack.open('Profile updated successfully!', 'OK', {
-                duration: 2500,
-            });
+            this.snack.success('Profile updated successfully.');
 
             this.profileForm.patchValue({ newPassword: '' });
         } catch (err) {
             console.error('❌ save profile error:', err);
-            this.apiError.set('Failed to save your profile.');
+            this.snack.error('Failed to save your profile.');
         }
 
         this.saving.set(false);
