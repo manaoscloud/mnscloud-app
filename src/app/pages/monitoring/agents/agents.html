@@ -291,51 +291,51 @@
         <mat-tab [label]="'Record' | t">
           <form class="tab-content form-grid" [formGroup]="form">
             <mat-form-field appearance="outline">
-              <mat-label>Status</mat-label>
+              <mat-label>{{ 'Status' | t }}</mat-label>
               <mat-select formControlName="status">
-                <mat-option [value]="1">Active</mat-option>
-                <mat-option [value]="0">Inactive</mat-option>
+                <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+                <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Name</mat-label>
-              <input matInput formControlName="name" placeholder="e.g. Linux Agent 01" />
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'Name' | t }}</mat-label>
+              <input matInput formControlName="name" [placeholder]="'e.g. Linux Agent 01' | t" />
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Agent UUID</mat-label>
-              <input matInput formControlName="agentUUID" autocomplete="off" />
-              <mat-hint>Optional for new enrollments; the installer creates the UUID.</mat-hint>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Hostname</mat-label>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'Hostname' | t }}</mat-label>
               <input matInput formControlName="hostname" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'Agent UUID' | t }}</mat-label>
+              <input matInput formControlName="agentUUID" autocomplete="off" />
+              <mat-hint>{{ 'Optional for new enrollments; the installer creates the UUID.' | t }}</mat-hint>
             </mat-form-field>
           </form>
         </mat-tab>
 
-        <mat-tab label="Assignment">
+        <mat-tab [label]="'Assignment' | t">
           <form class="tab-content form-grid" [formGroup]="form">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'Resource Type' | t }}</mat-label>
+              <input matInput formControlName="resourceType" [placeholder]="'e.g. voip_pabx_server' | t" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'Resource UUID' | t }}</mat-label>
+              <input matInput formControlName="resourceUUID" autocomplete="off" />
+            </mat-form-field>
+
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Capabilities</mat-label>
+              <mat-label>{{ 'Capabilities' | t }}</mat-label>
               <textarea
                 matInput
                 formControlName="capabilitiesText"
-                rows="7"
+                rows="4"
                 placeholder="linux.status&#10;security.nftables.manage&#10;security.crowdsec.manage"
               ></textarea>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Resource type</mat-label>
-              <input matInput formControlName="resourceType" placeholder="e.g. voip_pabx_server" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Resource UUID</mat-label>
-              <input matInput formControlName="resourceUUID" autocomplete="off" />
             </mat-form-field>
           </form>
         </mat-tab>
