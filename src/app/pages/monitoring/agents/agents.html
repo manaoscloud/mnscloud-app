@@ -84,7 +84,7 @@
           </div>
           @if (canUpdateRuntimeProduct(product)) {
             <button
-              class="status-pill version-chip version-chip-action"
+              class="status-pill version-chip version-chip-action runtime-product-action"
               type="button"
               [ngClass]="runtimeProductClass(product)"
               (click)="queueRuntimeProductUpdate(product)"
@@ -93,7 +93,10 @@
               <span>{{ runtimeProductStatus(product) }}</span>
             </button>
           } @else {
-            <span class="status-pill version-chip" [ngClass]="runtimeProductClass(product)">
+            <span
+              class="status-pill version-chip runtime-product-action"
+              [ngClass]="runtimeProductClass(product)"
+            >
               {{ runtimeProductStatus(product) }}
             </span>
           }
