@@ -1,0 +1,194 @@
+<section class="erp-page monitoring-dashboard" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'Monitoring Dashboard' | t }}</h1>
+        <p>{{ 'Operational health, runtime readiness, and recent platform events.' | t }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | t }}
+        </button>
+      </div>
+    </header>
+
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <div class="kpi-grid">
+        @for (item of kpis(); track item.label) {
+          <article class="kpi-tile" [ngClass]="'state-' + item.state">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label | t }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.detailValue }} {{ item.detailLabel | t }}</small>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Agent Connectivity' | t }}</h2>
+              <p>{{ 'Online and offline inventory reported by registered agents.' | t }}</p>
+            </div>
+            <a mat-stroked-button color="primary" [routerLink]="monitoringRoute('agents')">
+              <mat-icon>open_in_new</mat-icon>
+              {{ 'Agents' | t }}
+            </a>
+          </div>
+
+          <div class="metric-stack">
+            <div class="metric-row">
+              <span>{{ 'Online' | t }}</span>
+              <div class="metric-track">
+                <i [style.width.%]="metricPercent(agentSummary().online, agentSummary().total)"></i>
+              </div>
+              <strong>{{ agentSummary().online }}</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ 'Offline' | t }}</span>
+              <div class="metric-track is-warning">
+                <i [style.width.%]="metricPercent(agentSummary().offline, agentSummary().total)"></i>
+              </div>
+              <strong>{{ agentSummary().offline }}</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ 'Outdated' | t }}</span>
+              <div class="metric-track is-warning">
+                <i [style.width.%]="metricPercent(agentSummary().outdated, agentSummary().total)"></i>
+              </div>
+              <strong>{{ agentSummary().outdated }}</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ 'Unsupported' | t }}</span>
+              <div class="metric-track is-danger">
+                <i [style.width.%]="metricPercent(agentSummary().unsupported, agentSummary().total)"></i>
+              </div>
+              <strong>{{ agentSummary().unsupported }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Runtime Products' | t }}</h2>
+              <p>{{ 'Release state across Agent, API, and App runtimes.' | t }}</p>
+            </div>
+          </div>
+
+          <div class="runtime-list">
+            @for (product of runtimeProducts(); track product.product) {
+              <article class="runtime-row">
+                <div>
+                  <strong>{{ product.label }}</strong>
+                  <small>
+                    {{ product.latestVersion || '-' }} · {{ shortBuildRef(product.latestBuildRef) }}
+                  </small>
+                </div>
+                <div class="runtime-counts">
+                  <span>{{ product.currentCount }} {{ 'current' | t }}</span>
+                  <span>{{ product.outdatedCount }} {{ 'outdated' | t }}</span>
+                </div>
+                <span class="status-pill status-chip" [ngClass]="runtimeProductClass(product)">
+                  {{ runtimeProductStatus(product) | t }}
+                </span>
+              </article>
+            } @empty {
+              <div class="empty-state">{{ 'No runtime products found.' | t }}</div>
+            }
+          </div>
+        </section>
+      </div>
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'Recent Activity' | t }}</h2>
+            <p>{{ 'Latest operational events from the activity log stream.' | t }}</p>
+          </div>
+          <a
+            mat-stroked-button
+            color="primary"
+            [routerLink]="monitoringRoute('activity-logs')"
+          >
+            <mat-icon>open_in_new</mat-icon>
+            {{ 'Activity Logs' | t }}
+          </a>
+        </div>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table mat-table [dataSource]="activityDataSource" matSort>
+            <ng-container matColumnDef="created">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.dateCreated ? (row.dateCreated | date: 'short') : '-' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="level">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Level' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">
+                  {{ row.level || '-' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">
+                  {{ row.status || '-' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="action">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Action' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <strong>{{ row.action || '-' }}</strong>
+                <small>{{ row.category || row.hostname || '-' }}</small>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="resource">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Resource' | t }}</th>
+              <td mat-cell *matCellDef="let row">{{ resourceLabel(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="message">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Message' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span>{{ row.message || row.errorCode || '-' }}</span>
+                <small>{{ formatDuration(row.durationMs) }}</small>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="activityColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: activityColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="activityColumns.length">
+                {{ loading() ? ('Loading activity logs...' | t) : ('No activity logs found.' | t) }}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[5, 10, 25, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </section>
+    </div>
+  </mat-card>
+</section>

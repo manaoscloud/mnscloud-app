@@ -124,6 +124,14 @@ export const routes: Routes = [
                 data: { scope: 'tenant' },
               },
               {
+                path: 'monitoring',
+                loadComponent: () =>
+                  import('./pages/monitoring/dashboard/dashboard').then(
+                    (m) => m.MonitoringDashboardPage,
+                  ),
+                title: 'Monitoring | mnscloud',
+              },
+              {
                 path: 'monitoring/activity-logs',
                 loadComponent: () =>
                   import('./pages/monitoring/activity-logs/activity').then(
@@ -1048,6 +1056,14 @@ export const routes: Routes = [
             path: 'system',
             canActivate: [masterGuard],
             children: [
+              {
+                path: 'monitoring',
+                loadComponent: () =>
+                  import('./pages/monitoring/dashboard/dashboard').then(
+                    (m) => m.MonitoringDashboardPage,
+                  ),
+                title: 'System Monitoring | mnscloud',
+              },
               {
                 path: 'monitoring/activity-logs',
                 loadComponent: () =>

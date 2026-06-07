@@ -1749,6 +1749,15 @@ export class MainLayout {
       entitlementCode: 'module.monitoring.*',
       children: [
         {
+          id: 'monitoring/dashboard',
+          label: 'Dashboard',
+          icon: 'dashboard',
+          route: '/monitoring',
+          masterRoute: '/system/monitoring',
+          roles: ['OWNER', 'ADMIN'],
+          requiresEnvironment: true,
+        },
+        {
           id: 'monitoring/agents',
           label: 'Agents',
           icon: 'sensors',

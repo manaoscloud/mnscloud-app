@@ -206,6 +206,30 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'My Tenants': 'Meus Ambientes',
   'Tenant Members': 'Membros do Ambiente',
   'Tenant Invitations': 'Convites do Ambiente',
+  'Monitoring Dashboard': 'Painel de Monitoramento',
+  'Operational health, runtime readiness, and recent platform events.':
+    'Saúde operacional, prontidão dos runtimes e eventos recentes da plataforma.',
+  'Online agents': 'Agentes online',
+  'Runtime health': 'Saúde dos runtimes',
+  'Updates in progress': 'Atualizações em andamento',
+  'Failed events': 'Eventos com falha',
+  'error level': 'nível de erro',
+  'Agent Connectivity': 'Conectividade dos Agentes',
+  'Online and offline inventory reported by registered agents.':
+    'Inventário online e offline reportado pelos agentes registrados.',
+  'Runtime Products': 'Produtos de Runtime',
+  'Release state across Agent, API, and App runtimes.':
+    'Estado de releases nos runtimes Agent, API e App.',
+  'Recent Activity': 'Atividade Recente',
+  'Latest operational events from the activity log stream.':
+    'Eventos operacionais mais recentes do fluxo de logs de atividade.',
+  'No runtime products found.': 'Nenhum produto de runtime encontrado.',
+  'Failed to load monitoring dashboard.': 'Falha ao carregar o painel de monitoramento.',
+  current: 'atualizado',
+  offline: 'offline',
+  outdated: 'desatualizado',
+  failed: 'falha',
+  Check: 'Verificar',
   'Manage tenant members and access for this environment.':
     'Gerencie membros e acessos deste ambiente.',
   'Tenant, email or access level': 'Ambiente, e-mail ou nível de acesso',
@@ -925,6 +949,30 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'My Tenants': 'Mis Entornos',
   'Tenant Members': 'Miembros del Entorno',
   'Tenant Invitations': 'Invitaciones del Entorno',
+  'Monitoring Dashboard': 'Panel de Monitoreo',
+  'Operational health, runtime readiness, and recent platform events.':
+    'Salud operativa, preparación de runtimes y eventos recientes de la plataforma.',
+  'Online agents': 'Agentes en línea',
+  'Runtime health': 'Salud de runtimes',
+  'Updates in progress': 'Actualizaciones en curso',
+  'Failed events': 'Eventos con error',
+  'error level': 'nivel de error',
+  'Agent Connectivity': 'Conectividad de Agentes',
+  'Online and offline inventory reported by registered agents.':
+    'Inventario en línea y sin conexión reportado por los agentes registrados.',
+  'Runtime Products': 'Productos de Runtime',
+  'Release state across Agent, API, and App runtimes.':
+    'Estado de releases en los runtimes Agent, API y App.',
+  'Recent Activity': 'Actividad Reciente',
+  'Latest operational events from the activity log stream.':
+    'Eventos operativos más recientes del flujo de logs de actividad.',
+  'No runtime products found.': 'No se encontraron productos de runtime.',
+  'Failed to load monitoring dashboard.': 'Error al cargar el panel de monitoreo.',
+  current: 'actualizado',
+  offline: 'sin conexión',
+  outdated: 'desactualizado',
+  failed: 'error',
+  Check: 'Verificar',
   'Manage tenant members and access for this environment.':
     'Administre miembros y accesos de este entorno.',
   'Tenant, email or access level': 'Entorno, correo o nivel de acceso',
