@@ -935,8 +935,12 @@ export const routes: Routes = [
               })) as any),
               {
                 path: 'voip/webrtc',
-                redirectTo: 'voip/webrtc/domain',
-                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./pages/voip/webrtc/dashboard/dashboard').then(
+                    (m) => m.VoipWebRtcDashboardPage,
+                  ),
+                title: 'VoIP • WebRTC Dashboard | mnscloud',
+                data: { scope: 'tenant' },
               },
               ...(['domain'].map((section) => ({
                 path: `voip/webrtc/${section}`,
@@ -1274,8 +1278,12 @@ export const routes: Routes = [
               })) as any),
               {
                 path: 'webrtc',
-                redirectTo: 'webrtc/domain',
-                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./pages/voip/webrtc/dashboard/dashboard').then(
+                    (m) => m.VoipWebRtcDashboardPage,
+                  ),
+                title: 'System WebRTC Dashboard | mnscloud',
+                data: { scope: 'master' },
               },
               {
                 path: 'voip/domain',

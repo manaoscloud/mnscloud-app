@@ -832,9 +832,7 @@ export class MainLayout {
     }
     try {
       const grants = await this.billing.listEntitlementGrants();
-      this.commercialEntitlements.set(
-        grants.map((grant) => grant.entitlementCode).filter(Boolean),
-      );
+      this.commercialEntitlements.set(grants.map((grant) => grant.entitlementCode).filter(Boolean));
     } catch (error) {
       console.error('❌ Failed to load commercial entitlements:', error);
       this.commercialEntitlements.set([]);
@@ -1297,6 +1295,13 @@ export class MainLayout {
           label: 'WebRTC',
           icon: 'settings_input_antenna',
           children: [
+            {
+              id: 'voip/webrtc/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/voip/webrtc',
+              masterRoute: '/system/webrtc',
+            },
             {
               id: 'voip/webrtc/domain',
               label: 'Domain',
