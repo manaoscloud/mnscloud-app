@@ -296,6 +296,28 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Failed to load VPS dashboard.': 'Falha ao carregar o painel VPS.',
   'Some VPS dashboard sections could not be loaded.':
     'Algumas seções do painel VPS não puderam ser carregadas.',
+  'VPS Container Dashboard': 'Painel VPS Container',
+  'Container instance health, provider readiness, and plan capacity for container operations.':
+    'Saúde das instâncias de contêiner, prontidão de provedores e capacidade de planos para operações de contêiner.',
+  'Container Plans': 'Planos de Contêiner',
+  'Container Capacity': 'Capacidade de Contêiner',
+  'Container Status': 'Status dos Contêineres',
+  'Current container inventory grouped by operational state.':
+    'Inventário atual de contêineres agrupado por estado operacional.',
+  'Container provider accounts, linked plans, and attached instances.':
+    'Contas de provedores de contêiner, planos vinculados e instâncias associadas.',
+  'Container Plan Capacity': 'Capacidade dos Planos de Contêiner',
+  'Container plans with profile, provider capacity defaults, and adoption.':
+    'Planos de contêiner com perfil, padrões de capacidade do provedor e adoção.',
+  'Loading container status...': 'Carregando status dos contêineres...',
+  'Loading container providers...': 'Carregando provedores de contêiner...',
+  'Loading container plans...': 'Carregando planos de contêiner...',
+  'No container instances found.': 'Nenhuma instância de contêiner encontrada.',
+  'No container providers found.': 'Nenhum provedor de contêiner encontrado.',
+  'No container plans found.': 'Nenhum plano de contêiner encontrado.',
+  'Failed to load VPS Container dashboard.': 'Falha ao carregar o painel VPS Container.',
+  'Some VPS Container dashboard sections could not be loaded.':
+    'Algumas seções do painel VPS Container não puderam ser carregadas.',
   current: 'atualizado',
   offline: 'offline',
   outdated: 'desatualizado',
@@ -1110,6 +1132,28 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Failed to load VPS dashboard.': 'Error al cargar el panel VPS.',
   'Some VPS dashboard sections could not be loaded.':
     'Algunas secciones del panel VPS no se pudieron cargar.',
+  'VPS Container Dashboard': 'Panel VPS Container',
+  'Container instance health, provider readiness, and plan capacity for container operations.':
+    'Salud de instancias de contenedor, preparación de proveedores y capacidad de planes para operaciones de contenedor.',
+  'Container Plans': 'Planes de Contenedor',
+  'Container Capacity': 'Capacidad de Contenedor',
+  'Container Status': 'Estado de Contenedores',
+  'Current container inventory grouped by operational state.':
+    'Inventario actual de contenedores agrupado por estado operativo.',
+  'Container provider accounts, linked plans, and attached instances.':
+    'Cuentas de proveedores de contenedor, planes vinculados e instancias asociadas.',
+  'Container Plan Capacity': 'Capacidad de Planes de Contenedor',
+  'Container plans with profile, provider capacity defaults, and adoption.':
+    'Planes de contenedor con perfil, capacidad predeterminada del proveedor y adopción.',
+  'Loading container status...': 'Cargando estado de contenedores...',
+  'Loading container providers...': 'Cargando proveedores de contenedor...',
+  'Loading container plans...': 'Cargando planes de contenedor...',
+  'No container instances found.': 'No se encontraron instancias de contenedor.',
+  'No container providers found.': 'No se encontraron proveedores de contenedor.',
+  'No container plans found.': 'No se encontraron planes de contenedor.',
+  'Failed to load VPS Container dashboard.': 'Error al cargar el panel VPS Container.',
+  'Some VPS Container dashboard sections could not be loaded.':
+    'Algunas secciones del panel VPS Container no se pudieron cargar.',
   current: 'actualizado',
   offline: 'sin conexión',
   outdated: 'desactualizado',
