@@ -77,6 +77,24 @@ type RuntimeUpdateTarget = {
   available?: boolean | null;
 };
 
+type RuntimeProductFleet = {
+  product: 'mnscloud-agent' | 'mnscloud-api' | 'mnscloud-app' | string;
+  label: string;
+  capability: string;
+  channel: string;
+  mode: 'single' | 'cluster' | string;
+  strategy: string;
+  canRequest: boolean;
+  latestVersion?: string | null;
+  latestBuildRef?: string | null;
+  targetRef?: string | null;
+  nodeCount: number;
+  currentCount: number;
+  outdatedCount: number;
+  unknownCount: number;
+  availableCount: number;
+};
+
 @Component({
   selector: 'app-monitoring-agents',
   standalone: true,
@@ -126,6 +144,8 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   readonly editing = signal<MonitoringAgent | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly updatingIds = signal<Set<string>>(new Set());
+  readonly runtimeProducts = signal<RuntimeProductFleet[]>([]);
+  readonly updatingProducts = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly isMaster = computed(() => this.auth.user()?.role === 'MASTER');
   readonly canUpdateTenantAgent = computed(() =>
@@ -206,8 +226,12 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     this.loadingStarted = performance.now();
     this.loading.set(true);
     try {
-      const response = await this.api.get<any>(`monitoring/agents${this.queryString()}`);
+      const [response, runtimeProductsResponse] = await Promise.all([
+        this.api.get<any>(`monitoring/agents${this.queryString()}`),
+        this.api.get<any>('monitoring/agents/runtime-products'),
+      ]);
       this.agents.set(response?.data?.items ?? []);
+      this.runtimeProducts.set(runtimeProductsResponse?.data ?? []);
       this.dataSource.data = this.agents();
       this.pageIndex.set(0);
       this.reconcileSelection();
@@ -216,6 +240,43 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     } finally {
       const elapsed = performance.now() - this.loadingStarted;
       setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
+    }
+  }
+
+  async queueRuntimeProductUpdate(product: RuntimeProductFleet) {
+    if (!this.canUpdateRuntimeProduct(product)) return;
+    const target = product.targetRef || product.latestVersion || 'the latest release';
+    const modeLabel = product.mode === 'cluster' ? 'cluster' : 'runtime';
+    const ok = await this.confirm(
+      `Update ${product.label}`,
+      `Queue ${product.label} ${modeLabel} update to ${target}? The API will update every eligible online node for this product.`,
+      'Queue update',
+    );
+    if (!ok) return;
+    const next = new Set(this.updatingProducts());
+    next.add(product.product);
+    this.updatingProducts.set(next);
+    try {
+      const response = await this.api.post<any>(
+        `monitoring/agents/runtime-products/${product.product}/update`,
+        {},
+      );
+      const queued = response?.data?.jobs?.length ?? 0;
+      const skipped = response?.data?.skipped?.length ?? 0;
+      if (queued > 0) {
+        this.snack.success(`${product.label} rollout queued for ${queued} node(s).`);
+      } else if (skipped > 0) {
+        this.snack.success(`${product.label} rollout already has pending or current node(s).`);
+      } else {
+        this.snack.success(`${product.label} is already up to date.`);
+      }
+      await this.load();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error, `Failed to queue ${product.label} rollout.`));
+    } finally {
+      const current = new Set(this.updatingProducts());
+      current.delete(product.product);
+      this.updatingProducts.set(current);
     }
   }
 
@@ -524,12 +585,6 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return target && this.canUpdateTarget(row, target) ? target : null;
   }
 
-  platformUpdateTargets(row: MonitoringAgent) {
-    return this.runtimeUpdateTargets(row).filter((target) =>
-      target.product !== 'mnscloud-agent' && this.canUpdateTarget(row, target)
-    );
-  }
-
   canUpdateTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
     const hasRole =
       target.product === 'mnscloud-agent' ? this.canUpdateTenantAgent() : this.isMaster();
@@ -574,6 +629,31 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
 
   isUpdatingTarget(row: MonitoringAgent, target: RuntimeUpdateTarget) {
     return this.updatingIds().has(this.updateKey(row, target));
+  }
+
+  canUpdateRuntimeProduct(product: RuntimeProductFleet) {
+    return (
+      product.canRequest === true &&
+      product.availableCount > 0 &&
+      Boolean(product.latestVersion || product.targetRef) &&
+      !this.isUpdatingRuntimeProduct(product)
+    );
+  }
+
+  isUpdatingRuntimeProduct(product: RuntimeProductFleet) {
+    return this.updatingProducts().has(product.product);
+  }
+
+  runtimeProductStatus(product: RuntimeProductFleet) {
+    if (product.availableCount > 0) return 'Update';
+    if (product.unknownCount > 0) return 'Check';
+    return 'Current';
+  }
+
+  runtimeProductClass(product: RuntimeProductFleet) {
+    if (product.availableCount > 0) return 'chip-warning';
+    if (product.unknownCount > 0) return 'chip-skipped is-inactive';
+    return 'chip-success is-active';
   }
 
   private updateKey(row: MonitoringAgent, target: RuntimeUpdateTarget) {

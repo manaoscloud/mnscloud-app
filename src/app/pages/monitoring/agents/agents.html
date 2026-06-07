@@ -61,6 +61,46 @@
       </div>
     </div>
 
+    <section class="runtime-products" aria-label="Runtime products">
+      @for (product of runtimeProducts(); track product.product) {
+        <article class="runtime-product">
+          <div>
+            <strong>{{ product.label }}</strong>
+            <small>
+              {{ product.mode === 'cluster' ? 'Cluster' : 'Single node' }} ·
+              {{ product.nodeCount }} node(s)
+            </small>
+          </div>
+          <div class="runtime-product-version">
+            <span>{{ product.latestVersion || '-' }}</span>
+            <small>{{ 'Latest' | t }} {{ shortBuildRef(product.latestBuildRef) }}</small>
+          </div>
+          <div class="runtime-product-counts">
+            <span>{{ product.currentCount }} current</span>
+            <span>{{ product.outdatedCount }} outdated</span>
+            @if (product.unknownCount > 0) {
+              <span>{{ product.unknownCount }} unknown</span>
+            }
+          </div>
+          @if (canUpdateRuntimeProduct(product)) {
+            <button
+              class="status-pill version-chip version-chip-action"
+              type="button"
+              [ngClass]="runtimeProductClass(product)"
+              (click)="queueRuntimeProductUpdate(product)"
+              [disabled]="isUpdatingRuntimeProduct(product)"
+            >
+              <span>{{ runtimeProductStatus(product) }}</span>
+            </button>
+          } @else {
+            <span class="status-pill version-chip" [ngClass]="runtimeProductClass(product)">
+              {{ runtimeProductStatus(product) }}
+            </span>
+          }
+        </article>
+      }
+    </section>
+
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
@@ -184,18 +224,6 @@
               <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
                 <mat-icon>edit</mat-icon>
               </button>
-              @if (platformUpdateTargets(row).length) {
-                <button
-                  mat-icon-button
-                  type="button"
-                  [matMenuTriggerFor]="runtimeUpdateMenu"
-                  [matMenuTriggerData]="{ row: row }"
-                  aria-label="Runtime updates"
-                  matTooltip="Runtime updates"
-                >
-                  <mat-icon>system_update_alt</mat-icon>
-                </button>
-              }
               <button
                 mat-icon-button
                 type="button"
@@ -217,24 +245,6 @@
             </div>
           </td>
         </ng-container>
-
-        <mat-menu #runtimeUpdateMenu="matMenu">
-          <ng-template matMenuContent let-row="row">
-            @for (target of platformUpdateTargets(row); track target.product) {
-              <button
-                mat-menu-item
-                type="button"
-                (click)="queueRuntimeUpdate(row, target)"
-                [disabled]="isUpdatingTarget(row, target)"
-              >
-                <mat-icon>{{
-                  isUpdatingTarget(row, target) ? 'hourglass_empty' : 'system_update_alt'
-                }}</mat-icon>
-                <span>Update {{ target.label }} to {{ target.targetRef || target.latestVersion }}</span>
-              </button>
-            }
-          </ng-template>
-        </mat-menu>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>

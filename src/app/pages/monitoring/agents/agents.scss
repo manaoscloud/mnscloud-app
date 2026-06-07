@@ -17,6 +17,55 @@
   white-space: nowrap;
 }
 
+.runtime-products {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  margin: 0 0 1rem;
+}
+
+.runtime-product {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 1fr) auto;
+  min-height: 4.25rem;
+  padding: 0.75rem;
+}
+
+.runtime-product strong,
+.runtime-product span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runtime-product small,
+.runtime-product-counts span {
+  color: var(--muted-color, rgba(255, 255, 255, 0.62));
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.runtime-product-version,
+.runtime-product-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+@media (max-width: 920px) {
+  .runtime-product {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
 .version-cell {
   align-items: flex-start;
   max-width: 12rem;
