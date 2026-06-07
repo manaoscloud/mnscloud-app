@@ -653,6 +653,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     if (this.runtimeProductBusy(product)) return 'Updating';
     if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'Failed';
     if (product.availableCount > 0) return 'Update';
+    if (product.outdatedCount > 0 || product.rolloutStatus === 'outdated') return 'Outdated';
     if (product.unknownCount > 0) return 'Check';
     return 'Up to date';
   }
@@ -660,7 +661,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   runtimeProductClass(product: RuntimeProductFleet) {
     if (this.runtimeProductBusy(product)) return 'chip-skipped is-inactive';
     if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'chip-danger';
-    if (product.availableCount > 0) return 'chip-warning';
+    if (product.availableCount > 0 || product.outdatedCount > 0 || product.rolloutStatus === 'outdated') {
+      return 'chip-warning';
+    }
     if (product.unknownCount > 0) return 'chip-skipped is-inactive';
     return 'chip-success is-active';
   }
