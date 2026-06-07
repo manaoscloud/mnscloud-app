@@ -41,7 +41,8 @@
 }
 
 .runtime-product strong,
-.runtime-product span {
+.runtime-product-version span,
+.runtime-product-counts span {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -67,8 +68,8 @@
 .runtime-product-action {
   display: inline-flex;
   justify-self: end;
-  max-width: 6.75rem;
-  min-width: 5.4rem;
+  max-width: 5.75rem;
+  min-width: 4.9rem;
   text-align: center;
 }
 
@@ -113,7 +114,7 @@
   font-family: inherit;
   font-size: var(--agent-version-chip-font-size);
   font-weight: 600;
-  height: 100%;
+  height: 20px;
   line-height: 1;
   overflow: hidden;
   white-space: nowrap;
