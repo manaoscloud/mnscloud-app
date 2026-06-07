@@ -93,6 +93,10 @@ type RuntimeProductFleet = {
   outdatedCount: number;
   unknownCount: number;
   availableCount: number;
+  pendingCount?: number | null;
+  runningCount?: number | null;
+  failedCount?: number | null;
+  rolloutStatus?: 'current' | 'outdated' | 'updating' | 'failed' | 'unknown' | string | null;
 };
 
 @Component({
@@ -635,6 +639,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return (
       product.canRequest === true &&
       product.availableCount > 0 &&
+      !this.runtimeProductBusy(product) &&
       Boolean(product.latestVersion || product.targetRef) &&
       !this.isUpdatingRuntimeProduct(product)
     );
@@ -645,15 +650,24 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   runtimeProductStatus(product: RuntimeProductFleet) {
+    if (this.runtimeProductBusy(product)) return 'Updating';
+    if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'Failed';
     if (product.availableCount > 0) return 'Update';
     if (product.unknownCount > 0) return 'Check';
     return 'Up to date';
   }
 
   runtimeProductClass(product: RuntimeProductFleet) {
+    if (this.runtimeProductBusy(product)) return 'chip-skipped is-inactive';
+    if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'chip-danger';
     if (product.availableCount > 0) return 'chip-warning';
     if (product.unknownCount > 0) return 'chip-skipped is-inactive';
     return 'chip-success is-active';
+  }
+
+  private runtimeProductBusy(product: RuntimeProductFleet) {
+    return (product.pendingCount ?? 0) > 0 || (product.runningCount ?? 0) > 0 ||
+      product.rolloutStatus === 'updating';
   }
 
   private updateKey(row: MonitoringAgent, target: RuntimeUpdateTarget) {
