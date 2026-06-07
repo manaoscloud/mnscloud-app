@@ -1556,6 +1556,13 @@ export class MainLayout {
           icon: 'mark_email_read',
           children: [
             {
+              id: 'hosting/smtp/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/hosting/smtp',
+              masterRoute: '/system/hosting/smtp',
+            },
+            {
               id: 'hosting/smtp/providers',
               label: 'Provider',
               icon: 'cloud_sync',

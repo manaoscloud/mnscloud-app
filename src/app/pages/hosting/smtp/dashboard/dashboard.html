@@ -1,0 +1,284 @@
+<section class="erp-page smtp-dashboard" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'SMTP Dashboard' | t }}</h1>
+        <p>{{ 'Provider, account, and routing health for SMTP delivery.' | t }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | t }}
+        </button>
+      </div>
+    </header>
+
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <div class="kpi-grid">
+        @for (item of kpis(); track item.label) {
+          <article class="kpi-tile" [ngClass]="'state-' + item.state">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label | t }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.detailValue }} {{ item.detailLabel | t }}</small>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Provider Readiness' | t }}</h2>
+              <p>{{ 'SMTP providers with linked accounts and delivery routes.' | t }}</p>
+            </div>
+            <a mat-stroked-button color="primary" [routerLink]="routeTo('providers')">
+              <mat-icon>open_in_new</mat-icon>
+              {{ 'Provider' | t }}
+            </a>
+          </div>
+
+          <div class="table-wrapper mat-elevation-z8">
+            <table mat-table [dataSource]="providerDataSource" matSort #providerSort="matSort">
+              <ng-container matColumnDef="provider">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <strong>{{ row.name }}</strong>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="active">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
+                    {{ row.active ? ('Active' | t) : ('Inactive' | t) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="default">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Default' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="chipClass(row.isDefault)">
+                    {{ row.isDefault ? ('Yes' | t) : ('No' | t) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="accounts">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Accounts' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.accounts }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="routes">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Routes' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.routes }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="issues">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Issues' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="issueChipClass(row.issues)">
+                    {{ row.issues }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <a mat-stroked-button color="primary" [routerLink]="routeTo('providers')">
+                    <mat-icon>open_in_new</mat-icon>
+                    {{ 'View' | t }}
+                  </a>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="providerColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: providerColumns"></tr>
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="providerColumns.length">
+                  {{ loading() ? ('Loading SMTP providers...' | t) : ('No SMTP providers found.' | t) }}
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <mat-paginator
+            #providerPaginator
+            class="mobile-paginator"
+            [pageSizeOptions]="[5, 10, 25, 100]"
+            showFirstLastButtons
+          ></mat-paginator>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Account Inventory' | t }}</h2>
+              <p>{{ 'SMTP accounts grouped by provider and route usage.' | t }}</p>
+            </div>
+            <a mat-stroked-button color="primary" [routerLink]="routeTo('accounts')">
+              <mat-icon>open_in_new</mat-icon>
+              {{ 'Account' | t }}
+            </a>
+          </div>
+
+          <div class="table-wrapper mat-elevation-z8">
+            <table mat-table [dataSource]="accountDataSource" matSort #accountSort="matSort">
+              <ng-container matColumnDef="account">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Account' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <strong>{{ row.name }}</strong>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="provider">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="from">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'From' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.from }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="active">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
+                    {{ row.active ? ('Active' | t) : ('Inactive' | t) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="default">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Default' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="chipClass(row.isDefault)">
+                    {{ row.isDefault ? ('Yes' | t) : ('No' | t) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="routes">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Routes' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.routes }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <a mat-stroked-button color="primary" [routerLink]="routeTo('accounts')">
+                    <mat-icon>open_in_new</mat-icon>
+                    {{ 'View' | t }}
+                  </a>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="accountColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: accountColumns"></tr>
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="accountColumns.length">
+                  {{ loading() ? ('Loading SMTP accounts...' | t) : ('No SMTP accounts found.' | t) }}
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <mat-paginator
+            #accountPaginator
+            class="mobile-paginator"
+            [pageSizeOptions]="[5, 10, 25, 100]"
+            showFirstLastButtons
+          ></mat-paginator>
+        </section>
+      </div>
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'Route Map' | t }}</h2>
+            <p>{{ 'SMTP delivery routes with account linkage and status.' | t }}</p>
+          </div>
+          <a mat-stroked-button color="primary" [routerLink]="routeTo('routes')">
+            <mat-icon>open_in_new</mat-icon>
+            {{ 'Route' | t }}
+          </a>
+        </div>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table mat-table [dataSource]="routeDataSource" matSort #routeSort="matSort">
+            <ng-container matColumnDef="event">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Event' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <strong>{{ row.event }}</strong>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="account">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Account' | t }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.account || '-' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="provider">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | t }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="from">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'From' | t }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.from }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
+                  {{ row.active ? ('Active' | t) : ('Inactive' | t) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <a mat-stroked-button color="primary" [routerLink]="routeTo('routes')">
+                  <mat-icon>open_in_new</mat-icon>
+                  {{ 'View' | t }}
+                </a>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="routeColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: routeColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="routeColumns.length">
+                {{ loading() ? ('Loading SMTP routes...' | t) : ('No SMTP routes found.' | t) }}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          #routePaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[5, 10, 25, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </section>
+    </div>
+  </mat-card>
+</section>

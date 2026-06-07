@@ -622,7 +622,16 @@ export const routes: Routes = [
                 title: 'Hosting • SMTP | mnscloud',
                 data: { scope: 'tenant', context: 'hosting' },
                 children: [
-                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/dashboard/dashboard').then(
+                        (m) => m.HostingSmtpDashboardPage,
+                      ),
+                    title: 'Hosting • SMTP Dashboard | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                   {
                     path: 'providers',
                     loadComponent: () =>
@@ -1305,7 +1314,16 @@ export const routes: Routes = [
                 title: 'System SMTP | mnscloud',
                 data: { scope: 'master', context: 'system' },
                 children: [
-                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/dashboard/dashboard').then(
+                        (m) => m.HostingSmtpDashboardPage,
+                      ),
+                    title: 'System SMTP Dashboard | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
                   {
                     path: 'providers',
                     loadComponent: () =>

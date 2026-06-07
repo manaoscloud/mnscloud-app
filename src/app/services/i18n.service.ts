@@ -318,6 +318,33 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Failed to load VPS Container dashboard.': 'Falha ao carregar o painel VPS Container.',
   'Some VPS Container dashboard sections could not be loaded.':
     'Algumas seções do painel VPS Container não puderam ser carregadas.',
+  'SMTP Dashboard': 'Painel SMTP',
+  'Provider, account, and routing health for SMTP delivery.':
+    'Saúde de provedores, contas e roteamento para entrega SMTP.',
+  'SMTP Routes': 'Rotas SMTP',
+  'Delivery Readiness': 'Prontidão de Entrega',
+  linked: 'vinculados',
+  'SMTP providers with linked accounts and delivery routes.':
+    'Provedores SMTP com contas vinculadas e rotas de entrega.',
+  'Account Inventory': 'Inventário de Contas',
+  'SMTP accounts grouped by provider and route usage.':
+    'Contas SMTP agrupadas por provedor e uso de rotas.',
+  'Route Map': 'Mapa de Rotas',
+  'SMTP delivery routes with account linkage and status.':
+    'Rotas de entrega SMTP com vínculo de conta e status.',
+  Accounts: 'Contas',
+  Routes: 'Rotas',
+  From: 'Remetente',
+  Event: 'Evento',
+  'Loading SMTP providers...': 'Carregando provedores SMTP...',
+  'Loading SMTP accounts...': 'Carregando contas SMTP...',
+  'Loading SMTP routes...': 'Carregando rotas SMTP...',
+  'No SMTP providers found.': 'Nenhum provedor SMTP encontrado.',
+  'No SMTP accounts found.': 'Nenhuma conta SMTP encontrada.',
+  'No SMTP routes found.': 'Nenhuma rota SMTP encontrada.',
+  'Failed to load SMTP dashboard.': 'Falha ao carregar o painel SMTP.',
+  'Some SMTP dashboard sections could not be loaded.':
+    'Algumas seções do painel SMTP não puderam ser carregadas.',
   current: 'atualizado',
   offline: 'offline',
   outdated: 'desatualizado',
@@ -1154,6 +1181,33 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Failed to load VPS Container dashboard.': 'Error al cargar el panel VPS Container.',
   'Some VPS Container dashboard sections could not be loaded.':
     'Algunas secciones del panel VPS Container no se pudieron cargar.',
+  'SMTP Dashboard': 'Panel SMTP',
+  'Provider, account, and routing health for SMTP delivery.':
+    'Salud de proveedores, cuentas y enrutamiento para entrega SMTP.',
+  'SMTP Routes': 'Rutas SMTP',
+  'Delivery Readiness': 'Preparación de Entrega',
+  linked: 'vinculados',
+  'SMTP providers with linked accounts and delivery routes.':
+    'Proveedores SMTP con cuentas vinculadas y rutas de entrega.',
+  'Account Inventory': 'Inventario de Cuentas',
+  'SMTP accounts grouped by provider and route usage.':
+    'Cuentas SMTP agrupadas por proveedor y uso de rutas.',
+  'Route Map': 'Mapa de Rutas',
+  'SMTP delivery routes with account linkage and status.':
+    'Rutas de entrega SMTP con vínculo de cuenta y estado.',
+  Accounts: 'Cuentas',
+  Routes: 'Rutas',
+  From: 'Remitente',
+  Event: 'Evento',
+  'Loading SMTP providers...': 'Cargando proveedores SMTP...',
+  'Loading SMTP accounts...': 'Cargando cuentas SMTP...',
+  'Loading SMTP routes...': 'Cargando rutas SMTP...',
+  'No SMTP providers found.': 'No se encontraron proveedores SMTP.',
+  'No SMTP accounts found.': 'No se encontraron cuentas SMTP.',
+  'No SMTP routes found.': 'No se encontraron rutas SMTP.',
+  'Failed to load SMTP dashboard.': 'Error al cargar el panel SMTP.',
+  'Some SMTP dashboard sections could not be loaded.':
+    'Algunas secciones del panel SMTP no se pudieron cargar.',
   current: 'actualizado',
   offline: 'sin conexión',
   outdated: 'desactualizado',
