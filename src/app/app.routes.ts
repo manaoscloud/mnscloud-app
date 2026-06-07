@@ -683,7 +683,16 @@ export const routes: Routes = [
                 title: 'Hosting • VPS | mnscloud',
                 data: { scope: 'tenant', context: 'hosting' },
                 children: [
-                  { path: '', pathMatch: 'full', redirectTo: 'instances' },
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/dashboard/dashboard').then(
+                        (m) => m.HostingVpsDashboardPage,
+                      ),
+                    title: 'Hosting • VPS Dashboard | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                   {
                     path: 'instances',
                     loadComponent: () =>
@@ -1366,7 +1375,16 @@ export const routes: Routes = [
                 title: 'System VPS | mnscloud',
                 data: { scope: 'master', context: 'system' },
                 children: [
-                  { path: '', pathMatch: 'full', redirectTo: 'instances' },
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/dashboard/dashboard').then(
+                        (m) => m.HostingVpsDashboardPage,
+                      ),
+                    title: 'System VPS Dashboard | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
                   {
                     path: 'instances',
                     loadComponent: () =>

@@ -1605,6 +1605,13 @@ export class MainLayout {
           icon: 'cloud',
           children: [
             {
+              id: 'hosting/vps/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/hosting/vps',
+              masterRoute: '/system/vps',
+            },
+            {
               id: 'hosting/vps/provider',
               label: 'Provider',
               icon: 'cloud_sync',

@@ -271,6 +271,31 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Container Instance': 'Instância de Contêiner',
   'Webhost Host': 'Host Webhost',
   'Email Account': 'Conta de E-mail',
+  'VPS Dashboard': 'Painel VPS',
+  'Instance health, provider readiness, and plan capacity for VPS operations.':
+    'Saúde das instâncias, prontidão de provedores e capacidade de planos para operações VPS.',
+  'VPS Plans': 'Planos VPS',
+  'Catalog Capacity': 'Capacidade do Catálogo',
+  defaults: 'padrões',
+  'in use': 'em uso',
+  'RAM catalog': 'RAM no catálogo',
+  'Instance Status': 'Status das Instâncias',
+  'Current VPS inventory grouped by operational state.':
+    'Inventário VPS atual agrupado por estado operacional.',
+  'Provider accounts, linked plans, and attached instances.':
+    'Contas de provedores, planos vinculados e instâncias associadas.',
+  'Plan Capacity': 'Capacidade dos Planos',
+  'Commercial VPS plans with provider capacity defaults and adoption.':
+    'Planos VPS comerciais com padrões de capacidade do provedor e adoção.',
+  'Loading VPS status...': 'Carregando status VPS...',
+  'Loading VPS providers...': 'Carregando provedores VPS...',
+  'Loading VPS plans...': 'Carregando planos VPS...',
+  'No VPS instances found.': 'Nenhuma instância VPS encontrada.',
+  'No VPS providers found.': 'Nenhum provedor VPS encontrado.',
+  'No VPS plans found.': 'Nenhum plano VPS encontrado.',
+  'Failed to load VPS dashboard.': 'Falha ao carregar o painel VPS.',
+  'Some VPS dashboard sections could not be loaded.':
+    'Algumas seções do painel VPS não puderam ser carregadas.',
   current: 'atualizado',
   offline: 'offline',
   outdated: 'desatualizado',
@@ -1060,6 +1085,31 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Container Instance': 'Instancia de Contenedor',
   'Webhost Host': 'Host Webhost',
   'Email Account': 'Cuenta de Correo',
+  'VPS Dashboard': 'Panel VPS',
+  'Instance health, provider readiness, and plan capacity for VPS operations.':
+    'Salud de instancias, preparación de proveedores y capacidad de planes para operaciones VPS.',
+  'VPS Plans': 'Planes VPS',
+  'Catalog Capacity': 'Capacidad del Catálogo',
+  defaults: 'predeterminados',
+  'in use': 'en uso',
+  'RAM catalog': 'RAM en catálogo',
+  'Instance Status': 'Estado de Instancias',
+  'Current VPS inventory grouped by operational state.':
+    'Inventario VPS actual agrupado por estado operativo.',
+  'Provider accounts, linked plans, and attached instances.':
+    'Cuentas de proveedores, planes vinculados e instancias asociadas.',
+  'Plan Capacity': 'Capacidad de Planes',
+  'Commercial VPS plans with provider capacity defaults and adoption.':
+    'Planes VPS comerciales con capacidad predeterminada del proveedor y adopción.',
+  'Loading VPS status...': 'Cargando estado VPS...',
+  'Loading VPS providers...': 'Cargando proveedores VPS...',
+  'Loading VPS plans...': 'Cargando planes VPS...',
+  'No VPS instances found.': 'No se encontraron instancias VPS.',
+  'No VPS providers found.': 'No se encontraron proveedores VPS.',
+  'No VPS plans found.': 'No se encontraron planes VPS.',
+  'Failed to load VPS dashboard.': 'Error al cargar el panel VPS.',
+  'Some VPS dashboard sections could not be loaded.':
+    'Algunas secciones del panel VPS no se pudieron cargar.',
   current: 'actualizado',
   offline: 'sin conexión',
   outdated: 'desactualizado',
