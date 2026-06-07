@@ -1,0 +1,285 @@
+<section class="erp-page did-dashboard" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'DID Dashboard' | t }}</h1>
+        <p>{{ 'DID inventory, operator readiness, and external validation health.' | t }}</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | t }}
+        </button>
+      </div>
+    </header>
+
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+      }
+
+      <div class="kpi-grid">
+        @for (item of kpis(); track item.label) {
+          <article class="kpi-tile" [ngClass]="'state-' + item.state">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label | t }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.detailValue }} {{ item.detailLabel | t }}</small>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Operator Readiness' | t }}</h2>
+              <p>{{ 'DID operators with inventory, availability, and assignment coverage.' | t }}</p>
+            </div>
+            <a mat-stroked-button color="primary" [routerLink]="routeTo('operator')">
+              <mat-icon>open_in_new</mat-icon>
+              {{ 'Operator' | t }}
+            </a>
+          </div>
+
+          <div class="table-wrapper mat-elevation-z8">
+            <table mat-table [dataSource]="operatorDataSource" matSort #operatorSort="matSort">
+              <ng-container matColumnDef="operator">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Operator' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <strong>{{ row.name }}</strong>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="nick">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Nick' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.nick }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="active">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
+                    {{ row.active ? ('Active' | t) : ('Inactive' | t) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="numbers">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Numbers' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.numbers }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="available">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Available' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.available }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="assigned">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Assigned' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.assigned }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="issues">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Issues' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="issueChipClass(row.issues)">
+                    {{ row.issues }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <a mat-stroked-button color="primary" [routerLink]="routeTo('operator')">
+                    <mat-icon>open_in_new</mat-icon>
+                    {{ 'View' | t }}
+                  </a>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="operatorColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: operatorColumns"></tr>
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="operatorColumns.length">
+                  {{
+                    loading()
+                      ? ('Loading DID operators...' | t)
+                      : ('No DID operators found.' | t)
+                  }}
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <mat-paginator
+            #operatorPaginator
+            class="mobile-paginator"
+            [pageSizeOptions]="[5, 10, 25, 100]"
+            showFirstLastButtons
+          ></mat-paginator>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'DID Number Status' | t }}</h2>
+              <p>{{ 'Current DID inventory grouped by availability and assignment state.' | t }}</p>
+            </div>
+            <a mat-stroked-button color="primary" [routerLink]="routeTo('number')">
+              <mat-icon>open_in_new</mat-icon>
+              {{ 'Number' | t }}
+            </a>
+          </div>
+
+          <div class="table-wrapper mat-elevation-z8">
+            <table mat-table [dataSource]="statusDataSource" matSort #statusSort="matSort">
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="statusChipClass(row.status)">
+                    {{ row.status | t }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="total">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Total' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.total }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="available">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Available' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.available }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="assigned">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Assigned' | t }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.assigned }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="issues">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Issues' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-pill status-chip" [ngClass]="issueChipClass(row.issues)">
+                    {{ row.issues }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <a mat-stroked-button color="primary" [routerLink]="routeTo('number')">
+                    <mat-icon>open_in_new</mat-icon>
+                    {{ 'View' | t }}
+                  </a>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="statusColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: statusColumns"></tr>
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="statusColumns.length">
+                  {{ loading() ? ('Loading DIDs...' | t) : ('No DIDs found.' | t) }}
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <mat-paginator
+            #statusPaginator
+            class="mobile-paginator"
+            [pageSizeOptions]="[5, 10, 25, 100]"
+            showFirstLastButtons
+          ></mat-paginator>
+        </section>
+      </div>
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'External DID Validation' | t }}</h2>
+            <p>{{ 'Tenant-owned external DIDs by provider, validation, and billing state.' | t }}</p>
+          </div>
+          <a mat-stroked-button color="primary" [routerLink]="routeTo('external')">
+            <mat-icon>open_in_new</mat-icon>
+            {{ 'External' | t }}
+          </a>
+        </div>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table mat-table [dataSource]="externalDataSource" matSort #externalSort="matSort">
+            <ng-container matColumnDef="number">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Number' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <strong>{{ row.number }}</strong>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="provider">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | t }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="validation">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Validation' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip" [ngClass]="statusChipClass(row.validation)">
+                  {{ row.validation | t }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="billing">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Billing' | t }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.billing | t }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
+                  {{ row.active ? ('Active' | t) : ('Inactive' | t) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+              <td mat-cell *matCellDef="let row">
+                <a mat-stroked-button color="primary" [routerLink]="routeTo('external')">
+                  <mat-icon>open_in_new</mat-icon>
+                  {{ 'View' | t }}
+                </a>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="externalColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: externalColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="externalColumns.length">
+                {{
+                  loading()
+                    ? ('Loading external DIDs...' | t)
+                    : ('No external DIDs found.' | t)
+                }}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          #externalPaginator
+          class="mobile-paginator"
+          [pageSizeOptions]="[5, 10, 25, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </section>
+    </div>
+  </mat-card>
+</section>

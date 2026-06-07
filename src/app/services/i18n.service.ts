@@ -367,6 +367,35 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Failed to load Storage dashboard.': 'Falha ao carregar o painel Storage.',
   'Some Storage dashboard sections could not be loaded.':
     'Algumas seções do painel Storage não puderam ser carregadas.',
+  'DID Dashboard': 'Painel DID',
+  'DID inventory, operator readiness, and external validation health.':
+    'Inventário DID, prontidão de operadoras e saúde de validação externa.',
+  'DID Numbers': 'Números DID',
+  'DID Operators': 'Operadoras DID',
+  'External DIDs': 'DIDs Externos',
+  'DID Readiness': 'Prontidão DID',
+  available: 'disponíveis',
+  pending: 'pendentes',
+  assigned: 'atribuídos',
+  'Operator Readiness': 'Prontidão das Operadoras',
+  'DID operators with inventory, availability, and assignment coverage.':
+    'Operadoras DID com inventário, disponibilidade e cobertura de atribuição.',
+  Numbers: 'Números',
+  Available: 'Disponíveis',
+  Assigned: 'Atribuídos',
+  'DID Number Status': 'Status dos Números DID',
+  'Current DID inventory grouped by availability and assignment state.':
+    'Inventário DID atual agrupado por disponibilidade e estado de atribuição.',
+  'External DID Validation': 'Validação de DID Externo',
+  'Tenant-owned external DIDs by provider, validation, and billing state.':
+    'DIDs externos do ambiente por provedor, validação e estado de faturamento.',
+  Validation: 'Validação',
+  'Loading DID operators...': 'Carregando operadoras DID...',
+  'No DID operators found.': 'Nenhuma operadora DID encontrada.',
+  'No DIDs found.': 'Nenhum DID encontrado.',
+  'Failed to load DID dashboard.': 'Falha ao carregar o painel DID.',
+  'Some DID dashboard sections could not be loaded.':
+    'Algumas seções do painel DID não puderam ser carregadas.',
   current: 'atualizado',
   offline: 'offline',
   outdated: 'desatualizado',
@@ -1252,6 +1281,35 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Failed to load Storage dashboard.': 'Error al cargar el panel Storage.',
   'Some Storage dashboard sections could not be loaded.':
     'Algunas secciones del panel Storage no se pudieron cargar.',
+  'DID Dashboard': 'Panel DID',
+  'DID inventory, operator readiness, and external validation health.':
+    'Inventario DID, preparación de operadores y salud de validación externa.',
+  'DID Numbers': 'Números DID',
+  'DID Operators': 'Operadores DID',
+  'External DIDs': 'DIDs Externos',
+  'DID Readiness': 'Preparación DID',
+  available: 'disponibles',
+  pending: 'pendientes',
+  assigned: 'asignados',
+  'Operator Readiness': 'Preparación de Operadores',
+  'DID operators with inventory, availability, and assignment coverage.':
+    'Operadores DID con inventario, disponibilidad y cobertura de asignación.',
+  Numbers: 'Números',
+  Available: 'Disponibles',
+  Assigned: 'Asignados',
+  'DID Number Status': 'Estado de Números DID',
+  'Current DID inventory grouped by availability and assignment state.':
+    'Inventario DID actual agrupado por disponibilidad y estado de asignación.',
+  'External DID Validation': 'Validación de DID Externo',
+  'Tenant-owned external DIDs by provider, validation, and billing state.':
+    'DIDs externos del entorno por proveedor, validación y estado de facturación.',
+  Validation: 'Validación',
+  'Loading DID operators...': 'Cargando operadores DID...',
+  'No DID operators found.': 'No se encontraron operadores DID.',
+  'No DIDs found.': 'No se encontraron DIDs.',
+  'Failed to load DID dashboard.': 'Error al cargar el panel DID.',
+  'Some DID dashboard sections could not be loaded.':
+    'Algunas secciones del panel DID no se pudieron cargar.',
   current: 'actualizado',
   offline: 'sin conexión',
   outdated: 'desactualizado',

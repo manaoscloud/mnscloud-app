@@ -875,15 +875,35 @@ export const routes: Routes = [
               },
               {
                 path: 'voip/did',
-                loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
                 title: 'VoIP • DID | mnscloud',
-              },
-              {
-                path: 'voip/did/external',
-                loadComponent: () =>
-                  import('./pages/voip/did/external/external').then((m) => m.VoipDidExternalPage),
-                title: 'VoIP • DID • External | mnscloud',
-                data: { scope: 'tenant' },
+                data: { scope: 'tenant', context: 'voip' },
+                children: [
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/voip/did/dashboard/dashboard').then(
+                        (m) => m.VoipDidDashboardPage,
+                      ),
+                    title: 'VoIP • DID Dashboard | mnscloud',
+                    data: { scope: 'tenant', context: 'voip' },
+                  },
+                  {
+                    path: 'number',
+                    loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
+                    title: 'VoIP • DID Number | mnscloud',
+                    data: { scope: 'tenant', context: 'voip' },
+                  },
+                  {
+                    path: 'external',
+                    loadComponent: () =>
+                      import('./pages/voip/did/external/external').then(
+                        (m) => m.VoipDidExternalPage,
+                      ),
+                    title: 'VoIP • DID • External | mnscloud',
+                    data: { scope: 'tenant', context: 'voip' },
+                  },
+                ],
               },
               {
                 path: 'voip/portability',
@@ -1288,8 +1308,12 @@ export const routes: Routes = [
               },
               {
                 path: 'did',
-                redirectTo: 'did/number',
-                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./pages/voip/did/dashboard/dashboard').then(
+                    (m) => m.VoipDidDashboardPage,
+                  ),
+                title: 'System DID Dashboard | mnscloud',
+                data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'did/operator',

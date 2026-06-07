@@ -1233,6 +1233,13 @@ export class MainLayout {
           icon: 'dialpad',
           children: [
             {
+              id: 'voip/did/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/voip/did',
+              masterRoute: '/system/did',
+            },
+            {
               id: 'voip/did/operator',
               label: 'Operator',
               icon: 'badge',
@@ -1244,7 +1251,7 @@ export class MainLayout {
               id: 'voip/did/number',
               label: 'Number',
               icon: 'dialpad',
-              route: '/voip/did',
+              route: '/voip/did/number',
               masterRoute: '/system/did/number',
             },
             {
