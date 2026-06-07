@@ -90,14 +90,14 @@
               (click)="queueRuntimeProductUpdate(product)"
               [disabled]="isUpdatingRuntimeProduct(product)"
             >
-              <span>{{ runtimeProductStatus(product) }}</span>
+              <span>{{ runtimeProductStatus(product) | t }}</span>
             </button>
           } @else {
             <span
               class="status-pill version-chip runtime-product-action"
               [ngClass]="runtimeProductClass(product)"
             >
-              {{ runtimeProductStatus(product) }}
+              {{ runtimeProductStatus(product) | t }}
             </span>
           }
         </article>

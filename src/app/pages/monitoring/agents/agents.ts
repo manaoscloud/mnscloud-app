@@ -647,7 +647,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   runtimeProductStatus(product: RuntimeProductFleet) {
     if (product.availableCount > 0) return 'Update';
     if (product.unknownCount > 0) return 'Check';
-    return 'Current';
+    return 'Up to date';
   }
 
   runtimeProductClass(product: RuntimeProductFleet) {
