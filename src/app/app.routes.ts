@@ -666,7 +666,16 @@ export const routes: Routes = [
                 title: 'Hosting • Storage | mnscloud',
                 data: { scope: 'tenant', context: 'hosting' },
                 children: [
-                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/dashboard/dashboard').then(
+                        (m) => m.HostingStorageDashboardPage,
+                      ),
+                    title: 'Hosting • Storage Dashboard | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                   {
                     path: 'providers',
                     loadComponent: () =>
@@ -1358,7 +1367,16 @@ export const routes: Routes = [
                 title: 'System Storage | mnscloud',
                 data: { scope: 'master', context: 'system' },
                 children: [
-                  { path: '', pathMatch: 'full', redirectTo: 'accounts' },
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/dashboard/dashboard').then(
+                        (m) => m.HostingStorageDashboardPage,
+                      ),
+                    title: 'System Storage Dashboard | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
                   {
                     path: 'providers',
                     loadComponent: () =>

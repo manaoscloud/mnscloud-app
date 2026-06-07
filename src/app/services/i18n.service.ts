@@ -345,6 +345,28 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Failed to load SMTP dashboard.': 'Falha ao carregar o painel SMTP.',
   'Some SMTP dashboard sections could not be loaded.':
     'Algumas seções do painel SMTP não puderam ser carregadas.',
+  'Storage Dashboard': 'Painel Storage',
+  'Provider, account, and bucket readiness for private storage operations.':
+    'Prontidão de provedores, contas e buckets para operações de storage privado.',
+  'Storage Buckets': 'Buckets de Storage',
+  'Storage Readiness': 'Prontidão de Storage',
+  unmapped: 'não mapeados',
+  'Storage Provider Readiness': 'Prontidão dos Provedores de Storage',
+  'Storage providers with linked accounts and private bucket coverage.':
+    'Provedores de storage com contas vinculadas e cobertura de buckets privados.',
+  'Storage Account Inventory': 'Inventário de Contas de Storage',
+  'Buckets and containers linked to storage provider accounts.':
+    'Buckets e containers vinculados às contas de provedores de storage.',
+  'Provider Type Coverage': 'Cobertura por Tipo de Provedor',
+  'Storage provider families grouped by configured providers and active accounts.':
+    'Famílias de provedores de storage agrupadas por provedores configurados e contas ativas.',
+  Buckets: 'Buckets',
+  'Active accounts': 'Contas ativas',
+  'Loading storage coverage...': 'Carregando cobertura de storage...',
+  'No storage coverage found.': 'Nenhuma cobertura de storage encontrada.',
+  'Failed to load Storage dashboard.': 'Falha ao carregar o painel Storage.',
+  'Some Storage dashboard sections could not be loaded.':
+    'Algumas seções do painel Storage não puderam ser carregadas.',
   current: 'atualizado',
   offline: 'offline',
   outdated: 'desatualizado',
@@ -1208,6 +1230,28 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Failed to load SMTP dashboard.': 'Error al cargar el panel SMTP.',
   'Some SMTP dashboard sections could not be loaded.':
     'Algunas secciones del panel SMTP no se pudieron cargar.',
+  'Storage Dashboard': 'Panel Storage',
+  'Provider, account, and bucket readiness for private storage operations.':
+    'Preparación de proveedores, cuentas y buckets para operaciones de storage privado.',
+  'Storage Buckets': 'Buckets de Storage',
+  'Storage Readiness': 'Preparación de Storage',
+  unmapped: 'no mapeados',
+  'Storage Provider Readiness': 'Preparación de Proveedores de Storage',
+  'Storage providers with linked accounts and private bucket coverage.':
+    'Proveedores de storage con cuentas vinculadas y cobertura de buckets privados.',
+  'Storage Account Inventory': 'Inventario de Cuentas de Storage',
+  'Buckets and containers linked to storage provider accounts.':
+    'Buckets y contenedores vinculados a cuentas de proveedores de storage.',
+  'Provider Type Coverage': 'Cobertura por Tipo de Proveedor',
+  'Storage provider families grouped by configured providers and active accounts.':
+    'Familias de proveedores de storage agrupadas por proveedores configurados y cuentas activas.',
+  Buckets: 'Buckets',
+  'Active accounts': 'Cuentas activas',
+  'Loading storage coverage...': 'Cargando cobertura de storage...',
+  'No storage coverage found.': 'No se encontró cobertura de storage.',
+  'Failed to load Storage dashboard.': 'Error al cargar el panel Storage.',
+  'Some Storage dashboard sections could not be loaded.':
+    'Algunas secciones del panel Storage no se pudieron cargar.',
   current: 'actualizado',
   offline: 'sin conexión',
   outdated: 'desactualizado',

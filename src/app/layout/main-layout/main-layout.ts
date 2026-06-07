@@ -1591,6 +1591,13 @@ export class MainLayout {
           icon: 'storage',
           children: [
             {
+              id: 'hosting/storage/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/hosting/storage',
+              masterRoute: '/system/hosting/storage',
+            },
+            {
               id: 'hosting/storage/providers',
               label: 'Provider',
               icon: 'cloud_sync',
