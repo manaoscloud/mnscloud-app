@@ -1,305 +1,86 @@
-/* =========================================================
-   TENANTS — alinhado com o tema global
-========================================================= */
+.tenants-page {
+  .tenant-tabs {
+    margin-top: 0.25rem;
+  }
 
-.page-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    color: var(--mat-sys-color-on-surface);
-}
+  .tab-panel {
+    padding-top: 1rem;
+  }
 
-.page-subtitle {
-    margin: 0 0 1.25rem 0;
-    font-size: 0.9rem;
-    color: var(--mat-sys-color-on-surface-variant);
-}
+  .table-wrapper {
+    min-height: 260px;
+  }
 
-/* ================= INVITE BOX ================= */
-
-.invite-box {
-    margin-bottom: 24px;
-    padding: 16px 18px;
-    border-radius: 12px;
-
-    background: var(--mat-sys-color-surface-container-high);
-    border: 1px solid var(--mat-sys-color-outline-variant);
-
-    h3 {
-        margin: 0 0 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--mat-sys-color-on-surface);
-    }
-}
-
-.invite-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center; // alinhamento vertical com o botão
-}
-
-.full-width {
-    flex: 1 1 220px;
-}
-
-.role-field {
-    width: 150px;
-    min-width: 150px;
-}
-
-/* Botão de convite */
-.invite-btn {
-    height: 48px;
-    padding: 0 20px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-/* ====== FIX: remover espaço extra de subscript no MDC ====== */
-
-:host ::ng-deep .invite-grid .mat-mdc-form-field-subscript-wrapper {
-    display: none !important;
-}
-
-:host ::ng-deep .invite-grid .mat-mdc-form-field-bottom-align {
-    display: none !important;
-}
-
-:host ::ng-deep .invite-grid .mat-mdc-form-field {
-    margin-bottom: 0 !important;
-}
-
-/* mensagens do invite */
-
-.invite-error {
-    margin-top: 10px;
-    padding: 8px 10px;
-    background: color-mix(in srgb, #ef4444 10%, transparent);
-    border-left: 4px solid #ef4444;
-    border-radius: 8px;
-    color: #fecaca;
-    font-size: 13px;
-}
-
-.invite-success {
-    margin-top: 10px;
-    padding: 8px 10px;
-    background: color-mix(in srgb, #22c55e 10%, transparent);
-    border-left: 4px solid #22c55e;
-    border-radius: 8px;
-    color: #bbf7d0;
-    font-size: 13px;
-}
-
-/* responsivo */
-
-@media (max-width: 768px) {
-    .invite-grid {
-        flex-direction: column;
-        align-items: stretch;
-
-        .role-field,
-        .invite-btn {
-            width: 100%;
-        }
-    }
-}
-
-/* ================= LISTAGEM ================= */
-
-.section-title {
-    margin: 8px 0 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--mat-sys-color-on-surface);
-}
-
-/* Um pequeno respiro antes da tabela de invites */
-.section-title--invites {
-    margin-top: 24px;
-}
-
-/* tabela — usada tanto para Existing Access quanto Invitations */
-
-table {
+  table {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 4px;
-    background: var(--mat-sys-color-surface-container-high);
-    border-radius: 12px;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+
+  td strong {
+    display: block;
+    font-weight: 700;
+  }
+
+  td small {
+    display: block;
+    max-width: 360px;
+    margin-top: 0.2rem;
     overflow: hidden;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-
-    thead {
-        background: var(--mat-sys-color-surface-container-highest);
-
-        th {
-            text-align: left;
-            padding: 12px 16px;
-            font-weight: 600;
-            color: var(--mat-sys-color-on-surface-variant);
-            font-size: 13px;
-            border-bottom: 1px solid var(--mat-sys-color-outline-variant);
-        }
-    }
-
-    tbody {
-        tr {
-            border-bottom: 1px solid color-mix(in srgb,
-                    var(--mat-sys-color-outline-variant) 60%,
-                    transparent);
-
-            &:hover {
-                background: color-mix(in srgb,
-                        var(--mat-sys-color-primary) 6%,
-                        transparent);
-            }
-
-            td {
-                padding: 12px 16px;
-                font-size: 14px;
-                color: var(--mat-sys-color-on-surface);
-
-                &:last-child {
-                    text-align: right;
-                }
-            }
-        }
-
-        tr:last-child {
-            border-bottom: none;
-        }
-    }
-}
-
-/* Botão remover */
-
-.btn-danger {
-    padding: 8px 16px;
-    background: #ef4444;
-    color: #ffffff;
-    border-radius: 999px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
-    border: none;
-
-    &:hover {
-        background: #dc2626;
-    }
-}
-
-/* Botão default */
-.btn-secondary {
-    padding: 8px 16px;
-    background: transparent;
-    color: var(--mat-sys-color-primary);
-    border: 1px solid var(--mat-sys-color-primary);
-    border-radius: 999px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
-
-    &:hover {
-        background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
-    }
-}
-
-/* ================= STATUS PILLS (INVITES) ================= */
-
-.status-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 10px;
-    border-radius: 999px;
+    color: var(--mat-sys-color-on-surface-variant);
     font-size: 0.78rem;
-    font-weight: 600;
-}
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.status-pending {
-    background: color-mix(in srgb, var(--mat-sys-color-primary) 14%, transparent);
-    color: var(--mat-sys-color-primary);
-}
-
-.status-accepted {
-    background: color-mix(in srgb, #22c55e 16%, transparent);
-    color: #16a34a;
-}
-
-.status-canceled {
-    background: color-mix(in srgb, #ef4444 16%, transparent);
-    color: #b91c1c;
-}
-
-.status-default {
-    background: color-mix(in srgb, #22c55e 16%, transparent);
-    color: #16a34a;
-}
-
-.status-muted {
-    background: color-mix(in srgb, var(--mat-sys-color-outline-variant) 20%, transparent);
-    color: var(--mat-sys-color-on-surface-variant);
-}
-
-/* célula de ações da tabela de invites */
-.invite-actions-cell {
+  .actions-col {
+    width: 128px;
     text-align: right;
-}
+    white-space: nowrap;
+  }
 
-.invite-actions {
-    display: inline-flex;
-    gap: 8px;
-    align-items: center;
-    justify-content: flex-end;
-}
+  .actions-col button + button {
+    margin-left: 0.25rem;
+  }
 
-.no-actions {
+  .no-actions {
     color: var(--mat-sys-color-on-surface-variant);
-    font-size: 0.85rem;
+  }
 }
 
-/* Botão "link" perigoso, mais leve que o btn-danger */
-.btn-link-danger {
-    background: transparent;
-    border: none;
-    color: #ef4444;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 0;
-    font-size: 0.85rem;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+.state-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
 
-    &:hover {
-        color: #dc2626;
+.state-box.is-error {
+  border-color: color-mix(in srgb, var(--mat-sys-color-error) 60%, transparent);
+  color: var(--mat-sys-color-error);
+}
+
+.tenant-invite-dialog {
+  .save-main-button mat-progress-spinner,
+  .save-main-button mat-icon {
+    margin-right: 0.4rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .tenants-page {
+    .actions-col {
+      width: 96px;
     }
-}
 
-/* ================= STATES ================= */
-
-.error-box {
-    margin-top: 20px;
-    padding: 14px;
-    background: color-mix(in srgb, #ef4444 10%, transparent);
-    border-left: 4px solid #ef4444;
-    border-radius: 8px;
-    color: #fecaca;
-    font-size: 0.9rem;
-}
-
-.loading {
-    margin-top: 40px;
-    text-align: center;
-    font-size: 0.95rem;
-    color: var(--mat-sys-color-on-surface-variant);
-}
-
-.empty-state {
-    margin-top: 20px;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--mat-sys-color-on-surface-variant);
+    td small {
+      max-width: 220px;
+    }
+  }
 }
