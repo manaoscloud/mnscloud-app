@@ -593,6 +593,17 @@ export const routes: Routes = [
                 title: 'ISP • GeoMap Capacity | mnscloud',
               },
 
+              // InfraGIS
+              {
+                path: 'infragis',
+                loadComponent: () =>
+                  import('./pages/infragis/dashboard/dashboard').then(
+                    (m) => m.InfraGisDashboardPage,
+                  ),
+                title: 'InfraGIS | mnscloud',
+                data: { scope: 'tenant', context: 'infragis' },
+              },
+
               // Hosting
               {
                 path: 'hosting',

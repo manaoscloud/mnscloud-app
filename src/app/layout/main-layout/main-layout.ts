@@ -1202,6 +1202,17 @@ export class MainLayout {
       ],
     },
 
+    // ✅ InfraGIS (tenant; canonical replacement path for future GeoMap migration)
+    {
+      id: 'infragis',
+      label: 'InfraGIS',
+      icon: 'map',
+      route: '/infragis',
+      entitlementCode: 'module.infragis.*',
+      roles: ['OWNER', 'ADMIN', 'USER'],
+      requiresEnvironment: true,
+    },
+
     // ✅ VoIP (tenant; MASTER usa rotas globais quando disponível)
     {
       id: 'voip',

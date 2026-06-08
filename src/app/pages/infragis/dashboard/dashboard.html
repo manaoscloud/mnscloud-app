@@ -1,0 +1,60 @@
+<section class="erp-page infragis-dashboard" @fadeIn>
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'InfraGIS' | t }}</h1>
+        <p>{{ 'Corporate GIS control plane for georeferenced infrastructure assets.' | t }}</p>
+      </div>
+
+      <div class="header-actions">
+        <a mat-stroked-button color="primary" routerLink="/billing">
+          <mat-icon>workspace_premium</mat-icon>
+          {{ 'Billing' | t }}
+        </a>
+      </div>
+    </header>
+
+    <div class="infragis-hero">
+      <div class="hero-copy">
+        <span class="eyebrow">{{ 'Fail-closed module' | t }}</span>
+        <h2>{{ 'Generic asset-oriented GIS for multiple infrastructure verticals.' | t }}</h2>
+        <p>
+          {{
+            'InfraGIS will replace the ISP-bound GeoMap with tenant-scoped projects, layers, assets, offline packages and API-owned synchronization.'
+              | t
+          }}
+        </p>
+      </div>
+
+      <div class="hero-metrics" aria-label="InfraGIS readiness">
+        <div>
+          <strong>0</strong>
+          <span>{{ 'active projects' | t }}</span>
+        </div>
+        <div>
+          <strong>0</strong>
+          <span>{{ 'asset layers' | t }}</span>
+        </div>
+        <div>
+          <strong>0</strong>
+          <span>{{ 'offline packages' | t }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="readiness-grid">
+      @for (item of readiness; track item.label) {
+        <article class="readiness-item" [class.is-ready]="item.state === 'ready'">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <div>
+            <h3>{{ item.label | t }}</h3>
+            <p>{{ item.detail | t }}</p>
+          </div>
+          <span class="status-pill status-chip" [class.chip-active]="item.state === 'ready'">
+            {{ (item.state === 'ready' ? 'Ready' : 'Planned') | t }}
+          </span>
+        </article>
+      }
+    </div>
+  </mat-card>
+</section>

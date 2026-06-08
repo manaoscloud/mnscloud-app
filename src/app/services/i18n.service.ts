@@ -16,6 +16,7 @@ const MENU_TRANSLATIONS_PT: Record<string, string> = {
   Hosting: 'Hospedagem',
   'SMTP Delivery': 'Entrega SMTP',
   Storage: 'Armazenamento',
+  InfraGIS: 'InfraGIS',
   ISP: 'ISP',
   'Radius Server': 'Servidor Radius',
   VoIP: 'VoIP',
@@ -112,6 +113,7 @@ const MENU_TRANSLATIONS_ES: Record<string, string> = {
   Hosting: 'Hosting',
   'SMTP Delivery': 'Entrega SMTP',
   Storage: 'Almacenamiento',
+  InfraGIS: 'InfraGIS',
   ISP: 'ISP',
   'Radius Server': 'Servidor Radius',
   VoIP: 'VoIP',
@@ -271,6 +273,27 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Container Instance': 'Instância de Contêiner',
   'Webhost Host': 'Host Webhost',
   'Email Account': 'Conta de E-mail',
+  'Corporate GIS control plane for georeferenced infrastructure assets.':
+    'Plano de controle GIS corporativo para ativos de infraestrutura georreferenciados.',
+  'Fail-closed module': 'Módulo fail-closed',
+  'Generic asset-oriented GIS for multiple infrastructure verticals.':
+    'GIS genérico orientado a ativos para múltiplas verticais de infraestrutura.',
+  'InfraGIS will replace the ISP-bound GeoMap with tenant-scoped projects, layers, assets, offline packages and API-owned synchronization.':
+    'O InfraGIS substituirá o GeoMap vinculado ao ISP por projetos, camadas, ativos, pacotes offline e sincronização controlada pela API no escopo do tenant.',
+  'active projects': 'projetos ativos',
+  'asset layers': 'camadas de ativos',
+  'offline packages': 'pacotes offline',
+  'API contract': 'Contrato da API',
+  'Planned under /api/v1/infragis.': 'Planejado em /api/v1/infragis.',
+  'Mobile client': 'Cliente mobile',
+  'Public Flutter repository created.': 'Repositório Flutter público criado.',
+  'Offline sync': 'Sincronização offline',
+  'SQLite-first sync contract documented.':
+    'Contrato de sincronização com SQLite como base documentado.',
+  'Map provider': 'Provedor de mapa',
+  'Mapbox provider boundary documented.': 'Boundary do provedor Mapbox documentado.',
+  Ready: 'Pronto',
+  Planned: 'Planejado',
   'VPS Dashboard': 'Painel VPS',
   'Instance health, provider readiness, and plan capacity for VPS operations.':
     'Saúde das instâncias, prontidão de provedores e capacidade de planos para operações VPS.',
@@ -1265,6 +1288,27 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Container Instance': 'Instancia de Contenedor',
   'Webhost Host': 'Host Webhost',
   'Email Account': 'Cuenta de Correo',
+  'Corporate GIS control plane for georeferenced infrastructure assets.':
+    'Plano de control GIS corporativo para activos de infraestructura georreferenciados.',
+  'Fail-closed module': 'Módulo fail-closed',
+  'Generic asset-oriented GIS for multiple infrastructure verticals.':
+    'GIS genérico orientado a activos para múltiples verticales de infraestructura.',
+  'InfraGIS will replace the ISP-bound GeoMap with tenant-scoped projects, layers, assets, offline packages and API-owned synchronization.':
+    'InfraGIS reemplazará GeoMap vinculado al ISP por proyectos, capas, activos, paquetes offline y sincronización controlada por la API en el alcance del tenant.',
+  'active projects': 'proyectos activos',
+  'asset layers': 'capas de activos',
+  'offline packages': 'paquetes offline',
+  'API contract': 'Contrato de API',
+  'Planned under /api/v1/infragis.': 'Planificado en /api/v1/infragis.',
+  'Mobile client': 'Cliente mobile',
+  'Public Flutter repository created.': 'Repositorio Flutter público creado.',
+  'Offline sync': 'Sincronización offline',
+  'SQLite-first sync contract documented.':
+    'Contrato de sincronización con SQLite como base documentado.',
+  'Map provider': 'Proveedor de mapa',
+  'Mapbox provider boundary documented.': 'Boundary del proveedor Mapbox documentado.',
+  Ready: 'Listo',
+  Planned: 'Planificado',
   'VPS Dashboard': 'Panel VPS',
   'Instance health, provider readiness, and plan capacity for VPS operations.':
     'Salud de instancias, preparación de proveedores y capacidad de planes para operaciones VPS.',
