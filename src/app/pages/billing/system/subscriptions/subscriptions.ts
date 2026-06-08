@@ -6,7 +6,7 @@ import { BILLING_SYSTEM_IMPORTS, BillingSystemPage, BillingSystemSection } from 
   standalone: true,
   imports: BILLING_SYSTEM_IMPORTS,
   templateUrl: '../system.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['../system.scss'],
 })
 export class BillingSystemSubscriptionsPage extends BillingSystemPage {

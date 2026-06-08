@@ -6,9 +6,11 @@ import {
   OnDestroy,
   TemplateRef,
   ViewChild,
+  computed,
   inject,
+  linkedSignal,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -89,7 +91,7 @@ export const BILLING_SYSTEM_IMPORTS = [
   imports: BILLING_SYSTEM_IMPORTS,
   templateUrl: './system.html',
   styleUrls: ['./system.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class BillingSystemPage implements AfterViewInit, OnDestroy {
@@ -112,6 +114,22 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly selectedCreditTenant = signal<BillingTenantLookupItem | null>(null);
   readonly tenantSearchLoading = signal(false);
   readonly defaultCurrency = signal('');
+  readonly priceProductSearchInput = signal('');
+  readonly priceFormProductSearchInput = signal('');
+  readonly priceProductOptions = computed(() => this.filterProducts(this.priceProductSearchInput()));
+  readonly priceFormProductOptions = computed(() =>
+    this.filterProducts(this.priceFormProductSearchInput()),
+  );
+  readonly defaultPriceProductUUID = linkedSignal<BillingProduct[], string>({
+    source: this.products,
+    computation: (products, previous) => {
+      const previousValue = previous?.value ?? '';
+      if (previousValue && products.some((product) => product.BprUUID === previousValue)) {
+        return previousValue;
+      }
+      return products[0]?.BprUUID ?? '';
+    },
+  });
 
   readonly productSource = new MatTableDataSource<BillingProduct>([]);
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
@@ -171,8 +189,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   priceProductFilter = '';
   statusFilter: '' | 0 | 1 = '';
   subscriptionStatusFilter = '';
-  priceProductSearchInput = '';
-  priceFormProductSearchInput = '';
 
   readonly selectedProductUUIDs = new Set<string>();
   readonly selectedPriceUUIDs = new Set<string>();
@@ -612,19 +628,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return this.i18n.t(labels[status] ?? status);
   }
 
-  filteredProducts(search: string) {
-    const term = search.trim().toLowerCase();
-    if (!term) return this.products();
-    return this.products().filter((product) =>
-      [product.BprName, product.BprCode, product.BprModule]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term)),
-    );
-  }
-
   clearProductSelectSearch() {
-    this.priceProductSearchInput = '';
-    this.priceFormProductSearchInput = '';
+    this.priceProductSearchInput.set('');
+    this.priceFormProductSearchInput.set('');
   }
 
   closeDialog() {
@@ -885,7 +891,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private resetPriceForm() {
     this.editingPrice.set(null);
     this.priceForm.reset({
-      productUUID: this.products()[0]?.BprUUID ?? '',
+      productUUID: this.defaultPriceProductUUID(),
       name: '',
       currency: this.defaultCurrency(),
       billingMode: 'MONTHLY',
@@ -921,6 +927,16 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       sortOrder: 1000,
       status: 1,
     });
+  }
+
+  private filterProducts(search: string) {
+    const term = search.trim().toLowerCase();
+    if (!term) return this.products();
+    return this.products().filter((product) =>
+      [product.BprName, product.BprCode, product.BprModule]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(term)),
+    );
   }
 
   private async loadDefaultCurrency() {

@@ -236,14 +236,15 @@
                 <input
                   matInput
                   [placeholder]="'Search products' | transloco"
-                  [(ngModel)]="priceProductSearchInput"
+                  [ngModel]="priceProductSearchInput()"
+                  (ngModelChange)="priceProductSearchInput.set($event)"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                 />
               </mat-form-field>
             </mat-option>
             <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
-            @for (product of filteredProducts(priceProductSearchInput); track product.BprUUID) {
+            @for (product of priceProductOptions(); track product.BprUUID) {
               <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
             }
           </mat-select>
@@ -781,7 +782,8 @@
                       <input
                         matInput
                         [placeholder]="'Search products' | transloco"
-                        [(ngModel)]="priceFormProductSearchInput"
+                        [ngModel]="priceFormProductSearchInput()"
+                        (ngModelChange)="priceFormProductSearchInput.set($event)"
                         [ngModelOptions]="{ standalone: true }"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
@@ -789,7 +791,7 @@
                     </mat-form-field>
                   </mat-option>
                   @for (
-                    product of filteredProducts(priceFormProductSearchInput);
+                    product of priceFormProductOptions();
                     track product.BprUUID
                   ) {
                     <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
