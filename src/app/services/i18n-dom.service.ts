@@ -21,20 +21,29 @@ export class I18nDomService {
         this.i18n.language();
         this.translateSubtree(document.body);
       },
-      { injector: this.injector }
+      { injector: this.injector },
     );
 
     this.observer = new MutationObserver((mutations) => {
+      if (this.applying) return;
+
       for (const mutation of mutations) {
+        if (mutation.type === 'characterData') {
+          this.translateNode(mutation.target);
+          continue;
+        }
+
         if (mutation.type !== 'childList') continue;
         for (const node of mutation.addedNodes) {
           this.translateNode(node);
+          this.translateNodeSoon(node);
         }
       }
     });
 
     this.observer.observe(document.body, {
       childList: true,
+      characterData: true,
       subtree: true,
     });
   }
@@ -47,6 +56,18 @@ export class I18nDomService {
 
     if (node instanceof HTMLElement) {
       this.translateSubtree(node);
+    }
+  }
+
+  private translateNodeSoon(node: Node) {
+    const translate = () => this.translateNode(node);
+
+    queueMicrotask(translate);
+
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(translate);
+    } else {
+      setTimeout(translate, 0);
     }
   }
 
@@ -117,7 +138,7 @@ export class I18nDomService {
         'script',
         'style',
         'noscript',
-      ].join(',')
+      ].join(','),
     );
   }
 }
