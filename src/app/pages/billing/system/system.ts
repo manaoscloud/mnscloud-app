@@ -29,6 +29,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
@@ -67,6 +68,7 @@ export const BILLING_SYSTEM_IMPORTS = [
   MatTabsModule,
   MatTooltipModule,
   TranslatePipe,
+  CurrencyMaskDirective,
 ];
 
 @Component({
@@ -421,8 +423,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       currency: this.normalizeCurrencyInput(value.currency),
       billingMode: value.billingMode,
       unitCode: value.unitCode,
-      unitPrice: Number(value.unitPrice),
-      setupAmount: Number(value.setupAmount),
+      unitPrice: this.parseLocalizedNumber(value.unitPrice),
+      setupAmount: this.parseLocalizedNumber(value.setupAmount),
       includedQuantity: Number(value.includedQuantity),
       minimumCommitment: Number(value.minimumCommitment),
       config,
@@ -526,7 +528,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     try {
       await this.billing.manualCredit({
         environmentUUID: value.environmentUUID,
-        amount: Number(value.amount),
+        amount: this.parseLocalizedNumber(value.amount),
         currency: this.normalizeCurrencyInput(value.currency),
         reason: value.reason,
         reference: this.emptyToNull(value.reference),
@@ -945,6 +947,33 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private normalizeCurrencyInput(value: unknown) {
     const text = String(value ?? '').trim().toUpperCase();
     return text || null;
+  }
+
+  private parseLocalizedNumber(value: unknown) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const text = String(value ?? '').trim();
+    if (!text) return 0;
+    const normalized = text.replace(/[^\d.,-]/g, '');
+    const commaIndex = normalized.lastIndexOf(',');
+    const dotIndex = normalized.lastIndexOf('.');
+    const decimal = this.detectDecimalSeparator(normalized, commaIndex, dotIndex);
+
+    if (!decimal) return Number(normalized.replace(/[^\d-]/g, '')) || 0;
+
+    const decimalIndex = normalized.lastIndexOf(decimal);
+    const integer = normalized.slice(0, decimalIndex).replace(/[^\d-]/g, '');
+    const fraction = normalized.slice(decimalIndex + 1).replace(/[^\d]/g, '');
+    return Number(`${integer || '0'}.${fraction}`) || 0;
+  }
+
+  private detectDecimalSeparator(value: string, commaIndex: number, dotIndex: number) {
+    if (commaIndex === -1 && dotIndex === -1) return '';
+    if (commaIndex !== -1 && dotIndex !== -1) return commaIndex > dotIndex ? ',' : '.';
+
+    const separator = commaIndex !== -1 ? ',' : '.';
+    const index = commaIndex !== -1 ? commaIndex : dotIndex;
+    const fractionLength = value.slice(index + 1).replace(/[^\d]/g, '').length;
+    return fractionLength > 0 && fractionLength <= 2 ? separator : '';
   }
 
   private parseJson(value: string) {

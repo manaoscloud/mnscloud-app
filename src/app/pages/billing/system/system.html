@@ -796,14 +796,26 @@
                 @if (resolvedPriceCurrency(); as currency) {
                   <span matTextPrefix>{{ currency }}&nbsp;</span>
                 }
-                <input matInput type="number" step="0.000001" formControlName="unitPrice" />
+                <input
+                  matInput
+                  type="text"
+                  appCurrencyMask
+                  [appCurrencyMaskCurrency]="resolvedPriceCurrency()"
+                  formControlName="unitPrice"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Setup amount' | t }}</mat-label>
                 @if (resolvedPriceCurrency(); as currency) {
                   <span matTextPrefix>{{ currency }}&nbsp;</span>
                 }
-                <input matInput type="number" step="0.000001" formControlName="setupAmount" />
+                <input
+                  matInput
+                  type="text"
+                  appCurrencyMask
+                  [appCurrencyMaskCurrency]="resolvedPriceCurrency()"
+                  formControlName="setupAmount"
+                />
               </mat-form-field>
             </form>
           </div>
@@ -923,7 +935,13 @@
                 @if (resolvedCreditCurrency(); as currency) {
                   <span matTextPrefix>{{ currency }}&nbsp;</span>
                 }
-                <input matInput type="number" step="0.000001" formControlName="amount" />
+                <input
+                  matInput
+                  type="text"
+                  appCurrencyMask
+                  [appCurrencyMaskCurrency]="resolvedCreditCurrency()"
+                  formControlName="amount"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | t }}</mat-label>

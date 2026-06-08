@@ -184,6 +184,9 @@
 - All monetary inputs in the same commercial record must use the same resolved/default currency unless the business flow explicitly supports multiple currencies.
 - Numeric monetary fields should show the effective currency in the input itself, usually through
   `matTextPrefix`, using the record currency or resolved `DEFAULT_CURRENCY`.
+- Editable monetary fields must use `type="text"` with the shared `appCurrencyMask` directive,
+  not `type="number"`, so values such as `4.598,00` and `4,598.00` are accepted and converted to
+  numeric payloads consistently.
 - CRUD forms that use the system default currency must not render a currency field unless the business flow explicitly allows per-record currency override.
 - When the currency is not user-editable, omit it from create/update payloads so the API/DB resolves it from tenant Parameters and then master Parameters.
 - When a business flow does allow per-record currency override, keep API payload currency normalized to uppercase 3-letter ISO-style codes.

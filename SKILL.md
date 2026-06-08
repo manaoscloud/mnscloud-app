@@ -23,7 +23,9 @@ Use this repository as an independent public frontend client for the MNSCloud AP
   `DEFAULT_CURRENCY` with `SystemParameterService.resolveDefaultCurrency()`, initialize create forms
   from that value, let existing record currency win in edit mode, and normalize editable currency
   payloads to uppercase 3-letter codes. Do not hardcode `BRL`, `USD`, blank currency defaults, or
-  locale-derived currency as the UI source of truth.
+  locale-derived currency as the UI source of truth. Editable monetary amount fields must use
+  `type="text"` with `appCurrencyMask`, not `type="number"`, so locale values such as `4.598,00`
+  are accepted and converted to numeric API payloads.
 - File uploads must use the shared upload progress helpers in `src/app/shared/upload/`.
 - Browser-side permission checks are UX only; enforcement belongs to the API.
 

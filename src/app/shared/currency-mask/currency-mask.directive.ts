@@ -2,7 +2,10 @@ import {
   Directive,
   ElementRef,
   HostListener,
+  Input,
+  OnChanges,
   Renderer2,
+  SimpleChanges,
   forwardRef,
   inject,
 } from '@angular/core';
@@ -20,22 +23,33 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
     },
   ],
 })
-export class CurrencyMaskDirective implements ControlValueAccessor {
+export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
   private elementRef = inject(ElementRef<HTMLInputElement>);
   private renderer = inject(Renderer2);
   private locale = inject(LOCALE_ID, { optional: true }) as string | null;
+
+  @Input() appCurrencyMaskCurrency: string | null = null;
 
   private onChange: (value: number) => void = () => {};
   private onTouched: () => void = () => {};
 
   private formatter = this.buildFormatter();
   private decimalSeparator = this.getDecimalSeparator();
-  private groupSeparator = this.getGroupSeparator();
   private fractionDigits = this.formatter.resolvedOptions().maximumFractionDigits ?? 2;
 
   constructor() {
     this.renderer.setAttribute(this.elementRef.nativeElement, 'inputmode', 'decimal');
     this.renderer.setAttribute(this.elementRef.nativeElement, 'autocomplete', 'off');
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (!changes['appCurrencyMaskCurrency']) return;
+    this.refreshFormatConfig();
+    const input = this.elementRef.nativeElement;
+    const parsed = this.parseNumber(input.value);
+    if (input.value && Number.isFinite(parsed)) {
+      this.renderer.setProperty(input, 'value', this.formatNumber(parsed));
+    }
   }
 
   writeValue(value: number | null) {
@@ -83,7 +97,7 @@ export class CurrencyMaskDirective implements ControlValueAccessor {
   }
 
   private buildFormatter() {
-    const locale = this.locale || (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
+    const locale = this.resolveLocale();
     return new Intl.NumberFormat(locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -96,38 +110,77 @@ export class CurrencyMaskDirective implements ControlValueAccessor {
 
   private cleanInput(value: string) {
     if (!value) return '';
-    const digits = value.replace(new RegExp(`[^0-9${this.escape(this.decimalSeparator)}]`, 'g'), '');
-    const normalized = digits.replace(/\./g, this.decimalSeparator).replace(/,/g, this.decimalSeparator);
+    const normalized = this.normalizeLocalizedInput(value);
     const parts = normalized.split(this.decimalSeparator);
-    if (parts.length === 1) return parts[0];
-    const integer = parts[0];
+    if (parts.length === 1) return normalized;
+    const integer = parts[0] || '0';
     const fraction = parts.slice(1).join('');
     return `${integer}${this.decimalSeparator}${fraction.slice(0, this.fractionDigits)}`;
   }
 
   private parseNumber(value: string) {
     if (!value) return 0;
-    const cleaned = value
-      .replace(new RegExp(`\\${this.groupSeparator}`, 'g'), '')
-      .replace(this.decimalSeparator, '.')
-      .replace(/[^\d.]/g, '');
+    const cleaned = this.normalizeLocalizedInput(value).replace(this.decimalSeparator, '.');
     return Number(cleaned);
   }
 
+  private normalizeLocalizedInput(value: string) {
+    const raw = value.replace(/[^\d.,]/g, '');
+    if (!raw) return '';
+
+    const decimal = this.detectDecimalSeparator(raw);
+    if (!decimal) return raw.replace(/[^\d]/g, '');
+
+    const decimalIndex = raw.lastIndexOf(decimal);
+    const integer = raw.slice(0, decimalIndex).replace(/[^\d]/g, '');
+    const fraction = raw.slice(decimalIndex + 1).replace(/[^\d]/g, '');
+    return `${integer || '0'}${this.decimalSeparator}${fraction}`;
+  }
+
+  private detectDecimalSeparator(value: string) {
+    const commaIndex = value.lastIndexOf(',');
+    const dotIndex = value.lastIndexOf('.');
+
+    if (commaIndex === -1 && dotIndex === -1) return '';
+    if (commaIndex !== -1 && dotIndex !== -1) return commaIndex > dotIndex ? ',' : '.';
+
+    const separator = commaIndex !== -1 ? ',' : '.';
+    const index = commaIndex !== -1 ? commaIndex : dotIndex;
+    const fractionLength = value.slice(index + 1).replace(/[^\d]/g, '').length;
+
+    if (fractionLength === 0) return separator;
+    if (separator === this.decimalSeparator && fractionLength <= this.fractionDigits) {
+      return separator;
+    }
+    if (fractionLength <= this.fractionDigits) return separator;
+    return '';
+  }
+
   private getDecimalSeparator() {
-    const locale = this.locale || (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
+    const locale = this.resolveLocale();
     const parts = new Intl.NumberFormat(locale).formatToParts(1.1);
     return parts.find((part) => part.type === 'decimal')?.value ?? '.';
   }
 
-  private getGroupSeparator() {
-    const locale = this.locale || (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
-    const parts = new Intl.NumberFormat(locale).formatToParts(1000);
-    return parts.find((part) => part.type === 'group')?.value ?? ',';
+  private refreshFormatConfig() {
+    this.formatter = this.buildFormatter();
+    this.decimalSeparator = this.getDecimalSeparator();
+    this.fractionDigits = this.formatter.resolvedOptions().maximumFractionDigits ?? 2;
   }
 
-  private escape(value: string) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
+  private resolveLocale() {
+    const currency = this.appCurrencyMaskCurrency?.trim().toUpperCase();
+    const currencyLocale: Record<string, string> = {
+      BRL: 'pt-BR',
+      EUR: 'de-DE',
+      GBP: 'en-GB',
+      USD: 'en-US',
+    };
 
+    return (
+      (currency ? currencyLocale[currency] : null) ||
+      this.locale ||
+      (typeof navigator !== 'undefined' ? navigator.language : 'en-US')
+    );
+  }
 }
