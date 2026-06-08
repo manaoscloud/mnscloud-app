@@ -312,7 +312,7 @@
           </ng-container>
           <ng-container matColumnDef="mode">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Mode' | t }}</th>
-            <td mat-cell *matCellDef="let row">{{ label(row.BpcBillingMode) | t }}</td>
+            <td mat-cell *matCellDef="let row">{{ billingModeLabel(row.BpcBillingMode) }}</td>
           </ng-container>
           <ng-container matColumnDef="unitPrice">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Unit price' | t }}</th>
@@ -791,16 +791,14 @@
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Billing mode' | t }}</mat-label>
                 <mat-select formControlName="billingMode">
-                  <mat-option value="ONE_TIME">{{ 'One time' | t }}</mat-option>
-                  <mat-option value="MONTHLY">{{ 'Monthly' | t }}</mat-option>
-                  <mat-option value="HOURLY">{{ 'Hourly' | t }}</mat-option>
-                  <mat-option value="MINUTELY">{{ 'Minutely' | t }}</mat-option>
-                  <mat-option value="SECONDLY">{{ 'Secondly' | t }}</mat-option>
-                  <mat-option value="USAGE_UNIT">{{ 'Usage unit' | t }}</mat-option>
-                  <mat-option value="GB_HOUR">{{ 'GB hour' | t }}</mat-option>
-                  <mat-option value="GB_MONTH">{{ 'GB month' | t }}</mat-option>
-                  <mat-option value="MODULE_MONTHLY">{{ 'Module monthly' | t }}</mat-option>
-                  <mat-option value="TIERED_USAGE">{{ 'Tiered usage' | t }}</mat-option>
+                  <mat-select-trigger>
+                    {{ billingModeLabel(priceForm.controls.billingMode.value) }}
+                  </mat-select-trigger>
+                  @for (option of billingModeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{
+                      billingModeLabel(option.value)
+                    }}</mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">

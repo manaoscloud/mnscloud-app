@@ -49,6 +49,11 @@ export type BillingSystemSection =
   | 'subscriptions'
   | 'wallets';
 
+type BillingModeOption = {
+  value: string;
+  labelKey: string;
+};
+
 export const BILLING_SYSTEM_IMPORTS = [
   CommonModule,
   FormsModule,
@@ -136,6 +141,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     'price',
     'reserved',
     'actions',
+  ];
+  readonly billingModeOptions: BillingModeOption[] = [
+    { value: 'ONE_TIME', labelKey: 'One time' },
+    { value: 'MONTHLY', labelKey: 'Monthly' },
+    { value: 'HOURLY', labelKey: 'Hourly' },
+    { value: 'MINUTELY', labelKey: 'Minutely' },
+    { value: 'SECONDLY', labelKey: 'Secondly' },
+    { value: 'USAGE_UNIT', labelKey: 'Usage unit' },
+    { value: 'GB_HOUR', labelKey: 'GB hour' },
+    { value: 'GB_MONTH', labelKey: 'GB month' },
+    { value: 'MODULE_MONTHLY', labelKey: 'Module monthly' },
+    { value: 'TIERED_USAGE', labelKey: 'Tiered usage' },
   ];
 
   searchInput = '';
@@ -780,6 +797,12 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   label(value: unknown) {
     return String(value ?? '').replace(/_/g, ' ');
+  }
+
+  billingModeLabel(value: unknown) {
+    const mode = String(value ?? '');
+    const option = this.billingModeOptions.find((item) => item.value === mode);
+    return this.i18n.t(option?.labelKey ?? this.label(mode));
   }
 
   resolvedPriceCurrency() {
