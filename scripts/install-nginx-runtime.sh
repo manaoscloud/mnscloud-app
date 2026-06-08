@@ -20,6 +20,7 @@ APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaosc
 APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
 APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
 APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
+APP_NODE_MAX_OLD_SPACE_SIZE="${APP_NODE_MAX_OLD_SPACE_SIZE:-2048}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/dist/app/browser"
@@ -137,6 +138,19 @@ install_nodejs() {
   load_runtime_kit
   export MNSCLOUD_NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION}"
   mrtk_ensure_nodejs
+  log "using Node.js $(node -v) and npm $(npm -v)"
+}
+
+configure_build_environment() {
+  export NG_CLI_ANALYTICS="${NG_CLI_ANALYTICS:-false}"
+
+  if [[ -n "$APP_NODE_MAX_OLD_SPACE_SIZE" && "${NODE_OPTIONS:-}" != *"--max-old-space-size="* ]]; then
+    if [[ -n "${NODE_OPTIONS:-}" ]]; then
+      export NODE_OPTIONS="${NODE_OPTIONS} --max-old-space-size=${APP_NODE_MAX_OLD_SPACE_SIZE}"
+    else
+      export NODE_OPTIONS="--max-old-space-size=${APP_NODE_MAX_OLD_SPACE_SIZE}"
+    fi
+  fi
 }
 
 read_public_env_api_base_url() {
@@ -192,8 +206,9 @@ else
 fi
 
 if [[ "${SKIP_BUILD}" != "1" ]]; then
+  configure_build_environment
   log "installing dependencies"
-  npm --prefix "${REPO_ROOT}" ci
+  npm --prefix "${REPO_ROOT}" ci --include=dev
   log "building Angular app"
   npm --prefix "${REPO_ROOT}" run build
 fi

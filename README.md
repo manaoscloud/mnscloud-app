@@ -218,6 +218,11 @@ When the edge is on another host, keep the listener on the private interface and
 mnscloud-agent/cyber security network policies so only the edge can connect to the app runtime port.
 Firewall/nftables ownership stays with the agent/security layer, not this app installer.
 
+The installer uses Node.js 24 by default through `mnscloud-runtime-kit`. During the Angular build it
+sets `NG_CLI_ANALYTICS=false`, installs build dependencies explicitly, and applies
+`APP_NODE_MAX_OLD_SPACE_SIZE=2048` unless `NODE_OPTIONS` already defines a
+`--max-old-space-size` value.
+
 Supported operating systems match the `mnscloud-nginx` edge module:
 
 - Debian 12/13
@@ -228,7 +233,8 @@ Supported operating systems match the `mnscloud-nginx` edge module:
 The installer:
 
 - uses `mnscloud-runtime-kit` for the base Nginx package and Node.js installation;
-- runs `npm ci` and `npm run build`;
+- runs `npm ci --include=dev` and `npm run build`, because Angular build tooling lives in
+  development dependencies even when the target host serves a production static bundle;
 - copies `dist/app/browser` into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;
 - creates `/etc/nginx/conf.d/mnscloud-app.conf`;
