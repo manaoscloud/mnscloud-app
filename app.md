@@ -169,6 +169,8 @@
 - Mandatory implementation pattern:
   - first `mat-option` reserved for search input (`select-search-option`)
   - nested search field class `select-search-field`
+  - spacing, option padding, and search field sizing come from the global `src/styles.scss`
+    contract; do not add page-local layout overrides for these classes
   - filtered options list updated in real time from typed value
   - reset search text on close using `(openedChange)`
 - Exception: small static enum selects (for example `Active/Inactive`, `Yes/No`) can remain without search.

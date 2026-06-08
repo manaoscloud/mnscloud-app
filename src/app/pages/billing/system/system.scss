@@ -366,21 +366,6 @@
   }
 }
 
-:host ::ng-deep .select-search-option {
-  height: auto !important;
-  min-height: 68px !important;
-  padding: 8px 12px !important;
-  cursor: default !important;
-}
-
-:host ::ng-deep .select-search-option .mdc-list-item__primary-text {
-  width: 100%;
-}
-
-.select-search-field {
-  width: 100%;
-}
-
 .tenant-result-list {
   display: grid;
   gap: 0.5rem;

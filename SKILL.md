@@ -19,6 +19,9 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - CRUD pages must follow `app.md`.
 - CRUD dialog primary record tabs must use the translated `Record` key (`[label]="'Record' | t`).
   Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
+- Searchable `mat-select` controls must use the global `select-search-option` and
+  `select-search-field` layout from `src/styles.scss`; do not add page-local spacing overrides for
+  those classes.
 - Monetary CRUD inputs must follow the `app.md` system parameter defaults contract: resolve
   `DEFAULT_CURRENCY` with `SystemParameterService.resolveDefaultCurrency()`, initialize create forms
   from that value, let existing record currency win in edit mode, and normalize editable currency
