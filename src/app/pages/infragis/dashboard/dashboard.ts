@@ -21,6 +21,18 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 
 type InfraGisResourceKey = 'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
 type InfraGisRecord = Record<string, any>;
+type InfraGisField = {
+  key: string;
+  label: string;
+  type?: 'text' | 'number' | 'textarea' | 'select' | 'color';
+  span?: 'span-2' | 'span-4';
+  rows?: number;
+  options?: () => Array<{ value: string | number | null; label: string }>;
+};
+type InfraGisFieldGroup = {
+  label: string;
+  fields: InfraGisField[];
+};
 
 type InfraGisResource = {
   key: InfraGisResourceKey;
@@ -28,13 +40,7 @@ type InfraGisResource = {
   endpoint: string;
   uuidField: string;
   columns: Array<{ key: string; label: string }>;
-  fields: Array<{
-    key: string;
-    label: string;
-    type?: 'text' | 'number' | 'textarea' | 'select' | 'color';
-    span?: 'full';
-    options?: () => Array<{ value: string | number | null; label: string }>;
-  }>;
+  fieldGroups: InfraGisFieldGroup[];
 };
 
 @Component({
@@ -100,11 +106,19 @@ export class InfraGisDashboardPage implements OnInit {
         { key: 'AssetCount', label: 'Assets' },
         { key: 'IprStatus', label: 'Status' },
       ],
-      fields: [
-        { key: 'name', label: 'Name' },
-        { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-        { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-        { key: 'description', label: 'Description', type: 'textarea', span: 'full' },
+      fieldGroups: [
+        {
+          label: 'Record',
+          fields: [
+            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+            { key: 'name', label: 'Name', span: 'span-2' },
+            { key: 'sortOrder', label: 'Sort Order', type: 'number' },
+          ],
+        },
+        {
+          label: 'Description',
+          fields: [{ key: 'description', label: 'Description', type: 'textarea', span: 'span-4', rows: 5 }],
+        },
       ],
     },
     {
@@ -119,14 +133,27 @@ export class InfraGisDashboardPage implements OnInit {
         { key: 'AssetCount', label: 'Assets' },
         { key: 'IglStatus', label: 'Status' },
       ],
-      fields: [
-        { key: 'projectUUID', label: 'Project', type: 'select', options: () => this.projectOptions() },
-        { key: 'code', label: 'Code' },
-        { key: 'name', label: 'Name' },
-        { key: 'geometryType', label: 'Geometry', type: 'select', options: () => this.geometryOptions() },
-        { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-        { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-        { key: 'styleJson', label: 'Style JSON', type: 'textarea', span: 'full' },
+      fieldGroups: [
+        {
+          label: 'Record',
+          fields: [
+            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+            { key: 'code', label: 'Code' },
+            { key: 'name', label: 'Name' },
+            { key: 'sortOrder', label: 'Sort Order', type: 'number' },
+          ],
+        },
+        {
+          label: 'Assignment',
+          fields: [
+            { key: 'projectUUID', label: 'Project', type: 'select', options: () => this.projectOptions(), span: 'span-2' },
+            { key: 'geometryType', label: 'Geometry', type: 'select', options: () => this.geometryOptions() },
+          ],
+        },
+        {
+          label: 'Style',
+          fields: [{ key: 'styleJson', label: 'Style JSON', type: 'textarea', span: 'span-4', rows: 6 }],
+        },
       ],
     },
     {
@@ -140,7 +167,7 @@ export class InfraGisDashboardPage implements OnInit {
         { key: 'IacColor', label: 'Color' },
         { key: 'IacStatus', label: 'Status' },
       ],
-      fields: this.taxonomyFields('Category'),
+      fieldGroups: this.taxonomyFieldGroups('Category'),
     },
     {
       key: 'asset-types',
@@ -154,9 +181,24 @@ export class InfraGisDashboardPage implements OnInit {
         { key: 'IgtDefaultColor', label: 'Color' },
         { key: 'IgtStatus', label: 'Status' },
       ],
-      fields: [
-        { key: 'categoryUUID', label: 'Category', type: 'select', options: () => this.categoryOptions() },
-        ...this.taxonomyFields('Asset Type'),
+      fieldGroups: [
+        {
+          label: 'Record',
+          fields: [
+            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+            { key: 'code', label: 'Asset Type Code' },
+            { key: 'name', label: 'Name' },
+            { key: 'sortOrder', label: 'Sort Order', type: 'number' },
+          ],
+        },
+        {
+          label: 'Classification',
+          fields: [
+            { key: 'categoryUUID', label: 'Category', type: 'select', options: () => this.categoryOptions(), span: 'span-2' },
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'icon', label: 'Icon' },
+          ],
+        },
       ],
     },
     {
@@ -170,7 +212,7 @@ export class InfraGisDashboardPage implements OnInit {
         { key: 'IgsColor', label: 'Color' },
         { key: 'IgsStatus', label: 'Status' },
       ],
-      fields: this.statusFields(),
+      fieldGroups: this.statusFieldGroups(),
     },
     {
       key: 'assets',
@@ -185,18 +227,36 @@ export class InfraGisDashboardPage implements OnInit {
         { key: 'AssetStatusName', label: 'Asset Status' },
         { key: 'IgaStatus', label: 'Status' },
       ],
-      fields: [
-        { key: 'projectUUID', label: 'Project', type: 'select', options: () => this.projectOptions() },
-        { key: 'layerUUID', label: 'Layer', type: 'select', options: () => this.layerOptions() },
-        { key: 'assetTypeUUID', label: 'Asset Type', type: 'select', options: () => this.assetTypeOptions() },
-        { key: 'assetStatusUUID', label: 'Asset Status', type: 'select', options: () => this.assetStatusOptions() },
-        { key: 'name', label: 'Name' },
-        { key: 'externalID', label: 'External ID' },
-        { key: 'latitude', label: 'Latitude', type: 'number' },
-        { key: 'longitude', label: 'Longitude', type: 'number' },
-        { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-        { key: 'propertiesJson', label: 'Properties JSON', type: 'textarea', span: 'full' },
-        { key: 'geoJson', label: 'GeoJSON', type: 'textarea', span: 'full' },
+      fieldGroups: [
+        {
+          label: 'Record',
+          fields: [
+            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+            { key: 'name', label: 'Name', span: 'span-2' },
+            { key: 'externalID', label: 'External ID' },
+          ],
+        },
+        {
+          label: 'Assignment',
+          fields: [
+            { key: 'projectUUID', label: 'Project', type: 'select', options: () => this.projectOptions(), span: 'span-2' },
+            { key: 'layerUUID', label: 'Layer', type: 'select', options: () => this.layerOptions(), span: 'span-2' },
+            { key: 'assetTypeUUID', label: 'Asset Type', type: 'select', options: () => this.assetTypeOptions(), span: 'span-2' },
+            { key: 'assetStatusUUID', label: 'Asset Status', type: 'select', options: () => this.assetStatusOptions(), span: 'span-2' },
+          ],
+        },
+        {
+          label: 'Geometry',
+          fields: [
+            { key: 'latitude', label: 'Latitude', type: 'number' },
+            { key: 'longitude', label: 'Longitude', type: 'number' },
+            { key: 'geoJson', label: 'GeoJSON', type: 'textarea', span: 'span-4', rows: 5 },
+          ],
+        },
+        {
+          label: 'Advanced',
+          fields: [{ key: 'propertiesJson', label: 'Properties JSON', type: 'textarea', span: 'span-4', rows: 6 }],
+        },
       ],
     },
   ];
@@ -359,8 +419,12 @@ export class InfraGisDashboardPage implements OnInit {
       styleJson: 'IglStyleJson',
     };
     const model: InfraGisRecord = {};
-    for (const field of resource.fields) model[field.key] = row[mappings[field.key]] ?? null;
+    for (const field of this.resourceFields(resource)) model[field.key] = row[mappings[field.key]] ?? null;
     return model;
+  }
+
+  resourceFields(resource: InfraGisResource): InfraGisField[] {
+    return resource.fieldGroups.flatMap((group) => group.fields);
   }
 
   private prefix(resource: InfraGisResource) {
@@ -425,24 +489,42 @@ export class InfraGisDashboardPage implements OnInit {
     ];
   }
 
-  private taxonomyFields(label: string): InfraGisResource['fields'] {
+  private taxonomyFieldGroups(label: string): InfraGisResource['fieldGroups'] {
     return [
-      { key: 'code', label: `${label} Code` },
-      { key: 'name', label: 'Name' },
-      { key: 'color', label: 'Color', type: 'color' },
-      { key: 'icon', label: 'Icon' },
-      { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-      { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+      {
+        label: 'Record',
+        fields: [
+          { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+          { key: 'code', label: `${label} Code` },
+          { key: 'name', label: 'Name' },
+          { key: 'sortOrder', label: 'Sort Order', type: 'number' },
+        ],
+      },
+      {
+        label: 'Visual',
+        fields: [
+          { key: 'color', label: 'Color', type: 'color' },
+          { key: 'icon', label: 'Icon', span: 'span-2' },
+        ],
+      },
     ];
   }
 
-  private statusFields(): InfraGisResource['fields'] {
+  private statusFieldGroups(): InfraGisResource['fieldGroups'] {
     return [
-      { key: 'code', label: 'Status Code' },
-      { key: 'name', label: 'Name' },
-      { key: 'color', label: 'Color', type: 'color' },
-      { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-      { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+      {
+        label: 'Record',
+        fields: [
+          { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
+          { key: 'code', label: 'Status Code' },
+          { key: 'name', label: 'Name' },
+          { key: 'sortOrder', label: 'Sort Order', type: 'number' },
+        ],
+      },
+      {
+        label: 'Visual',
+        fields: [{ key: 'color', label: 'Color', type: 'color' }],
+      },
     ];
   }
 }

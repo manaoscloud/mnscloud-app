@@ -109,6 +109,26 @@
   }
 }
 
+.crud-dialog {
+  .tab-content {
+    padding: 1rem 0 0.25rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+
+    .span-2 {
+      grid-column: span 2;
+    }
+
+    .span-4 {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
 @media (max-width: 1200px) {
   .infragis-dashboard {
     .dashboard-grid {
@@ -125,6 +145,17 @@
   .infragis-dashboard {
     .dashboard-grid {
       grid-template-columns: 1fr;
+    }
+  }
+
+  .crud-dialog {
+    .form-grid {
+      grid-template-columns: 1fr;
+
+      .span-2,
+      .span-4 {
+        grid-column: 1 / -1;
+      }
     }
   }
 }
