@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { InviteAccept } from './invite-accept';
+import { InviteAcceptPage } from './invite-accept';
 
-describe('InviteAccept', () => {
-  let component: InviteAccept;
-  let fixture: ComponentFixture<InviteAccept>;
+describe('InviteAcceptPage', () => {
+  let component: InviteAcceptPage;
+  let fixture: ComponentFixture<InviteAcceptPage>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [InviteAccept],
+      imports: [InviteAcceptPage],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(InviteAccept);
+    fixture = TestBed.createComponent(InviteAcceptPage);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
