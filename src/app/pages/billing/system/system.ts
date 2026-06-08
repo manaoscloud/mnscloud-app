@@ -8,6 +8,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -88,6 +89,7 @@ export const BILLING_SYSTEM_IMPORTS = [
   imports: BILLING_SYSTEM_IMPORTS,
   templateUrl: './system.html',
   styleUrls: ['./system.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class BillingSystemPage implements AfterViewInit, OnDestroy {

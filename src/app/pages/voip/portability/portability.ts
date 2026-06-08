@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -80,6 +81,7 @@ type CustomerItem = {
   ],
   templateUrl: './portability.html',
   styleUrls: ['./portability.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPortabilityPage implements AfterViewInit, OnDestroy {

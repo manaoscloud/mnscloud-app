@@ -6,6 +6,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -99,6 +100,7 @@ type SupplierOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './payables.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./payables.scss'],
 })
 export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {

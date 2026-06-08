@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -94,6 +95,7 @@ type SmtpEventTypeResponse = {
   ],
   templateUrl: './routes.html',
   styleUrls: ['./routes.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class HostingSmtpRoutesPage implements OnDestroy {

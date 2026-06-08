@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -75,6 +76,7 @@ type IvrRouteType = 'extension' | 'ivr' | 'queue' | 'group' | 'external';
   ],
   templateUrl: './ivr.html',
   styleUrls: ['../queue/queue.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {

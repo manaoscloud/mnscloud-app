@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -61,6 +62,7 @@ type FixedIpv6Item = {
   ],
   templateUrl: './fixed-ipv6.html',
   styleUrls: ['./fixed-ipv6.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {

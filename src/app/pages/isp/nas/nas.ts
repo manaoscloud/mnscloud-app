@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -83,6 +84,7 @@ type IspNasItem = {
   ],
   templateUrl: './nas.html',
   styleUrls: ['./nas.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class IspNasPage implements AfterViewInit, OnDestroy {

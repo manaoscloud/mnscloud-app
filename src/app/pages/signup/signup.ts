@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -56,6 +57,7 @@ type SignupPolicy = {
   ],
   templateUrl: './signup.html',
   styleUrls: ['./signup.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class Signup implements OnInit, AfterViewInit {

@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -82,6 +83,7 @@ type CreateMode = 'single' | 'range';
   ],
   templateUrl: './extension.html',
   styleUrls: ['./extension.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -33,6 +33,7 @@ import { fadeIn } from '../../shared/animations/fade.animation';
     MatProgressSpinnerModule,
     MatIconModule,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class ResetPasswordComponent {

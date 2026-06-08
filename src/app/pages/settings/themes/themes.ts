@@ -9,6 +9,7 @@ import {
   inject,
   signal,
   computed,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import {
   AbstractControl,
@@ -167,6 +168,7 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
   ],
   templateUrl: './themes.html',
   styleUrls: ['./themes.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class SettingsThemesPage implements AfterViewInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 // Angular Material
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   imports: [MatIconModule, MatButtonModule],
   templateUrl: './state-message.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./state-message.scss'],
 })
 export class StateMessageComponent {

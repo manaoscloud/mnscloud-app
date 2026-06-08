@@ -9,6 +9,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -197,6 +198,7 @@ class MapStyleControl {
     PhoneInputComponent,
   ],
   templateUrl: './customer.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./customer.scss'],
 })
 export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {

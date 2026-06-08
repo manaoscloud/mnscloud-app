@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -54,6 +55,7 @@ import { VoipDidExternalItem, VoipDidExternalService } from './external.service'
   ],
   templateUrl: './external.html',
   styleUrls: ['./external.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipDidExternalPage implements AfterViewInit, OnDestroy {

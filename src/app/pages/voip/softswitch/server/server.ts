@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -65,6 +65,7 @@ type ServerPayload = {
     MatTooltipModule,
   ],
   templateUrl: './server.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./server.scss'],
 })
 export class VoipSoftswitchServerPage implements AfterViewInit {

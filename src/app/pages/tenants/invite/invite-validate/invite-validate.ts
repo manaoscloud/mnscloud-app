@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TenantsService } from '../../tenants.service';
@@ -11,6 +11,7 @@ import { InviteSessionService } from '../../../../services/invite-session.servic
   standalone: true,
   imports: [RouterModule, StateMessageComponent],
   templateUrl: './invite-validate.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./invite-validate.scss'],
 })
 export class InviteValidatePage {

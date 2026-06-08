@@ -7,6 +7,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -92,6 +93,7 @@ const MIN_LOADING_MS = 600;
     TranslocoPipe,
   ],
   templateUrl: './teams.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./teams.scss'],
 })
 export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {

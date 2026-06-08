@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject } from '@angular/core';
+import { AfterViewInit, Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -55,6 +55,7 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
     MatProgressSpinnerModule,
   ],
   templateUrl: './attendance.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./attendance.scss'],
 })
 export class SupportAttendancePage implements AfterViewInit {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
 import { fadeIn } from '../../shared/animations/fade.animation';
@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth.service';
   imports: [MatCardModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class Dashboard {

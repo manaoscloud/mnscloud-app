@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [MatCardModule, MatIconModule],
   templateUrl: './pipeline.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./pipeline.scss'],
 })
 export class CrmPipelinePage {

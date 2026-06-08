@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CommonModule } from '@angular/common';
@@ -201,6 +202,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     MatTooltipModule,
   ],
   templateUrl: './webrtc.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./webrtc.scss'],
 })
 export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {

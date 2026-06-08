@@ -229,7 +229,7 @@
           <input
             matInput
             readonly
-            [value]="formatDate(lastCredential()?.TemporaryPasswordExpiresAt)"
+            [value]="formatDate($safeNavigationMigration(lastCredential()?.TemporaryPasswordExpiresAt))"
           />
         </mat-form-field>
       </div>

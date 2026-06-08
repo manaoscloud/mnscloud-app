@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -78,6 +79,7 @@ type ApiResponse<T> = {
   ],
   templateUrl: './providers.html',
   styleUrls: ['./providers.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class HostingStorageProvidersPage implements OnInit, OnDestroy {

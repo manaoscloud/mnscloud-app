@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -76,6 +76,7 @@ type CredentialResponse = {
   ],
   templateUrl: './time-clock-accounts.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {

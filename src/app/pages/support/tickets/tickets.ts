@@ -8,6 +8,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -117,6 +118,7 @@ const MIN_LOADING_MS = 600;
     DateMaskDirective,
   ],
   templateUrl: './tickets.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./tickets.scss'],
 })
 export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {

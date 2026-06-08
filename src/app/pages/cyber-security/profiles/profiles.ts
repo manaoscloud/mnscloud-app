@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,6 +70,7 @@ import {
   ],
   templateUrl: './profiles.html',
   styleUrls: ['./profiles.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {

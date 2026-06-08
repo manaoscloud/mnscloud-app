@@ -8,6 +8,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -70,6 +71,7 @@ export const BILLING_WALLET_IMPORTS = [
   imports: BILLING_WALLET_IMPORTS,
   templateUrl: './wallet.html',
   styleUrls: ['./wallet.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class BillingWalletPage implements AfterViewInit, OnDestroy {

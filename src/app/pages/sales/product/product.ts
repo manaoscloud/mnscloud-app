@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -102,6 +103,7 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   ],
   templateUrl: './product.html',
   styleUrls: ['./product.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class SaleProductPage implements AfterViewInit, OnDestroy {

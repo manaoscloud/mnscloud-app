@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -89,6 +90,7 @@ type CustomerOption = {
   ],
   templateUrl: './domains.html',
   styleUrls: ['./domains.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class HostingDnsDomainsPage implements OnDestroy {

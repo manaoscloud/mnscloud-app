@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 // Angular Material
@@ -47,6 +47,7 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
   ],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class UserProfileComponent {

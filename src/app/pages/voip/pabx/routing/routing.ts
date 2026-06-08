@@ -7,6 +7,7 @@ import {
   signal,
   TemplateRef,
   ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -74,6 +75,7 @@ type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
   ],
   templateUrl: './routing.html',
   styleUrls: ['./routing.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {

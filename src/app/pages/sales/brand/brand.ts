@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -58,6 +59,7 @@ type BrandItem = {
   ],
   templateUrl: './brand.html',
   styleUrls: ['./brand.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class SaleBrandPage implements AfterViewInit, OnDestroy {

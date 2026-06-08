@@ -7,6 +7,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -74,6 +75,7 @@ type ErpFinInvInvoice = {
     CurrencyMaskDirective,
   ],
   templateUrl: './invoices.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./invoices.scss'],
 })
 export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {

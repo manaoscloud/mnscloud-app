@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -225,6 +226,7 @@ const CONFIGS: Record<SbcResource, Config> = {
     MatTooltipModule,
   ],
   templateUrl: './sbc.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./sbc.scss'],
 })
 export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {

@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -223,6 +224,7 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   templateUrl: './payment-gateway.html',
   styleUrls: ['./payment-gateway.scss'],
   animations: [fadeIn],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     '[@fadeIn]': '',
   },

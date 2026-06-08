@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TenantsService } from '../../tenants.service';
@@ -34,6 +34,7 @@ import { MatNativeDateModule } from '@angular/material/core';
   ],
   templateUrl: './invite-accept.html',
   styleUrls: ['./invite-accept.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class InviteAcceptPage {

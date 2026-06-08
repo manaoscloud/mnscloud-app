@@ -6,6 +6,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -69,6 +70,7 @@ type ErpFinInvDueDay = {
     TranslocoPipe,
   ],
   templateUrl: './duedays.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./duedays.scss'],
 })
 export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {

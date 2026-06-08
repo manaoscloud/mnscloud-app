@@ -17,7 +17,7 @@ import { routes } from './app.routes';
 
 import { provideAnimations } from '@angular/platform-browser/animations';
 
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { TitleStrategy } from '@angular/router';
 import { apiInterceptor } from './core/interceptors/api.interceptor';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
@@ -43,7 +43,7 @@ export const appConfig: ApplicationConfig = {
     ),
     { provide: TitleStrategy, useClass: PublicThemeTitleStrategy },
     importProvidersFrom(MatSnackBarModule),
-    provideHttpClient(withInterceptors([apiInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([apiInterceptor])),
     provideTransloco({
       config: {
         availableLangs: ['pt-BR', 'en-US', 'es-ES'],

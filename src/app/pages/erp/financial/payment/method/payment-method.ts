@@ -7,6 +7,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -64,6 +65,7 @@ type PaymentMethod = {
     TranslocoPipe,
   ],
   templateUrl: './payment-method.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./payment-method.scss'],
 })
 export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
@@ -40,6 +40,7 @@ type Lead = {
     MatProgressSpinnerModule,
   ],
   templateUrl: './leads.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./leads.scss'],
 })
 export class CrmLeadsPage implements AfterViewInit {

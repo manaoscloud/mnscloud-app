@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -133,6 +134,7 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
   ],
   templateUrl: './trunk-route.html',
   styleUrls: ['./trunk-route.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {

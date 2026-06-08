@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
@@ -12,6 +12,7 @@ import {
   imports: HUMAN_RESOURCES_CRUD_IMPORTS,
   templateUrl: '../shared/simple-resource-page.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class ErpHumanResourcesDepartmentsPage extends SimpleResourcePageBase {

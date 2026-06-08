@@ -7,6 +7,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -110,6 +111,7 @@ type CustomerOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './contracts.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./contracts.scss'],
 })
 export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy {

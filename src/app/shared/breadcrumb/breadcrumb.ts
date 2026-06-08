@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon'; // ✅ IMPORT NECESSÁRIO
@@ -14,6 +14,7 @@ interface Crumb {
   standalone: true,
   imports: [RouterModule, MatIconModule],
   templateUrl: './breadcrumb.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./breadcrumb.scss'],
 })
 export class BreadcrumbComponent {

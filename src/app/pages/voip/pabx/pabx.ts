@@ -7,6 +7,7 @@ import {
   signal,
   TemplateRef,
   ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -115,6 +116,7 @@ type StorageAccountOption = {
   ],
   templateUrl: './pabx.html',
   styleUrls: ['./pabx.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxPage implements AfterViewInit, OnDestroy {

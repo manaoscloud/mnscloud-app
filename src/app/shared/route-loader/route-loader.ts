@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { trigger, style, animate, transition } from '@angular/animations';
 
@@ -8,6 +8,7 @@ import { trigger, style, animate, transition } from '@angular/animations';
   imports: [],
   templateUrl: './route-loader.html',
   styleUrls: ['./route-loader.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [
     trigger('fadeInOut', [
       transition(':enter', [

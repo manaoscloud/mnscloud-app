@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -73,6 +74,7 @@ type CreateMode = 'single' | 'range';
   ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipDidPage implements AfterViewInit, OnDestroy {

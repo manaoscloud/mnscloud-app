@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -83,6 +84,7 @@ type HostingSmtpAccount = {
   ],
   templateUrl: './accounts.html',
   styleUrls: ['./accounts.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class HostingSmtpAccountsPage implements OnDestroy {

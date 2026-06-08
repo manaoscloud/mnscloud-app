@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
@@ -39,6 +39,7 @@ type Opportunity = {
     MatProgressSpinnerModule,
   ],
   templateUrl: './opportunities.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./opportunities.scss'],
 })
 export class CrmOpportunitiesPage implements AfterViewInit {

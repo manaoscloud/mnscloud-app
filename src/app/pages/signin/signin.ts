@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -54,6 +55,7 @@ type SigninPolicy = {
   ],
   templateUrl: './signin.html',
   styleUrls: ['./signin.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class Signin implements OnInit, AfterViewInit {

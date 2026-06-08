@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -67,6 +68,7 @@ type PoolIpv4NetworkItem = {
   ],
   templateUrl: './pool-ipv4.html',
   styleUrls: ['./pool-ipv4.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {

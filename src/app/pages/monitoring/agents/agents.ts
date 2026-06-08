@@ -9,6 +9,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -125,6 +126,7 @@ type RuntimeProductFleet = {
   ],
   templateUrl: './agents.html',
   styleUrls: ['./agents.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class MonitoringAgentsPage implements OnInit, OnDestroy {

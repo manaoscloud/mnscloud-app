@@ -8,6 +8,7 @@ import {
   signal,
   TemplateRef,
   ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -79,6 +80,7 @@ type CustomerOption = {
   ],
   templateUrl: './instances.html',
   styleUrls: ['./instances.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class HostingVpsInstancesPage implements OnDestroy {

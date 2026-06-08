@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -76,6 +77,7 @@ type LookupOption = {
   ],
   templateUrl: './queue-agent.html',
   styleUrls: ['./queue-agent.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {

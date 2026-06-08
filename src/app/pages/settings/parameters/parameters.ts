@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -125,6 +125,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
   styleUrls: ['./parameters.scss'],
   animations: [fadeIn],
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: { '[@fadeIn]': '' },
 })
 export class SettingsParametersPage implements OnInit {

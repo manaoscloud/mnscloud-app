@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -64,6 +65,7 @@ import {
   ],
   templateUrl: './trusted-nodes.html',
   styleUrls: ['./trusted-nodes.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {

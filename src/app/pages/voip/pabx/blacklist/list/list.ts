@@ -7,6 +7,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -64,6 +65,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   ],
   templateUrl: './list.html',
   styleUrls: ['./list.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxBlacklistListPage implements AfterViewInit, OnDestroy {

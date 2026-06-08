@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -19,6 +19,7 @@ import { fadeIn } from '../../shared/animations/fade.animation';
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss'],
   animations: [fadeIn],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     '[@fadeIn]': '', // aplica animação no host em vez do template
   },

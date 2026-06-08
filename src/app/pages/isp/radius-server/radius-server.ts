@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -71,6 +72,7 @@ type IspRadiusServerItem = {
   ],
   templateUrl: './radius-server.html',
   styleUrls: ['./radius-server.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class IspRadiusServerPage implements AfterViewInit, OnDestroy {

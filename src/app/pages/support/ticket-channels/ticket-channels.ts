@@ -6,6 +6,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -65,6 +66,7 @@ const MIN_LOADING_MS = 600;
     TranslocoPipe,
   ],
   templateUrl: './ticket-channels.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./ticket-channels.scss'],
 })
 export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestroy {

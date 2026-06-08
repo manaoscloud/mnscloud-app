@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import {
   FormControl,
@@ -93,6 +94,7 @@ type OptionItem = {
   ],
   templateUrl: './employees.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy {

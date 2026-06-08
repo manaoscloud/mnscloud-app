@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -57,6 +58,7 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
   ],
   templateUrl: './vendor-model.html',
   styleUrls: ['./vendor-model.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class IspVendorModelPage implements AfterViewInit, OnDestroy {

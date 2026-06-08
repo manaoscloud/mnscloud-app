@@ -9,6 +9,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -82,6 +83,7 @@ type CustomerOption = {
   ],
   templateUrl: './hosts.html',
   styleUrls: ['./hosts.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class HostingWebhostHostsPage implements OnDestroy {

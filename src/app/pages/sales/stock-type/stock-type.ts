@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -58,6 +59,7 @@ type SaleStockTypeItem = {
   ],
   templateUrl: './stock-type.html',
   styleUrls: ['./stock-type.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class SaleStockTypePage implements AfterViewInit, OnDestroy {

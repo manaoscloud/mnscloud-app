@@ -6,6 +6,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,6 +70,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {

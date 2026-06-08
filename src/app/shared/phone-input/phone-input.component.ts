@@ -7,6 +7,7 @@ import {
   Optional,
   Self,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { MatFormFieldControl } from '@angular/material/form-field';
@@ -17,6 +18,7 @@ import { Subject } from 'rxjs';
   standalone: true,
   templateUrl: './phone-input.component.html',
   styleUrls: ['./phone-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: MatFormFieldControl,

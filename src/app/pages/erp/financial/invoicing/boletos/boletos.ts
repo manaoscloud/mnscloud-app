@@ -7,6 +7,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -89,6 +90,7 @@ type CustomerOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './boletos.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./boletos.scss'],
 })
 export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {

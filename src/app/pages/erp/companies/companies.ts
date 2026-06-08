@@ -8,6 +8,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -84,6 +85,7 @@ type Company = {
     PhoneInputComponent,
   ],
   templateUrl: './companies.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./companies.scss'],
 })
 export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {

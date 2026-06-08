@@ -1,4 +1,4 @@
-import { Component, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import {
   Router,
   RouterOutlet,
@@ -35,6 +35,7 @@ import { RouteLoader } from './shared/route-loader/route-loader';
       }
     `,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [
     trigger('routeFadeAnimation', [
       transition('* <=> *', [

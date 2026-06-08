@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -154,6 +155,7 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   ],
   templateUrl: './tools.html',
   styleUrls: ['./tools.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class HostingWebhostToolsPage implements OnDestroy {

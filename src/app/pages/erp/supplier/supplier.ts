@@ -9,6 +9,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -90,6 +91,7 @@ type PostalCodeLookupItem = {
     PhoneInputComponent,
   ],
   templateUrl: './supplier.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./supplier.scss'],
 })
 export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {

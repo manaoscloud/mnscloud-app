@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -153,6 +154,7 @@ const RESOURCE_META: Record<
   ],
   templateUrl: './resource.html',
   styleUrls: ['./resource.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {

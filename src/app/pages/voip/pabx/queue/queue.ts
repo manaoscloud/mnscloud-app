@@ -8,6 +8,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -73,6 +74,7 @@ type Option = { value: string; label: string; pabxUUID?: string | null };
   ],
   templateUrl: './queue.html',
   styleUrls: ['./queue.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [fadeIn],
 })
 export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
