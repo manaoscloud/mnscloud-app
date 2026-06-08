@@ -174,6 +174,18 @@
   - filtered options list updated in real time from typed value
   - reset search text on close using `(openedChange)`
 - Exception: small static enum selects (for example `Active/Inactive`, `Yes/No`) can remain without search.
+- Static enum/control selects still must be fully internationalized by the component, not by the DOM
+  translation fallback.
+  - Define a canonical option list in the component for commercial/status/mode enums.
+  - The selected trigger, dropdown options, table columns, filters, and confirmation text must all
+    use the same label helper/source.
+  - Do not leave raw English literals inside `mat-option` content for enum values.
+  - For nullable/all filters, prefer a stable empty-string UI value (`''`) for the `All` option and
+    normalize it to `null` only when calling the API. Avoid binding `null` directly to a
+    `mat-option` when the selected checkmark must be visible.
+  - Validate both closed and opened select states in PT/EN/ES during CRUD creation/refactor.
+  - The DOM translation service is a safety net only; it is not the source of truth for CRUD
+    component labels.
 
 ## System Parameter Defaults
 

@@ -32,7 +32,7 @@ import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { I18nService } from '../../../services/i18n.service';
+import { AppLanguage, I18nService } from '../../../services/i18n.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
 import {
   BillingPrice,
@@ -51,7 +51,7 @@ export type BillingSystemSection =
 
 type BillingModeOption = {
   value: string;
-  labelKey: string;
+  labels: Record<AppLanguage, string>;
 };
 
 export const BILLING_SYSTEM_IMPORTS = [
@@ -143,21 +143,36 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     'actions',
   ];
   readonly billingModeOptions: BillingModeOption[] = [
-    { value: 'ONE_TIME', labelKey: 'One time' },
-    { value: 'MONTHLY', labelKey: 'Monthly' },
-    { value: 'HOURLY', labelKey: 'Hourly' },
-    { value: 'MINUTELY', labelKey: 'Minutely' },
-    { value: 'SECONDLY', labelKey: 'Secondly' },
-    { value: 'USAGE_UNIT', labelKey: 'Usage unit' },
-    { value: 'GB_HOUR', labelKey: 'GB hour' },
-    { value: 'GB_MONTH', labelKey: 'GB month' },
-    { value: 'MODULE_MONTHLY', labelKey: 'Module monthly' },
-    { value: 'TIERED_USAGE', labelKey: 'Tiered usage' },
+    { value: 'ONE_TIME', labels: { 'en-US': 'One time', 'pt-BR': 'Único', 'es-ES': 'Único' } },
+    { value: 'MONTHLY', labels: { 'en-US': 'Monthly', 'pt-BR': 'Mensal', 'es-ES': 'Mensual' } },
+    { value: 'HOURLY', labels: { 'en-US': 'Hourly', 'pt-BR': 'Por hora', 'es-ES': 'Por hora' } },
+    {
+      value: 'MINUTELY',
+      labels: { 'en-US': 'Minutely', 'pt-BR': 'Por minuto', 'es-ES': 'Por minuto' },
+    },
+    {
+      value: 'SECONDLY',
+      labels: { 'en-US': 'Secondly', 'pt-BR': 'Por segundo', 'es-ES': 'Por segundo' },
+    },
+    {
+      value: 'USAGE_UNIT',
+      labels: { 'en-US': 'Usage unit', 'pt-BR': 'Unidade de uso', 'es-ES': 'Unidad de uso' },
+    },
+    { value: 'GB_HOUR', labels: { 'en-US': 'GB hour', 'pt-BR': 'GB hora', 'es-ES': 'GB hora' } },
+    { value: 'GB_MONTH', labels: { 'en-US': 'GB month', 'pt-BR': 'GB mês', 'es-ES': 'GB mes' } },
+    {
+      value: 'MODULE_MONTHLY',
+      labels: { 'en-US': 'Module monthly', 'pt-BR': 'Módulo mensal', 'es-ES': 'Módulo mensual' },
+    },
+    {
+      value: 'TIERED_USAGE',
+      labels: { 'en-US': 'Tiered usage', 'pt-BR': 'Uso por faixas', 'es-ES': 'Uso por tramos' },
+    },
   ];
 
   searchInput = '';
   priceProductFilter = '';
-  statusFilter: number | null = null;
+  statusFilter: '' | 0 | 1 = '';
   subscriptionStatusFilter = '';
   priceProductSearchInput = '';
   priceFormProductSearchInput = '';
@@ -246,8 +261,12 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.error.set(null);
     try {
       const [products, prices, subscriptions] = await Promise.all([
-        this.billing.listProducts(this.searchInput, this.statusFilter),
-        this.billing.listPrices(this.searchInput, this.priceProductFilter, this.statusFilter),
+        this.billing.listProducts(this.searchInput, this.normalizedStatusFilter()),
+        this.billing.listPrices(
+          this.searchInput,
+          this.priceProductFilter,
+          this.normalizedStatusFilter(),
+        ),
         this.billing.listSystemSubscriptions(this.searchInput, this.subscriptionStatusFilter),
       ]);
       this.products.set(products);
@@ -269,7 +288,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   clearFilters() {
     this.searchInput = '';
     this.priceProductFilter = '';
-    this.statusFilter = null;
+    this.statusFilter = '';
     this.subscriptionStatusFilter = '';
     void this.refresh();
   }
@@ -802,7 +821,12 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   billingModeLabel(value: unknown) {
     const mode = String(value ?? '');
     const option = this.billingModeOptions.find((item) => item.value === mode);
-    return this.i18n.t(option?.labelKey ?? this.label(mode));
+    const language = this.i18n.language();
+    return option?.labels[language] ?? option?.labels['en-US'] ?? this.i18n.t(this.label(mode));
+  }
+
+  normalizedStatusFilter() {
+    return this.statusFilter === '' ? null : this.statusFilter;
   }
 
   resolvedPriceCurrency() {
