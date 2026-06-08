@@ -302,6 +302,10 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.price-form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .credit-form-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 
@@ -445,6 +449,7 @@
   }
 
   .span-2,
+  .span-4,
   .credit-form-grid .span-4 {
     grid-column: auto;
   }

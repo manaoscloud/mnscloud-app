@@ -712,19 +712,26 @@
   <div class="crud-dialog billing-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editingPrice() ? 'Edit price' : 'New price' }}</h2>
-        <p>Configure billing units, recurrence and commercial values.</p>
+        <h2>{{ (editingPrice() ? 'Edit price' : 'New price') | t }}</h2>
+        <p>{{ 'Configure billing units, recurrence and commercial values.' | t }}</p>
       </div>
       @if (editingPrice()) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | t }}</span>
       }
     </div>
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | t">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="priceForm">
+            <form class="form-grid price-form-grid" [formGroup]="priceForm">
               <mat-form-field appearance="outline">
+                <mat-label>{{ 'Status' | t }}</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Product' | t }}</mat-label>
                 <mat-select
                   formControlName="productUUID"
@@ -759,6 +766,12 @@
                 <mat-label>{{ 'Name' | t }}</mat-label>
                 <input matInput formControlName="name" />
               </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+        <mat-tab [label]="'Pricing' | t">
+          <div class="tab-content">
+            <form class="form-grid price-form-grid" [formGroup]="priceForm">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | t }}</mat-label>
                 <input matInput maxlength="3" formControlName="currency" />
@@ -779,16 +792,22 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Unit code' | t }}</mat-label>
-                <input matInput formControlName="unitCode" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
                 <mat-label>{{ 'Unit price' | t }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="unitPrice" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Setup amount' | t }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="setupAmount" />
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+        <mat-tab [label]="'Usage' | t">
+          <div class="tab-content">
+            <form class="form-grid price-form-grid" [formGroup]="priceForm">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'Unit code' | t }}</mat-label>
+                <input matInput formControlName="unitCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Included quantity' | t }}</mat-label>
@@ -798,14 +817,13 @@
                 <mat-label>{{ 'Minimum commitment' | t }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="minimumCommitment" />
               </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Status' | t }}</mat-label>
-                <mat-select formControlName="status">
-                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
+            </form>
+          </div>
+        </mat-tab>
+        <mat-tab [label]="'Advanced' | t">
+          <div class="tab-content">
+            <form class="form-grid price-form-grid" [formGroup]="priceForm">
+              <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Config JSON' | t }}</mat-label>
                 <textarea matInput rows="4" formControlName="configJson"></textarea>
               </mat-form-field>
@@ -816,7 +834,7 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | t }}</button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editingPrice()">
         <button
@@ -828,7 +846,7 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | t }}
         </button>
         @if (!editingPrice()) {
           <button
@@ -853,7 +871,7 @@
       >
         <button mat-menu-item (click)="saveAndNewPrice()" [disabled]="saving()" type="button">
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | t }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>
