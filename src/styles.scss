@@ -1505,14 +1505,19 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
   padding: 0;
 }
 
+.cdk-overlay-pane .mat-mdc-select-panel {
+  padding: 0.5rem 0 !important;
+}
+
 .cdk-overlay-pane .mat-mdc-select-panel .mat-mdc-option:not(.select-search-option) {
   min-height: 48px;
-  padding: 0 1rem !important;
+  padding: 0 1.5rem !important;
 }
 
 .cdk-overlay-pane .mat-mdc-select-panel .mat-mdc-option:not(.select-search-option) .mdc-list-item__primary-text {
   display: block;
   width: 100%;
+  padding-left: 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1527,8 +1532,8 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
 
 .select-search-field {
   width: 100%;
-  margin: 0.5rem 0 0.25rem;
-  padding: 0 0.75rem;
+  margin: 0 0 0.35rem;
+  padding: 0 1.5rem;
   box-sizing: border-box;
 }
 
