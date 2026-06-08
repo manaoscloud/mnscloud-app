@@ -214,6 +214,9 @@
             [(ngModel)]="priceProductFilter"
             (openedChange)="!$event && clearProductSelectSearch()"
           >
+            <mat-select-trigger>
+              {{ priceProductFilter ? productName(priceProductFilter) : ('All' | t) }}
+            </mat-select-trigger>
             <mat-option class="select-search-option">
               <mat-form-field
                 appearance="outline"
@@ -230,7 +233,7 @@
                 />
               </mat-form-field>
             </mat-option>
-            <mat-option value="">{{ 'All' | t }}</mat-option>
+            <mat-option [value]="''">{{ 'All' | t }}</mat-option>
             @for (product of filteredProducts(priceProductSearchInput); track product.BprUUID) {
               <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
             }
@@ -386,7 +389,14 @@
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Subscription status' | t }}</mat-label>
           <mat-select [(ngModel)]="subscriptionStatusFilter">
-            <mat-option value="">{{ 'All' | t }}</mat-option>
+            <mat-select-trigger>
+              {{
+                subscriptionStatusFilter
+                  ? subscriptionStatusLabel(subscriptionStatusFilter)
+                  : ('All' | t)
+              }}
+            </mat-select-trigger>
+            <mat-option [value]="''">{{ 'All' | t }}</mat-option>
             <mat-option value="ACTIVE">{{ 'Active' | t }}</mat-option>
             <mat-option value="SUSPENDED">{{ 'Suspended' | t }}</mat-option>
             <mat-option value="CANCELED">{{ 'Canceled' | t }}</mat-option>

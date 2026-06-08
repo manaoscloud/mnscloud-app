@@ -32,6 +32,7 @@ import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { I18nService } from '../../../services/i18n.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
 import {
   BillingPrice,
@@ -84,6 +85,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly i18n = inject(I18nService);
   private readonly parameters = inject(SystemParameterService);
 
   @Input() section: BillingSystemSection = 'dashboard';
@@ -562,6 +564,17 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return this.products().find((product) => product.BprUUID === uuid)?.BprName ?? uuid;
   }
 
+  subscriptionStatusLabel(status: string) {
+    const labels: Record<string, string> = {
+      ACTIVE: 'Active',
+      SUSPENDED: 'Suspended',
+      CANCELED: 'Canceled',
+      PENDING_PAYMENT: 'Pending payment',
+    };
+
+    return this.i18n.t(labels[status] ?? status);
+  }
+
   filteredProducts(search: string) {
     const term = search.trim().toLowerCase();
     if (!term) return this.products();
@@ -945,7 +958,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   private normalizeCurrencyInput(value: unknown) {
-    const text = String(value ?? '').trim().toUpperCase();
+    const text = String(value ?? '')
+      .trim()
+      .toUpperCase();
     return text || null;
   }
 
