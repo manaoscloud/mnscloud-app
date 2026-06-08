@@ -652,10 +652,6 @@ mat-sidenav-content.content-area {
   overflow: hidden;
 }
 
-body.geomap-mobile-fullscreen mat-sidenav-content.content-area {
-  overflow: hidden;
-}
-
 .page-content {
   flex: 1;
   overflow-y: auto;
@@ -664,11 +660,6 @@ body.geomap-mobile-fullscreen mat-sidenav-content.content-area {
   padding: var(--layout-content-padding);
   padding-bottom: calc(var(--layout-content-padding) + env(safe-area-inset-bottom));
   scroll-padding-bottom: calc(var(--layout-content-padding) + env(safe-area-inset-bottom));
-}
-
-body.geomap-mobile-fullscreen .page-content {
-  padding: 0 !important;
-  overflow: hidden !important;
 }
 
 /* footer */
@@ -683,16 +674,6 @@ body.geomap-mobile-fullscreen .page-content {
   border-top: 1px solid var(--mat-sys-color-outline-variant);
   background: var(--mat-sys-color-surface-container-low);
   z-index: 9;
-}
-
-body.geomap-mobile-fullscreen .topbar,
-body.geomap-mobile-fullscreen app-breadcrumb,
-body.geomap-mobile-fullscreen .footer {
-  display: none !important;
-}
-
-body.geomap-mobile-fullscreen mat-sidenav-content.content-area {
-  padding-bottom: 0 !important;
 }
 
 /* =======================================================

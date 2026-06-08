@@ -537,62 +537,6 @@ export const routes: Routes = [
                   ),
                 title: 'ISP • PPPoE Client | mnscloud',
               },
-              {
-                path: 'isp/geomap/map',
-                loadComponent: () =>
-                  import('./pages/isp/geomap/assets/assets').then((m) => m.IspGeoMapAssetsPage),
-                title: 'ISP • GeoMap Map | mnscloud',
-              },
-              {
-                path: 'isp/geomap/assets',
-                redirectTo: 'isp/geomap/map',
-                pathMatch: 'full',
-              },
-              {
-                path: 'isp/geomap/asset',
-                loadComponent: () =>
-                  import('./pages/isp/geomap/asset/asset').then((m) => m.IspGeoMapAssetPage),
-                title: 'ISP • GeoMap Asset Models | mnscloud',
-              },
-              {
-                path: 'isp/geomap/asset-type',
-                loadComponent: () =>
-                  import('./pages/isp/geomap/asset-type/asset-type').then(
-                    (m) => m.IspGeoMapAssetTypePage,
-                  ),
-                title: 'ISP • GeoMap Asset Types | mnscloud',
-              },
-              {
-                path: 'isp/geomap/projects',
-                loadComponent: () =>
-                  import('./pages/isp/geomap/projects/projects').then(
-                    (m) => m.IspGeoMapProjectsPage,
-                  ),
-                title: 'ISP • GeoMap Projects | mnscloud',
-              },
-              {
-                path: 'isp/geomap/ftth',
-                loadComponent: () =>
-                  import('./pages/isp/geomap/ftth/ftth').then((m) => m.IspGeoMapFtthPage),
-                title: 'ISP • GeoMap FTTH | mnscloud',
-              },
-              {
-                path: 'isp/geomap/viability',
-                loadComponent: () =>
-                  import('./pages/isp/geomap/viability/viability').then(
-                    (m) => m.IspGeoMapViabilityPage,
-                  ),
-                title: 'ISP • GeoMap Viability | mnscloud',
-              },
-              {
-                path: 'isp/geomap/capacity',
-                loadComponent: () =>
-                  import('./pages/isp/geomap/capacity/capacity').then(
-                    (m) => m.IspGeoMapCapacityPage,
-                  ),
-                title: 'ISP • GeoMap Capacity | mnscloud',
-              },
-
               // InfraGIS
               {
                 path: 'infragis',

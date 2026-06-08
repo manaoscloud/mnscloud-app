@@ -344,7 +344,7 @@ mat-paginator {
   border-radius: 0.65rem;
 }
 
-.geomap-pin {
+.map-pin {
   position: relative;
   width: 20px;
   height: 20px;
@@ -355,7 +355,7 @@ mat-paginator {
   border: 2px solid #ffffff;
 }
 
-.geomap-pin-inner {
+.map-pin-inner {
   position: absolute;
   width: 6px;
   height: 6px;
@@ -379,22 +379,22 @@ mat-paginator {
   background: color-mix(in srgb, var(--mat-sys-color-primary) 15%, transparent);
 }
 
-:host-context(.dark-theme) ::ng-deep .mapboxgl-ctrl-group button:not(.geomap-style-toggle) {
+:host-context(.dark-theme) ::ng-deep .mapboxgl-ctrl-group button:not(.map-style-toggle) {
   filter: invert(1) hue-rotate(180deg);
 }
 
 @media (prefers-color-scheme: dark) {
-  :host-context(.system-theme) ::ng-deep .mapboxgl-ctrl-group button:not(.geomap-style-toggle) {
+  :host-context(.system-theme) ::ng-deep .mapboxgl-ctrl-group button:not(.map-style-toggle) {
     filter: invert(1) hue-rotate(180deg);
   }
 }
 
-:host ::ng-deep .geomap-style-control .geomap-style-toggle {
+:host ::ng-deep .map-style-control .map-style-toggle {
   display: grid;
   place-items: center;
 }
 
-:host ::ng-deep .geomap-style-toggle svg {
+:host ::ng-deep .map-style-toggle svg {
   width: 18px;
   height: 18px;
   fill: currentColor;

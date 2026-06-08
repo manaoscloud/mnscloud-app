@@ -134,7 +134,6 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
   "Create a customer-to-DID association.": "Crie uma associação cliente-DID.",
   "Create a stock type such as Refrigerated or Hot.":
     "Crie um tipo de estoque como Refrigerado ou Quente.",
-  "Create and maintain GeoMap projects.": "Criar e manter projetos GeoMap.",
   "Create Account ✨": "Criar conta ✨",
   "Create a new support ticket and track SLA and resolution dates.":
     "Crie um novo ticket de suporte e acompanhe o SLA e as datas de resolução.",
@@ -184,8 +183,6 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
   "Document number": "Número do documento",
   "Domain": "Domínio",
   "Document": "Documento",
-  "Define reusable types for the GeoMap asset registry and map markers.":
-    "Defina tipos reutilizáveis ​​para o registro de ativos do GeoMap e marcadores de mapa.",
   "Deploy static assets or connect to a build pipeline.":
     "Implante ativos estáticos ou conecte-se a um pipeline de build.",
   "Define the RADIUS endpoint and default behavior.":
@@ -227,23 +224,16 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
     "Insira coordenadas e raio para validar a cobertura.",
   "From Name (optional)": "Do nome (opcional)",
   "From Address (optional)": "Do endereço (opcional)",
-  "GeoMap Asset Models": "Modelos de ativos GeoMap",
   "From Type": "Do tipo",
   "From UUID": "Do UUID",
-  "GeoMap Capacity": "Capacidade do GeoMapa",
-  "GeoMap FTTH": "Geomapa FTTH",
-  "GeoMap Asset Types": "Tipos de ativos GeoMap",
   "Host": "Hospedar",
   "IP": "PI",
   "Image": "Imagem",
   "Hosting": "Hospedagem",
   "Images": "Imagens",
   "Inactive": "Inativo",
-  "GeoMap Projects": "Projetos GeoMapa",
-  "GeoMap Viability": "Viabilidade do GeoMapa",
   "In Service": "Em serviço",
   "In Automation": "Em automação",
-  "GeoMap Map": "Mapa GeoMapa",
   "Instagram user ID": "ID de usuário do Instagram",
   "Instance Name": "Nome da instância",
   "Invitation": "Convite",
@@ -323,8 +313,6 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
   "Manage operators before linking numbers.":
     "Gerencie operadoras antes de vincular números.",
   "Map": "Mapa",
-  "Manage reusable asset types, labels, and default colors for GeoMap assets.":
-    "Gerencie tipos de ativos reutilizáveis, rótulos e cores padrão para ativos GeoMap.",
   "Manage products with pricing, attributes, and images.":
     "Gerencie produtos com preços, atributos e imagens.",
   "Manage the payment methods available for your financial workflows.":
@@ -332,8 +320,6 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
   "mnscloud": "Nuvem de mnscloud",
   "Manage ticket origin channels such as Chat, Phone, or Email.":
     "Gerencie canais de origem de tickets, como chat, telefone ou e-mail.",
-  "Manage vendor models linked to GeoMap asset types.":
-    "Gerencie modelos de fornecedores vinculados a tipos de ativos GeoMap.",
   "Manage your active sales opportunities and pipeline value.":
     "Gerencie suas oportunidades de vendas ativas e o valor do pipeline.",
   "Map event types to SMTP accounts and overrides.":
@@ -402,8 +388,6 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
     "Organize os agentes de suporte em equipes para gerenciar a propriedade de tickets.",
   "Optical Line Terminals mapped to each POP.":
     "Terminais de Linha Óptica mapeados para cada POP.",
-  "Organize GeoMap assets by project.":
-    "Organize os ativos do GeoMap por projeto.",
   "Port": "Porta",
   "PPPoE Client": "Cliente PPPoE",
   "PON Capacity": "Capacidade PON",
@@ -468,8 +452,6 @@ export const AUTO_EN_TO_PT: Record<string, string> = {
   "Register stock type definitions for POS.":
     "Cadastre definições de tipo de estoque para PDV.",
   "Requested": "Solicitado",
-  "Register vendor models linked to GeoMap asset types.":
-    "Registre modelos de fornecedores vinculados a tipos de ativos GeoMap.",
   "Reset": "Reiniciar",
   "Register description, attributes, and pricing.":
     "Registre descrição, atributos e preços.",
@@ -925,7 +907,6 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
     "Cree un dominio antes de agregar correos electrónicos.",
   "Create a category for products and sales.":
     "Crea una categoría para productos y ventas.",
-  "Create and maintain GeoMap projects.": "Crear y mantener proyectos GeoMap.",
   "Create a brand for catalog and sales.":
     "Crear una marca para catálogo y ventas.",
   "Create a stock type such as Refrigerated or Hot.":
@@ -978,8 +959,6 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
   "Document number": "Número de documento",
   "Display name": "Nombre para mostrar",
   "Default From Name": "Predeterminado desde nombre",
-  "Define reusable types for the GeoMap asset registry and map markers.":
-    "Defina tipos reutilizables para el registro de activos de GeoMap y los marcadores de mapas.",
   "Define the official origins used to open support tickets.":
     "Definir los orígenes oficiales utilizados para abrir tickets de soporte.",
   "Define the RADIUS endpoint and default behavior.":
@@ -1019,10 +998,8 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
     "Ingrese coordenadas y radio para validar la cobertura.",
   "Fill out the quotation data before adding items.":
     "Complete los datos de la cotización antes de agregar artículos.",
-  "GeoMap Capacity": "Capacidad de mapas geográficos",
   "From Address (optional)": "Desde la dirección (opcional)",
   "From UUID": "Desde UUID",
-  "GeoMap Asset Models": "Modelos de activos de GeoMap",
   "From Type": "De tipo",
   "From Name (optional)": "De nombre (opcional)",
   "Framed IP": "IP enmarcada",
@@ -1032,14 +1009,9 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
   "Images": "Imágenes",
   "Hosting": "Alojamiento",
   "Inactive": "Inactivo",
-  "GeoMap Map": "Mapa GeoMapa",
-  "GeoMap Asset Types": "Tipos de activos de mapas geográficos",
-  "GeoMap FTTH": "GeoMapa FTTH",
   "In Service": "En servicio",
   "Instagram user ID": "ID de usuario de Instagram",
-  "GeoMap Projects": "Proyectos de mapas geográficos",
   "Internal notes": "Notas internas",
-  "GeoMap Viability": "Viabilidad del mapa geográfico",
   "In Automation": "En Automatización",
   "Instance Name": "Nombre de instancia",
   "Installation Address": "Dirección de instalación",
@@ -1116,8 +1088,6 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
   "Manage suppliers and keep partner data updated.":
     "Gestionar proveedores y mantener actualizados los datos de los socios.",
   "Map": "Mapa",
-  "Manage reusable asset types, labels, and default colors for GeoMap assets.":
-    "Administre tipos de activos reutilizables, etiquetas y colores predeterminados para los activos de GeoMap.",
   "Manage customer records for shared partner workflows.":
     "Administre registros de clientes para flujos de trabajo de socios compartidos.",
   "Manage the payment methods available for your financial workflows.":
@@ -1125,8 +1095,6 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
   "Manage products with pricing, attributes, and images.":
     "Administre productos con precios, atributos e imágenes.",
   "mnscloud": "Nube de mnscloud",
-  "Manage vendor models linked to GeoMap asset types.":
-    "Administre modelos de proveedores vinculados a tipos de activos de GeoMap.",
   "Manage ticket origin channels such as Chat, Phone, or Email.":
     "Administre los canales de origen de los tickets, como Chat, Teléfono o Correo electrónico.",
   "Manage your active sales opportunities and pipeline value.":
@@ -1183,8 +1151,6 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
   "Overview": "Descripción general",
   "No storage accounts yet": "Aún no hay cuentas de almacenamiento",
   "Online ✔️": "En línea ✔️",
-  "Organize GeoMap assets by project.":
-    "Organice los activos de GeoMap por proyecto.",
   "Optical Line Terminals mapped to each POP.":
     "Terminales de línea óptica asignados a cada POP.",
   "Owner": "Dueño",
@@ -1270,8 +1236,6 @@ export const AUTO_EN_TO_ES: Record<string, string> = {
   "Reset": "Reiniciar",
   "Register the network presence points tied to your infrastructure.":
     "Registre los puntos de presencia de red vinculados a su infraestructura.",
-  "Register vendor models linked to GeoMap asset types.":
-    "Registre modelos de proveedores vinculados a tipos de activos de GeoMap.",
   "Register operator numbers and link them to an operator.":
     "Registre números de operador y vincúlelos a un operador.",
   "Result": "Resultado",

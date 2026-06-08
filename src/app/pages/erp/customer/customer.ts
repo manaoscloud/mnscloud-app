@@ -99,9 +99,9 @@ type PostalCodeLookupItem = {
   state?: string | null;
 };
 
-type GeoMapStyleMode = 'street' | 'satellite';
+type MapStyleMode = 'street' | 'satellite';
 
-const GEO_MAP_STYLE_URLS: Record<GeoMapStyleMode, string> = {
+const MAP_STYLE_URLS: Record<MapStyleMode, string> = {
   street: 'mapbox://styles/mapbox/streets-v12',
   satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
 };
@@ -118,7 +118,7 @@ const SATELLITE_ICON = `
     </svg>
 `;
 
-class GeoMapStyleControl {
+class MapStyleControl {
   private container?: HTMLElement;
   private button?: HTMLButtonElement;
   private readonly handleClick = () => {
@@ -128,18 +128,18 @@ class GeoMapStyleControl {
 
   constructor(
     private readonly options: {
-      getNextMode: () => GeoMapStyleMode;
+      getNextMode: () => MapStyleMode;
       onToggle: () => void;
     },
   ) {}
 
   onAdd() {
     this.container = document.createElement('div');
-    this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group geomap-style-control';
+    this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group map-style-control';
 
     this.button = document.createElement('button');
     this.button.type = 'button';
-    this.button.className = 'mapboxgl-ctrl-icon geomap-style-toggle';
+    this.button.className = 'mapboxgl-ctrl-icon map-style-toggle';
     this.button.addEventListener('click', this.handleClick);
 
     this.container.appendChild(this.button);
@@ -209,8 +209,8 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   private mapMarker: any;
   private mapboxgl?: any;
   private mapboxToken: string | null = null;
-  private styleControl?: GeoMapStyleControl;
-  private mapStyle: GeoMapStyleMode = 'street';
+  private styleControl?: MapStyleControl;
+  private mapStyle: MapStyleMode = 'street';
   customers: Customer[] = [];
   complexes: ErpComplexOption[] = [];
   complexMap = new Map<string, ErpComplexOption>();
@@ -1072,7 +1072,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
 
     this.map = new mapboxgl.Map({
       container: 'erp-customer-map',
-      style: GEO_MAP_STYLE_URLS.street,
+      style: MAP_STYLE_URLS.street,
       center: [defaultLng, defaultLat],
       zoom: 14,
       attributionControl: false,
@@ -1080,7 +1080,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
 
     this.map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
     this.map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
-    this.styleControl = new GeoMapStyleControl({
+    this.styleControl = new MapStyleControl({
       getNextMode: () => (this.mapStyle === 'street' ? 'satellite' : 'street'),
       onToggle: () => this.toggleMapStyle(),
     });
@@ -1108,7 +1108,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   private toggleMapStyle() {
     if (!this.map) return;
     this.mapStyle = this.mapStyle === 'street' ? 'satellite' : 'street';
-    this.map.setStyle(GEO_MAP_STYLE_URLS[this.mapStyle], { diff: false });
+    this.map.setStyle(MAP_STYLE_URLS[this.mapStyle], { diff: false });
   }
 
   private hasValidCoordinates() {
@@ -1211,8 +1211,8 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       const coords = [lngValue, latValue] as [number, number];
       if (!this.mapMarker) {
         const markerElement = document.createElement('div');
-        markerElement.className = 'geomap-pin';
-        markerElement.innerHTML = '<span class=\"geomap-pin-inner\"></span>';
+        markerElement.className = 'map-pin';
+        markerElement.innerHTML = '<span class=\"map-pin-inner\"></span>';
         this.mapMarker = new this.mapboxgl.Marker({ element: markerElement, draggable: true })
           .setLngLat(coords)
           .addTo(this.map);

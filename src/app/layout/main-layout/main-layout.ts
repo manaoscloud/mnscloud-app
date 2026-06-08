@@ -1148,61 +1148,10 @@ export class MainLayout {
             { id: 'isp/vendor/model', label: 'Model', icon: 'memory', route: '/isp/vendor-model' },
           ],
         },
-        {
-          id: 'isp/geomap',
-          label: 'GeoMap',
-          icon: 'map',
-          children: [
-            { id: 'isp/geomap/map', label: 'Map', icon: 'map', route: '/isp/geomap/map' },
-            {
-              id: 'isp/geomap/projects',
-              label: 'Projects',
-              icon: 'folder',
-              route: '/isp/geomap/projects',
-            },
-            {
-              id: 'isp/geomap/assets',
-              label: 'Assets',
-              icon: 'public',
-              children: [
-                {
-                  id: 'isp/geomap/assets/types',
-                  label: 'Types',
-                  icon: 'category',
-                  route: '/isp/geomap/asset-type',
-                },
-                {
-                  id: 'isp/geomap/assets/models',
-                  label: 'Models',
-                  icon: 'badge',
-                  route: '/isp/geomap/asset',
-                },
-              ],
-            },
-            {
-              id: 'isp/geomap/ftth',
-              label: 'FTTH',
-              icon: 'fiber_smart_record',
-              route: '/isp/geomap/ftth',
-            },
-            {
-              id: 'isp/geomap/viability',
-              label: 'Viability',
-              icon: 'fact_check',
-              route: '/isp/geomap/viability',
-            },
-            {
-              id: 'isp/geomap/capacity',
-              label: 'Capacity',
-              icon: 'speed',
-              route: '/isp/geomap/capacity',
-            },
-          ],
-        },
       ],
     },
 
-    // ✅ InfraGIS (tenant; canonical replacement path for future GeoMap migration)
+    // ✅ InfraGIS (tenant)
     {
       id: 'infragis',
       label: 'InfraGIS',

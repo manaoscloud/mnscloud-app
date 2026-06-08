@@ -7,54 +7,199 @@
       </div>
 
       <div class="header-actions">
-        <a mat-stroked-button color="primary" routerLink="/billing">
-          <mat-icon>workspace_premium</mat-icon>
-          {{ 'Billing' | t }}
-        </a>
+        <button mat-stroked-button color="primary" type="button" (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | t }}
+        </button>
       </div>
     </header>
 
-    <div class="infragis-hero">
-      <div class="hero-copy">
-        <span class="eyebrow">{{ 'Fail-closed module' | t }}</span>
-        <h2>{{ 'Generic asset-oriented GIS for multiple infrastructure verticals.' | t }}</h2>
-        <p>
-          {{
-            'InfraGIS will replace the ISP-bound GeoMap with tenant-scoped projects, layers, assets, offline packages and API-owned synchronization.'
-              | t
-          }}
-        </p>
-      </div>
+    <div class="dashboard-grid">
+      <article class="metric-card">
+        <span>{{ 'Projects' | t }}</span>
+        <strong>{{ metric('ProjectCount') }}</strong>
+        <small>{{ 'Tenant scoped workspaces' | t }}</small>
+      </article>
+      <article class="metric-card">
+        <span>{{ 'Layers' | t }}</span>
+        <strong>{{ metric('LayerCount') }}</strong>
+        <small>{{ 'Operational map layers' | t }}</small>
+      </article>
+      <article class="metric-card">
+        <span>{{ 'Assets' | t }}</span>
+        <strong>{{ metric('AssetCount') }}</strong>
+        <small>{{ 'Registered infrastructure assets' | t }}</small>
+      </article>
+      <article class="metric-card">
+        <span>{{ 'Active assets' | t }}</span>
+        <strong>{{ metric('ActiveAssetCount') }}</strong>
+        <small>{{ 'Visible in field operations' | t }}</small>
+      </article>
+    </div>
 
-      <div class="hero-metrics" aria-label="InfraGIS readiness">
-        <div>
-          <strong>0</strong>
-          <span>{{ 'active projects' | t }}</span>
-        </div>
-        <div>
-          <strong>0</strong>
-          <span>{{ 'asset layers' | t }}</span>
-        </div>
-        <div>
-          <strong>0</strong>
-          <span>{{ 'offline packages' | t }}</span>
-        </div>
+    <section class="map-panel">
+      <div class="map-copy">
+        <h2>{{ 'Map' | t }}</h2>
+        <p>{{ 'Initial authorized asset projection. Advanced providers stay behind the API contract.' | t }}</p>
+      </div>
+      <div class="map-canvas" aria-label="InfraGIS asset map">
+        @for (asset of mapAssets(); track asset['IgaUUID']) {
+          <button
+            type="button"
+            class="map-point"
+            [ngStyle]="mapPointStyle(asset)"
+            [matTooltip]="asset['IgaName']"
+            aria-label="InfraGIS asset"
+          ></button>
+        }
+      </div>
+    </section>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Search' | t }}</mat-label>
+        <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Status' | t }}</mat-label>
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <mat-option [value]="null">{{ 'All' | t }}</mat-option>
+          <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
+          <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | t }}
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | t }}
+        </button>
       </div>
     </div>
 
-    <div class="readiness-grid">
-      @for (item of readiness; track item.label) {
-        <article class="readiness-item" [class.is-ready]="item.state === 'ready'">
-          <mat-icon>{{ item.icon }}</mat-icon>
-          <div>
-            <h3>{{ item.label | t }}</h3>
-            <p>{{ item.detail | t }}</p>
+    <mat-tab-group class="resource-tabs">
+      @for (resource of resources; track resource.key) {
+        <mat-tab [label]="resource.label | t">
+          <div class="tab-toolbar">
+            <button mat-stroked-button color="primary" type="button" (click)="openCreate(resource)">
+              <mat-icon>add</mat-icon>
+              {{ 'New' | t }}
+            </button>
           </div>
-          <span class="status-pill status-chip" [class.chip-active]="item.state === 'ready'">
-            {{ (item.state === 'ready' ? 'Ready' : 'Planned') | t }}
-          </span>
-        </article>
+
+          <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+            @if (loading()) {
+              <div class="table-loading" aria-live="polite" aria-busy="true">
+                <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+              </div>
+            }
+
+            <table mat-table [dataSource]="rows()[resource.key]">
+              @for (column of resource.columns; track column.key) {
+                <ng-container [matColumnDef]="column.key">
+                  <th mat-header-cell *matHeaderCellDef>{{ column.label | t }}</th>
+                  <td mat-cell *matCellDef="let row">
+                    @if (column.key.toLowerCase().includes('color')) {
+                      <span class="color-swatch" [style.background]="displayValue(row, column.key)"></span>
+                    }
+                    {{ displayValue(row, column.key) | t }}
+                  </td>
+                </ng-container>
+              }
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+                  {{ 'Actions' | t }}
+                </th>
+                <td mat-cell *matCellDef="let row" class="actions-col-cell">
+                  <div class="actions-col">
+                    <button mat-icon-button type="button" (click)="openEdit(resource, row)" [matTooltip]="'Edit' | t">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" type="button" (click)="remove(resource, row)" [matTooltip]="'Delete' | t">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns(resource)"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns(resource)"></tr>
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="displayedColumns(resource).length">
+                  {{ (loading() ? 'Loading records...' : 'No records found.') | t }}
+                </td>
+              </tr>
+            </table>
+          </div>
+        </mat-tab>
       }
-    </div>
+    </mat-tab-group>
   </mat-card>
 </section>
+
+<ng-template #recordDialog>
+  @if (editingResource(); as resource) {
+    <div class="crud-dialog entity-dialog">
+      <div class="dialog-header">
+        <div>
+          <h2>{{ (editingRecord() ? 'Edit record' : 'New record') | t }}</h2>
+          <p>{{ resource.label | t }}</p>
+        </div>
+      </div>
+
+      <mat-dialog-content class="dialog-content">
+        <mat-tab-group class="form-tabs">
+          <mat-tab [label]="'Record' | t">
+            <form class="tab-content form-grid">
+              @for (field of resource.fields; track field.key) {
+                <mat-form-field appearance="outline" [class.span-4]="field.span === 'full'">
+                  <mat-label>{{ field.label | t }}</mat-label>
+                  @if (field.type === 'select') {
+                    <mat-select
+                      [ngModel]="formModel()[field.key]"
+                      (ngModelChange)="updateField(field.key, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      @for (option of field.options?.() ?? []; track option.value) {
+                        <mat-option [value]="option.value">{{ option.label | t }}</mat-option>
+                      }
+                    </mat-select>
+                  } @else if (field.type === 'textarea') {
+                    <textarea
+                      matInput
+                      rows="3"
+                      [ngModel]="formModel()[field.key]"
+                      (ngModelChange)="updateField(field.key, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                    ></textarea>
+                  } @else {
+                    <input
+                      matInput
+                      [type]="field.type === 'number' ? 'number' : field.type === 'color' ? 'color' : 'text'"
+                      [ngModel]="formModel()[field.key]"
+                      (ngModelChange)="updateField(field.key, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  }
+                </mat-form-field>
+              }
+            </form>
+          </mat-tab>
+        </mat-tab-group>
+      </mat-dialog-content>
+
+      <mat-dialog-actions class="form-actions" align="end">
+        <button mat-stroked-button type="button" mat-dialog-close>{{ 'Cancel' | t }}</button>
+        <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving()">
+          <mat-icon>save</mat-icon>
+          {{ 'Save' | t }}
+        </button>
+      </mat-dialog-actions>
+    </div>
+  }
+</ng-template>
