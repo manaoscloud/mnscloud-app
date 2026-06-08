@@ -956,6 +956,9 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Active products': 'Produtos ativos',
   'Active prices': 'Preços ativos',
   'Active subscriptions': 'Assinaturas ativas',
+  'total products': 'produtos no total',
+  'total price records': 'registros de preço no total',
+  'tenant(s)': 'tenant(s)',
   Reserved: 'Reservado',
   'Available catalog': 'Catálogo disponível',
   'Ledger entries': 'Lançamentos do extrato',
@@ -969,6 +972,12 @@ const COMMON_EN_TO_PT_MANUAL: Record<string, string> = {
   'Wallet operations': 'Operações de carteira',
   'Apply audited prepaid credits to tenant wallets.':
     'Aplique créditos pré-pagos auditados nas carteiras dos ambientes.',
+  'Add prepaid balance to a tenant wallet with an audit reference.':
+    'Adicione saldo pré-pago a uma carteira de tenant com uma referência de auditoria.',
+  'Select visible products': 'Selecionar produtos visíveis',
+  'Select visible prices': 'Selecionar preços visíveis',
+  'Select visible subscriptions': 'Selecionar assinaturas visíveis',
+  'Search tenant': 'Buscar tenant',
   'Time Clock Accounts': 'Contas de ponto',
   'Generate secure Pulse access for HR employees.':
     'Gere acessos seguros do Pulse para funcionários do RH.',
@@ -2001,6 +2010,9 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Active products': 'Productos activos',
   'Active prices': 'Precios activos',
   'Active subscriptions': 'Suscripciones activas',
+  'total products': 'productos en total',
+  'total price records': 'registros de precio en total',
+  'tenant(s)': 'tenant(s)',
   Reserved: 'Reservado',
   'Available catalog': 'Catálogo disponible',
   'Ledger entries': 'Movimientos del extracto',
@@ -2014,6 +2026,12 @@ const COMMON_EN_TO_ES_MANUAL: Record<string, string> = {
   'Wallet operations': 'Operaciones de cartera',
   'Apply audited prepaid credits to tenant wallets.':
     'Aplique créditos prepagos auditados a las carteras de los entornos.',
+  'Add prepaid balance to a tenant wallet with an audit reference.':
+    'Agregue saldo prepago a una cartera de tenant con una referencia de auditoría.',
+  'Select visible products': 'Seleccionar productos visibles',
+  'Select visible prices': 'Seleccionar precios visibles',
+  'Select visible subscriptions': 'Seleccionar suscripciones visibles',
+  'Search tenant': 'Buscar tenant',
   'Time Clock Accounts': 'Cuentas de control horario',
   'Generate secure Pulse access for HR employees.':
     'Genere accesos seguros de Pulse para empleados de RR. HH.',
