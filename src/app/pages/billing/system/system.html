@@ -143,7 +143,7 @@
           </ng-container>
           <ng-container matColumnDef="scope">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Scope' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.BprBillingScope }}</td>
+            <td mat-cell *matCellDef="let row">{{ billingScopeLabel(row.BprBillingScope) }}</td>
           </ng-container>
           <ng-container matColumnDef="prices">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Prices' | transloco }}</th>
@@ -598,9 +598,11 @@
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Billing scope' | transloco }}</mat-label>
                 <mat-select formControlName="billingScope">
-                  <mat-option value="MODULE">{{ 'Module' | transloco }}</mat-option>
-                  <mat-option value="RESOURCE">{{ 'Resource' | transloco }}</mat-option>
-                  <mat-option value="USAGE">{{ 'Usage' | transloco }}</mat-option>
+                  @for (option of billingScopeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{
+                      option.labelKey | transloco
+                    }}</mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
@@ -609,7 +611,14 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Sort order' | transloco }}</mat-label>
-                <input matInput type="number" min="0" step="1" formControlName="sortOrder" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  formControlName="sortOrder"
+                  [matTooltip]="'Lower numbers appear first in billing lists.' | transloco"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Description' | transloco }}</mat-label>

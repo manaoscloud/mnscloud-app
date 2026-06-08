@@ -54,6 +54,11 @@ type BillingModeOption = {
   labelKey: string;
 };
 
+type BillingScopeOption = {
+  value: 'MODULE' | 'RESOURCE' | 'USAGE';
+  labelKey: string;
+};
+
 export const BILLING_SYSTEM_IMPORTS = [
   CommonModule,
   FormsModule,
@@ -153,6 +158,11 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     { value: 'GB_MONTH', labelKey: 'GB month' },
     { value: 'MODULE_MONTHLY', labelKey: 'Module monthly' },
     { value: 'TIERED_USAGE', labelKey: 'Tiered usage' },
+  ];
+  readonly billingScopeOptions: BillingScopeOption[] = [
+    { value: 'MODULE', labelKey: 'Module' },
+    { value: 'RESOURCE', labelKey: 'Resource' },
+    { value: 'USAGE', labelKey: 'Usage' },
   ];
 
   searchInput = '';
@@ -338,7 +348,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     const publicFeatures = this.parseJson(value.publicFeaturesJson);
     if (publicFeatures === false) {
       this.saving.set(false);
-      this.snack.error('Public features JSON is invalid.');
+      this.snack.error(this.i18n.t('Public features JSON is invalid.'));
       return;
     }
     const payload = {
@@ -363,17 +373,19 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     try {
       const current = this.editingProduct();
       if (current) {
-        if (!current.BpdUUID) throw new Error('Product definition UUID is missing.');
+        if (!current.BpdUUID) throw new Error(this.i18n.t('Product definition UUID is missing.'));
         await this.billing.updateProductDefinition(current.BpdUUID, payload);
       } else {
         await this.billing.createProductDefinition(payload);
       }
-      this.snack.success(current ? 'Product updated.' : 'Product created.');
+      this.snack.success(this.i18n.t(current ? 'Product updated.' : 'Product created.'));
       if (!keepOpen) this.closeActiveDialog();
       await this.refresh();
       if (keepOpen && !current) this.resetProductForm();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to save product.');
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to save product.'),
+      );
     } finally {
       this.saving.set(false);
     }
@@ -385,24 +397,26 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   async deleteProduct(row: BillingProduct) {
     if (!row.BpdUUID) {
-      this.snack.error('Product definition UUID is missing.');
+      this.snack.error(this.i18n.t('Product definition UUID is missing.'));
       return;
     }
     if (
       !(await this.confirm(
-        'Delete product',
-        `Delete ${row.BprName}? Products with prices or subscriptions must be set inactive instead.`,
-        'Delete',
+        this.i18n.t('Delete product'),
+        this.i18n.t('Delete product confirmation', { name: row.BprName }),
+        this.i18n.t('Delete'),
       ))
     )
       return;
     try {
       await this.billing.deleteProductDefinition(row.BpdUUID);
       this.selectedProductUUIDs.delete(row.BpdUUID);
-      this.snack.success('Product deleted.');
+      this.snack.success(this.i18n.t('Product deleted.'));
       await this.refresh();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to delete product.');
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to delete product.'),
+      );
     }
   }
 
@@ -752,13 +766,13 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       .slice(0, 3)
       .map((row) => row.BprName);
     const detail = labels.length
-      ? ` Selected: ${labels.join(', ')}${ids.length > 3 ? ', ...' : ''}`
+      ? ` ${this.i18n.t('Selected')}: ${labels.join(', ')}${ids.length > 3 ? ', ...' : ''}`
       : '';
     if (
       !(await this.confirm(
-        'Delete selected products',
-        `Delete ${ids.length} selected product record(s)? Products with prices or subscriptions will be blocked.${detail}`,
-        'Delete selected',
+        this.i18n.t('Delete selected products'),
+        `${this.i18n.t('Delete selected products confirmation', { count: ids.length })}${detail}`,
+        this.i18n.t('Delete selected'),
       ))
     )
       return;
@@ -766,8 +780,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       ids,
       (uuid) => this.billing.deleteProductDefinition(uuid),
       this.selectedProductUUIDs,
-      'product',
-      'deleted',
+      this.i18n.t('product'),
+      this.i18n.t('deleted'),
     );
   }
 
@@ -807,6 +821,12 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     const mode = String(value ?? '');
     const option = this.billingModeOptions.find((item) => item.value === mode);
     return this.i18n.t(option?.labelKey ?? this.label(mode));
+  }
+
+  billingScopeLabel(value: unknown) {
+    const scope = String(value ?? '') as BillingScopeOption['value'];
+    const option = this.billingScopeOptions.find((item) => item.value === scope);
+    return this.i18n.t(option?.labelKey ?? this.label(scope));
   }
 
   normalizedStatusFilter() {
