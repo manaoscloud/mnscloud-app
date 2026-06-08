@@ -175,13 +175,19 @@
 
 ## System Parameter Defaults
 
-- When a CRUD/page needs the system default currency, do not hardcode `BRL`, `USD`, or a locale-derived currency as the source of truth.
+- Every monetary input/display in CRUD flows must follow the platform default currency contract.
+- When a CRUD/page needs the system default currency, do not hardcode `BRL`, `USD`, a blank string, or a locale-derived currency as the source of truth.
 - Resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`.
 - The resolver must use tenant parameters first and fall back to master parameters when the tenant value is missing, empty, or inactive.
-- Existing record values still win in edit mode; the resolved default is for fallback display when the record has no currency.
+- Create forms with monetary fields must initialize their currency from the resolved `DEFAULT_CURRENCY`.
+- Existing record values still win in edit mode; the resolved default is only a fallback display/form value when the record has no currency.
+- All monetary inputs in the same commercial record must use the same resolved/default currency unless the business flow explicitly supports multiple currencies.
+- Numeric monetary fields should show the effective currency in the input itself, usually through
+  `matTextPrefix`, using the record currency or resolved `DEFAULT_CURRENCY`.
 - CRUD forms that use the system default currency must not render a currency field unless the business flow explicitly allows per-record currency override.
 - When the currency is not user-editable, omit it from create/update payloads so the API/DB resolves it from tenant Parameters and then master Parameters.
 - When a business flow does allow per-record currency override, keep API payload currency normalized to uppercase 3-letter ISO-style codes.
+- Currency selection/defaulting is UX only. API/DB remains responsible for validating the effective currency, applying tenant/master parameter fallback, and rejecting unsupported currency values.
 
 ## Hosting VPS Image Placement
 

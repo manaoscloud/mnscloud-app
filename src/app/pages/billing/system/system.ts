@@ -31,6 +31,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { SystemParameterService } from '../../../services/system-parameter.service';
 import {
   BillingPrice,
   BillingProduct,
@@ -81,6 +82,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly parameters = inject(SystemParameterService);
 
   @Input() section: BillingSystemSection = 'dashboard';
 
@@ -93,6 +95,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly tenantOptions = signal<BillingTenantLookupItem[]>([]);
   readonly selectedCreditTenant = signal<BillingTenantLookupItem | null>(null);
   readonly tenantSearchLoading = signal(false);
+  readonly defaultCurrency = signal('');
 
   readonly productSource = new MatTableDataSource<BillingProduct>([]);
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
@@ -208,6 +211,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.productSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.priceSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
+    void this.loadDefaultCurrency();
     setTimeout(() => this.refresh(), 0);
   }
 
@@ -388,7 +392,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.priceForm.reset({
       productUUID: row.BillingProductBprUUID,
       name: row.BpcName,
-      currency: row.BpcCurrency,
+      currency: row.BpcCurrency || this.defaultCurrency(),
       billingMode: row.BpcBillingMode,
       unitCode: row.BpcUnitCode,
       unitPrice: Number(row.BpcUnitPrice ?? 0),
@@ -414,7 +418,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     const payload = {
       productUUID: value.productUUID,
       name: value.name,
-      currency: this.emptyToNull(value.currency),
+      currency: this.normalizeCurrencyInput(value.currency),
       billingMode: value.billingMode,
       unitCode: value.unitCode,
       unitPrice: Number(value.unitPrice),
@@ -460,7 +464,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       tenantSearch: '',
       environmentUUID: '',
       amount: 0,
-      currency: '',
+      currency: this.defaultCurrency(),
       reason: '',
       reference: '',
       idempotencyKey: crypto.randomUUID(),
@@ -523,7 +527,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       await this.billing.manualCredit({
         environmentUUID: value.environmentUUID,
         amount: Number(value.amount),
-        currency: this.emptyToNull(value.currency),
+        currency: this.normalizeCurrencyInput(value.currency),
         reason: value.reason,
         reference: this.emptyToNull(value.reference),
         idempotencyKey: this.emptyToNull(value.idempotencyKey),
@@ -763,6 +767,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return String(value ?? '').replace(/_/g, ' ');
   }
 
+  resolvedPriceCurrency() {
+    return (
+      this.normalizeCurrencyInput(this.priceForm.controls.currency.value) ?? this.defaultCurrency()
+    );
+  }
+
+  resolvedCreditCurrency() {
+    return (
+      this.normalizeCurrencyInput(this.creditForm.controls.currency.value) ?? this.defaultCurrency()
+    );
+  }
+
   private openDialog(template: TemplateRef<unknown> | undefined, width: string) {
     if (!template) return;
     this.closeActiveDialog();
@@ -803,7 +819,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.priceForm.reset({
       productUUID: this.products()[0]?.BprUUID ?? '',
       name: '',
-      currency: '',
+      currency: this.defaultCurrency(),
       billingMode: 'MONTHLY',
       unitCode: 'UNIT',
       unitPrice: 0,
@@ -837,6 +853,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       sortOrder: 1000,
       status: 1,
     });
+  }
+
+  private async loadDefaultCurrency() {
+    try {
+      this.defaultCurrency.set(await this.parameters.resolveDefaultCurrency());
+      if (!this.editingPrice() && !this.priceForm.controls.currency.value) {
+        this.priceForm.controls.currency.setValue(this.defaultCurrency(), { emitEvent: false });
+      }
+    } catch {
+      // Keep the field empty when the API cannot resolve the platform default.
+      // The API/DB remains responsible for the final currency fallback.
+    }
   }
 
   private visibleRows<T>(source: MatTableDataSource<T>) {
@@ -912,6 +940,11 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private emptyToNull(value: unknown) {
     const text = String(value ?? '').trim();
     return text ? text : null;
+  }
+
+  private normalizeCurrencyInput(value: unknown) {
+    const text = String(value ?? '').trim().toUpperCase();
+    return text || null;
   }
 
   private parseJson(value: string) {

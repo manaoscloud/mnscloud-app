@@ -19,6 +19,11 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - CRUD pages must follow `app.md`.
 - CRUD dialog primary record tabs must use the translated `Record` key (`[label]="'Record' | t`).
   Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
+- Monetary CRUD inputs must follow the `app.md` system parameter defaults contract: resolve
+  `DEFAULT_CURRENCY` with `SystemParameterService.resolveDefaultCurrency()`, initialize create forms
+  from that value, let existing record currency win in edit mode, and normalize editable currency
+  payloads to uppercase 3-letter codes. Do not hardcode `BRL`, `USD`, blank currency defaults, or
+  locale-derived currency as the UI source of truth.
 - File uploads must use the shared upload progress helpers in `src/app/shared/upload/`.
 - Browser-side permission checks are UX only; enforcement belongs to the API.
 
