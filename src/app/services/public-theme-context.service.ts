@@ -1,6 +1,6 @@
-import { DOCUMENT } from "@angular/common";
-import { inject, Injectable, signal } from "@angular/core";
-import { resolveApiUrl } from "../shared/runtime/app-runtime-config";
+import { DOCUMENT } from '@angular/common';
+import { inject, Injectable, signal } from '@angular/core';
+import { resolveApiUrl } from '../shared/runtime/app-runtime-config';
 
 export type PublicThemeRuntimeContext = {
   ThemeUUID: string;
@@ -14,15 +14,15 @@ export type PublicThemeRuntimeContext = {
 };
 
 type PublicThemeContextResponse = {
-  status: "success";
+  status: 'success';
   message: string;
   data?: { context?: PublicThemeRuntimeContext | null };
 };
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class PublicThemeContextService {
   private readonly document = inject(DOCUMENT);
-  private readonly fallbackTitle = "mnscloud";
+  private readonly fallbackTitle = 'mnscloud';
 
   readonly context = signal<PublicThemeRuntimeContext | null>(null);
 
@@ -31,11 +31,11 @@ export class PublicThemeContextService {
   }
 
   async load(): Promise<void> {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     try {
-      const res = await fetch(resolveApiUrl("public/theme/context"), {
-        headers: { Accept: "application/json" },
+      const res = await fetch(resolveApiUrl('public/theme/context'), {
+        headers: { Accept: 'application/json' },
       });
       if (!res.ok) throw new Error(`theme context failed: ${res.status}`);
       const response = (await res.json()) as PublicThemeContextResponse;
@@ -61,12 +61,12 @@ export class PublicThemeContextService {
     let element = this.document.querySelector<HTMLMetaElement>(selector);
 
     if (!element) {
-      element = this.document.createElement("meta");
-      element.setAttribute("name", "description");
+      element = this.document.createElement('meta');
+      element.setAttribute('name', 'description');
       this.document.head.appendChild(element);
     }
 
-    element.setAttribute("content", value);
+    element.setAttribute('content', value);
   }
 
   private setFavicon(value: string | null) {
@@ -76,25 +76,20 @@ export class PublicThemeContextService {
     let element = this.document.querySelector<HTMLLinkElement>(selector);
 
     if (!element) {
-      element = this.document.createElement("link");
-      element.setAttribute("rel", "icon");
+      element = this.document.createElement('link');
+      element.setAttribute('rel', 'icon');
       this.document.head.appendChild(element);
     }
 
-    element.setAttribute("href", value);
+    element.setAttribute('href', value);
   }
 
   private setPrimaryColor(value: string | null) {
     if (!value) {
-      this.document.documentElement.style.removeProperty(
-        "--tenant-primary-color",
-      );
+      this.document.documentElement.style.removeProperty('--tenant-primary-color');
       return;
     }
 
-    this.document.documentElement.style.setProperty(
-      "--tenant-primary-color",
-      value,
-    );
+    this.document.documentElement.style.setProperty('--tenant-primary-color', value);
   }
 }

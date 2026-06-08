@@ -36,7 +36,7 @@ import {
   openCrudTemplateDialog,
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type HostingStorageProvider = {
   HspUUID: string;
@@ -83,7 +83,7 @@ type ApiResponse<T> = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './accounts.html',

@@ -30,7 +30,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { ApiService } from '../../../services/api.service';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type IspPopOption = {
   IppUUID: string;
@@ -79,7 +79,7 @@ type IspNasItem = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './nas.html',
   styleUrls: ['./nas.scss'],

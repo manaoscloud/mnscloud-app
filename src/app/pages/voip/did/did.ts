@@ -36,7 +36,7 @@ import { VoipDidService, VoipDidItem } from './did.service';
 import { VoipDidOperatorService, VoipDidOperatorItem } from './operator/operator.service';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type OperatorOption = {
   value: string;
@@ -68,7 +68,7 @@ type CreateMode = 'single' | 'range';
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     PhoneInputComponent,
   ],
   templateUrl: './did.html',

@@ -42,7 +42,7 @@ import {
 } from '../media-files/media-files.service';
 import { PabxRoutingResource, VoipPabxRoutingService } from './routing.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
@@ -66,7 +66,7 @@ type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
     MatSelectModule,
     MatSortModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTableModule,
     MatTooltipModule,
     MatCheckboxModule,

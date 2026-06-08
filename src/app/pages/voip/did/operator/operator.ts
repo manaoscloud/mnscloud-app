@@ -41,7 +41,7 @@ import {
   openCrudTemplateDialog,
 } from '../../../../shared/dialog/crud-dialog.util';
 import { VoipDidOperatorService, VoipDidOperatorItem } from './operator.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SupplierOption = { value: string; label: string };
 
@@ -68,7 +68,7 @@ type SupplierOption = { value: string; label: string };
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './operator.html',
   styleUrls: ['./operator.scss'],

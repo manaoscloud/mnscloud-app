@@ -2,48 +2,48 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'Time Clock Accounts' | t }}</h1>
-        <p>{{ 'Generate secure Pulse access for HR employees.' | t }}</p>
+        <h1>{{ 'Time Clock Accounts' | transloco }}</h1>
+        <p>{{ 'Generate secure Pulse access for HR employees.' | transloco }}</p>
       </div>
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
           <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | t }}
+          {{ 'Refresh' | transloco }}
         </button>
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          {{ 'New' | t }}
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'Search' | t }}</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
           [ngModel]="searchInput()"
           (ngModelChange)="searchInput.set($event)"
-          [placeholder]="'Employee or login code' | t"
+          [placeholder]="'Employee or login code' | transloco"
         />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'Status' | t }}</mat-label>
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-          <mat-option [value]="null">{{ 'All' | t }}</mat-option>
-          <mat-option value="active">{{ 'Active' | t }}</mat-option>
-          <mat-option value="inactive">{{ 'Inactive' | t }}</mat-option>
-          <mat-option value="blocked">{{ 'Blocked' | t }}</mat-option>
+          <mat-option [value]="null">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="active">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="inactive">{{ 'Inactive' | transloco }}</mat-option>
+          <mat-option value="blocked">{{ 'Blocked' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | t }}
+          {{ 'Apply' | transloco }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | t }}
+          {{ 'Clear' | transloco }}
         </button>
       </div>
     </div>
@@ -57,7 +57,7 @@
 
       <table mat-table [dataSource]="dataSource" matSort>
         <ng-container matColumnDef="EmployeeName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Employee' | t }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Employee' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <strong>{{ row.EmployeeName || '-' }}</strong>
             <small>{{ row.EmployeeEmail || '-' }}</small>
@@ -65,30 +65,30 @@
         </ng-container>
 
         <ng-container matColumnDef="LoginCode">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Login code' | t }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Login code' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <code>{{ row.LoginCode }}</code>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="Status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <mat-chip class="status-pill" [class.inactive]="row.Status !== 'active'">
-              {{ statusLabel(row.Status) | t }}
+              {{ statusLabel(row.Status) | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="MustChangePassword">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Temporary' | t }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Temporary' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.MustChangePassword ? ('Yes' | t) : ('No' | t) }}
+            {{ row.MustChangePassword ? ('Yes' | transloco) : ('No' | transloco) }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="LastLoginAt">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Last login' | t }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Last login' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ formatDate(row.LastLoginAt) }}</td>
         </ng-container>
 
@@ -99,7 +99,7 @@
               <button
                 mat-icon-button
                 type="button"
-                [matTooltip]="'Reset password' | t"
+                [matTooltip]="'Reset password' | transloco"
                 (click)="resetPassword(row)"
               >
                 <mat-icon>key</mat-icon>
@@ -107,7 +107,9 @@
               <button
                 mat-icon-button
                 type="button"
-                [matTooltip]="row.Status === 'blocked' ? ('Activate' | t) : ('Block' | t)"
+                [matTooltip]="
+                  row.Status === 'blocked' ? ('Activate' | transloco) : ('Block' | transloco)
+                "
                 (click)="setStatus(row, row.Status === 'blocked' ? 'active' : 'blocked')"
               >
                 <mat-icon>{{ row.Status === 'blocked' ? 'lock_open' : 'lock' }}</mat-icon>
@@ -116,7 +118,7 @@
                 mat-icon-button
                 color="warn"
                 type="button"
-                [matTooltip]="'Deactivate' | t"
+                [matTooltip]="'Deactivate' | transloco"
                 (click)="setStatus(row, 'inactive')"
               >
                 <mat-icon>person_off</mat-icon>
@@ -129,7 +131,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ 'No time clock accounts found.' | t }}
+            {{ 'No time clock accounts found.' | transloco }}
           </td>
         </tr>
       </table>
@@ -147,16 +149,16 @@
   <div class="crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ 'New time clock account' | t }}</h2>
-        <p>{{ 'Create a random Pulse login and one-time temporary password.' | t }}</p>
+        <h2>{{ 'New time clock account' | transloco }}</h2>
+        <p>{{ 'Create a random Pulse login and one-time temporary password.' | transloco }}</p>
       </div>
     </div>
     <mat-dialog-content class="dialog-content">
       <mat-tab-group>
-        <mat-tab [label]="'Record' | t">
+        <mat-tab [label]="'Record' | transloco">
           <form class="form-grid" [formGroup]="form">
             <mat-form-field appearance="outline" class="span-2">
-              <mat-label>{{ 'Employee' | t }}</mat-label>
+              <mat-label>{{ 'Employee' | transloco }}</mat-label>
               <mat-select formControlName="employeeUUID">
                 @for (employee of employees(); track employee.EmployeeUUID) {
                   <mat-option [value]="employee.EmployeeUUID">
@@ -166,15 +168,15 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Status' | t }}</mat-label>
+              <mat-label>{{ 'Status' | transloco }}</mat-label>
               <mat-select formControlName="status">
-                <mat-option value="active">{{ 'Active' | t }}</mat-option>
-                <mat-option value="inactive">{{ 'Inactive' | t }}</mat-option>
-                <mat-option value="blocked">{{ 'Blocked' | t }}</mat-option>
+                <mat-option value="active">{{ 'Active' | transloco }}</mat-option>
+                <mat-option value="inactive">{{ 'Inactive' | transloco }}</mat-option>
+                <mat-option value="blocked">{{ 'Blocked' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>{{ 'Notes' | t }}</mat-label>
+              <mat-label>{{ 'Notes' | transloco }}</mat-label>
               <textarea matInput rows="3" formControlName="notes"></textarea>
             </mat-form-field>
           </form>
@@ -182,7 +184,9 @@
       </mat-tab-group>
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions" align="end">
-      <button mat-stroked-button type="button" (click)="closeDialogs()">{{ 'Cancel' | t }}</button>
+      <button mat-stroked-button type="button" (click)="closeDialogs()">
+        {{ 'Cancel' | transloco }}
+      </button>
       <button
         mat-flat-button
         color="primary"
@@ -191,7 +195,7 @@
         [disabled]="saving()"
       >
         <mat-icon>save</mat-icon>
-        {{ 'Save' | t }}
+        {{ 'Save' | transloco }}
       </button>
     </mat-dialog-actions>
   </div>
@@ -201,10 +205,11 @@
   <div class="crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ 'Temporary credentials' | t }}</h2>
+        <h2>{{ 'Temporary credentials' | transloco }}</h2>
         <p>
           {{
-            'Show these credentials to the employee securely. The password is not stored here.' | t
+            'Show these credentials to the employee securely. The password is not stored here.'
+              | transloco
           }}
         </p>
       </div>
@@ -212,15 +217,15 @@
     <mat-dialog-content class="dialog-content">
       <div class="form-grid">
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Login code' | t }}</mat-label>
+          <mat-label>{{ 'Login code' | transloco }}</mat-label>
           <input matInput readonly [value]="lastCredential()?.LoginCode || ''" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Temporary password' | t }}</mat-label>
+          <mat-label>{{ 'Temporary password' | transloco }}</mat-label>
           <input matInput readonly [value]="lastCredential()?.TemporaryPassword || ''" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Expires at' | t }}</mat-label>
+          <mat-label>{{ 'Expires at' | transloco }}</mat-label>
           <input
             matInput
             readonly
@@ -231,7 +236,7 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions" align="end">
       <button mat-flat-button color="primary" type="button" (click)="closeDialogs()">
-        {{ 'Close' | t }}
+        {{ 'Close' | transloco }}
       </button>
     </mat-dialog-actions>
   </div>

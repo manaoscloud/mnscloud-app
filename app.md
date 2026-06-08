@@ -84,8 +84,9 @@
     menu labels, page headings, helper text, dialog titles, tab labels, field labels, placeholders,
     tooltips, aria-labels, empty states, confirmation text, snackbar fallback messages, and action
     labels.
-  - Manual translations belong in `src/app/services/i18n.service.ts` when generated auto literals
-    are not enough or when the domain wording must stay controlled in Portuguese and Spanish.
+  - Manual translations belong in `public/i18n/<language>.json`. Transloco is the only runtime
+    i18n layer; do not add component-local translation maps, generated auto dictionaries, custom
+    translation pipes, or DOM translation fallbacks.
   - If the refactor establishes or changes a reusable frontend behavior, document that behavior in
     this `app.md` baseline instead of creating product-specific docs for a single module.
   - Product/module docs are only for product semantics, operational contracts, or cross-repository
@@ -226,7 +227,7 @@
 - Dialog structure:
   - header (`.dialog-header`)
   - content (`.dialog-content`) with `MatTabGroup`
-  - first tab label must be the translated `Record` key (`[label]="'Record' | t`) by default, because it contains the primary record fields. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
+  - first tab label must be the translated `Record` key (`[label]="'Record' | transloco`) by default, because it contains the primary record fields. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
   - footer (`.form-actions`) with `Cancel`, `Save`, and create-only `Save/New` in the save split menu
   - footer must stay fixed at the bottom of dialog (`mat-dialog-actions` cannot move with content length)
 - Action labels:
@@ -525,5 +526,8 @@ npm run check:crud -- src/app/pages/<area>/<component>
 ## I18n
 
 - Glossary: `i18n-glossary.md`
-- Runtime service: `src/app/services/i18n.service.ts`
-- DOM translation layer: `src/app/services/i18n-dom.service.ts`
+- Runtime service: `src/app/services/app-i18n.service.ts`
+- Translation files: `public/i18n/pt-BR.json`, `public/i18n/en-US.json`, and
+  `public/i18n/es-ES.json`
+- Angular templates must use the Transloco pipe (`| transloco`). Do not add custom translation
+  pipes, generated auto dictionaries, or DOM translation observers.

@@ -35,7 +35,7 @@ import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
-import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type ContractStatus = 'draft' | 'active' | 'expired' | 'canceled';
 
@@ -105,7 +105,7 @@ type CustomerOption = {
     MatDatepickerModule,
     MatNativeDateModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     DateMaskDirective,
     CurrencyMaskDirective,
   ],

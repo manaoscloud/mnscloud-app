@@ -14,12 +14,18 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
-type InfraGisResourceKey = 'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
+type InfraGisResourceKey =
+  | 'projects'
+  | 'layers'
+  | 'categories'
+  | 'asset-types'
+  | 'statuses'
+  | 'assets';
 type InfraGisRecord = Record<string, any>;
 type InfraGisField = {
   key: string;
@@ -60,7 +66,7 @@ type InfraGisResource = {
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -117,7 +123,9 @@ export class InfraGisDashboardPage implements OnInit {
         },
         {
           label: 'Description',
-          fields: [{ key: 'description', label: 'Description', type: 'textarea', span: 'span-4', rows: 5 }],
+          fields: [
+            { key: 'description', label: 'Description', type: 'textarea', span: 'span-4', rows: 5 },
+          ],
         },
       ],
     },
@@ -146,13 +154,26 @@ export class InfraGisDashboardPage implements OnInit {
         {
           label: 'Assignment',
           fields: [
-            { key: 'projectUUID', label: 'Project', type: 'select', options: () => this.projectOptions(), span: 'span-2' },
-            { key: 'geometryType', label: 'Geometry', type: 'select', options: () => this.geometryOptions() },
+            {
+              key: 'projectUUID',
+              label: 'Project',
+              type: 'select',
+              options: () => this.projectOptions(),
+              span: 'span-2',
+            },
+            {
+              key: 'geometryType',
+              label: 'Geometry',
+              type: 'select',
+              options: () => this.geometryOptions(),
+            },
           ],
         },
         {
           label: 'Style',
-          fields: [{ key: 'styleJson', label: 'Style JSON', type: 'textarea', span: 'span-4', rows: 6 }],
+          fields: [
+            { key: 'styleJson', label: 'Style JSON', type: 'textarea', span: 'span-4', rows: 6 },
+          ],
         },
       ],
     },
@@ -194,7 +215,13 @@ export class InfraGisDashboardPage implements OnInit {
         {
           label: 'Classification',
           fields: [
-            { key: 'categoryUUID', label: 'Category', type: 'select', options: () => this.categoryOptions(), span: 'span-2' },
+            {
+              key: 'categoryUUID',
+              label: 'Category',
+              type: 'select',
+              options: () => this.categoryOptions(),
+              span: 'span-2',
+            },
             { key: 'color', label: 'Color', type: 'color' },
             { key: 'icon', label: 'Icon' },
           ],
@@ -239,10 +266,34 @@ export class InfraGisDashboardPage implements OnInit {
         {
           label: 'Assignment',
           fields: [
-            { key: 'projectUUID', label: 'Project', type: 'select', options: () => this.projectOptions(), span: 'span-2' },
-            { key: 'layerUUID', label: 'Layer', type: 'select', options: () => this.layerOptions(), span: 'span-2' },
-            { key: 'assetTypeUUID', label: 'Asset Type', type: 'select', options: () => this.assetTypeOptions(), span: 'span-2' },
-            { key: 'assetStatusUUID', label: 'Asset Status', type: 'select', options: () => this.assetStatusOptions(), span: 'span-2' },
+            {
+              key: 'projectUUID',
+              label: 'Project',
+              type: 'select',
+              options: () => this.projectOptions(),
+              span: 'span-2',
+            },
+            {
+              key: 'layerUUID',
+              label: 'Layer',
+              type: 'select',
+              options: () => this.layerOptions(),
+              span: 'span-2',
+            },
+            {
+              key: 'assetTypeUUID',
+              label: 'Asset Type',
+              type: 'select',
+              options: () => this.assetTypeOptions(),
+              span: 'span-2',
+            },
+            {
+              key: 'assetStatusUUID',
+              label: 'Asset Status',
+              type: 'select',
+              options: () => this.assetStatusOptions(),
+              span: 'span-2',
+            },
           ],
         },
         {
@@ -255,7 +306,15 @@ export class InfraGisDashboardPage implements OnInit {
         },
         {
           label: 'Advanced',
-          fields: [{ key: 'propertiesJson', label: 'Properties JSON', type: 'textarea', span: 'span-4', rows: 6 }],
+          fields: [
+            {
+              key: 'propertiesJson',
+              label: 'Properties JSON',
+              type: 'textarea',
+              span: 'span-4',
+              rows: 6,
+            },
+          ],
         },
       ],
     },
@@ -313,7 +372,9 @@ export class InfraGisDashboardPage implements OnInit {
     this.saving.set(true);
     try {
       const endpoint = uuid ? `${resource.endpoint}/${uuid}` : resource.endpoint;
-      const request = uuid ? this.api.put<any>(endpoint, this.formModel()) : this.api.post<any>(endpoint, this.formModel());
+      const request = uuid
+        ? this.api.put<any>(endpoint, this.formModel())
+        : this.api.post<any>(endpoint, this.formModel());
       await request;
       this.snack.success('InfraGIS record saved.');
       this.dialogRef?.close();
@@ -344,7 +405,9 @@ export class InfraGisDashboardPage implements OnInit {
       this.snack.success('InfraGIS record deleted.');
       await this.refresh();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Unable to delete InfraGIS record.');
+      this.snack.error(
+        error instanceof Error ? error.message : 'Unable to delete InfraGIS record.',
+      );
     } finally {
       this.loading.set(false);
     }
@@ -419,7 +482,8 @@ export class InfraGisDashboardPage implements OnInit {
       styleJson: 'IglStyleJson',
     };
     const model: InfraGisRecord = {};
-    for (const field of this.resourceFields(resource)) model[field.key] = row[mappings[field.key]] ?? null;
+    for (const field of this.resourceFields(resource))
+      model[field.key] = row[mappings[field.key]] ?? null;
     return model;
   }
 
@@ -447,7 +511,10 @@ export class InfraGisDashboardPage implements OnInit {
   }
 
   private statusOptions() {
-    return [{ value: 1, label: 'Active' }, { value: 0, label: 'Inactive' }];
+    return [
+      { value: 1, label: 'Active' },
+      { value: 0, label: 'Inactive' },
+    ];
   }
 
   private geometryOptions() {

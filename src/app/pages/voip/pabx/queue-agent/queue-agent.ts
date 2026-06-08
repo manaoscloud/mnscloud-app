@@ -38,7 +38,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipPabxExtensionItem, VoipPabxExtensionService } from '../extension/extension.service';
 import { VoipPabxQueueAgentItem, VoipPabxQueueAgentService } from './queue-agent.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type RuntimeStatus = VoipPabxQueueAgentItem['VqaRuntimeStatus'];
 type RuntimeAction = 'login' | 'logout' | 'pause' | 'unpause';
@@ -71,7 +71,7 @@ type LookupOption = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './queue-agent.html',

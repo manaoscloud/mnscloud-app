@@ -26,8 +26,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
-import { I18nService, AppLanguage, LanguageOptionCode } from '../../services/i18n.service';
-import { TranslatePipe } from '../../shared/i18n/translate.pipe';
+import { AppI18nService, AppLanguage, LanguageOptionCode } from '../../services/app-i18n.service';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SigninPolicy = {
   captchaEnabled: boolean;
@@ -50,7 +50,7 @@ type SigninPolicy = {
     MatButtonModule,
     MatSelectModule,
     MatCheckboxModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './signin.html',
   styleUrls: ['./signin.scss'],
@@ -63,7 +63,7 @@ export class Signin implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
-  private readonly i18n = inject(I18nService);
+  private readonly i18n = inject(AppI18nService);
 
   @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
 
@@ -135,7 +135,12 @@ export class Signin implements OnInit, AfterViewInit {
         throw new Error(this.i18n.t('signin.error.invalidResponse'));
       }
 
-      await this.auth.login(jwt, result?.data?.user ?? null, this.api, result?.data?.rememberMe === true);
+      await this.auth.login(
+        jwt,
+        result?.data?.user ?? null,
+        this.api,
+        result?.data?.rememberMe === true,
+      );
 
       this.snack.success(this.i18n.t('signin.success.welcomeBack'));
 

@@ -2,14 +2,16 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'Monitoring Dashboard' | t }}</h1>
-        <p>{{ 'Operational health, runtime readiness, and recent platform events.' | t }}</p>
+        <h1>{{ 'Monitoring Dashboard' | transloco }}</h1>
+        <p>
+          {{ 'Operational health, runtime readiness, and recent platform events.' | transloco }}
+        </p>
       </div>
 
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
           <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | t }}
+          {{ 'Refresh' | transloco }}
         </button>
       </div>
     </header>
@@ -25,9 +27,9 @@
         @for (item of kpis(); track item.label) {
           <article class="kpi-tile" [ngClass]="'state-' + item.state">
             <mat-icon>{{ item.icon }}</mat-icon>
-            <span>{{ item.label | t }}</span>
+            <span>{{ item.label | transloco }}</span>
             <strong>{{ item.value }}</strong>
-            <small>{{ item.detailValue }} {{ item.detailLabel | t }}</small>
+            <small>{{ item.detailValue }} {{ item.detailLabel | transloco }}</small>
           </article>
         }
       </div>
@@ -36,41 +38,47 @@
         <section class="dashboard-panel">
           <div class="panel-header">
             <div>
-              <h2>{{ 'Agent Connectivity' | t }}</h2>
-              <p>{{ 'Online and offline inventory reported by registered agents.' | t }}</p>
+              <h2>{{ 'Agent Connectivity' | transloco }}</h2>
+              <p>{{ 'Online and offline inventory reported by registered agents.' | transloco }}</p>
             </div>
             <a mat-stroked-button color="primary" [routerLink]="monitoringRoute('agents')">
               <mat-icon>open_in_new</mat-icon>
-              {{ 'Agents' | t }}
+              {{ 'Agents' | transloco }}
             </a>
           </div>
 
           <div class="metric-stack">
             <div class="metric-row">
-              <span>{{ 'Online' | t }}</span>
+              <span>{{ 'Online' | transloco }}</span>
               <div class="metric-track">
                 <i [style.width.%]="metricPercent(agentSummary().online, agentSummary().total)"></i>
               </div>
               <strong>{{ agentSummary().online }}</strong>
             </div>
             <div class="metric-row">
-              <span>{{ 'Offline' | t }}</span>
+              <span>{{ 'Offline' | transloco }}</span>
               <div class="metric-track is-warning">
-                <i [style.width.%]="metricPercent(agentSummary().offline, agentSummary().total)"></i>
+                <i
+                  [style.width.%]="metricPercent(agentSummary().offline, agentSummary().total)"
+                ></i>
               </div>
               <strong>{{ agentSummary().offline }}</strong>
             </div>
             <div class="metric-row">
-              <span>{{ 'Outdated' | t }}</span>
+              <span>{{ 'Outdated' | transloco }}</span>
               <div class="metric-track is-warning">
-                <i [style.width.%]="metricPercent(agentSummary().outdated, agentSummary().total)"></i>
+                <i
+                  [style.width.%]="metricPercent(agentSummary().outdated, agentSummary().total)"
+                ></i>
               </div>
               <strong>{{ agentSummary().outdated }}</strong>
             </div>
             <div class="metric-row">
-              <span>{{ 'Unsupported' | t }}</span>
+              <span>{{ 'Unsupported' | transloco }}</span>
               <div class="metric-track is-danger">
-                <i [style.width.%]="metricPercent(agentSummary().unsupported, agentSummary().total)"></i>
+                <i
+                  [style.width.%]="metricPercent(agentSummary().unsupported, agentSummary().total)"
+                ></i>
               </div>
               <strong>{{ agentSummary().unsupported }}</strong>
             </div>
@@ -80,8 +88,8 @@
         <section class="dashboard-panel">
           <div class="panel-header">
             <div>
-              <h2>{{ 'Runtime Products' | t }}</h2>
-              <p>{{ 'Release state across Agent, API, and App runtimes.' | t }}</p>
+              <h2>{{ 'Runtime Products' | transloco }}</h2>
+              <p>{{ 'Release state across Agent, API, and App runtimes.' | transloco }}</p>
             </div>
           </div>
 
@@ -95,15 +103,15 @@
                   </small>
                 </div>
                 <div class="runtime-counts">
-                  <span>{{ product.currentCount }} {{ 'current' | t }}</span>
-                  <span>{{ product.outdatedCount }} {{ 'outdated' | t }}</span>
+                  <span>{{ product.currentCount }} {{ 'current' | transloco }}</span>
+                  <span>{{ product.outdatedCount }} {{ 'outdated' | transloco }}</span>
                 </div>
                 <span class="status-pill status-chip" [ngClass]="runtimeProductClass(product)">
-                  {{ runtimeProductStatus(product) | t }}
+                  {{ runtimeProductStatus(product) | transloco }}
                 </span>
               </article>
             } @empty {
-              <div class="empty-state">{{ 'No runtime products found.' | t }}</div>
+              <div class="empty-state">{{ 'No runtime products found.' | transloco }}</div>
             }
           </div>
         </section>
@@ -112,30 +120,26 @@
       <section class="dashboard-panel">
         <div class="panel-header">
           <div>
-            <h2>{{ 'Recent Activity' | t }}</h2>
-            <p>{{ 'Latest operational events from the activity log stream.' | t }}</p>
+            <h2>{{ 'Recent Activity' | transloco }}</h2>
+            <p>{{ 'Latest operational events from the activity log stream.' | transloco }}</p>
           </div>
-          <a
-            mat-stroked-button
-            color="primary"
-            [routerLink]="monitoringRoute('activity-logs')"
-          >
+          <a mat-stroked-button color="primary" [routerLink]="monitoringRoute('activity-logs')">
             <mat-icon>open_in_new</mat-icon>
-            {{ 'Activity Logs' | t }}
+            {{ 'Activity Logs' | transloco }}
           </a>
         </div>
 
         <div class="table-wrapper mat-elevation-z8">
           <table mat-table [dataSource]="activityDataSource" matSort>
             <ng-container matColumnDef="created">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 {{ row.dateCreated ? (row.dateCreated | date: 'short') : '-' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="level">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Level' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Level' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">
                   {{ row.level || '-' }}
@@ -144,7 +148,7 @@
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">
                   {{ row.status || '-' }}
@@ -153,7 +157,7 @@
             </ng-container>
 
             <ng-container matColumnDef="action">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Action' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Action' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <strong>{{ row.action || '-' }}</strong>
                 <small>{{ row.category || row.hostname || '-' }}</small>
@@ -161,12 +165,14 @@
             </ng-container>
 
             <ng-container matColumnDef="resource">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Resource' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Resource' | transloco }}
+              </th>
               <td mat-cell *matCellDef="let row">{{ resourceLabel(row) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="message">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Message' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Message' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <span>{{ row.message || row.errorCode || '-' }}</span>
                 <small>{{ formatDuration(row.durationMs) }}</small>
@@ -177,7 +183,11 @@
             <tr mat-row *matRowDef="let row; columns: activityColumns"></tr>
             <tr class="mat-row" *matNoDataRow>
               <td class="mat-cell" [attr.colspan]="activityColumns.length">
-                {{ loading() ? ('Loading activity logs...' | t) : ('No activity logs found.' | t) }}
+                {{
+                  loading()
+                    ? ('Loading activity logs...' | transloco)
+                    : ('No activity logs found.' | transloco)
+                }}
               </td>
             </tr>
           </table>

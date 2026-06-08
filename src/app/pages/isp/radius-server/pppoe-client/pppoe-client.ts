@@ -28,7 +28,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type PppoeClientItem = {
   PpcUUID: string;
@@ -67,7 +67,7 @@ type FixedIpv4Option = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './pppoe-client.html',
   styleUrls: ['./pppoe-client.scss'],

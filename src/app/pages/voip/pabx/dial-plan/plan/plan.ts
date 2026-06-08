@@ -35,7 +35,7 @@ import {
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipPabxDialPlanItem, VoipPabxDialPlanUiService } from '../dial-plan.service';
-import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-voip-pabx-dial-plan-plan',
@@ -59,7 +59,7 @@ import { TranslatePipe } from '../../../../../shared/i18n/translate.pipe';
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './plan.html',

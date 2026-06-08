@@ -38,7 +38,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { VoipSoftswitchProviderItem, VoipSoftswitchProviderService } from './provider.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
 
@@ -63,7 +63,7 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
   ],

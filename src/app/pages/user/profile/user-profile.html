@@ -2,8 +2,8 @@
   <mat-card class="erp-card profile-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'My Profile' | t }}</h1>
-        <p>{{ 'Manage your personal information and account.' | t }}</p>
+        <h1>{{ 'My Profile' | transloco }}</h1>
+        <p>{{ 'Manage your personal information and account.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
@@ -15,7 +15,7 @@
           [disabled]="loading() || saving() || savingAvatar()"
         >
           <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | t }}
+          {{ 'Refresh' | transloco }}
         </button>
       </div>
     </header>
@@ -23,15 +23,15 @@
     @if (loading()) {
       <div class="profile-loading" aria-live="polite" aria-busy="true">
         <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
-        <span>{{ 'Loading your profile...' | t }}</span>
+        <span>{{ 'Loading your profile...' | transloco }}</span>
       </div>
     } @else {
       @if (apiError()) {
         <section class="profile-state is-error">
           <mat-icon>error_outline</mat-icon>
           <div>
-            <strong>{{ 'Unable to load profile' | t }}</strong>
-            <span>{{ apiError()! | t }}</span>
+            <strong>{{ 'Unable to load profile' | transloco }}</strong>
+            <span>{{ apiError()! | transloco }}</span>
           </div>
         </section>
       }
@@ -45,53 +45,55 @@
         novalidate
       >
         <mat-tab-group class="form-tabs profile-tabs">
-          <mat-tab [label]="'Record' | t">
+          <mat-tab [label]="'Record' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'First Name' | t }}</mat-label>
+                <mat-label>{{ 'First Name' | transloco }}</mat-label>
                 <input matInput formControlName="firstName" required autocomplete="given-name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Last Name' | t }}</mat-label>
+                <mat-label>{{ 'Last Name' | transloco }}</mat-label>
                 <input matInput formControlName="lastName" required autocomplete="family-name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Email' | t }}</mat-label>
+                <mat-label>{{ 'Email' | transloco }}</mat-label>
                 <input matInput formControlName="email" readonly autocomplete="email" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Phone' | t }}</mat-label>
+                <mat-label>{{ 'Phone' | transloco }}</mat-label>
                 <input matInput formControlName="phone" autocomplete="tel" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Date of Birth' | t }}</mat-label>
+                <mat-label>{{ 'Date of Birth' | transloco }}</mat-label>
                 <input matInput [matDatepicker]="picker" formControlName="dateBirth" />
                 <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'New Password' | t }}</mat-label>
+                <mat-label>{{ 'New Password' | transloco }}</mat-label>
                 <input
                   matInput
                   type="password"
                   formControlName="newPassword"
                   autocomplete="new-password"
                 />
-                <mat-hint>{{ 'Leave blank to keep current password.' | t }}</mat-hint>
+                <mat-hint>{{ 'Leave blank to keep current password.' | transloco }}</mat-hint>
               </mat-form-field>
 
               <section class="profile-summary span-4">
                 <div>
-                  <span>{{ 'Status' | t }}</span>
-                  <strong>{{ (profile()?.status === 1 ? 'Active' : 'Inactive') | t }}</strong>
+                  <span>{{ 'Status' | transloco }}</span>
+                  <strong>{{
+                    (profile()?.status === 1 ? 'Active' : 'Inactive') | transloco
+                  }}</strong>
                 </div>
                 <div>
-                  <span>{{ 'Created at' | t }}</span>
+                  <span>{{ 'Created at' | transloco }}</span>
                   <strong>{{ profile()?.dateCreated || '-' }}</strong>
                 </div>
               </section>
@@ -110,8 +112,8 @@
                 </div>
 
                 <div class="avatar-content">
-                  <h2>{{ 'Profile picture' | t }}</h2>
-                  <p>{{ 'Supported formats: JPG, PNG, WEBP (max 5MB).' | t }}</p>
+                  <h2>{{ 'Profile picture' | transloco }}</h2>
+                  <p>{{ 'Supported formats: JPG, PNG, WEBP (max 5MB).' | transloco }}</p>
 
                   <div class="avatar-actions">
                     <button
@@ -122,17 +124,19 @@
                       [disabled]="savingAvatar() || loading()"
                     >
                       <mat-icon>upload</mat-icon>
-                      {{ 'Upload' | t }}
+                      {{ 'Upload' | transloco }}
                     </button>
 
                     <button
                       mat-stroked-button
                       type="button"
                       (click)="onCancelAvatarChange()"
-                      [disabled]="savingAvatar() || loading() || (!avatarPreviewUrl() && !currentAvatarUrl())"
+                      [disabled]="
+                        savingAvatar() || loading() || (!avatarPreviewUrl() && !currentAvatarUrl())
+                      "
                     >
                       <mat-icon>restart_alt</mat-icon>
-                      {{ 'Reset' | t }}
+                      {{ 'Reset' | transloco }}
                     </button>
 
                     <button
@@ -143,20 +147,25 @@
                       [disabled]="savingAvatarDisabled()"
                     >
                       @if (savingAvatar()) {
-                        <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+                        <mat-progress-spinner
+                          diameter="20"
+                          mode="indeterminate"
+                        ></mat-progress-spinner>
                       } @else {
                         <mat-icon>save</mat-icon>
                       }
                       @if (!savingAvatar()) {
-                        {{ 'Save Picture' | t }}
+                        {{ 'Save Picture' | transloco }}
                       } @else {
-                        {{ 'Saving...' | t }}
+                        {{ 'Saving...' | transloco }}
                       }
                     </button>
                   </div>
 
                   @if (avatarPreviewUrl()) {
-                    <span class="avatar-pending">{{ 'Picture selected. Save it to apply changes.' | t }}</span>
+                    <span class="avatar-pending">{{
+                      'Picture selected. Save it to apply changes.' | transloco
+                    }}</span>
                   }
                 </div>
 
@@ -184,7 +193,7 @@
             [disabled]="saving() || savingAvatar() || loading()"
           >
             <mat-icon>restart_alt</mat-icon>
-            {{ 'Reset' | t }}
+            {{ 'Reset' | transloco }}
           </button>
         </div>
 
@@ -202,9 +211,9 @@
               <mat-icon>save</mat-icon>
             }
             @if (!saving()) {
-              {{ 'Save' | t }}
+              {{ 'Save' | transloco }}
             } @else {
-              {{ 'Saving...' | t }}
+              {{ 'Saving...' | transloco }}
             }
           </button>
         </div>

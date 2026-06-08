@@ -12,7 +12,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   HostingVpsInstance,
   HostingVpsInstanceConfig,
@@ -74,7 +74,7 @@ type PlanRow = {
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -116,7 +116,16 @@ export class HostingVpsDashboardPage implements AfterViewInit {
     'issues',
     'actions',
   ];
-  readonly planColumns = ['plan', 'provider', 'cpu', 'memory', 'disk', 'price', 'instances', 'active'];
+  readonly planColumns = [
+    'plan',
+    'provider',
+    'cpu',
+    'memory',
+    'disk',
+    'price',
+    'instances',
+    'active',
+  ];
 
   readonly instanceSummary = computed(() => {
     const rows = this.instances();
@@ -431,7 +440,10 @@ export class HostingVpsDashboardPage implements AfterViewInit {
     }
   }
 
-  private formatPrice(value: number | string | null | undefined, currency: string | null | undefined) {
+  private formatPrice(
+    value: number | string | null | undefined,
+    currency: string | null | undefined,
+  ) {
     const amount = Number(value ?? 0);
     const code = currency || 'BRL';
     if (!Number.isFinite(amount)) return '-';

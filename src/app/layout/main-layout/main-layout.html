@@ -21,7 +21,7 @@
         <mat-icon>search</mat-icon>
         <div class="search-field">
           <input
-            [placeholder]="'layout.searchMenu' | t"
+            [placeholder]="'layout.searchMenu' | transloco"
             [value]="menuSearch()"
             (input)="menuSearch.set($any($event.target).value)"
           />
@@ -251,16 +251,11 @@
       }
     </div>
 
-    <div
-      class="sidenav-version"
-      [class.has-update]="appVersion().updateAvailable"
-    >
+    <div class="sidenav-version" [class.has-update]="appVersion().updateAvailable">
       <span class="version-product">APP</span>
       <span class="version-current">v{{ appVersion().version }}</span>
       @if (!isDesktopCompact()) {
-        <span class="version-latest">
-          Latest {{ appVersion().latestVersion || '-' }}
-        </span>
+        <span class="version-latest"> Latest {{ appVersion().latestVersion || '-' }} </span>
       }
     </div>
   </mat-sidenav>
@@ -288,20 +283,20 @@
         @if (!online()) {
           <div class="offline-pill">
             <mat-icon>cloud_off</mat-icon>
-            <span>{{ 'layout.offline' | t }}</span>
+            <span>{{ 'layout.offline' | transloco }}</span>
           </div>
         }
 
         <!-- Language -->
         <button mat-button class="lang-button" [matMenuTriggerFor]="languageMenu">
           <mat-icon>translate</mat-icon>
-          <span>{{ currentLanguageLabel() | t }}</span>
+          <span>{{ currentLanguageLabel() | transloco }}</span>
           <mat-icon>expand_more</mat-icon>
         </button>
         <mat-menu #languageMenu="matMenu" class="rounded-menu">
           @for (language of languageOptions; track language.code) {
             <button mat-menu-item (click)="changeLanguage(language.code)">
-              <span>{{ language.labelKey | t }}</span>
+              <span>{{ language.labelKey | transloco }}</span>
               @if (language.code === currentLanguageOption()) {
                 <mat-icon>check</mat-icon>
               }
@@ -362,7 +357,7 @@
                 class="tenant-star-slot"
                 [class.is-default]="env.IsDefault == 1"
                 (click)="setDefaultEnvironment(env, $event)"
-                [title]="'layout.setDefault' | t"
+                [title]="'layout.setDefault' | transloco"
               >
                 <mat-icon>{{ env.IsDefault == 1 ? 'star' : 'star_border' }}</mat-icon>
               </span>
@@ -374,7 +369,7 @@
           }
           @if (!environments().length) {
             <button mat-menu-item>
-              <span>{{ 'layout.noEnvironments' | t }}</span>
+              <span>{{ 'layout.noEnvironments' | transloco }}</span>
             </button>
           }
         </mat-menu>
@@ -411,17 +406,17 @@
       <mat-menu #menu="matMenu" class="rounded-menu">
         <button mat-menu-item routerLink="/user/profile">
           <mat-icon>person</mat-icon>
-          <span>{{ 'menu.myProfile' | t }}</span>
+          <span>{{ 'menu.myProfile' | transloco }}</span>
         </button>
 
         <button mat-menu-item routerLink="/settings">
           <mat-icon>settings</mat-icon>
-          <span>{{ 'menu.settings' | t }}</span>
+          <span>{{ 'menu.settings' | transloco }}</span>
         </button>
 
         <button mat-menu-item (click)="logout()">
           <mat-icon color="warn">logout</mat-icon>
-          <span>{{ 'menu.logout' | t }}</span>
+          <span>{{ 'menu.logout' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-toolbar>
@@ -432,6 +427,6 @@
       <router-outlet></router-outlet>
     </main>
 
-    <footer class="footer">© {{ currentYear }} mnscloud - {{ 'layout.footer' | t }}</footer>
+    <footer class="footer">© {{ currentYear }} mnscloud - {{ 'layout.footer' | transloco }}</footer>
   </mat-sidenav-content>
 </mat-sidenav-container>

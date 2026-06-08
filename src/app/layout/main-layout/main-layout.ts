@@ -36,10 +36,10 @@ import { AuthService, AppRole } from '../../services/auth.service';
 import { NetworkService } from '../../services/network.service';
 import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
-import { I18nService, AppLanguage, LanguageOptionCode } from '../../services/i18n.service';
+import { AppI18nService, AppLanguage, LanguageOptionCode } from '../../services/app-i18n.service';
 import { RuntimeVersionService } from '../../services/runtime-version.service';
 import { BillingService } from '../../pages/billing/shared/billing.service';
-import { TranslatePipe } from '../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   extractEnvironmentAccess,
   normalizeEnvironmentUUID,
@@ -102,7 +102,7 @@ interface UserAccessResponse {
     MatButtonModule,
     MatToolbarModule,
     MatTooltipModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
@@ -128,7 +128,7 @@ export class MainLayout {
   private readonly network = inject(NetworkService);
   private readonly session = inject(SessionService);
   private readonly api = inject(ApiService);
-  private readonly i18n = inject(I18nService);
+  private readonly i18n = inject(AppI18nService);
   private readonly runtimeVersion = inject(RuntimeVersionService);
   private readonly billing = inject(BillingService);
   private readonly destroyRef = inject(DestroyRef);
@@ -876,7 +876,7 @@ export class MainLayout {
   private localizeMenu(items: NavItem[]): NavItem[] {
     return items.map((item) => ({
       ...item,
-      label: this.i18n.translateMenuLabel(item.label),
+      label: this.i18n.t(item.label),
       children: item.children ? this.localizeMenu(item.children) : undefined,
     }));
   }

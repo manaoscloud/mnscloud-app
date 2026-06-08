@@ -2,26 +2,29 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'Billing Control' | t }}</h1>
+        <h1>{{ 'Billing Control' | transloco }}</h1>
         <p>
-          {{ 'Official products, price book, subscriptions and prepaid credit operations.' | t }}
+          {{
+            'Official products, price book, subscriptions and prepaid credit operations.'
+              | transloco
+          }}
         </p>
       </div>
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refresh()">
           <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | t }}
+          {{ 'Refresh' | transloco }}
         </button>
         @if (isSection('products')) {
           <button mat-stroked-button color="primary" type="button" (click)="openProductCreate()">
             <mat-icon>add</mat-icon>
-            {{ 'New' | t }}
+            {{ 'New' | transloco }}
           </button>
         }
         @if (isSection('prices')) {
           <button mat-stroked-button color="primary" type="button" (click)="openPriceCreate()">
             <mat-icon>add</mat-icon>
-            {{ 'New' | t }}
+            {{ 'New' | transloco }}
           </button>
         }
       </div>
@@ -34,26 +37,26 @@
     @if (isSection('dashboard')) {
       <div class="dashboard-grid">
         <article class="metric-card">
-          <span>{{ 'Active products' | t }}</span>
+          <span>{{ 'Active products' | transloco }}</span>
           <strong>{{ activeProductCount }}</strong>
-          <small>{{ productSource.data.length }} {{ 'total products' | t }}</small>
+          <small>{{ productSource.data.length }} {{ 'total products' | transloco }}</small>
         </article>
         <article class="metric-card">
-          <span>{{ 'Active prices' | t }}</span>
+          <span>{{ 'Active prices' | transloco }}</span>
           <strong>{{ activePriceCount }}</strong>
-          <small>{{ priceSource.data.length }} {{ 'total price records' | t }}</small>
+          <small>{{ priceSource.data.length }} {{ 'total price records' | transloco }}</small>
         </article>
         <article class="metric-card">
-          <span>{{ 'Active subscriptions' | t }}</span>
+          <span>{{ 'Active subscriptions' | transloco }}</span>
           <strong>{{ activeSystemSubscriptionCount }}</strong>
-          <small>{{ tenantSubscriptionCount }} {{ 'tenant(s)' | t }}</small>
+          <small>{{ tenantSubscriptionCount }} {{ 'tenant(s)' | transloco }}</small>
         </article>
         <article class="metric-card action-card">
-          <span>{{ 'Add credit' | t }}</span>
-          <strong>{{ 'Wallets' | t }}</strong>
+          <span>{{ 'Add credit' | transloco }}</span>
+          <strong>{{ 'Wallets' | transloco }}</strong>
           <button mat-stroked-button color="primary" type="button" (click)="openCreditDialog()">
             <mat-icon>add_card</mat-icon>
-            {{ 'Add credit' | t }}
+            {{ 'Add credit' | transloco }}
           </button>
         </article>
       </div>
@@ -62,22 +65,24 @@
     @if (isSection('products')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Search products' | t }}</mat-label>
+          <mat-label>{{ 'Search products' | transloco }}</mat-label>
           <input matInput [(ngModel)]="searchInput" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Status' | t }}</mat-label>
+          <mat-label>{{ 'Status' | transloco }}</mat-label>
           <mat-select [(ngModel)]="statusFilter">
-            <mat-option [value]="''">{{ 'All' | t }}</mat-option>
-            <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-            <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+            <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
+            <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+            <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
         @if (selectedProductCount) {
-          <span class="selection-count">{{ selectedProductCount }} {{ 'selected' | t }}</span>
+          <span class="selection-count"
+            >{{ selectedProductCount }} {{ 'selected' | transloco }}</span
+          >
           <button
             class="context-action"
             mat-stroked-button
@@ -87,16 +92,16 @@
             [disabled]="loading()"
           >
             <mat-icon>delete</mat-icon>
-            {{ 'Delete selected' | t }}
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | t }}
+          {{ 'Apply' | transloco }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | t }}
+          {{ 'Clear' | transloco }}
         </button>
       </div>
 
@@ -113,7 +118,7 @@
                 [checked]="isAllVisibleProductsSelected()"
                 [indeterminate]="isSomeVisibleProductsSelected()"
                 (change)="toggleVisibleProducts($event.checked)"
-                [attr.aria-label]="'Select visible products' | t"
+                [attr.aria-label]="'Select visible products' | transloco"
               ></mat-checkbox>
             </th>
             <td mat-cell *matCellDef="let row" class="select-col">
@@ -125,32 +130,34 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="code">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Code' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Code' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprCode }}</td>
           </ng-container>
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprName }}</td>
           </ng-container>
           <ng-container matColumnDef="module">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Module' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Module' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprModule }}</td>
           </ng-container>
           <ng-container matColumnDef="scope">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Scope' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Scope' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprBillingScope }}</td>
           </ng-container>
           <ng-container matColumnDef="prices">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Prices' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Prices' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.PriceCount ?? row.ActivePrices ?? 0 }}</td>
           </ng-container>
           <ng-container matColumnDef="sortOrder">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Sort order' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Sort order' | transloco }}
+            </th>
             <td mat-cell *matCellDef="let row">{{ row.BpdSortOrder ?? '-' }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
-              {{ 'Status' | t }}
+              {{ 'Status' | transloco }}
             </th>
             <td mat-cell *matCellDef="let row" class="status-col">
               <span
@@ -159,20 +166,20 @@
                 [class.is-inactive]="row.BprStatus !== 1"
                 [class.chip-success]="row.BprStatus === 1"
                 [class.chip-skipped]="row.BprStatus !== 1"
-                >{{ (row.BprStatus === 1 ? 'Active' : 'Inactive') | t }}</span
+                >{{ (row.BprStatus === 1 ? 'Active' : 'Inactive') | transloco }}</span
               >
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-              {{ 'Actions' | t }}
+              {{ 'Actions' | transloco }}
             </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
                 <button
                   mat-icon-button
                   type="button"
-                  [matTooltip]="'Edit' | t"
+                  [matTooltip]="'Edit' | transloco"
                   (click)="openProductEdit(row)"
                 >
                   <mat-icon>edit</mat-icon>
@@ -180,7 +187,7 @@
                 <button
                   mat-icon-button
                   type="button"
-                  [matTooltip]="'Delete' | t"
+                  [matTooltip]="'Delete' | transloco"
                   (click)="deleteProduct(row)"
                 >
                   <mat-icon>delete</mat-icon>
@@ -192,7 +199,7 @@
           <tr mat-row *matRowDef="let row; columns: productColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="productColumns.length">
-              {{ 'No products found.' | t }}
+              {{ 'No products found.' | transloco }}
             </td>
           </tr>
         </table>
@@ -207,17 +214,17 @@
     @if (isSection('prices')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Search prices' | t }}</mat-label>
+          <mat-label>{{ 'Search prices' | transloco }}</mat-label>
           <input matInput [(ngModel)]="searchInput" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Product' | t }}</mat-label>
+          <mat-label>{{ 'Product' | transloco }}</mat-label>
           <mat-select
             [(ngModel)]="priceProductFilter"
             (openedChange)="!$event && clearProductSelectSearch()"
           >
             <mat-select-trigger>
-              {{ priceProductFilter ? productName(priceProductFilter) : ('All' | t) }}
+              {{ priceProductFilter ? productName(priceProductFilter) : ('All' | transloco) }}
             </mat-select-trigger>
             <mat-option class="select-search-option">
               <mat-form-field
@@ -228,32 +235,32 @@
                 <mat-icon matPrefix>search</mat-icon>
                 <input
                   matInput
-                  [placeholder]="'Search products' | t"
+                  [placeholder]="'Search products' | transloco"
                   [(ngModel)]="priceProductSearchInput"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                 />
               </mat-form-field>
             </mat-option>
-            <mat-option [value]="''">{{ 'All' | t }}</mat-option>
+            <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
             @for (product of filteredProducts(priceProductSearchInput); track product.BprUUID) {
               <mat-option [value]="product.BprUUID">{{ product.BprName }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Status' | t }}</mat-label>
+          <mat-label>{{ 'Status' | transloco }}</mat-label>
           <mat-select [(ngModel)]="statusFilter">
-            <mat-option [value]="''">{{ 'All' | t }}</mat-option>
-            <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-            <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+            <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
+            <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+            <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
         @if (selectedPriceCount) {
-          <span class="selection-count">{{ selectedPriceCount }} {{ 'selected' | t }}</span>
+          <span class="selection-count">{{ selectedPriceCount }} {{ 'selected' | transloco }}</span>
           <button
             class="context-action"
             mat-stroked-button
@@ -263,16 +270,16 @@
             [disabled]="loading()"
           >
             <mat-icon>delete</mat-icon>
-            {{ 'Delete selected' | t }}
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | t }}
+          {{ 'Apply' | transloco }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | t }}
+          {{ 'Clear' | transloco }}
         </button>
       </div>
 
@@ -289,7 +296,7 @@
                 [checked]="isAllVisiblePricesSelected()"
                 [indeterminate]="isSomeVisiblePricesSelected()"
                 (change)="toggleVisiblePrices($event.checked)"
-                [attr.aria-label]="'Select visible prices' | t"
+                [attr.aria-label]="'Select visible prices' | transloco"
               ></mat-checkbox>
             </th>
             <td mat-cell *matCellDef="let row" class="select-col">
@@ -301,34 +308,36 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="product">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.BprName || productName(row.BillingProductBprUUID) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BpcName }}</td>
           </ng-container>
           <ng-container matColumnDef="mode">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Mode' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Mode' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ billingModeLabel(row.BpcBillingMode) }}</td>
           </ng-container>
           <ng-container matColumnDef="unitPrice">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Unit price' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Unit price' | transloco }}
+            </th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BpcUnitPrice, row.BpcCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="setup">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Setup' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Setup' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BpcSetupAmount, row.BpcCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
-              {{ 'Status' | t }}
+              {{ 'Status' | transloco }}
             </th>
             <td mat-cell *matCellDef="let row" class="status-col">
               <span
@@ -337,20 +346,20 @@
                 [class.is-inactive]="row.BpcStatus !== 1"
                 [class.chip-success]="row.BpcStatus === 1"
                 [class.chip-skipped]="row.BpcStatus !== 1"
-                >{{ (row.BpcStatus === 1 ? 'Active' : 'Inactive') | t }}</span
+                >{{ (row.BpcStatus === 1 ? 'Active' : 'Inactive') | transloco }}</span
               >
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-              {{ 'Actions' | t }}
+              {{ 'Actions' | transloco }}
             </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
                 <button
                   mat-icon-button
                   type="button"
-                  [matTooltip]="'Edit' | t"
+                  [matTooltip]="'Edit' | transloco"
                   (click)="openPriceEdit(row)"
                 >
                   <mat-icon>edit</mat-icon>
@@ -358,7 +367,7 @@
                 <button
                   mat-icon-button
                   type="button"
-                  [matTooltip]="'Delete' | t"
+                  [matTooltip]="'Delete' | transloco"
                   (click)="deletePrice(row)"
                 >
                   <mat-icon>delete</mat-icon>
@@ -370,7 +379,7 @@
           <tr mat-row *matRowDef="let row; columns: priceColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="priceColumns.length">
-              {{ 'No prices found.' | t }}
+              {{ 'No prices found.' | transloco }}
             </td>
           </tr>
         </table>
@@ -385,31 +394,33 @@
     @if (isSection('subscriptions')) {
       <div class="filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Search subscriptions' | t }}</mat-label>
+          <mat-label>{{ 'Search subscriptions' | transloco }}</mat-label>
           <input matInput [(ngModel)]="searchInput" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Subscription status' | t }}</mat-label>
+          <mat-label>{{ 'Subscription status' | transloco }}</mat-label>
           <mat-select [(ngModel)]="subscriptionStatusFilter">
             <mat-select-trigger>
               {{
                 subscriptionStatusFilter
                   ? subscriptionStatusLabel(subscriptionStatusFilter)
-                  : ('All' | t)
+                  : ('All' | transloco)
               }}
             </mat-select-trigger>
-            <mat-option [value]="''">{{ 'All' | t }}</mat-option>
-            <mat-option value="ACTIVE">{{ 'Active' | t }}</mat-option>
-            <mat-option value="SUSPENDED">{{ 'Suspended' | t }}</mat-option>
-            <mat-option value="CANCELED">{{ 'Canceled' | t }}</mat-option>
-            <mat-option value="PENDING_PAYMENT">{{ 'Pending payment' | t }}</mat-option>
+            <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
+            <mat-option value="ACTIVE">{{ 'Active' | transloco }}</mat-option>
+            <mat-option value="SUSPENDED">{{ 'Suspended' | transloco }}</mat-option>
+            <mat-option value="CANCELED">{{ 'Canceled' | transloco }}</mat-option>
+            <mat-option value="PENDING_PAYMENT">{{ 'Pending payment' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="filter-actions">
         @if (selectedSubscriptionCount) {
-          <span class="selection-count">{{ selectedSubscriptionCount }} {{ 'selected' | t }}</span>
+          <span class="selection-count"
+            >{{ selectedSubscriptionCount }} {{ 'selected' | transloco }}</span
+          >
           <button
             class="context-action"
             mat-stroked-button
@@ -419,16 +430,16 @@
             [disabled]="loading()"
           >
             <mat-icon>block</mat-icon>
-            {{ 'Cancel selected' | t }}
+            {{ 'Cancel selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | t }}
+          {{ 'Apply' | transloco }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | t }}
+          {{ 'Clear' | transloco }}
         </button>
       </div>
 
@@ -445,7 +456,7 @@
                 [checked]="isAllVisibleSubscriptionsSelected()"
                 [indeterminate]="isSomeVisibleSubscriptionsSelected()"
                 (change)="toggleVisibleSubscriptions($event.checked)"
-                [attr.aria-label]="'Select visible subscriptions' | t"
+                [attr.aria-label]="'Select visible subscriptions' | transloco"
               ></mat-checkbox>
             </th>
             <td mat-cell *matCellDef="let row" class="select-col">
@@ -458,28 +469,28 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="tenant">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Tenant' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Tenant' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.EnvironmentName || row.EnvironmentUUID }}
             </td>
           </ng-container>
           <ng-container matColumnDef="product">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Product' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BprName || row.BprCode }}</td>
           </ng-container>
           <ng-container matColumnDef="resource">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Resource' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Resource' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.BsuResourceLabel || row.BsuResourceType || '-' }}
             </td>
           </ng-container>
           <ng-container matColumnDef="quantity">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Qty' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Qty' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.BsuQuantity }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
-              {{ 'Status' | t }}
+              {{ 'Status' | transloco }}
             </th>
             <td mat-cell *matCellDef="let row" class="status-col">
               <span
@@ -488,32 +499,32 @@
                 [class.is-inactive]="row.BsuStatus !== 'ACTIVE'"
                 [class.chip-success]="row.BsuStatus === 'ACTIVE'"
                 [class.chip-skipped]="row.BsuStatus !== 'ACTIVE'"
-                >{{ label(row.BsuStatus) | t }}</span
+                >{{ label(row.BsuStatus) | transloco }}</span
               >
             </td>
           </ng-container>
           <ng-container matColumnDef="price">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Price' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Price' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BsuUnitPriceSnapshot, row.BsuCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="reserved">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Reserved' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Reserved' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               {{ formatMoney(row.BsuReservedAmountSnapshot, row.BsuCurrency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-              {{ 'Actions' | t }}
+              {{ 'Actions' | transloco }}
             </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
                 <button
                   mat-icon-button
                   type="button"
-                  [matTooltip]="'Cancel' | t"
+                  [matTooltip]="'Cancel' | transloco"
                   (click)="cancelSubscription(row)"
                   [disabled]="row.BsuStatus === 'CANCELED'"
                 >
@@ -526,7 +537,7 @@
           <tr mat-row *matRowDef="let row; columns: subscriptionColumns"></tr>
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="subscriptionColumns.length">
-              {{ 'No subscriptions found.' | t }}
+              {{ 'No subscriptions found.' | transloco }}
             </td>
           </tr>
         </table>
@@ -541,12 +552,12 @@
     @if (isSection('wallets')) {
       <section class="action-panel">
         <div>
-          <h2>{{ 'Wallet operations' | t }}</h2>
-          <p>{{ 'Apply audited prepaid credits to tenant wallets.' | t }}</p>
+          <h2>{{ 'Wallet operations' | transloco }}</h2>
+          <p>{{ 'Apply audited prepaid credits to tenant wallets.' | transloco }}</p>
         </div>
         <button mat-stroked-button color="primary" type="button" (click)="openCreditDialog()">
           <mat-icon>add_card</mat-icon>
-          {{ 'Add credit' | t }}
+          {{ 'Add credit' | transloco }}
         </button>
       </section>
     }
@@ -557,51 +568,51 @@
   <div class="crud-dialog billing-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ (editingProduct() ? 'Edit product' : 'New product') | t }}</h2>
-        <p>{{ 'Maintain the official billing product definition.' | t }}</p>
+        <h2>{{ (editingProduct() ? 'Edit product' : 'New product') | transloco }}</h2>
+        <p>{{ 'Maintain the official billing product definition.' | transloco }}</p>
       </div>
       @if (editingProduct()) {
-        <span class="pill">{{ 'Editing' | t }}</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab [label]="'Record' | t">
+        <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid product-form-grid" [formGroup]="productForm">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Status' | t }}</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select formControlName="status">
-                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Product code' | t }}</mat-label>
+                <mat-label>{{ 'Product code' | transloco }}</mat-label>
                 <input matInput maxlength="120" formControlName="code" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Module' | t }}</mat-label>
+                <mat-label>{{ 'Module' | transloco }}</mat-label>
                 <input matInput maxlength="80" formControlName="module" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Billing scope' | t }}</mat-label>
+                <mat-label>{{ 'Billing scope' | transloco }}</mat-label>
                 <mat-select formControlName="billingScope">
-                  <mat-option value="MODULE">{{ 'Module' | t }}</mat-option>
-                  <mat-option value="RESOURCE">{{ 'Resource' | t }}</mat-option>
-                  <mat-option value="USAGE">{{ 'Usage' | t }}</mat-option>
+                  <mat-option value="MODULE">{{ 'Module' | transloco }}</mat-option>
+                  <mat-option value="RESOURCE">{{ 'Resource' | transloco }}</mat-option>
+                  <mat-option value="USAGE">{{ 'Usage' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Name' | t }}</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput maxlength="160" formControlName="name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Sort order' | t }}</mat-label>
+                <mat-label>{{ 'Sort order' | transloco }}</mat-label>
                 <input matInput type="number" min="0" step="1" formControlName="sortOrder" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ 'Description' | t }}</mat-label>
+                <mat-label>{{ 'Description' | transloco }}</mat-label>
                 <textarea
                   matInput
                   rows="2"
@@ -612,52 +623,52 @@
             </form>
           </div>
         </mat-tab>
-        <mat-tab [label]="'Entitlements' | t">
+        <mat-tab [label]="'Entitlements' | transloco">
           <div class="tab-content">
             <form class="form-grid product-form-grid" [formGroup]="productForm">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Entitlement pattern' | t }}</mat-label>
+                <mat-label>{{ 'Entitlement pattern' | transloco }}</mat-label>
                 <input matInput maxlength="160" formControlName="entitlementPattern" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Requires entitlement code' | t }}</mat-label>
+                <mat-label>{{ 'Requires entitlement code' | transloco }}</mat-label>
                 <input matInput maxlength="160" formControlName="requiresEntitlementCode" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Resource type' | t }}</mat-label>
+                <mat-label>{{ 'Resource type' | transloco }}</mat-label>
                 <input matInput maxlength="80" formControlName="resourceType" />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
-        <mat-tab [label]="'Public Catalog' | t">
+        <mat-tab [label]="'Public Catalog' | transloco">
           <div class="tab-content">
             <form class="form-grid product-form-grid" [formGroup]="productForm">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Public' | t }}</mat-label>
+                <mat-label>{{ 'Public' | transloco }}</mat-label>
                 <mat-select formControlName="isPublic">
-                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Public sort order' | t }}</mat-label>
+                <mat-label>{{ 'Public sort order' | transloco }}</mat-label>
                 <input matInput type="number" min="0" step="1" formControlName="publicSortOrder" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Public slug' | t }}</mat-label>
+                <mat-label>{{ 'Public slug' | transloco }}</mat-label>
                 <input matInput maxlength="160" formControlName="publicSlug" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Public name' | t }}</mat-label>
+                <mat-label>{{ 'Public name' | transloco }}</mat-label>
                 <input matInput maxlength="160" formControlName="publicName" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Public summary' | t }}</mat-label>
+                <mat-label>{{ 'Public summary' | transloco }}</mat-label>
                 <input matInput maxlength="255" formControlName="publicSummary" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ 'Public description' | t }}</mat-label>
+                <mat-label>{{ 'Public description' | transloco }}</mat-label>
                 <textarea
                   matInput
                   rows="2"
@@ -666,7 +677,7 @@
                 ></textarea>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ 'Public features JSON' | t }}</mat-label>
+                <mat-label>{{ 'Public features JSON' | transloco }}</mat-label>
                 <textarea matInput rows="2" formControlName="publicFeaturesJson"></textarea>
               </mat-form-field>
             </form>
@@ -676,7 +687,9 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | t }}</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editingProduct()">
         <button
@@ -688,7 +701,7 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          {{ 'Save' | t }}
+          {{ 'Save' | transloco }}
         </button>
         @if (!editingProduct()) {
           <button
@@ -698,8 +711,8 @@
             [matMenuTriggerFor]="productSaveMenu"
             [disabled]="saving()"
             type="button"
-            [attr.aria-label]="'More save actions' | t"
-            [matTooltip]="'More save actions' | t"
+            [attr.aria-label]="'More save actions' | transloco"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -713,7 +726,7 @@
       >
         <button mat-menu-item (click)="saveAndNewProduct()" [disabled]="saving()" type="button">
           <mat-icon>add</mat-icon>
-          <span>{{ 'Save/New' | t }}</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>
@@ -724,27 +737,27 @@
   <div class="crud-dialog billing-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ (editingPrice() ? 'Edit price' : 'New price') | t }}</h2>
-        <p>{{ 'Configure billing units, recurrence and commercial values.' | t }}</p>
+        <h2>{{ (editingPrice() ? 'Edit price' : 'New price') | transloco }}</h2>
+        <p>{{ 'Configure billing units, recurrence and commercial values.' | transloco }}</p>
       </div>
       @if (editingPrice()) {
-        <span class="pill">{{ 'Editing' | t }}</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab [label]="'Record' | t">
+        <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid price-form-grid" [formGroup]="priceForm">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Status' | t }}</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select formControlName="status">
-                  <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-                  <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Product' | t }}</mat-label>
+                <mat-label>{{ 'Product' | transloco }}</mat-label>
                 <mat-select
                   formControlName="productUUID"
                   (openedChange)="!$event && clearProductSelectSearch()"
@@ -758,7 +771,7 @@
                       <mat-icon matPrefix>search</mat-icon>
                       <input
                         matInput
-                        [placeholder]="'Search products' | t"
+                        [placeholder]="'Search products' | transloco"
                         [(ngModel)]="priceFormProductSearchInput"
                         [ngModelOptions]="{ standalone: true }"
                         (click)="$event.stopPropagation()"
@@ -775,21 +788,21 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Name' | t }}</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput formControlName="name" />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
-        <mat-tab [label]="'Pricing' | t">
+        <mat-tab [label]="'Pricing' | transloco">
           <div class="tab-content">
             <form class="form-grid price-form-grid" [formGroup]="priceForm">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Currency' | t }}</mat-label>
+                <mat-label>{{ 'Currency' | transloco }}</mat-label>
                 <input matInput maxlength="3" formControlName="currency" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Billing mode' | t }}</mat-label>
+                <mat-label>{{ 'Billing mode' | transloco }}</mat-label>
                 <mat-select formControlName="billingMode">
                   <mat-select-trigger>
                     {{ billingModeLabel(priceForm.controls.billingMode.value) }}
@@ -802,7 +815,7 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Unit price' | t }}</mat-label>
+                <mat-label>{{ 'Unit price' | transloco }}</mat-label>
                 @if (resolvedPriceCurrency(); as currency) {
                   <span matTextPrefix>{{ currency }}&nbsp;</span>
                 }
@@ -815,7 +828,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Setup amount' | t }}</mat-label>
+                <mat-label>{{ 'Setup amount' | transloco }}</mat-label>
                 @if (resolvedPriceCurrency(); as currency) {
                   <span matTextPrefix>{{ currency }}&nbsp;</span>
                 }
@@ -830,29 +843,29 @@
             </form>
           </div>
         </mat-tab>
-        <mat-tab [label]="'Usage' | t">
+        <mat-tab [label]="'Usage' | transloco">
           <div class="tab-content">
             <form class="form-grid price-form-grid" [formGroup]="priceForm">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Unit code' | t }}</mat-label>
+                <mat-label>{{ 'Unit code' | transloco }}</mat-label>
                 <input matInput formControlName="unitCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Included quantity' | t }}</mat-label>
+                <mat-label>{{ 'Included quantity' | transloco }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="includedQuantity" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Minimum commitment' | t }}</mat-label>
+                <mat-label>{{ 'Minimum commitment' | transloco }}</mat-label>
                 <input matInput type="number" step="0.000001" formControlName="minimumCommitment" />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
-        <mat-tab [label]="'Advanced' | t">
+        <mat-tab [label]="'Advanced' | transloco">
           <div class="tab-content">
             <form class="form-grid price-form-grid" [formGroup]="priceForm">
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ 'Config JSON' | t }}</mat-label>
+                <mat-label>{{ 'Config JSON' | transloco }}</mat-label>
                 <textarea matInput rows="4" formControlName="configJson"></textarea>
               </mat-form-field>
             </form>
@@ -862,7 +875,9 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | t }}</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editingPrice()">
         <button
@@ -874,7 +889,7 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          {{ 'Save' | t }}
+          {{ 'Save' | transloco }}
         </button>
         @if (!editingPrice()) {
           <button
@@ -884,8 +899,8 @@
             [matMenuTriggerFor]="priceSaveMenu"
             [disabled]="saving()"
             type="button"
-            [attr.aria-label]="'More save actions' | t"
-            [matTooltip]="'More save actions' | t"
+            [attr.aria-label]="'More save actions' | transloco"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -899,7 +914,7 @@
       >
         <button mat-menu-item (click)="saveAndNewPrice()" [disabled]="saving()" type="button">
           <mat-icon>add</mat-icon>
-          <span>{{ 'Save/New' | t }}</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>
@@ -910,17 +925,17 @@
   <div class="crud-dialog billing-dialog compact-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ 'Add credit' | t }}</h2>
-        <p>{{ 'Add prepaid balance to a tenant wallet with an audit reference.' | t }}</p>
+        <h2>{{ 'Add credit' | transloco }}</h2>
+        <p>{{ 'Add prepaid balance to a tenant wallet with an audit reference.' | transloco }}</p>
       </div>
     </div>
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab [label]="'Record' | t">
+        <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid credit-form-grid" [formGroup]="creditForm">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Tenant email, name or UUID' | t }}</mat-label>
+                <mat-label>{{ 'Tenant email, name or UUID' | transloco }}</mat-label>
                 <input
                   matInput
                   formControlName="tenantSearch"
@@ -934,14 +949,14 @@
                   type="button"
                   (click)="searchCreditTenants()"
                   [disabled]="tenantSearchLoading()"
-                  [matTooltip]="'Search tenant' | t"
-                  [attr.aria-label]="'Search tenant' | t"
+                  [matTooltip]="'Search tenant' | transloco"
+                  [attr.aria-label]="'Search tenant' | transloco"
                 >
                   <mat-icon>search</mat-icon>
                 </button>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Amount' | t }}</mat-label>
+                <mat-label>{{ 'Amount' | transloco }}</mat-label>
                 @if (resolvedCreditCurrency(); as currency) {
                   <span matTextPrefix>{{ currency }}&nbsp;</span>
                 }
@@ -954,7 +969,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Currency' | t }}</mat-label>
+                <mat-label>{{ 'Currency' | transloco }}</mat-label>
                 <input matInput maxlength="3" formControlName="currency" />
               </mat-form-field>
               <input type="hidden" formControlName="environmentUUID" />
@@ -970,7 +985,8 @@
                         {{ tenant.EnvironmentName || tenant.TenantEmail }}
                       </span>
                       <span class="option-subtitle">
-                        {{ tenant.TenantEmail }} · {{ tenant.WalletSummary || ('No wallet' | t) }}
+                        {{ tenant.TenantEmail }} ·
+                        {{ tenant.WalletSummary || ('No wallet' | transloco) }}
                       </span>
                     </button>
                   }
@@ -986,15 +1002,15 @@
                 </div>
               }
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Reason' | t }}</mat-label>
+                <mat-label>{{ 'Reason' | transloco }}</mat-label>
                 <input matInput formControlName="reason" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Reference' | t }}</mat-label>
+                <mat-label>{{ 'Reference' | transloco }}</mat-label>
                 <input matInput formControlName="reference" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Idempotency key' | t }}</mat-label>
+                <mat-label>{{ 'Idempotency key' | transloco }}</mat-label>
                 <input matInput formControlName="idempotencyKey" />
               </mat-form-field>
             </form>
@@ -1005,7 +1021,7 @@
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
         <button mat-stroked-button type="button" (click)="closeDialog()">
-          {{ 'Cancel' | t }}
+          {{ 'Cancel' | transloco }}
         </button>
       </div>
       <div class="primary-actions save-split-action is-single-action">
@@ -1018,7 +1034,7 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          {{ 'Save' | t }}
+          {{ 'Save' | transloco }}
         </button>
       </div>
     </mat-dialog-actions>

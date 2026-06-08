@@ -16,7 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { VoipWebRtcService, WebRtcRecord } from '../webrtc.service';
 import {
   VoipWebRtcDashboardService,
@@ -49,7 +49,7 @@ type SelectOption = {
     MatSortModule,
     MatTableModule,
     MatTooltipModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],

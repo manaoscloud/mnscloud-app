@@ -2,14 +2,18 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'Storage Dashboard' | t }}</h1>
-        <p>{{ 'Provider, account, and bucket readiness for private storage operations.' | t }}</p>
+        <h1>{{ 'Storage Dashboard' | transloco }}</h1>
+        <p>
+          {{
+            'Provider, account, and bucket readiness for private storage operations.' | transloco
+          }}
+        </p>
       </div>
 
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
           <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | t }}
+          {{ 'Refresh' | transloco }}
         </button>
       </div>
     </header>
@@ -25,9 +29,9 @@
         @for (item of kpis(); track item.label) {
           <article class="kpi-tile" [ngClass]="'state-' + item.state">
             <mat-icon>{{ item.icon }}</mat-icon>
-            <span>{{ item.label | t }}</span>
+            <span>{{ item.label | transloco }}</span>
             <strong>{{ item.value }}</strong>
-            <small>{{ item.detailValue }} {{ item.detailLabel | t }}</small>
+            <small>{{ item.detailValue }} {{ item.detailLabel | transloco }}</small>
           </article>
         }
       </div>
@@ -36,59 +40,75 @@
         <section class="dashboard-panel">
           <div class="panel-header">
             <div>
-              <h2>{{ 'Storage Provider Readiness' | t }}</h2>
-              <p>{{ 'Storage providers with linked accounts and private bucket coverage.' | t }}</p>
+              <h2>{{ 'Storage Provider Readiness' | transloco }}</h2>
+              <p>
+                {{
+                  'Storage providers with linked accounts and private bucket coverage.' | transloco
+                }}
+              </p>
             </div>
             <a mat-stroked-button color="primary" [routerLink]="routeTo('providers')">
               <mat-icon>open_in_new</mat-icon>
-              {{ 'Provider' | t }}
+              {{ 'Provider' | transloco }}
             </a>
           </div>
 
           <div class="table-wrapper mat-elevation-z8">
             <table mat-table [dataSource]="providerDataSource" matSort #providerSort="matSort">
               <ng-container matColumnDef="provider">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Provider' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <strong>{{ row.name }}</strong>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="type">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | transloco }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
               </ng-container>
 
               <ng-container matColumnDef="active">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Active' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
-                    {{ row.active ? ('Active' | t) : ('Inactive' | t) }}
+                    {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
                   </span>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="default">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Default' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Default' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-pill status-chip" [ngClass]="chipClass(row.isDefault)">
-                    {{ row.isDefault ? ('Yes' | t) : ('No' | t) }}
+                    {{ row.isDefault ? ('Yes' | transloco) : ('No' | transloco) }}
                   </span>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="accounts">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Accounts' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Accounts' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">{{ row.accounts }}</td>
               </ng-container>
 
               <ng-container matColumnDef="buckets">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Buckets' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Buckets' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">{{ row.buckets }}</td>
               </ng-container>
 
               <ng-container matColumnDef="issues">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Issues' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Issues' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-pill status-chip" [ngClass]="issueChipClass(row.issues)">
                     {{ row.issues }}
@@ -97,11 +117,11 @@
               </ng-container>
 
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
                 <td mat-cell *matCellDef="let row">
                   <a mat-stroked-button color="primary" [routerLink]="routeTo('providers')">
                     <mat-icon>open_in_new</mat-icon>
-                    {{ 'View' | t }}
+                    {{ 'View' | transloco }}
                   </a>
                 </td>
               </ng-container>
@@ -112,8 +132,8 @@
                 <td class="mat-cell" [attr.colspan]="providerColumns.length">
                   {{
                     loading()
-                      ? ('Loading storage providers...' | t)
-                      : ('No storage providers found.' | t)
+                      ? ('Loading storage providers...' | transloco)
+                      : ('No storage providers found.' | transloco)
                   }}
                 </td>
               </tr>
@@ -131,63 +151,75 @@
         <section class="dashboard-panel">
           <div class="panel-header">
             <div>
-              <h2>{{ 'Storage Account Inventory' | t }}</h2>
-              <p>{{ 'Buckets and containers linked to storage provider accounts.' | t }}</p>
+              <h2>{{ 'Storage Account Inventory' | transloco }}</h2>
+              <p>{{ 'Buckets and containers linked to storage provider accounts.' | transloco }}</p>
             </div>
             <a mat-stroked-button color="primary" [routerLink]="routeTo('accounts')">
               <mat-icon>open_in_new</mat-icon>
-              {{ 'Storage' | t }}
+              {{ 'Storage' | transloco }}
             </a>
           </div>
 
           <div class="table-wrapper mat-elevation-z8">
             <table mat-table [dataSource]="accountDataSource" matSort #accountSort="matSort">
               <ng-container matColumnDef="account">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Account' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Account' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <strong>{{ row.name }}</strong>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="provider">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Provider' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
               </ng-container>
 
               <ng-container matColumnDef="bucket">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Bucket' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Bucket' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">{{ row.bucket }}</td>
               </ng-container>
 
               <ng-container matColumnDef="region">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Region' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Region' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">{{ row.region }}</td>
               </ng-container>
 
               <ng-container matColumnDef="active">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Active' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
-                    {{ row.active ? ('Active' | t) : ('Inactive' | t) }}
+                    {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
                   </span>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="default">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Default' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Default' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-pill status-chip" [ngClass]="chipClass(row.isDefault)">
-                    {{ row.isDefault ? ('Yes' | t) : ('No' | t) }}
+                    {{ row.isDefault ? ('Yes' | transloco) : ('No' | transloco) }}
                   </span>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
                 <td mat-cell *matCellDef="let row">
                   <a mat-stroked-button color="primary" [routerLink]="routeTo('accounts')">
                     <mat-icon>open_in_new</mat-icon>
-                    {{ 'View' | t }}
+                    {{ 'View' | transloco }}
                   </a>
                 </td>
               </ng-container>
@@ -198,8 +230,8 @@
                 <td class="mat-cell" [attr.colspan]="accountColumns.length">
                   {{
                     loading()
-                      ? ('Loading storage accounts...' | t)
-                      : ('No storage accounts found.' | t)
+                      ? ('Loading storage accounts...' | transloco)
+                      : ('No storage accounts found.' | transloco)
                   }}
                 </td>
               </tr>
@@ -218,41 +250,52 @@
       <section class="dashboard-panel">
         <div class="panel-header">
           <div>
-            <h2>{{ 'Provider Type Coverage' | t }}</h2>
-            <p>{{ 'Storage provider families grouped by configured providers and active accounts.' | t }}</p>
+            <h2>{{ 'Provider Type Coverage' | transloco }}</h2>
+            <p>
+              {{
+                'Storage provider families grouped by configured providers and active accounts.'
+                  | transloco
+              }}
+            </p>
           </div>
           <a mat-stroked-button color="primary" [routerLink]="routeTo('providers')">
             <mat-icon>open_in_new</mat-icon>
-            {{ 'Provider' | t }}
+            {{ 'Provider' | transloco }}
           </a>
         </div>
 
         <div class="table-wrapper mat-elevation-z8">
           <table mat-table [dataSource]="typeDataSource" matSort #typeSort="matSort">
             <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <strong>{{ row.provider }}</strong>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="providers">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Providers' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Providers' | transloco }}
+              </th>
               <td mat-cell *matCellDef="let row">{{ row.providers }}</td>
             </ng-container>
 
             <ng-container matColumnDef="accounts">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Accounts' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Accounts' | transloco }}
+              </th>
               <td mat-cell *matCellDef="let row">{{ row.accounts }}</td>
             </ng-container>
 
             <ng-container matColumnDef="activeAccounts">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Active accounts' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Active accounts' | transloco }}
+              </th>
               <td mat-cell *matCellDef="let row">{{ row.activeAccounts }}</td>
             </ng-container>
 
             <ng-container matColumnDef="issues">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Issues' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Issues' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <span class="status-pill status-chip" [ngClass]="issueChipClass(row.issues)">
                   {{ row.issues }}
@@ -261,11 +304,11 @@
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <a mat-stroked-button color="primary" [routerLink]="routeTo('accounts')">
                   <mat-icon>open_in_new</mat-icon>
-                  {{ 'View' | t }}
+                  {{ 'View' | transloco }}
                 </a>
               </td>
             </ng-container>
@@ -274,7 +317,11 @@
             <tr mat-row *matRowDef="let row; columns: typeColumns"></tr>
             <tr class="mat-row" *matNoDataRow>
               <td class="mat-cell" [attr.colspan]="typeColumns.length">
-                {{ loading() ? ('Loading storage coverage...' | t) : ('No storage coverage found.' | t) }}
+                {{
+                  loading()
+                    ? ('Loading storage coverage...' | transloco)
+                    : ('No storage coverage found.' | transloco)
+                }}
               </td>
             </tr>
           </table>

@@ -38,7 +38,7 @@ import {
   updateWebhostDialogViewport,
 } from '../webhost-dialog-viewport';
 import type { HostingWebhostHost, WebhostProviderType } from '../webhost.types';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type ToolKind = 'databases' | 'mailing-lists' | 'zone-records';
 
@@ -149,7 +149,7 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './tools.html',

@@ -28,7 +28,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
 import {
@@ -61,7 +61,7 @@ export const BILLING_WALLET_IMPORTS = [
   MatTableModule,
   MatTabsModule,
   MatTooltipModule,
-  TranslatePipe,
+  TranslocoPipe,
 ];
 
 @Component({
@@ -441,8 +441,9 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       amount: row?.BleAmount,
       balance: row?.BleBalanceAfter,
     };
-    return String(mapped[column] ?? row?.[column] ?? row?.BprName ?? row?.BleDateCreated ?? '')
-      .toLowerCase();
+    return String(
+      mapped[column] ?? row?.[column] ?? row?.BprName ?? row?.BleDateCreated ?? '',
+    ).toLowerCase();
   }
 
   private emptyToNull(value: unknown) {

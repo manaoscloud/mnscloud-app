@@ -38,7 +38,7 @@ import {
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxTrunkRouteUiService } from './trunk-route.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type ResourceKind = 'trunks' | 'inbound-routes';
 type ResourceRow = {
@@ -127,7 +127,7 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
   ],

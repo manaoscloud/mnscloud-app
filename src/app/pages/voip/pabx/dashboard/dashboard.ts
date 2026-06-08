@@ -16,7 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { VoipDomainItem, VoipDomainService } from '../../domain/domain.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxServerItem, VoipPabxServerService } from '../server/server.service';
@@ -52,7 +52,7 @@ type SelectOption = {
     MatSortModule,
     MatTableModule,
     MatTooltipModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -202,12 +202,15 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   private async loadDashboard() {
     this.loading.set(true);
     try {
-      const response = await this.api.get({
-        period: this.period(),
-        pabxUUID: this.pabxUUID(),
-        serverUUID: this.serverUUID(),
-        domainUUID: this.domainUUID(),
-      }, this.isMaster());
+      const response = await this.api.get(
+        {
+          period: this.period(),
+          pabxUUID: this.pabxUUID(),
+          serverUUID: this.serverUUID(),
+          domainUUID: this.domainUUID(),
+        },
+        this.isMaster(),
+      );
       const data = response?.data;
       this.summary.set(data?.summary ?? {});
       this.generatedAt.set(data?.generatedAt ?? null);

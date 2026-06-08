@@ -166,11 +166,12 @@ export class AuthService {
       const prev = this.getUser();
       const prevUrl = prev?.avatarUrl ?? null;
 
-      const avatarVersion = serverAvatar && serverAvatar === prevUrl
-        ? prev?.avatarVersion ?? Date.now()
-        : serverAvatar
-        ? Date.now()
-        : null;
+      const avatarVersion =
+        serverAvatar && serverAvatar === prevUrl
+          ? (prev?.avatarVersion ?? Date.now())
+          : serverAvatar
+            ? Date.now()
+            : null;
 
       const updated: AuthUser = {
         uuid: raw.UserUUID,

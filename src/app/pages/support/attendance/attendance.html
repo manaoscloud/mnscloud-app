@@ -6,7 +6,13 @@
         <p>Track conversations across automation, queue, and active service.</p>
       </div>
       <div class="header-actions">
-        <button mat-stroked-button color="primary" (click)="loadAttendance()" type="button" [disabled]="loading">
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="loadAttendance()"
+          type="button"
+          [disabled]="loading"
+        >
           <mat-icon>refresh</mat-icon>
           Refresh
         </button>
@@ -115,29 +121,55 @@
                   <span>{{ displayAgent(item) }}</span>
                 </div>
                 <div class="item-actions">
-                  <button mat-stroked-button type="button" (click)="assignToMe(item)" [disabled]="!canAssign(item) || actionLoadingId === itemKey(item)">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="assignToMe(item)"
+                    [disabled]="!canAssign(item) || actionLoadingId === itemKey(item)"
+                  >
                     <mat-icon>person_add</mat-icon>
                     Assign to me
                   </button>
                   @if (statusOf(item) !== 'automation') {
-                    <button mat-stroked-button type="button" (click)="moveTo(item, 'automation')" [disabled]="actionLoadingId === itemKey(item)">
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="moveTo(item, 'automation')"
+                      [disabled]="actionLoadingId === itemKey(item)"
+                    >
                       <mat-icon>smart_toy</mat-icon>
                       To automation
                     </button>
                   }
                   @if (statusOf(item) !== 'waiting') {
-                    <button mat-stroked-button type="button" (click)="moveTo(item, 'waiting')" [disabled]="actionLoadingId === itemKey(item)">
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="moveTo(item, 'waiting')"
+                      [disabled]="actionLoadingId === itemKey(item)"
+                    >
                       <mat-icon>hourglass_top</mat-icon>
                       To waiting
                     </button>
                   }
                   @if (statusOf(item) !== 'serving') {
-                    <button mat-stroked-button type="button" (click)="moveTo(item, 'serving')" [disabled]="actionLoadingId === itemKey(item)">
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="moveTo(item, 'serving')"
+                      [disabled]="actionLoadingId === itemKey(item)"
+                    >
                       <mat-icon>headset_mic</mat-icon>
                       To service
                     </button>
                   }
-                  <button mat-stroked-button color="warn" type="button" (click)="closeConversation(item)" [disabled]="actionLoadingId === itemKey(item)">
+                  <button
+                    mat-stroked-button
+                    color="warn"
+                    type="button"
+                    (click)="closeConversation(item)"
+                    [disabled]="actionLoadingId === itemKey(item)"
+                  >
                     <mat-icon>close</mat-icon>
                     Close
                   </button>
@@ -145,7 +177,7 @@
                 <div class="item-footer">
                   <mat-icon>schedule</mat-icon>
                   @if (displayQueueTime(item)) {
-                    <span>{{ displayQueueTime(item) | date:'short' }}</span>
+                    <span>{{ displayQueueTime(item) | date: 'short' }}</span>
                   } @else {
                     <span>No timestamp</span>
                   }

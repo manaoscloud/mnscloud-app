@@ -12,7 +12,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type StorageProviderType = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
 
@@ -87,7 +87,7 @@ type ProviderTypeRow = {
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -127,7 +127,15 @@ export class HostingStorageDashboardPage implements AfterViewInit {
     'issues',
     'actions',
   ];
-  readonly accountColumns = ['account', 'provider', 'bucket', 'region', 'active', 'default', 'actions'];
+  readonly accountColumns = [
+    'account',
+    'provider',
+    'bucket',
+    'region',
+    'active',
+    'default',
+    'actions',
+  ];
   readonly typeColumns = ['type', 'providers', 'accounts', 'activeAccounts', 'issues', 'actions'];
 
   readonly providerSummary = computed(() => {
@@ -275,9 +283,7 @@ export class HostingStorageDashboardPage implements AfterViewInit {
   }
 
   routeTo(section: 'providers' | 'accounts') {
-    return this.isMaster()
-      ? ['/system/hosting/storage', section]
-      : ['/hosting/storage', section];
+    return this.isMaster() ? ['/system/hosting/storage', section] : ['/hosting/storage', section];
   }
 
   chipClass(value: boolean | number) {
@@ -398,7 +404,9 @@ export class HostingStorageDashboardPage implements AfterViewInit {
       this.providers().find((item) => item.HspUUID === account.HostingStorageProviderHspUUID)
         ?.HspConfig,
     );
-    return String(config['region'] || providerConfig['region'] || providerConfig['endpoint'] || '-');
+    return String(
+      config['region'] || providerConfig['region'] || providerConfig['endpoint'] || '-',
+    );
   }
 
   private isActive(value: unknown) {

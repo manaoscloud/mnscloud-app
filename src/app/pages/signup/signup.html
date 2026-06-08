@@ -1,12 +1,9 @@
 <main class="page-wrapper" @fadeIn>
-
   <mat-card class="auth-card">
-
     <h1 class="mat-headline-small title">Create Account ✨</h1>
     <p class="subtitle mat-body-medium">Join mnscloud in seconds</p>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit($event)" autocomplete="off" novalidate>
-
       <div class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>First Name</mat-label>
@@ -57,7 +54,11 @@
         <mat-form-field appearance="outline">
           <mat-label>Password</mat-label>
 
-          <input matInput [type]="showPassword() ? 'text' : 'password'" formControlName="password" />
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+          />
 
           <button
             type="button"
@@ -82,22 +83,24 @@
       }
 
       <!-- 🔹 Botão agora usa exatamente a mesma regra do Signin -->
-      <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="!canSubmit">
+      <button
+        mat-flat-button
+        color="primary"
+        class="submit-btn"
+        type="submit"
+        [disabled]="!canSubmit"
+      >
         @if (!isLoading()) {
           Sign Up
         } @else {
           <mat-spinner diameter="22"></mat-spinner>
         }
-
       </button>
-
     </form>
 
     <p class="link-row">
       Already have an account?
       <a routerLink="/signin">Sign in</a>
     </p>
-
   </mat-card>
-
 </main>

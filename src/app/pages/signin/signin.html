@@ -1,29 +1,36 @@
 <main class="page-wrapper" @fadeIn>
-
   <mat-card class="auth-card">
     <div class="language-row" data-no-translate>
       <mat-form-field appearance="outline" class="language-select" subscriptSizing="dynamic">
-          <mat-label>{{ 'signin.language' | t }}</mat-label>
-          <mat-icon matPrefix>translate</mat-icon>
-          <mat-select [value]="currentLanguageOption()" (selectionChange)="changeLanguage($event.value)">
-            @for (language of languageOptions; track language.code) {
+        <mat-label>{{ 'signin.language' | transloco }}</mat-label>
+        <mat-icon matPrefix>translate</mat-icon>
+        <mat-select
+          [value]="currentLanguageOption()"
+          (selectionChange)="changeLanguage($event.value)"
+        >
+          @for (language of languageOptions; track language.code) {
             <mat-option [value]="language.code">
-              {{ language.labelKey | t }}
+              {{ language.labelKey | transloco }}
             </mat-option>
           }
         </mat-select>
       </mat-form-field>
     </div>
 
-    <h1 class="mat-headline-small title">{{ 'signin.title' | t }} 👋</h1>
-    <p class="subtitle mat-body-medium">{{ 'signin.subtitle' | t }}</p>
+    <h1 class="mat-headline-small title">{{ 'signin.title' | transloco }} 👋</h1>
+    <p class="subtitle mat-body-medium">{{ 'signin.subtitle' | transloco }}</p>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit($event)" autocomplete="off" novalidate>
-
       <!-- Email -->
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'signin.email' | t }}</mat-label>
-        <input matInput type="email" autocomplete="email" formControlName="email" placeholder="name@example.com" />
+        <mat-label>{{ 'signin.email' | transloco }}</mat-label>
+        <input
+          matInput
+          type="email"
+          autocomplete="email"
+          formControlName="email"
+          placeholder="name@example.com"
+        />
         <mat-icon matSuffix>mail</mat-icon>
         @if (form.get('email')?.invalid) {
           <mat-error>{{ emailError() }}</mat-error>
@@ -32,10 +39,14 @@
 
       <!-- Password -->
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'signin.password' | t }}</mat-label>
+        <mat-label>{{ 'signin.password' | transloco }}</mat-label>
 
-        <input matInput [type]="showPassword() ? 'text' : 'password'" autocomplete="current-password"
-          formControlName="password" />
+        <input
+          matInput
+          [type]="showPassword() ? 'text' : 'password'"
+          autocomplete="current-password"
+          formControlName="password"
+        />
 
         <button
           type="button"
@@ -43,7 +54,11 @@
           matSuffix
           class="field-icon-btn"
           (click)="togglePassword($event)"
-          [attr.aria-label]="showPassword() ? ('signin.hidePassword' | t) : ('signin.showPassword' | t)"
+          [attr.aria-label]="
+            showPassword()
+              ? ('signin.hidePassword' | transloco)
+              : ('signin.showPassword' | transloco)
+          "
           [attr.aria-pressed]="showPassword()"
         >
           <mat-icon class="field-icon">
@@ -54,9 +69,11 @@
 
       <div class="signin-options">
         @if (signinPolicy().rememberMeEnabled) {
-          <mat-checkbox formControlName="rememberMe">{{ 'signin.rememberMe' | t }}</mat-checkbox>
+          <mat-checkbox formControlName="rememberMe">{{
+            'signin.rememberMe' | transloco
+          }}</mat-checkbox>
         }
-        <a routerLink="/auth/forgot-password">{{ 'signin.forgotPassword' | t }}</a>
+        <a routerLink="/auth/forgot-password">{{ 'signin.forgotPassword' | transloco }}</a>
       </div>
 
       @if (signinPolicy().captchaEnabled) {
@@ -73,22 +90,24 @@
       }
 
       <!-- SUBMIT — mesmo padrão do Forgot Password -->
-      <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="!canSubmit">
+      <button
+        mat-flat-button
+        color="primary"
+        class="submit-btn"
+        type="submit"
+        [disabled]="!canSubmit"
+      >
         @if (!isLoading()) {
-          {{ 'signin.submit' | t }}
+          {{ 'signin.submit' | transloco }}
         } @else {
           <mat-spinner diameter="22"></mat-spinner>
         }
-
       </button>
-
     </form>
 
     <p class="link-row">
-      {{ 'signin.noAccount' | t }}
-      <a routerLink="/signup">{{ 'signin.createAccount' | t }}</a>
+      {{ 'signin.noAccount' | transloco }}
+      <a routerLink="/signup">{{ 'signin.createAccount' | transloco }}</a>
     </p>
-
   </mat-card>
-
 </main>

@@ -18,7 +18,7 @@ import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type ActivityLog = {
   uuid: string;
@@ -63,7 +63,7 @@ type ActivityLog = {
     MatSortModule,
     MatTableModule,
     MatTooltipModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './activity.html',
   styleUrls: ['./activity.scss'],

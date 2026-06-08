@@ -30,7 +30,7 @@ import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type ProductItem = {
   SprUUID: string;
@@ -96,7 +96,7 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatSortModule,
     CurrencyMaskDirective,
   ],

@@ -36,7 +36,7 @@ import {
   openCrudTemplateDialog,
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SmtpAccount = {
   HsaUUID: string;
@@ -89,7 +89,7 @@ type SmtpEventTypeResponse = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './routes.html',

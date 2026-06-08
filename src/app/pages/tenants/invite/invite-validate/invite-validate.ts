@@ -14,7 +14,6 @@ import { InviteSessionService } from '../../../../services/invite-session.servic
   styleUrls: ['./invite-validate.scss'],
 })
 export class InviteValidatePage {
-
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private service = inject(TenantsService);
@@ -72,7 +71,6 @@ export class InviteValidatePage {
         userExists,
         userProfileComplete,
       });
-
     } catch (err) {
       console.error('❌ validate invite error:', err);
       this.error.set('Failed to validate invitation.');

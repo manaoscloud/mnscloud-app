@@ -1,10 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TenantsService } from '../../tenants.service';
 import { StateMessageComponent } from '../../../../shared/state-message/state-message';
 import { InviteSessionService } from '../../../../services/invite-session.service';
@@ -41,7 +37,6 @@ import { MatNativeDateModule } from '@angular/material/core';
   animations: [fadeIn],
 })
 export class InviteAcceptPage {
-
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private accessService = inject(TenantsService);
@@ -100,19 +95,15 @@ export class InviteAcceptPage {
     }
 
     const session = this.inviteSession.get();
-    const userUUID =
-      session?.userUUID ??
-      inviteData?.UserUUID ??
-      inviteData?.userUUID ??
-      null;
+    const userUUID = session?.userUUID ?? inviteData?.UserUUID ?? inviteData?.userUUID ?? null;
     const userExists =
       typeof inviteData?.UserExists === 'number'
         ? inviteData.UserExists
-        : session?.userExists ?? 0;
+        : (session?.userExists ?? 0);
     const profileComplete =
       typeof inviteData?.UserProfileComplete === 'number'
         ? inviteData.UserProfileComplete
-        : session?.userProfileComplete ?? 0;
+        : (session?.userProfileComplete ?? 0);
 
     this.invite.set({
       InviteEmail: inviteData?.InviteEmail,

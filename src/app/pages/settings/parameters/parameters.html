@@ -29,7 +29,7 @@
 
       <div class="dialog-content">
         <mat-tab-group class="form-tabs">
-          <mat-tab [label]="'Record' | t">
+          <mat-tab [label]="'Record' | transloco">
             <form class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default Currency</mat-label>
@@ -338,9 +338,7 @@
 
                   <mat-slide-toggle
                     [ngModel]="item().billingSignupTrialRequireEmailVerified"
-                    (ngModelChange)="
-                      updateItem({ billingSignupTrialRequireEmailVerified: $event })
-                    "
+                    (ngModelChange)="updateItem({ billingSignupTrialRequireEmailVerified: $event })"
                     [ngModelOptions]="{ standalone: true }"
                   >
                     Require Verified Email

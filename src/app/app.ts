@@ -7,17 +7,9 @@ import {
   NavigationCancel,
   NavigationError,
 } from '@angular/router';
-import {
-  trigger,
-  transition,
-  style,
-  animate,
-  query,
-  group,
-} from '@angular/animations';
+import { trigger, transition, style, animate, query, group } from '@angular/animations';
 
 import { RouteLoader } from './shared/route-loader/route-loader';
-import { I18nDomService } from './services/i18n-dom.service';
 
 @Component({
   selector: 'app-root',
@@ -28,10 +20,7 @@ import { I18nDomService } from './services/i18n-dom.service';
     <app-route-loader></app-route-loader>
 
     <!-- Conteúdo principal com animação entre rotas -->
-    <main
-      [@routeFadeAnimation]="getRouteAnimationState(outlet)"
-      class="app-container"
-    >
+    <main [@routeFadeAnimation]="getRouteAnimationState(outlet)" class="app-container">
       <router-outlet #outlet="outlet"></router-outlet>
     </main>
   `,
@@ -50,30 +39,16 @@ import { I18nDomService } from './services/i18n-dom.service';
     trigger('routeFadeAnimation', [
       transition('* <=> *', [
         // garante layout consistente no enter/leave
-        query(
-          ':enter, :leave',
-          style({ position: 'fixed', width: '100%' }),
-          { optional: true },
-        ),
+        query(':enter, :leave', style({ position: 'fixed', width: '100%' }), { optional: true }),
         group([
           // fade-out rota anterior
-          query(
-            ':leave',
-            [
-              style({ opacity: 1 }),
-              animate('250ms ease', style({ opacity: 0 })),
-            ],
-            { optional: true },
-          ),
+          query(':leave', [style({ opacity: 1 }), animate('250ms ease', style({ opacity: 0 }))], {
+            optional: true,
+          }),
           // fade-in rota nova
-          query(
-            ':enter',
-            [
-              style({ opacity: 0 }),
-              animate('300ms ease', style({ opacity: 1 })),
-            ],
-            { optional: true },
-          ),
+          query(':enter', [style({ opacity: 0 }), animate('300ms ease', style({ opacity: 1 }))], {
+            optional: true,
+          }),
         ]),
       ]),
     ]),
@@ -82,14 +57,9 @@ import { I18nDomService } from './services/i18n-dom.service';
 export class App implements AfterViewInit {
   @ViewChild(RouteLoader) loader!: RouteLoader;
 
-  constructor(
-    private router: Router,
-    private i18nDom: I18nDomService
-  ) { }
+  constructor(private router: Router) {}
 
   ngAfterViewInit() {
-    this.i18nDom.init();
-
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) {
         this.loader?.show?.();
@@ -112,10 +82,6 @@ export class App implements AfterViewInit {
     const data = route.snapshot.data;
 
     // Nunca retorna null — isso elimina o NG0100
-    return (
-      data?.['animation'] ||
-      route.snapshot.url.map((u) => u.path).join('/') ||
-      'none'
-    );
+    return data?.['animation'] || route.snapshot.url.map((u) => u.path).join('/') || 'none';
   }
 }

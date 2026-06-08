@@ -3,11 +3,13 @@
     <header class="page-header">
       <div>
         <h1>User Governance</h1>
-        <p>Close, suspend, anonymize, and legally retain accounts without breaking platform history.</p>
+        <p>
+          Close, suspend, anonymize, and legally retain accounts without breaking platform history.
+        </p>
       </div>
       <button mat-stroked-button color="primary" type="button" (click)="load()">
         <mat-icon>refresh</mat-icon>
-        {{ 'Refresh' | t }}
+        {{ 'Refresh' | transloco }}
       </button>
     </header>
 
@@ -17,15 +19,15 @@
 
     <div class="filter-grid">
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'Search' | t }}</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input matInput [(ngModel)]="searchInput" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'Status' | t }}</mat-label>
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [(ngModel)]="statusFilter">
-          <mat-option [value]="null">{{ 'All' | t }}</mat-option>
-          <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-          <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+          <mat-option [value]="null">{{ 'All' | transloco }}</mat-option>
+          <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
     </div>
@@ -33,11 +35,11 @@
     <div class="filter-actions">
       <button mat-stroked-button type="button" (click)="applyFilters()">
         <mat-icon>filter_alt</mat-icon>
-        {{ 'Apply' | t }}
+        {{ 'Apply' | transloco }}
       </button>
       <button mat-stroked-button type="button" (click)="clearFilters()">
         <mat-icon>backspace</mat-icon>
-        {{ 'Clear' | t }}
+        {{ 'Clear' | transloco }}
       </button>
     </div>
 
@@ -50,7 +52,7 @@
         }
         <table mat-table [dataSource]="source" matSort>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               <span class="status-pill" [class.is-active]="row.Status === 1 && !row.DateDeleted">
                 {{ statusLabel(row) }}
@@ -59,7 +61,7 @@
           </ng-container>
 
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               <button class="link-button" type="button" (click)="selectUser(row)">
                 {{ fullName(row) }}
@@ -102,29 +104,54 @@
           </ng-container>
 
           <ng-container matColumnDef="created">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | t }}</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | transloco }}</th>
             <td mat-cell *matCellDef="let row">{{ row.DateCreated || '-' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-              {{ 'Actions' | t }}
+              {{ 'Actions' | transloco }}
             </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
-                <button mat-icon-button type="button" matTooltip="Details" (click)="selectUser(row)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Details"
+                  (click)="selectUser(row)"
+                >
                   <mat-icon>visibility</mat-icon>
                 </button>
-                <button mat-icon-button type="button" matTooltip="Suspend" (click)="openAction(row, 'suspend')">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Suspend"
+                  (click)="openAction(row, 'suspend')"
+                >
                   <mat-icon>block</mat-icon>
                 </button>
-                <button mat-icon-button type="button" matTooltip="Close account" (click)="openAction(row, 'close')">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Close account"
+                  (click)="openAction(row, 'close')"
+                >
                   <mat-icon>lock</mat-icon>
                 </button>
-                <button mat-icon-button type="button" matTooltip="Anonymize" (click)="openAction(row, 'anonymize')">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Anonymize"
+                  (click)="openAction(row, 'anonymize')"
+                >
                   <mat-icon>person_off</mat-icon>
                 </button>
-                <button mat-icon-button type="button" matTooltip="Legal hold" (click)="openAction(row, 'legal-hold')">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Legal hold"
+                  (click)="openAction(row, 'legal-hold')"
+                >
                   <mat-icon>gavel</mat-icon>
                 </button>
               </div>
@@ -132,13 +159,21 @@
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
-          <tr mat-row *matRowDef="let row; columns: columns" [class.is-selected]="selectedUser()?.UserUUID === row.UserUUID"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columns"
+            [class.is-selected]="selectedUser()?.UserUUID === row.UserUUID"
+          ></tr>
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="columns.length">No users found.</td>
           </tr>
         </table>
       </div>
-      <mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 25, 100]" showFirstLastButtons></mat-paginator>
+      <mat-paginator
+        class="mobile-paginator"
+        [pageSizeOptions]="[10, 25, 100]"
+        showFirstLastButtons
+      ></mat-paginator>
 
       <aside class="detail-panel">
         @if (selectedUser(); as user) {
@@ -152,7 +187,10 @@
                   <article>
                     <strong>{{ action.UaaAction }}</strong>
                     <span>{{ action.UaaReason }}</span>
-                    <small>{{ action.RequestedByEmail || '-' }} • {{ action.UaaDateCreated || '-' }}</small>
+                    <small
+                      >{{ action.RequestedByEmail || '-' }} •
+                      {{ action.UaaDateCreated || '-' }}</small
+                    >
                   </article>
                 } @empty {
                   <p class="empty-state">No governance actions found.</p>
@@ -163,7 +201,9 @@
               <div class="list-panel">
                 @for (hold of legalHolds(); track hold.UlhUUID) {
                   <article>
-                    <strong>{{ hold.UlhStatus === 1 ? 'Active' : 'Released' }} • {{ hold.UlhID }}</strong>
+                    <strong
+                      >{{ hold.UlhStatus === 1 ? 'Active' : 'Released' }} • {{ hold.UlhID }}</strong
+                    >
                     <span>{{ hold.UlhReason }}</span>
                     <small>{{ hold.UlhLegalBasis }} • {{ hold.UlhDateCreated || '-' }}</small>
                     @if (hold.UlhStatus === 1) {
@@ -212,8 +252,14 @@
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button mat-dialog-close type="button">{{ 'Cancel' | t }}</button>
-      <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="submitAction()">
+      <button mat-stroked-button mat-dialog-close type="button">{{ 'Cancel' | transloco }}</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="saving()"
+        (click)="submitAction()"
+      >
         <mat-icon>check</mat-icon>
         Confirm
       </button>

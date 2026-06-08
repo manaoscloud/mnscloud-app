@@ -2,45 +2,52 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'InfraGIS' | t }}</h1>
-        <p>{{ 'Corporate GIS control plane for georeferenced infrastructure assets.' | t }}</p>
+        <h1>{{ 'InfraGIS' | transloco }}</h1>
+        <p>
+          {{ 'Corporate GIS control plane for georeferenced infrastructure assets.' | transloco }}
+        </p>
       </div>
 
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refresh()">
           <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | t }}
+          {{ 'Refresh' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="dashboard-grid">
       <article class="metric-card">
-        <span>{{ 'Projects' | t }}</span>
+        <span>{{ 'Projects' | transloco }}</span>
         <strong>{{ metric('ProjectCount') }}</strong>
-        <small>{{ 'Tenant scoped workspaces' | t }}</small>
+        <small>{{ 'Tenant scoped workspaces' | transloco }}</small>
       </article>
       <article class="metric-card">
-        <span>{{ 'Layers' | t }}</span>
+        <span>{{ 'Layers' | transloco }}</span>
         <strong>{{ metric('LayerCount') }}</strong>
-        <small>{{ 'Operational map layers' | t }}</small>
+        <small>{{ 'Operational map layers' | transloco }}</small>
       </article>
       <article class="metric-card">
-        <span>{{ 'Assets' | t }}</span>
+        <span>{{ 'Assets' | transloco }}</span>
         <strong>{{ metric('AssetCount') }}</strong>
-        <small>{{ 'Registered infrastructure assets' | t }}</small>
+        <small>{{ 'Registered infrastructure assets' | transloco }}</small>
       </article>
       <article class="metric-card">
-        <span>{{ 'Active assets' | t }}</span>
+        <span>{{ 'Active assets' | transloco }}</span>
         <strong>{{ metric('ActiveAssetCount') }}</strong>
-        <small>{{ 'Visible in field operations' | t }}</small>
+        <small>{{ 'Visible in field operations' | transloco }}</small>
       </article>
     </div>
 
     <section class="map-panel">
       <div class="map-copy">
-        <h2>{{ 'Map' | t }}</h2>
-        <p>{{ 'Initial authorized asset projection. Advanced providers stay behind the API contract.' | t }}</p>
+        <h2>{{ 'Map' | transloco }}</h2>
+        <p>
+          {{
+            'Initial authorized asset projection. Advanced providers stay behind the API contract.'
+              | transloco
+          }}
+        </p>
       </div>
       <div class="map-canvas" aria-label="InfraGIS asset map">
         @for (asset of mapAssets(); track asset['IgaUUID']) {
@@ -57,37 +64,37 @@
 
     <div class="filter-grid">
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'Search' | t }}</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'Status' | t }}</mat-label>
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-          <mat-option [value]="null">{{ 'All' | t }}</mat-option>
-          <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-          <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+          <mat-option [value]="null">{{ 'All' | transloco }}</mat-option>
+          <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | t }}
+          {{ 'Apply' | transloco }}
         </button>
         <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | t }}
+          {{ 'Clear' | transloco }}
         </button>
       </div>
     </div>
 
     <mat-tab-group class="resource-tabs">
       @for (resource of resources; track resource.key) {
-        <mat-tab [label]="resource.label | t">
+        <mat-tab [label]="resource.label | transloco">
           <div class="tab-toolbar">
             <button mat-stroked-button color="primary" type="button" (click)="openCreate(resource)">
               <mat-icon>add</mat-icon>
-              {{ 'New' | t }}
+              {{ 'New' | transloco }}
             </button>
           </div>
 
@@ -101,26 +108,40 @@
             <table mat-table [dataSource]="rows()[resource.key]">
               @for (column of resource.columns; track column.key) {
                 <ng-container [matColumnDef]="column.key">
-                  <th mat-header-cell *matHeaderCellDef>{{ column.label | t }}</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ column.label | transloco }}</th>
                   <td mat-cell *matCellDef="let row">
                     @if (column.key.toLowerCase().includes('color')) {
-                      <span class="color-swatch" [style.background]="displayValue(row, column.key)"></span>
+                      <span
+                        class="color-swatch"
+                        [style.background]="displayValue(row, column.key)"
+                      ></span>
                     }
-                    {{ displayValue(row, column.key) | t }}
+                    {{ displayValue(row, column.key) | transloco }}
                   </td>
                 </ng-container>
               }
 
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-                  {{ 'Actions' | t }}
+                  {{ 'Actions' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row" class="actions-col-cell">
                   <div class="actions-col">
-                    <button mat-icon-button type="button" (click)="openEdit(resource, row)" [matTooltip]="'Edit' | t">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      (click)="openEdit(resource, row)"
+                      [matTooltip]="'Edit' | transloco"
+                    >
                       <mat-icon>edit</mat-icon>
                     </button>
-                    <button mat-icon-button color="warn" type="button" (click)="remove(resource, row)" [matTooltip]="'Delete' | t">
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      type="button"
+                      (click)="remove(resource, row)"
+                      [matTooltip]="'Delete' | transloco"
+                    >
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
@@ -131,7 +152,7 @@
               <tr mat-row *matRowDef="let row; columns: displayedColumns(resource)"></tr>
               <tr class="mat-row" *matNoDataRow>
                 <td class="mat-cell" [attr.colspan]="displayedColumns(resource).length">
-                  {{ (loading() ? 'Loading records...' : 'No records found.') | t }}
+                  {{ (loading() ? 'Loading records...' : 'No records found.') | transloco }}
                 </td>
               </tr>
             </table>
@@ -147,15 +168,15 @@
     <div class="crud-dialog entity-dialog">
       <div class="dialog-header">
         <div>
-          <h2>{{ (editingRecord() ? 'Edit record' : 'New record') | t }}</h2>
-          <p>{{ resource.label | t }}</p>
+          <h2>{{ (editingRecord() ? 'Edit record' : 'New record') | transloco }}</h2>
+          <p>{{ resource.label | transloco }}</p>
         </div>
       </div>
 
       <mat-dialog-content class="dialog-content">
         <mat-tab-group class="form-tabs">
           @for (group of resource.fieldGroups; track group.label) {
-            <mat-tab [label]="group.label | t">
+            <mat-tab [label]="group.label | transloco">
               <form class="tab-content form-grid">
                 @for (field of group.fields; track field.key) {
                   <mat-form-field
@@ -163,7 +184,7 @@
                     [class.span-2]="field.span === 'span-2'"
                     [class.span-4]="field.span === 'span-4'"
                   >
-                    <mat-label>{{ field.label | t }}</mat-label>
+                    <mat-label>{{ field.label | transloco }}</mat-label>
                     @if (field.type === 'select') {
                       <mat-select
                         [ngModel]="formModel()[field.key]"
@@ -171,7 +192,9 @@
                         [ngModelOptions]="{ standalone: true }"
                       >
                         @for (option of field.options?.() ?? []; track option.value) {
-                          <mat-option [value]="option.value">{{ option.label | t }}</mat-option>
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
                         }
                       </mat-select>
                     } @else if (field.type === 'textarea') {
@@ -185,7 +208,13 @@
                     } @else {
                       <input
                         matInput
-                        [type]="field.type === 'number' ? 'number' : field.type === 'color' ? 'color' : 'text'"
+                        [type]="
+                          field.type === 'number'
+                            ? 'number'
+                            : field.type === 'color'
+                              ? 'color'
+                              : 'text'
+                        "
                         [ngModel]="formModel()[field.key]"
                         (ngModelChange)="updateField(field.key, $event)"
                         [ngModelOptions]="{ standalone: true }"
@@ -200,10 +229,18 @@
       </mat-dialog-content>
 
       <mat-dialog-actions class="form-actions" align="end">
-        <button mat-stroked-button type="button" mat-dialog-close>{{ 'Cancel' | t }}</button>
-        <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving()">
+        <button mat-stroked-button type="button" mat-dialog-close>
+          {{ 'Cancel' | transloco }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="save()"
+          [disabled]="saving()"
+        >
           <mat-icon>save</mat-icon>
-          {{ 'Save' | t }}
+          {{ 'Save' | transloco }}
         </button>
       </mat-dialog-actions>
     </div>

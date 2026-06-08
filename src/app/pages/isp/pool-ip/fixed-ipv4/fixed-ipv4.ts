@@ -28,7 +28,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../../../services/api.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type FixedIpv4Item = {
   If4UUID: string;
@@ -57,7 +57,7 @@ type FixedIpv4Item = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './fixed-ipv4.html',
   styleUrls: ['./fixed-ipv4.scss'],

@@ -12,7 +12,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   HostingVpsContainerInstance,
   HostingVpsContainerInstanceConfig,
@@ -75,7 +75,7 @@ type PlanRow = {
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -328,7 +328,9 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
   }
 
   private providerEndpoint() {
-    return this.isMaster() ? 'system/hosting/vps-container/providers' : 'hosting/vps-container/providers';
+    return this.isMaster()
+      ? 'system/hosting/vps-container/providers'
+      : 'hosting/vps-container/providers';
   }
 
   private planEndpoint() {
@@ -336,7 +338,9 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
   }
 
   private instanceEndpoint() {
-    return this.isMaster() ? 'system/hosting/vps-container/instances' : 'hosting/vps-container/instances';
+    return this.isMaster()
+      ? 'system/hosting/vps-container/instances'
+      : 'hosting/vps-container/instances';
   }
 
   private applyDataSources() {
@@ -395,8 +399,9 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
         profile: config.profile || '-',
         price: this.formatPrice(plan.HcnPrice, plan.HcnCurrency),
         active: this.isActive(plan.HcnIsActive),
-        instances: this.instances().filter((item) => item.HostingVpsContainerPlanHcnUUID === plan.HcnUUID)
-          .length,
+        instances: this.instances().filter(
+          (item) => item.HostingVpsContainerPlanHcnUUID === plan.HcnUUID,
+        ).length,
       };
     });
   }
@@ -439,7 +444,10 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
     }
   }
 
-  private formatPrice(value: number | string | null | undefined, currency: string | null | undefined) {
+  private formatPrice(
+    value: number | string | null | undefined,
+    currency: string | null | undefined,
+  ) {
     const amount = Number(value ?? 0);
     const code = currency || 'BRL';
     if (!Number.isFinite(amount)) return '-';

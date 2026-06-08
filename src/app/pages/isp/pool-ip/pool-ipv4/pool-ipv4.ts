@@ -28,7 +28,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../../../services/api.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type PoolIpv4Item = {
   Ip4UUID: string;
@@ -63,7 +63,7 @@ type PoolIpv4NetworkItem = {
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './pool-ipv4.html',
   styleUrls: ['./pool-ipv4.scss'],

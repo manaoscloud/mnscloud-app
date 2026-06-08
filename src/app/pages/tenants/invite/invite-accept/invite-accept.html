@@ -1,76 +1,110 @@
 @if (loading()) {
-<app-state-message layout="page" type="empty" icon="hourglass_top" title="Preparing your invitation..."
-    message="Please wait while we validate your invitation link." />
+  <app-state-message
+    layout="page"
+    type="empty"
+    icon="hourglass_top"
+    title="Preparing your invitation..."
+    message="Please wait while we validate your invitation link."
+  />
 } @else {
-@if (needsProfile()) {
-<main class="page-wrapper" @fadeIn>
-    <mat-card class="auth-card">
+  @if (needsProfile()) {
+    <main class="page-wrapper" @fadeIn>
+      <mat-card class="auth-card">
         <h1 class="mat-headline-small title">Complete Your Profile</h1>
-        <p class="subtitle mat-body-medium">You're joining {{ invite()?.EnvironmentName || 'this tenant' }}</p>
-        <p class="subtitle mat-body-medium">Invite sent to {{ invite()?.InviteEmail || 'your email' }}</p>
+        <p class="subtitle mat-body-medium">
+          You're joining {{ invite()?.EnvironmentName || 'this tenant' }}
+        </p>
+        <p class="subtitle mat-body-medium">
+          Invite sent to {{ invite()?.InviteEmail || 'your email' }}
+        </p>
 
         <form [formGroup]="form" (ngSubmit)="submitProfile($event)" autocomplete="off" novalidate>
-            <mat-form-field appearance="outline">
-                <mat-label>First Name</mat-label>
-                <input matInput type="text" formControlName="firstName" />
-            </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>First Name</mat-label>
+            <input matInput type="text" formControlName="firstName" />
+          </mat-form-field>
 
-            <mat-form-field appearance="outline">
-                <mat-label>Last Name</mat-label>
-                <input matInput type="text" formControlName="lastName" />
-            </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Last Name</mat-label>
+            <input matInput type="text" formControlName="lastName" />
+          </mat-form-field>
 
-            <mat-form-field appearance="outline">
-                <mat-label>Phone</mat-label>
-                <input matInput type="text" formControlName="phone" />
-            </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Phone</mat-label>
+            <input matInput type="text" formControlName="phone" />
+          </mat-form-field>
 
-            @if (error()) {
-                <p class="api-error">{{ error() }}</p>
-            }
+          @if (error()) {
+            <p class="api-error">{{ error() }}</p>
+          }
 
-            <mat-form-field appearance="outline">
-                <mat-label>Date of birth</mat-label>
-                <input matInput [matDatepicker]="picker" formControlName="dateBirth" />
-                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Date of birth</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="dateBirth" />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
 
-            <mat-form-field appearance="outline">
-                <mat-label>Password</mat-label>
-                <input matInput [type]="showPassword() ? 'text' : 'password'" formControlName="password" />
-                <button type="button" matSuffix class="field-icon-btn" (click)="togglePassword()">
-                    <mat-icon class="field-icon">
-                        {{ showPassword() ? 'visibility_off' : 'visibility' }}
-                    </mat-icon>
-                </button>
-            </mat-form-field>
-
-            <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="!canSubmit">
-                @if (!submitting()) {
-                    Accept Invitation
-                } @else {
-                    <mat-spinner diameter="22"></mat-spinner>
-                }
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input
+              matInput
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+            />
+            <button type="button" matSuffix class="field-icon-btn" (click)="togglePassword()">
+              <mat-icon class="field-icon">
+                {{ showPassword() ? 'visibility_off' : 'visibility' }}
+              </mat-icon>
             </button>
+          </mat-form-field>
+
+          <button
+            mat-flat-button
+            color="primary"
+            class="submit-btn"
+            type="submit"
+            [disabled]="!canSubmit"
+          >
+            @if (!submitting()) {
+              Accept Invitation
+            } @else {
+              <mat-spinner diameter="22"></mat-spinner>
+            }
+          </button>
         </form>
 
         <p class="link-row">
-            Already have an account?
-            <a routerLink="/signin">Sign in</a>
+          Already have an account?
+          <a routerLink="/signin">Sign in</a>
         </p>
-    </mat-card>
-</main>
-} @else {
-@if (error()) {
-<app-state-message layout="page" type="error" icon="error_outline" title="Unable to accept invitation"
-    [message]="error()!" primaryLabel="Back to Sign In" [primaryAction]="goSignin" secondaryLabel="Go to Dashboard"
-    [secondaryAction]="goHome" />
-} @else {
-<app-state-message layout="page" type="success" icon="check_circle" title="Invitation accepted."
-    [message]="message() || 'Your access was activated successfully.'" primaryLabel="Go to Dashboard"
-    [primaryAction]="goToDashboard" secondaryLabel="Sign in"
-    [secondaryAction]="goSignin" />
-}
-}
+      </mat-card>
+    </main>
+  } @else {
+    @if (error()) {
+      <app-state-message
+        layout="page"
+        type="error"
+        icon="error_outline"
+        title="Unable to accept invitation"
+        [message]="error()!"
+        primaryLabel="Back to Sign In"
+        [primaryAction]="goSignin"
+        secondaryLabel="Go to Dashboard"
+        [secondaryAction]="goHome"
+      />
+    } @else {
+      <app-state-message
+        layout="page"
+        type="success"
+        icon="check_circle"
+        title="Invitation accepted."
+        [message]="message() || 'Your access was activated successfully.'"
+        primaryLabel="Go to Dashboard"
+        [primaryAction]="goToDashboard"
+        secondaryLabel="Sign in"
+        [secondaryAction]="goSignin"
+      />
+    }
+  }
 }

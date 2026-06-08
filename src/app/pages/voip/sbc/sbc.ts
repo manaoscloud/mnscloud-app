@@ -33,7 +33,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SbcRecord, SbcResource, VoipSbcService } from './sbc.service';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type LookupKey = 'providers' | 'servers' | 'trunks';
 type LookupOption = { value: string; label: string };
@@ -221,7 +221,7 @@ const CONFIGS: Record<SbcResource, Config> = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './sbc.html',

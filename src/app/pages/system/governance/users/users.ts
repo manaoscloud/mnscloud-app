@@ -17,7 +17,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type AccountAction = 'suspend' | 'close' | 'anonymize' | 'legal-hold' | 'release-hold';
 
@@ -84,7 +84,7 @@ interface LegalHold {
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './users.html',
   styleUrls: ['./users.scss'],
@@ -207,14 +207,16 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
     this.saving.set(true);
     const payload = this.actionForm.getRawValue();
     const hold = this.selectedHold();
-    const endpoint = action === 'legal-hold'
-      ? `system/governance/users/${user.UserUUID}/legal-holds`
-      : action === 'release-hold' && hold
-        ? `system/governance/users/${user.UserUUID}/legal-holds/${hold.UlhUUID}/release`
-      : `system/governance/users/${user.UserUUID}/${action}`;
-    const body = action === 'legal-hold'
-      ? payload
-      : { reason: payload.reason, legalBasis: payload.legalBasis };
+    const endpoint =
+      action === 'legal-hold'
+        ? `system/governance/users/${user.UserUUID}/legal-holds`
+        : action === 'release-hold' && hold
+          ? `system/governance/users/${user.UserUUID}/legal-holds/${hold.UlhUUID}/release`
+          : `system/governance/users/${user.UserUUID}/${action}`;
+    const body =
+      action === 'legal-hold'
+        ? payload
+        : { reason: payload.reason, legalBasis: payload.legalBasis };
 
     try {
       await this.api.post(endpoint, body);

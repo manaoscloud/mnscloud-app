@@ -31,7 +31,7 @@ import { ApiService } from '../../../services/api.service';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SupplierOption = {
   value: string;
@@ -57,7 +57,7 @@ type SupplierOption = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     PhoneInputComponent,
   ],
   templateUrl: './vendor.html',

@@ -8,9 +8,8 @@ describe('InviteValidate', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [InviteValidate]
-    })
-    .compileComponents();
+      imports: [InviteValidate],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(InviteValidate);
     component = fixture.componentInstance;

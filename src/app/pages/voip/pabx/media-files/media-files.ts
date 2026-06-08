@@ -47,7 +47,7 @@ import type { FileUploadProgress } from '../../../../shared/upload/file-upload-p
 import { VoipPabxCdrRecordingDialogComponent } from '../cdr/recording-dialog/recording-dialog';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxMediaFileItem, VoipPabxMediaFilesService } from './media-files.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type StorageAccountOption = { value: string; label: string };
 type PabxOption = { value: string; label: string };
@@ -74,7 +74,7 @@ type PabxOption = { value: string; label: string };
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './media-files.html',

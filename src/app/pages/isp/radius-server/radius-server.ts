@@ -31,7 +31,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type IspRadiusServerItem = {
   IrsUUID: string;
@@ -67,7 +67,7 @@ type IspRadiusServerItem = {
     MatSlideToggleModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './radius-server.html',
   styleUrls: ['./radius-server.scss'],

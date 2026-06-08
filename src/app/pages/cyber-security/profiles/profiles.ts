@@ -27,12 +27,12 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
-import { I18nService } from '../../../services/i18n.service';
+import { AppI18nService } from '../../../services/app-i18n.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   CyberSecurityProtectedService,
   CyberSecurityServicesService,
@@ -64,7 +64,7 @@ import {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './profiles.html',
@@ -76,7 +76,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   private readonly servicesApi = inject(CyberSecurityServicesService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
-  private readonly i18n = inject(I18nService);
+  private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
@@ -505,7 +505,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   }
 
   private t(value: string) {
-    return this.i18n.translateLiteral(value);
+    return this.i18n.t(value);
   }
 
   private pretty(value: unknown) {

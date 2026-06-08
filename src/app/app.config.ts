@@ -5,25 +5,28 @@ import {
   LOCALE_ID,
   provideAppInitializer,
   provideZonelessChangeDetection,
-} from "@angular/core";
+} from '@angular/core';
 
-import { registerLocaleData } from "@angular/common";
-import localeEn from "@angular/common/locales/en";
-import localeEs from "@angular/common/locales/es";
-import localePt from "@angular/common/locales/pt";
-import { provideRouter } from "@angular/router";
-import { routes } from "./app.routes";
+import { registerLocaleData } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
+import localeEn from '@angular/common/locales/en';
+import localeEs from '@angular/common/locales/es';
+import localePt from '@angular/common/locales/pt';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
 
-import { provideAnimations } from "@angular/platform-browser/animations";
+import { provideAnimations } from '@angular/platform-browser/animations';
 
-import { provideHttpClient, withInterceptors } from "@angular/common/http";
-import { TitleStrategy } from "@angular/router";
-import { apiInterceptor } from "./core/interceptors/api.interceptor";
-import { MAT_DATE_LOCALE } from "@angular/material/core";
-import { MatSnackBarModule } from "@angular/material/snack-bar";
-import { I18nService, resolveInitialLanguage } from "./services/i18n.service";
-import { PublicThemeContextService } from "./services/public-theme-context.service";
-import { PublicThemeTitleStrategy } from "./services/public-theme-title.strategy";
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { TitleStrategy } from '@angular/router';
+import { apiInterceptor } from './core/interceptors/api.interceptor';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { provideTransloco, TranslocoService } from '@jsverse/transloco';
+import { AppI18nService, resolveInitialLanguage } from './services/app-i18n.service';
+import { TranslocoHttpLoader } from './services/transloco-loader';
+import { PublicThemeContextService } from './services/public-theme-context.service';
+import { PublicThemeTitleStrategy } from './services/public-theme-title.strategy';
 
 registerLocaleData(localeEn);
 registerLocaleData(localeEs);
@@ -35,12 +38,25 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimations(),
     provideAppInitializer(() => inject(PublicThemeContextService).load()),
+    provideAppInitializer(() =>
+      firstValueFrom(inject(TranslocoService).load(inject(AppI18nService).language())),
+    ),
     { provide: TitleStrategy, useClass: PublicThemeTitleStrategy },
     importProvidersFrom(MatSnackBarModule),
     provideHttpClient(withInterceptors([apiInterceptor])),
+    provideTransloco({
+      config: {
+        availableLangs: ['pt-BR', 'en-US', 'es-ES'],
+        defaultLang: resolveInitialLanguage(),
+        fallbackLang: 'en-US',
+        reRenderOnLangChange: true,
+        prodMode: true,
+      },
+      loader: TranslocoHttpLoader,
+    }),
     {
       provide: MAT_DATE_LOCALE,
-      useFactory: () => inject(I18nService).language(),
+      useFactory: () => inject(AppI18nService).language(),
     },
     {
       provide: LOCALE_ID,

@@ -13,7 +13,7 @@ import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type HostingDatasetKey =
   | 'dnsDomains'
@@ -112,7 +112,7 @@ const EMPTY_HOSTING_DATA: Record<HostingDatasetKey, GenericRow[]> = {
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -352,7 +352,9 @@ export class HostingDashboardPage implements AfterViewInit {
   }
 
   private withLimit(endpoint: string) {
-    return endpoint.includes('?') ? `${endpoint}&limit=500&offset=0` : `${endpoint}?limit=500&offset=0`;
+    return endpoint.includes('?')
+      ? `${endpoint}&limit=500&offset=0`
+      : `${endpoint}?limit=500&offset=0`;
   }
 
   private responseItems(response: unknown): GenericRow[] {
@@ -375,11 +377,15 @@ export class HostingDashboardPage implements AfterViewInit {
   private workloads(): WorkloadRow[] {
     const data = this.data();
     return [
-      this.workload('dns-domains', 'DNS Domains', 'language', data.dnsDomains, [], ['HddStatus'], [
-        'hosting',
-        'dns',
-        'domains',
-      ]),
+      this.workload(
+        'dns-domains',
+        'DNS Domains',
+        'language',
+        data.dnsDomains,
+        [],
+        ['HddStatus'],
+        ['hosting', 'dns', 'domains'],
+      ),
       this.workload(
         'vps-instances',
         'VPS Instances',
@@ -440,9 +446,15 @@ export class HostingDashboardPage implements AfterViewInit {
   private providers(): ProviderRow[] {
     const data = this.data();
     return [
-      this.provider('dns-providers', 'DNS Providers', data.dnsProviders, [], ['HdpStatus'], [
-        'HdpIsDefault',
-      ], ['hosting', 'dns', 'providers']),
+      this.provider(
+        'dns-providers',
+        'DNS Providers',
+        data.dnsProviders,
+        [],
+        ['HdpStatus'],
+        ['HdpIsDefault'],
+        ['hosting', 'dns', 'providers'],
+      ),
       this.provider(
         'smtp-providers',
         'SMTP Providers',
@@ -494,9 +506,16 @@ export class HostingDashboardPage implements AfterViewInit {
   private issues(): IssueRow[] {
     const data = this.data();
     return [
-      ...this.issueRows('VPS Instance', data.vpsInstances, 'HviUUID', 'HviName', ['HviStatus'], [
-        'HviProvisionStatus',
-      ], ['HviProvisionError'], ['hosting', 'vps', 'instances']),
+      ...this.issueRows(
+        'VPS Instance',
+        data.vpsInstances,
+        'HviUUID',
+        'HviName',
+        ['HviStatus'],
+        ['HviProvisionStatus'],
+        ['HviProvisionError'],
+        ['hosting', 'vps', 'instances'],
+      ),
       ...this.issueRows(
         'Container Instance',
         data.containerInstances,
@@ -580,7 +599,9 @@ export class HostingDashboardPage implements AfterViewInit {
     route: string[],
   ): IssueRow[] {
     return rows
-      .filter((row) => this.isIssueRow(row, [...statusFields, ...provisionStatusFields], errorFields))
+      .filter((row) =>
+        this.isIssueRow(row, [...statusFields, ...provisionStatusFields], errorFields),
+      )
       .map((row, index) => ({
         key: String(row[uuidField] ?? `${type}-${index}`),
         type,
@@ -623,7 +644,9 @@ export class HostingDashboardPage implements AfterViewInit {
       const value = row[field];
       if (typeof value === 'boolean') return value;
       if (typeof value === 'number') return value === 1;
-      return ['1', 'true', 'yes', 'active', 'default'].includes(this.stringValue(value).toLowerCase());
+      return ['1', 'true', 'yes', 'active', 'default'].includes(
+        this.stringValue(value).toLowerCase(),
+      );
     });
   }
 

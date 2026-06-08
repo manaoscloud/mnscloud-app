@@ -59,7 +59,11 @@ export class DateMaskDirective {
     const separator = parts.find((p) => p.type === 'literal')?.value ?? '/';
     const totalDigits = order.reduce((sum, part) => sum + (part === 'year' ? 4 : 2), 0);
 
-    this.cachedPattern = { order: order.length ? order : ['month', 'day', 'year'], separator, totalDigits };
+    this.cachedPattern = {
+      order: order.length ? order : ['month', 'day', 'year'],
+      separator,
+      totalDigits,
+    };
     return this.cachedPattern;
   }
 }

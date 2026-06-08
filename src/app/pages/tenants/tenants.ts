@@ -28,7 +28,7 @@ import { firstValueFrom } from 'rxjs';
 import { SnackbarService } from '../../services/snackbar.service';
 import { fadeIn } from '../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../shared/dialog/crud-dialog.util';
-import { TranslatePipe } from '../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TenantsService } from './tenants.service';
 
@@ -69,7 +69,7 @@ type TenantInvite = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './tenants.html',
   styleUrl: './tenants.scss',
@@ -345,8 +345,7 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private configureTables() {
-    this.myTenantsSource.sortingDataAccessor = (row, column) =>
-      this.accessSortValue(row, column);
+    this.myTenantsSource.sortingDataAccessor = (row, column) => this.accessSortValue(row, column);
     this.membersSource.sortingDataAccessor = (row, column) => this.accessSortValue(row, column);
     this.invitesSource.sortingDataAccessor = (row, column) => this.inviteSortValue(row, column);
   }
@@ -367,9 +366,10 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private matchesAccessFilter(item: TenantAccess, search: string, status: string) {
-    const haystack = `${item.EnvironmentName ?? ''} ${item.Role ?? ''} ${this.memberStatusLabel(item)}`
-      .toLowerCase()
-      .trim();
+    const haystack =
+      `${item.EnvironmentName ?? ''} ${item.Role ?? ''} ${this.memberStatusLabel(item)}`
+        .toLowerCase()
+        .trim();
     const matchesSearch = !search || haystack.includes(search);
     const normalizedStatus = this.memberStatusLabel(item).toLowerCase();
     const matchesStatus =

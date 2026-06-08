@@ -13,7 +13,7 @@ import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type MonitoringAgent = {
   uuid: string;
@@ -80,7 +80,7 @@ type KpiTile = {
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -169,7 +169,8 @@ export class MonitoringDashboardPage implements AfterViewInit {
   });
 
   ngAfterViewInit() {
-    this.activityDataSource.sortingDataAccessor = (row, column) => this.activitySortValue(row, column);
+    this.activityDataSource.sortingDataAccessor = (row, column) =>
+      this.activitySortValue(row, column);
     this.activityDataSource.sort = this.activitySort ?? null;
     this.activityDataSource.paginator = this.activityPaginator ?? null;
     void this.load();
@@ -206,8 +207,12 @@ export class MonitoringDashboardPage implements AfterViewInit {
       this.runtimeProducts.set(runtimeResult.value?.data ?? []);
       this.latestLogs.set(logsResult.value?.data?.items ?? []);
       this.activityDataSource.data = this.latestLogs();
-      this.failedTotal.set(failedResult.status === 'fulfilled' ? Number(failedResult.value?.data?.total ?? 0) : 0);
-      this.errorTotal.set(errorsResult.status === 'fulfilled' ? Number(errorsResult.value?.data?.total ?? 0) : 0);
+      this.failedTotal.set(
+        failedResult.status === 'fulfilled' ? Number(failedResult.value?.data?.total ?? 0) : 0,
+      );
+      this.errorTotal.set(
+        errorsResult.status === 'fulfilled' ? Number(errorsResult.value?.data?.total ?? 0) : 0,
+      );
       this.generatedAt.set(new Date().toISOString());
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to load monitoring dashboard.'));
@@ -241,7 +246,8 @@ export class MonitoringDashboardPage implements AfterViewInit {
 
   chipClass(value: string | null | undefined) {
     const normalized = String(value ?? 'unknown').toLowerCase();
-    if (['success', 'completed', 'online', 'info'].includes(normalized)) return 'chip-success is-active';
+    if (['success', 'completed', 'online', 'info'].includes(normalized))
+      return 'chip-success is-active';
     if (['failed', 'error', 'critical'].includes(normalized)) return 'chip-danger';
     if (['warn', 'warning', 'outdated'].includes(normalized)) return 'chip-warning';
     return 'chip-skipped is-inactive';

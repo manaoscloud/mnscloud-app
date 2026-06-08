@@ -10,7 +10,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipDidItem, VoipDidService } from '../did.service';
 import { VoipDidExternalItem, VoipDidExternalService } from '../external/external.service';
@@ -66,7 +66,7 @@ type ExternalRow = {
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -133,7 +133,9 @@ export class VoipDidDashboardPage implements AfterViewInit {
     const total = rows.length;
     const active = rows.filter((row) => this.isActive(row.VddStatus)).length;
     const pending = rows.filter((row) =>
-      ['pending', 'queued', 'requested'].includes(String(row.VddValidationStatus ?? '').toLowerCase()),
+      ['pending', 'queued', 'requested'].includes(
+        String(row.VddValidationStatus ?? '').toLowerCase(),
+      ),
     ).length;
     return { total, active, pending };
   });

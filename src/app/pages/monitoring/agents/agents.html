@@ -73,7 +73,7 @@
           </div>
           <div class="runtime-product-version">
             <span>{{ product.latestVersion || '-' }}</span>
-            <small>{{ 'Latest' | t }} {{ shortBuildRef(product.latestBuildRef) }}</small>
+            <small>{{ 'Latest' | transloco }} {{ shortBuildRef(product.latestBuildRef) }}</small>
           </div>
           <div class="runtime-product-counts">
             <span>{{ product.currentCount }} current</span>
@@ -90,14 +90,14 @@
               (click)="queueRuntimeProductUpdate(product)"
               [disabled]="isUpdatingRuntimeProduct(product)"
             >
-              <span>{{ runtimeProductStatus(product) | t }}</span>
+              <span>{{ runtimeProductStatus(product) | transloco }}</span>
             </button>
           } @else {
             <span
               class="status-pill version-chip runtime-product-action"
               [ngClass]="runtimeProductClass(product)"
             >
-              {{ runtimeProductStatus(product) | t }}
+              {{ runtimeProductStatus(product) | transloco }}
             </span>
           }
         </article>
@@ -184,9 +184,9 @@
           <td mat-cell *matCellDef="let row">
             <div class="version-cell">
               <span>{{ row.version || '-' }}</span>
-              <small>{{ 'Build' | t }} {{ shortBuildRef(row.buildRef) }}</small>
+              <small>{{ 'Build' | transloco }} {{ shortBuildRef(row.buildRef) }}</small>
               <small
-                >{{ 'Latest' | t }} {{ row.latestVersion || '-' }} ·
+                >{{ 'Latest' | transloco }} {{ row.latestVersion || '-' }} ·
                 {{ shortBuildRef(row.latestBuildRef) }}</small
               >
               @if (agentUpdateTarget(row); as target) {
@@ -197,11 +197,11 @@
                   (click)="queueRuntimeUpdate(row, target)"
                   [disabled]="isUpdatingTarget(row, target)"
                 >
-                  <span>{{ updateLabel(row) | t }}</span>
+                  <span>{{ updateLabel(row) | transloco }}</span>
                 </button>
               } @else {
                 <span class="status-pill version-chip" [ngClass]="updateChipClass(row)">
-                  {{ updateLabel(row) | t }}
+                  {{ updateLabel(row) | transloco }}
                 </span>
               }
             </div>
@@ -288,48 +288,58 @@
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
-        <mat-tab [label]="'Record' | t">
+        <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid" [formGroup]="form">
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Status' | t }}</mat-label>
+              <mat-label>{{ 'Status' | transloco }}</mat-label>
               <mat-select formControlName="status">
-                <mat-option [value]="1">{{ 'Active' | t }}</mat-option>
-                <mat-option [value]="0">{{ 'Inactive' | t }}</mat-option>
+                <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Name' | t }}</mat-label>
-              <input matInput formControlName="name" [placeholder]="'e.g. Linux Agent 01' | t" />
+              <mat-label>{{ 'Name' | transloco }}</mat-label>
+              <input
+                matInput
+                formControlName="name"
+                [placeholder]="'e.g. Linux Agent 01' | transloco"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Hostname' | t }}</mat-label>
+              <mat-label>{{ 'Hostname' | transloco }}</mat-label>
               <input matInput formControlName="hostname" autocomplete="off" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Agent UUID' | t }}</mat-label>
+              <mat-label>{{ 'Agent UUID' | transloco }}</mat-label>
               <input matInput formControlName="agentUUID" autocomplete="off" />
-              <mat-hint>{{ 'Optional for new enrollments; the installer creates the UUID.' | t }}</mat-hint>
+              <mat-hint>{{
+                'Optional for new enrollments; the installer creates the UUID.' | transloco
+              }}</mat-hint>
             </mat-form-field>
           </form>
         </mat-tab>
 
-        <mat-tab [label]="'Assignment' | t">
+        <mat-tab [label]="'Assignment' | transloco">
           <form class="tab-content form-grid" [formGroup]="form">
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Resource Type' | t }}</mat-label>
-              <input matInput formControlName="resourceType" [placeholder]="'e.g. voip_pabx_server' | t" />
+              <mat-label>{{ 'Resource Type' | transloco }}</mat-label>
+              <input
+                matInput
+                formControlName="resourceType"
+                [placeholder]="'e.g. voip_pabx_server' | transloco"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Resource UUID' | t }}</mat-label>
+              <mat-label>{{ 'Resource UUID' | transloco }}</mat-label>
               <input matInput formControlName="resourceUUID" autocomplete="off" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>{{ 'Capabilities' | t }}</mat-label>
+              <mat-label>{{ 'Capabilities' | transloco }}</mat-label>
               <textarea
                 matInput
                 formControlName="capabilitiesText"

@@ -2,26 +2,29 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'VoIP Dashboard' | t }}</h1>
+        <h1>{{ 'VoIP Dashboard' | transloco }}</h1>
         <p>
-          {{ 'Unified operational view for domains, DID, PABX, SBC, WebRTC and Softswitch.' | t }}
+          {{
+            'Unified operational view for domains, DID, PABX, SBC, WebRTC and Softswitch.'
+              | transloco
+          }}
         </p>
       </div>
 
       <div class="header-actions">
         <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
           <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | t }}
+          {{ 'Refresh' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid dashboard-filters">
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'Period' | t }}</mat-label>
+        <mat-label>{{ 'Period' | transloco }}</mat-label>
         <mat-select [ngModel]="period()" (ngModelChange)="period.set($event)">
           @for (option of periodOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label | t }}</mat-option>
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -29,11 +32,11 @@
       <div class="filter-actions">
         <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
           <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | t }}
+          {{ 'Apply' | transloco }}
         </button>
         <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
           <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | t }}
+          {{ 'Clear' | transloco }}
         </button>
       </div>
     </div>
@@ -49,7 +52,7 @@
         @for (item of kpis(); track item.label) {
           <article class="kpi-tile">
             <mat-icon>{{ item.icon }}</mat-icon>
-            <span>{{ item.label | t }}</span>
+            <span>{{ item.label | transloco }}</span>
             <strong>{{ item.value }}</strong>
           </article>
         }
@@ -59,8 +62,10 @@
         <section class="dashboard-panel">
           <div class="panel-header">
             <div>
-              <h2>{{ 'Module Readiness' | t }}</h2>
-              <p>{{ 'Commercial and runtime submodules currently configured in VoIP.' | t }}</p>
+              <h2>{{ 'Module Readiness' | transloco }}</h2>
+              <p>
+                {{ 'Commercial and runtime submodules currently configured in VoIP.' | transloco }}
+              </p>
             </div>
           </div>
 
@@ -68,8 +73,8 @@
             @for (item of modules(); track item.module) {
               <article class="module-row" [class.state-warning]="item.health === 'warning'">
                 <div>
-                  <strong>{{ item.label | t }}</strong>
-                  <small>{{ item.status | t }}</small>
+                  <strong>{{ item.label | transloco }}</strong>
+                  <small>{{ item.status | transloco }}</small>
                 </div>
                 <span>{{ item.primaryValue || 0 }}/{{ item.secondaryValue || 0 }}</span>
                 <span
@@ -79,11 +84,11 @@
                   [class.chip-skipped]="item.health !== 'ok' && item.health !== 'warning'"
                   [class.is-active]="item.health === 'ok'"
                   [class.is-inactive]="item.health !== 'ok'"
-                  >{{ healthLabel(item.health) | t }}</span
+                  >{{ healthLabel(item.health) | transloco }}</span
                 >
               </article>
             } @empty {
-              <p class="empty-state">{{ 'No VoIP modules found.' | t }}</p>
+              <p class="empty-state">{{ 'No VoIP modules found.' | transloco }}</p>
             }
           </div>
         </section>
@@ -91,8 +96,8 @@
         <section class="dashboard-panel">
           <div class="panel-header">
             <div>
-              <h2>{{ 'Runtime Readiness' | t }}</h2>
-              <p>{{ 'Online state reported by VoIP infrastructure servers.' | t }}</p>
+              <h2>{{ 'Runtime Readiness' | transloco }}</h2>
+              <p>{{ 'Online state reported by VoIP infrastructure servers.' | transloco }}</p>
             </div>
           </div>
 
@@ -100,8 +105,10 @@
             @for (item of runtimeBreakdown(); track item.component) {
               <article class="runtime-row">
                 <div>
-                  <strong>{{ item.component | t }}</strong>
-                  <small>{{ item.online || 0 }}/{{ item.total || 0 }} {{ 'online' | t }}</small>
+                  <strong>{{ item.component | transloco }}</strong>
+                  <small
+                    >{{ item.online || 0 }}/{{ item.total || 0 }} {{ 'online' | transloco }}</small
+                  >
                 </div>
                 <span
                   class="status-pill status-chip state-chip"
@@ -111,11 +118,11 @@
                   [class.chip-skipped]="runtimeHealth(item) === 'empty'"
                   [class.is-active]="runtimeHealth(item) === 'ok'"
                   [class.is-inactive]="runtimeHealth(item) !== 'ok'"
-                  >{{ healthLabel(runtimeHealth(item)) | t }}</span
+                  >{{ healthLabel(runtimeHealth(item)) | transloco }}</span
                 >
               </article>
             } @empty {
-              <p class="empty-state">{{ 'No VoIP runtime components found.' | t }}</p>
+              <p class="empty-state">{{ 'No VoIP runtime components found.' | transloco }}</p>
             }
           </div>
         </section>
@@ -124,18 +131,22 @@
       <section class="dashboard-panel">
         <div class="panel-header">
           <div>
-            <h2>{{ 'Call Outcome' | t }}</h2>
-            <p>{{ 'Aggregated PABX and Softswitch call activity for the selected period.' | t }}</p>
+            <h2>{{ 'Call Outcome' | transloco }}</h2>
+            <p>
+              {{
+                'Aggregated PABX and Softswitch call activity for the selected period.' | transloco
+              }}
+            </p>
           </div>
           @if (generatedAt()) {
-            <small>{{ 'Last generated' | t }}: {{ generatedAt() | date: 'short' }}</small>
+            <small>{{ 'Last generated' | transloco }}: {{ generatedAt() | date: 'short' }}</small>
           }
         </div>
 
         <div class="metric-stack">
           @for (item of callBreakdown(); track item.label) {
             <div class="metric-row">
-              <span>{{ item.label | t }}</span>
+              <span>{{ item.label | transloco }}</span>
               <div
                 class="metric-track"
                 [class.is-danger]="item.label === 'Failed'"

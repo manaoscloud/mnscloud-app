@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   VoipDashboardMetric,
   VoipDashboardModule,
@@ -33,7 +33,7 @@ import {
     MatIconModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],

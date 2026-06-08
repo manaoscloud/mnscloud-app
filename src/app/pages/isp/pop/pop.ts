@@ -28,7 +28,7 @@ import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { ApiService } from '../../../services/api.service';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type IspPopItem = {
   IppUUID: string;
@@ -62,7 +62,7 @@ type IspPopItem = {
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './pop.html',
   styleUrls: ['./pop.scss'],

@@ -1,13 +1,13 @@
-import { inject, Injectable } from "@angular/core";
-import { Title } from "@angular/platform-browser";
-import { RouterStateSnapshot, TitleStrategy } from "@angular/router";
-import { PublicThemeContextService } from "./public-theme-context.service";
+import { inject, Injectable } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
+import { PublicThemeContextService } from './public-theme-context.service';
 
 @Injectable()
 export class PublicThemeTitleStrategy extends TitleStrategy {
   private readonly title = inject(Title);
   private readonly publicTheme = inject(PublicThemeContextService);
-  private readonly fallbackBrand = "mnscloud";
+  private readonly fallbackBrand = 'mnscloud';
 
   override updateTitle(snapshot: RouterStateSnapshot): void {
     const routeTitle = this.buildTitle(snapshot);

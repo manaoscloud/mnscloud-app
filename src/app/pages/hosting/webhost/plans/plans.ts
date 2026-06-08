@@ -33,7 +33,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { SystemParameterService } from '../../../../services/system-parameter.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   getWebhostDialogViewportConfig,
   updateWebhostDialogViewport,
@@ -66,7 +66,7 @@ import type {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './plans.html',

@@ -36,7 +36,7 @@ import { ApiService } from '../../../services/api.service';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type Ticket = {
   SupportTicketUUID: string;
@@ -112,7 +112,7 @@ const MIN_LOADING_MS = 600;
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     PhoneInputComponent,
     DateMaskDirective,
   ],

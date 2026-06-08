@@ -15,7 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { ApiService } from '../../../services/api.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -118,7 +118,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
     MatProgressSpinnerModule,
     MatSlideToggleModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatSelectModule,
   ],
   templateUrl: './parameters.html',
@@ -339,8 +339,7 @@ export class SettingsParametersPage implements OnInit {
       billingSignupTrialAmount: this.normalizeNumber(raw?.billingSignupTrialAmount, 0),
       billingSignupTrialCurrency: String(raw?.billingSignupTrialCurrency ?? 'BRL') || 'BRL',
       billingSignupTrialExpiresDays: this.normalizeInteger(raw?.billingSignupTrialExpiresDays, 15),
-      billingSignupTrialRequireEmailVerified:
-        raw?.billingSignupTrialRequireEmailVerified !== false,
+      billingSignupTrialRequireEmailVerified: raw?.billingSignupTrialRequireEmailVerified !== false,
       signupCaptchaEnabled: raw?.signupCaptchaEnabled === true,
       signupCaptchaProvider: this.normalizeCaptchaProvider(raw?.signupCaptchaProvider),
       signupCaptchaSiteKey: String(raw?.signupCaptchaSiteKey ?? ''),

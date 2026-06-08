@@ -33,7 +33,7 @@ import {
   CrudDialogBinding,
   openCrudTemplateDialog,
 } from '../../../../shared/dialog/crud-dialog.util';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 export const HUMAN_RESOURCES_CRUD_IMPORTS = [
@@ -56,7 +56,7 @@ export const HUMAN_RESOURCES_CRUD_IMPORTS = [
   MatTableModule,
   MatTabsModule,
   MatTooltipModule,
-  TranslatePipe,
+  TranslocoPipe,
 ];
 
 export type SimpleResource = {

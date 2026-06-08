@@ -37,7 +37,7 @@ import { VoipPabxServerItem, VoipPabxServerService } from './server/server.servi
 import { VoipDomainItem, VoipDomainService } from '../domain/domain.service';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type ServerOption = {
   value: string;
@@ -109,7 +109,7 @@ type StorageAccountOption = {
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
   ],

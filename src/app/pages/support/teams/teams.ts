@@ -30,7 +30,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SupportTeam = {
   SupportTeamUUID: string;
@@ -89,7 +89,7 @@ const MIN_LOADING_MS = 600;
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './teams.html',
   styleUrls: ['./teams.scss'],

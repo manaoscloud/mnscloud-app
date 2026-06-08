@@ -38,7 +38,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { ApiService } from '../../../services/api.service';
 import { VoipDomainItem, VoipDomainService } from '../domain/domain.service';
 import { VoipSoftswitchAccountService, VoipSoftswitchAccount } from './softswitch.service';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   VoipSoftswitchProviderItem,
   VoipSoftswitchProviderService,
@@ -72,7 +72,7 @@ type CustomerOption = {
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
   ],

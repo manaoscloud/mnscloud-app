@@ -38,7 +38,7 @@ import {
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipSoftswitchAccount, VoipSoftswitchAccountService } from '../softswitch.service';
 import { VoipSoftswitchResourceUiService } from './resource.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type ResourceKind = 'trunks' | 'routes' | 'policies' | 'rates' | 'cdrs';
 type ResourceRow = {
@@ -147,7 +147,7 @@ const RESOURCE_META: Record<
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
   ],

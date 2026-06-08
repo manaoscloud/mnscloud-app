@@ -34,7 +34,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type MonitoringAgent = {
   uuid: string;
@@ -120,7 +120,7 @@ type RuntimeProductFleet = {
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './agents.html',
@@ -241,7 +241,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
         this.runtimeProducts.set(runtimeProductsResult.value?.data ?? []);
       } else if (this.runtimeProducts().length === 0) {
         this.runtimeProducts.set([]);
-        this.snack.error(this.errorMessage(runtimeProductsResult.reason, 'Failed to load runtime products.'));
+        this.snack.error(
+          this.errorMessage(runtimeProductsResult.reason, 'Failed to load runtime products.'),
+        );
       }
       this.dataSource.data = this.agents();
       this.pageIndex.set(0);
@@ -668,7 +670,11 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   runtimeProductClass(product: RuntimeProductFleet) {
     if (this.runtimeProductBusy(product)) return 'chip-skipped is-inactive';
     if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'chip-danger';
-    if (product.availableCount > 0 || product.outdatedCount > 0 || product.rolloutStatus === 'outdated') {
+    if (
+      product.availableCount > 0 ||
+      product.outdatedCount > 0 ||
+      product.rolloutStatus === 'outdated'
+    ) {
       return 'chip-warning';
     }
     if (product.unknownCount > 0) return 'chip-skipped is-inactive';
@@ -676,8 +682,11 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   private runtimeProductBusy(product: RuntimeProductFleet) {
-    return (product.pendingCount ?? 0) > 0 || (product.runningCount ?? 0) > 0 ||
-      product.rolloutStatus === 'updating';
+    return (
+      (product.pendingCount ?? 0) > 0 ||
+      (product.runningCount ?? 0) > 0 ||
+      product.rolloutStatus === 'updating'
+    );
   }
 
   private updateKey(row: MonitoringAgent, target: RuntimeUpdateTarget) {

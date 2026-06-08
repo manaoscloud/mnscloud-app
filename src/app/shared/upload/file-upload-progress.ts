@@ -137,11 +137,7 @@ function effectivePhaseForView<T = unknown>(
   progress: FileUploadProgress<T>,
   active: boolean,
 ): FileUploadPhase {
-  if (
-    active &&
-    progress.phase === 'uploading' &&
-    progress.percent === 100
-  ) {
+  if (active && progress.phase === 'uploading' && progress.percent === 100) {
     return 'processing';
   }
   return progress.phase;

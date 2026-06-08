@@ -17,17 +17,17 @@
     @if (activeSection() !== 'dashboard') {
       <div class="filter-grid" [formGroup]="filterForm">
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Search' | t }}</mat-label>
+          <mat-label>{{ 'Search' | transloco }}</mat-label>
           <input
             matInput
             formControlName="search"
-            [placeholder]="'IP, agent, service, profile' | t"
+            [placeholder]="'IP, agent, service, profile' | transloco"
           />
         </mat-form-field>
 
         @if (activeSection() === 'alerts' || activeSection() === 'decisions') {
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'Server' | t }}</mat-label>
+            <mat-label>{{ 'Server' | transloco }}</mat-label>
             <mat-select
               formControlName="serverUUID"
               (openedChange)="clearAlertServerSearch($event)"
@@ -36,14 +36,14 @@
                 <input
                   matInput
                   class="select-search-field"
-                  [placeholder]="'Search server' | t"
+                  [placeholder]="'Search server' | transloco"
                   [value]="alertServerSearch()"
                   (input)="alertServerSearch.set($any($event.target).value)"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                 />
               </mat-option>
-              <mat-option value="">{{ 'All servers' | t }}</mat-option>
+              <mat-option value="">{{ 'All servers' | transloco }}</mat-option>
               @for (server of filteredAlertServers(); track serverOptionValue(server)) {
                 <mat-option [value]="serverOptionValue(server)">
                   {{ serverLabel(server) }}
@@ -53,50 +53,50 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'Status' | t }}</mat-label>
+            <mat-label>{{ 'Status' | transloco }}</mat-label>
             <mat-select formControlName="status">
-              <mat-option value="">{{ 'All statuses' | t }}</mat-option>
+              <mat-option value="">{{ 'All statuses' | transloco }}</mat-option>
               @if (activeSection() === 'alerts') {
-                <mat-option value="open">{{ 'Open' | t }}</mat-option>
-                <mat-option value="acknowledged">{{ 'Acknowledged' | t }}</mat-option>
-                <mat-option value="resolved">{{ 'Resolved' | t }}</mat-option>
-                <mat-option value="ignored">{{ 'Ignored' | t }}</mat-option>
+                <mat-option value="open">{{ 'Open' | transloco }}</mat-option>
+                <mat-option value="acknowledged">{{ 'Acknowledged' | transloco }}</mat-option>
+                <mat-option value="resolved">{{ 'Resolved' | transloco }}</mat-option>
+                <mat-option value="ignored">{{ 'Ignored' | transloco }}</mat-option>
               } @else {
-                <mat-option value="active">{{ 'Active' | t }}</mat-option>
-                <mat-option value="expired">{{ 'Expired' | t }}</mat-option>
-                <mat-option value="removed">{{ 'Removed' | t }}</mat-option>
-                <mat-option value="pending">{{ 'Pending' | t }}</mat-option>
-                <mat-option value="failed">{{ 'Failed' | t }}</mat-option>
+                <mat-option value="active">{{ 'Active' | transloco }}</mat-option>
+                <mat-option value="expired">{{ 'Expired' | transloco }}</mat-option>
+                <mat-option value="removed">{{ 'Removed' | transloco }}</mat-option>
+                <mat-option value="pending">{{ 'Pending' | transloco }}</mat-option>
+                <mat-option value="failed">{{ 'Failed' | transloco }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
 
           @if (activeSection() === 'alerts') {
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Level' | t }}</mat-label>
+              <mat-label>{{ 'Level' | transloco }}</mat-label>
               <mat-select formControlName="level">
-                <mat-option value="">{{ 'All levels' | t }}</mat-option>
-                <mat-option value="info">{{ 'Info' | t }}</mat-option>
-                <mat-option value="warning">{{ 'Warning' | t }}</mat-option>
-                <mat-option value="error">{{ 'Error' | t }}</mat-option>
-                <mat-option value="critical">{{ 'Critical' | t }}</mat-option>
+                <mat-option value="">{{ 'All levels' | transloco }}</mat-option>
+                <mat-option value="info">{{ 'Info' | transloco }}</mat-option>
+                <mat-option value="warning">{{ 'Warning' | transloco }}</mat-option>
+                <mat-option value="error">{{ 'Error' | transloco }}</mat-option>
+                <mat-option value="critical">{{ 'Critical' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
           } @else {
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Action' | t }}</mat-label>
+              <mat-label>{{ 'Action' | transloco }}</mat-label>
               <mat-select formControlName="action">
-                <mat-option value="">{{ 'All actions' | t }}</mat-option>
-                <mat-option value="ban">{{ 'Ban' | t }}</mat-option>
-                <mat-option value="allow">{{ 'Allow' | t }}</mat-option>
-                <mat-option value="captcha">{{ 'Captcha' | t }}</mat-option>
-                <mat-option value="none">{{ 'None' | t }}</mat-option>
+                <mat-option value="">{{ 'All actions' | transloco }}</mat-option>
+                <mat-option value="ban">{{ 'Ban' | transloco }}</mat-option>
+                <mat-option value="allow">{{ 'Allow' | transloco }}</mat-option>
+                <mat-option value="captcha">{{ 'Captcha' | transloco }}</mat-option>
+                <mat-option value="none">{{ 'None' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
           }
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'Service' | t }}</mat-label>
+            <mat-label>{{ 'Service' | transloco }}</mat-label>
             <mat-select
               formControlName="serviceSlug"
               (openedChange)="clearAlertServiceSearch($event)"
@@ -105,14 +105,14 @@
                 <input
                   matInput
                   class="select-search-field"
-                  [placeholder]="'Search service' | t"
+                  [placeholder]="'Search service' | transloco"
                   [value]="alertServiceSearch()"
                   (input)="alertServiceSearch.set($any($event.target).value)"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                 />
               </mat-option>
-              <mat-option value="">{{ 'All services' | t }}</mat-option>
+              <mat-option value="">{{ 'All services' | transloco }}</mat-option>
               @for (service of filteredAlertServices(); track service.uuid || service.slug) {
                 <mat-option [value]="service.slug">{{ service.name || service.slug }}</mat-option>
               }
@@ -120,19 +120,19 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'Origin' | t }}</mat-label>
-            <input matInput formControlName="sourceIP" [placeholder]="'Source IP' | t" />
+            <mat-label>{{ 'Origin' | transloco }}</mat-label>
+            <input matInput formControlName="sourceIP" [placeholder]="'Source IP' | transloco" />
           </mat-form-field>
 
           @if (activeSection() === 'decisions') {
             <mat-form-field appearance="outline">
-              <mat-label>{{ 'Source' | t }}</mat-label>
+              <mat-label>{{ 'Source' | transloco }}</mat-label>
               <mat-select formControlName="origin">
-                <mat-option value="">{{ 'All sources' | t }}</mat-option>
+                <mat-option value="">{{ 'All sources' | transloco }}</mat-option>
                 <mat-option value="crowdsec">CrowdSec</mat-option>
-                <mat-option value="manual">{{ 'Manual' | t }}</mat-option>
-                <mat-option value="import">{{ 'Import' | t }}</mat-option>
-                <mat-option value="system">{{ 'System' | t }}</mat-option>
+                <mat-option value="manual">{{ 'Manual' | transloco }}</mat-option>
+                <mat-option value="import">{{ 'Import' | transloco }}</mat-option>
+                <mat-option value="system">{{ 'System' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
           }
@@ -141,11 +141,11 @@
         <div class="filter-actions">
           <button mat-stroked-button type="button" (click)="applyFilters()">
             <mat-icon>filter_alt</mat-icon>
-            {{ 'Apply' | t }}
+            {{ 'Apply' | transloco }}
           </button>
           <button mat-stroked-button type="button" (click)="clearFilters()">
             <mat-icon>backspace</mat-icon>
-            {{ 'Clear' | t }}
+            {{ 'Clear' | transloco }}
           </button>
         </div>
       </div>
@@ -369,7 +369,9 @@
               (matSortChange)="resetDecisionPaginator()"
             >
               <ng-container matColumnDef="server">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Server' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Server' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <strong>{{ serverLabel(row) }}</strong>
                   @if (serverDetail(row)) {
@@ -385,7 +387,7 @@
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-chip" [ngClass]="chipClass(row.status)">
-                    {{ row.status || '-' | t }}
+                    {{ row.status || '-' | transloco }}
                   </span>
                 </td>
               </ng-container>
@@ -393,7 +395,7 @@
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>Action</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-chip" [ngClass]="chipClass(row.action)">
-                    {{ row.action || '-' | t }}
+                    {{ row.action || '-' | transloco }}
                   </span>
                 </td>
               </ng-container>
@@ -475,29 +477,33 @@
                 </td>
               </ng-container>
               <ng-container matColumnDef="level">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Level' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Level' | transloco }}</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-chip" [ngClass]="chipClass(row.level)">
-                    {{ row.level || '-' | t }}
+                    {{ row.level || '-' | transloco }}
                   </span>
                 </td>
               </ng-container>
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Status' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-chip" [ngClass]="chipClass(row.status)">
-                    {{ row.status || '-' | t }}
+                    {{ row.status || '-' | transloco }}
                   </span>
                 </td>
               </ng-container>
               <ng-container matColumnDef="enforcement">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Enforcement' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Enforcement' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   <span
                     class="status-chip"
                     [ngClass]="chipClass(row.enforcementAction || row.enforcementStatus)"
                   >
-                    {{ row.enforcementAction || row.enforcementStatus || '-' | t }}
+                    {{ row.enforcementAction || row.enforcementStatus || '-' | transloco }}
                   </span>
                   @if (row.enforcementExpiresAt) {
                     <small>{{ row.enforcementExpiresAt | date: 'short' }}</small>
@@ -505,17 +511,23 @@
                 </td>
               </ng-container>
               <ng-container matColumnDef="service">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Service' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Service' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">{{ serviceLabel(row.serviceSlug) }}</td>
               </ng-container>
               <ng-container matColumnDef="message">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Message' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Message' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row" class="alert-message-cell">
                   {{ row.message || '-' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="detectedAt">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Detected' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'Detected' | transloco }}
+                </th>
                 <td mat-cell *matCellDef="let row">
                   {{
                     row.detectedAt || row.dateCreated
@@ -525,14 +537,14 @@
                 </td>
               </ng-container>
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | t }}</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
                 <td mat-cell *matCellDef="let row" class="actions-cell">
                   <div class="table-actions">
                     <button
                       mat-icon-button
                       type="button"
-                      [matTooltip]="'View alert details' | t"
-                      [attr.aria-label]="'View alert details' | t"
+                      [matTooltip]="'View alert details' | transloco"
+                      [attr.aria-label]="'View alert details' | transloco"
                       (click)="openAlertDetails(row)"
                     >
                       <mat-icon>visibility</mat-icon>
@@ -540,8 +552,8 @@
                     <button
                       mat-icon-button
                       type="button"
-                      [matTooltip]="'Acknowledge alert' | t"
-                      [attr.aria-label]="'Acknowledge alert' | t"
+                      [matTooltip]="'Acknowledge alert' | transloco"
+                      [attr.aria-label]="'Acknowledge alert' | transloco"
                       [disabled]="row.status === 'acknowledged'"
                       (click)="updateAlertStatus(row, 'acknowledged')"
                     >
@@ -550,8 +562,8 @@
                     <button
                       mat-icon-button
                       type="button"
-                      [matTooltip]="'Resolve alert' | t"
-                      [attr.aria-label]="'Resolve alert' | t"
+                      [matTooltip]="'Resolve alert' | transloco"
+                      [attr.aria-label]="'Resolve alert' | transloco"
                       [disabled]="row.status === 'resolved'"
                       (click)="updateAlertStatus(row, 'resolved')"
                     >
@@ -560,8 +572,8 @@
                     <button
                       mat-icon-button
                       type="button"
-                      [matTooltip]="'Ignore alert' | t"
-                      [attr.aria-label]="'Ignore alert' | t"
+                      [matTooltip]="'Ignore alert' | transloco"
+                      [attr.aria-label]="'Ignore alert' | transloco"
                       [disabled]="row.status === 'ignored'"
                       (click)="updateAlertStatus(row, 'ignored')"
                     >
@@ -791,19 +803,19 @@
           </div>
           <div>
             <span>Status</span>
-            <strong>{{ decision.status || '-' | t }}</strong>
+            <strong>{{ decision.status || '-' | transloco }}</strong>
           </div>
           <div>
             <span>Action</span>
-            <strong>{{ decision.action || '-' | t }}</strong>
+            <strong>{{ decision.action || '-' | transloco }}</strong>
           </div>
           <div>
             <span>Source</span>
-            <strong>{{ decision.origin || '-' | t }}</strong>
+            <strong>{{ decision.origin || '-' | transloco }}</strong>
           </div>
           <div>
             <span>Scope</span>
-            <strong>{{ decision.scope || '-' | t }}</strong>
+            <strong>{{ decision.scope || '-' | transloco }}</strong>
           </div>
           <div>
             <span>Value</span>
@@ -846,48 +858,50 @@
 
 <ng-template #alertDialog>
   <div class="cyber-dialog alert-dialog">
-    <h2>{{ 'Alert details' | t }}</h2>
+    <h2>{{ 'Alert details' | transloco }}</h2>
     <mat-dialog-content>
       @if (selectedAlert(); as alert) {
         <div class="alert-detail-grid">
           <div>
-            <span>{{ 'Server' | t }}</span>
+            <span>{{ 'Server' | transloco }}</span>
             <strong>{{ serverLabel(alert) }}</strong>
             <small>{{ serverDetail(alert) || '-' }}</small>
           </div>
           <div>
-            <span>{{ 'Level' | t }}</span>
-            <strong>{{ alert.level || '-' | t }}</strong>
+            <span>{{ 'Level' | transloco }}</span>
+            <strong>{{ alert.level || '-' | transloco }}</strong>
           </div>
           <div>
-            <span>{{ 'Status' | t }}</span>
-            <strong>{{ alert.status || '-' | t }}</strong>
+            <span>{{ 'Status' | transloco }}</span>
+            <strong>{{ alert.status || '-' | transloco }}</strong>
           </div>
           <div>
-            <span>{{ 'Enforcement' | t }}</span>
-            <strong>{{ alert.enforcementAction || alert.enforcementStatus || '-' | t }}</strong>
+            <span>{{ 'Enforcement' | transloco }}</span>
+            <strong>{{
+              alert.enforcementAction || alert.enforcementStatus || '-' | transloco
+            }}</strong>
             @if (alert.enforcementExpiresAt) {
               <small>{{ alert.enforcementExpiresAt | date: 'medium' }}</small>
             }
           </div>
           <div>
-            <span>{{ 'Service' | t }}</span>
+            <span>{{ 'Service' | transloco }}</span>
             <strong>{{ serviceLabel(alert.serviceSlug) }}</strong>
           </div>
           <div>
-            <span>{{ 'Origin' | t }}</span>
+            <span>{{ 'Origin' | transloco }}</span>
             <strong>{{ alert.sourceIP || '-' }}</strong>
           </div>
           <div class="full">
-            <span>{{ 'Scenario' | t }}</span>
+            <span>{{ 'Scenario' | transloco }}</span>
             <strong>{{ alert.scenario || '-' }}</strong>
           </div>
           <div class="full">
-            <span>{{ 'Message' | t }}</span>
+            <span>{{ 'Message' | transloco }}</span>
             <p>{{ alert.message || '-' }}</p>
           </div>
           <div class="full">
-            <span>{{ 'Evidence' | t }}</span>
+            <span>{{ 'Evidence' | transloco }}</span>
             <pre>{{ alert.details | json }}</pre>
           </div>
         </div>
@@ -897,11 +911,11 @@
       @if (selectedAlert(); as alert) {
         <button mat-stroked-button type="button" (click)="updateAlertStatus(alert, 'acknowledged')">
           <mat-icon>done</mat-icon>
-          {{ 'Acknowledge' | t }}
+          {{ 'Acknowledge' | transloco }}
         </button>
         <button mat-stroked-button type="button" (click)="updateAlertStatus(alert, 'ignored')">
           <mat-icon>visibility_off</mat-icon>
-          {{ 'Ignore' | t }}
+          {{ 'Ignore' | transloco }}
         </button>
         <button
           mat-flat-button
@@ -910,10 +924,10 @@
           (click)="updateAlertStatus(alert, 'resolved')"
         >
           <mat-icon>task_alt</mat-icon>
-          {{ 'Resolve' | t }}
+          {{ 'Resolve' | transloco }}
         </button>
       }
-      <button mat-stroked-button mat-dialog-close>{{ 'Close' | t }}</button>
+      <button mat-stroked-button mat-dialog-close>{{ 'Close' | transloco }}</button>
     </mat-dialog-actions>
   </div>
 </ng-template>

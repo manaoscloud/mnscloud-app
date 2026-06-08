@@ -12,7 +12,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type SmtpProvider = {
   HspUUID: string;
@@ -98,7 +98,7 @@ type RouteRow = {
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -139,7 +139,15 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
     'issues',
     'actions',
   ];
-  readonly accountColumns = ['account', 'provider', 'from', 'active', 'default', 'routes', 'actions'];
+  readonly accountColumns = [
+    'account',
+    'provider',
+    'from',
+    'active',
+    'default',
+    'routes',
+    'actions',
+  ];
   readonly routeColumns = ['event', 'account', 'provider', 'from', 'active', 'actions'];
 
   readonly providerSummary = computed(() => {
@@ -162,7 +170,9 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
     const rows = this.routes();
     const total = rows.length;
     const active = rows.filter((row) => this.isActive(row.HsrIsActive)).length;
-    const linked = rows.filter((row) => Boolean(this.accountLabel(row.HostingSmtpAccountHsaUUID))).length;
+    const linked = rows.filter((row) =>
+      Boolean(this.accountLabel(row.HostingSmtpAccountHsaUUID)),
+    ).length;
     return { total, active, linked };
   });
 
@@ -252,7 +262,9 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
       ).length;
 
       this.providers.set(
-        providersResult.status === 'fulfilled' ? this.items<SmtpProvider>(providersResult.value) : [],
+        providersResult.status === 'fulfilled'
+          ? this.items<SmtpProvider>(providersResult.value)
+          : [],
       );
       this.accounts.set(
         accountsResult.status === 'fulfilled' ? this.items<SmtpAccount>(accountsResult.value) : [],
@@ -281,9 +293,7 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
   }
 
   routeTo(section: 'providers' | 'accounts' | 'routes') {
-    return this.isMaster()
-      ? ['/system/hosting/smtp', section]
-      : ['/hosting/smtp', section];
+    return this.isMaster() ? ['/system/hosting/smtp', section] : ['/hosting/smtp', section];
   }
 
   chipClass(value: boolean | number) {

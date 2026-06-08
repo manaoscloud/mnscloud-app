@@ -30,7 +30,7 @@ import { ApiService } from '../../../services/api.service';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
 
@@ -53,7 +53,7 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './vendor-model.html',
   styleUrls: ['./vendor-model.scss'],

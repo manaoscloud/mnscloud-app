@@ -42,7 +42,7 @@ import {
   VoipPabxMediaFilesService,
 } from '../media-files/media-files.service';
 import { VoipPabxQueueItem, VoipPabxQueueMemberItem, VoipPabxQueueService } from './queue.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 
@@ -68,7 +68,7 @@ type Option = { value: string; label: string; pabxUUID?: string | null };
     MatSortModule,
     MatTableModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatTooltipModule,
   ],
   templateUrl: './queue.html',

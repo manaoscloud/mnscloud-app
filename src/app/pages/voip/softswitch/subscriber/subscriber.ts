@@ -39,7 +39,7 @@ import {
   VoipSoftswitchSubscriberItem,
   VoipSoftswitchSubscriberService,
 } from './subscriber.service';
-import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-voip-softswitch-subscriber',
@@ -62,7 +62,7 @@ import { TranslatePipe } from '../../../../shared/i18n/translate.pipe';
     MatSortModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    TranslatePipe,
+    TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
   ],

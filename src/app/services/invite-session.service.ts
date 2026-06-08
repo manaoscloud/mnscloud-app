@@ -5,7 +5,6 @@ const INVITE_SESSION_KEY = 'mc_invite_session';
 
 @Injectable({ providedIn: 'root' })
 export class InviteSessionService {
-
   set(session: InviteSession) {
     localStorage.setItem(INVITE_SESSION_KEY, JSON.stringify(session));
   }
