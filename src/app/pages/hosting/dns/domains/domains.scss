@@ -248,18 +248,6 @@
   }
 }
 
-.select-search-option {
-  height: auto !important;
-  min-height: 72px !important;
-  padding: 0.35rem 0.75rem !important;
-  cursor: default !important;
-}
-
-.select-search-field {
-  width: 100%;
-  pointer-events: auto;
-}
-
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

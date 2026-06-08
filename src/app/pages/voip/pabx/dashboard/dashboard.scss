@@ -81,17 +81,6 @@
   background: var(--mat-sys-color-primary);
 }
 
-.select-search-option {
-  height: auto;
-  padding: 0.5rem 0.75rem;
-}
-
-.select-search-field {
-  width: 100%;
-  border: 0;
-  outline: 0;
-}
-
 @media (max-width: 1200px) {
   .dashboard-filters,
   .kpi-grid,

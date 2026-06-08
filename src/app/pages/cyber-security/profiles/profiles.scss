@@ -32,22 +32,6 @@
   color: var(--mat-sys-color-on-surface-variant);
 }
 
-.select-search-option {
-  height: auto;
-  padding: 6px 10px;
-}
-
-.select-search-field {
-  width: 100%;
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  outline: none;
-  padding: 8px 10px;
-}
-
 textarea {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }

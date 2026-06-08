@@ -562,38 +562,6 @@ mat-paginator {
   align-items: center;
 }
 
-:host ::ng-deep .select-search-option {
-  height: auto;
-  cursor: default;
-  padding: 0;
-}
-
-:host ::ng-deep .select-search-field {
-  width: 100%;
-  margin: 0.5rem 0 0.25rem;
-  padding: 0 0.75rem;
-  box-sizing: border-box;
-}
-
-:host ::ng-deep .select-search-option .mdc-list-item__primary-text {
-  width: 100%;
-}
-
-:host ::ng-deep .select-search-field .mat-mdc-form-field {
-  width: 100%;
-  max-width: 100%;
-  flex: 1 1 auto;
-}
-
-:host ::ng-deep .select-search-field .mat-mdc-text-field-wrapper {
-  width: 100%;
-  max-width: 100%;
-}
-
-:host ::ng-deep .select-search-field .mat-mdc-form-field-infix {
-  width: 100%;
-}
-
 .actions-col-cell {
   min-width: 140px;
   width: 140px;

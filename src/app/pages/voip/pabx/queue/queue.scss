@@ -504,23 +504,6 @@ mat-paginator {
   text-align: right !important;
 }
 
-:host ::ng-deep .select-search-option {
-  height: auto;
-  cursor: default;
-  padding: 0;
-}
-
-:host ::ng-deep .select-search-field {
-  width: 100%;
-  margin: 0.5rem 0 0.25rem;
-  padding: 0 0.75rem;
-  box-sizing: border-box;
-}
-
-:host ::ng-deep .select-search-option .mdc-list-item__primary-text {
-  width: 100%;
-}
-
 @media (max-width: 1400px) {
   .form-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
