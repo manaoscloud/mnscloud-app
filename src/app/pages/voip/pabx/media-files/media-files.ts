@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -90,7 +92,12 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
-  readonly loading = signal(false);
+  private readonly itemsResource = resource({
+    defaultValue: [] as VoipPabxMediaFileItem[],
+    loader: () => this.fetchItems(),
+  });
+  private readonly mutating = signal(false);
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly saving = signal(false);
   readonly uploading = signal(false);
   readonly searchInput = signal('');
@@ -147,54 +154,57 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   private dialogBinding: CrudDialogBinding | null = null;
   private activeUploadSubscription: Subscription | null = null;
   private activeUploadReject: ((error: Error) => void) | null = null;
+  private readonly itemsEffect = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+  });
+  private readonly itemsErrorEffect = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error, 'Failed to load media files.'));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    setTimeout(() => void this.loadItems(), 0);
+    void this.bootstrap();
   }
 
   ngOnDestroy() {
     this.closeDialog();
   }
 
+  async bootstrap() {
+    await this.loadLookups();
+    this.itemsResource.reload();
+  }
+
   refreshList() {
-    void this.loadItems();
+    void this.bootstrap();
   }
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
     this.statusFilter.set('');
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      await this.loadLookups();
-      const response = await this.api.list({
-        search: this.search(),
-        status: this.statusFilter(),
-        limit: this.listLimit,
-      });
-      this.dataSource.data = (response?.data?.items ?? []) as VoipPabxMediaFileItem[];
-      this.reconcileSelection();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to load media files.'));
-      this.dataSource.data = [];
-      this.reconcileSelection();
-    } finally {
-      const elapsed = performance.now() - start;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+  private async fetchItems(): Promise<VoipPabxMediaFileItem[]> {
+    const response = await this.api.list({
+      search: this.search(),
+      status: this.statusFilter(),
+      limit: this.listLimit,
+    });
+    return (response?.data?.items ?? []) as VoipPabxMediaFileItem[];
   }
 
   startCreate() {
@@ -278,7 +288,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
       this.snack.success(
         createMode ? 'Media file created successfully.' : 'Media file updated successfully.',
       );
-      await this.loadItems();
+      this.itemsResource.reload();
       if (saveAndNew && createMode) {
         this.startCreate();
         return;
@@ -287,7 +297,7 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
     } catch (err: any) {
       if (savedItem?.uuid) {
         this.editing.set(savedItem);
-        await this.loadItems();
+        this.itemsResource.reload();
         if (err instanceof UploadCancelledError) {
           this.snack.warning('Upload cancelled. Media file metadata was saved without audio.');
         } else {
@@ -329,9 +339,16 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
       'Delete',
     );
     if (!confirmed) return;
-    await this.api.remove(item.uuid);
-    this.snack.success('Media file deleted successfully.');
-    await this.loadItems();
+    this.mutating.set(true);
+    try {
+      await this.api.remove(item.uuid);
+      this.snack.success('Media file deleted successfully.');
+      this.itemsResource.reload();
+    } catch (err: any) {
+      this.snack.error(this.messageFromError(err, 'Failed to delete media file.'));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
   get selectedCount() {
@@ -387,15 +404,22 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
       'Delete selected',
     );
     if (!confirmed) return;
-    const response = await this.api.removeMany(ids);
-    const deleted = new Set<string>(response?.data?.deleted ?? []);
-    this.selectedUUIDs.update((current) => {
-      const next = new Set(current);
-      deleted.forEach((id) => next.delete(id));
-      return next;
-    });
-    this.snack.success(`${deleted.size} media file(s) deleted successfully.`);
-    await this.loadItems();
+    this.mutating.set(true);
+    try {
+      const response = await this.api.removeMany(ids);
+      const deleted = new Set<string>(response?.data?.deleted ?? []);
+      this.selectedUUIDs.update((current) => {
+        const next = new Set(current);
+        deleted.forEach((id) => next.delete(id));
+        return next;
+      });
+      this.snack.success(`${deleted.size} media file(s) deleted successfully.`);
+      this.itemsResource.reload();
+    } catch (err: any) {
+      this.snack.error(this.messageFromError(err, 'Failed to delete selected media files.'));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
   fileLabel(item: VoipPabxMediaFileItem) {
