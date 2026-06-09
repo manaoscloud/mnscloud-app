@@ -4,7 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -77,7 +79,11 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(false);
+  private readonly domainsResource = resource({
+    defaultValue: [] as VoipDomainItem[],
+    loader: () => this.fetchDomains(),
+  });
+  readonly loading = this.domainsResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipDomainItem | null>(null);
@@ -105,17 +111,29 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   private domainFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private routeSub: Subscription | null = null;
-  private viewReady = false;
+  private readonly domainsEffect = effect(() => {
+    this.dataSource.data = this.domainsResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+  });
+  private readonly domainsErrorEffect = effect(() => {
+    const error = this.domainsResource.error();
+    if (!error) return;
+    const message =
+      error instanceof Error ? error.message : 'Failed to load domains.';
+    this.snack.error(message);
+    this.dataSource.data = [];
+  });
 
   ngOnInit() {
     this.routeSub = this.route.data.subscribe((data) => {
       this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
-      if (this.viewReady) void this.loadDomains();
+      this.domainsResource.reload();
     });
   }
 
   ngAfterViewInit() {
-    this.viewReady = true;
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -137,7 +155,6 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => void this.loadDomains(), 0);
   }
 
   ngOnDestroy() {
@@ -151,17 +168,17 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadDomains();
+    this.domainsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadDomains();
+    this.domainsResource.reload();
   }
 
   refreshList() {
-    void this.loadDomains();
+    this.domainsResource.reload();
   }
 
   selectedCount() {
@@ -216,37 +233,15 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
     this.selectedDomainUUIDs.set(next);
   }
 
-  async loadDomains() {
-    this.loading.set(true);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.list(
-        {
-          search: this.search || undefined,
-          limit: this.listLimit,
-        },
-        this.scope(),
-      );
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.filter = '';
-      if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    } catch (err: any) {
-      const message =
-        err?.error?.message || err?.error?.error || err?.message || 'Failed to load domains.';
-      this.snack.error(message);
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+  private async fetchDomains(): Promise<VoipDomainItem[]> {
+    const response = await this.api.list(
+      {
+        search: this.search || undefined,
+        limit: this.listLimit,
+      },
+      this.scope(),
+    );
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -291,7 +286,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
         this.snack.success('VoIP domain created.');
       }
 
-      await this.loadDomains();
+      this.domainsResource.reload();
       if (createAnother && !editing) {
         this.resetForm();
         return;

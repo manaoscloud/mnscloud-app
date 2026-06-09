@@ -6,7 +6,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   viewChild,
 } from '@angular/core';
@@ -84,7 +86,11 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(false);
+  private readonly operatorsResource = resource({
+    defaultValue: [] as VoipDidOperatorItem[],
+    loader: () => this.fetchOperators(),
+  });
+  readonly loading = this.operatorsResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipDidOperatorItem | null>(null);
@@ -97,7 +103,6 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   suppliers: SupplierOption[] = [];
   supplierMap = new Map<string, SupplierOption>();
   readonly suppliersReady = signal(false);
-  readonly viewReady = signal(false);
   readonly isMasterScope = signal(false);
   supplierSearch = '';
 
@@ -118,10 +123,23 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   readonly operatorFormDialog = viewChild<TemplateRef<unknown>>('operatorFormDialog');
   private operatorFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly operatorsEffect = effect(() => {
+    this.dataSource.data = this.operatorsResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+  });
+  private readonly operatorsErrorEffect = effect(() => {
+    const error = this.operatorsResource.error();
+    if (!error) return;
+    this.snack.error(this.extractErrorMessage(error, 'Failed to load DID operators.'));
+    this.dataSource.data = [];
+  });
 
   ngOnInit() {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
-    setTimeout(() => void this.loadSuppliers());
+    void this.loadSuppliers();
+    this.operatorsResource.reload();
   }
 
   ngAfterViewInit() {
@@ -150,9 +168,7 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-    this.viewReady.set(true);
     this.cdr.detectChanges();
-    setTimeout(() => void this.loadOperators());
   }
 
   ngOnDestroy() {
@@ -165,13 +181,13 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadOperators();
+    this.operatorsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadOperators();
+    this.operatorsResource.reload();
   }
 
   selectedCount() {
@@ -230,39 +246,20 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     this.selectedOperatorUUIDs.set(new Set());
   }
 
-  async loadOperators() {
-    this.loading.set(true);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.list(
-        {
-          search: this.search || undefined,
-          limit: this.listLimit,
-        },
-        this.isMasterScope(),
-      );
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.filter = '';
-      if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    } catch (err: any) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load DID operators.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+  private async fetchOperators(): Promise<VoipDidOperatorItem[]> {
+    const response = await this.api.list(
+      {
+        search: this.search || undefined,
+        limit: this.listLimit,
+      },
+      this.isMasterScope(),
+    );
+    return response?.data?.items ?? [];
   }
 
   async refreshList() {
     await this.loadSuppliers();
-    await this.loadOperators();
+    this.operatorsResource.reload();
   }
 
   async loadSuppliers() {
@@ -305,7 +302,7 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
         this.snack.success('DID operator created successfully.');
       }
 
-      await this.loadOperators();
+      this.operatorsResource.reload();
       if (saveAndNew && !editing) {
         this.resetForm();
         return;
