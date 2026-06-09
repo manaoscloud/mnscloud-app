@@ -3,7 +3,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -118,7 +120,6 @@ export class HostingSmtpRoutesPage implements OnDestroy {
   );
   readonly endpoint = computed(() => `${this.rootEndpoint()}/routes`);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly testing = signal(false);
   readonly routes = signal<SmtpRoute[]>([]);
@@ -156,6 +157,48 @@ export class HostingSmtpRoutesPage implements OnDestroy {
     html: ['<p>This is a test email sent from an MNSCloud SMTP route.</p>'],
   });
 
+  private readonly routesResource = resource({
+    params: () => ({
+      rootEndpoint: this.rootEndpoint(),
+      endpoint: this.endpoint(),
+    }),
+    defaultValue: {
+      accounts: [] as SmtpAccount[],
+      routes: [] as SmtpRoute[],
+      eventTypes: [] as SmtpEventType[],
+    },
+    loader: async ({ params }) => {
+      const [accounts, routes, eventTypesResponse] = await Promise.all([
+        this.api.get<SmtpAccount[]>(`${params.rootEndpoint}/accounts`),
+        this.api.get<SmtpRoute[]>(params.endpoint),
+        this.api.get<SmtpEventTypeResponse | SmtpEventType[]>(`${params.rootEndpoint}/event-types`),
+      ]);
+      const eventTypes = Array.isArray(eventTypesResponse)
+        ? eventTypesResponse
+        : eventTypesResponse.data;
+      return {
+        accounts: Array.isArray(accounts) ? accounts : [],
+        routes: Array.isArray(routes) ? routes : [],
+        eventTypes: Array.isArray(eventTypes) ? eventTypes : [],
+      };
+    },
+  });
+  readonly loading = this.routesResource.isLoading;
+  private readonly syncRoutes = effect(() => {
+    const snapshot = this.routesResource.value();
+    this.accounts.set(snapshot.accounts);
+    this.routes.set(snapshot.routes);
+    this.eventTypes.set(snapshot.eventTypes);
+    this.dataSource.data = snapshot.routes;
+    this.pageIndex.set(0);
+    this.reconcileSelection();
+  });
+  private readonly reportLoadError = effect(() => {
+    const error = this.routesResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load SMTP routes.'));
+  });
+
   readonly filteredAccountOptions = computed(() => {
     const term = this.accountSearch().trim().toLowerCase();
     return this.accounts().filter(
@@ -187,7 +230,6 @@ export class HostingSmtpRoutesPage implements OnDestroy {
 
   ngOnInit() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.loadAll();
   }
 
   ngOnDestroy() {
@@ -196,29 +238,7 @@ export class HostingSmtpRoutesPage implements OnDestroy {
   }
 
   refreshList() {
-    void this.loadAll();
-  }
-
-  async loadAll() {
-    const start = performance.now();
-    this.loading.set(true);
-
-    try {
-      const [accounts, routes] = await Promise.all([
-        this.api.get<SmtpAccount[]>(`${this.rootEndpoint()}/accounts`),
-        this.api.get<SmtpRoute[]>(this.endpoint()),
-        this.loadEventTypes(),
-      ]);
-      this.accounts.set(Array.isArray(accounts) ? accounts : []);
-      this.routes.set(Array.isArray(routes) ? routes : []);
-      this.dataSource.data = this.routes();
-      this.pageIndex.set(0);
-      this.reconcileSelection();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load SMTP routes.'));
-    } finally {
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - (performance.now() - start)));
-    }
+    this.routesResource.reload();
   }
 
   applyFilters() {
@@ -244,14 +264,6 @@ export class HostingSmtpRoutesPage implements OnDestroy {
 
   resetAccountSearch(opened: boolean) {
     if (!opened) this.accountSearch.set('');
-  }
-
-  private async loadEventTypes() {
-    const response = await this.api.get<SmtpEventTypeResponse | SmtpEventType[]>(
-      `${this.rootEndpoint()}/event-types`,
-    );
-    const rows = Array.isArray(response) ? response : response.data;
-    this.eventTypes.set(Array.isArray(rows) ? rows : []);
   }
 
   startCreate() {
@@ -381,7 +393,7 @@ export class HostingSmtpRoutesPage implements OnDestroy {
         await this.api.post(this.endpoint(), payload);
         this.snack.success('SMTP route created.');
       }
-      await this.loadAll();
+      this.routesResource.reload();
       if (keepOpen && !editing) this.startCreate();
       else this.closeDialog();
     } catch (error) {
@@ -397,7 +409,7 @@ export class HostingSmtpRoutesPage implements OnDestroy {
     try {
       await this.api.delete(`${this.endpoint()}/${route.HsrUUID}`);
       this.snack.success('SMTP route deleted.');
-      await this.loadAll();
+      this.routesResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete SMTP route.'));
     }
@@ -419,7 +431,7 @@ export class HostingSmtpRoutesPage implements OnDestroy {
       } else {
         this.snack.success(`${result.deleted.size} selected SMTP route(s) deleted.`);
       }
-      await this.loadAll();
+      this.routesResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete selected SMTP routes.'));
     }

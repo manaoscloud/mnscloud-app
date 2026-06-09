@@ -3,7 +3,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -97,7 +99,6 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
-  private loadingStarted = 0;
   readonly dataSource = new MatTableDataSource<HostingSmtpAccount>([]);
 
   readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
@@ -106,7 +107,6 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   );
   readonly endpoint = computed(() => `${this.rootEndpoint()}/accounts`);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly accounts = signal<HostingSmtpAccount[]>([]);
   readonly providers = signal<HostingSmtpProvider[]>([]);
@@ -145,6 +145,41 @@ export class HostingSmtpAccountsPage implements OnDestroy {
     defaultFromEmail: ['', [Validators.email]],
   });
 
+  private readonly accountsResource = resource({
+    params: () => ({
+      rootEndpoint: this.rootEndpoint(),
+      endpoint: this.endpoint(),
+    }),
+    defaultValue: {
+      providers: [] as HostingSmtpProvider[],
+      accounts: [] as HostingSmtpAccount[],
+    },
+    loader: async ({ params }) => {
+      const [providers, accounts] = await Promise.all([
+        this.api.get<HostingSmtpProvider[]>(`${params.rootEndpoint}/providers`),
+        this.api.get<HostingSmtpAccount[]>(params.endpoint),
+      ]);
+      return {
+        providers: Array.isArray(providers) ? providers : [],
+        accounts: Array.isArray(accounts) ? accounts : [],
+      };
+    },
+  });
+  readonly loading = this.accountsResource.isLoading;
+  private readonly syncAccounts = effect(() => {
+    const snapshot = this.accountsResource.value();
+    this.providers.set(snapshot.providers);
+    this.accounts.set(snapshot.accounts);
+    this.dataSource.data = snapshot.accounts;
+    this.pageIndex.set(0);
+    this.reconcileSelection();
+  });
+  private readonly reportLoadError = effect(() => {
+    const error = this.accountsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load SMTP accounts.'));
+  });
+
   readonly filteredProviderOptions = computed(() => {
     const term = this.providerSearch().trim().toLowerCase();
     return this.providers().filter(
@@ -176,7 +211,6 @@ export class HostingSmtpAccountsPage implements OnDestroy {
 
   ngOnInit() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.loadAll();
   }
 
   ngOnDestroy() {
@@ -184,28 +218,7 @@ export class HostingSmtpAccountsPage implements OnDestroy {
   }
 
   refreshList() {
-    void this.loadAll();
-  }
-
-  async loadAll() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-    try {
-      const [providers, accounts] = await Promise.all([
-        this.api.get<HostingSmtpProvider[]>(`${this.rootEndpoint()}/providers`),
-        this.api.get<HostingSmtpAccount[]>(this.endpoint()),
-      ]);
-      this.providers.set(Array.isArray(providers) ? providers : []);
-      this.accounts.set(Array.isArray(accounts) ? accounts : []);
-      this.dataSource.data = this.accounts();
-      this.pageIndex.set(0);
-      this.reconcileSelection();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load SMTP accounts.'));
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+    this.accountsResource.reload();
   }
 
   applyFilters() {
@@ -310,7 +323,7 @@ export class HostingSmtpAccountsPage implements OnDestroy {
         await this.api.post(this.endpoint(), payload);
         this.snack.success('SMTP account created.');
       }
-      await this.loadAll();
+      this.accountsResource.reload();
       if (keepOpen && !editing) this.startCreate();
       else this.closeDialog();
     } catch (error) {
@@ -338,7 +351,7 @@ export class HostingSmtpAccountsPage implements OnDestroy {
     try {
       await this.api.delete(`${this.endpoint()}/${item.HsaUUID}`);
       this.snack.success('SMTP account deleted.');
-      await this.loadAll();
+      this.accountsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete SMTP account.'));
     }
@@ -360,7 +373,7 @@ export class HostingSmtpAccountsPage implements OnDestroy {
       } else {
         this.snack.success(`${result.deleted.size} selected SMTP account(s) deleted.`);
       }
-      await this.loadAll();
+      this.accountsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete selected SMTP accounts.'));
     }

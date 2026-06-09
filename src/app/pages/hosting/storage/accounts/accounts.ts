@@ -4,7 +4,9 @@ import {
   OnInit,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -102,7 +104,6 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
-  private loadingStarted = 0;
   readonly dataSource = new MatTableDataSource<HostingStorageAccount>([]);
 
   readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
@@ -111,7 +112,6 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   );
   readonly endpoint = computed(() => `${this.rootEndpoint()}/accounts`);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly accounts = signal<HostingStorageAccount[]>([]);
   readonly providers = signal<HostingStorageProvider[]>([]);
@@ -154,6 +154,42 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
     configJson: [''],
   });
 
+  private readonly accountsResource = resource({
+    params: () => ({
+      rootEndpoint: this.rootEndpoint(),
+      endpoint: this.endpoint(),
+    }),
+    defaultValue: {
+      providers: [] as HostingStorageProvider[],
+      accounts: [] as HostingStorageAccount[],
+    },
+    loader: async ({ params }) => {
+      const [providers, accounts] = await Promise.all([
+        this.api.get<ApiResponse<HostingStorageProvider[]>>(`${params.rootEndpoint}/providers`),
+        this.api.get<ApiResponse<HostingStorageAccount[]>>(params.endpoint),
+      ]);
+      return {
+        providers: Array.isArray(providers.data) ? providers.data : [],
+        accounts: Array.isArray(accounts.data) ? accounts.data : [],
+      };
+    },
+  });
+  readonly loading = this.accountsResource.isLoading;
+  private readonly syncAccounts = effect(() => {
+    const snapshot = this.accountsResource.value();
+    this.providers.set(snapshot.providers);
+    this.accounts.set(snapshot.accounts);
+    this.syncSelectedProvider(this.form.controls.providerUuid.value);
+    this.dataSource.data = snapshot.accounts;
+    this.pageIndex.set(0);
+    this.reconcileSelection();
+  });
+  private readonly reportLoadError = effect(() => {
+    const error = this.accountsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load storage accounts.'));
+  });
+
   readonly filteredProviderOptions = computed(() => {
     const term = this.providerSearch().trim().toLowerCase();
     return this.providers().filter(
@@ -189,7 +225,6 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
     this.form.controls.providerUuid.valueChanges.subscribe((providerUuid) => {
       this.syncSelectedProvider(providerUuid);
     });
-    void this.loadAll();
   }
 
   ngOnDestroy() {
@@ -197,29 +232,7 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadAll();
-  }
-
-  async loadAll() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-    try {
-      const [providers, accounts] = await Promise.all([
-        this.api.get<ApiResponse<HostingStorageProvider[]>>(`${this.rootEndpoint()}/providers`),
-        this.api.get<ApiResponse<HostingStorageAccount[]>>(this.endpoint()),
-      ]);
-      this.providers.set(Array.isArray(providers.data) ? providers.data : []);
-      this.accounts.set(Array.isArray(accounts.data) ? accounts.data : []);
-      this.syncSelectedProvider(this.form.controls.providerUuid.value);
-      this.dataSource.data = this.accounts();
-      this.pageIndex.set(0);
-      this.reconcileSelection();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load storage accounts.'));
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+    this.accountsResource.reload();
   }
 
   applyFilters() {
@@ -349,7 +362,7 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
         await this.api.post(this.endpoint(), payload);
         this.snack.success('Storage account created.');
       }
-      await this.loadAll();
+      this.accountsResource.reload();
       if (keepOpen && !editing) {
         this.editing.set(null);
         this.form.reset({
@@ -393,7 +406,7 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
     try {
       await this.api.delete(`${this.endpoint()}/${item.HsaUUID}`);
       this.snack.success('Storage account deleted.');
-      await this.loadAll();
+      this.accountsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete storage account.'));
     }
@@ -416,7 +429,7 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
       } else {
         this.snack.success('Selected storage accounts deleted.');
       }
-      await this.loadAll();
+      this.accountsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete selected storage accounts.'));
     }
