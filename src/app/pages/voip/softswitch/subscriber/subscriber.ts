@@ -1,7 +1,9 @@
 import {
   AfterViewInit,
   Component,
+  effect,
   OnDestroy,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -79,7 +81,6 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly error = signal<string | null>(null);
@@ -97,6 +98,7 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
     'actions',
   ];
   readonly dataSource = new MatTableDataSource<VoipSoftswitchSubscriberItem>([]);
+  readonly appliedSearch = signal('');
   search = '';
   searchInput = '';
   accountSearch = '';
@@ -120,8 +122,29 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
   readonly subscriberFormDialog = viewChild<TemplateRef<unknown>>('subscriberFormDialog');
+  private readonly subscribersResource = resource({
+    params: () => ({ search: this.appliedSearch(), limit: this.listLimit }),
+    defaultValue: [] as VoipSoftswitchSubscriberItem[],
+    loader: async ({ params }) => {
+      const res = await this.api.list(params);
+      return res?.data?.items ?? [];
+    },
+  });
+  readonly loading = this.subscribersResource.isLoading;
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.subscribersResource.value();
+    this.reconcileSelection();
+    this.dataSource.paginator?.firstPage();
+  });
+  private readonly reportLoadError = effect(() => {
+    const error = this.subscribersResource.error();
+    if (!error) return;
+    const message = this.errorMessage(error, 'Failed to load subscribers.');
+    this.error.set(message);
+    this.snack.error(message);
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -144,10 +167,7 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-    setTimeout(() => {
-      void this.loadLookups();
-      void this.loadItems();
-    }, 0);
+    setTimeout(() => void this.loadLookups(), 0);
   }
 
   ngOnDestroy() {
@@ -160,34 +180,17 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadItems();
+    this.appliedSearch.set(this.search);
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    this.error.set(null);
-    const start = performance.now();
-    try {
-      const res = await this.api.list({ search: this.search, limit: this.listLimit });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.paginator?.firstPage();
-    } catch (err: any) {
-      this.error.set(err?.error?.error || err?.message || 'Failed to load subscribers.');
-    } finally {
-      const waitMs = Math.max(0, 600 - (performance.now() - start));
-      setTimeout(() => this.loading.set(false), waitMs);
-    }
+    this.appliedSearch.set('');
   }
 
   refreshList() {
-    return this.loadItems();
+    this.subscribersResource.reload();
   }
 
   startCreate() {
@@ -227,7 +230,7 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
     try {
       if (this.editing()) await this.api.update(this.editing()!.VsuUUID, payload);
       else await this.api.create(payload);
-      await this.loadItems();
+      this.subscribersResource.reload();
       if (saveAndNew && !this.editing()) {
         this.resetForm();
         return;
@@ -260,7 +263,7 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
     try {
       await this.api.remove(item.VsuUUID);
-      await this.loadItems();
+      this.subscribersResource.reload();
     } catch (err: any) {
       this.snack.error(err?.error?.error || err?.message || 'Failed to delete subscriber.');
     }
@@ -410,6 +413,11 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
     Array.from(this.selectedSubscriberUUIDs).forEach((uuid) => {
       if (!valid.has(uuid)) this.selectedSubscriberUUIDs.delete(uuid);
     });
+  }
+
+  private errorMessage(error: unknown, fallback: string) {
+    const err = error as { error?: { error?: string }; message?: string };
+    return err?.error?.error || err?.message || fallback;
   }
 
   private async confirmDelete(title: string, message: string, confirmLabel: string) {
