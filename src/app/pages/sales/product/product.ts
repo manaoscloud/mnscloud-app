@@ -1,9 +1,11 @@
 import {
   AfterViewInit,
   Component,
+  effect,
   OnDestroy,
   TemplateRef,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -112,7 +114,6 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
 
   amountPrefix = '';
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly products = signal<ProductItem[]>([]);
@@ -154,6 +155,21 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
   });
 
   dataSource = new MatTableDataSource<ProductItem>([]);
+  private readonly productsResource = resource({
+    defaultValue: [] as ProductItem[],
+    loader: () => this.fetchProducts(),
+  });
+  private readonly syncProducts = effect(() => {
+    const items = this.productsResource.value();
+    this.products.set(items);
+    this.dataSource.data = [...items];
+    this.error.set(null);
+  });
+  private readonly reportProductsError = effect(() => {
+    const error = this.productsResource.error();
+    if (error) this.error.set(this.extractErrorMessage(error, 'Failed to load products.'));
+  });
+  readonly loading = this.productsResource.isLoading;
 
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
@@ -178,7 +194,6 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     const currencyMeta = this.getCurrencyAffixes();
     this.amountPrefix = currencyMeta.prefix;
     this.loadLookups();
-    this.loadProducts();
   }
 
   async loadLookups() {
@@ -239,11 +254,7 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     };
   }
 
-  async loadProducts() {
-    this.loading.set(true);
-    this.error.set(null);
-    const start = performance.now();
-
+  private async fetchProducts(): Promise<ProductItem[]> {
     const { search, saleUnitUUID, saleCategoryUUID, saleBrandUUID, type, status, barcode } =
       this.filterForm.getRawValue();
     const params = new URLSearchParams();
@@ -255,26 +266,13 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     if (status !== '') params.set('status', String(status));
     if (barcode?.trim()) params.set('barcode', barcode.trim());
 
-    try {
-      const response = await this.api.get<any>(`sale/products?${params.toString()}`);
-      const items = response?.data?.items ?? [];
-      this.products.set(items);
-      this.dataSource.data = [...items];
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load products.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const query = params.toString();
+    const response = await this.api.get<any>(`sale/products${query ? `?${query}` : ''}`);
+    return Array.isArray(response?.data?.items) ? response.data.items : [];
   }
 
   applyFilters() {
-    void this.loadProducts();
+    this.productsResource.reload();
   }
 
   clearFilters() {
@@ -287,11 +285,11 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
       status: '',
       barcode: '',
     });
-    void this.loadProducts();
+    this.productsResource.reload();
   }
 
   refreshList() {
-    void this.loadProducts();
+    this.productsResource.reload();
   }
 
   openCreateDialog() {
@@ -445,24 +443,14 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`sale/products/${editing.SprUUID}`, data);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.products.update((items) =>
-            items.map((row) => (row.SprUUID === item.SprUUID ? item : row)),
-          );
-          this.dataSource.data = [...this.products()];
-        }
+        await this.api.put<any>(`sale/products/${editing.SprUUID}`, data);
+        this.productsResource.reload();
         this.cancelEdit();
         return;
       }
 
-      const response = await this.api.post<any>('sale/products', data);
-      const item = response?.data?.item ?? null;
-      if (item) {
-        this.products.update((items) => [item, ...items]);
-        this.dataSource.data = [...this.products()];
-      }
+      await this.api.post<any>('sale/products', data);
+      this.productsResource.reload();
 
       if (closeAfterSave) {
         this.cancelEdit();
@@ -496,14 +484,12 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`sale/products/${product.SprUUID}`);
-      this.products.update((items) => items.filter((row) => row.SprUUID !== product.SprUUID));
-      this.dataSource.data = [...this.products()];
+      this.productsResource.reload();
       if (this.editing()?.SprUUID === product.SprUUID) {
         this.cancelEdit();
       }
-    } catch (err) {
-      console.error('Failed to delete product.', err);
-      alert('Failed to delete product.');
+    } catch (err: any) {
+      this.error.set(this.extractErrorMessage(err, 'Failed to delete product.'));
     }
   }
 
