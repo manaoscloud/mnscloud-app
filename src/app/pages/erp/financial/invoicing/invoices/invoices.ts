@@ -1,11 +1,12 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -79,13 +80,21 @@ type ErpFinInvInvoice = {
 export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+
+  private readonly invoicesResource = resource({
+    defaultValue: [] as ErpFinInvInvoice[],
+    loader: async () => {
+      const res = await this.api.get<{ data?: { items?: ErpFinInvInvoice[] } }>(
+        'erp/financial/invoicing/invoices',
+      );
+      return res?.data?.items ?? [];
+    },
+  });
 
   invoices: ErpFinInvInvoice[] = [];
   dataSource = new MatTableDataSource<ErpFinInvInvoice>([]);
   displayedColumns: string[] = ['number', 'issueDate', 'amount', 'status', 'actions'];
-  loading = false;
   saving = false;
   error = '';
   search = '';
@@ -114,10 +123,27 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
     notes: '',
   };
 
+  get loading() {
+    return this.invoicesResource.isLoading();
+  }
+
+  private readonly syncInvoices = effect(() => {
+    this.invoices = this.invoicesResource.value();
+    this.dataSource.data = [...this.invoices];
+    this.applyFilter();
+  });
+
+  private readonly reportInvoicesError = effect(() => {
+    const error = this.invoicesResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load invoices.'));
+      this.dataSource.data = [];
+    }
+  });
+
   ngOnInit() {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
-    void this.loadInvoices();
   }
 
   ngOnDestroy() {
@@ -167,7 +193,7 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadInvoices();
+    this.invoicesResource.reload();
   }
 
   applyFilter() {
@@ -175,34 +201,6 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
     this.dataSource.filter = q;
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
-    }
-  }
-
-  async loadInvoices() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      const res = await this.api.get<any>('erp/financial/invoicing/invoices');
-      this.invoices = res?.data?.items ?? [];
-      this.dataSource.data = [...this.invoices];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load invoices.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
     }
   }
 
@@ -275,8 +273,7 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
 
       this.closeInvoiceDialog();
       this.startCreate();
-      this.cdr.detectChanges();
-      await this.loadInvoices();
+      this.invoicesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save invoice.');
     } finally {
@@ -301,16 +298,13 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/financial/invoicing/invoices/${invoiceUUID}`);
       this.snack.success('Invoice deleted successfully.');
-      await this.loadInvoices();
+      this.invoicesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete invoice.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -515,5 +509,14 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
   private showWarning(message: string) {
     this.error = '';
     this.snack.warning(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error && typeof error === 'object' && 'error' in error) {
+      const payload = (error as { error?: { error?: string; message?: string } }).error;
+      return payload?.error || payload?.message || fallback;
+    }
+    if (error instanceof Error) return error.message;
+    return fallback;
   }
 }

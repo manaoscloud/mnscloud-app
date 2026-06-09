@@ -4,7 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -76,10 +78,19 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
 
+  private readonly dueDaysResource = resource({
+    defaultValue: [] as ErpFinInvDueDay[],
+    loader: async () => {
+      const res = await this.api.get<{ data?: { items?: ErpFinInvDueDay[] } }>(
+        'erp/financial/invoicing/duedays',
+      );
+      return res?.data?.items ?? [];
+    },
+  });
+
   dueDays: ErpFinInvDueDay[] = [];
   dataSource = new MatTableDataSource<ErpFinInvDueDay>([]);
   displayedColumns: string[] = ['name', 'dueDay', 'billingDay', 'closedMonth', 'status', 'actions'];
-  loading = false;
   saving = false;
   error = '';
   search = '';
@@ -107,9 +118,26 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
     status: 'active' as DueDayStatus,
   };
 
+  get loading() {
+    return this.dueDaysResource.isLoading();
+  }
+
+  private readonly syncDueDays = effect(() => {
+    this.dueDays = this.dueDaysResource.value();
+    this.dataSource.data = [...this.dueDays];
+    this.applyFilter();
+  });
+
+  private readonly reportDueDaysError = effect(() => {
+    const error = this.dueDaysResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load due days.'));
+      this.dataSource.data = [];
+    }
+  });
+
   ngOnInit() {
     this.startCreate();
-    void this.loadDueDays();
   }
 
   ngOnDestroy() {
@@ -168,7 +196,7 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadDueDays();
+    this.dueDaysResource.reload();
   }
 
   applyFilter() {
@@ -176,22 +204,6 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
     this.dataSource.filter = q;
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
-    }
-  }
-
-  async loadDueDays() {
-    this.loading = true;
-    this.error = '';
-    try {
-      const res = await this.api.get<any>('erp/financial/invoicing/duedays');
-      this.dueDays = res?.data?.items ?? [];
-      this.dataSource.data = [...this.dueDays];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load due days.');
-      this.dataSource.data = [];
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -269,16 +281,11 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
 
       this.closeDueDayDialog();
       this.startCreate();
-      setTimeout(() => {
-        void this.loadDueDays();
-      }, 0);
+      this.dueDaysResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save due day.');
     } finally {
-      // Avoid mutating loading in the same check cycle that may trigger global error UI.
-      setTimeout(() => {
-        this.saving = false;
-      }, 0);
+      this.saving = false;
     }
   }
 
@@ -299,18 +306,13 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/financial/invoicing/duedays/${dueDayUUID}`);
       this.snack.success('Due day rule deleted successfully.');
-      await this.loadDueDays();
+      this.dueDaysResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete due day.');
-    } finally {
-      setTimeout(() => {
-        this.loading = false;
-      }, 0);
     }
   }
 
@@ -428,5 +430,14 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
   private showWarning(message: string) {
     this.error = '';
     this.snack.warning(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error && typeof error === 'object' && 'error' in error) {
+      const payload = (error as { error?: { error?: string; message?: string } }).error;
+      return payload?.error || payload?.message || fallback;
+    }
+    if (error instanceof Error) return error.message;
+    return fallback;
   }
 }
