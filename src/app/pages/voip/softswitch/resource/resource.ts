@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -168,11 +170,10 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
     (this.route.snapshot.data?.['resource'] ?? 'trunks') as ResourceKind,
   );
   readonly meta = computed(() => RESOURCE_META[this.resource()]);
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<ResourceRow | null>(null);
-  readonly accountOptions = signal<VoipSoftswitchAccount[]>([]);
+  private readonly appliedSearch = signal('');
   readonly selectedIds = new Set<string>();
   readonly displayedColumns = [
     'select',
@@ -187,6 +188,55 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
   search = '';
   searchInput = '';
   accountSearch = '';
+
+  private readonly itemsResource = resource({
+    params: () => ({
+      resource: this.resource(),
+      search: this.appliedSearch(),
+      limit: this.listLimit,
+    }),
+    defaultValue: [] as ResourceRow[],
+    loader: async ({ params }) => {
+      const res = await this.api.list(params.resource, {
+        search: params.search,
+        limit: params.limit,
+      });
+      return res?.data?.items ?? [];
+    },
+  });
+
+  private readonly accountOptionsResource = resource({
+    params: () => ({ limit: this.listLimit }),
+    defaultValue: [] as VoipSoftswitchAccount[],
+    loader: async ({ params }) => {
+      const res = await this.accountApi.list(false, { limit: params.limit });
+      return res?.data?.items ?? [];
+    },
+  });
+
+  readonly loading = this.itemsResource.isLoading;
+  readonly accountOptions = computed(
+    () => this.accountOptionsResource.value() as VoipSoftswitchAccount[],
+  );
+
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+    this.dataSource.paginator?.firstPage();
+  });
+
+  private readonly reportListError = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load Softswitch resources.'));
+  });
+
+  private readonly reportLookupError = effect(() => {
+    const error = this.accountOptionsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load Softswitch accounts.'));
+  });
+
   readonly form = this.fb.nonNullable.group({
     accountUUID: ['', [Validators.required]],
     name: ['', [Validators.required]],
@@ -211,10 +261,6 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
       if (column === 'status') return this.statusLabel(data);
       return String((data as Record<string, unknown>)[column] ?? '');
     };
-    setTimeout(() => {
-      void this.loadLookups();
-      void this.loadItems();
-    }, 0);
   }
 
   ngOnDestroy() {
@@ -225,33 +271,16 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
   }
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadItems();
+    this.appliedSearch.set(this.search);
   }
   clearSearchFilters() {
     this.search = '';
     this.searchInput = '';
-    void this.loadItems();
+    this.appliedSearch.set('');
   }
   refreshList() {
-    return this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      const res = await this.api.list(this.resource(), {
-        search: this.search,
-        limit: this.listLimit,
-      });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.paginator?.firstPage();
-    } catch (err: any) {
-      this.snack.error(err?.error?.error || err?.message || 'Failed to load Softswitch resources.');
-    } finally {
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - (performance.now() - start)));
-    }
+    this.itemsResource.reload();
+    this.accountOptionsResource.reload();
   }
 
   startCreate() {
@@ -279,7 +308,7 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
     try {
       if (this.editing()) await this.api.update(this.resource(), this.editing()!.uuid, payload);
       else await this.api.create(this.resource(), payload);
-      await this.loadItems();
+      this.itemsResource.reload();
       if (saveAndNew && !this.editing()) {
         this.resetForm();
         return;
@@ -304,7 +333,7 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
     )
       return;
     await this.api.remove(this.resource(), item.uuid);
-    await this.loadItems();
+    this.itemsResource.reload();
   }
   get selectedCount() {
     return this.selectedIds.size;
@@ -437,10 +466,6 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
     this.dialogRef?.close();
     this.dialogRef = null;
   }
-  private async loadLookups() {
-    const res = await this.accountApi.list(false, { limit: this.listLimit });
-    this.accountOptions.set(res?.data?.items ?? []);
-  }
   private reconcileSelection() {
     const valid = new Set(this.dataSource.data.map((row) => row.uuid));
     Array.from(this.selectedIds).forEach((uuid) => {
@@ -454,5 +479,10 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
       disableClose: true,
     });
     return Boolean(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private errorMessage(error: unknown, fallback: string) {
+    const maybe = error as { error?: { error?: string }; message?: string };
+    return maybe?.error?.error || maybe?.message || fallback;
   }
 }

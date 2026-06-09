@@ -3,7 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -81,13 +84,11 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<VoipSoftswitchDidItem | null>(null);
-  readonly accountOptions = signal<VoipSoftswitchAccount[]>([]);
-  readonly subscriberOptions = signal<VoipSoftswitchSubscriberItem[]>([]);
+  private readonly appliedSearch = signal('');
   readonly selectedDidUUIDs = new Set<string>();
   readonly displayedColumns = [
     'select',
@@ -104,6 +105,61 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
   searchInput = '';
   accountSearch = '';
   subscriberSearch = '';
+
+  private readonly didsResource = resource({
+    params: () => ({ search: this.appliedSearch(), limit: this.listLimit }),
+    defaultValue: [] as VoipSoftswitchDidItem[],
+    loader: async ({ params }) => {
+      const res = await this.api.list({ search: params.search, limit: params.limit });
+      return res?.data?.items ?? [];
+    },
+  });
+
+  private readonly accountOptionsResource = resource({
+    params: () => ({ limit: this.listLimit }),
+    defaultValue: [] as VoipSoftswitchAccount[],
+    loader: async ({ params }) => {
+      const res = await this.accountApi.list(false, { limit: params.limit });
+      return res?.data?.items ?? [];
+    },
+  });
+
+  private readonly subscriberOptionsResource = resource({
+    params: () => ({ limit: this.listLimit }),
+    defaultValue: [] as VoipSoftswitchSubscriberItem[],
+    loader: async ({ params }) => {
+      const res = await this.subscriberApi.list({ limit: params.limit });
+      return res?.data?.items ?? [];
+    },
+  });
+
+  readonly loading = this.didsResource.isLoading;
+  readonly accountOptions = computed(
+    () => this.accountOptionsResource.value() as VoipSoftswitchAccount[],
+  );
+  readonly subscriberOptions = computed(
+    () => this.subscriberOptionsResource.value() as VoipSoftswitchSubscriberItem[],
+  );
+
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.didsResource.value();
+    this.reconcileSelection();
+    this.dataSource.paginator?.firstPage();
+  });
+
+  private readonly reportListError = effect(() => {
+    const error = this.didsResource.error();
+    if (!error) return;
+    const message = this.errorMessage(error, 'Failed to load DIDs.');
+    this.error.set(message);
+    this.snack.error(message);
+  });
+
+  private readonly reportLookupError = effect(() => {
+    const error = this.accountOptionsResource.error() ?? this.subscriberOptionsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load DID lookups.'));
+  });
 
   readonly form = this.fb.nonNullable.group({
     accountUUID: ['', [Validators.required]],
@@ -143,10 +199,6 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-    setTimeout(() => {
-      void this.loadLookups();
-      void this.loadItems();
-    }, 0);
   }
 
   ngOnDestroy() {
@@ -159,33 +211,20 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadItems();
+    this.appliedSearch.set(this.search);
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    this.error.set(null);
-    const start = performance.now();
-    try {
-      const res = await this.api.list({ search: this.search, limit: this.listLimit });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.paginator?.firstPage();
-    } catch (err: any) {
-      this.error.set(err?.error?.error || err?.message || 'Failed to load DIDs.');
-    } finally {
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - (performance.now() - start)));
-    }
+    this.appliedSearch.set('');
   }
 
   refreshList() {
-    return this.loadItems();
+    this.error.set(null);
+    this.didsResource.reload();
+    this.accountOptionsResource.reload();
+    this.subscriberOptionsResource.reload();
   }
 
   startCreate() {
@@ -225,7 +264,7 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     try {
       if (this.editing()) await this.api.update(this.editing()!.VsdUUID, payload);
       else await this.api.create(payload);
-      await this.loadItems();
+      this.didsResource.reload();
       if (saveAndNew && !this.editing()) {
         this.resetForm();
         return;
@@ -258,7 +297,7 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
     try {
       await this.api.remove(item.VsdUUID);
-      await this.loadItems();
+      this.didsResource.reload();
     } catch (err: any) {
       this.snack.error(err?.error?.error || err?.message || 'Failed to delete DID.');
     }
@@ -408,19 +447,6 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     this.dialogRef = null;
   }
 
-  private async loadLookups() {
-    try {
-      const [accounts, subscribers] = await Promise.all([
-        this.accountApi.list(false, { limit: this.listLimit }),
-        this.subscriberApi.list({ limit: this.listLimit }),
-      ]);
-      this.accountOptions.set(accounts?.data?.items ?? []);
-      this.subscriberOptions.set(subscribers?.data?.items ?? []);
-    } catch (err: any) {
-      this.snack.error(err?.error?.error || 'Failed to load DID lookups.');
-    }
-  }
-
   private reconcileSelection() {
     const valid = new Set(this.dataSource.data.map((row) => row.VsdUUID));
     Array.from(this.selectedDidUUIDs).forEach((uuid) => {
@@ -435,5 +461,10 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
       disableClose: true,
     });
     return Boolean(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private errorMessage(error: unknown, fallback: string) {
+    const maybe = error as { error?: { error?: string }; message?: string };
+    return maybe?.error?.error || maybe?.message || fallback;
   }
 }
