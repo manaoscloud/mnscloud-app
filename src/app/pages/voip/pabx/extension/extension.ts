@@ -5,7 +5,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -97,7 +99,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   readonly pageTitle = computed(() => 'PABX Extension');
   readonly pageSubtitle = computed(() => 'Manage extensions linked to tenant PABX accounts.');
 
-  readonly loading = signal(false);
+  private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly error = signal<string | null>(null);
@@ -105,6 +107,11 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   readonly generatedCredentials = signal<VoipPabxExtensionGeneratedCredential[]>([]);
 
   readonly dataSource = new MatTableDataSource<VoipPabxExtensionItem>([]);
+  private readonly extensionsResource = resource({
+    defaultValue: [] as VoipPabxExtensionItem[],
+    loader: () => this.fetchExtensions(),
+  });
+  readonly loading = computed(() => this.extensionsResource.isLoading() || this.mutating());
   readonly displayedColumns = [
     'select',
     'username',
@@ -173,6 +180,20 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   readonly extensionFormDialog = viewChild<TemplateRef<unknown>>('extensionFormDialog');
   private extensionFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly extensionsEffect = effect(() => {
+    this.dataSource.data = this.extensionsResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    this.paginator()?.firstPage();
+  });
+  private readonly extensionsErrorEffect = effect(() => {
+    const error = this.extensionsResource.error();
+    if (!error) return;
+    this.error.set(null);
+    this.snack.error(this.extractApiError(error, 'Failed to load extensions.'));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -180,7 +201,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) =>
       this.sortValue(data, sortHeaderId);
     this.dataSource.filterPredicate = (data) => this.matchesFilters(data);
-    setTimeout(() => void this.loadExtensions(), 0);
+    this.extensionsResource.reload();
   }
 
   ngOnDestroy() {
@@ -236,7 +257,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadExtensions();
+    this.extensionsResource.reload();
   }
 
   clearSearchFilters() {
@@ -244,43 +265,11 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
     this.search = '';
     this.statusFilter = '';
     this.pabxFilter = '';
-    void this.loadExtensions();
-  }
-
-  async loadExtensions() {
-    this.loading.set(true);
-    this.error.set(null);
-    const start = performance.now();
-    try {
-      await this.loadPabxOptions();
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('search', this.search);
-      if (this.statusFilter !== '') params.set('status', String(this.statusFilter));
-      if (this.pabxFilter) params.set('pabxUUID', this.pabxFilter);
-      const response = await this.api.list(params);
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.filter = '';
-      if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    } catch (err: any) {
-      const message = this.extractApiError(err, 'Failed to load extensions.');
-      this.error.set(null);
-      this.snack.error(message);
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    this.extensionsResource.reload();
   }
 
   refreshList() {
-    void this.loadExtensions();
+    this.extensionsResource.reload();
   }
 
   startCreate() {
@@ -449,7 +438,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
           this.generatedCredentials.set(response?.data?.credentials ?? []);
           this.form.controls.extensionRange.setValue('', { emitEvent: false });
           this.form.controls.extensionRange.updateValueAndValidity({ emitEvent: false });
-          await this.loadExtensions();
+          this.extensionsResource.reload();
           const skipped = Array.isArray(response?.data?.skippedExisting)
             ? response.data.skippedExisting.length
             : 0;
@@ -470,7 +459,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
           password: payload.password || this.generateRandomPassword(16),
         });
       }
-      await this.loadExtensions();
+      this.extensionsResource.reload();
       if (createAnother && !editing) {
         this.resetForm();
         return;
@@ -504,14 +493,17 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     try {
+      this.mutating.set(true);
       await this.api.remove(item.VpeUUID);
       this.selectedExtensionUUIDs.delete(item.VpeUUID);
-      await this.loadExtensions();
+      this.extensionsResource.reload();
       this.snack.success('Extension deleted successfully.');
     } catch (err: any) {
       const message = this.extractApiError(err, 'Failed to delete extension.');
       this.error.set(null);
       this.snack.error(message);
+    } finally {
+      this.mutating.set(false);
     }
   }
 
@@ -583,7 +575,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
       failed.forEach((uuid) => this.selectedExtensionUUIDs.add(uuid));
       if (failed.size)
         this.snack.warning(`${failed.size} selected extension(s) could not be deleted.`);
-      this.applySearchFilters();
+      this.extensionsResource.reload();
     } catch (err: any) {
       const message = this.extractApiError(err, 'Failed to delete selected extensions.');
       this.snack.error(message);
@@ -704,6 +696,18 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
       });
     this.updateCodecOptions(this.form.controls.pabxUUID.value);
     this.cdr.detectChanges();
+  }
+
+  private async fetchExtensions(): Promise<VoipPabxExtensionItem[]> {
+    this.error.set(null);
+    await this.loadPabxOptions();
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (this.search) params.set('search', this.search);
+    if (this.statusFilter !== '') params.set('status', String(this.statusFilter));
+    if (this.pabxFilter) params.set('pabxUUID', this.pabxFilter);
+    const response = await this.api.list(params);
+    return response?.data?.items ?? [];
   }
 
   private parseParams(params: string): Record<string, unknown> | null {

@@ -2,8 +2,10 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
   OnDestroy,
+  resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
@@ -131,7 +133,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   readonly pageTitle = computed(() => 'PABX');
   readonly pageSubtitle = computed(() => 'Register tenant PABX accounts and default codecs.');
 
-  readonly loading = signal(false);
+  private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipPabxAccount | null>(null);
@@ -139,6 +141,11 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   searchInput = '';
 
   readonly dataSource = new MatTableDataSource<VoipPabxAccount>([]);
+  private readonly accountsResource = resource({
+    defaultValue: [] as VoipPabxAccount[],
+    loader: () => this.fetchAccounts(),
+  });
+  readonly loading = computed(() => this.accountsResource.isLoading() || this.mutating());
   readonly displayedColumns = [
     'select',
     'name',
@@ -267,6 +274,18 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   readonly pabxFormDialog = viewChild<TemplateRef<unknown>>('pabxFormDialog');
   private pabxFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly accountsEffect = effect(() => {
+    this.dataSource.data = this.accountsResource.value();
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+  private readonly accountsErrorEffect = effect(() => {
+    const error = this.accountsResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error, 'Failed to load accounts.'));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -309,7 +328,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => void this.loadAccounts(), 0);
+    this.accountsResource.reload();
   }
 
   ngOnDestroy() {
@@ -322,48 +341,17 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadAccounts();
+    this.accountsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadAccounts();
-  }
-
-  async loadAccounts() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      await this.loadServers();
-      await this.loadDomains();
-      await this.loadCustomers();
-      await this.loadDialPlans();
-      await this.loadBlacklists();
-      await this.loadStorageAccounts();
-      const res = await this.api.list({
-        search: this.search,
-        limit: this.listLimit,
-      });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-      this.applyFilter();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to load accounts.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    this.accountsResource.reload();
   }
 
   refreshList() {
-    void this.loadAccounts();
+    this.accountsResource.reload();
   }
 
   startCreate() {
@@ -439,7 +427,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
         await this.api.create(payload);
         this.snack.success('PABX account created successfully.');
       }
-      await this.loadAccounts();
+      this.accountsResource.reload();
       if (createAnother && !editing) {
         this.resetForm();
         return;
@@ -471,12 +459,15 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     try {
+      this.mutating.set(true);
       await this.api.remove(item.VpaUUID);
       this.snack.success('PABX account deleted successfully.');
       this.selectedAccountUUIDs.delete(item.VpaUUID);
-      await this.loadAccounts();
+      this.accountsResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err, 'Failed to delete account.'));
+    } finally {
+      this.mutating.set(false);
     }
   }
 
@@ -799,6 +790,20 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
         dialPlanUUID: defaultPlan?.uuid ?? this.dialPlanOptions[0]?.value ?? '',
       });
     }
+  }
+
+  private async fetchAccounts(): Promise<VoipPabxAccount[]> {
+    await this.loadServers();
+    await this.loadDomains();
+    await this.loadCustomers();
+    await this.loadDialPlans();
+    await this.loadBlacklists();
+    await this.loadStorageAccounts();
+    const res = await this.api.list({
+      search: this.search,
+      limit: this.listLimit,
+    });
+    return res?.data?.items ?? [];
   }
 
   private parseCodecs(value: string | null | undefined, fallback: string[]): string[] {
