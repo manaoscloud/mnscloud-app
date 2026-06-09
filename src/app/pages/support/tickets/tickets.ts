@@ -5,7 +5,10 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -87,8 +90,6 @@ type CustomerOption = { value: string; label: string };
 
 type ChannelOption = { value: string; label: string };
 
-const MIN_LOADING_MS = 600;
-
 @Component({
   selector: 'app-support-tickets',
   standalone: true,
@@ -140,8 +141,25 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   ];
   search = '';
   searchInput = '';
-  loading = true;
   error = '';
+  private readonly saving = signal(false);
+  private readonly ticketsResource = resource({
+    defaultValue: [] as Ticket[],
+    loader: () => this.fetchTickets(),
+  });
+  readonly loading = computed(() => this.ticketsResource.isLoading() || this.saving());
+  private readonly ticketsEffect = effect(() => {
+    this.tickets = this.ticketsResource.value();
+    this.dataSource.data = [...this.tickets];
+    this.applyFilter();
+  });
+  private readonly ticketsErrorEffect = effect(() => {
+    const error = this.ticketsResource.error();
+    if (!error) return;
+    this.error = error instanceof Error ? error.message : 'Failed to load tickets.';
+    this.tickets = [];
+    this.dataSource.data = [];
+  });
 
   editing: Ticket | null = null;
   events: TicketEvent[] = [];
@@ -240,7 +258,6 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     this.resetForm();
     void this.loadCustomers();
     void this.loadChannels();
-    void this.loadTickets();
   }
 
   ngAfterViewInit() {
@@ -327,7 +344,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadTickets();
+    this.ticketsResource.reload();
   }
 
   applyFilter() {
@@ -444,31 +461,16 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadTickets() {
-    const startedAt = Date.now();
-    this.loading = true;
+  private async fetchTickets(): Promise<Ticket[]> {
     this.error = '';
-    try {
-      const params = new URLSearchParams();
-      if (this.filters.status) params.set('status', this.filters.status);
-      if (this.filters.priority) params.set('priority', this.filters.priority);
-      if (this.filters.customerUUID) params.set('customerUUID', this.filters.customerUUID);
-      if (this.filters.channelUUID) params.set('channelUUID', this.filters.channelUUID);
-      const query = params.toString();
-      const res = await this.api.get<any>(`support/tickets${query ? `?${query}` : ''}`);
-      this.tickets = res?.data?.items ?? [];
-      this.dataSource.data = [...this.tickets];
-      this.applyFilter();
-    } catch (err: any) {
-      this.error = err?.message ?? 'Failed to load tickets.';
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_LOADING_MS) {
-        await new Promise((resolve) => setTimeout(resolve, MIN_LOADING_MS - elapsed));
-      }
-      this.loading = false;
-    }
+    const params = new URLSearchParams();
+    if (this.filters.status) params.set('status', this.filters.status);
+    if (this.filters.priority) params.set('priority', this.filters.priority);
+    if (this.filters.customerUUID) params.set('customerUUID', this.filters.customerUUID);
+    if (this.filters.channelUUID) params.set('channelUUID', this.filters.channelUUID);
+    const query = params.toString();
+    const res = await this.api.get<any>(`support/tickets${query ? `?${query}` : ''}`);
+    return res?.data?.items ?? [];
   }
 
   private resetForm() {
@@ -685,7 +687,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
 
     try {
@@ -720,7 +722,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
         await this.api.post('support/tickets', payload);
       }
 
-      await this.loadTickets();
+      this.ticketsResource.reload();
       if (createAndNew && !this.editing) {
         this.resetForm();
       } else {
@@ -730,7 +732,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to save ticket.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 
@@ -748,16 +750,16 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
     try {
       await this.api.delete(`support/tickets/${item.SupportTicketUUID}`);
-      await this.loadTickets();
+      this.ticketsResource.reload();
       this.resetForm();
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to delete ticket.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 

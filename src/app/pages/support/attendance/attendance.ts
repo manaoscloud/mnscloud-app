@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, resource } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -58,14 +58,28 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./attendance.scss'],
 })
-export class SupportAttendancePage implements AfterViewInit {
+export class SupportAttendancePage {
   private api = inject(ApiService);
   private auth = inject(AuthService);
 
   items: AttendanceItem[] = [];
-  loading = false;
   error = '';
   actionLoadingId: string | null = null;
+  private readonly attendanceResource = resource({
+    defaultValue: [] as AttendanceItem[],
+    loader: () => this.fetchAttendance(),
+  });
+  readonly loading = this.attendanceResource.isLoading;
+  private readonly attendanceEffect = effect(() => {
+    this.items = this.attendanceResource.value();
+    this.updateFilterOptions();
+    this.applyFilters();
+  });
+  private readonly attendanceErrorEffect = effect(() => {
+    const error = this.attendanceResource.error();
+    if (!error) return;
+    this.error = error instanceof Error ? error.message : 'Failed to load attendance.';
+  });
 
   filters = {
     search: '',
@@ -84,12 +98,6 @@ export class SupportAttendancePage implements AfterViewInit {
     serving: [],
   };
   laneOrder: AttendanceStatus[] = ['automation', 'waiting', 'serving'];
-
-  ngAfterViewInit() {
-    setTimeout(() => {
-      this.loadAttendance();
-    }, 0);
-  }
 
   statusLabel(status: AttendanceStatus) {
     return STATUS_LABELS[status];
@@ -113,19 +121,14 @@ export class SupportAttendancePage implements AfterViewInit {
     this.applyFilters();
   }
 
-  async loadAttendance() {
-    this.loading = true;
+  refreshList() {
+    this.attendanceResource.reload();
+  }
+
+  private async fetchAttendance(): Promise<AttendanceItem[]> {
     this.error = '';
-    try {
-      const res = await this.api.get<any>('support/attendance');
-      this.items = res?.data?.items ?? [];
-      this.updateFilterOptions();
-      this.applyFilters();
-    } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Failed to load attendance.';
-    } finally {
-      this.loading = false;
-    }
+    const res = await this.api.get<any>('support/attendance');
+    return res?.data?.items ?? [];
   }
 
   laneItems(status: AttendanceStatus) {

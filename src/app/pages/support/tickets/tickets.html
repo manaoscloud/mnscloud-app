@@ -11,7 +11,7 @@
           mat-stroked-button
           color="primary"
           (click)="refreshList()"
-          [disabled]="loading"
+          [disabled]="loading()"
           type="button"
         >
           <mat-icon>refresh</mat-icon>
@@ -123,7 +123,7 @@
         <button
           mat-stroked-button
           (click)="applySearchFilters()"
-          [disabled]="loading"
+          [disabled]="loading()"
           type="button"
         >
           Apply
@@ -132,8 +132,8 @@
       </div>
     </div>
 
-    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
-      @if (loading) {
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
@@ -533,13 +533,13 @@
         mat-flat-button
         color="primary"
         (click)="saveTicket()"
-        [disabled]="loading"
+        [disabled]="loading()"
         type="button"
       >
         Save
       </button>
       @if (!editing) {
-        <button mat-stroked-button (click)="saveTicket(true)" [disabled]="loading" type="button">
+        <button mat-stroked-button (click)="saveTicket(true)" [disabled]="loading()" type="button">
           Save and new
         </button>
       }

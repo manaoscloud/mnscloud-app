@@ -9,9 +9,9 @@
         <button
           mat-stroked-button
           color="primary"
-          (click)="loadAttendance()"
+          (click)="refreshList()"
           type="button"
-          [disabled]="loading"
+          [disabled]="loading()"
         >
           <mat-icon>refresh</mat-icon>
           Refresh
@@ -84,7 +84,7 @@
       </div>
     </div>
 
-    @if (loading) {
+    @if (loading()) {
       <div class="status-row">
         <mat-progress-spinner diameter="24" mode="indeterminate" />
         <span>Loading attendance queue...</span>
