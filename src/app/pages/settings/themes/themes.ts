@@ -5,7 +5,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   computed,
   ChangeDetectionStrategy,
@@ -104,6 +106,11 @@ type ThemeJobQueueResponse = {
   duration?: string;
 };
 
+type ThemeSnapshot = {
+  domains: ThemeDomain[];
+  jobs: Record<string, { web?: ThemeJob; cert?: ThemeJob }>;
+};
+
 const DOMAIN_REGEX = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 
 function domainValidator(control: AbstractControl): ValidationErrors | null {
@@ -184,8 +191,13 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
 
   private dialogBinding: CrudDialogBinding | null = null;
 
+  private readonly themesResource = resource({
+    defaultValue: { domains: [], jobs: {} } as ThemeSnapshot,
+    loader: () => this.fetchThemeSnapshot(),
+  });
+
   readonly domains = signal<ThemeDomain[]>([]);
-  readonly loading = signal(false);
+  readonly loading = computed(() => this.themesResource.isLoading());
   readonly saving = signal(false);
   readonly editing = signal<ThemeDomain | null>(null);
   readonly actionLoading = signal<Record<string, { web?: boolean; cert?: boolean }>>({});
@@ -208,6 +220,24 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
     primaryColor: ['', [optionalHexColorValidator]],
   });
 
+  private readonly themesEffect = effect(() => {
+    const snapshot = this.themesResource.value();
+    this.domains.set(snapshot.domains);
+    this.jobs.set(snapshot.jobs);
+    this.dataSource.data = snapshot.domains;
+    this.applyFilters();
+  });
+
+  private readonly themesErrorEffect = effect(() => {
+    const error = this.themesResource.error();
+    if (!error) return;
+    this.snack.error(this.friendlyError(error, 'Failed to load domains.'));
+    this.domains.set([]);
+    this.jobs.set({});
+    this.dataSource.data = [];
+    this.applyFilters();
+  });
+
   constructor() {
     this.dataSource.filterPredicate = (data, filter) => {
       const parsed = this.parseFilter(filter);
@@ -224,12 +254,12 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
       return matchesSearch && matchesStatus;
     };
     this.dataSource.sortingDataAccessor = (item, column) => this.sortValue(item, column);
-    this.refreshList();
   }
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
+    this.refreshList();
   }
 
   ngOnDestroy() {
@@ -237,7 +267,7 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadDomains();
+    this.themesResource.reload();
   }
 
   applyFilters() {
@@ -252,42 +282,22 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
     this.applyFilters();
   }
 
-  async loadDomains() {
-    this.loading.set(true);
-    const start = performance.now();
-
-    try {
-      const resp = await this.api.get<ThemeListResponse>('settings/themes');
-      const items = resp?.data?.items ?? [];
-      this.domains.set(items);
-      this.dataSource.data = items;
-      this.applyFilters();
-      await this.loadJobs();
-    } catch (error: unknown) {
-      this.snack.error(this.friendlyError(error, 'Failed to load domains.'));
-    } finally {
-      this.finishLoading(start);
+  private async fetchThemeSnapshot(): Promise<ThemeSnapshot> {
+    const [domainResponse, jobResponse] = await Promise.all([
+      this.api.get<ThemeListResponse>('settings/themes'),
+      this.api.get<ThemeJobListResponse>('settings/themes/jobs').catch(() => null),
+    ]);
+    const domains = domainResponse?.data?.items ?? [];
+    const jobs: Record<string, { web?: ThemeJob; cert?: ThemeJob }> = {};
+    for (const job of jobResponse?.data?.items ?? []) {
+      const action = job.Action;
+      if (!action) continue;
+      jobs[job.ThemeUUID] = {
+        ...jobs[job.ThemeUUID],
+        [action]: job,
+      };
     }
-  }
-
-  async loadJobs() {
-    try {
-      const resp = await this.api.get<ThemeJobListResponse>('settings/themes/jobs');
-      const items = resp?.data?.items ?? [];
-      const next: Record<string, { web?: ThemeJob; cert?: ThemeJob }> = {};
-      for (const job of items) {
-        const action = job.Action;
-        if (!action) continue;
-        next[job.ThemeUUID] = {
-          ...next[job.ThemeUUID],
-          [action]: job,
-        };
-      }
-      this.jobs.set(next);
-      this.dataSource._updateChangeSubscription();
-    } catch {
-      // Job status is optional for the list.
-    }
+    return { domains, jobs };
   }
 
   startCreate() {
@@ -357,7 +367,7 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
         this.snack.success('Domain created successfully.');
       }
 
-      await this.loadDomains();
+      this.refreshList();
       if (closeAfterSave || editingItem) {
         this.closeDialog();
         this.editing.set(null);
@@ -398,7 +408,7 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
         next.delete(item.ThemeUUID);
         return next;
       });
-      await this.loadDomains();
+      this.refreshList();
       if (this.editing()?.ThemeUUID === item.ThemeUUID) this.cancelForm();
       this.snack.success('Domain deleted successfully.');
     } catch (error: unknown) {
@@ -439,7 +449,7 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
       this.domains.update((rows) => rows.filter((row) => !deleted.has(row.ThemeUUID)));
       this.dataSource.data = this.domains();
       this.selectedThemeUUIDs.set(failed);
-      await this.loadDomains();
+      this.refreshList();
       failed.size
         ? this.snack.error(`${failed.size} theme domain(s) could not be deleted.`)
         : this.snack.success(`${deleted.size || ids.length} theme domain(s) deleted.`);
@@ -672,16 +682,6 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
     } catch {
       return { search: '', status: '' };
     }
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string): string {
