@@ -5,7 +5,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -89,7 +91,12 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
-  readonly loading = signal(false);
+  private readonly itemsResource = resource({
+    defaultValue: [] as VoipPabxQueueAgentItem[],
+    loader: () => this.fetchItems(),
+  });
+  private readonly mutating = signal(false);
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipPabxQueueAgentItem | null>(null);
@@ -138,6 +145,17 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   readonly queueAgentFormDialog = viewChild<TemplateRef<unknown>>('queueAgentFormDialog');
 
   private queueAgentDialogBinding: CrudDialogBinding | null = null;
+  private readonly itemsEffect = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+  });
+  private readonly itemsErrorEffect = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.dataSource.data = [];
+    this.reconcileSelection();
+    this.snack.error(this.extractErrorMessage(error, 'Failed to load queue agents.'));
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -161,9 +179,7 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
       }
     };
 
-    setTimeout(() => {
-      void this.bootstrap();
-    }, 0);
+    void this.bootstrap();
   }
 
   ngOnDestroy() {
@@ -171,13 +187,14 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   }
 
   async bootstrap() {
-    await Promise.all([this.loadLookups(), this.loadItems()]);
+    await this.loadLookups();
+    this.itemsResource.reload();
   }
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
     this.resetPaginator();
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   clearSearchFilters() {
@@ -186,35 +203,21 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     this.runtimeFilter.set('');
     this.statusFilter.set('');
     this.resetPaginator();
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   refreshList() {
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchItems(): Promise<VoipPabxQueueAgentItem[]> {
+    const params = new URLSearchParams({ limit: String(this.listLimit) });
+    if (this.search()) params.set('search', this.search());
+    if (this.runtimeFilter()) params.set('runtimeStatus', this.runtimeFilter());
+    if (this.statusFilter()) params.set('status', this.statusFilter());
 
-    try {
-      const params = new URLSearchParams({ limit: String(this.listLimit) });
-      if (this.search()) params.set('search', this.search());
-      if (this.runtimeFilter()) params.set('runtimeStatus', this.runtimeFilter());
-      if (this.statusFilter()) params.set('status', this.statusFilter());
-
-      const response = await this.api.list(params);
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-    } catch (err) {
-      this.dataSource.data = [];
-      this.reconcileSelection();
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load queue agents.'));
-    } finally {
-      const waitMs = Math.max(0, 600 - (performance.now() - start));
-      if (waitMs) setTimeout(() => this.loading.set(false), waitMs);
-      else this.loading.set(false);
-    }
+    const response = await this.api.list(params);
+    return response?.data?.items ?? [];
   }
 
   async loadLookups() {
@@ -290,7 +293,7 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
         this.snack.success('Queue agent created successfully.');
       }
 
-      await this.loadItems();
+      this.itemsResource.reload();
 
       if (saveAndNew && createMode) {
         this.resetForm();
@@ -330,10 +333,10 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.api.remove(item.VqaUUID);
-      await this.loadItems();
+      this.itemsResource.reload();
       this.selectedQueueAgentUUIDs.update((current) => {
         const next = new Set(current);
         next.delete(item.VqaUUID);
@@ -343,7 +346,7 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     } catch (err) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete queue agent.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -369,7 +372,7 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     this.deletingSelected.set(true);
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.api.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -386,12 +389,12 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
       } else {
         this.snack.success(`${deleted.size || ids.length} selected queue agent(s) deleted.`);
       }
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete selected queue agents.'));
     } finally {
       this.deletingSelected.set(false);
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -402,7 +405,7 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
         action,
         action === 'pause' ? 'Manual pause' : undefined,
       );
-      await this.loadItems();
+      this.itemsResource.reload();
       this.snack.success('Queue agent status updated successfully.');
     } catch (err) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to update queue agent status.'));
