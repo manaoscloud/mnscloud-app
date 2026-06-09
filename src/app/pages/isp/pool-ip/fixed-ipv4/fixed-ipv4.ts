@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -69,7 +71,12 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
+  private readonly fixedIpv4Resource = resource({
+    defaultValue: [] as FixedIpv4Item[],
+    loader: () => this.fetchItems(),
+  });
+
+  readonly loading = this.fixedIpv4Resource.isLoading;
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<FixedIpv4Item | null>(null);
@@ -93,6 +100,18 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
   private formDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
+  private readonly syncRows = effect(() => {
+    this.dataSource.data = this.fixedIpv4Resource.value();
+    this.applySearchFilters();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.fixedIpv4Resource.error();
+    this.error.set(
+      error ? this.extractErrorMessage(error, 'Failed to load fixed IPv4 entries.') : null,
+    );
+  });
+
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
@@ -103,8 +122,6 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-
-    setTimeout(() => this.loadItems(), 0);
   }
 
   ngOnDestroy() {
@@ -130,30 +147,9 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
-  async loadItems() {
-    this.loading.set(true);
-    this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>('isp/fixed-ipv4-addresses');
-      this.dataSource.data = response?.data?.items ?? [];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load fixed IPv4 entries.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
-  }
-
   refreshList() {
-    void this.loadItems();
+    this.error.set(null);
+    this.fixedIpv4Resource.reload();
   }
 
   startCreate() {
@@ -199,7 +195,7 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
         await this.api.post('isp/fixed-ipv4-addresses', payload);
       }
 
-      await this.loadItems();
+      this.fixedIpv4Resource.reload();
       if (createAnother) {
         this.startCreate();
         return;
@@ -232,7 +228,7 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/fixed-ipv4-addresses/${item.If4UUID}`);
-      this.dataSource.data = this.dataSource.data.filter((row) => row.If4UUID !== item.If4UUID);
+      this.fixedIpv4Resource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to delete fixed IPv4 entry.'));
     }
@@ -245,6 +241,11 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
 
   statusLabel(item: FixedIpv4Item) {
     return item.If4Status === 1 ? 'Active' : 'Inactive';
+  }
+
+  private async fetchItems(): Promise<FixedIpv4Item[]> {
+    const response = await this.api.get<any>('isp/fixed-ipv4-addresses');
+    return response?.data?.items ?? [];
   }
 
   private openDialog() {
