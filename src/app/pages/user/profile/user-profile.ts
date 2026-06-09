@@ -2,7 +2,9 @@ import {
   Component,
   ElementRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -64,7 +66,11 @@ export class UserProfileComponent {
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(true);
+  private readonly profileResource = resource({
+    loader: () => this.fetchProfile(),
+  });
+
+  readonly loading = this.profileResource.isLoading;
   readonly saving = signal(false);
   readonly apiError = signal<string | null>(null);
 
@@ -103,56 +109,22 @@ export class UserProfileComponent {
 
   readonly avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
 
-  constructor() {
-    this.loadProfile();
-  }
+  private readonly profileEffect = effect(() => {
+    const profile = this.profileResource.value();
+    if (!profile) return;
+    this.applyProfile(profile);
+  });
 
-  async loadProfile() {
-    this.loading.set(true);
-    this.apiError.set(null);
+  private readonly profileErrorEffect = effect(() => {
+    const error = this.profileResource.error();
+    if (!error) return;
+    const message = this.errorMessage(error, 'Failed to load your profile.');
+    this.apiError.set(message);
+    this.snack.error(message);
+  });
 
-    try {
-      const response = await this.api.get<any>('user/profile');
-      const raw = response.data;
-
-      const mapped: UserProfile = {
-        userUUID: raw.UserUUID,
-        firstName: raw.FirstName ?? '',
-        lastName: raw.LastName ?? '',
-        email: raw.Email ?? '',
-        phone: raw.Phone ?? '',
-        dateBirth: raw.DateBirth ? raw.DateBirth.substring(0, 10) : null,
-        status: raw.Status,
-        dateCreated: raw.DateCreated,
-        avatarUrl: raw.AvatarUrl ?? raw.Avatar ?? null,
-      };
-
-      this.profile.set(mapped);
-
-      const date = mapped.dateBirth ? new Date(mapped.dateBirth + 'T00:00:00') : null;
-
-      this.profileForm.reset({
-        firstName: mapped.firstName,
-        lastName: mapped.lastName,
-        email: mapped.email,
-        phone: mapped.phone ?? '',
-        dateBirth: date,
-        newPassword: '',
-      });
-
-      this.currentAvatarUrl.set(mapped.avatarUrl ?? null);
-      this.avatarPreviewUrl.set(null);
-      this.avatarFile = null;
-      this.clearAvatarInput();
-
-      this.avatarVersion.set(Date.now());
-    } catch (err) {
-      console.error('❌ load profile error:', err);
-      this.apiError.set('Failed to load your profile.');
-      this.snack.error('Failed to load your profile.');
-    }
-
-    this.loading.set(false);
+  refreshProfile() {
+    this.profileResource.reload();
   }
 
   get avatarLetter(): string {
@@ -290,6 +262,7 @@ export class UserProfileComponent {
       this.snack.success('Profile updated successfully.');
 
       this.profileForm.patchValue({ newPassword: '' });
+      this.refreshProfile();
     } catch (err) {
       console.error('❌ save profile error:', err);
       this.snack.error('Failed to save your profile.');
@@ -318,5 +291,51 @@ export class UserProfileComponent {
     this.avatarFile = null;
     this.clearAvatarInput();
     this.avatarVersion.set(Date.now());
+  }
+
+  private async fetchProfile(): Promise<UserProfile> {
+    this.apiError.set(null);
+    const response = await this.api.get<any>('user/profile');
+    const raw = response.data;
+
+    return {
+      userUUID: raw.UserUUID,
+      firstName: raw.FirstName ?? '',
+      lastName: raw.LastName ?? '',
+      email: raw.Email ?? '',
+      phone: raw.Phone ?? '',
+      dateBirth: raw.DateBirth ? raw.DateBirth.substring(0, 10) : null,
+      status: raw.Status,
+      dateCreated: raw.DateCreated,
+      avatarUrl: raw.AvatarUrl ?? raw.Avatar ?? null,
+    };
+  }
+
+  private applyProfile(profile: UserProfile) {
+    this.profile.set(profile);
+
+    const date = profile.dateBirth ? new Date(profile.dateBirth + 'T00:00:00') : null;
+
+    this.profileForm.reset({
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      email: profile.email,
+      phone: profile.phone ?? '',
+      dateBirth: date,
+      newPassword: '',
+    });
+
+    this.currentAvatarUrl.set(profile.avatarUrl ?? null);
+    this.avatarPreviewUrl.set(null);
+    this.avatarFile = null;
+    this.clearAvatarInput();
+    this.avatarVersion.set(Date.now());
+  }
+
+  private errorMessage(error: unknown, fallback: string): string {
+    const serverMessage = (error as any)?.error?.error || (error as any)?.error?.message;
+    if (typeof serverMessage === 'string' && serverMessage.trim()) return serverMessage;
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
   }
 }
