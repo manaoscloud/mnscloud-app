@@ -1,7 +1,9 @@
 import {
   AfterViewInit,
   Component,
+  effect,
   OnDestroy,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -66,11 +68,15 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly categories = signal<CategoryItem[]>([]);
   readonly editing = signal<CategoryItem | null>(null);
+  private readonly categoriesResource = resource({
+    defaultValue: [] as CategoryItem[],
+    loader: () => this.fetchCategories(),
+  });
+  readonly loading = this.categoriesResource.isLoading;
 
   readonly filterForm = this.fb.nonNullable.group({
     name: [''],
@@ -86,53 +92,45 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
   readonly categoryFormDialog = viewChild<TemplateRef<unknown>>('categoryFormDialog');
   private categoryFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
-
-  ngOnInit() {
-    this.loadCategories();
-  }
+  private readonly syncCategories = effect(() => {
+    const items = this.categoriesResource.value();
+    this.categories.set(items);
+    this.dataSource.data = [...items];
+  });
+  private readonly reportCategoriesError = effect(() => {
+    const error = this.categoriesResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load categories.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
   }
 
-  async loadCategories() {
-    this.loading.set(true);
+  private async fetchCategories() {
     this.error.set(null);
-    const start = performance.now();
 
     const { name } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
     if (name?.trim()) params.set('name', name.trim());
 
-    try {
-      const response = await this.api.get<any>(`sale/categories?${params.toString()}`);
-      const items = response?.data?.items ?? [];
-      this.categories.set(items);
-      this.dataSource.data = [...items];
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load categories.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>(`sale/categories?${params.toString()}`);
+    return response?.data?.items ?? [];
   }
 
   applyFilters() {
-    void this.loadCategories();
+    this.categoriesResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ name: '' });
-    void this.loadCategories();
+    this.categoriesResource.reload();
   }
 
   refreshList() {
-    void this.loadCategories();
+    this.categoriesResource.reload();
   }
 
   startEdit(category: CategoryItem) {
@@ -168,24 +166,13 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`sale/categories/${editing.ScaUUID}`, payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.categories.update((items) =>
-            items.map((row) => (row.ScaUUID === item.ScaUUID ? item : row)),
-          );
-          this.dataSource.data = [...this.categories()];
-        }
+        await this.api.put<any>(`sale/categories/${editing.ScaUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('sale/categories', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.categories.update((items) => [item, ...items]);
-          this.dataSource.data = [...this.categories()];
-        }
+        await this.api.post<any>('sale/categories', payload);
       }
 
       this.cancelEdit();
+      this.categoriesResource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to save category.'));
     } finally {
@@ -208,11 +195,9 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`sale/categories/${category.ScaUUID}`);
-      this.categories.update((items) => items.filter((row) => row.ScaUUID !== category.ScaUUID));
-      this.dataSource.data = [...this.categories()];
-    } catch (err) {
-      console.error('Failed to delete category.', err);
-      alert('Failed to delete category.');
+      this.categoriesResource.reload();
+    } catch (err: any) {
+      this.error.set(this.extractErrorMessage(err, 'Failed to delete category.'));
     }
   }
 

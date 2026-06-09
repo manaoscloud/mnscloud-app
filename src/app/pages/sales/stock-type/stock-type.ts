@@ -1,7 +1,9 @@
 import {
   AfterViewInit,
   Component,
+  effect,
   OnDestroy,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -66,11 +68,15 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly stockTypes = signal<SaleStockTypeItem[]>([]);
   readonly editing = signal<SaleStockTypeItem | null>(null);
+  private readonly stockTypesResource = resource({
+    defaultValue: [] as SaleStockTypeItem[],
+    loader: () => this.fetchStockTypes(),
+  });
+  readonly loading = this.stockTypesResource.isLoading;
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
@@ -86,53 +92,45 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
   readonly stockTypeFormDialog = viewChild<TemplateRef<unknown>>('stockTypeFormDialog');
   private stockTypeFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
-
-  ngOnInit() {
-    this.loadStockTypes();
-  }
+  private readonly syncStockTypes = effect(() => {
+    const items = this.stockTypesResource.value();
+    this.stockTypes.set(items);
+    this.dataSource.data = [...items];
+  });
+  private readonly reportStockTypesError = effect(() => {
+    const error = this.stockTypesResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load stock types.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
   }
 
-  async loadStockTypes() {
-    this.loading.set(true);
+  private async fetchStockTypes() {
     this.error.set(null);
-    const start = performance.now();
 
     const { search } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
     if (search?.trim()) params.set('search', search.trim());
 
-    try {
-      const response = await this.api.get<any>(`sale/stock-types?${params.toString()}`);
-      const items = response?.data?.items ?? [];
-      this.stockTypes.set(items);
-      this.dataSource.data = [...items];
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load stock types.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>(`sale/stock-types?${params.toString()}`);
+    return response?.data?.items ?? [];
   }
 
   applyFilters() {
-    void this.loadStockTypes();
+    this.stockTypesResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ search: '' });
-    void this.loadStockTypes();
+    this.stockTypesResource.reload();
   }
 
   refreshList() {
-    void this.loadStockTypes();
+    this.stockTypesResource.reload();
   }
 
   startEdit(stockType: SaleStockTypeItem) {
@@ -168,24 +166,13 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`sale/stock-types/${editing.SstUUID}`, payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.stockTypes.update((items) =>
-            items.map((row) => (row.SstUUID === item.SstUUID ? item : row)),
-          );
-          this.dataSource.data = [...this.stockTypes()];
-        }
+        await this.api.put<any>(`sale/stock-types/${editing.SstUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('sale/stock-types', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.stockTypes.update((items) => [item, ...items]);
-          this.dataSource.data = [...this.stockTypes()];
-        }
+        await this.api.post<any>('sale/stock-types', payload);
       }
 
       this.cancelEdit();
+      this.stockTypesResource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to save stock type.'));
     } finally {
@@ -208,11 +195,9 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`sale/stock-types/${stockType.SstUUID}`);
-      this.stockTypes.update((items) => items.filter((row) => row.SstUUID !== stockType.SstUUID));
-      this.dataSource.data = [...this.stockTypes()];
-    } catch (err) {
-      console.error('Failed to delete stock type.', err);
-      alert('Failed to delete stock type.');
+      this.stockTypesResource.reload();
+    } catch (err: any) {
+      this.error.set(this.extractErrorMessage(err, 'Failed to delete stock type.'));
     }
   }
 

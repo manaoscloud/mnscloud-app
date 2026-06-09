@@ -1,7 +1,9 @@
 import {
   AfterViewInit,
   Component,
+  effect,
   OnDestroy,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -66,11 +68,15 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly brands = signal<BrandItem[]>([]);
   readonly editing = signal<BrandItem | null>(null);
+  private readonly brandsResource = resource({
+    defaultValue: [] as BrandItem[],
+    loader: () => this.fetchBrands(),
+  });
+  readonly loading = this.brandsResource.isLoading;
 
   readonly filterForm = this.fb.nonNullable.group({
     name: [''],
@@ -86,53 +92,45 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
   readonly brandFormDialog = viewChild<TemplateRef<unknown>>('brandFormDialog');
   private brandFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
-
-  ngOnInit() {
-    this.loadBrands();
-  }
+  private readonly syncBrands = effect(() => {
+    const items = this.brandsResource.value();
+    this.brands.set(items);
+    this.dataSource.data = [...items];
+  });
+  private readonly reportBrandsError = effect(() => {
+    const error = this.brandsResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load brands.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
   }
 
-  async loadBrands() {
-    this.loading.set(true);
+  private async fetchBrands() {
     this.error.set(null);
-    const start = performance.now();
 
     const { name } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
     if (name?.trim()) params.set('name', name.trim());
 
-    try {
-      const response = await this.api.get<any>(`sale/brands?${params.toString()}`);
-      const items = response?.data?.items ?? [];
-      this.brands.set(items);
-      this.dataSource.data = [...items];
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load brands.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>(`sale/brands?${params.toString()}`);
+    return response?.data?.items ?? [];
   }
 
   applyFilters() {
-    void this.loadBrands();
+    this.brandsResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ name: '' });
-    void this.loadBrands();
+    this.brandsResource.reload();
   }
 
   refreshList() {
-    void this.loadBrands();
+    this.brandsResource.reload();
   }
 
   startEdit(brand: BrandItem) {
@@ -168,24 +166,13 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`sale/brands/${editing.SbrUUID}`, payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.brands.update((items) =>
-            items.map((row) => (row.SbrUUID === item.SbrUUID ? item : row)),
-          );
-          this.dataSource.data = [...this.brands()];
-        }
+        await this.api.put<any>(`sale/brands/${editing.SbrUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('sale/brands', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.brands.update((items) => [item, ...items]);
-          this.dataSource.data = [...this.brands()];
-        }
+        await this.api.post<any>('sale/brands', payload);
       }
 
       this.cancelEdit();
+      this.brandsResource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to save brand.'));
     } finally {
@@ -233,11 +220,9 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`sale/brands/${brand.SbrUUID}`);
-      this.brands.update((items) => items.filter((row) => row.SbrUUID !== brand.SbrUUID));
-      this.dataSource.data = [...this.brands()];
-    } catch (err) {
-      console.error('Failed to delete brand.', err);
-      alert('Failed to delete brand.');
+      this.brandsResource.reload();
+    } catch (err: any) {
+      this.error.set(this.extractErrorMessage(err, 'Failed to delete brand.'));
     }
   }
 
