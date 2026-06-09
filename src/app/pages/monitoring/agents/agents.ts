@@ -6,7 +6,9 @@ import {
   OnInit,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -100,6 +102,30 @@ type RuntimeProductFleet = {
   rolloutStatus?: 'current' | 'outdated' | 'updating' | 'failed' | 'unknown' | string | null;
 };
 
+type AgentFilters = {
+  search: string;
+  type: string;
+  status: string;
+};
+
+type MonitoringAgentsSnapshot = {
+  agents: MonitoringAgent[];
+  runtimeProducts: RuntimeProductFleet[];
+  runtimeProductsError?: string | null;
+};
+
+const EMPTY_AGENT_FILTERS: AgentFilters = {
+  search: '',
+  type: '',
+  status: '',
+};
+
+const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
+  agents: [],
+  runtimeProducts: [],
+  runtimeProductsError: null,
+};
+
 @Component({
   selector: 'app-monitoring-agents',
   standalone: true,
@@ -143,15 +169,12 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
-  private loadingStarted = 0;
+  private lastRuntimeProductsError = '';
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
-  readonly agents = signal<MonitoringAgent[]>([]);
   readonly editing = signal<MonitoringAgent | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly updatingIds = signal<Set<string>>(new Set());
-  readonly runtimeProducts = signal<RuntimeProductFleet[]>([]);
   readonly updatingProducts = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly isMaster = computed(() => this.auth.user()?.role === 'MASTER');
@@ -164,6 +187,17 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
   readonly generatedToken = signal('');
   readonly dataSource = new MatTableDataSource<MonitoringAgent>([]);
+  private readonly appliedFilters = signal<AgentFilters>({ ...EMPTY_AGENT_FILTERS });
+  private readonly agentsResource = resource({
+    params: () => this.appliedFilters(),
+    defaultValue: EMPTY_AGENTS_SNAPSHOT,
+    loader: ({ params }) => this.loadAgentsSnapshot(params),
+  });
+
+  readonly loading = this.agentsResource.isLoading;
+  readonly agentsSnapshot = computed(() => this.agentsResource.value());
+  readonly agents = computed(() => this.agentsSnapshot().agents);
+  readonly runtimeProducts = computed(() => this.agentsSnapshot().runtimeProducts);
 
   readonly displayedColumns = [
     'select',
@@ -216,9 +250,29 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return this.filteredAgents().slice(start, start + this.pageSize());
   });
 
+  private readonly syncTable = effect(() => {
+    this.dataSource.data = this.agents();
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadErrors = effect(() => {
+    const error = this.agentsResource.error();
+    if (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to load agents.'));
+      return;
+    }
+
+    const runtimeProductsError = this.agentsSnapshot().runtimeProductsError ?? '';
+    if (runtimeProductsError && runtimeProductsError !== this.lastRuntimeProductsError) {
+      this.lastRuntimeProductsError = runtimeProductsError;
+      this.snack.error(runtimeProductsError);
+    } else if (!runtimeProductsError) {
+      this.lastRuntimeProductsError = '';
+    }
+  });
+
   ngOnInit() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.load();
   }
 
   ngOnDestroy() {
@@ -226,37 +280,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   refreshList() {
-    void this.load();
-  }
-
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-    try {
-      const [agentsResult, runtimeProductsResult] = await Promise.allSettled([
-        this.api.get<any>(`monitoring/agents${this.queryString()}`),
-        this.api.get<any>('monitoring/agents/runtime-products'),
-      ]);
-      if (agentsResult.status === 'rejected') throw agentsResult.reason;
-      const response = agentsResult.value;
-      this.agents.set(response?.data?.items ?? []);
-      if (runtimeProductsResult.status === 'fulfilled') {
-        this.runtimeProducts.set(runtimeProductsResult.value?.data ?? []);
-      } else if (this.runtimeProducts().length === 0) {
-        this.runtimeProducts.set([]);
-        this.snack.error(
-          this.errorMessage(runtimeProductsResult.reason, 'Failed to load runtime products.'),
-        );
-      }
-      this.dataSource.data = this.agents();
-      this.pageIndex.set(0);
-      this.reconcileSelection();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load agents.'));
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+    this.agentsResource.reload();
   }
 
   async queueRuntimeProductUpdate(product: RuntimeProductFleet) {
@@ -286,7 +310,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
       } else {
         this.snack.success(`${product.label} is already up to date.`);
       }
-      await this.load();
+      this.agentsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, `Failed to queue ${product.label} rollout.`));
     } finally {
@@ -297,12 +321,14 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   applyFilters() {
-    void this.load();
+    this.pageIndex.set(0);
+    this.appliedFilters.set(this.normalizedFilters());
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', type: '', status: '' });
-    void this.load();
+    this.filterForm.reset({ ...EMPTY_AGENT_FILTERS });
+    this.pageIndex.set(0);
+    this.appliedFilters.set({ ...EMPTY_AGENT_FILTERS });
   }
 
   onPage(event: PageEvent) {
@@ -394,7 +420,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
         this.snack.success('Agent enrollment created. Copy the install command.');
         this.openTokenDialog();
       }
-      await this.load();
+      this.agentsResource.reload();
       if (keepOpen && !editing) {
         this.startCreate();
       } else {
@@ -451,7 +477,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
       } else {
         this.snack.success(`${target.label} update queued.`);
       }
-      await this.load();
+      this.agentsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, `Failed to queue ${target.label} update.`));
     } finally {
@@ -471,7 +497,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     try {
       await this.api.delete(`monitoring/agents/${row.uuid}`);
       this.snack.success('Agent deleted.');
-      await this.load();
+      this.agentsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete agent.'));
     }
@@ -497,7 +523,7 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
             `${ids.length - failedIds.length} agent(s) deleted; ${failedIds.length} failed.`,
           )
         : this.snack.success('Selected agents deleted.');
-      await this.load();
+      this.agentsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete selected agents.'));
     }
@@ -702,11 +728,42 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     return value ? value.slice(0, 12) : '-';
   }
 
-  private queryString() {
+  private async loadAgentsSnapshot(filters: AgentFilters): Promise<MonitoringAgentsSnapshot> {
+    const [agentsResult, runtimeProductsResult] = await Promise.allSettled([
+      this.api.get<any>(`monitoring/agents${this.queryString(filters)}`),
+      this.api.get<any>('monitoring/agents/runtime-products'),
+    ]);
+
+    if (agentsResult.status === 'rejected') throw agentsResult.reason;
+
+    const runtimeProducts =
+      runtimeProductsResult.status === 'fulfilled'
+        ? (runtimeProductsResult.value?.data ?? [])
+        : this.runtimeProducts();
+
+    return {
+      agents: agentsResult.value?.data?.items ?? [],
+      runtimeProducts,
+      runtimeProductsError:
+        runtimeProductsResult.status === 'rejected'
+          ? this.errorMessage(runtimeProductsResult.reason, 'Failed to load runtime products.')
+          : null,
+    };
+  }
+
+  private normalizedFilters(): AgentFilters {
     const value = this.filterForm.getRawValue();
+    return {
+      search: value.search.trim(),
+      type: value.type,
+      status: value.status,
+    };
+  }
+
+  private queryString(value: AgentFilters) {
     const params = new URLSearchParams();
     params.set('limit', '1000');
-    if (value.search.trim()) params.set('search', value.search.trim());
+    if (value.search) params.set('search', value.search);
     if (value.type) params.set('type', value.type);
     if (value.status) params.set('status', value.status);
     const query = params.toString();

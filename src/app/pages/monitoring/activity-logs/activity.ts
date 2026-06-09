@@ -2,7 +2,10 @@ import { NgClass, DatePipe } from '@angular/common';
 import {
   Component,
   OnInit,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -52,6 +55,34 @@ type ActivityLog = {
   dateCreated?: string | null;
 };
 
+type ActivityLogFilters = {
+  search: string;
+  environmentUUID: string;
+  level: string;
+  status: string;
+  category: string;
+  correlationID: string;
+};
+
+type ActivityLogsSnapshot = {
+  items: ActivityLog[];
+  total: number;
+};
+
+const EMPTY_ACTIVITY_FILTERS: ActivityLogFilters = {
+  search: '',
+  environmentUUID: '',
+  level: '',
+  status: '',
+  category: '',
+  correlationID: '',
+};
+
+const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
+  items: [],
+  total: 0,
+};
+
 @Component({
   selector: 'app-monitoring-activity-logs',
   standalone: true,
@@ -88,15 +119,12 @@ export class MonitoringActivityLogsPage implements OnInit {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
 
-  private loadingStarted = 0;
-
-  readonly loading = signal(false);
-  readonly total = signal(0);
   readonly selected = signal<ActivityLog | null>(null);
   readonly pageIndex = signal(0);
   readonly pageSize = signal(25);
   readonly sortActive = signal('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
+  private readonly appliedFilters = signal<ActivityLogFilters>({ ...EMPTY_ACTIVITY_FILTERS });
   readonly dataSource = new MatTableDataSource<ActivityLog>([]);
 
   readonly isMaster = this.auth.user()?.role === 'MASTER';
@@ -144,9 +172,33 @@ export class MonitoringActivityLogsPage implements OnInit {
     correlationID: [''],
   });
 
+  private readonly activityLogsResource = resource({
+    params: () => ({
+      filters: this.appliedFilters(),
+      pageIndex: this.pageIndex(),
+      pageSize: this.pageSize(),
+    }),
+    defaultValue: EMPTY_ACTIVITY_LOGS,
+    loader: ({ params }) => this.loadActivityLogsSnapshot(params.filters),
+  });
+
+  readonly loading = this.activityLogsResource.isLoading;
+  readonly logsSnapshot = computed(() => this.activityLogsResource.value());
+  readonly total = computed(() => this.logsSnapshot().total);
+
+  private readonly syncTable = effect(() => {
+    this.dataSource.data = this.sortRows(this.logsSnapshot().items);
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.activityLogsResource.error();
+    if (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to load activity logs.'));
+    }
+  });
+
   ngOnInit() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.load();
   }
 
   refreshList() {
@@ -162,56 +214,29 @@ export class MonitoringActivityLogsPage implements OnInit {
       sort.active = '';
       sort.direction = '';
     }
-    void this.load();
-  }
-
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-    try {
-      const params = this.buildQuery();
-      const response = await this.api.get<any>(`monitoring/activity-logs${params}`);
-      const rows = response?.data?.items ?? [];
-      this.dataSource.data = this.sortRows(rows);
-      this.total.set(Number(response?.data?.total ?? 0));
-    } catch (err: any) {
-      this.snack.error(this.errorMessage(err, 'Failed to load activity logs.'));
-      this.dataSource.data = [];
-      this.total.set(0);
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+    this.activityLogsResource.reload();
   }
 
   applyFilters() {
     this.pageIndex.set(0);
-    void this.load();
+    this.appliedFilters.set(this.normalizedFilters());
   }
 
   clearFilters() {
-    this.filterForm.reset({
-      search: '',
-      environmentUUID: '',
-      level: '',
-      status: '',
-      category: '',
-      correlationID: '',
-    });
+    this.filterForm.reset({ ...EMPTY_ACTIVITY_FILTERS });
     this.pageIndex.set(0);
-    void this.load();
+    this.appliedFilters.set({ ...EMPTY_ACTIVITY_FILTERS });
   }
 
   onPage(event: PageEvent) {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
-    void this.load();
   }
 
   onSort(sort: Sort) {
     this.sortActive.set(sort.active);
     this.sortDirection.set(sort.direction);
-    this.dataSource.data = this.sortRows([...this.dataSource.data]);
+    this.dataSource.data = this.sortRows([...this.logsSnapshot().items]);
   }
 
   openDetails(row: ActivityLog, template: any) {
@@ -288,8 +313,30 @@ export class MonitoringActivityLogsPage implements OnInit {
     return value?.error?.error || value?.message || fallback;
   }
 
-  private buildQuery() {
+  private async loadActivityLogsSnapshot(
+    filters: ActivityLogFilters,
+  ): Promise<ActivityLogsSnapshot> {
+    const params = this.buildQuery(filters);
+    const response = await this.api.get<any>(`monitoring/activity-logs${params}`);
+    return {
+      items: response?.data?.items ?? [],
+      total: Number(response?.data?.total ?? 0),
+    };
+  }
+
+  private normalizedFilters(): ActivityLogFilters {
     const value = this.filterForm.getRawValue();
+    return {
+      search: value.search.trim(),
+      environmentUUID: value.environmentUUID.trim(),
+      level: value.level.trim(),
+      status: value.status.trim(),
+      category: value.category.trim(),
+      correlationID: value.correlationID.trim(),
+    };
+  }
+
+  private buildQuery(value: ActivityLogFilters) {
     const params = new URLSearchParams();
     for (const [key, item] of Object.entries(value)) {
       if (item !== null && item !== undefined && String(item).trim()) {
