@@ -2,10 +2,13 @@ import {
   AfterViewInit,
   Component,
   OnDestroy,
-  OnInit,
   TemplateRef,
-  inject,
   ChangeDetectionStrategy,
+  computed,
+  effect,
+  inject,
+  resource,
+  signal,
   viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -58,8 +61,6 @@ type ChannelConfig = {
   webchat_url?: string;
 };
 
-const MIN_LOADING_MS = 600;
-
 @Component({
   selector: 'app-support-channels',
   standalone: true,
@@ -86,7 +87,7 @@ const MIN_LOADING_MS = 600;
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./channels.scss'],
 })
-export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
+export class SupportChannelsPage implements AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private dialog = inject(MatDialog);
 
@@ -95,8 +96,25 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
   displayedColumns: string[] = ['provider', 'displayName', 'status', 'lastSyncAt', 'actions'];
   search = '';
   searchInput = '';
-  loading = true;
   error = '';
+  private readonly saving = signal(false);
+  private readonly connectionsResource = resource({
+    defaultValue: [] as SupportChannel[],
+    loader: () => this.fetchConnections(),
+  });
+  readonly loading = computed(() => this.connectionsResource.isLoading() || this.saving());
+  private readonly connectionsEffect = effect(() => {
+    this.connections = this.connectionsResource.value();
+    this.dataSource.data = [...this.connections];
+    this.applySearchFilters();
+  });
+  private readonly connectionsErrorEffect = effect(() => {
+    const error = this.connectionsResource.error();
+    if (!error) return;
+    this.error = error instanceof Error ? error.message : 'Failed to load support channels.';
+    this.connections = [];
+    this.dataSource.data = [];
+  });
 
   editing: SupportChannel | null = null;
 
@@ -143,10 +161,6 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
   private channelFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
-  ngOnInit() {
-    void this.loadConnections();
-  }
-
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
@@ -182,7 +196,7 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadConnections();
+    this.connectionsResource.reload();
   }
 
   providerLabel(provider: string) {
@@ -239,25 +253,10 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  async loadConnections() {
-    const startedAt = Date.now();
-    this.loading = true;
+  private async fetchConnections(): Promise<SupportChannel[]> {
     this.error = '';
-    try {
-      const res = await this.api.get<any>('support/channels');
-      this.connections = res?.data?.items ?? [];
-      this.dataSource.data = [...this.connections];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error = err?.message ?? 'Failed to load support channels.';
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_LOADING_MS) {
-        await new Promise((resolve) => setTimeout(resolve, MIN_LOADING_MS - elapsed));
-      }
-      this.loading = false;
-    }
+    const res = await this.api.get<any>('support/channels');
+    return res?.data?.items ?? [];
   }
 
   private resetForm() {
@@ -397,7 +396,7 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
 
     try {
@@ -416,7 +415,7 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
         await this.api.post(`support/channels/${this.form.provider}`, payload);
       }
 
-      await this.loadConnections();
+      this.connectionsResource.reload();
       if (createAndNew && !this.editing) {
         this.resetForm();
       } else {
@@ -426,7 +425,7 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to save support channel.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 
@@ -444,15 +443,15 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
     try {
       await this.api.delete(`support/channels/${item.Provider}/${item.SupportChannelUUID}`);
-      await this.loadConnections();
+      this.connectionsResource.reload();
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to delete support channel.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 }

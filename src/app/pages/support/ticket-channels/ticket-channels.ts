@@ -2,10 +2,13 @@ import {
   AfterViewInit,
   Component,
   OnDestroy,
-  OnInit,
   TemplateRef,
-  inject,
   ChangeDetectionStrategy,
+  computed,
+  effect,
+  inject,
+  resource,
+  signal,
   viewChild,
 } from '@angular/core';
 
@@ -41,8 +44,6 @@ type SupportTicketChannel = {
   DateCreated?: string | null;
 };
 
-const MIN_LOADING_MS = 600;
-
 @Component({
   selector: 'app-support-ticket-channels',
   standalone: true,
@@ -68,7 +69,7 @@ const MIN_LOADING_MS = 600;
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./ticket-channels.scss'],
 })
-export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestroy {
+export class SupportTicketChannelsPage implements AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private dialog = inject(MatDialog);
 
@@ -77,8 +78,25 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
   displayedColumns: string[] = ['name', 'code', 'status', 'actions'];
   search = '';
   searchInput = '';
-  loading = true;
   error = '';
+  private readonly saving = signal(false);
+  private readonly channelsResource = resource({
+    defaultValue: [] as SupportTicketChannel[],
+    loader: () => this.fetchChannels(),
+  });
+  readonly loading = computed(() => this.channelsResource.isLoading() || this.saving());
+  private readonly channelsEffect = effect(() => {
+    this.channels = this.channelsResource.value();
+    this.dataSource.data = [...this.channels];
+    this.applySearchFilters();
+  });
+  private readonly channelsErrorEffect = effect(() => {
+    const error = this.channelsResource.error();
+    if (!error) return;
+    this.error = error instanceof Error ? error.message : 'Failed to load channels.';
+    this.channels = [];
+    this.dataSource.data = [];
+  });
 
   editing: SupportTicketChannel | null = null;
 
@@ -99,10 +117,6 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
   readonly ticketChannelFormDialog = viewChild<TemplateRef<unknown>>('ticketChannelFormDialog');
   private ticketChannelFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
-
-  ngOnInit() {
-    void this.loadChannels();
-  }
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -151,32 +165,17 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
   }
 
   refreshList() {
-    void this.loadChannels();
+    this.channelsResource.reload();
   }
 
   statusLabel(status: number) {
     return status === 1 ? 'Active' : 'Inactive';
   }
 
-  async loadChannels() {
-    const startedAt = Date.now();
-    this.loading = true;
+  private async fetchChannels(): Promise<SupportTicketChannel[]> {
     this.error = '';
-    try {
-      const res = await this.api.get<any>('support/ticket-channels');
-      this.channels = res?.data?.items ?? [];
-      this.dataSource.data = [...this.channels];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error = err?.message ?? 'Failed to load channels.';
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_LOADING_MS) {
-        await new Promise((resolve) => setTimeout(resolve, MIN_LOADING_MS - elapsed));
-      }
-      this.loading = false;
-    }
+    const res = await this.api.get<any>('support/ticket-channels');
+    return res?.data?.items ?? [];
   }
 
   private resetForm() {
@@ -303,7 +302,7 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
       return;
     }
 
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
 
     try {
@@ -323,7 +322,7 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
         await this.api.post('support/ticket-channels', payload);
       }
 
-      await this.loadChannels();
+      this.channelsResource.reload();
       if (createAndNew && !this.editing) {
         this.resetForm();
       } else {
@@ -333,7 +332,7 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to save channel.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 
@@ -351,15 +350,15 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
     });
     const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
     try {
       await this.api.delete(`support/ticket-channels/${item.SupportTicketChannelUUID}`);
-      await this.loadChannels();
+      this.channelsResource.reload();
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to delete channel.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 }

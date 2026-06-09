@@ -7,7 +7,7 @@
       </div>
 
       <div class="header-actions">
-        <button mat-stroked-button (click)="refreshList()" [disabled]="loading" type="button">
+        <button mat-stroked-button (click)="refreshList()" [disabled]="loading()" type="button">
           <mat-icon>refresh</mat-icon>
           Refresh
         </button>
@@ -33,7 +33,7 @@
         <button
           mat-stroked-button
           (click)="applySearchFilters()"
-          [disabled]="loading"
+          [disabled]="loading()"
           type="button"
         >
           Apply
@@ -41,7 +41,7 @@
         <button
           mat-stroked-button
           (click)="clearSearchFilters()"
-          [disabled]="loading || (!searchInput && !search)"
+          [disabled]="loading() || (!searchInput && !search)"
           type="button"
         >
           Clear
@@ -49,8 +49,8 @@
       </div>
     </div>
 
-    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
-      @if (loading) {
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
@@ -115,7 +115,7 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading ? 'Loading...' : 'No connections found for "' + (search || 'all') + '"' }}
+            {{ loading() ? 'Loading...' : 'No connections found for "' + (search || 'all') + '"' }}
           </td>
         </tr>
       </table>
@@ -273,7 +273,7 @@
         mat-flat-button
         color="primary"
         (click)="saveConnection()"
-        [disabled]="loading"
+        [disabled]="loading()"
         type="button"
       >
         Save
@@ -282,7 +282,7 @@
         <button
           mat-stroked-button
           (click)="saveConnection(true)"
-          [disabled]="loading"
+          [disabled]="loading()"
           type="button"
         >
           Save and new
