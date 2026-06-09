@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -61,6 +63,20 @@ type ExternalRow = {
   active: boolean;
 };
 
+type DidDashboardSnapshot = {
+  operators: VoipDidOperatorItem[];
+  dids: VoipDidItem[];
+  externalDids: VoipDidExternalItem[];
+  failed: number;
+};
+
+const EMPTY_DID_DASHBOARD: DidDashboardSnapshot = {
+  operators: [],
+  dids: [],
+  externalDids: [],
+  failed: 0,
+};
+
 @Component({
   selector: 'app-voip-did-dashboard',
   standalone: true,
@@ -87,7 +103,7 @@ export class VoipDidDashboardPage implements AfterViewInit {
   private readonly externalApi = inject(VoipDidExternalService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
-  private loadingStarted = 0;
+  private lastDashboardFailure = '';
 
   readonly operatorSort = viewChild<MatSort>('operatorSort');
   readonly operatorPaginator = viewChild<MatPaginator>('operatorPaginator');
@@ -96,10 +112,15 @@ export class VoipDidDashboardPage implements AfterViewInit {
   readonly externalSort = viewChild<MatSort>('externalSort');
   readonly externalPaginator = viewChild<MatPaginator>('externalPaginator');
 
-  readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly dashboardResource = resource({
+    params: () => this.isMaster(),
+    defaultValue: EMPTY_DID_DASHBOARD,
+    loader: ({ params }) => this.fetchDashboard(params),
+  });
 
+  readonly loading = this.dashboardResource.isLoading;
   readonly operators = signal<VoipDidOperatorItem[]>([]);
   readonly dids = signal<VoipDidItem[]>([]);
   readonly externalDids = signal<VoipDidExternalItem[]>([]);
@@ -120,6 +141,38 @@ export class VoipDidDashboardPage implements AfterViewInit {
   ];
   readonly statusColumns = ['status', 'total', 'available', 'assigned', 'issues', 'actions'];
   readonly externalColumns = ['number', 'provider', 'validation', 'billing', 'active', 'actions'];
+
+  private readonly syncDashboard = effect(() => {
+    const snapshot = this.dashboardResource.value();
+    this.operators.set(snapshot.operators);
+    this.dids.set(snapshot.dids);
+    this.externalDids.set(snapshot.externalDids);
+    this.applyDataSources();
+
+    if (snapshot.failed === 0) {
+      this.lastDashboardFailure = '';
+      return;
+    }
+
+    const message =
+      snapshot.failed === 3
+        ? 'Failed to load DID dashboard.'
+        : 'Some DID dashboard sections could not be loaded.';
+    if (message !== this.lastDashboardFailure) {
+      this.lastDashboardFailure = message;
+      snapshot.failed === 3 ? this.snack.error(message) : this.snack.warning(message);
+    }
+  });
+
+  private readonly reportDashboardError = effect(() => {
+    const error = this.dashboardResource.error();
+    if (!error) return;
+    const message = this.errorMessage(error, 'Failed to load DID dashboard.');
+    if (message !== this.lastDashboardFailure) {
+      this.lastDashboardFailure = message;
+      this.snack.error(message);
+    }
+  });
 
   readonly numberSummary = computed(() => {
     const rows = this.dids();
@@ -211,60 +264,10 @@ export class VoipDidDashboardPage implements AfterViewInit {
     this.statusDataSource.paginator = this.statusPaginator() ?? null;
     this.externalDataSource.sort = this.externalSort() ?? null;
     this.externalDataSource.paginator = this.externalPaginator() ?? null;
-
-    void this.load();
   }
 
   refreshList() {
-    void this.load();
-  }
-
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-
-    try {
-      const [operatorsResult, didsResult, externalResult] = await Promise.allSettled([
-        this.operatorApi.list({ limit: 5000 }, this.isMaster()),
-        this.didApi.list({ limit: 5000 }, this.isMaster()),
-        this.externalApi.list({ limit: 5000 }, this.isMaster()),
-      ]);
-
-      const failed = [operatorsResult, didsResult, externalResult].filter(
-        (result) => result.status === 'rejected',
-      ).length;
-
-      this.operators.set(
-        operatorsResult.status === 'fulfilled'
-          ? this.items<VoipDidOperatorItem>(operatorsResult.value)
-          : [],
-      );
-      this.dids.set(
-        didsResult.status === 'fulfilled' ? this.items<VoipDidItem>(didsResult.value) : [],
-      );
-      this.externalDids.set(
-        externalResult.status === 'fulfilled'
-          ? this.items<VoipDidExternalItem>(externalResult.value)
-          : [],
-      );
-
-      this.applyDataSources();
-
-      if (failed === 3) {
-        this.snack.error('Failed to load DID dashboard.');
-      } else if (failed > 0) {
-        this.snack.warning('Some DID dashboard sections could not be loaded.');
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load DID dashboard.'));
-      this.operators.set([]);
-      this.dids.set([]);
-      this.externalDids.set([]);
-      this.applyDataSources();
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+    this.dashboardResource.reload();
   }
 
   routeTo(section: 'operator' | 'number' | 'external') {
@@ -296,6 +299,31 @@ export class VoipDidDashboardPage implements AfterViewInit {
     this.operatorDataSource.data = this.operatorRows();
     this.statusDataSource.data = this.statusRows();
     this.externalDataSource.data = this.externalRows();
+  }
+
+  private async fetchDashboard(isMaster: boolean): Promise<DidDashboardSnapshot> {
+    const [operatorsResult, didsResult, externalResult] = await Promise.allSettled([
+      this.operatorApi.list({ limit: 5000 }, isMaster),
+      this.didApi.list({ limit: 5000 }, isMaster),
+      this.externalApi.list({ limit: 5000 }, isMaster),
+    ]);
+
+    const failed = [operatorsResult, didsResult, externalResult].filter(
+      (result) => result.status === 'rejected',
+    ).length;
+
+    return {
+      operators:
+        operatorsResult.status === 'fulfilled'
+          ? this.items<VoipDidOperatorItem>(operatorsResult.value)
+          : [],
+      dids: didsResult.status === 'fulfilled' ? this.items<VoipDidItem>(didsResult.value) : [],
+      externalDids:
+        externalResult.status === 'fulfilled'
+          ? this.items<VoipDidExternalItem>(externalResult.value)
+          : [],
+      failed,
+    };
   }
 
   private operatorRows(): OperatorRow[] {
