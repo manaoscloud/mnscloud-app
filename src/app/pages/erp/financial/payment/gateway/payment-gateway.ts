@@ -5,7 +5,9 @@ import {
   OnInit,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -251,8 +253,26 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
     this.isMaster() ? 'system/payment-gateways' : 'erp/financial/payment/gateways',
   );
 
+  private readonly paymentGatewaysResource = resource({
+    params: () => ({ endpoint: this.baseEndpoint() }),
+    defaultValue: [] as PaymentGatewayAccount[],
+    loader: async ({ params }) => {
+      const result = await this.api.get<unknown>(params.endpoint);
+      const list = Array.isArray(result)
+        ? result
+        : Array.isArray((result as any)?.data?.items)
+          ? (result as any).data.items
+          : [];
+
+      return list.map((item: any) => ({
+        ...item,
+        EfgConfig: this.parseConfig(item.EfgConfig),
+      })) as PaymentGatewayAccount[];
+    },
+  });
+
   readonly paymentGateways = signal<PaymentGatewayAccount[]>([]);
-  readonly loadingGateways = signal<boolean>(false);
+  readonly loadingGateways = this.paymentGatewaysResource.isLoading;
   readonly savingGateway = signal<boolean>(false);
   readonly validatingGatewayUUID = signal<string | null>(null);
 
@@ -297,6 +317,24 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   search = '';
   searchInput = '';
 
+  private readonly syncPaymentGateways = effect(() => {
+    const normalized = this.paymentGatewaysResource.value();
+    this.paymentGateways.set(normalized);
+    this.dataSource.data = [...normalized];
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+
+  private readonly reportPaymentGatewayError = effect(() => {
+    const error = this.paymentGatewaysResource.error();
+    if (error) {
+      this.showGatewayError(this.friendlyError(error, 'Failed to load payment gateways.'));
+      this.paymentGateways.set([]);
+      this.dataSource.data = [];
+      this.selectedGatewayUUIDs.set(new Set());
+    }
+  });
+
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
   readonly gatewayFormDialog = viewChild<TemplateRef<unknown>>('gatewayFormDialog');
@@ -305,7 +343,6 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
 
   ngOnInit() {
     this.cancelEditGateway();
-    void this.loadPaymentGateways();
   }
 
   ngOnDestroy() {
@@ -364,7 +401,7 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   }
 
   refreshList() {
-    void this.loadPaymentGateways();
+    this.paymentGatewaysResource.reload();
   }
 
   applyFilter() {
@@ -594,44 +631,6 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
     this.selectedGatewayUUIDs.set(next);
   }
 
-  async loadPaymentGateways() {
-    this.loadingGateways.set(true);
-    const start = performance.now();
-
-    try {
-      const result = await this.api.get<unknown>(this.baseEndpoint());
-      const list = Array.isArray(result)
-        ? result
-        : Array.isArray((result as any)?.data?.items)
-          ? (result as any).data.items
-          : [];
-
-      const normalized = list.map((item: any) => ({
-        ...item,
-        EfgConfig: this.parseConfig(item.EfgConfig),
-      })) as PaymentGatewayAccount[];
-
-      this.paymentGateways.set(normalized);
-      this.dataSource.data = [...normalized];
-      this.reconcileSelection();
-      this.applySearchFilters();
-    } catch (error) {
-      this.showGatewayError(this.friendlyError(error, 'Failed to load payment gateways.'));
-      this.paymentGateways.set([]);
-      this.dataSource.data = [];
-      this.selectedGatewayUUIDs.set(new Set());
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loadingGateways.set(false), waitMs);
-      } else {
-        this.loadingGateways.set(false);
-      }
-    }
-  }
-
   startEditGateway(item: PaymentGatewayAccount) {
     this.editingGateway.set(item);
     this.advancedJsonMode.set(false);
@@ -764,7 +763,7 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
         this.closeGatewayDialog();
         this.cancelEditGateway();
       }
-      await this.loadPaymentGateways();
+      this.paymentGatewaysResource.reload();
     } catch (error) {
       this.showGatewayError(this.friendlyError(error, 'Failed to save payment gateway.'));
     } finally {
@@ -793,7 +792,7 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
     try {
       await this.api.delete(`${this.baseEndpoint()}/${item.EfgUUID}`);
       this.showGatewaySuccess('Payment gateway deleted.');
-      await this.loadPaymentGateways();
+      this.paymentGatewaysResource.reload();
     } catch (error) {
       this.showGatewayError(this.friendlyError(error, 'Failed to delete payment gateway.'));
     }
@@ -836,7 +835,7 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
         );
       }
 
-      await this.loadPaymentGateways();
+      this.paymentGatewaysResource.reload();
 
       if (failed.length > 0) {
         const failedIds = new Set(
