@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -78,7 +80,12 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
-  readonly loading = signal(false);
+  private readonly itemsResource = resource({
+    defaultValue: [] as VoipBlacklistNumberItem[],
+    loader: () => this.fetchItems(),
+  });
+  private readonly mutating = signal(false);
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly saving = signal(false);
   readonly searchInput = signal('');
   readonly search = signal('');
@@ -119,12 +126,23 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
   readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly itemsEffect = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+  });
+  private readonly itemsErrorEffect = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error, 'Failed to load blacklist numbers.'));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    setTimeout(() => void this.bootstrap(), 0);
+    void this.bootstrap();
   }
 
   ngOnDestroy() {
@@ -133,23 +151,23 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
 
   async bootstrap() {
     await this.loadLists();
-    await this.loadItems();
+    this.itemsResource.reload();
   }
 
   refreshList() {
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
     this.blacklistFilter.set('');
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   onBlacklistOpened(opened: boolean) {
@@ -161,23 +179,12 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
     this.lists.set((response?.data?.items ?? []) as VoipBlacklistItem[]);
   }
 
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      const response = await this.api.listNumbers(this.blacklistFilter(), {
-        search: this.search(),
-        limit: this.listLimit,
-      });
-      this.dataSource.data = (response?.data?.items ?? []) as VoipBlacklistNumberItem[];
-      this.reconcileSelection();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to load blacklist numbers.'));
-      this.dataSource.data = [];
-      this.reconcileSelection();
-    } finally {
-      await this.finishLoading(start);
-    }
+  private async fetchItems(): Promise<VoipBlacklistNumberItem[]> {
+    const response = await this.api.listNumbers(this.blacklistFilter(), {
+      search: this.search(),
+      limit: this.listLimit,
+    });
+    return (response?.data?.items ?? []) as VoipBlacklistNumberItem[];
   }
 
   startCreate() {
@@ -234,7 +241,7 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
           ? 'Blacklist number updated successfully.'
           : 'Blacklist number created successfully.',
       );
-      await this.loadItems();
+      this.itemsResource.reload();
       if (saveAndNew && createMode) {
         this.startCreate();
         return;
@@ -263,16 +270,16 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
       'Delete',
     );
     if (!confirmed) return;
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.api.removeNumber(item.VbnUUID);
       this.selectedUUIDs.update((current) => this.removeFromSet(current, item.VbnUUID));
       this.snack.success('Blacklist number deleted successfully.');
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err, 'Failed to delete blacklist number.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -324,7 +331,7 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
       'Delete selected',
     );
     if (!confirmed) return;
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.api.removeManyNumbers(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -333,11 +340,11 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
       this.selectedUUIDs.set(failed);
       if (failed.size) this.snack.error(`${failed.size} selected number(s) could not be deleted.`);
       else this.snack.success(`${deleted.size || ids.length} selected number(s) deleted.`);
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err, 'Failed to delete selected numbers.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -411,12 +418,6 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
         .map((item) => item?.uuid ?? item?.VbnUUID ?? null)
         .filter((uuid): uuid is string => !!uuid),
     );
-  }
-
-  private async finishLoading(start: number) {
-    const waitMs = Math.max(0, 600 - (performance.now() - start));
-    if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
-    this.loading.set(false);
   }
 
   private messageFromError(err: any, fallback: string) {
