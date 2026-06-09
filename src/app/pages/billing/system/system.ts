@@ -4,8 +4,10 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
   linkedSignal,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -60,6 +62,25 @@ type BillingScopeOption = {
   labelKey: string;
 };
 
+type BillingSystemFilters = {
+  search: string;
+  priceProductUUID: string;
+  status: '' | 0 | 1;
+  subscriptionStatus: string;
+};
+
+type BillingSystemSnapshot = {
+  products: BillingProduct[];
+  prices: BillingPrice[];
+  subscriptions: BillingSubscription[];
+};
+
+const EMPTY_BILLING_SYSTEM_SNAPSHOT: BillingSystemSnapshot = {
+  products: [],
+  prices: [],
+  subscriptions: [],
+};
+
 export const BILLING_SYSTEM_IMPORTS = [
   FormsModule,
   ReactiveFormsModule,
@@ -101,7 +122,20 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   section: BillingSystemSection = 'dashboard';
 
-  readonly loading = signal(false);
+  private readonly appliedFilters = signal<BillingSystemFilters>({
+    search: '',
+    priceProductUUID: '',
+    status: '',
+    subscriptionStatus: '',
+  });
+  private readonly billingResource = resource({
+    params: () => this.appliedFilters(),
+    defaultValue: EMPTY_BILLING_SYSTEM_SNAPSHOT,
+    loader: ({ params }) => this.fetchBillingSnapshot(params),
+  });
+
+  private readonly mutating = signal(false);
+  readonly loading = computed(() => this.billingResource.isLoading() || this.mutating());
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editingProduct = signal<BillingProduct | null>(null);
@@ -249,6 +283,21 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private activeDialogRef: MatDialogRef<unknown> | null = null;
   private activeDialogBinding: CrudDialogBinding | null = null;
 
+  private readonly syncBillingData = effect(() => {
+    const snapshot = this.billingResource.value();
+    this.products.set(snapshot.products);
+    this.productSource.data = snapshot.products;
+    this.priceSource.data = snapshot.prices;
+    this.subscriptionSource.data = snapshot.subscriptions;
+    this.reconcileSelections();
+  });
+
+  private readonly reportBillingError = effect(() => {
+    const error = this.billingResource.error();
+    if (!error) return;
+    this.error.set(error instanceof Error ? error.message : 'Failed to load billing data.');
+  });
+
   ngAfterViewInit() {
     this.productSource.paginator = this.productPaginator() ?? null;
     this.priceSource.paginator = this.pricePaginator() ?? null;
@@ -260,41 +309,30 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.priceSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     void this.loadDefaultCurrency();
-    setTimeout(() => this.refresh(), 0);
+    this.refresh();
   }
 
   ngOnDestroy() {
     this.closeActiveDialog();
   }
 
-  async refresh() {
-    const startedAt = Date.now();
-    this.loading.set(true);
+  refresh() {
+    this.billingResource.reload();
+  }
+
+  private async fetchBillingSnapshot(filters: BillingSystemFilters): Promise<BillingSystemSnapshot> {
     this.error.set(null);
-    try {
-      const [products, prices, subscriptions] = await Promise.all([
-        this.billing.listProducts(this.searchInput, this.normalizedStatusFilter()),
-        this.billing.listPrices(
-          this.searchInput,
-          this.priceProductFilter,
-          this.normalizedStatusFilter(),
-        ),
-        this.billing.listSystemSubscriptions(this.searchInput, this.subscriptionStatusFilter),
-      ]);
-      this.products.set(products);
-      this.productSource.data = products;
-      this.priceSource.data = prices;
-      this.subscriptionSource.data = subscriptions;
-      this.reconcileSelections();
-    } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'Failed to load billing data.');
-    } finally {
-      await this.finishLoading(startedAt);
-    }
+    const status = filters.status === '' ? null : filters.status;
+    const [products, prices, subscriptions] = await Promise.all([
+      this.billing.listProducts(filters.search, status),
+      this.billing.listPrices(filters.search, filters.priceProductUUID, status),
+      this.billing.listSystemSubscriptions(filters.search, filters.subscriptionStatus),
+    ]);
+    return { products, prices, subscriptions };
   }
 
   applyFilters() {
-    void this.refresh();
+    this.appliedFilters.set(this.currentFilters());
   }
 
   clearFilters() {
@@ -302,7 +340,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.priceProductFilter = '';
     this.statusFilter = '';
     this.subscriptionStatusFilter = '';
-    void this.refresh();
+    this.applyFilters();
   }
 
   isSection(section: BillingSystemSection) {
@@ -397,7 +435,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       }
       this.snack.success(this.i18n.t(current ? 'Product updated.' : 'Product created.'));
       if (!keepOpen) this.closeActiveDialog();
-      await this.refresh();
+      this.refresh();
       if (keepOpen && !current) this.resetProductForm();
     } catch (error) {
       this.snack.error(
@@ -429,7 +467,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       await this.billing.deleteProductDefinition(row.BpdUUID);
       this.selectedProductUUIDs.delete(row.BpdUUID);
       this.snack.success(this.i18n.t('Product deleted.'));
-      await this.refresh();
+      this.refresh();
     } catch (error) {
       this.snack.error(
         error instanceof Error ? error.message : this.i18n.t('Failed to delete product.'),
@@ -490,7 +528,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       else await this.billing.createPrice(payload);
       this.snack.success(current ? 'Price updated.' : 'Price created.');
       if (!keepOpen) this.closeActiveDialog();
-      await this.refresh();
+      this.refresh();
       if (keepOpen && !current) this.resetPriceForm();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to save price.');
@@ -509,7 +547,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       await this.billing.deletePrice(row.BpcUUID);
       this.selectedPriceUUIDs.delete(row.BpcUUID);
       this.snack.success('Price deleted.');
-      await this.refresh();
+      this.refresh();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to delete price.');
     }
@@ -590,7 +628,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       });
       this.snack.success('Credit added.');
       this.closeActiveDialog();
-      await this.refresh();
+      this.refresh();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to add credit.');
     } finally {
@@ -606,7 +644,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       await this.billing.cancelSubscription(row.BsuUUID);
       this.selectedSubscriptionUUIDs.delete(row.BsuUUID);
       this.snack.success('Subscription canceled.');
-      await this.refresh();
+      this.refresh();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to cancel subscription.');
     }
@@ -836,10 +874,6 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return this.i18n.t(option?.labelKey ?? this.label(scope));
   }
 
-  normalizedStatusFilter() {
-    return this.statusFilter === '' ? null : this.statusFilter;
-  }
-
   resolvedPriceCurrency() {
     return (
       this.normalizeCurrencyInput(this.priceForm.controls.currency.value) ?? this.defaultCurrency()
@@ -965,7 +999,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     label: string,
     verb: string,
   ) {
-    this.loading.set(true);
+    this.mutating.set(true);
     const failed = new Set<string>();
     try {
       for (const uuid of ids) {
@@ -976,7 +1010,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
           failed.add(uuid);
         }
       }
-      await this.refresh();
+      this.refresh();
       if (failed.size) {
         failed.forEach((uuid) => selection.add(uuid));
         this.snack.error(`${failed.size} selected ${label} record(s) could not be ${verb}.`);
@@ -984,7 +1018,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
         this.snack.success(`${ids.length} ${label} record(s) ${verb}.`);
       }
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -1013,16 +1047,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     return row.BpdUUID ?? null;
   }
 
-  private async finishLoading(startedAt: number) {
-    const elapsed = Date.now() - startedAt;
-    const remaining = Math.max(0, 600 - elapsed);
-    if (remaining) await new Promise((resolve) => setTimeout(resolve, remaining));
-    this.loading.set(false);
-  }
-
   private emptyToNull(value: unknown) {
     const text = String(value ?? '').trim();
     return text ? text : null;
+  }
+
+  private currentFilters(): BillingSystemFilters {
+    return {
+      search: this.searchInput,
+      priceProductUUID: this.priceProductFilter,
+      status: this.statusFilter,
+      subscriptionStatus: this.subscriptionStatusFilter,
+    };
   }
 
   private normalizeCurrencyInput(value: unknown) {
