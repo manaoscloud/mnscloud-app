@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -66,13 +68,40 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
   private readonly snack = inject(SnackbarService);
 
   readonly isMasterScope = signal(false);
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly editing = signal<VoipDidExternalItem | null>(null);
   readonly dataSource = new MatTableDataSource<VoipDidExternalItem>([]);
   readonly displayedColumns = ['number', 'provider', 'validation', 'billing', 'tenant', 'actions'];
+  private readonly appliedSearch = signal('');
   searchInput = '';
   search = '';
+
+  private readonly externalDidsResource = resource({
+    params: () => ({
+      search: this.appliedSearch(),
+      isMasterScope: this.isMasterScope(),
+    }),
+    defaultValue: [] as VoipDidExternalItem[],
+    loader: async ({ params }) => {
+      const response = await this.api.list(
+        { search: params.search, limit: 5000 },
+        params.isMasterScope,
+      );
+      return response?.data?.items ?? [];
+    },
+  });
+
+  readonly loading = this.externalDidsResource.isLoading;
+
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.externalDidsResource.value();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.externalDidsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load external DIDs.'));
+  });
 
   readonly form = this.fb.nonNullable.group({
     number: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
@@ -111,37 +140,25 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-    setTimeout(() => void this.loadItems(), 0);
   }
 
   ngOnDestroy() {
     this.closeDialog();
   }
 
-  async loadItems() {
-    this.loading.set(true);
-    try {
-      const response = await this.api.list(
-        { search: this.search, limit: 5000 },
-        this.isMasterScope(),
-      );
-      this.dataSource.data = response?.data?.items ?? [];
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to load external DIDs.');
-    } finally {
-      this.loading.set(false);
-    }
+  refreshList() {
+    this.externalDidsResource.reload();
   }
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadItems();
+    this.appliedSearch.set(this.search);
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadItems();
+    this.appliedSearch.set('');
   }
 
   startCreate() {
@@ -203,7 +220,7 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
         await this.api.create(payload);
         this.snack.success('External DID created.');
       }
-      await this.loadItems();
+      this.externalDidsResource.reload();
       if (closeAfterSave) this.closeDialog();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to save external DID.');
@@ -218,7 +235,7 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
         expectedSource: item.VddExternalAllowedSources ?? undefined,
       });
       this.snack.success('Validation restarted.');
-      await this.loadItems();
+      this.externalDidsResource.reload();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to start validation.');
     }
@@ -228,7 +245,7 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
     try {
       await this.api.setStatus(item.VddUUID, { validationStatus, billingStatus });
       this.snack.success('External DID status updated.');
-      await this.loadItems();
+      this.externalDidsResource.reload();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to update status.');
     }
@@ -238,7 +255,7 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
     try {
       await this.api.remove(item.VddUUID, this.isMasterScope());
       this.snack.success('External DID removed.');
-      await this.loadItems();
+      this.externalDidsResource.reload();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to remove external DID.');
     }
@@ -266,5 +283,11 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
     this.dialogBinding = null;
     this.dialogRef?.close();
     this.dialogRef = null;
+  }
+
+  private errorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error) return error.message;
+    const maybe = error as { error?: { error?: string }; message?: string };
+    return maybe?.error?.error || maybe?.message || fallback;
   }
 }
