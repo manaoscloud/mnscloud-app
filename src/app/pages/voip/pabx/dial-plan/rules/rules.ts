@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -79,7 +81,12 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
-  readonly loading = signal(false);
+  private readonly itemsResource = resource({
+    defaultValue: [] as VoipPabxDialPlanRuleItem[],
+    loader: () => this.fetchItems(),
+  });
+  private readonly mutating = signal(false);
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly saving = signal(false);
   readonly searchInput = signal('');
   readonly search = signal('');
@@ -148,12 +155,23 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly itemsEffect = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+  });
+  private readonly itemsErrorEffect = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error, 'Failed to load dial plan rules.'));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    setTimeout(() => void this.bootstrap(), 0);
+    void this.bootstrap();
   }
 
   ngOnDestroy() {
@@ -162,23 +180,23 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
 
   async bootstrap() {
     await Promise.all([this.loadDialPlans(), this.loadTrunks()]);
-    await this.loadItems();
+    this.itemsResource.reload();
   }
 
   refreshList() {
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
     this.dialPlanFilter.set('');
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   onDialPlanSelectOpened(opened: boolean) {
@@ -199,24 +217,13 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     this.trunks.set((response?.data?.items ?? []) as VoipPabxTrunkOption[]);
   }
 
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      const response = await this.api.listAllRules({
-        search: this.search(),
-        dialPlanUUID: this.dialPlanFilter(),
-        limit: this.listLimit,
-      });
-      this.dataSource.data = (response?.data?.items ?? []) as VoipPabxDialPlanRuleItem[];
-      this.reconcileSelection();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to load dial plan rules.'));
-      this.dataSource.data = [];
-      this.reconcileSelection();
-    } finally {
-      await this.finishLoading(start);
-    }
+  private async fetchItems(): Promise<VoipPabxDialPlanRuleItem[]> {
+    const response = await this.api.listAllRules({
+      search: this.search(),
+      dialPlanUUID: this.dialPlanFilter(),
+      limit: this.listLimit,
+    });
+    return (response?.data?.items ?? []) as VoipPabxDialPlanRuleItem[];
   }
 
   startCreate() {
@@ -306,7 +313,7 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
       this.snack.success(
         editing ? 'Dial plan rule updated successfully.' : 'Dial plan rule created successfully.',
       );
-      await this.loadItems();
+      this.itemsResource.reload();
       if (saveAndNew && createMode) {
         this.startCreate();
         return;
@@ -335,16 +342,16 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
       'Delete',
     );
     if (!confirmed) return;
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.api.removeRule(item.uuid);
       this.selectedUUIDs.update((current) => this.removeFromSet(current, item.uuid));
       this.snack.success('Dial plan rule deleted successfully.');
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err, 'Failed to delete dial plan rule.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -395,7 +402,7 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
       'Delete selected',
     );
     if (!confirmed) return;
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.api.removeManyRules(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -404,11 +411,11 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
       this.selectedUUIDs.set(failed);
       if (failed.size) this.snack.error(`${failed.size} selected rule(s) could not be deleted.`);
       else this.snack.success(`${deleted.size || ids.length} selected rule(s) deleted.`);
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err, 'Failed to delete selected rules.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -489,12 +496,6 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
         )
         .filter((uuid): uuid is string => !!uuid),
     );
-  }
-
-  private async finishLoading(start: number) {
-    const waitMs = Math.max(0, 600 - (performance.now() - start));
-    if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
-    this.loading.set(false);
   }
 
   private messageFromError(err: any, fallback: string) {
