@@ -2,7 +2,10 @@ import {
   AfterViewInit,
   Component,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -71,6 +74,16 @@ interface LegalHold {
   UlhDateReleased?: string | null;
 }
 
+type GovernanceUserFilters = {
+  search: string;
+  status: number | null;
+};
+
+const EMPTY_GOVERNANCE_USER_FILTERS: GovernanceUserFilters = {
+  search: '',
+  status: null,
+};
+
 @Component({
   selector: 'app-system-governance-users',
   standalone: true,
@@ -103,7 +116,6 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly selectedUser = signal<GovernanceUser | null>(null);
@@ -127,6 +139,17 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
 
   searchInput = '';
   statusFilter: number | null = null;
+  private readonly appliedFilters = signal<GovernanceUserFilters>({
+    ...EMPTY_GOVERNANCE_USER_FILTERS,
+  });
+  private readonly usersResource = resource({
+    params: () => this.appliedFilters(),
+    defaultValue: [] as GovernanceUser[],
+    loader: ({ params }) => this.fetchUsers(params),
+  });
+
+  readonly loading = this.usersResource.isLoading;
+  readonly users = computed(() => this.usersResource.value());
 
   readonly actionForm = this.fb.nonNullable.group({
     reason: ['', [Validators.required, Validators.minLength(4)]],
@@ -138,44 +161,56 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
   readonly sort = viewChild(MatSort);
   readonly actionDialog = viewChild<TemplateRef<unknown>>('actionDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
+  private lastLoadError = '';
+
+  private readonly syncUsers = effect(() => {
+    this.source.data = this.users();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.usersResource.error();
+    if (!error) {
+      this.error.set(null);
+      this.lastLoadError = '';
+      return;
+    }
+
+    const message = error instanceof Error ? error.message : 'Failed to load users.';
+    this.error.set(message);
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+    }
+  });
 
   ngAfterViewInit() {
     this.source.paginator = this.paginator() ?? null;
     this.source.sort = this.sort() ?? null;
     this.source.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    setTimeout(() => this.load(), 0);
   }
 
-  async load() {
-    const startedAt = Date.now();
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const params = new URLSearchParams();
-      if (this.searchInput.trim()) params.set('search', this.searchInput.trim());
-      if (this.statusFilter !== null) params.set('status', String(this.statusFilter));
-      params.set('limit', '2000');
-      const response = await this.api.get<ApiListResponse<GovernanceUser>>(
-        `system/governance/users?${params.toString()}`,
-      );
-      this.source.data = response.data?.items ?? [];
-    } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'Failed to load users.');
-    } finally {
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < 180) await new Promise((resolve) => setTimeout(resolve, 180 - elapsed));
-      this.loading.set(false);
-    }
+  refreshList() {
+    this.usersResource.reload();
   }
 
   applyFilters() {
-    void this.load();
+    const filters = this.normalizedFilters();
+    const current = this.appliedFilters();
+    if (filters.search === current.search && filters.status === current.status) {
+      this.usersResource.reload();
+    } else {
+      this.appliedFilters.set(filters);
+    }
   }
 
   clearFilters() {
     this.searchInput = '';
     this.statusFilter = null;
-    void this.load();
+    const current = this.appliedFilters();
+    if (!current.search && current.status === null) {
+      this.usersResource.reload();
+    } else {
+      this.appliedFilters.set({ ...EMPTY_GOVERNANCE_USER_FILTERS });
+    }
   }
 
   async selectUser(row: GovernanceUser) {
@@ -230,8 +265,8 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
       await this.api.post(endpoint, body);
       this.snack.success('User governance action completed.');
       this.dialogRef?.close();
-      await this.load();
-      const refreshed = this.source.data.find((item) => item.UserUUID === user.UserUUID) ?? user;
+      const users = await this.refreshUsersNow();
+      const refreshed = users.find((item) => item.UserUUID === user.UserUUID) ?? user;
       await this.selectUser(refreshed);
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to execute action.');
@@ -292,6 +327,31 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
       `system/governance/users/${user.UserUUID}/legal-holds?limit=100`,
     );
     this.legalHolds.set(response.data?.items ?? []);
+  }
+
+  private normalizedFilters(): GovernanceUserFilters {
+    return {
+      search: this.searchInput.trim(),
+      status: this.statusFilter,
+    };
+  }
+
+  private async refreshUsersNow() {
+    const users = await this.fetchUsers(this.appliedFilters());
+    this.source.data = users;
+    this.usersResource.reload();
+    return users;
+  }
+
+  private async fetchUsers(filters: GovernanceUserFilters) {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status !== null) params.set('status', String(filters.status));
+    params.set('limit', '2000');
+    const response = await this.api.get<ApiListResponse<GovernanceUser>>(
+      `system/governance/users?${params.toString()}`,
+    );
+    return response.data?.items ?? [];
   }
 
   private sortValue(row: GovernanceUser, column: string): string | number {
