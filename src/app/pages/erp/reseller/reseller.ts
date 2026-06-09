@@ -2,9 +2,11 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  effect,
   ElementRef,
   OnDestroy,
   OnInit,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -101,7 +103,13 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   resellers: Reseller[] = [];
   dataSource = new MatTableDataSource<Reseller>([]);
   displayedColumns: string[] = ['select', 'name', 'type', 'document', 'email', 'status', 'actions'];
-  loading = true;
+  private readonly resellersResource = resource({
+    defaultValue: [] as Reseller[],
+    loader: () => this.fetchResellers(),
+  });
+  get loading() {
+    return this.resellersResource.isLoading();
+  }
   saving = false;
   searchingPostalCode = false;
   error = '';
@@ -118,6 +126,19 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
   private resellerFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncResellers = effect(() => {
+    this.resellers = this.resellersResource.value();
+    this.dataSource.data = [...this.resellers];
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+  private readonly reportResellersError = effect(() => {
+    const error = this.resellersResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load resellers.'));
+      this.dataSource.data = [];
+    }
+  });
 
   form = {
     type: 'company' as 'company' | 'person',
@@ -177,9 +198,6 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      void this.loadResellers();
-    }, 0);
   }
 
   onSearchChange(value: string) {
@@ -188,17 +206,17 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadResellers();
+    this.resellersResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadResellers();
+    this.resellersResource.reload();
   }
 
   refreshList() {
-    void this.loadResellers();
+    this.resellersResource.reload();
   }
 
   applyFilter() {
@@ -209,38 +227,13 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadResellers() {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    this.loading = true;
-    this.cdr.detectChanges();
+  private async fetchResellers() {
     this.error = '';
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('q', this.search);
-      const res = await this.api.get<any>(`erp/resellers?${params.toString()}`);
-      this.resellers = res?.data?.items ?? [];
-      this.dataSource.data = [...this.resellers];
-      this.reconcileSelection();
-      this.applyFilter();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load resellers.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    }
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (this.search) params.set('q', this.search);
+    const res = await this.api.get<any>(`erp/resellers?${params.toString()}`);
+    return res?.data?.items ?? [];
   }
 
   startCreate() {
@@ -340,7 +333,7 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
         this.resetForm();
         this.cdr.detectChanges();
       }
-      await this.loadResellers();
+      this.resellersResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save reseller.');
     } finally {
@@ -405,17 +398,14 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/resellers/${resellerUUID}`);
       this.selectedResellerUUIDs.delete(resellerUUID);
-      await this.loadResellers();
+      this.resellersResource.reload();
       this.snack.success('Reseller deleted successfully.');
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete reseller.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -487,7 +477,6 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading = true;
     this.error = '';
     try {
       const response = await this.api.delete<any>('erp/resellers/bulk', { ids });
@@ -499,7 +488,7 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
       this.resellers = this.resellers.filter((row) => !deleted.has(row.ResellerUUID));
       this.selectedResellerUUIDs.clear();
       failed.forEach((uuid) => this.selectedResellerUUIDs.add(uuid));
-      await this.loadResellers();
+      this.resellersResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected reseller record(s) could not be deleted.`);
       } else {
@@ -507,8 +496,6 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
       }
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete selected resellers.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -530,6 +517,13 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   private showError(message: string) {
     this.error = '';
     this.snack.error(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
   }
 
   private showWarning(message: string) {

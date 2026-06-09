@@ -2,9 +2,11 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  effect,
   ElementRef,
   OnDestroy,
   OnInit,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -101,7 +103,13 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
   suppliers: Supplier[] = [];
   dataSource = new MatTableDataSource<Supplier>([]);
   displayedColumns: string[] = ['select', 'name', 'type', 'document', 'email', 'status', 'actions'];
-  loading = true;
+  private readonly suppliersResource = resource({
+    defaultValue: [] as Supplier[],
+    loader: () => this.fetchSuppliers(),
+  });
+  get loading() {
+    return this.suppliersResource.isLoading();
+  }
   saving = false;
   searchingPostalCode = false;
   error = '';
@@ -118,6 +126,19 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
   readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
   private supplierFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncSuppliers = effect(() => {
+    this.suppliers = this.suppliersResource.value();
+    this.dataSource.data = [...this.suppliers];
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+  private readonly reportSuppliersError = effect(() => {
+    const error = this.suppliersResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load suppliers.'));
+      this.dataSource.data = [];
+    }
+  });
 
   form = {
     type: 'company' as 'company' | 'person',
@@ -177,9 +198,6 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      void this.loadSuppliers();
-    }, 0);
   }
 
   onSearchChange(value: string) {
@@ -188,17 +206,17 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadSuppliers();
+    this.suppliersResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadSuppliers();
+    this.suppliersResource.reload();
   }
 
   refreshList() {
-    void this.loadSuppliers();
+    this.suppliersResource.reload();
   }
 
   applyFilter() {
@@ -209,33 +227,13 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadSuppliers() {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    this.loading = true;
-    this.cdr.detectChanges();
+  private async fetchSuppliers() {
     this.error = '';
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('q', this.search);
-      const res = await this.api.get<any>(`erp/suppliers?${params.toString()}`);
-      this.suppliers = res?.data?.items ?? [];
-      this.dataSource.data = [...this.suppliers];
-      this.reconcileSelection();
-      this.applyFilter();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load suppliers.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs > 0) {
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
-      }
-      this.loading = false;
-    }
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (this.search) params.set('q', this.search);
+    const res = await this.api.get<any>(`erp/suppliers?${params.toString()}`);
+    return res?.data?.items ?? [];
   }
 
   startCreate() {
@@ -335,7 +333,7 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
         this.resetForm();
         this.cdr.detectChanges();
       }
-      await this.loadSuppliers();
+      this.suppliersResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save supplier.');
     } finally {
@@ -400,17 +398,14 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/suppliers/${supplierUUID}`);
       this.selectedSupplierUUIDs.delete(supplierUUID);
-      await this.loadSuppliers();
+      this.suppliersResource.reload();
       this.snack.success('Supplier deleted successfully.');
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete supplier.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -482,7 +477,6 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading = true;
     this.error = '';
     try {
       const response = await this.api.delete<any>('erp/suppliers/bulk', { ids });
@@ -494,7 +488,7 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
       this.suppliers = this.suppliers.filter((row) => !deleted.has(row.SupplierUUID));
       this.selectedSupplierUUIDs.clear();
       failed.forEach((uuid) => this.selectedSupplierUUIDs.add(uuid));
-      await this.loadSuppliers();
+      this.suppliersResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected supplier record(s) could not be deleted.`);
       } else {
@@ -502,8 +496,6 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
       }
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete selected suppliers.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -525,6 +517,13 @@ export class ErpSupplierPage implements OnInit, AfterViewInit, OnDestroy {
   private showError(message: string) {
     this.error = '';
     this.snack.error(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
   }
 
   private showWarning(message: string) {

@@ -2,9 +2,11 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  effect,
   ElementRef,
   OnDestroy,
   OnInit,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -101,7 +103,13 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   carriers: Carrier[] = [];
   dataSource = new MatTableDataSource<Carrier>([]);
   displayedColumns: string[] = ['select', 'name', 'type', 'document', 'email', 'status', 'actions'];
-  loading = true;
+  private readonly carriersResource = resource({
+    defaultValue: [] as Carrier[],
+    loader: () => this.fetchCarriers(),
+  });
+  get loading() {
+    return this.carriersResource.isLoading();
+  }
   saving = false;
   searchingPostalCode = false;
   error = '';
@@ -118,6 +126,19 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
   private carrierFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncCarriers = effect(() => {
+    this.carriers = this.carriersResource.value();
+    this.dataSource.data = [...this.carriers];
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+  private readonly reportCarriersError = effect(() => {
+    const error = this.carriersResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load carriers.'));
+      this.dataSource.data = [];
+    }
+  });
 
   form = {
     type: 'company' as 'company' | 'person',
@@ -177,9 +198,6 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      void this.loadCarriers();
-    }, 0);
   }
 
   onSearchChange(value: string) {
@@ -188,17 +206,17 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadCarriers();
+    this.carriersResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadCarriers();
+    this.carriersResource.reload();
   }
 
   refreshList() {
-    void this.loadCarriers();
+    this.carriersResource.reload();
   }
 
   applyFilter() {
@@ -209,38 +227,13 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadCarriers() {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    this.loading = true;
-    this.cdr.detectChanges();
+  private async fetchCarriers() {
     this.error = '';
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('q', this.search);
-      const res = await this.api.get<any>(`erp/carriers?${params.toString()}`);
-      this.carriers = res?.data?.items ?? [];
-      this.dataSource.data = [...this.carriers];
-      this.reconcileSelection();
-      this.applyFilter();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load carriers.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    }
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (this.search) params.set('q', this.search);
+    const res = await this.api.get<any>(`erp/carriers?${params.toString()}`);
+    return res?.data?.items ?? [];
   }
 
   startCreate() {
@@ -340,7 +333,7 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
         this.resetForm();
         this.cdr.detectChanges();
       }
-      await this.loadCarriers();
+      this.carriersResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save carrier.');
     } finally {
@@ -405,17 +398,14 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/carriers/${carrierUUID}`);
       this.selectedCarrierUUIDs.delete(carrierUUID);
-      await this.loadCarriers();
+      this.carriersResource.reload();
       this.snack.success('Carrier deleted successfully.');
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete carrier.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -487,7 +477,6 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading = true;
     this.error = '';
     try {
       const response = await this.api.delete<any>('erp/carriers/bulk', { ids });
@@ -499,7 +488,7 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
       this.carriers = this.carriers.filter((row) => !deleted.has(row.CarrierUUID));
       this.selectedCarrierUUIDs.clear();
       failed.forEach((uuid) => this.selectedCarrierUUIDs.add(uuid));
-      await this.loadCarriers();
+      this.carriersResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected carrier record(s) could not be deleted.`);
       } else {
@@ -507,8 +496,6 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
       }
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete selected carriers.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -530,6 +517,13 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   private showError(message: string) {
     this.error = '';
     this.snack.error(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
   }
 
   private showWarning(message: string) {
