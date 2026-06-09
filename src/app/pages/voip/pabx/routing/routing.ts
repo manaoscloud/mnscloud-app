@@ -2,8 +2,10 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
   OnDestroy,
+  resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
@@ -89,7 +91,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
 
   readonly resource = signal<PabxRoutingResource>('external');
-  readonly loading = signal(false);
+  private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<any | null>(null);
@@ -125,6 +127,11 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   });
 
   readonly dataSource = new MatTableDataSource<any>([]);
+  private readonly itemsResource = resource({
+    defaultValue: [] as any[],
+    loader: () => this.fetchItems(),
+  });
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly displayedColumns = computed(() => {
     if (this.resource() === 'external') {
       return ['select', 'name', 'number', 'pabx', 'status', 'actions'];
@@ -178,6 +185,19 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   readonly routingFormDialog = viewChild<TemplateRef<unknown>>('routingFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly itemsEffect = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    this.dataSource.paginator?.firstPage();
+  });
+  private readonly itemsErrorEffect = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   readonly pageTitle = computed(() => {
     const titles: Record<PabxRoutingResource, string> = {
@@ -190,16 +210,16 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   });
 
   ngAfterViewInit() {
-    this.route.data.subscribe((data) => {
-      this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
-      this.resetForm();
-      void this.refreshList();
-    });
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.dataSource.filterPredicate = (row, filter) =>
       JSON.stringify(row).toLowerCase().includes(filter.trim().toLowerCase());
+    this.route.data.subscribe((data) => {
+      this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
+      this.resetForm();
+      void this.bootstrap();
+    });
   }
 
   ngOnDestroy() {
@@ -207,35 +227,18 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   }
 
   async refreshList() {
-    const started = performance.now();
-    this.loading.set(true);
-    try {
-      await this.loadLookups();
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('search', this.search);
-      const response = await this.api.list(this.resource(), params);
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.filter = '';
-      if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err));
-    } finally {
-      const waitMs = Math.max(0, 600 - (performance.now() - started));
-      setTimeout(() => this.loading.set(false), waitMs);
-    }
+    await this.bootstrap();
   }
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.refreshList();
+    this.itemsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.refreshList();
+    this.itemsResource.reload();
   }
 
   startCreate() {
@@ -303,7 +306,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
       } else {
         this.closeDialog();
       }
-      await this.refreshList();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err));
     } finally {
@@ -328,12 +331,15 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
     try {
+      this.mutating.set(true);
       await this.api.remove(this.resource(), this.uuidOf(row));
       this.snack.success(`${this.singularTitle()} deleted successfully.`);
       this.selectedRoutingUUIDs.delete(this.uuidOf(row));
-      await this.refreshList();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err));
+    } finally {
+      this.mutating.set(false);
     }
   }
 
@@ -579,6 +585,19 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     );
     await this.loadTargets();
     if (this.resource() === 'ivr') await this.loadOptionTargets();
+  }
+
+  private async bootstrap() {
+    await this.loadLookups();
+    this.itemsResource.reload();
+  }
+
+  private async fetchItems(): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (this.search) params.set('search', this.search);
+    const response = await this.api.list(this.resource(), params);
+    return response?.data?.items ?? [];
   }
 
   private async loadTargets() {

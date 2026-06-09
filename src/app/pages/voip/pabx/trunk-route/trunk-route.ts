@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -148,7 +150,7 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     (this.route.snapshot.data?.['resource'] ?? 'trunks') as ResourceKind,
   );
   readonly meta = computed(() => RESOURCE_META[this.resource()]);
-  readonly loading = signal(false);
+  private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<ResourceRow | null>(null);
@@ -167,6 +169,11 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     'actions',
   ];
   readonly dataSource = new MatTableDataSource<ResourceRow>([]);
+  private readonly itemsResource = resource({
+    defaultValue: [] as ResourceRow[],
+    loader: () => this.fetchItems(),
+  });
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly audioCodecOptions = ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'];
   readonly videoCodecOptions = ['H264'];
   readonly directionOptions = ['inbound', 'outbound', 'both'];
@@ -211,6 +218,18 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
   readonly resourceFormDialog = viewChild<TemplateRef<unknown>>('resourceFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly itemsEffect = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+    this.dataSource.paginator?.firstPage();
+  });
+  private readonly itemsErrorEffect = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -222,10 +241,7 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       if (column === 'status') return this.statusLabel(data);
       return String((data as Record<string, unknown>)[column] ?? '');
     };
-    setTimeout(() => {
-      void this.loadLookups();
-      void this.loadItems();
-    }, 0);
+    void this.bootstrap();
   }
 
   ngOnDestroy() {
@@ -236,33 +252,15 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
   }
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadItems();
+    this.itemsResource.reload();
   }
   clearSearchFilters() {
     this.search = '';
     this.searchInput = '';
-    void this.loadItems();
+    this.itemsResource.reload();
   }
   refreshList() {
-    return this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      const res = await this.api.list(this.resource(), {
-        search: this.search,
-        limit: this.listLimit,
-      });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.paginator?.firstPage();
-    } catch (err: any) {
-      this.snack.error(err?.error?.error || err?.message || 'Failed to load PABX resources.');
-    } finally {
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - (performance.now() - start)));
-    }
+    return this.bootstrap();
   }
 
   startCreate() {
@@ -326,7 +324,7 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     try {
       if (this.editing()) await this.api.update(this.resource(), this.editing()!.uuid, payload);
       else await this.api.create(this.resource(), payload);
-      await this.loadItems();
+      this.itemsResource.reload();
       if (saveAndNew && !this.editing()) {
         this.resetForm();
         return;
@@ -350,8 +348,15 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       !(await this.confirmDelete(`Delete ${this.meta().title}`, `Delete "${item.name}"?`, 'Delete'))
     )
       return;
-    await this.api.remove(this.resource(), item.uuid);
-    await this.loadItems();
+    try {
+      this.mutating.set(true);
+      await this.api.remove(this.resource(), item.uuid);
+      this.itemsResource.reload();
+    } catch (err: any) {
+      this.snack.error(this.messageFromError(err));
+    } finally {
+      this.mutating.set(false);
+    }
   }
   get selectedCount() {
     return this.selectedIds.size;
@@ -656,6 +661,17 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       await this.refreshInboundLookupsForSelectedPabx();
     }
   }
+  private async bootstrap() {
+    await this.loadLookups();
+    this.itemsResource.reload();
+  }
+  private async fetchItems(): Promise<ResourceRow[]> {
+    const res = await this.api.list(this.resource(), {
+      search: this.search,
+      limit: this.listLimit,
+    });
+    return res?.data?.items ?? [];
+  }
   private async refreshInboundLookupsForSelectedPabx(includeDidUUID = '') {
     if (!this.isInboundRouteResource() || !this.form.controls.pabxUUID.value) {
       this.didOptions.set([]);
@@ -757,6 +773,10 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       disableClose: true,
     });
     return Boolean(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private messageFromError(err: any) {
+    return err?.error?.error || err?.error?.message || err?.message || 'Operation failed.';
   }
 
   private parseCodecs(codecs: string) {
