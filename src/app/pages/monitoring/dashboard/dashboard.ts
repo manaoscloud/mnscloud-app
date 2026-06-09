@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -75,6 +77,24 @@ type KpiTile = {
   state: 'good' | 'warn' | 'bad' | 'neutral';
 };
 
+type MonitoringDashboardSnapshot = {
+  agents: MonitoringAgent[];
+  runtimeProducts: RuntimeProductFleet[];
+  latestLogs: ActivityLog[];
+  failedTotal: number;
+  errorTotal: number;
+  generatedAt: string | null;
+};
+
+const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
+  agents: [],
+  runtimeProducts: [],
+  latestLogs: [],
+  failedTotal: 0,
+  errorTotal: 0,
+  generatedAt: null,
+};
+
 @Component({
   selector: 'app-monitoring-dashboard',
   standalone: true,
@@ -100,21 +120,35 @@ export class MonitoringDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
-  private loadingStarted = 0;
 
   readonly activitySort = viewChild(MatSort);
   readonly activityPaginator = viewChild(MatPaginator);
 
-  readonly loading = signal(false);
-  readonly agents = signal<MonitoringAgent[]>([]);
-  readonly runtimeProducts = signal<RuntimeProductFleet[]>([]);
-  readonly latestLogs = signal<ActivityLog[]>([]);
-  readonly failedTotal = signal(0);
-  readonly errorTotal = signal(0);
-  readonly generatedAt = signal<string | null>(null);
+  private readonly dashboardResource = resource({
+    loader: () => this.loadDashboardSnapshot(),
+  });
+
+  readonly loading = this.dashboardResource.isLoading;
+  readonly dashboard = computed(() => this.dashboardResource.value() ?? EMPTY_DASHBOARD);
+  readonly agents = computed(() => this.dashboard().agents);
+  readonly runtimeProducts = computed(() => this.dashboard().runtimeProducts);
+  readonly latestLogs = computed(() => this.dashboard().latestLogs);
+  readonly failedTotal = computed(() => this.dashboard().failedTotal);
+  readonly errorTotal = computed(() => this.dashboard().errorTotal);
+  readonly generatedAt = computed(() => this.dashboard().generatedAt);
 
   readonly activityDataSource = new MatTableDataSource<ActivityLog>([]);
   readonly activityColumns = ['created', 'level', 'status', 'action', 'resource', 'message'];
+
+  private readonly syncActivityTable = effect(() => {
+    this.activityDataSource.data = this.latestLogs();
+  });
+
+  private readonly reportDashboardError = effect(() => {
+    const error = this.dashboardResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load monitoring dashboard.'));
+  });
 
   readonly agentSummary = computed(() => {
     const rows = this.agents();
@@ -183,59 +217,16 @@ export class MonitoringDashboardPage implements AfterViewInit {
       this.activitySortValue(row, column);
     this.activityDataSource.sort = this.activitySort() ?? null;
     this.activityDataSource.paginator = this.activityPaginator() ?? null;
-    void this.load();
   }
 
   refreshList() {
-    void this.load();
+    this.dashboardResource.reload();
   }
 
   monitoringRoute(path: 'agents' | 'activity-logs') {
     return this.auth.user()?.role === 'MASTER'
       ? ['/system/monitoring', path]
       : ['/monitoring', path];
-  }
-
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-    try {
-      const [agentsResult, runtimeResult, logsResult, failedResult, errorsResult] =
-        await Promise.allSettled([
-          this.api.get<any>('monitoring/agents?limit=1000'),
-          this.api.get<any>('monitoring/agents/runtime-products'),
-          this.api.get<any>('monitoring/activity-logs?limit=12&offset=0'),
-          this.api.get<any>('monitoring/activity-logs?status=failed&limit=1&offset=0'),
-          this.api.get<any>('monitoring/activity-logs?level=error&limit=1&offset=0'),
-        ]);
-
-      if (agentsResult.status === 'rejected') throw agentsResult.reason;
-      if (runtimeResult.status === 'rejected') throw runtimeResult.reason;
-      if (logsResult.status === 'rejected') throw logsResult.reason;
-
-      this.agents.set(agentsResult.value?.data?.items ?? []);
-      this.runtimeProducts.set(runtimeResult.value?.data ?? []);
-      this.latestLogs.set(logsResult.value?.data?.items ?? []);
-      this.activityDataSource.data = this.latestLogs();
-      this.failedTotal.set(
-        failedResult.status === 'fulfilled' ? Number(failedResult.value?.data?.total ?? 0) : 0,
-      );
-      this.errorTotal.set(
-        errorsResult.status === 'fulfilled' ? Number(errorsResult.value?.data?.total ?? 0) : 0,
-      );
-      this.generatedAt.set(new Date().toISOString());
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load monitoring dashboard.'));
-      this.agents.set([]);
-      this.runtimeProducts.set([]);
-      this.latestLogs.set([]);
-      this.activityDataSource.data = [];
-      this.failedTotal.set(0);
-      this.errorTotal.set(0);
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
   }
 
   runtimeProductStatus(product: RuntimeProductFleet) {
@@ -298,5 +289,31 @@ export class MonitoringDashboardPage implements AfterViewInit {
   private errorMessage(error: unknown, fallback: string) {
     const maybe = error as { error?: { error?: string; message?: string }; message?: string };
     return maybe?.error?.message || maybe?.error?.error || maybe?.message || fallback;
+  }
+
+  private async loadDashboardSnapshot(): Promise<MonitoringDashboardSnapshot> {
+    const [agentsResult, runtimeResult, logsResult, failedResult, errorsResult] =
+      await Promise.allSettled([
+        this.api.get<any>('monitoring/agents?limit=1000'),
+        this.api.get<any>('monitoring/agents/runtime-products'),
+        this.api.get<any>('monitoring/activity-logs?limit=12&offset=0'),
+        this.api.get<any>('monitoring/activity-logs?status=failed&limit=1&offset=0'),
+        this.api.get<any>('monitoring/activity-logs?level=error&limit=1&offset=0'),
+      ]);
+
+    if (agentsResult.status === 'rejected') throw agentsResult.reason;
+    if (runtimeResult.status === 'rejected') throw runtimeResult.reason;
+    if (logsResult.status === 'rejected') throw logsResult.reason;
+
+    return {
+      agents: agentsResult.value?.data?.items ?? [],
+      runtimeProducts: runtimeResult.value?.data ?? [],
+      latestLogs: logsResult.value?.data?.items ?? [],
+      failedTotal:
+        failedResult.status === 'fulfilled' ? Number(failedResult.value?.data?.total ?? 0) : 0,
+      errorTotal:
+        errorsResult.status === 'fulfilled' ? Number(errorsResult.value?.data?.total ?? 0) : 0,
+      generatedAt: new Date().toISOString(),
+    };
   }
 }

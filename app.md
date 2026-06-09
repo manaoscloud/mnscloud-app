@@ -58,6 +58,19 @@
   `@ViewChildren`.
 - Use `signal`, `computed`, `linkedSignal`, and small explicit effects for UI state. Keep API/DB
   business decisions out of signals; signals only model presentation state and user interaction.
+- Use Angular `resource()` for dashboard/read-model data that is loaded from one or more GET
+  endpoints and refreshed as a unit. Keep the loader typed, return a single immutable snapshot, and
+  derive UI state with `computed()` instead of maintaining parallel `loading/error/items` signals.
+- `resource()` loaders may combine multiple API calls when the screen needs a consistent dashboard
+  snapshot. Required panels should reject the loader on failure; optional counters/panels may use
+  settled fallbacks inside the snapshot so one secondary metric does not blank the full dashboard.
+- Use `resource.reload()` for explicit refresh actions. Do not duplicate resource state into manual
+  mutable signals unless a UI integration requires an adapter such as `MatTableDataSource`.
+- Keep mutations (`POST`, `PUT`, `DELETE`, uploads, queue actions, provisioning actions) explicit
+  through service methods. Do not hide business workflow side effects inside `resource()` loaders.
+- `httpResource` can be introduced for simple same-service GET resources after the endpoint typing is
+  stable. Continue using `ApiService` where request headers, tenant context, auth behavior, upload
+  progress, or custom error handling are required.
 - Prefer direct standalone imports (`DatePipe`, `JsonPipe`, `NgClass`, specific Material modules,
   etc.) instead of broad `CommonModule` when the component can declare the exact template
   dependency. Run the Angular unused-import cleanup after migration/refactor work.
