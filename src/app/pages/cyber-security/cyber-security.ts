@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   OnInit,
+  resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
@@ -131,6 +132,41 @@ type CyberProgressEvent = {
   error?: string;
 };
 
+type CyberFilters = {
+  search: string;
+  serverUUID: string;
+  status: string;
+  level: string;
+  serviceSlug: string;
+  sourceIP: string;
+  action: string;
+  origin: string;
+};
+
+type CyberSnapshot = {
+  dashboard: CyberRecord;
+  servers: CyberRecord[];
+  services: CyberRecord[];
+  profiles: CyberRecord[];
+  decisions: CyberRecord[];
+  alerts: CyberRecord[];
+  listEntries: CyberRecord[];
+  trustedNodes: CyberRecord[];
+  securityEvents: CyberRecord[];
+};
+
+const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
+  dashboard: {},
+  servers: [],
+  services: [],
+  profiles: [],
+  decisions: [],
+  alerts: [],
+  listEntries: [],
+  trustedNodes: [],
+  securityEvents: [],
+};
+
 @Component({
   selector: 'app-cyber-security',
   standalone: true,
@@ -173,7 +209,23 @@ export class CyberSecurityPage implements OnInit {
   readonly alertDialog = viewChild<TemplateRef<unknown>>('alertDialog');
   readonly decisionDialog = viewChild<TemplateRef<unknown>>('decisionDialog');
 
-  readonly loading = signal(false);
+  private readonly appliedFilters = signal<CyberFilters>({
+    search: '',
+    serverUUID: '',
+    status: '',
+    level: '',
+    serviceSlug: '',
+    sourceIP: '',
+    action: '',
+    origin: '',
+  });
+  private readonly cyberResource = resource({
+    params: () => this.appliedFilters(),
+    defaultValue: EMPTY_CYBER_SNAPSHOT,
+    loader: ({ params }) => this.fetchCyberSnapshot(params),
+  });
+
+  readonly loading = this.cyberResource.isLoading;
   readonly dashboard = signal<CyberRecord>({});
   readonly servers = signal<CyberRecord[]>([]);
   readonly services = signal<CyberRecord[]>([]);
@@ -204,6 +256,27 @@ export class CyberSecurityPage implements OnInit {
     this.decisionDataSource.sort = this.decisionSort() ?? null;
     this.alertDataSource.paginator = this.alertPaginator() ?? null;
     this.alertDataSource.sort = this.alertSort() ?? null;
+  });
+
+  private readonly syncCyberData = effect(() => {
+    const snapshot = this.cyberResource.value();
+    this.dashboard.set(snapshot.dashboard);
+    this.servers.set(snapshot.servers);
+    this.services.set(snapshot.services);
+    this.profiles.set(snapshot.profiles);
+    this.decisions.set(snapshot.decisions);
+    this.decisionDataSource.data = snapshot.decisions;
+    this.alerts.set(snapshot.alerts);
+    this.alertDataSource.data = snapshot.alerts;
+    this.listEntries.set(snapshot.listEntries);
+    this.trustedNodes.set(snapshot.trustedNodes);
+    this.securityEvents.set(snapshot.securityEvents);
+  });
+
+  private readonly reportCyberError = effect(() => {
+    const error = this.cyberResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load Cyber Security.'));
   });
 
   readonly sections: Array<{
@@ -453,7 +526,7 @@ export class CyberSecurityPage implements OnInit {
     this.route.paramMap.subscribe((params) => {
       this.activeSection.set(this.normalizeSection(params.get('section')));
     });
-    void this.loadAll();
+    this.refreshList();
   }
 
   routeFor(section: CyberSection) {
@@ -463,57 +536,52 @@ export class CyberSecurityPage implements OnInit {
     return section === 'dashboard' ? base : `${base}/${section}`;
   }
 
-  async loadAll() {
-    this.loading.set(true);
-    try {
-      const query = this.queryString();
-      const decisionQuery = this.decisionQueryString();
-      const alertQuery = this.alertQueryString();
-      const [
-        dashboard,
-        servers,
-        services,
-        profiles,
-        decisions,
-        alerts,
-        lists,
-        trustedNodes,
-        securityEvents,
-      ] = await Promise.all([
-        this.api.get<any>('cyber-security/dashboard'),
-        this.api.get<any>(`cyber-security/servers${query}`),
-        this.api.get<any>(`cyber-security/services${query}`),
-        this.api.get<any>(`cyber-security/profiles${query}`),
-        this.api.get<any>(`cyber-security/decisions${decisionQuery}`),
-        this.api.get<any>(`cyber-security/alerts${alertQuery}`),
-        this.api.get<any>(`cyber-security/lists${query}`),
-        this.api.get<any>(`cyber-security/trusted-nodes${query}`),
-        this.api.get<any>(`cyber-security/security-events${query}`),
-      ]);
-      this.dashboard.set(dashboard?.data ?? {});
-      this.servers.set(servers?.data?.items ?? []);
-      this.services.set(services?.data?.items ?? []);
-      this.profiles.set(profiles?.data?.items ?? []);
-      const decisionItems = decisions?.data?.items ?? [];
-      this.decisions.set(decisionItems);
-      this.decisionDataSource.data = decisionItems;
-      const alertItems = alerts?.data?.items ?? [];
-      this.alerts.set(alertItems);
-      this.alertDataSource.data = alertItems;
-      this.listEntries.set(lists?.data?.items ?? []);
-      this.trustedNodes.set(trustedNodes?.data?.items ?? []);
-      this.securityEvents.set(securityEvents?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load Cyber Security.'));
-    } finally {
-      this.loading.set(false);
-    }
+  refreshList() {
+    this.cyberResource.reload();
+  }
+
+  private async fetchCyberSnapshot(filters: CyberFilters): Promise<CyberSnapshot> {
+    const query = this.queryString(filters);
+    const decisionQuery = this.decisionQueryString(filters);
+    const alertQuery = this.alertQueryString(filters);
+    const [
+      dashboard,
+      servers,
+      services,
+      profiles,
+      decisions,
+      alerts,
+      lists,
+      trustedNodes,
+      securityEvents,
+    ] = await Promise.all([
+      this.api.get<any>('cyber-security/dashboard'),
+      this.api.get<any>(`cyber-security/servers${query}`),
+      this.api.get<any>(`cyber-security/services${query}`),
+      this.api.get<any>(`cyber-security/profiles${query}`),
+      this.api.get<any>(`cyber-security/decisions${decisionQuery}`),
+      this.api.get<any>(`cyber-security/alerts${alertQuery}`),
+      this.api.get<any>(`cyber-security/lists${query}`),
+      this.api.get<any>(`cyber-security/trusted-nodes${query}`),
+      this.api.get<any>(`cyber-security/security-events${query}`),
+    ]);
+    return {
+      dashboard: dashboard?.data ?? {},
+      servers: servers?.data?.items ?? [],
+      services: services?.data?.items ?? [],
+      profiles: profiles?.data?.items ?? [],
+      decisions: decisions?.data?.items ?? [],
+      alerts: alerts?.data?.items ?? [],
+      listEntries: lists?.data?.items ?? [],
+      trustedNodes: trustedNodes?.data?.items ?? [],
+      securityEvents: securityEvents?.data?.items ?? [],
+    };
   }
 
   applyFilters() {
     this.resetDecisionPaginator();
     this.resetAlertPaginator();
-    void this.loadAll();
+    this.appliedFilters.set(this.currentFilters());
   }
 
   clearFilters() {
@@ -531,7 +599,7 @@ export class CyberSecurityPage implements OnInit {
     this.alertServiceSearch.set('');
     this.resetDecisionPaginator();
     this.resetAlertPaginator();
-    void this.loadAll();
+    this.applyFilters();
   }
 
   clearServerProfileSearch(open: boolean) {
@@ -588,7 +656,7 @@ export class CyberSecurityPage implements OnInit {
       payload: {},
     });
     this.snack.success('Security status refresh started.');
-    void this.loadAll();
+    this.refreshList();
   }
 
   async queueInstall(row: CyberRecord) {
@@ -601,7 +669,7 @@ export class CyberSecurityPage implements OnInit {
       },
     });
     this.snack.success('Protection install job started.');
-    void this.loadAll();
+    this.refreshList();
   }
 
   async queueProfileApply(row: CyberRecord) {
@@ -613,7 +681,7 @@ export class CyberSecurityPage implements OnInit {
       payload: {},
     });
     this.snack.success('Security profile apply job started.');
-    void this.loadAll();
+    this.refreshList();
   }
 
   async assignServerProfile(row: CyberRecord, profileUUID: string | null) {
@@ -629,7 +697,7 @@ export class CyberSecurityPage implements OnInit {
         profileUUID,
       });
       this.snack.success(profileUUID ? 'Security profile assigned.' : 'Security profile removed.');
-      void this.loadAll();
+      this.refreshList();
     } catch (error) {
       row.profileUUID = previousProfileUUID ?? undefined;
       row.profileName = previousProfileUUID
@@ -682,7 +750,7 @@ export class CyberSecurityPage implements OnInit {
     try {
       await this.api.put(`cyber-security/alerts/${row.uuid}/status`, { status });
       this.snack.success('Alert updated.');
-      void this.loadAll();
+      this.refreshList();
     } catch (error) {
       row.status = previous;
       this.snack.error(this.errorMessage(error, 'Failed to update alert.'));
@@ -761,7 +829,7 @@ export class CyberSecurityPage implements OnInit {
       else await this.api.post(endpoint, payload);
       this.dialog.closeAll();
       this.snack.success('Saved successfully.');
-      void this.loadAll();
+      this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to save.'));
     }
@@ -771,7 +839,7 @@ export class CyberSecurityPage implements OnInit {
     try {
       await this.api.delete(endpoint);
       this.snack.success('Deleted successfully.');
-      void this.loadAll();
+      this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete.'));
     }
@@ -786,8 +854,7 @@ export class CyberSecurityPage implements OnInit {
     });
   }
 
-  private queryString() {
-    const filters = this.filterForm.getRawValue();
+  private queryString(filters: CyberFilters) {
     const search = filters.search.trim();
     const params = new URLSearchParams();
     if (search) params.set('search', search);
@@ -795,8 +862,7 @@ export class CyberSecurityPage implements OnInit {
     return `?${params.toString()}`;
   }
 
-  private alertQueryString() {
-    const filters = this.filterForm.getRawValue();
+  private alertQueryString(filters: CyberFilters) {
     const params = new URLSearchParams();
     if (filters.search.trim()) params.set('search', filters.search.trim());
     if (filters.serverUUID) params.set('serverUUID', filters.serverUUID);
@@ -808,8 +874,7 @@ export class CyberSecurityPage implements OnInit {
     return `?${params.toString()}`;
   }
 
-  private decisionQueryString() {
-    const filters = this.filterForm.getRawValue();
+  private decisionQueryString(filters: CyberFilters) {
     const params = new URLSearchParams();
     if (filters.search.trim()) params.set('search', filters.search.trim());
     if (filters.serverUUID) params.set('serverUUID', filters.serverUUID);
@@ -836,6 +901,10 @@ export class CyberSecurityPage implements OnInit {
       }
     }
     return next;
+  }
+
+  private currentFilters(): CyberFilters {
+    return this.filterForm.getRawValue();
   }
 
   private errorMessage(error: any, fallback: string) {
