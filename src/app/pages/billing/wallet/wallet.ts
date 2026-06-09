@@ -4,7 +4,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -41,6 +44,14 @@ import {
 } from '../shared/billing.service';
 
 export type BillingTenantSection = 'dashboard' | 'catalog' | 'subscriptions' | 'ledger';
+
+type BillingWalletSnapshot = {
+  wallets: BillingWallet[];
+  catalog: BillingCatalogItem[];
+  subscriptions: BillingSubscription[];
+  ledger: BillingLedgerEntry[];
+  topups: BillingPaymentIntent[];
+};
 
 export const BILLING_WALLET_IMPORTS = [
   DatePipe,
@@ -81,7 +92,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
 
   section: BillingTenantSection = 'dashboard';
 
-  readonly loading = signal(false);
+  private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly wallets = signal<BillingWallet[]>([]);
@@ -91,6 +102,17 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   readonly catalogSource = new MatTableDataSource<BillingCatalogItem>([]);
   readonly subscriptionSource = new MatTableDataSource<BillingSubscription>([]);
   readonly ledgerSource = new MatTableDataSource<BillingLedgerEntry>([]);
+  private readonly walletResource = resource({
+    defaultValue: {
+      wallets: [],
+      catalog: [],
+      subscriptions: [],
+      ledger: [],
+      topups: [],
+    } as BillingWalletSnapshot,
+    loader: () => this.fetchWalletSnapshot(),
+  });
+  readonly loading = computed(() => this.walletResource.isLoading() || this.mutating());
 
   readonly catalogColumns = ['product', 'mode', 'price', 'setup', 'actions'];
   readonly subscriptionColumns = [
@@ -140,6 +162,20 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   readonly ledgerSort = viewChild<MatSort>('ledgerSort');
   private subscriptionDialogRef: MatDialogRef<unknown> | null = null;
   private subscriptionDialogBinding: CrudDialogBinding | null = null;
+  private readonly walletEffect = effect(() => {
+    const snapshot = this.walletResource.value();
+    this.wallets.set(snapshot.wallets);
+    this.topups.set(snapshot.topups);
+    this.catalogSource.data = snapshot.catalog;
+    this.subscriptionSource.data = snapshot.subscriptions;
+    this.ledgerSource.data = snapshot.ledger;
+    this.reconcileSelection();
+  });
+  private readonly walletErrorEffect = effect(() => {
+    const error = this.walletResource.error();
+    if (!error) return;
+    this.error.set(error instanceof Error ? error.message : 'Failed to load billing data.');
+  });
 
   ngAfterViewInit() {
     this.catalogSource.paginator = this.catalogPaginator() ?? null;
@@ -151,36 +187,16 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.catalogSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.ledgerSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    setTimeout(() => this.refresh(), 0);
+    this.refresh();
   }
 
   ngOnDestroy() {
     this.closeSubscriptionDialog();
   }
 
-  async refresh() {
-    const startedAt = Date.now();
-    this.loading.set(true);
+  refresh() {
     this.error.set(null);
-    try {
-      const [wallets, catalog, subscriptions, ledger, topups] = await Promise.all([
-        this.billing.listWallets(),
-        this.billing.listCatalog(this.searchInput),
-        this.billing.listSubscriptions(this.searchInput, this.statusFilter),
-        this.billing.listLedger(this.ledgerSearchInput),
-        this.billing.listTopups('PENDING'),
-      ]);
-      this.wallets.set(wallets);
-      this.topups.set(topups);
-      this.catalogSource.data = catalog;
-      this.subscriptionSource.data = subscriptions;
-      this.ledgerSource.data = ledger;
-      this.reconcileSelection();
-    } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'Failed to load billing data.');
-    } finally {
-      await this.finishLoading(startedAt);
-    }
+    this.walletResource.reload();
   }
 
   applyFilters() {
@@ -267,7 +283,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
         'Top-up request created. Credit will be applied after payment confirmation.',
       );
       this.closeSubscriptionDialog();
-      await this.refresh();
+      this.refresh();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to create top-up request.');
     } finally {
@@ -316,7 +332,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       });
       this.snack.success('Subscription created.');
       if (!keepOpen) this.closeSubscriptionDialog();
-      await this.refresh();
+      this.refresh();
       if (keepOpen) this.resetSubscriptionForm();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to create subscription.');
@@ -342,7 +358,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       await this.billing.cancelSubscription(row.BsuUUID);
       this.selectedSubscriptionUUIDs.delete(row.BsuUUID);
       this.snack.success('Subscription canceled.');
-      await this.refresh();
+      this.refresh();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Failed to cancel subscription.');
     }
@@ -410,7 +426,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     )
       return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     const failed = new Set<string>();
     try {
       for (const uuid of ids) {
@@ -421,7 +437,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
           failed.add(uuid);
         }
       }
-      await this.refresh();
+      this.refresh();
       if (failed.size) {
         failed.forEach((uuid) => this.selectedSubscriptionUUIDs.add(uuid));
         this.snack.error(`${failed.size} selected subscription record(s) could not be canceled.`);
@@ -429,8 +445,20 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
         this.snack.success(`${ids.length} subscription record(s) canceled.`);
       }
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
+  }
+
+  private async fetchWalletSnapshot(): Promise<BillingWalletSnapshot> {
+    this.error.set(null);
+    const [wallets, catalog, subscriptions, ledger, topups] = await Promise.all([
+      this.billing.listWallets(),
+      this.billing.listCatalog(this.searchInput),
+      this.billing.listSubscriptions(this.searchInput, this.statusFilter),
+      this.billing.listLedger(this.ledgerSearchInput),
+      this.billing.listTopups('PENDING'),
+    ]);
+    return { wallets, catalog, subscriptions, ledger, topups };
   }
 
   private sortValue(row: any, column: string) {
@@ -501,10 +529,4 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     });
   }
 
-  private async finishLoading(startedAt: number) {
-    const elapsed = Date.now() - startedAt;
-    const remaining = Math.max(0, 600 - elapsed);
-    if (remaining) await new Promise((resolve) => setTimeout(resolve, remaining));
-    this.loading.set(false);
-  }
 }
