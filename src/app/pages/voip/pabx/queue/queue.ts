@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -85,7 +87,7 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
-  readonly loading = signal(false);
+  private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly membersLoading = signal(false);
@@ -102,6 +104,11 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
   readonly mediaFileOptions = signal<Option[]>([]);
   readonly memberRows = signal<VoipPabxQueueMemberItem[]>([]);
   readonly dataSource = new MatTableDataSource<VoipPabxQueueItem>([]);
+  private readonly itemsResource = resource({
+    defaultValue: [] as VoipPabxQueueItem[],
+    loader: () => this.fetchItems(),
+  });
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly displayedColumns = [
     'select',
     'name',
@@ -162,12 +169,25 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
   readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly itemsEffect = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    this.reconcileSelection();
+    const paginator = this.paginator();
+    if (paginator) paginator.firstPage();
+  });
+  private readonly itemsErrorEffect = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error, 'Failed to load queues.'));
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    setTimeout(() => void this.loadItems(), 0);
+    this.itemsResource.reload();
   }
 
   ngOnDestroy() {
@@ -175,38 +195,18 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    const started = performance.now();
-    this.loading.set(true);
-    try {
-      await this.loadLookups();
-      const params = new URLSearchParams({ limit: String(this.listLimit) });
-      if (this.search()) params.set('search', this.search());
-      const response = await this.api.list(params);
-      this.dataSource.data = (response?.data?.items ?? []) as VoipPabxQueueItem[];
-      this.reconcileSelection();
-      const paginator = this.paginator();
-      if (paginator) paginator.firstPage();
-    } catch (err) {
-      this.snack.error(this.messageFromError(err, 'Failed to load queues.'));
-    } finally {
-      const waitMs = Math.max(0, 600 - (performance.now() - started));
-      setTimeout(() => this.loading.set(false), waitMs);
-    }
+    this.itemsResource.reload();
   }
 
   startCreate() {
@@ -259,7 +259,7 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
       } else {
         this.closeDialog();
       }
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err) {
       this.snack.error(this.messageFromError(err, 'Failed to save queue.'));
     } finally {
@@ -280,6 +280,7 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
     if (!confirmed) return;
 
     try {
+      this.mutating.set(true);
       await this.api.remove(item.VpqUUID);
       this.snack.success('Queue deleted successfully.');
       this.selectedUUIDs.update((set) => {
@@ -287,9 +288,11 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
         next.delete(item.VpqUUID);
         return next;
       });
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err) {
       this.snack.error(this.messageFromError(err, 'Failed to delete queue.'));
+    } finally {
+      this.mutating.set(false);
     }
   }
 
@@ -476,6 +479,14 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
         pabxUUID: item.pabxUUID,
       })),
     );
+  }
+
+  private async fetchItems(): Promise<VoipPabxQueueItem[]> {
+    await this.loadLookups();
+    const params = new URLSearchParams({ limit: String(this.listLimit) });
+    if (this.search()) params.set('search', this.search());
+    const response = await this.api.list(params);
+    return (response?.data?.items ?? []) as VoipPabxQueueItem[];
   }
 
   private async loadMembers() {
