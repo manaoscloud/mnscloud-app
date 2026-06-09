@@ -1,10 +1,11 @@
 import {
   Component,
   OnDestroy,
-  OnInit,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -80,7 +81,7 @@ type ApiResponse<T> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
-export class HostingStorageProvidersPage implements OnInit, OnDestroy {
+export class HostingStorageProvidersPage implements OnDestroy {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -92,7 +93,6 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
-  private loadingStarted = 0;
   readonly dataSource = new MatTableDataSource<HostingStorageProvider>([]);
 
   readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
@@ -100,9 +100,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
     this.isMaster() ? 'system/hosting/storage/providers' : 'hosting/storage/providers',
   );
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
-  readonly providers = signal<HostingStorageProvider[]>([]);
   readonly editing = signal<HostingStorageProvider | null>(null);
   readonly selectedProvider = signal<StorageProvider>('s3');
   readonly selectedIds = signal<Set<string>>(new Set());
@@ -127,6 +125,30 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
     search: [''],
     provider: [''],
     status: [''],
+  });
+
+  private readonly providersResource = resource({
+    params: () => ({ endpoint: this.endpoint() }),
+    defaultValue: [] as HostingStorageProvider[],
+    loader: async ({ params }) => {
+      const result = await this.api.get<ApiResponse<HostingStorageProvider[]>>(params.endpoint);
+      return Array.isArray(result.data) ? result.data : [];
+    },
+  });
+
+  readonly loading = this.providersResource.isLoading;
+  readonly providers = this.providersResource.value;
+
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.providers();
+    this.pageIndex.set(0);
+    this.reconcileSelection();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.providersResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load storage providers.'));
   });
 
   readonly form = this.fb.nonNullable.group({
@@ -186,7 +208,6 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       this.applyProviderValidators(provider);
     });
     this.applyProviderValidators(this.form.controls.provider.value);
-    void this.loadItems();
   }
 
   ngOnDestroy() {
@@ -194,24 +215,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-    try {
-      const result = await this.api.get<ApiResponse<HostingStorageProvider[]>>(this.endpoint());
-      this.providers.set(Array.isArray(result.data) ? result.data : []);
-      this.dataSource.data = this.providers();
-      this.pageIndex.set(0);
-      this.reconcileSelection();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load storage providers.'));
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+    this.providersResource.reload();
   }
 
   applyFilters() {
@@ -417,7 +421,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
         await this.api.post(this.endpoint(), payload);
         this.snack.success('Storage provider created.');
       }
-      await this.loadItems();
+      this.providersResource.reload();
       if (keepOpen && !editing) {
         this.editing.set(null);
         this.form.reset({
@@ -481,7 +485,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
     try {
       await this.api.delete(`${this.endpoint()}/${item.HspUUID}`);
       this.snack.success('Storage provider deleted.');
-      await this.loadItems();
+      this.providersResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete storage provider.'));
     }
@@ -504,7 +508,7 @@ export class HostingStorageProvidersPage implements OnInit, OnDestroy {
       } else {
         this.snack.success('Selected storage providers deleted.');
       }
-      await this.loadItems();
+      this.providersResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete selected storage providers.'));
     }

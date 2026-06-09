@@ -3,7 +3,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -109,7 +111,6 @@ export class HostingSmtpProvidersPage implements OnDestroy {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
-  private loadingStarted = 0;
   readonly dataSource = new MatTableDataSource<HostingSmtpProvider>([]);
 
   readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
@@ -117,9 +118,7 @@ export class HostingSmtpProvidersPage implements OnDestroy {
     this.isMaster() ? 'system/hosting/smtp/providers' : 'hosting/smtp/providers',
   );
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
-  readonly providers = signal<HostingSmtpProvider[]>([]);
   readonly editing = signal<HostingSmtpProvider | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
@@ -143,6 +142,30 @@ export class HostingSmtpProvidersPage implements OnDestroy {
     search: [''],
     provider: [''],
     status: [''],
+  });
+
+  private readonly providersResource = resource({
+    params: () => ({ endpoint: this.endpoint() }),
+    defaultValue: [] as HostingSmtpProvider[],
+    loader: async ({ params }) => {
+      const result = await this.api.get<HostingSmtpProvider[]>(params.endpoint);
+      return Array.isArray(result) ? result : [];
+    },
+  });
+
+  readonly loading = this.providersResource.isLoading;
+  readonly providers = this.providersResource.value;
+
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.providers();
+    this.pageIndex.set(0);
+    this.reconcileSelection();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.providersResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load SMTP providers.'));
   });
 
   readonly form = this.fb.nonNullable.group({
@@ -181,7 +204,6 @@ export class HostingSmtpProvidersPage implements OnDestroy {
 
   ngOnInit() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.loadItems();
   }
 
   ngOnDestroy() {
@@ -189,24 +211,7 @@ export class HostingSmtpProvidersPage implements OnDestroy {
   }
 
   refreshList() {
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-    try {
-      const result = await this.api.get<HostingSmtpProvider[]>(this.endpoint());
-      this.providers.set(Array.isArray(result) ? result : []);
-      this.dataSource.data = this.providers();
-      this.pageIndex.set(0);
-      this.reconcileSelection();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load SMTP providers.'));
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+    this.providersResource.reload();
   }
 
   applyFilters() {
@@ -335,7 +340,7 @@ export class HostingSmtpProvidersPage implements OnDestroy {
         await this.api.post(this.endpoint(), payload);
         this.snack.success('SMTP provider created.');
       }
-      await this.loadItems();
+      this.providersResource.reload();
       if (keepOpen && !editing) this.startCreate();
       else this.closeDialog();
     } catch (error) {
@@ -363,7 +368,7 @@ export class HostingSmtpProvidersPage implements OnDestroy {
     try {
       await this.api.delete(`${this.endpoint()}/${item.HspUUID}`);
       this.snack.success('SMTP provider deleted.');
-      await this.loadItems();
+      this.providersResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete SMTP provider.'));
     }
@@ -377,15 +382,13 @@ export class HostingSmtpProvidersPage implements OnDestroy {
     try {
       const response = await this.api.delete<any>(`${this.endpoint()}/bulk`, { ids });
       const result = this.parseBulkDeleteResult(response, ids);
-      this.providers.set(this.providers().filter((row) => !result.deleted.has(row.HspUUID)));
-      this.dataSource.data = this.providers();
       this.selectedIds.set(result.failed);
       if (result.failed.size) {
         this.snack.error(`${result.failed.size} selected SMTP provider(s) could not be deleted.`);
       } else {
         this.snack.success(`${result.deleted.size} selected SMTP provider(s) deleted.`);
       }
-      await this.loadItems();
+      this.providersResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to delete selected SMTP providers.'));
     }
