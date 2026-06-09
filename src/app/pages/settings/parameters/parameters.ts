@@ -1,9 +1,10 @@
 import {
   Component,
-  OnInit,
   ViewEncapsulation,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
@@ -72,6 +73,11 @@ type StorageAccountItem = {
   HspProvider?: string | null;
 };
 
+type ParametersSnapshot = {
+  item: SystemParametersItem;
+  storageAccounts: StorageAccountItem[];
+};
+
 const DEFAULT_ITEM: SystemParametersItem = {
   sprUUID: null,
   googleMapsEmbedApiKey: '',
@@ -135,7 +141,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[@fadeIn]': '' },
 })
-export class SettingsParametersPage implements OnInit {
+export class SettingsParametersPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
 
@@ -166,7 +172,19 @@ export class SettingsParametersPage implements OnInit {
     this.isMaster() ? 'system/parameters' : 'settings/parameters',
   );
 
-  readonly loading = signal(false);
+  private readonly parametersResource = resource({
+    params: () => ({
+      endpoint: this.baseEndpoint(),
+      isMaster: this.isMaster(),
+    }),
+    defaultValue: {
+      item: { ...DEFAULT_ITEM },
+      storageAccounts: [],
+    } as ParametersSnapshot,
+    loader: ({ params }) => this.loadParametersSnapshot(params.endpoint, params.isMaster),
+  });
+
+  readonly loading = computed(() => this.parametersResource.isLoading());
   readonly saving = signal(false);
   readonly feedback = signal<string | null>(null);
   readonly success = signal<string | null>(null);
@@ -182,30 +200,31 @@ export class SettingsParametersPage implements OnInit {
     () => this.buildSignature(this.item()) !== this.baselineSignature(),
   );
 
-  ngOnInit() {
-    void this.loadItems();
-  }
+  constructor() {
+    effect(() => {
+      const snapshot = this.parametersResource.value();
+      if (!snapshot) return;
+      this.storageAccounts.set(snapshot.storageAccounts);
+      this.item.set(snapshot.item);
+      this.baselineItem.set({ ...snapshot.item });
+      this.baselineSignature.set(this.buildSignature(snapshot.item));
+    });
 
-  async loadItems() {
-    this.loading.set(true);
-    this.feedback.set(null);
-    this.success.set(null);
-
-    try {
-      const result = await this.api.get<any>(this.baseEndpoint());
-      await this.loadStorageAccounts();
-      const loaded = this.readItem(result);
-      this.item.set(loaded);
-      this.baselineItem.set({ ...loaded });
-      this.baselineSignature.set(this.buildSignature(loaded));
-    } catch (error) {
+    effect(() => {
+      const error = this.parametersResource.error();
+      if (!error) return;
       this.feedback.set(this.friendlyError(error, 'Failed to load parameters.'));
       this.item.set({ ...DEFAULT_ITEM });
       this.baselineItem.set({ ...DEFAULT_ITEM });
+      this.storageAccounts.set([]);
       this.baselineSignature.set(this.buildSignature(DEFAULT_ITEM));
-    } finally {
-      this.loading.set(false);
-    }
+    });
+  }
+
+  refreshItems() {
+    this.feedback.set(null);
+    this.success.set(null);
+    this.parametersResource.reload();
   }
 
   updateItem(patch: Partial<SystemParametersItem>) {
@@ -432,16 +451,29 @@ export class SettingsParametersPage implements OnInit {
     });
   }
 
-  private async loadStorageAccounts() {
+  private async loadParametersSnapshot(
+    endpoint: string,
+    isMaster: boolean,
+  ): Promise<ParametersSnapshot> {
+    const [parametersResult, storageAccounts] = await Promise.all([
+      this.api.get<any>(endpoint),
+      this.fetchStorageAccounts(isMaster),
+    ]);
+
+    return {
+      item: this.readItem(parametersResult),
+      storageAccounts,
+    };
+  }
+
+  private async fetchStorageAccounts(isMaster: boolean): Promise<StorageAccountItem[]> {
+    const endpoint = isMaster ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts';
     try {
-      const endpoint = this.isMaster()
-        ? 'system/hosting/storage/accounts'
-        : 'hosting/storage/accounts';
       const response = await this.api.get<any>(endpoint);
       const rows = Array.isArray(response?.data) ? response.data : (response?.data?.items ?? []);
-      this.storageAccounts.set(rows as StorageAccountItem[]);
+      return rows as StorageAccountItem[];
     } catch {
-      this.storageAccounts.set([]);
+      return [];
     }
   }
 

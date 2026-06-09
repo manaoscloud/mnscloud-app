@@ -6,7 +6,9 @@ import {
   OnInit,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -50,6 +52,15 @@ type TenantInvite = {
   UsiStatus?: number | null;
   UsiDateCreated?: string | null;
   UsiDateAccepted?: string | null;
+};
+
+type TenantsSnapshot = {
+  myTenants: TenantAccess[];
+  members: TenantAccess[];
+  invites: TenantInvite[];
+  currentEnvRole: string | null;
+  error: string | null;
+  invitesError: string | null;
 };
 
 @Component({
@@ -96,8 +107,20 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   private rawMembers: TenantAccess[] = [];
   private rawInvites: TenantInvite[] = [];
 
-  readonly loading = signal(true);
-  readonly invitesLoading = signal(true);
+  private readonly tenantsResource = resource({
+    defaultValue: {
+      myTenants: [],
+      members: [],
+      invites: [],
+      currentEnvRole: null,
+      error: null,
+      invitesError: null,
+    } as TenantsSnapshot,
+    loader: () => this.fetchTenantsSnapshot(),
+  });
+
+  readonly loading = computed(() => this.tenantsResource.isLoading());
+  readonly invitesLoading = computed(() => this.tenantsResource.isLoading());
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly invitesError = signal<string | null>(null);
@@ -127,9 +150,22 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
     role: ['USER', [Validators.required]],
   });
 
+  constructor() {
+    effect(() => {
+      const snapshot = this.tenantsResource.value();
+      if (!snapshot) return;
+      this.rawMyTenants = snapshot.myTenants;
+      this.rawMembers = snapshot.members;
+      this.rawInvites = snapshot.invites;
+      this.currentEnvRole.set(snapshot.currentEnvRole);
+      this.error.set(snapshot.error);
+      this.invitesError.set(snapshot.invitesError);
+      this.applyDataSources();
+    });
+  }
+
   ngOnInit() {
     this.configureTables();
-    void this.load();
   }
 
   ngAfterViewInit() {
@@ -146,19 +182,9 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.load();
-  }
-
-  async load() {
-    this.loading.set(true);
-    this.invitesLoading.set(true);
     this.error.set(null);
     this.invitesError.set(null);
-
-    await Promise.all([this.loadAccessList(), this.loadInvites()]);
-
-    this.loading.set(false);
-    this.invitesLoading.set(false);
+    this.tenantsResource.reload();
   }
 
   applyFilters() {
@@ -196,7 +222,7 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
     try {
       await this.service.inviteUser({ email: email.trim().toLowerCase(), role });
       this.snack.success('Invitation sent successfully.');
-      await this.loadInvites();
+      this.tenantsResource.reload();
 
       if (keepOpen) {
         this.inviteForm.reset({ email: '', role: 'USER' });
@@ -223,8 +249,7 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       await this.service.deleteAccess(uuid);
-      this.rawMembers = this.rawMembers.filter((item) => item.UscUUID !== uuid);
-      this.applyDataSources();
+      this.tenantsResource.reload();
       this.snack.success('Tenant member removed successfully.');
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to remove access.'));
@@ -241,8 +266,7 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       await this.service.cancelInvite(invite.UsiUUID);
-      this.rawInvites = this.rawInvites.filter((item) => item.UsiUUID !== invite.UsiUUID);
-      this.applyDataSources();
+      this.tenantsResource.reload();
       this.snack.success('Invitation canceled successfully.');
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to cancel invitation.'));
@@ -277,7 +301,7 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
         localStorage.setItem('mc_current_env', environmentUUID);
       }
 
-      this.applyDataSources();
+      this.tenantsResource.reload();
       this.snack.success('Default tenant updated successfully.');
     } catch (error) {
       this.snack.error(this.errorMessage(error, 'Failed to set default tenant.'));
@@ -295,54 +319,85 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
     return 'Pending';
   }
 
-  private async loadAccessList() {
+  private async fetchTenantsSnapshot(): Promise<TenantsSnapshot> {
+    const [accessSnapshot, invitesSnapshot] = await Promise.all([
+      this.fetchAccessSnapshot(),
+      this.fetchInvitesSnapshot(),
+    ]);
+
+    return {
+      myTenants: accessSnapshot.myTenants,
+      members: accessSnapshot.members,
+      invites: invitesSnapshot.invites,
+      currentEnvRole: accessSnapshot.currentEnvRole,
+      error: accessSnapshot.error,
+      invitesError: invitesSnapshot.invitesError,
+    };
+  }
+
+  private async fetchAccessSnapshot(): Promise<{
+    myTenants: TenantAccess[];
+    members: TenantAccess[];
+    currentEnvRole: string | null;
+    error: string | null;
+  }> {
     try {
       const response = await this.service.getMyAccessList();
       const myTenants = response?.data?.access ?? [];
-      this.rawMyTenants = myTenants;
 
       const currentEnv =
         typeof localStorage !== 'undefined' ? localStorage.getItem('mc_current_env') : null;
       const currentRole =
         myTenants.find((item: TenantAccess) => item.EnvironmentUUID === currentEnv)?.Role ?? null;
-      this.currentEnvRole.set(currentRole);
 
       if (currentEnv && ['OWNER', 'ADMIN'].includes(String(currentRole ?? '').toUpperCase())) {
         try {
           const envResponse = await this.service.getEnvironmentAccess();
-          this.rawMembers = envResponse?.data?.members ?? [];
+          return {
+            myTenants,
+            members: envResponse?.data?.members ?? [],
+            currentEnvRole: currentRole,
+            error: null,
+          };
         } catch (error) {
-          console.error('getEnvironmentAccess error:', error);
-          this.rawMembers = myTenants;
+          return {
+            myTenants,
+            members: myTenants,
+            currentEnvRole: currentRole,
+            error: this.errorMessage(error, 'Failed to load access list.'),
+          };
         }
-      } else {
-        this.rawMembers = myTenants;
       }
+
+      return {
+        myTenants,
+        members: myTenants,
+        currentEnvRole: currentRole,
+        error: null,
+      };
     } catch (error) {
-      console.error('getMyAccessList error:', error);
-      this.error.set(this.errorMessage(error, 'Failed to load access list.'));
-      this.rawMyTenants = [];
-      this.rawMembers = [];
-    } finally {
-      this.applyDataSources();
+      return {
+        myTenants: [],
+        members: [],
+        currentEnvRole: null,
+        error: this.errorMessage(error, 'Failed to load access list.'),
+      };
     }
   }
 
-  private async loadInvites() {
+  private async fetchInvitesSnapshot(): Promise<{
+    invites: TenantInvite[];
+    invitesError: string | null;
+  }> {
     try {
       const response = await this.service.listInvites();
-      this.rawInvites = response?.data?.invites ?? [];
+      return { invites: response?.data?.invites ?? [], invitesError: null };
     } catch (error) {
-      console.error('listInvites error:', error);
       const message = this.errorMessage(error, 'Failed to load invitations.');
       if (message.toLowerCase().includes('permission')) {
-        this.rawInvites = [];
-      } else {
-        this.invitesError.set(message);
-        this.rawInvites = [];
+        return { invites: [], invitesError: null };
       }
-    } finally {
-      this.applyDataSources();
+      return { invites: [], invitesError: message };
     }
   }
 
