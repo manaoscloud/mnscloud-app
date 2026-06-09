@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -110,7 +112,6 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
 
   amountPrefix = '';
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly itemSaving = signal(false);
   readonly error = signal<string | null>(null);
@@ -163,6 +164,21 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   ];
   readonly itemColumns = ['product', 'quantity', 'unitPrice', 'discount', 'total', 'actions'];
   readonly dataSource = new MatTableDataSource<SaleQuotation>([]);
+  private readonly quotationsResource = resource({
+    defaultValue: [] as SaleQuotation[],
+    loader: () => this.fetchQuotations(),
+  });
+  private readonly syncQuotations = effect(() => {
+    const items = this.quotationsResource.value();
+    this.quotations.set(items);
+    this.dataSource.data = items;
+    this.error.set(null);
+  });
+  private readonly reportQuotationsError = effect(() => {
+    const error = this.quotationsResource.error();
+    if (error) this.error.set(this.extractErrorMessage(error, 'Failed to load quotations.'));
+  });
+  readonly loading = this.quotationsResource.isLoading;
   readonly paginator = viewChild(MatPaginator);
   readonly quotationFormDialog = viewChild<TemplateRef<unknown>>('quotationFormDialog');
   private quotationFormDialogRef: MatDialogRef<unknown> | null = null;
@@ -183,7 +199,6 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
     this.amountPrefix = this.getCurrencyAffixes(this.defaultCurrency()).prefix;
     void this.loadDefaultCurrency();
     this.loadLookups();
-    this.loadQuotations();
   }
 
   private async loadDefaultCurrency() {
@@ -228,46 +243,29 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  async loadQuotations() {
-    this.loading.set(true);
-    this.error.set(null);
-    const start = performance.now();
-
+  private async fetchQuotations(): Promise<SaleQuotation[]> {
     const { search, status, customerUUID } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
     if (search?.trim()) params.set('q', search.trim());
     if (status) params.set('status', status);
     if (customerUUID) params.set('customerUUID', customerUUID);
 
-    try {
-      const response = await this.api.get<any>(`sale/quotations?${params.toString()}`);
-      const items = response?.data?.items ?? [];
-      this.quotations.set(items);
-      this.dataSource.data = items;
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load quotations.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const query = params.toString();
+    const response = await this.api.get<any>(`sale/quotations${query ? `?${query}` : ''}`);
+    return Array.isArray(response?.data?.items) ? response.data.items : [];
   }
 
   applyFilters() {
-    void this.loadQuotations();
+    this.quotationsResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ search: '', status: '', customerUUID: '' });
-    void this.loadQuotations();
+    this.quotationsResource.reload();
   }
 
   refreshList() {
-    void this.loadQuotations();
+    this.quotationsResource.reload();
   }
 
   openCreateDialog() {
@@ -395,7 +393,7 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
       }
 
       this.cancelEdit();
-      await this.loadQuotations();
+      this.quotationsResource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to save quotation.'));
     } finally {
@@ -418,17 +416,12 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`sale/quotations/${quotation.SqtUUID}`);
-      this.quotations.update((items) => {
-        const next = items.filter((row) => row.SqtUUID !== quotation.SqtUUID);
-        this.dataSource.data = next;
-        return next;
-      });
+      this.quotationsResource.reload();
       if (this.editing()?.SqtUUID === quotation.SqtUUID) {
         this.cancelEdit();
       }
-    } catch (err) {
-      console.error('Failed to delete quotation.', err);
-      alert('Failed to delete quotation.');
+    } catch (err: any) {
+      this.error.set(this.extractErrorMessage(err, 'Failed to delete quotation.'));
     }
   }
 
@@ -505,7 +498,7 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
 
       this.cancelItemEdit();
       await this.loadQuotationItems(quotation.SqtUUID);
-      await this.loadQuotations();
+      this.quotationsResource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to save quotation item.'));
     } finally {
@@ -532,10 +525,9 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
     try {
       await this.api.delete(`sale/quotations/${quotation.SqtUUID}/items/${item.SqiUUID}`);
       await this.loadQuotationItems(quotation.SqtUUID);
-      await this.loadQuotations();
-    } catch (err) {
-      console.error('Failed to delete item.', err);
-      alert('Failed to delete item.');
+      this.quotationsResource.reload();
+    } catch (err: any) {
+      this.error.set(this.extractErrorMessage(err, 'Failed to delete item.'));
     }
   }
 
