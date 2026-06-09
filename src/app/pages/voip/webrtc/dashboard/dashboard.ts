@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -29,14 +31,31 @@ import { VoipWebRtcService, WebRtcRecord } from '../webrtc.service';
 import {
   VoipWebRtcDashboardService,
   WebRtcDashboardDomain,
+  WebRtcDashboardData,
+  WebRtcDashboardFilters,
   WebRtcDashboardMetric,
   WebRtcDashboardServer,
-  WebRtcDashboardSummary,
 } from './dashboard.service';
 
 type SelectOption = {
   value: string;
   label: string;
+};
+
+type WebRtcDashboardRequest = Required<Pick<WebRtcDashboardFilters, 'period'>> &
+  Omit<WebRtcDashboardFilters, 'period'> & {
+    scope: string;
+  };
+
+const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
+  period: 'today',
+  startAt: null,
+  generatedAt: null,
+  summary: {},
+  servers: [],
+  domains: [],
+  certificateBreakdown: [],
+  jobBreakdown: [],
 };
 
 @Component({
@@ -71,19 +90,31 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 5000;
 
-  readonly loading = signal(false);
   readonly period = signal('today');
   readonly serverUUID = signal('');
   readonly domainUUID = signal('');
   readonly serverSearch = signal('');
   readonly domainSearch = signal('');
-  readonly generatedAt = signal<string | null>(null);
-  readonly startAt = signal<string | null>(null);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  readonly summary = signal<WebRtcDashboardSummary>({});
-  readonly certificateBreakdown = signal<WebRtcDashboardMetric[]>([]);
-  readonly jobBreakdown = signal<WebRtcDashboardMetric[]>([]);
+  private readonly appliedFilters = signal<WebRtcDashboardRequest>({
+    period: 'today',
+    serverUUID: '',
+    domainUUID: '',
+    scope: this.scope(),
+  });
+
+  private readonly dashboardResource = resource({
+    params: () => this.appliedFilters(),
+    defaultValue: EMPTY_WEBRTC_DASHBOARD,
+    loader: ({ params }) => this.loadDashboardSnapshot(params),
+  });
+
+  readonly loading = this.dashboardResource.isLoading;
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly summary = computed(() => this.dashboard().summary);
+  readonly certificateBreakdown = computed(() => this.dashboard().certificateBreakdown);
+  readonly jobBreakdown = computed(() => this.dashboard().jobBreakdown);
 
   readonly serverDataSource = new MatTableDataSource<WebRtcDashboardServer>([]);
   readonly domainDataSource = new MatTableDataSource<WebRtcDashboardDomain>([]);
@@ -164,17 +195,34 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
   readonly serverPaginator = viewChild<MatPaginator>('serverPaginator');
   readonly domainPaginator = viewChild<MatPaginator>('domainPaginator');
 
+  private readonly syncDashboardTables = effect(() => {
+    const dashboard = this.dashboard();
+    this.serverDataSource.data = dashboard.servers;
+    this.domainDataSource.data = dashboard.domains;
+  });
+
+  private readonly reportDashboardError = effect(() => {
+    const error = this.dashboardResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load WebRTC dashboard.'));
+  });
+
   async ngAfterViewInit() {
     this.bindTables();
-    await Promise.all([this.loadOptions(), this.loadDashboard()]);
+    await this.loadOptions();
   }
 
   refreshList() {
-    void this.loadDashboard();
+    this.dashboardResource.reload();
   }
 
   applySearchFilters() {
-    void this.loadDashboard();
+    this.appliedFilters.set({
+      period: this.period(),
+      serverUUID: this.serverUUID(),
+      domainUUID: this.domainUUID(),
+      scope: this.scope(),
+    });
   }
 
   clearSearchFilters() {
@@ -183,15 +231,7 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
     this.domainUUID.set('');
     this.serverSearch.set('');
     this.domainSearch.set('');
-    void this.loadDashboard();
-  }
-
-  onServerSelectOpened(open: boolean) {
-    if (!open) this.serverSearch.set('');
-  }
-
-  onDomainSelectOpened(open: boolean) {
-    if (!open) this.domainSearch.set('');
+    this.applySearchFilters();
   }
 
   metricPercent(item: WebRtcDashboardMetric, items: WebRtcDashboardMetric[]) {
@@ -217,30 +257,26 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
     return Number(value) === 1 || value === true ? 'Yes' : 'No';
   }
 
-  private async loadDashboard() {
-    this.loading.set(true);
-    try {
-      const response = await this.api.get(
-        {
-          period: this.period(),
-          serverUUID: this.serverUUID(),
-          domainUUID: this.domainUUID(),
-        },
-        this.isMaster(),
-      );
-      const data = response?.data;
-      this.summary.set(data?.summary ?? {});
-      this.generatedAt.set(data?.generatedAt ?? null);
-      this.startAt.set(data?.startAt ?? null);
-      this.certificateBreakdown.set(data?.certificateBreakdown ?? []);
-      this.jobBreakdown.set(data?.jobBreakdown ?? []);
-      this.serverDataSource.data = data?.servers ?? [];
-      this.domainDataSource.data = data?.domains ?? [];
-    } catch (error: any) {
-      this.snack.error(error?.error?.error || 'Failed to load WebRTC dashboard.');
-    } finally {
-      this.loading.set(false);
-    }
+  onServerSelectOpened(open: boolean) {
+    if (!open) this.serverSearch.set('');
+  }
+
+  onDomainSelectOpened(open: boolean) {
+    if (!open) this.domainSearch.set('');
+  }
+
+  private async loadDashboardSnapshot(
+    params: WebRtcDashboardRequest,
+  ): Promise<WebRtcDashboardData> {
+    const response = await this.api.get(
+      {
+        period: params.period,
+        serverUUID: params.serverUUID,
+        domainUUID: params.domainUUID,
+      },
+      params.scope === 'master',
+    );
+    return response?.data ?? EMPTY_WEBRTC_DASHBOARD;
   }
 
   private async loadOptions() {
@@ -311,5 +347,12 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
     if (Array.isArray(response?.data)) return response.data as T[];
     if (Array.isArray(response?.data?.items)) return response.data.items as T[];
     return [];
+  }
+
+  private errorMessage(error: unknown, fallback: string): string {
+    const serverMessage = (error as any)?.error?.error || (error as any)?.error?.message;
+    if (typeof serverMessage === 'string' && serverMessage.trim()) return serverMessage;
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
   }
 }
