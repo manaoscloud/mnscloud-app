@@ -1,5 +1,5 @@
 export const APP_BUILD_INFO = {
   product: 'mnscloud-app',
-  version: '0.1.85',
+  version: '0.1.86',
   channel: 'stable',
 } as const;
