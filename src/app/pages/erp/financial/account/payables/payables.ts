@@ -4,7 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -106,6 +108,16 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
 
+  private readonly payablesResource = resource({
+    defaultValue: [] as ErpFinAccPayable[],
+    loader: async () => {
+      const res = await this.api.get<{ data?: { items?: ErpFinAccPayable[] } }>(
+        'erp/financial/accounts/payables',
+      );
+      return res?.data?.items ?? [];
+    },
+  });
+
   payables: ErpFinAccPayable[] = [];
   dataSource = new MatTableDataSource<ErpFinAccPayable>([]);
   displayedColumns: string[] = [
@@ -117,7 +129,6 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
     'status',
     'actions',
   ];
-  loading = true;
   saving = false;
   settling = false;
   error = '';
@@ -174,9 +185,28 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
     paymentNotes: '',
   };
 
+  get loading() {
+    return this.payablesResource.isLoading();
+  }
+
+  private readonly syncPayables = effect(() => {
+    this.payables = this.payablesResource.value();
+    this.dataSource.data = [...this.payables];
+    this.applyFilter();
+  });
+
+  private readonly reportPayablesError = effect(() => {
+    const error = this.payablesResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load payables.'));
+      this.dataSource.data = [];
+    }
+  });
+
   ngOnInit() {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
+    void this.loadSuppliers();
   }
 
   ngOnDestroy() {
@@ -185,38 +215,34 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    setTimeout(async () => {
-      this.dataSource.paginator = this.paginator() ?? null;
-      this.dataSource.sort = this.sort() ?? null;
-      this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-        switch (sortHeaderId) {
-          case 'description':
-            return data.Description ?? '';
-          case 'supplier':
-            return this.supplierLabel(data.SupplierUUID) ?? '';
-          case 'docNumber':
-            return data.DocNumber ?? '';
-          case 'dueDate':
-            return data.DueDate ?? '';
-          case 'amount':
-            return data.Amount ?? 0;
-          case 'status':
-            return data.Status ?? '';
-          default:
-            return '';
-        }
-      };
-      this.dataSource.filterPredicate = (data, filter) => {
-        const value = filter.trim().toLowerCase();
-        if (!value) return true;
-        const supplier = this.supplierLabel(data.SupplierUUID);
-        return [data.Description, data.DocNumber, supplier]
-          .filter(Boolean)
-          .some((field) => String(field).toLowerCase().includes(value));
-      };
-      await this.loadSuppliers();
-      await this.loadPayables();
-    }, 0);
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
+    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
+      switch (sortHeaderId) {
+        case 'description':
+          return data.Description ?? '';
+        case 'supplier':
+          return this.supplierLabel(data.SupplierUUID) ?? '';
+        case 'docNumber':
+          return data.DocNumber ?? '';
+        case 'dueDate':
+          return data.DueDate ?? '';
+        case 'amount':
+          return data.Amount ?? 0;
+        case 'status':
+          return data.Status ?? '';
+        default:
+          return '';
+      }
+    };
+    this.dataSource.filterPredicate = (data, filter) => {
+      const value = filter.trim().toLowerCase();
+      if (!value) return true;
+      const supplier = this.supplierLabel(data.SupplierUUID);
+      return [data.Description, data.DocNumber, supplier]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(value));
+    };
   }
 
   onSearchChange(value: string) {
@@ -235,7 +261,7 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadPayables();
+    this.payablesResource.reload();
   }
 
   applyFilter() {
@@ -257,29 +283,6 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
       this.supplierMap = new Map(this.suppliers.map((s) => [s.value, s]));
     } catch (err) {
       console.error('Failed to load suppliers.', err);
-    }
-  }
-
-  async loadPayables() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      const res = await this.api.get<any>('erp/financial/accounts/payables');
-      this.payables = res?.data?.items ?? [];
-      this.dataSource.data = [...this.payables];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load payables.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
-      }
-      this.loading = false;
     }
   }
 
@@ -368,7 +371,7 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
           this.resetCreateForm();
         }
       }
-      await this.loadPayables();
+      this.payablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save payable.');
     } finally {
@@ -398,16 +401,13 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/financial/accounts/payables/${payableUUID}`);
       this.snack.success('Payable deleted successfully.');
-      await this.loadPayables();
+      this.payablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete payable.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -436,7 +436,6 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.post(
@@ -444,11 +443,9 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
         {},
       );
       this.snack.success('Payable reopened successfully.');
-      await this.loadPayables();
+      this.payablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to reopen payable.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -487,7 +484,7 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
       this.settleFiles = [];
       this.snack.success('Payable settled successfully.');
       await this.loadSettleAttachments();
-      await this.loadPayables();
+      this.payablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to settle payable.');
     } finally {
@@ -751,5 +748,14 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
   private showWarning(message: string) {
     this.error = '';
     this.snack.warning(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error && typeof error === 'object' && 'error' in error) {
+      const payload = (error as { error?: { error?: string; message?: string } }).error;
+      return payload?.error || payload?.message || fallback;
+    }
+    if (error instanceof Error) return error.message;
+    return fallback;
   }
 }
