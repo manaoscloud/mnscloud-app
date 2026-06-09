@@ -5,7 +5,9 @@ import {
   OnInit,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -215,11 +217,11 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   readonly config = computed(() => CONFIGS[this.currentResource()]);
   readonly title = computed(() => this.config().title);
   readonly subtitle = computed(() => this.config().subtitle);
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly editing = signal<WebRtcRecord | null>(null);
   readonly selected = new Set<string>();
   readonly generatedInstall = signal<Record<string, string> | null>(null);
+  private readonly appliedSearch = signal('');
   searchInput = '';
   search = '';
   readonly dataSource = new MatTableDataSource<WebRtcRecord>([]);
@@ -236,6 +238,39 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   private routeSub: Subscription | null = null;
   private viewReady = false;
 
+  private readonly recordsResource = resource({
+    params: () => ({
+      resource: this.config().resource,
+      scope: this.scope(),
+      search: this.appliedSearch(),
+    }),
+    defaultValue: [] as WebRtcRecord[],
+    loader: async ({ params }) => {
+      const res = await this.api.list(
+        params.resource,
+        {
+          limit: 5000,
+          search: params.search,
+        },
+        params.scope,
+      );
+      return res?.data?.items ?? [];
+    },
+  });
+
+  readonly loading = this.recordsResource.isLoading;
+
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.recordsResource.value();
+    this.reconcile();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.recordsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load WebRTC records.'));
+  });
+
   ngOnInit() {
     this.routeSub = this.route.data.subscribe((data) => {
       this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
@@ -244,7 +279,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       this.search = '';
       this.dataSource.filter = '';
       this.selected.clear();
-      if (this.viewReady) void this.load();
+      if (this.viewReady) this.recordsResource.reload();
     });
   }
   ngAfterViewInit() {
@@ -255,7 +290,6 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       JSON.stringify(row).toLowerCase().includes(filter);
     this.dataSource.sortingDataAccessor = (row, column) =>
       String(this.cell(row, column) ?? '').toLowerCase();
-    setTimeout(() => this.load(), 0);
   }
   ngOnDestroy() {
     this.routeSub?.unsubscribe();
@@ -309,40 +343,21 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   }
-  async load() {
-    this.loading.set(true);
-    try {
-      const res = await this.api.list(
-        this.config().resource,
-        {
-          limit: 5000,
-          search: this.search,
-        },
-        this.scope(),
-      );
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcile();
-    } catch (e: any) {
-      this.snack.error(e?.error?.error || e?.message || 'Failed to load WebRTC records.');
-    } finally {
-      setTimeout(() => this.loading.set(false), 600);
-    }
-  }
   refreshList() {
-    void this.load();
+    this.recordsResource.reload();
   }
   applySearchFilters() {
     this.search = this.searchInput.trim();
     this.dataSource.filter = this.search.toLowerCase();
     this.paginator()?.firstPage();
-    void this.load();
+    this.appliedSearch.set(this.search);
   }
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
     this.dataSource.filter = '';
     this.paginator()?.firstPage();
-    void this.load();
+    this.appliedSearch.set('');
   }
   async loadLookups() {
     const needs = new Set(
@@ -491,7 +506,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
         ? await this.api.update(resource, this.uuid(row), this.payload(), this.scope())
         : await this.api.create(resource, this.payload(), this.scope());
       this.snack.success('WebRTC record saved.');
-      await this.load();
+      this.recordsResource.reload();
       if (!row && resource === 'servers' && !saveAndNew) {
         const item = response?.data?.item ?? null;
         const createdUUID = String(item?.[this.config().uuid] ?? '');
@@ -537,12 +552,12 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     if (!ok) return;
     await this.api.remove(this.config().resource, this.uuid(row), this.scope());
     this.snack.success('WebRTC record deleted.');
-    await this.load();
+    this.recordsResource.reload();
   }
   async provisionDomain(row: WebRtcRecord) {
     await this.api.provisionDomain(this.uuid(row), this.scope());
     this.snack.success('WebRTC domain provisioning queued on edge agent.');
-    await this.load();
+    this.recordsResource.reload();
   }
   async generateInstallCommand(row: WebRtcRecord) {
     if (this.config().resource !== 'servers') return;
@@ -649,6 +664,11 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     if (failed.length)
       this.snack.error(`${failed.length} selected WebRTC record(s) could not be deleted.`);
     else this.snack.success('Selected WebRTC records deleted.');
-    await this.load();
+    this.recordsResource.reload();
+  }
+
+  private errorMessage(error: unknown, fallback: string) {
+    const maybe = error as { error?: { error?: string }; message?: string };
+    return maybe?.error?.error || maybe?.message || fallback;
   }
 }

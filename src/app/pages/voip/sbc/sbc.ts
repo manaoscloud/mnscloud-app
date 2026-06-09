@@ -5,7 +5,9 @@ import {
   OnInit,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -240,10 +242,10 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   readonly config = computed(() => CONFIGS[this.currentResource()]);
   readonly title = computed(() => this.config().title);
   readonly subtitle = computed(() => this.config().subtitle);
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly editing = signal<SbcRecord | null>(null);
   readonly selected = new Set<string>();
+  private readonly appliedSearch = signal('');
   searchInput = '';
   search = '';
   readonly dataSource = new MatTableDataSource<SbcRecord>([]);
@@ -259,6 +261,35 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   private routeSub: Subscription | null = null;
   private viewReady = false;
 
+  private readonly recordsResource = resource({
+    params: () => ({
+      resource: this.config().resource,
+      isMaster: this.isMaster(),
+      search: this.appliedSearch(),
+    }),
+    defaultValue: [] as SbcRecord[],
+    loader: async ({ params }) => {
+      const res = await this.api.list(params.resource, params.isMaster, {
+        limit: 5000,
+        search: params.search,
+      });
+      return res?.data?.items ?? [];
+    },
+  });
+
+  readonly loading = this.recordsResource.isLoading;
+
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.recordsResource.value();
+    this.reconcile();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.recordsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load SBC records.'));
+  });
+
   ngOnInit() {
     this.routeSub = this.route.data.subscribe((data) => {
       this.currentResource.set((data['resource'] ?? 'providers') as SbcResource);
@@ -267,7 +298,7 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
       this.search = '';
       this.dataSource.filter = '';
       this.selected.clear();
-      if (this.viewReady) void this.load();
+      if (this.viewReady) this.recordsResource.reload();
     });
   }
   ngAfterViewInit() {
@@ -278,7 +309,6 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
       JSON.stringify(row).toLowerCase().includes(filter);
     this.dataSource.sortingDataAccessor = (row, column) =>
       String(this.cell(row, column) ?? '').toLowerCase();
-    setTimeout(() => this.load(), 0);
   }
   ngOnDestroy() {
     this.routeSub?.unsubscribe();
@@ -315,36 +345,21 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
     };
     return map[column] ?? '';
   }
-  async load() {
-    this.loading.set(true);
-    try {
-      const res = await this.api.list(this.config().resource, this.isMaster(), {
-        limit: 5000,
-        search: this.search,
-      });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcile();
-    } catch (e: any) {
-      this.snack.error(e?.error?.error || e?.message || 'Failed to load SBC records.');
-    } finally {
-      setTimeout(() => this.loading.set(false), 600);
-    }
-  }
   refreshList() {
-    void this.load();
+    this.recordsResource.reload();
   }
   applySearchFilters() {
     this.search = this.searchInput.trim();
     this.dataSource.filter = this.search.toLowerCase();
     this.paginator()?.firstPage();
-    void this.load();
+    this.appliedSearch.set(this.search);
   }
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
     this.dataSource.filter = '';
     this.paginator()?.firstPage();
-    void this.load();
+    this.appliedSearch.set('');
   }
   async loadLookups() {
     const needs = new Set(
@@ -488,7 +503,7 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
         );
       else await this.api.create(this.config().resource, this.payload(), this.isMaster());
       this.snack.success('SBC record saved.');
-      await this.load();
+      this.recordsResource.reload();
       if (saveAndNew && !row) {
         this.editing.set(null);
         this.buildForm(null);
@@ -516,7 +531,7 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
     if (!ok) return;
     await this.api.remove(this.config().resource, this.uuid(row), this.isMaster());
     this.snack.success('SBC record deleted.');
-    await this.load();
+    this.recordsResource.reload();
   }
   isSelected(row: SbcRecord) {
     return this.selected.has(this.uuid(row));
@@ -574,6 +589,11 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
     if (failed.length)
       this.snack.error(`${failed.length} selected SBC record(s) could not be deleted.`);
     else this.snack.success('Selected SBC records deleted.');
-    await this.load();
+    this.recordsResource.reload();
+  }
+
+  private errorMessage(error: unknown, fallback: string) {
+    const maybe = error as { error?: { error?: string }; message?: string };
+    return maybe?.error?.error || maybe?.message || fallback;
   }
 }
