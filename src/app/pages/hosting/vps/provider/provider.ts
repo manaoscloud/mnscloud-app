@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -124,7 +126,6 @@ export class HostingVpsProviderPage implements OnDestroy {
     return this.sortedRows().slice(start, start + this.pageSize());
   });
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly validatingProviderId = signal<string | null>(null);
   readonly editing = signal<HostingVpsProvider | null>(null);
@@ -202,6 +203,39 @@ export class HostingVpsProviderPage implements OnDestroy {
     isDefault: [0, [Validators.required]],
   });
 
+  private readonly providersResource = resource({
+    params: () => ({
+      search: this.appliedSearch(),
+      status: this.appliedStatus(),
+      endpoint: this.providerEndpoint(),
+    }),
+    defaultValue: [] as HostingVpsProvider[],
+    loader: async ({ params }) => {
+      const search = params.search.trim();
+      const query = new URLSearchParams({ limit: '500', offset: '0' });
+      if (search) query.set('search', search);
+      if (params.status === '0' || params.status === '1') query.set('status', params.status);
+      const result = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
+        `${params.endpoint}?${query.toString()}`,
+      );
+      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
+      return list.map((item) => ({
+        ...item,
+        HvrConfig: this.parseConfig<VpsProviderConfig>(item.HvrConfig),
+      })) as HostingVpsProvider[];
+    },
+  });
+  readonly loading = this.providersResource.isLoading;
+  private readonly syncProviders = effect(() => {
+    this.providers.set(this.providersResource.value());
+    this.reconcileProviderSelection();
+  });
+  private readonly reportLoadError = effect(() => {
+    const error = this.providersResource.error();
+    if (!error) return;
+    this.snack.error(this.friendlyError(error, 'Failed to load VPS providers.'));
+  });
+
   constructor() {
     this.applyProviderValidators(this.providerSelection(), false);
     this.providerForm.controls.provider.valueChanges.subscribe((value) => {
@@ -209,7 +243,6 @@ export class HostingVpsProviderPage implements OnDestroy {
       this.providerSelection.set(value);
       this.applyProviderValidators(value, !!this.editing());
     });
-    this.refreshList();
   }
 
   ngOnDestroy() {
@@ -218,7 +251,7 @@ export class HostingVpsProviderPage implements OnDestroy {
   }
 
   refreshList() {
-    void this.loadProviders();
+    this.providersResource.reload();
   }
 
   applyFilters() {
@@ -226,7 +259,6 @@ export class HostingVpsProviderPage implements OnDestroy {
     this.appliedSearch.set(values.search);
     this.appliedStatus.set(values.status);
     this.resetPagination();
-    void this.loadProviders();
   }
 
   clearFilters() {
@@ -260,33 +292,6 @@ export class HostingVpsProviderPage implements OnDestroy {
     this.sortActive.set(sort.active);
     this.sortDirection.set(sort.direction);
     this.resetPagination();
-  }
-
-  async loadProviders() {
-    this.loading.set(true);
-    const start = performance.now();
-    const values = this.filterForm.getRawValue();
-    const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (values.search.trim()) params.set('search', values.search.trim());
-    if (values.status === '0' || values.status === '1') params.set('status', values.status);
-
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
-        `${this.providerEndpoint()}?${params.toString()}`,
-      );
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      this.providers.set(
-        list.map((item) => ({
-          ...item,
-          HvrConfig: this.parseConfig<VpsProviderConfig>(item.HvrConfig),
-        })),
-      );
-      this.reconcileProviderSelection();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS providers.'));
-    } finally {
-      this.finishLoading(start);
-    }
   }
 
   startCreate() {
@@ -416,7 +421,7 @@ export class HostingVpsProviderPage implements OnDestroy {
         await this.api.post(this.providerEndpoint(), payload);
         this.snack.success('Provider providerRecord created.');
       }
-      await this.loadProviders();
+      this.providersResource.reload();
       if (closeAfterSave || editing) {
         this.closeDialog();
         this.editing.set(null);
@@ -449,7 +454,7 @@ export class HostingVpsProviderPage implements OnDestroy {
     try {
       await this.api.delete(`${this.providerEndpoint()}/${item.HvrUUID}`);
       this.snack.success('Provider providerRecord deleted.');
-      await this.loadProviders();
+      this.providersResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to delete provider.'));
     }
@@ -528,7 +533,7 @@ export class HostingVpsProviderPage implements OnDestroy {
       );
       this.providers.update((rows) => rows.filter((row) => !deleted.has(row.HvrUUID)));
       this.selectedProviderUUIDs.set(failed);
-      await this.loadProviders();
+      this.providersResource.reload();
       if (failed.size) {
         this.snack.error(`${failed.size} provider(s) could not be deleted.`);
       } else {
@@ -835,16 +840,6 @@ export class HostingVpsProviderPage implements OnDestroy {
     if (username) credentials.username = username;
     if (password) credentials.password = password;
     return Object.keys(credentials).length ? credentials : null;
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string) {
