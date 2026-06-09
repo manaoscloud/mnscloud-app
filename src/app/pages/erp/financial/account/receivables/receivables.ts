@@ -4,7 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -89,6 +91,16 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
 
+  private readonly receivablesResource = resource({
+    defaultValue: [] as ErpFinAccReceivable[],
+    loader: async () => {
+      const res = await this.api.get<{ data?: { items?: ErpFinAccReceivable[] } }>(
+        'erp/financial/accounts/receivables',
+      );
+      return res?.data?.items ?? [];
+    },
+  });
+
   receivables: ErpFinAccReceivable[] = [];
   dataSource = new MatTableDataSource<ErpFinAccReceivable>([]);
   displayedColumns: string[] = [
@@ -100,7 +112,6 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
     'status',
     'actions',
   ];
-  loading = false;
   saving = false;
   error = '';
   search = '';
@@ -136,11 +147,28 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
     notes: '',
   };
 
+  get loading() {
+    return this.receivablesResource.isLoading();
+  }
+
+  private readonly syncReceivables = effect(() => {
+    this.receivables = this.receivablesResource.value();
+    this.dataSource.data = [...this.receivables];
+    this.applyFilter();
+  });
+
+  private readonly reportReceivablesError = effect(() => {
+    const error = this.receivablesResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load receivables.'));
+      this.dataSource.data = [];
+    }
+  });
+
   ngOnInit() {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
     void this.loadCustomers();
-    void this.loadReceivables();
   }
 
   ngOnDestroy() {
@@ -194,7 +222,7 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
   }
 
   refreshList() {
-    void this.loadReceivables();
+    this.receivablesResource.reload();
   }
 
   applyFilter() {
@@ -216,29 +244,6 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
       this.customerMap = new Map(this.customers.map((c) => [c.value, c]));
     } catch (err) {
       console.error('Failed to load customers.', err);
-    }
-  }
-
-  async loadReceivables() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      const res = await this.api.get<any>('erp/financial/accounts/receivables');
-      this.receivables = res?.data?.items ?? [];
-      this.dataSource.data = [...this.receivables];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load receivables.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
-      }
-      this.loading = false;
     }
   }
 
@@ -327,7 +332,7 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
           this.resetCreateForm();
         }
       }
-      await this.loadReceivables();
+      this.receivablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save receivable.');
     } finally {
@@ -357,16 +362,13 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/financial/accounts/receivables/${receivableUUID}`);
       this.snack.success('Receivable deleted successfully.');
-      await this.loadReceivables();
+      this.receivablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete receivable.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -391,7 +393,7 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
         {},
       );
       this.snack.success('Boleto issued successfully.');
-      await this.loadReceivables();
+      this.receivablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to issue boleto from receivable.');
     } finally {
@@ -565,5 +567,14 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
   private showWarning(message: string) {
     this.error = '';
     this.snack.warning(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error && typeof error === 'object' && 'error' in error) {
+      const payload = (error as { error?: { error?: string; message?: string } }).error;
+      return payload?.error || payload?.message || fallback;
+    }
+    if (error instanceof Error) return error.message;
+    return fallback;
   }
 }
