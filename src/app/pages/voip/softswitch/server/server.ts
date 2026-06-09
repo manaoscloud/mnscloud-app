@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -95,7 +97,6 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
     'actions',
   ];
   readonly editing = signal<VoipSoftswitchServerItem | null>(null);
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly selectedIds = signal<Set<string>>(new Set());
 
@@ -103,7 +104,15 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
   searchInput = '';
   private dialogBinding: CrudDialogBinding | null = null;
   private dialogRef: MatDialogRef<unknown> | null = null;
-  private minLoadingTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastLoadError = '';
+  private readonly appliedSearch = signal('');
+  private readonly serversResource = resource({
+    params: () => this.appliedSearch(),
+    defaultValue: [] as VoipSoftswitchServerItem[],
+    loader: ({ params }) => this.fetchServers(params),
+  });
+
+  readonly loading = this.serversResource.isLoading;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -144,9 +153,25 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
           return '';
       }
     };
-
-    void this.load();
   }
+
+  private readonly syncRows = effect(() => {
+    this.dataSource.data = this.serversResource.value();
+    this.reconcileSelection();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.serversResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+    const message = (error as any)?.error?.error || 'Failed to load Softswitch servers.';
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+  });
 
   ngAfterViewInit() {
     const sort = this.sort();
@@ -159,15 +184,19 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
     return this.selectedIds().size;
   }
 
-  async refreshList() {
-    await this.load();
+  refreshList() {
+    this.serversResource.reload();
   }
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
-    void this.load();
+    if (this.appliedSearch() === this.search) {
+      this.serversResource.reload();
+    } else {
+      this.appliedSearch.set(this.search);
+    }
   }
 
   clearSearchFilters() {
@@ -175,19 +204,10 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
     this.search = '';
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
-    void this.load();
-  }
-
-  async load() {
-    this.startLoading();
-    try {
-      const res = await this.api.list(true, { search: this.search, limit: 5000, offset: 0 });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-    } catch (error: any) {
-      this.snack.error(error?.error?.error || 'Failed to load Softswitch servers.');
-    } finally {
-      this.stopLoading();
+    if (this.appliedSearch() === '') {
+      this.serversResource.reload();
+    } else {
+      this.appliedSearch.set('');
     }
   }
 
@@ -227,7 +247,7 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
         this.snack.success('Softswitch server created successfully.');
       }
 
-      await this.load();
+      this.serversResource.reload();
       if (createAnother && !editing) {
         this.form.reset(this.emptyFormValue());
         return;
@@ -251,7 +271,7 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
       await this.api.remove(row.VsrUUID, true);
       this.removeSelection([row.VsrUUID]);
       this.snack.success('Softswitch server deleted successfully.');
-      await this.load();
+      this.serversResource.reload();
     } catch (error: any) {
       this.snack.error(error?.error?.error || 'Failed to delete Softswitch server.');
     }
@@ -284,7 +304,7 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
           ? `${deleted.length} server(s) deleted. ${failed.length} failed.`
           : 'Selected Softswitch servers deleted successfully.',
       );
-      await this.load();
+      this.serversResource.reload();
     } catch (error: any) {
       this.snack.error(error?.error?.error || 'Failed to delete selected Softswitch servers.');
     }
@@ -409,6 +429,11 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
     this.selectedIds.set(new Set(ids));
   }
 
+  private async fetchServers(search: string): Promise<VoipSoftswitchServerItem[]> {
+    const res = await this.api.list(true, { search, limit: 5000, offset: 0 });
+    return res?.data?.items ?? [];
+  }
+
   private extractDeletedIds(response: any, fallback: string[]) {
     const deleted = response?.data?.deleted ?? response?.deleted;
     return Array.isArray(deleted) ? deleted : fallback;
@@ -429,18 +454,5 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
       disableClose: true,
     });
     return !!(await firstValueFrom(ref.afterClosed()));
-  }
-
-  private startLoading() {
-    if (this.minLoadingTimer) clearTimeout(this.minLoadingTimer);
-    this.loading.set(true);
-  }
-
-  private stopLoading() {
-    if (this.minLoadingTimer) clearTimeout(this.minLoadingTimer);
-    this.minLoadingTimer = setTimeout(() => {
-      this.loading.set(false);
-      this.minLoadingTimer = null;
-    }, 600);
   }
 }

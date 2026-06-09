@@ -4,7 +4,9 @@ import {
   AfterViewInit,
   Component,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -106,7 +108,6 @@ export class VoipPabxServerPage implements AfterViewInit {
     'actions',
   ];
   readonly editing = signal<VoipPabxServerItem | null>(null);
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly validatingIds = signal<Set<string>>(new Set());
@@ -116,7 +117,15 @@ export class VoipPabxServerPage implements AfterViewInit {
   searchInput = '';
   private dialogBinding: CrudDialogBinding | null = null;
   private dialogRef: MatDialogRef<unknown> | null = null;
-  private minLoadingTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastLoadError = '';
+  private readonly appliedSearch = signal('');
+  private readonly serversResource = resource({
+    params: () => this.appliedSearch(),
+    defaultValue: [] as VoipPabxServerItem[],
+    loader: ({ params }) => this.fetchServers(params),
+  });
+
+  readonly loading = this.serversResource.isLoading;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -168,9 +177,25 @@ export class VoipPabxServerPage implements AfterViewInit {
           return '';
       }
     };
-
-    void this.load();
   }
+
+  private readonly syncRows = effect(() => {
+    this.dataSource.data = this.serversResource.value();
+    this.reconcileSelection();
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.serversResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+    const message = (error as any)?.error?.error || 'Failed to load PABX servers.';
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+  });
 
   ngAfterViewInit() {
     const sort = this.sort();
@@ -183,15 +208,19 @@ export class VoipPabxServerPage implements AfterViewInit {
     return this.selectedIds().size;
   }
 
-  async refreshList() {
-    await this.load();
+  refreshList() {
+    this.serversResource.reload();
   }
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
-    void this.load();
+    if (this.appliedSearch() === this.search) {
+      this.serversResource.reload();
+    } else {
+      this.appliedSearch.set(this.search);
+    }
   }
 
   clearSearchFilters() {
@@ -199,19 +228,10 @@ export class VoipPabxServerPage implements AfterViewInit {
     this.search = '';
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
-    void this.load();
-  }
-
-  async load() {
-    this.startLoading();
-    try {
-      const res = await this.api.list(true, { search: this.search, limit: 5000, offset: 0 });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-    } catch (error: any) {
-      this.snack.error(error?.error?.error || 'Failed to load PABX servers.');
-    } finally {
-      this.stopLoading();
+    if (this.appliedSearch() === '') {
+      this.serversResource.reload();
+    } else {
+      this.appliedSearch.set('');
     }
   }
 
@@ -263,7 +283,7 @@ export class VoipPabxServerPage implements AfterViewInit {
         }
       }
 
-      await this.load();
+      this.serversResource.reload();
       if (createAnother && !editing) {
         this.form.reset(this.emptyFormValue());
         return;
@@ -287,7 +307,7 @@ export class VoipPabxServerPage implements AfterViewInit {
       await this.api.remove(row.VpsUUID, true);
       this.removeSelection([row.VpsUUID]);
       this.snack.success('PABX server deleted successfully.');
-      await this.load();
+      this.serversResource.reload();
     } catch (error: any) {
       this.snack.error(error?.error?.error || 'Failed to delete PABX server.');
     }
@@ -392,7 +412,7 @@ export class VoipPabxServerPage implements AfterViewInit {
           ? `${deleted.length} server(s) deleted. ${failed.length} failed.`
           : 'Selected PABX servers deleted successfully.',
       );
-      await this.load();
+      this.serversResource.reload();
     } catch (error: any) {
       this.snack.error(error?.error?.error || 'Failed to delete selected PABX servers.');
     }
@@ -574,6 +594,11 @@ export class VoipPabxServerPage implements AfterViewInit {
     this.selectedIds.set(new Set(ids));
   }
 
+  private async fetchServers(search: string): Promise<VoipPabxServerItem[]> {
+    const res = await this.api.list(true, { search, limit: 5000, offset: 0 });
+    return res?.data?.items ?? [];
+  }
+
   private extractDeletedIds(response: any, fallback: string[]) {
     const deleted = response?.data?.deleted ?? response?.deleted;
     return Array.isArray(deleted) ? deleted : fallback;
@@ -609,18 +634,5 @@ export class VoipPabxServerPage implements AfterViewInit {
 
   private shellQuote(value: string) {
     return `'${value.replace(/'/g, `'\\''`)}'`;
-  }
-
-  private startLoading() {
-    if (this.minLoadingTimer) clearTimeout(this.minLoadingTimer);
-    this.loading.set(true);
-  }
-
-  private stopLoading() {
-    if (this.minLoadingTimer) clearTimeout(this.minLoadingTimer);
-    this.minLoadingTimer = setTimeout(() => {
-      this.loading.set(false);
-      this.minLoadingTimer = null;
-    }, 600);
   }
 }
