@@ -3,8 +3,10 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  effect,
   OnDestroy,
   OnInit,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -106,7 +108,13 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   complexes: ErpComplex[] = [];
   dataSource = new MatTableDataSource<ErpComplex>([]);
   displayedColumns: string[] = ['select', 'name', 'document', 'cityState', 'status', 'actions'];
-  loading = true;
+  private readonly complexesResource = resource({
+    defaultValue: [] as ErpComplex[],
+    loader: () => this.fetchComplexes(),
+  });
+  get loading() {
+    return this.complexesResource.isLoading();
+  }
   saving = false;
   searchingPostalCode = false;
   error = '';
@@ -123,6 +131,19 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
   private complexFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncComplexes = effect(() => {
+    this.complexes = this.complexesResource.value();
+    this.dataSource.data = [...this.complexes];
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+  private readonly reportComplexesError = effect(() => {
+    const error = this.complexesResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load complexes.'));
+      this.dataSource.data = [];
+    }
+  });
 
   statusOptions: { value: ComplexStatus; label: string }[] = [
     { value: 'active', label: 'Active' },
@@ -153,7 +174,6 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.resetForm();
-    void this.loadComplexes();
   }
 
   ngOnDestroy() {
@@ -193,17 +213,17 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadComplexes();
+    this.complexesResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadComplexes();
+    this.complexesResource.reload();
   }
 
   refreshList() {
-    void this.loadComplexes();
+    this.complexesResource.reload();
   }
 
   applyFilter() {
@@ -214,38 +234,13 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadComplexes() {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    this.loading = true;
-    this.cdr.detectChanges();
+  private async fetchComplexes() {
     this.error = '';
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('q', this.search);
-      const res = await this.api.get<any>(`erp/complexes?${params.toString()}`);
-      this.complexes = res?.data?.items ?? [];
-      this.dataSource.data = [...this.complexes];
-      this.reconcileSelection();
-      this.applyFilter();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load complexes.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    }
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (this.search) params.set('q', this.search);
+    const res = await this.api.get<any>(`erp/complexes?${params.toString()}`);
+    return res?.data?.items ?? [];
   }
 
   startCreate() {
@@ -347,7 +342,7 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
         this.resetForm();
         this.cdr.detectChanges();
       }
-      await this.loadComplexes();
+      this.complexesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save complex.');
     } finally {
@@ -413,17 +408,14 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/complexes/${complexUUID}`);
       this.selectedComplexUUIDs.delete(complexUUID);
-      await this.loadComplexes();
+      this.complexesResource.reload();
       this.snack.success('Complex deleted successfully.');
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete complex.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -506,7 +498,6 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading = true;
     this.error = '';
     try {
       const response = await this.api.delete<any>('erp/complexes/bulk', { ids });
@@ -518,7 +509,7 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
       this.complexes = this.complexes.filter((row) => !deleted.has(row.ComplexUUID));
       this.selectedComplexUUIDs.clear();
       failed.forEach((uuid) => this.selectedComplexUUIDs.add(uuid));
-      await this.loadComplexes();
+      this.complexesResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected complex record(s) could not be deleted.`);
       } else {
@@ -526,8 +517,6 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
       }
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete selected complexes.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -555,6 +544,11 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   private showWarning(message: string) {
     this.error = '';
     this.snack.warning(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
   }
 
   private reconcileSelection() {

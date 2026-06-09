@@ -1,9 +1,10 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
+  effect,
   OnDestroy,
   OnInit,
+  resource,
   TemplateRef,
   inject,
   signal,
@@ -89,7 +90,6 @@ type Company = {
 export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
   private readonly listLimit = 200;
 
@@ -104,7 +104,13 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
     'status',
     'actions',
   ];
-  loading = true;
+  private readonly companiesResource = resource({
+    defaultValue: [] as Company[],
+    loader: () => this.fetchCompanies(),
+  });
+  get loading() {
+    return this.companiesResource.isLoading();
+  }
   saving = false;
   error = '';
   search = '';
@@ -119,6 +125,19 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   readonly companyFormDialog = viewChild<TemplateRef<unknown>>('companyFormDialog');
   private companyFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncCompanies = effect(() => {
+    this.companies = this.companiesResource.value();
+    this.dataSource.data = [...this.companies];
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+  private readonly reportCompaniesError = effect(() => {
+    const error = this.companiesResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load companies.'));
+      this.dataSource.data = [];
+    }
+  });
 
   statusOptions: { value: CompanyStatus; label: string }[] = [
     { value: 'active', label: 'Active' },
@@ -183,9 +202,6 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      void this.loadCompanies();
-    }, 0);
   }
 
   onSearchChange(value: string) {
@@ -194,17 +210,17 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadCompanies();
+    this.companiesResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadCompanies();
+    this.companiesResource.reload();
   }
 
   refreshList() {
-    void this.loadCompanies();
+    this.companiesResource.reload();
   }
 
   applyFilter() {
@@ -215,38 +231,13 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadCompanies() {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    this.loading = true;
-    this.cdr.detectChanges();
+  private async fetchCompanies() {
     this.error = '';
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('q', this.search);
-      const res = await this.api.get<any>(`erp/companies?${params.toString()}`);
-      this.companies = res?.data?.items ?? [];
-      this.dataSource.data = [...this.companies];
-      this.reconcileSelection();
-      this.applyFilter();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load companies.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    }
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (this.search) params.set('q', this.search);
+    const res = await this.api.get<any>(`erp/companies?${params.toString()}`);
+    return res?.data?.items ?? [];
   }
 
   startCreate() {
@@ -320,18 +311,16 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
         this.snack.success('Company created successfully.');
       }
 
-      await this.loadCompanies();
+      this.companiesResource.reload();
 
       if (saveAndNew && isCreateMode) {
         this.resetForm();
         this.error = '';
-        this.cdr.detectChanges();
         return;
       }
 
       this.closeCompanyDialog();
       this.resetForm();
-      this.cdr.detectChanges();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save company.');
     } finally {
@@ -356,17 +345,14 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/companies/${companyUUID}`);
       this.selectedCompanyUUIDs.delete(companyUUID);
-      await this.loadCompanies();
+      this.companiesResource.reload();
       this.snack.success('Company deleted successfully.');
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete company.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -438,7 +424,6 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading = true;
     this.error = '';
     try {
       const response = await this.api.delete<any>('erp/companies/bulk', { ids });
@@ -450,7 +435,7 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
       this.companies = this.companies.filter((row) => !deleted.has(row.CompanyUUID));
       this.selectedCompanyUUIDs.clear();
       failed.forEach((uuid) => this.selectedCompanyUUIDs.add(uuid));
-      await this.loadCompanies();
+      this.companiesResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected company record(s) could not be deleted.`);
       } else {
@@ -458,8 +443,6 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
       }
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete selected companies.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -484,6 +467,11 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   private showWarning(message: string) {
     this.error = '';
     this.snack.warning(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
   }
 
   private resetForm() {
