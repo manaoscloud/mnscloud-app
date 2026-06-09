@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -101,7 +103,11 @@ export class HostingWebhostEmailsPage implements OnDestroy {
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly loading = signal(false);
+  private readonly emailsResource = resource({
+    defaultValue: [] as HostingWebhostEmailAccount[],
+    loader: () => this.fetchEmails(),
+  });
+  readonly loading = this.emailsResource.isLoading;
   readonly saving = signal(false);
   readonly actionEmailUUID = signal<string | null>(null);
   readonly editing = signal<HostingWebhostEmailAccount | null>(null);
@@ -224,8 +230,20 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     );
   });
 
+  private readonly syncEmails = effect(() => {
+    this.emails.set(this.emailsResource.value());
+    this.reconcileEmailSelection();
+  });
+
+  private readonly reportEmailsError = effect(() => {
+    const error = this.emailsResource.error();
+    if (error) {
+      this.snack.error(this.friendlyError(error, 'Failed to load Webhost emails.'));
+    }
+  });
+
   constructor() {
-    this.refreshList();
+    void this.loadHosts();
   }
 
   ngOnDestroy() {
@@ -236,7 +254,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
 
   refreshList() {
     void this.loadHosts();
-    void this.loadEmails();
+    this.emailsResource.reload();
   }
 
   applyFilters() {
@@ -247,7 +265,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     this.appliedStatus.set(values.status);
     this.appliedProvisionStatus.set(values.provisionStatus);
     this.resetPagination();
-    void this.loadEmails();
+    this.emailsResource.reload();
   }
 
   clearFilters() {
@@ -311,9 +329,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     }
   }
 
-  async loadEmails() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchEmails(): Promise<HostingWebhostEmailAccount[]> {
     const values = this.filterForm.getRawValue();
     const params = new URLSearchParams({ limit: '500', offset: '0' });
     if (values.search.trim()) params.set('search', values.search.trim());
@@ -321,20 +337,11 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     if (values.status) params.set('status', values.status);
     if (values.provisionStatus) params.set('provisionStatus', values.provisionStatus);
 
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingWebhostEmailAccount[] } }>(
-        `${this.emailEndpoint}?${params.toString()}`,
-      );
-      const items = result?.data?.items ?? [];
-      this.emails.set(
-        items.map((item) => ({ ...item, HweConfig: this.parseConfig(item.HweConfig) })),
-      );
-      this.reconcileEmailSelection();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load Webhost emails.'));
-    } finally {
-      this.finishLoading(start);
-    }
+    const result = await this.api.get<{ data?: { items?: HostingWebhostEmailAccount[] } }>(
+      `${this.emailEndpoint}?${params.toString()}`,
+    );
+    const items = result?.data?.items ?? [];
+    return items.map((item) => ({ ...item, HweConfig: this.parseConfig(item.HweConfig) }));
   }
 
   startCreate() {
@@ -411,7 +418,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
         await this.api.post(this.emailEndpoint, payload);
         this.snack.success('Webhost email created.');
       }
-      await this.loadEmails();
+      this.emailsResource.reload();
       if (closeAfterSave || editing) {
         this.closeDialog();
         this.editing.set(null);
@@ -468,7 +475,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
         action === 'provision' ? 'Webhost email provisioning queued.' : 'Password reset queued.',
       );
       this.closePasswordDialog();
-      await this.loadEmails();
+      this.emailsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to run email action.'));
     } finally {
@@ -481,7 +488,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     try {
       await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/${action}`, {});
       this.snack.success(`Webhost email ${action} queued.`);
-      await this.loadEmails();
+      this.emailsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, `Failed to ${action} Webhost email.`));
     } finally {
@@ -505,7 +512,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     try {
       await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/deprovision`, {});
       this.snack.success('Webhost email deprovision queued.');
-      await this.loadEmails();
+      this.emailsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to deprovision Webhost email.'));
     } finally {
@@ -529,7 +536,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     try {
       await this.api.delete(`${this.emailEndpoint}/${item.HweUUID}`);
       this.snack.success('Webhost email deleted.');
-      await this.loadEmails();
+      this.emailsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to delete Webhost email.'));
     }
@@ -595,7 +602,7 @@ export class HostingWebhostEmailsPage implements OnDestroy {
       );
       this.emails.update((rows) => rows.filter((row) => !deleted.has(row.HweUUID)));
       this.selectedEmailUUIDs.set(failed);
-      await this.loadEmails();
+      this.emailsResource.reload();
       failed.size
         ? this.snack.error(`${failed.size} Webhost email(s) could not be deleted.`)
         : this.snack.success(`${deleted.size || ids.length} Webhost email(s) deleted.`);
@@ -705,16 +712,6 @@ export class HostingWebhostEmailsPage implements OnDestroy {
       autoProvision: values.autoProvision === 1,
       notes: this.normalizeString(values.notes),
     };
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string) {

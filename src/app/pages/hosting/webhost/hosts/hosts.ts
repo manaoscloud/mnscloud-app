@@ -5,7 +5,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -120,7 +122,11 @@ export class HostingWebhostHostsPage implements OnDestroy {
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly loading = signal(false);
+  private readonly hostsResource = resource({
+    defaultValue: [] as HostingWebhostHost[],
+    loader: () => this.fetchHosts(),
+  });
+  readonly loading = this.hostsResource.isLoading;
   readonly saving = signal(false);
   readonly actionHostUUID = signal<string | null>(null);
   readonly editing = signal<HostingWebhostHost | null>(null);
@@ -269,6 +275,18 @@ export class HostingWebhostHostsPage implements OnDestroy {
     );
   });
 
+  private readonly syncHosts = effect(() => {
+    this.hosts.set(this.hostsResource.value());
+    this.reconcileHostSelection();
+  });
+
+  private readonly reportHostsError = effect(() => {
+    const error = this.hostsResource.error();
+    if (error) {
+      this.snack.error(this.friendlyError(error, 'Failed to load Webhost hosts.'));
+    }
+  });
+
   constructor() {
     this.filterForm.controls.customerUUID.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -286,7 +304,9 @@ export class HostingWebhostHostsPage implements OnDestroy {
         this.clearFormDomainIfNeeded(normalizedCustomerUUID);
       });
 
-    this.refreshList();
+    void this.loadPlans();
+    void this.loadCustomers();
+    void this.loadDomains();
   }
 
   ngOnDestroy() {
@@ -298,7 +318,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
     void this.loadPlans();
     void this.loadCustomers();
     void this.loadDomains();
-    void this.loadHosts();
+    this.hostsResource.reload();
   }
 
   applyFilters() {
@@ -311,7 +331,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
     this.appliedStatus.set(values.status);
     this.appliedProvisionStatus.set(values.provisionStatus);
     this.resetPagination();
-    void this.loadHosts();
+    this.hostsResource.reload();
   }
 
   clearFilters() {
@@ -428,9 +448,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
     }
   }
 
-  async loadHosts() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchHosts(): Promise<HostingWebhostHost[]> {
     const values = this.filterForm.getRawValue();
     const params = new URLSearchParams({ limit: '500', offset: '0' });
     if (values.search.trim()) params.set('search', values.search.trim());
@@ -441,20 +459,11 @@ export class HostingWebhostHostsPage implements OnDestroy {
     if (values.status) params.set('status', values.status);
     if (values.provisionStatus) params.set('provisionStatus', values.provisionStatus);
 
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
-        `${this.hostEndpoint}?${params.toString()}`,
-      );
-      const items = result?.data?.items ?? [];
-      this.hosts.set(
-        items.map((item) => ({ ...item, HwhConfig: this.parseConfig(item.HwhConfig) })),
-      );
-      this.reconcileHostSelection();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load Webhost hosts.'));
-    } finally {
-      this.finishLoading(start);
-    }
+    const result = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
+      `${this.hostEndpoint}?${params.toString()}`,
+    );
+    const items = result?.data?.items ?? [];
+    return items.map((item) => ({ ...item, HwhConfig: this.parseConfig(item.HwhConfig) }));
   }
 
   startCreate() {
@@ -538,7 +547,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
         await this.api.post(this.hostEndpoint, payload);
         this.snack.success('Webhost host created.');
       }
-      await this.loadHosts();
+      this.hostsResource.reload();
       if (closeAfterSave || editing) {
         this.closeDialog();
         this.editing.set(null);
@@ -563,7 +572,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
     try {
       await this.api.post(`${this.hostEndpoint}/${item.HwhUUID}/${action}`, {});
       this.snack.success(`Webhost host ${action} queued.`);
-      await this.loadHosts();
+      this.hostsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, `Failed to ${action} Webhost host.`));
     } finally {
@@ -587,7 +596,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
     try {
       await this.api.delete(`${this.hostEndpoint}/${item.HwhUUID}`);
       this.snack.success('Webhost host deleted.');
-      await this.loadHosts();
+      this.hostsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to delete Webhost host.'));
     }
@@ -658,7 +667,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
       );
       this.hosts.update((rows) => rows.filter((row) => !deleted.has(row.HwhUUID)));
       this.selectedHostUUIDs.set(failed);
-      await this.loadHosts();
+      this.hostsResource.reload();
       failed.size
         ? this.snack.error(`${failed.size} Webhost host(s) could not be deleted.`)
         : this.snack.success(`${deleted.size || ids.length} Webhost host(s) deleted.`);
@@ -821,16 +830,6 @@ export class HostingWebhostHostsPage implements OnDestroy {
       autoProvision: values.autoProvision === 1,
       notes: this.normalizeString(values.notes),
     };
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string) {
