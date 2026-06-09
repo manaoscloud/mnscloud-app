@@ -2,8 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   computed,
+  effect,
   inject,
   OnDestroy,
+  resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
@@ -113,6 +115,18 @@ export class HostingVpsInstancesPage implements OnDestroy {
   readonly providers = signal<HostingVpsProvider[]>([]);
   readonly plans = signal<HostingVpsPlan[]>([]);
   readonly vpsInstances = signal<HostingVpsInstance[]>([]);
+  private readonly instancesResource = resource({
+    defaultValue: [] as HostingVpsInstance[],
+    loader: () => this.fetchInstances(),
+  });
+  private readonly syncInstances = effect(() => {
+    this.vpsInstances.set(this.instancesResource.value());
+    this.reconcileInstanceSelection();
+  });
+  private readonly reportInstancesError = effect(() => {
+    const error = this.instancesResource.error();
+    if (error) this.snack.error(this.friendlyError(error, 'Failed to load VPS instances.'));
+  });
   readonly appliedSearch = signal('');
   readonly appliedCustomerUUID = signal('');
   readonly appliedStatus = signal('');
@@ -150,7 +164,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
     return this.sortedRows().slice(start, start + this.pageSize());
   });
 
-  readonly loading = signal(false);
+  readonly loading = this.instancesResource.isLoading;
   readonly saving = signal(false);
   readonly retryingInstanceUUIDs = signal<Set<string>>(new Set());
   readonly changingPlan = signal(false);
@@ -255,7 +269,9 @@ export class HostingVpsInstancesPage implements OnDestroy {
     this.instanceForm.controls.image.valueChanges.subscribe((value) =>
       this.currentImage.set(value ?? ''),
     );
-    this.refreshList();
+    void this.loadProviders();
+    void this.loadCustomers();
+    void this.loadPlans();
   }
 
   ngOnDestroy() {
@@ -268,7 +284,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
     void this.loadProviders();
     void this.loadCustomers();
     void this.loadPlans();
-    void this.loadInstances();
+    this.instancesResource.reload();
   }
 
   applyFilters() {
@@ -277,7 +293,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
     this.appliedCustomerUUID.set(values.customerUUID);
     this.appliedStatus.set(values.status);
     this.resetPagination();
-    void this.loadInstances();
+    this.instancesResource.reload();
   }
 
   clearFilters() {
@@ -512,32 +528,21 @@ export class HostingVpsInstancesPage implements OnDestroy {
     }
   }
 
-  async loadInstances() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchInstances(): Promise<HostingVpsInstance[]> {
     const values = this.filterForm.getRawValue();
     const params = new URLSearchParams({ limit: '500', offset: '0' });
     if (values.search.trim()) params.set('search', values.search.trim());
     if (values.customerUUID) params.set('customerUUID', values.customerUUID);
     if (values.status === '0' || values.status === '1') params.set('status', values.status);
 
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingVpsInstance[] } }>(
-        `${this.instanceEndpoint()}?${params.toString()}`,
-      );
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      this.vpsInstances.set(
-        list.map((item) => ({
-          ...item,
-          HviConfig: this.parseConfig<HostingVpsInstanceConfig>(item.HviConfig),
-        })),
-      );
-      this.reconcileInstanceSelection();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS instances.'));
-    } finally {
-      this.finishLoading(start);
-    }
+    const result = await this.api.get<{ data?: { items?: HostingVpsInstance[] } }>(
+      `${this.instanceEndpoint()}?${params.toString()}`,
+    );
+    const list = Array.isArray(result?.data?.items) ? result.data.items : [];
+    return list.map((item) => ({
+      ...item,
+      HviConfig: this.parseConfig<HostingVpsInstanceConfig>(item.HviConfig),
+    }));
   }
 
   async loadProviderCatalog() {
@@ -637,7 +642,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
         await this.api.post(this.instanceEndpoint(), payload);
         this.snack.success('VPS instance queued for provisioning.');
       }
-      await this.loadInstances();
+      this.instancesResource.reload();
       if (closeAfterSave || editing) {
         this.closeDialog();
         this.editing.set(null);
@@ -670,7 +675,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
     try {
       await this.api.delete(`${this.instanceEndpoint()}/${item.HviUUID}`);
       this.snack.success('VPS instance deleted.');
-      await this.loadInstances();
+      this.instancesResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to delete VPS instance.'));
     }
@@ -714,7 +719,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
           ),
         );
       }
-      await this.loadInstances();
+      this.instancesResource.reload();
       if ((updated?.HviStatus ?? '').toLowerCase() === 'queue_failed') {
         this.snack.error('VPS provisioning retry could not be queued.');
       } else {
@@ -808,7 +813,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
           ),
         );
       }
-      await this.loadInstances();
+      this.instancesResource.reload();
       this.closeChangePlanDialog();
       this.snack.success('VPS plan change queued.');
     } catch (error) {
@@ -891,7 +896,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
       );
       this.vpsInstances.update((rows) => rows.filter((row) => !deleted.has(row.HviUUID)));
       this.selectedInstanceUUIDs.set(failed);
-      await this.loadInstances();
+      this.instancesResource.reload();
       if (failed.size) {
         this.snack.error(`${failed.size} VPS instance(s) could not be deleted.`);
       } else {
@@ -1019,16 +1024,6 @@ export class HostingVpsInstancesPage implements OnDestroy {
         ?.HvrUUID ??
       ''
     );
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string) {

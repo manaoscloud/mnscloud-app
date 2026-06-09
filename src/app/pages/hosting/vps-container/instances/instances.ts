@@ -2,8 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   computed,
+  effect,
   inject,
   OnDestroy,
+  resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
@@ -116,6 +118,20 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
   readonly providers = signal<HostingVpsContainerProvider[]>([]);
   readonly plans = signal<HostingVpsContainerPlan[]>([]);
   readonly vpsInstances = signal<HostingVpsContainerInstance[]>([]);
+  private readonly instancesResource = resource({
+    defaultValue: [] as HostingVpsContainerInstance[],
+    loader: () => this.fetchInstances(),
+  });
+  private readonly syncInstances = effect(() => {
+    this.vpsInstances.set(this.instancesResource.value());
+    this.reconcileInstanceSelection();
+  });
+  private readonly reportInstancesError = effect(() => {
+    const error = this.instancesResource.error();
+    if (error) {
+      this.snack.error(this.friendlyError(error, 'Failed to load VPS Container instances.'));
+    }
+  });
   readonly appliedSearch = signal('');
   readonly appliedCustomerUUID = signal('');
   readonly appliedStatus = signal('');
@@ -155,7 +171,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
     return this.sortedRows().slice(start, start + this.pageSize());
   });
 
-  readonly loading = signal(false);
+  readonly loading = this.instancesResource.isLoading;
   readonly saving = signal(false);
   readonly retryingInstanceUUIDs = signal<Set<string>>(new Set());
   readonly changingPlan = signal(false);
@@ -260,7 +276,9 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
     this.instanceForm.controls.image.valueChanges.subscribe((value) =>
       this.currentImage.set(value ?? ''),
     );
-    this.refreshList();
+    void this.loadProviders();
+    void this.loadCustomers();
+    void this.loadPlans();
   }
 
   ngOnDestroy() {
@@ -273,7 +291,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
     void this.loadProviders();
     void this.loadCustomers();
     void this.loadPlans();
-    void this.loadInstances();
+    this.instancesResource.reload();
   }
 
   applyFilters() {
@@ -282,7 +300,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
     this.appliedCustomerUUID.set(values.customerUUID);
     this.appliedStatus.set(values.status);
     this.resetPagination();
-    void this.loadInstances();
+    this.instancesResource.reload();
   }
 
   clearFilters() {
@@ -515,32 +533,21 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
     }
   }
 
-  async loadInstances() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchInstances(): Promise<HostingVpsContainerInstance[]> {
     const values = this.filterForm.getRawValue();
     const params = new URLSearchParams({ limit: '500', offset: '0' });
     if (values.search.trim()) params.set('search', values.search.trim());
     if (values.customerUUID) params.set('customerUUID', values.customerUUID);
     if (values.status === '0' || values.status === '1') params.set('status', values.status);
 
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingVpsContainerInstance[] } }>(
-        `${this.instanceEndpoint()}?${params.toString()}`,
-      );
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      this.vpsInstances.set(
-        list.map((item) => ({
-          ...item,
-          HciConfig: this.parseConfig<HostingVpsContainerInstanceConfig>(item.HciConfig),
-        })),
-      );
-      this.reconcileInstanceSelection();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS Container instances.'));
-    } finally {
-      this.finishLoading(start);
-    }
+    const result = await this.api.get<{ data?: { items?: HostingVpsContainerInstance[] } }>(
+      `${this.instanceEndpoint()}?${params.toString()}`,
+    );
+    const list = Array.isArray(result?.data?.items) ? result.data.items : [];
+    return list.map((item) => ({
+      ...item,
+      HciConfig: this.parseConfig<HostingVpsContainerInstanceConfig>(item.HciConfig),
+    }));
   }
 
   async loadProviderCatalog() {
@@ -640,7 +647,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
         await this.api.post(this.instanceEndpoint(), payload);
         this.snack.success('VPS Container instance queued for provisioning.');
       }
-      await this.loadInstances();
+      this.instancesResource.reload();
       if (closeAfterSave || editing) {
         this.closeDialog();
         this.editing.set(null);
@@ -673,7 +680,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
     try {
       await this.api.delete(`${this.instanceEndpoint()}/${item.HciUUID}`);
       this.snack.success('VPS Container instance deleted.');
-      await this.loadInstances();
+      this.instancesResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to delete VPS Container instance.'));
     }
@@ -717,7 +724,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
           ),
         );
       }
-      await this.loadInstances();
+      this.instancesResource.reload();
       if ((updated?.HciStatus ?? '').toLowerCase() === 'queue_failed') {
         this.snack.error('VPS Container provisioning retry could not be queued.');
       } else {
@@ -811,7 +818,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
           ),
         );
       }
-      await this.loadInstances();
+      this.instancesResource.reload();
       this.closeChangePlanDialog();
       this.snack.success('VPS Container plan change queued.');
     } catch (error) {
@@ -894,7 +901,7 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
       );
       this.vpsInstances.update((rows) => rows.filter((row) => !deleted.has(row.HciUUID)));
       this.selectedInstanceUUIDs.set(failed);
-      await this.loadInstances();
+      this.instancesResource.reload();
       if (failed.size) {
         this.snack.error(`${failed.size} VPS Container instance(s) could not be deleted.`);
       } else {
@@ -1030,16 +1037,6 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
         ?.HcpUUID ??
       ''
     );
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string) {
