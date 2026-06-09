@@ -1,9 +1,9 @@
 import {
   Component,
-  ViewChild,
   AfterViewInit,
   ChangeDetectionStrategy,
   inject,
+  viewChild,
 } from '@angular/core';
 import {
   Router,
@@ -23,11 +23,11 @@ import { RouteLoader } from './shared/route-loader/route-loader';
   imports: [RouterOutlet, RouteLoader],
   template: `
     <!-- Loader global durante navegação -->
-    <app-route-loader></app-route-loader>
+    <app-route-loader />
 
     <!-- Conteúdo principal com animação entre rotas -->
     <main [@routeFadeAnimation]="getRouteAnimationState(outlet)" class="app-container">
-      <router-outlet #outlet="outlet"></router-outlet>
+      <router-outlet #outlet="outlet" />
     </main>
   `,
   styles: [
@@ -41,7 +41,7 @@ import { RouteLoader } from './shared/route-loader/route-loader';
       }
     `,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('routeFadeAnimation', [
       transition('* <=> *', [
@@ -64,12 +64,12 @@ import { RouteLoader } from './shared/route-loader/route-loader';
 export class App implements AfterViewInit {
   private router = inject(Router);
 
-  @ViewChild(RouteLoader) loader!: RouteLoader;
+  readonly loader = viewChild.required(RouteLoader);
 
   ngAfterViewInit() {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) {
-        this.loader?.show?.();
+        this.loader()?.show?.();
       }
 
       if (
@@ -77,7 +77,7 @@ export class App implements AfterViewInit {
         event instanceof NavigationCancel ||
         event instanceof NavigationError
       ) {
-        setTimeout(() => this.loader?.hide?.(), 200);
+        setTimeout(() => this.loader()?.hide?.(), 200);
       }
     });
   }

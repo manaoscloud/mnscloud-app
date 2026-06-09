@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -65,7 +73,6 @@ type PlanRow = {
   selector: 'app-hosting-vps-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule,
     MatCardModule,
@@ -75,10 +82,11 @@ type PlanRow = {
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
+    NgClass,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingVpsDashboardPage implements AfterViewInit {
@@ -87,12 +95,12 @@ export class HostingVpsDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private loadingStarted = 0;
 
-  @ViewChild('statusSort') statusSort?: MatSort;
-  @ViewChild('statusPaginator') statusPaginator?: MatPaginator;
-  @ViewChild('providerSort') providerSort?: MatSort;
-  @ViewChild('providerPaginator') providerPaginator?: MatPaginator;
-  @ViewChild('planSort') planSort?: MatSort;
-  @ViewChild('planPaginator') planPaginator?: MatPaginator;
+  readonly statusSort = viewChild<MatSort>('statusSort');
+  readonly statusPaginator = viewChild<MatPaginator>('statusPaginator');
+  readonly providerSort = viewChild<MatSort>('providerSort');
+  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
+  readonly planSort = viewChild<MatSort>('planSort');
+  readonly planPaginator = viewChild<MatPaginator>('planPaginator');
 
   readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
@@ -210,12 +218,12 @@ export class HostingVpsDashboardPage implements AfterViewInit {
       this.providerSortValue(row, column);
     this.planDataSource.sortingDataAccessor = (row, column) => this.planSortValue(row, column);
 
-    this.statusDataSource.sort = this.statusSort ?? null;
-    this.statusDataSource.paginator = this.statusPaginator ?? null;
-    this.providerDataSource.sort = this.providerSort ?? null;
-    this.providerDataSource.paginator = this.providerPaginator ?? null;
-    this.planDataSource.sort = this.planSort ?? null;
-    this.planDataSource.paginator = this.planPaginator ?? null;
+    this.statusDataSource.sort = this.statusSort() ?? null;
+    this.statusDataSource.paginator = this.statusPaginator() ?? null;
+    this.providerDataSource.sort = this.providerSort() ?? null;
+    this.providerDataSource.paginator = this.providerPaginator() ?? null;
+    this.planDataSource.sort = this.planSort() ?? null;
+    this.planDataSource.paginator = this.planPaginator() ?? null;
 
     void this.load();
   }

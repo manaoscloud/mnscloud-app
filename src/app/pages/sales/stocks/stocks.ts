@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,7 +69,7 @@ type SaleStockTypeItem = {
   ],
   templateUrl: './stocks.html',
   styleUrls: ['./stocks.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SalesStocksPage implements AfterViewInit, OnDestroy {
@@ -96,9 +96,9 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
 
   readonly displayedColumns = ['name', 'type', 'actions'];
   readonly dataSource = new MatTableDataSource<SaleStockItem>([]);
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('stockFormDialog') stockFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly stockFormDialog = viewChild<TemplateRef<unknown>>('stockFormDialog');
   private stockFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -108,8 +108,8 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -275,10 +275,11 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
   }
 
   private openStockDialog() {
-    if (!this.stockFormDialog || this.stockFormDialogRef) return;
+    const stockFormDialog = this.stockFormDialog();
+    if (!stockFormDialog || this.stockFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.stockFormDialog,
+      stockFormDialog,
       'sale-stocks-form-dialog',
     );
     this.stockFormDialogRef = this.dialogBinding.ref;

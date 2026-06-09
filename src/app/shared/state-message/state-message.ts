@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   imports: [MatIconModule, MatButtonModule],
   templateUrl: './state-message.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./state-message.scss'],
 })
 export class StateMessageComponent {

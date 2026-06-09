@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,7 +69,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
@@ -116,15 +116,15 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
     enabled: [true],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('didFormDialog') didFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly didFormDialog = viewChild<TemplateRef<unknown>>('didFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
       switch (column) {
         case 'number':
@@ -387,10 +387,11 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.didFormDialog || this.dialogRef) return;
+    const didFormDialog = this.didFormDialog();
+    if (!didFormDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.didFormDialog,
+      didFormDialog,
       'voip-softswitch-did-form-dialog',
       { onEscape: () => this.cancelEdit() },
     );

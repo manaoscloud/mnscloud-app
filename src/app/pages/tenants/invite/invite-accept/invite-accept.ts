@@ -34,7 +34,7 @@ import { MatNativeDateModule } from '@angular/material/core';
   ],
   templateUrl: './invite-accept.html',
   styleUrls: ['./invite-accept.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class InviteAcceptPage {

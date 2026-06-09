@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -153,7 +153,7 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   ],
   templateUrl: './tools.html',
   styleUrls: ['./tools.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingWebhostToolsPage implements OnDestroy {
@@ -163,8 +163,8 @@ export class HostingWebhostToolsPage implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
 
-  @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
-  @ViewChild('passwordDialog') passwordDialog?: TemplateRef<unknown>;
+  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
+  readonly passwordDialog = viewChild<TemplateRef<unknown>>('passwordDialog');
 
   private dialogRef: MatDialogRef<unknown> | null = null;
   passwordDialogRef: MatDialogRef<unknown> | null = null;
@@ -448,7 +448,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
     }
     this.passwordTarget.set(row);
     this.passwordForm.reset({ password: '' });
-    this.passwordDialogRef = this.dialog.open(this.passwordDialog!, {
+    this.passwordDialogRef = this.dialog.open(this.passwordDialog()!, {
       width: '420px',
       maxWidth: 'calc(100vw - 24px)',
       disableClose: true,
@@ -639,7 +639,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
 
   private openDialog() {
     const config = getWebhostDialogViewportConfig();
-    this.dialogRef = this.dialog.open(this.formDialog!, {
+    this.dialogRef = this.dialog.open(this.formDialog()!, {
       ...config,
       disableClose: true,
       autoFocus: false,

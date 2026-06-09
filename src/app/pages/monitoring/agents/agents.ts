@@ -1,15 +1,15 @@
-import { CommonModule } from '@angular/common';
+import { NgClass, DatePipe } from '@angular/common';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
   Component,
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -104,7 +104,6 @@ type RuntimeProductFleet = {
   selector: 'app-monitoring-agents',
   standalone: true,
   imports: [
-    CommonModule,
     ClipboardModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -123,10 +122,12 @@ type RuntimeProductFleet = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    DatePipe,
+    NgClass,
   ],
   templateUrl: './agents.html',
   styleUrls: ['./agents.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class MonitoringAgentsPage implements OnInit, OnDestroy {
@@ -136,10 +137,10 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('agentDialog') agentDialog?: TemplateRef<unknown>;
-  @ViewChild('tokenDialog') tokenDialog?: TemplateRef<unknown>;
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
+  readonly agentDialog = viewChild<TemplateRef<unknown>>('agentDialog');
+  readonly tokenDialog = viewChild<TemplateRef<unknown>>('tokenDialog');
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
   private loadingStarted = 0;
@@ -346,8 +347,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.agentDialog || this.dialogBinding) return;
-    const binding = openCrudTemplateDialog(this.dialog, this.agentDialog, 'crud-dialog-panel', {
+    const agentDialog = this.agentDialog();
+    if (!agentDialog || this.dialogBinding) return;
+    const binding = openCrudTemplateDialog(this.dialog, agentDialog, 'crud-dialog-panel', {
       onEscape: () => this.closeDialog(),
     });
     this.dialogBinding = binding;
@@ -502,8 +504,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
   }
 
   openTokenDialog() {
-    if (!this.tokenDialog) return;
-    this.dialog.open(this.tokenDialog, {
+    const tokenDialog = this.tokenDialog();
+    if (!tokenDialog) return;
+    this.dialog.open(tokenDialog, {
       width: 'min(760px, calc(100vw - 32px))',
       maxWidth: '760px',
       disableClose: false,

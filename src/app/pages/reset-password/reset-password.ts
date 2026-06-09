@@ -33,7 +33,7 @@ import { fadeIn } from '../../shared/animations/fade.animation';
     MatProgressSpinnerModule,
     MatIconModule,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class ResetPasswordComponent {

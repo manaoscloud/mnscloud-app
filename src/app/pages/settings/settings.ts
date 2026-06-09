@@ -19,7 +19,7 @@ import { fadeIn } from '../../shared/animations/fade.animation';
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss'],
   animations: [fadeIn],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[@fadeIn]': '', // aplica animação no host em vez do template
   },

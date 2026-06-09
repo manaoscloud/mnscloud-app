@@ -4,11 +4,11 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -64,7 +64,6 @@ const MIN_LOADING_MS = 600;
   selector: 'app-support-channels',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -81,9 +80,10 @@ const MIN_LOADING_MS = 600;
     MatProgressSpinnerModule,
     MatTabsModule,
     TranslocoPipe,
+    DatePipe,
   ],
   templateUrl: './channels.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./channels.scss'],
 })
 export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
@@ -137,9 +137,9 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
     },
   };
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('channelFormDialog') channelFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly channelFormDialog = viewChild<TemplateRef<unknown>>('channelFormDialog');
   private channelFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -148,8 +148,8 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -283,9 +283,10 @@ export class SupportChannelsPage implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private openFormDialog() {
-    if (!this.channelFormDialog) return;
+    const channelFormDialog = this.channelFormDialog();
+    if (!channelFormDialog) return;
     if (this.channelFormDialogRef) return;
-    this.channelFormDialogRef = this.dialog.open(this.channelFormDialog, {
+    this.channelFormDialogRef = this.dialog.open(channelFormDialog, {
       ...this.getDialogViewportConfig(),
       panelClass: 'support-channel-form-dialog',
       disableClose: true,

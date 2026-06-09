@@ -5,9 +5,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -73,7 +73,7 @@ type ErpFinInvInvoice = {
     CurrencyMaskDirective,
   ],
   templateUrl: './invoices.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./invoices.scss'],
 })
 export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
@@ -93,9 +93,9 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
   editingInvoice: ErpFinInvInvoice | null = null;
   amountPrefix = '';
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('invoiceFormDialog') invoiceFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly invoiceFormDialog = viewChild<TemplateRef<unknown>>('invoiceFormDialog');
   private invoiceFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -126,8 +126,8 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'number':
@@ -410,9 +410,10 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openInvoiceDialog() {
-    if (!this.invoiceFormDialog || this.invoiceFormDialogRef) return;
+    const invoiceFormDialog = this.invoiceFormDialog();
+    if (!invoiceFormDialog || this.invoiceFormDialogRef) return;
     this.error = '';
-    this.invoiceFormDialogRef = this.dialog.open(this.invoiceFormDialog, {
+    this.invoiceFormDialogRef = this.dialog.open(invoiceFormDialog, {
       ...this.getInvoiceDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

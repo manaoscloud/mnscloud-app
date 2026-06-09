@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth.service';
   imports: [MatCardModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class Dashboard {

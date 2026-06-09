@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -43,7 +43,6 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   selector: 'app-support-attendance',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -53,9 +52,10 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
     MatSelectModule,
     MatChipsModule,
     MatProgressSpinnerModule,
+    DatePipe,
   ],
   templateUrl: './attendance.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./attendance.scss'],
 })
 export class SupportAttendancePage implements AfterViewInit {

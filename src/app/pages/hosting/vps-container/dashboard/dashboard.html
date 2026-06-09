@@ -22,7 +22,7 @@
     <div class="dashboard-content" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
 
@@ -115,7 +115,7 @@
             class="mobile-paginator"
             [pageSizeOptions]="[5, 10, 25, 100]"
             showFirstLastButtons
-          ></mat-paginator>
+          />
         </section>
 
         <section class="dashboard-panel">
@@ -224,7 +224,7 @@
             class="mobile-paginator"
             [pageSizeOptions]="[5, 10, 25, 100]"
             showFirstLastButtons
-          ></mat-paginator>
+          />
         </section>
       </div>
 
@@ -321,7 +321,7 @@
           class="mobile-paginator"
           [pageSizeOptions]="[5, 10, 25, 100]"
           showFirstLastButtons
-        ></mat-paginator>
+        />
       </section>
     </div>
   </mat-card>

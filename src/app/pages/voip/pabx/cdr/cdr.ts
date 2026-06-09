@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { Component, inject, signal, ChangeDetectionStrategy, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -24,7 +24,6 @@ import { VoipPabxCdrRecordingDialogComponent } from './recording-dialog/recordin
   selector: 'app-voip-pabx-cdr',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatButtonModule,
     MatCardModule,
@@ -40,10 +39,11 @@ import { VoipPabxCdrRecordingDialogComponent } from './recording-dialog/recordin
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,
+    NgClass,
   ],
   templateUrl: './cdr.html',
   styleUrls: ['./cdr.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxCdrPage {
@@ -75,14 +75,12 @@ export class VoipPabxCdrPage {
     'recording',
   ];
 
-  @ViewChild(MatPaginator)
-  paginator?: MatPaginator;
-  @ViewChild(MatSort)
-  sort?: MatSort;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     void this.refreshList();
   }

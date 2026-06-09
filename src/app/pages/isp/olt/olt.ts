@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -83,7 +83,7 @@ type IspOltItem = {
   ],
   templateUrl: './olt.html',
   styleUrls: ['./olt.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspOltPage implements AfterViewInit, OnDestroy {
@@ -117,15 +117,15 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('oltFormDialog') oltFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly oltFormDialog = viewChild<TemplateRef<unknown>>('oltFormDialog');
   private oltFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -424,9 +424,10 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
   }
 
   private openOltDialog() {
-    if (!this.oltFormDialog || this.oltFormDialogRef) return;
+    const oltFormDialog = this.oltFormDialog();
+    if (!oltFormDialog || this.oltFormDialogRef) return;
     this.error.set(null);
-    this.oltFormDialogRef = this.dialog.open(this.oltFormDialog, {
+    this.oltFormDialogRef = this.dialog.open(oltFormDialog, {
       ...this.getOltDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,7 +43,6 @@ type SelectOption = {
   selector: 'app-voip-webrtc-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
     MatButtonModule,
@@ -50,10 +57,11 @@ type SelectOption = {
     MatTableModule,
     MatTooltipModule,
     TranslocoPipe,
+    DatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipWebRtcDashboardPage implements AfterViewInit {
@@ -151,10 +159,10 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
     ];
   });
 
-  @ViewChild('serverSort') serverSort?: MatSort;
-  @ViewChild('domainSort') domainSort?: MatSort;
-  @ViewChild('serverPaginator') serverPaginator?: MatPaginator;
-  @ViewChild('domainPaginator') domainPaginator?: MatPaginator;
+  readonly serverSort = viewChild<MatSort>('serverSort');
+  readonly domainSort = viewChild<MatSort>('domainSort');
+  readonly serverPaginator = viewChild<MatPaginator>('serverPaginator');
+  readonly domainPaginator = viewChild<MatPaginator>('domainPaginator');
 
   async ngAfterViewInit() {
     this.bindTables();
@@ -272,10 +280,14 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
       if (column === 'lastSyncedAt') return item.lastSyncedAt ?? '';
       return String((item as any)[column] ?? '').toLowerCase();
     };
-    if (this.serverSort) this.serverDataSource.sort = this.serverSort;
-    if (this.domainSort) this.domainDataSource.sort = this.domainSort;
-    if (this.serverPaginator) this.serverDataSource.paginator = this.serverPaginator;
-    if (this.domainPaginator) this.domainDataSource.paginator = this.domainPaginator;
+    const serverSort = this.serverSort();
+    if (serverSort) this.serverDataSource.sort = serverSort;
+    const domainSort = this.domainSort();
+    if (domainSort) this.domainDataSource.sort = domainSort;
+    const serverPaginator = this.serverPaginator();
+    if (serverPaginator) this.serverDataSource.paginator = serverPaginator;
+    const domainPaginator = this.domainPaginator();
+    if (domainPaginator) this.domainDataSource.paginator = domainPaginator;
   }
 
   private filterOptions(options: SelectOption[], search: string) {

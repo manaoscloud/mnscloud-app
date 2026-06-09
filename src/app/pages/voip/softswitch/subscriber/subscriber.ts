@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -68,7 +68,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   ],
   templateUrl: './subscriber.html',
   styleUrls: ['./subscriber.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
@@ -117,15 +117,15 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
     enabled: [true],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('subscriberFormDialog') subscriberFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly subscriberFormDialog = viewChild<TemplateRef<unknown>>('subscriberFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
       switch (column) {
         case 'username':
@@ -375,10 +375,11 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.subscriberFormDialog || this.dialogRef) return;
+    const subscriberFormDialog = this.subscriberFormDialog();
+    if (!subscriberFormDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.subscriberFormDialog,
+      subscriberFormDialog,
       'voip-softswitch-subscriber-form-dialog',
       { onEscape: () => this.cancelEdit() },
     );

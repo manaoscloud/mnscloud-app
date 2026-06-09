@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -89,7 +97,6 @@ type RouteRow = {
   selector: 'app-hosting-smtp-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule,
     MatCardModule,
@@ -99,10 +106,11 @@ type RouteRow = {
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
+    NgClass,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingSmtpDashboardPage implements AfterViewInit {
@@ -111,12 +119,12 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private loadingStarted = 0;
 
-  @ViewChild('providerSort') providerSort?: MatSort;
-  @ViewChild('providerPaginator') providerPaginator?: MatPaginator;
-  @ViewChild('accountSort') accountSort?: MatSort;
-  @ViewChild('accountPaginator') accountPaginator?: MatPaginator;
-  @ViewChild('routeSort') routeSort?: MatSort;
-  @ViewChild('routePaginator') routePaginator?: MatPaginator;
+  readonly providerSort = viewChild<MatSort>('providerSort');
+  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
+  readonly accountSort = viewChild<MatSort>('accountSort');
+  readonly accountPaginator = viewChild<MatPaginator>('accountPaginator');
+  readonly routeSort = viewChild<MatSort>('routeSort');
+  readonly routePaginator = viewChild<MatPaginator>('routePaginator');
 
   readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
@@ -233,12 +241,12 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
       this.accountSortValue(row, column);
     this.routeDataSource.sortingDataAccessor = (row, column) => this.routeSortValue(row, column);
 
-    this.providerDataSource.sort = this.providerSort ?? null;
-    this.providerDataSource.paginator = this.providerPaginator ?? null;
-    this.accountDataSource.sort = this.accountSort ?? null;
-    this.accountDataSource.paginator = this.accountPaginator ?? null;
-    this.routeDataSource.sort = this.routeSort ?? null;
-    this.routeDataSource.paginator = this.routePaginator ?? null;
+    this.providerDataSource.sort = this.providerSort() ?? null;
+    this.providerDataSource.paginator = this.providerPaginator() ?? null;
+    this.accountDataSource.sort = this.accountSort() ?? null;
+    this.accountDataSource.paginator = this.accountPaginator() ?? null;
+    this.routeDataSource.sort = this.routeSort() ?? null;
+    this.routeDataSource.paginator = this.routePaginator() ?? null;
 
     void this.load();
   }

@@ -2,11 +2,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -93,7 +93,7 @@ type SmtpEventTypeResponse = {
   ],
   templateUrl: './routes.html',
   styleUrls: ['./routes.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingSmtpRoutesPage implements OnDestroy {
@@ -103,10 +103,10 @@ export class HostingSmtpRoutesPage implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('routeDialog') routeDialog?: TemplateRef<unknown>;
-  @ViewChild('testDialog') testDialog?: TemplateRef<unknown>;
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
+  readonly routeDialog = viewChild<TemplateRef<unknown>>('routeDialog');
+  readonly testDialog = viewChild<TemplateRef<unknown>>('testDialog');
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
   private testDialogBinding: CrudDialogBinding | null = null;
@@ -279,8 +279,9 @@ export class HostingSmtpRoutesPage implements OnDestroy {
   }
 
   private openDialog() {
-    if (!this.routeDialog || this.dialogBinding) return;
-    this.dialogBinding = openCrudTemplateDialog(this.dialog, this.routeDialog, 'crud-form-dialog', {
+    const routeDialog = this.routeDialog();
+    if (!routeDialog || this.dialogBinding) return;
+    this.dialogBinding = openCrudTemplateDialog(this.dialog, routeDialog, 'crud-form-dialog', {
       onEscape: () => this.closeDialog(),
     });
     this.dialogBinding.ref.afterClosed().subscribe(() => {
@@ -312,13 +313,11 @@ export class HostingSmtpRoutesPage implements OnDestroy {
   }
 
   private openTestDialog() {
-    if (!this.testDialog || this.testDialogBinding) return;
-    this.testDialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      this.testDialog,
-      'crud-form-dialog',
-      { onEscape: () => this.closeTestDialog() },
-    );
+    const testDialog = this.testDialog();
+    if (!testDialog || this.testDialogBinding) return;
+    this.testDialogBinding = openCrudTemplateDialog(this.dialog, testDialog, 'crud-form-dialog', {
+      onEscape: () => this.closeTestDialog(),
+    });
     this.testDialogBinding.ref.afterClosed().subscribe(() => {
       this.testDialogBinding?.stop();
       this.testDialogBinding = null;

@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -61,7 +61,7 @@ type FixedIpv6Item = {
   ],
   templateUrl: './fixed-ipv6.html',
   styleUrls: ['./fixed-ipv6.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {
@@ -87,15 +87,15 @@ export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {
     status: [1, [Validators.required]],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private formDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -248,9 +248,10 @@ export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.formDialog || this.formDialogRef) return;
+    const formDialog = this.formDialog();
+    if (!formDialog || this.formDialogRef) return;
     this.error.set(null);
-    this.formDialogRef = this.dialog.open(this.formDialog, {
+    this.formDialogRef = this.dialog.open(formDialog, {
       ...this.getDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

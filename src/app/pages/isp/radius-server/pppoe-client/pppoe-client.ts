@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -71,7 +71,7 @@ type FixedIpv4Option = {
   ],
   templateUrl: './pppoe-client.html',
   styleUrls: ['./pppoe-client.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class PppoeClientPage implements AfterViewInit, OnDestroy {
@@ -99,15 +99,15 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('pppoeClientFormDialog') pppoeClientFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly pppoeClientFormDialog = viewChild<TemplateRef<unknown>>('pppoeClientFormDialog');
   private pppoeClientFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -277,9 +277,10 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
   }
 
   private openPppoeClientDialog() {
-    if (!this.pppoeClientFormDialog || this.pppoeClientFormDialogRef) return;
+    const pppoeClientFormDialog = this.pppoeClientFormDialog();
+    if (!pppoeClientFormDialog || this.pppoeClientFormDialogRef) return;
     this.error.set(null);
-    this.pppoeClientFormDialogRef = this.dialog.open(this.pppoeClientFormDialog, {
+    this.pppoeClientFormDialogRef = this.dialog.open(pppoeClientFormDialog, {
       ...this.getPppoeClientDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

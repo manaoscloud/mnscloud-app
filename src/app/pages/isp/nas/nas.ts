@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -83,7 +83,7 @@ type IspNasItem = {
   ],
   templateUrl: './nas.html',
   styleUrls: ['./nas.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspNasPage implements AfterViewInit, OnDestroy {
@@ -117,15 +117,15 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('nasFormDialog') nasFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly nasFormDialog = viewChild<TemplateRef<unknown>>('nasFormDialog');
   private nasFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -424,9 +424,10 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
   }
 
   private openNasDialog() {
-    if (!this.nasFormDialog || this.nasFormDialogRef) return;
+    const nasFormDialog = this.nasFormDialog();
+    if (!nasFormDialog || this.nasFormDialogRef) return;
     this.error.set(null);
-    this.nasFormDialogRef = this.dialog.open(this.nasFormDialog, {
+    this.nasFormDialogRef = this.dialog.open(nasFormDialog, {
       ...this.getNasDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

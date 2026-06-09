@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -66,7 +66,7 @@ type IspPopItem = {
   ],
   templateUrl: './pop.html',
   styleUrls: ['./pop.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspPopPage implements AfterViewInit, OnDestroy {
@@ -93,15 +93,15 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('popFormDialog') popFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly popFormDialog = viewChild<TemplateRef<unknown>>('popFormDialog');
   private popFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -269,9 +269,10 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
   }
 
   private openPopDialog() {
-    if (!this.popFormDialog || this.popFormDialogRef) return;
+    const popFormDialog = this.popFormDialog();
+    if (!popFormDialog || this.popFormDialogRef) return;
     this.error.set(null);
-    this.popFormDialogRef = this.dialog.open(this.popFormDialog, {
+    this.popFormDialogRef = this.dialog.open(popFormDialog, {
       ...this.getPopDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

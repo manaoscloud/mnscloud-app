@@ -4,9 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -68,7 +68,7 @@ type ErpFinInvDueDay = {
     TranslocoPipe,
   ],
   templateUrl: './duedays.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./duedays.scss'],
 })
 export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
@@ -86,9 +86,9 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
   searchInput = '';
   editingDueDay: ErpFinInvDueDay | null = null;
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('dueDayFormDialog') dueDayFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly dueDayFormDialog = viewChild<TemplateRef<unknown>>('dueDayFormDialog');
   private dueDayFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -118,8 +118,8 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'dueDay':
@@ -323,9 +323,10 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openDueDayDialog() {
-    if (!this.dueDayFormDialog || this.dueDayFormDialogRef) return;
+    const dueDayFormDialog = this.dueDayFormDialog();
+    if (!dueDayFormDialog || this.dueDayFormDialogRef) return;
     this.error = '';
-    this.dueDayFormDialogRef = this.dialog.open(this.dueDayFormDialog, {
+    this.dueDayFormDialogRef = this.dialog.open(dueDayFormDialog, {
       ...this.getDueDayDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

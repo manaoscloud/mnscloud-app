@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -103,7 +111,6 @@ const EMPTY_HOSTING_DATA: Record<HostingDatasetKey, GenericRow[]> = {
   selector: 'app-hosting-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule,
     MatCardModule,
@@ -113,10 +120,11 @@ const EMPTY_HOSTING_DATA: Record<HostingDatasetKey, GenericRow[]> = {
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
+    NgClass,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingDashboardPage implements AfterViewInit {
@@ -125,12 +133,12 @@ export class HostingDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private loadingStarted = 0;
 
-  @ViewChild('workloadSort') workloadSort?: MatSort;
-  @ViewChild('workloadPaginator') workloadPaginator?: MatPaginator;
-  @ViewChild('providerSort') providerSort?: MatSort;
-  @ViewChild('providerPaginator') providerPaginator?: MatPaginator;
-  @ViewChild('issueSort') issueSort?: MatSort;
-  @ViewChild('issuePaginator') issuePaginator?: MatPaginator;
+  readonly workloadSort = viewChild<MatSort>('workloadSort');
+  readonly workloadPaginator = viewChild<MatPaginator>('workloadPaginator');
+  readonly providerSort = viewChild<MatSort>('providerSort');
+  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
+  readonly issueSort = viewChild<MatSort>('issueSort');
+  readonly issuePaginator = viewChild<MatPaginator>('issuePaginator');
 
   readonly loading = signal(false);
   readonly data = signal<Record<HostingDatasetKey, GenericRow[]>>({ ...EMPTY_HOSTING_DATA });
@@ -223,12 +231,12 @@ export class HostingDashboardPage implements AfterViewInit {
       this.providerSortValue(row, column);
     this.issueDataSource.sortingDataAccessor = (row, column) => this.issueSortValue(row, column);
 
-    this.workloadDataSource.sort = this.workloadSort ?? null;
-    this.workloadDataSource.paginator = this.workloadPaginator ?? null;
-    this.providerDataSource.sort = this.providerSort ?? null;
-    this.providerDataSource.paginator = this.providerPaginator ?? null;
-    this.issueDataSource.sort = this.issueSort ?? null;
-    this.issueDataSource.paginator = this.issuePaginator ?? null;
+    this.workloadDataSource.sort = this.workloadSort() ?? null;
+    this.workloadDataSource.paginator = this.workloadPaginator() ?? null;
+    this.providerDataSource.sort = this.providerSort() ?? null;
+    this.providerDataSource.paginator = this.providerPaginator() ?? null;
+    this.issueDataSource.sort = this.issueSort() ?? null;
+    this.issueDataSource.paginator = this.issuePaginator() ?? null;
 
     void this.load();
   }

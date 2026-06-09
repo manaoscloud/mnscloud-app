@@ -6,10 +6,10 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -89,7 +89,7 @@ type PostalCodeLookupItem = {
     PhoneInputComponent,
   ],
   templateUrl: './reseller.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./reseller.scss'],
 })
 export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
@@ -112,10 +112,10 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('resellerFormDialog') resellerFormDialog?: TemplateRef<unknown>;
-  @ViewChild('addressNumberInput') addressNumberInput?: ElementRef<HTMLInputElement>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly resellerFormDialog = viewChild<TemplateRef<unknown>>('resellerFormDialog');
+  readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
   private resellerFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -151,8 +151,8 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -381,7 +381,7 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
         this.searchingPostalCode = false;
         this.cdr.detectChanges();
         setTimeout(() => {
-          this.addressNumberInput?.nativeElement?.focus();
+          this.addressNumberInput()?.nativeElement?.focus();
         }, 0);
       }, 0);
     } catch (err: any) {
@@ -538,9 +538,10 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openResellerDialog() {
-    if (!this.resellerFormDialog || this.resellerFormDialogRef) return;
+    const resellerFormDialog = this.resellerFormDialog();
+    if (!resellerFormDialog || this.resellerFormDialogRef) return;
     this.error = '';
-    this.resellerFormDialogRef = this.dialog.open(this.resellerFormDialog, {
+    this.resellerFormDialogRef = this.dialog.open(resellerFormDialog, {
       ...this.getResellerDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

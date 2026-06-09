@@ -10,7 +10,7 @@ import {
   standalone: true,
   imports: BILLING_WALLET_IMPORTS,
   templateUrl: '../../wallet/wallet.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['../../wallet/wallet.scss'],
 })
 export class BillingTenantCatalogPage extends BillingWalletPage {

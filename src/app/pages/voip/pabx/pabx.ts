@@ -6,8 +6,8 @@ import {
   OnDestroy,
   signal,
   TemplateRef,
-  ViewChild,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -115,7 +115,7 @@ type StorageAccountOption = {
   ],
   templateUrl: './pabx.html',
   styleUrls: ['./pabx.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxPage implements AfterViewInit, OnDestroy {
@@ -262,18 +262,15 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     );
   });
 
-  @ViewChild(MatPaginator)
-  paginator?: MatPaginator;
-  @ViewChild(MatSort)
-  sort?: MatSort;
-  @ViewChild('pabxFormDialog')
-  pabxFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly pabxFormDialog = viewChild<TemplateRef<unknown>>('pabxFormDialog');
   private pabxFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
@@ -865,10 +862,11 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   private openPabxDialog() {
-    if (!this.pabxFormDialog || this.pabxFormDialogRef) return;
+    const pabxFormDialog = this.pabxFormDialog();
+    if (!pabxFormDialog || this.pabxFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.pabxFormDialog,
+      pabxFormDialog,
       'voip-pabx-form-dialog',
     );
     this.pabxFormDialogRef = this.dialogBinding.ref;

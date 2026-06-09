@@ -6,10 +6,10 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -89,7 +89,7 @@ type PostalCodeLookupItem = {
     PhoneInputComponent,
   ],
   templateUrl: './carrier.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./carrier.scss'],
 })
 export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
@@ -112,10 +112,10 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('carrierFormDialog') carrierFormDialog?: TemplateRef<unknown>;
-  @ViewChild('addressNumberInput') addressNumberInput?: ElementRef<HTMLInputElement>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly carrierFormDialog = viewChild<TemplateRef<unknown>>('carrierFormDialog');
+  readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
   private carrierFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -151,8 +151,8 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -381,7 +381,7 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
         this.searchingPostalCode = false;
         this.cdr.detectChanges();
         setTimeout(() => {
-          this.addressNumberInput?.nativeElement?.focus();
+          this.addressNumberInput()?.nativeElement?.focus();
         }, 0);
       }, 0);
     } catch (err: any) {
@@ -538,9 +538,10 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openCarrierDialog() {
-    if (!this.carrierFormDialog || this.carrierFormDialogRef) return;
+    const carrierFormDialog = this.carrierFormDialog();
+    if (!carrierFormDialog || this.carrierFormDialogRef) return;
     this.error = '';
-    this.carrierFormDialogRef = this.dialog.open(this.carrierFormDialog, {
+    this.carrierFormDialogRef = this.dialog.open(carrierFormDialog, {
       ...this.getCarrierDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

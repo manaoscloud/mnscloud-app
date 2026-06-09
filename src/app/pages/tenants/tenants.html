@@ -70,7 +70,7 @@
           <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
             @if (loading()) {
               <div class="table-loading" aria-live="polite" aria-busy="true">
-                <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+                <mat-progress-spinner diameter="36" mode="indeterminate" />
               </div>
             }
 
@@ -136,7 +136,7 @@
             class="mobile-paginator"
             [pageSizeOptions]="[5, 10, 25, 100]"
             showFirstLastButtons
-          ></mat-paginator>
+          />
         </section>
       </mat-tab>
 
@@ -145,7 +145,7 @@
           <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
             @if (loading()) {
               <div class="table-loading" aria-live="polite" aria-busy="true">
-                <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+                <mat-progress-spinner diameter="36" mode="indeterminate" />
               </div>
             }
 
@@ -211,7 +211,7 @@
             class="mobile-paginator"
             [pageSizeOptions]="[5, 10, 25, 100]"
             showFirstLastButtons
-          ></mat-paginator>
+          />
         </section>
       </mat-tab>
 
@@ -227,7 +227,7 @@
           <div class="table-wrapper mat-elevation-z8" [class.is-loading]="invitesLoading()">
             @if (invitesLoading()) {
               <div class="table-loading" aria-live="polite" aria-busy="true">
-                <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+                <mat-progress-spinner diameter="36" mode="indeterminate" />
               </div>
             }
 
@@ -313,7 +313,7 @@
             class="mobile-paginator"
             [pageSizeOptions]="[5, 10, 25, 100]"
             showFirstLastButtons
-          ></mat-paginator>
+          />
         </section>
       </mat-tab>
     </mat-tab-group>
@@ -368,7 +368,7 @@
           (click)="sendInvite(false)"
         >
           @if (saving()) {
-            <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+            <mat-progress-spinner diameter="20" mode="indeterminate" />
           } @else {
             <mat-icon>save</mat-icon>
           }

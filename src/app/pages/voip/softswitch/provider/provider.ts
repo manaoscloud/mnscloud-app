@@ -6,8 +6,8 @@ import {
   OnDestroy,
   signal,
   TemplateRef,
-  ViewChild,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,7 +69,7 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
   ],
   templateUrl: './provider.html',
   styleUrls: ['./provider.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
@@ -133,18 +133,15 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator)
-  paginator?: MatPaginator;
-  @ViewChild(MatSort)
-  sort?: MatSort;
-  @ViewChild('providerFormDialog')
-  providerFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
   private providerFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -518,10 +515,11 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
   }
 
   private openProviderDialog() {
-    if (!this.providerFormDialog || this.providerFormDialogRef) return;
+    const providerFormDialog = this.providerFormDialog();
+    if (!providerFormDialog || this.providerFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.providerFormDialog,
+      providerFormDialog,
       'voip-softswitch-provider-form-dialog',
     );
     this.providerFormDialogRef = this.dialogBinding.ref;

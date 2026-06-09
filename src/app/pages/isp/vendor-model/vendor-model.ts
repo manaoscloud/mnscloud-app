@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -57,7 +57,7 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
   ],
   templateUrl: './vendor-model.html',
   styleUrls: ['./vendor-model.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspVendorModelPage implements AfterViewInit, OnDestroy {
@@ -94,15 +94,15 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('vendorModelFormDialog') vendorModelFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly vendorModelFormDialog = viewChild<TemplateRef<unknown>>('vendorModelFormDialog');
   private vendorModelFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -314,9 +314,10 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
   }
 
   private openVendorModelDialog() {
-    if (!this.vendorModelFormDialog || this.vendorModelFormDialogRef) return;
+    const vendorModelFormDialog = this.vendorModelFormDialog();
+    if (!vendorModelFormDialog || this.vendorModelFormDialogRef) return;
     this.error.set(null);
-    this.vendorModelFormDialogRef = this.dialog.open(this.vendorModelFormDialog, {
+    this.vendorModelFormDialogRef = this.dialog.open(vendorModelFormDialog, {
       ...this.getVendorModelDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

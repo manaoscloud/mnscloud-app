@@ -9,7 +9,7 @@ import { StateMessageComponent } from '../../shared/state-message/state-message'
   selector: 'app-not-found',
   standalone: true,
   imports: [RouterModule, StateMessageComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-state-message
       layout="page"

@@ -53,7 +53,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
 
@@ -64,14 +64,14 @@
               [checked]="isAllVisibleSelected()"
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
-            ></mat-checkbox>
+            />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
               [checked]="isSelected(row)"
               (click)="$event.stopPropagation()"
               (change)="toggleEntitySelection(row, $event.checked)"
-            ></mat-checkbox>
+            />
           </td>
         </ng-container>
 
@@ -164,7 +164,7 @@
       class="mobile-paginator"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-    ></mat-paginator>
+    />
   </mat-card>
 </section>
 
@@ -284,7 +284,7 @@
           [attr.aria-label]="uploadViewModel().title"
           [mode]="uploadViewModel().progressMode"
           [value]="uploadViewModel().progressValue"
-        ></mat-progress-bar>
+        />
       </section>
     }
 

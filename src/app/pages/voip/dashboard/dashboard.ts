@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -24,7 +24,6 @@ import {
   selector: 'app-voip-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
     MatButtonModule,
@@ -34,10 +33,11 @@ import {
     MatProgressSpinnerModule,
     MatSelectModule,
     TranslocoPipe,
+    DatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipDashboardPage {

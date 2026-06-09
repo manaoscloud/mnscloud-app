@@ -6,7 +6,7 @@
       [class.error]="state() === 'error'"
     >
       @if (state() === 'loading') {
-        <mat-spinner diameter="34"></mat-spinner>
+        <mat-spinner diameter="34" />
       } @else {
         <mat-icon>{{ state() === 'success' ? 'check' : 'priority_high' }}</mat-icon>
       }

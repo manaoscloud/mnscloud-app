@@ -4,11 +4,11 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -225,7 +225,7 @@ const CONFIGS: Record<SbcResource, Config> = {
     MatTooltipModule,
   ],
   templateUrl: './sbc.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./sbc.scss'],
 })
 export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
@@ -251,9 +251,9 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   readonly lookups: Record<LookupKey, LookupOption[]> = { providers: [], servers: [], trunks: [] };
   readonly lookupSearch: Record<LookupKey, string> = { providers: '', servers: '', trunks: '' };
   form = this.fb.group({});
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
   private routeSub: Subscription | null = null;
@@ -272,8 +272,8 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   }
   ngAfterViewInit() {
     this.viewReady = true;
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (row, filter) =>
       JSON.stringify(row).toLowerCase().includes(filter);
     this.dataSource.sortingDataAccessor = (row, column) =>
@@ -336,14 +336,14 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   applySearchFilters() {
     this.search = this.searchInput.trim();
     this.dataSource.filter = this.search.toLowerCase();
-    this.paginator?.firstPage();
+    this.paginator()?.firstPage();
     void this.load();
   }
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
     this.dataSource.filter = '';
-    this.paginator?.firstPage();
+    this.paginator()?.firstPage();
     void this.load();
   }
   async loadLookups() {
@@ -444,8 +444,9 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
     this.openDialog();
   }
   openDialog() {
-    if (!this.formDialog) return;
-    this.binding = openCrudTemplateDialog(this.dialog, this.formDialog, 'voip-sbc-form-dialog', {
+    const formDialog = this.formDialog();
+    if (!formDialog) return;
+    this.binding = openCrudTemplateDialog(this.dialog, formDialog, 'voip-sbc-form-dialog', {
       onEscape: () => this.closeDialog(),
     });
     this.dialogRef = this.binding.ref;
@@ -525,9 +526,10 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   }
   visibleRows() {
     const rows = this.dataSource.filteredData;
-    if (!this.paginator) return rows;
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    return rows.slice(start, start + this.paginator.pageSize);
+    const paginator = this.paginator();
+    if (!paginator) return rows;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return rows.slice(start, start + paginator.pageSize);
   }
   allVisibleSelected() {
     const rows = this.visibleRows();

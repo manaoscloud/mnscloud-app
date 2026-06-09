@@ -5,9 +5,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -109,7 +109,7 @@ type CustomerOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './contracts.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./contracts.scss'],
 })
 export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -142,9 +142,9 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
   customers: CustomerOption[] = [];
   customerMap = new Map<string, CustomerOption>();
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('contractFormDialog') contractFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly contractFormDialog = viewChild<TemplateRef<unknown>>('contractFormDialog');
   private contractFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -196,8 +196,8 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'title':
@@ -625,9 +625,10 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private openContractDialog() {
-    if (!this.contractFormDialog || this.contractFormDialogRef) return;
+    const contractFormDialog = this.contractFormDialog();
+    if (!contractFormDialog || this.contractFormDialogRef) return;
     this.error = '';
-    this.contractFormDialogRef = this.dialog.open(this.contractFormDialog, {
+    this.contractFormDialogRef = this.dialog.open(contractFormDialog, {
       ...this.getContractDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

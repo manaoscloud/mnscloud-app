@@ -12,7 +12,7 @@ import {
   imports: HUMAN_RESOURCES_CRUD_IMPORTS,
   templateUrl: '../shared/simple-resource-page.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class ErpHumanResourcesDepartmentsPage extends SimpleResourcePageBase {

@@ -144,7 +144,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
       <table mat-table [dataSource]="dataSource" matSort>
@@ -242,7 +242,7 @@
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
       aria-label="Select page of products"
-    ></mat-paginator>
+    />
   </mat-card>
 </section>
 

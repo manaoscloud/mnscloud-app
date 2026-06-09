@@ -4,13 +4,13 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -201,7 +201,6 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   selector: 'app-financial-payment-gateway',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -220,11 +219,12 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
     MatTooltipModule,
     MatTabsModule,
     TranslocoPipe,
+    NgClass,
   ],
   templateUrl: './payment-gateway.html',
   styleUrls: ['./payment-gateway.scss'],
   animations: [fadeIn],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[@fadeIn]': '',
   },
@@ -297,9 +297,9 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   search = '';
   searchInput = '';
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('gatewayFormDialog') gatewayFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly gatewayFormDialog = viewChild<TemplateRef<unknown>>('gatewayFormDialog');
   private gatewayFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -313,8 +313,8 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -888,10 +888,11 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   }
 
   private openGatewayDialog() {
-    if (!this.gatewayFormDialog || this.gatewayFormDialogRef) return;
+    const gatewayFormDialog = this.gatewayFormDialog();
+    if (!gatewayFormDialog || this.gatewayFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.gatewayFormDialog,
+      gatewayFormDialog,
       'crud-dialog-panel',
       {
         onEscape: () => this.cancelGatewayForm(),

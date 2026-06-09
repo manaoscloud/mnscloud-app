@@ -1,5 +1,15 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass, JsonPipe, DatePipe } from '@angular/common';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  OnInit,
+  signal,
+  TemplateRef,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -125,7 +135,6 @@ type CyberProgressEvent = {
   selector: 'app-cyber-security',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -142,10 +151,13 @@ type CyberProgressEvent = {
     MatTooltipModule,
     RouterLink,
     TranslocoPipe,
+    DatePipe,
+    JsonPipe,
+    NgClass,
   ],
   templateUrl: './cyber-security.html',
   styleUrls: ['./cyber-security.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class CyberSecurityPage implements OnInit {
@@ -156,14 +168,10 @@ export class CyberSecurityPage implements OnInit {
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('listDialog')
-  listDialog?: TemplateRef<unknown>;
-  @ViewChild('jobDialog')
-  jobDialog?: TemplateRef<unknown>;
-  @ViewChild('alertDialog')
-  alertDialog?: TemplateRef<unknown>;
-  @ViewChild('decisionDialog')
-  decisionDialog?: TemplateRef<unknown>;
+  readonly listDialog = viewChild<TemplateRef<unknown>>('listDialog');
+  readonly jobDialog = viewChild<TemplateRef<unknown>>('jobDialog');
+  readonly alertDialog = viewChild<TemplateRef<unknown>>('alertDialog');
+  readonly decisionDialog = viewChild<TemplateRef<unknown>>('decisionDialog');
 
   readonly loading = signal(false);
   readonly dashboard = signal<CyberRecord>({});
@@ -187,25 +195,16 @@ export class CyberSecurityPage implements OnInit {
   readonly decisionDataSource = new MatTableDataSource<CyberRecord>([]);
   readonly alertDataSource = new MatTableDataSource<CyberRecord>([]);
 
-  @ViewChild('decisionPaginator')
-  set decisionPaginator(paginator: MatPaginator | undefined) {
-    this.decisionDataSource.paginator = paginator ?? null;
-  }
-
-  @ViewChild('decisionSort')
-  set decisionSort(sort: MatSort | undefined) {
-    this.decisionDataSource.sort = sort ?? null;
-  }
-
-  @ViewChild('alertPaginator')
-  set alertPaginator(paginator: MatPaginator | undefined) {
-    this.alertDataSource.paginator = paginator ?? null;
-  }
-
-  @ViewChild('alertSort')
-  set alertSort(sort: MatSort | undefined) {
-    this.alertDataSource.sort = sort ?? null;
-  }
+  readonly decisionPaginator = viewChild<MatPaginator>('decisionPaginator');
+  readonly decisionSort = viewChild<MatSort>('decisionSort');
+  readonly alertPaginator = viewChild<MatPaginator>('alertPaginator');
+  readonly alertSort = viewChild<MatSort>('alertSort');
+  private readonly bindTableQueries = effect(() => {
+    this.decisionDataSource.paginator = this.decisionPaginator() ?? null;
+    this.decisionDataSource.sort = this.decisionSort() ?? null;
+    this.alertDataSource.paginator = this.alertPaginator() ?? null;
+    this.alertDataSource.sort = this.alertSort() ?? null;
+  });
 
   readonly sections: Array<{
     key: CyberSection;
@@ -564,7 +563,7 @@ export class CyberSecurityPage implements OnInit {
       reason: row?.reason ?? '',
       enabled: row?.enabled ?? 1,
     });
-    this.openDialog(this.listDialog);
+    this.openDialog(this.listDialog());
   }
 
   async saveListEntry() {
@@ -644,7 +643,7 @@ export class CyberSecurityPage implements OnInit {
     if (!row.agentUUID) return;
     this.selectedServer.set(row);
     this.selectedJobs.set([]);
-    this.openDialog(this.jobDialog, '1100px');
+    this.openDialog(this.jobDialog(), '1100px');
     try {
       const params = new URLSearchParams({
         agentUUID: row.agentUUID,
@@ -668,12 +667,12 @@ export class CyberSecurityPage implements OnInit {
 
   openAlertDetails(row: CyberRecord) {
     this.selectedAlert.set(row);
-    this.openDialog(this.alertDialog, '980px');
+    this.openDialog(this.alertDialog(), '980px');
   }
 
   openDecisionDetails(row: CyberRecord) {
     this.selectedDecision.set(row);
-    this.openDialog(this.decisionDialog, '980px');
+    this.openDialog(this.decisionDialog(), '980px');
   }
 
   async updateAlertStatus(row: CyberRecord, status: string) {

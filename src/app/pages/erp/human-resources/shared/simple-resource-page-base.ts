@@ -3,11 +3,10 @@ import {
   Directive,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -37,7 +36,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 export const HUMAN_RESOURCES_CRUD_IMPORTS = [
-  CommonModule,
   FormsModule,
   ReactiveFormsModule,
   MatButtonModule,
@@ -102,9 +100,9 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
     notes: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('resourceFormDialog') resourceFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly resourceFormDialog = viewChild<TemplateRef<unknown>>('resourceFormDialog');
 
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -131,8 +129,8 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -343,9 +341,10 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
     const filtered = this.dataSource.filteredData?.length
       ? this.dataSource.filteredData
       : this.dataSource.data;
-    if (!this.paginator) return filtered;
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    return filtered.slice(start, start + this.paginator.pageSize);
+    const paginator = this.paginator();
+    if (!paginator) return filtered;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return filtered.slice(start, start + paginator.pageSize);
   }
 
   isAllVisibleSelected() {
@@ -382,10 +381,11 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
   }
 
   private openDialog() {
-    if (!this.resourceFormDialog || this.dialogBinding) return;
+    const resourceFormDialog = this.resourceFormDialog();
+    if (!resourceFormDialog || this.dialogBinding) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.resourceFormDialog,
+      resourceFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );

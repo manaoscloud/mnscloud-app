@@ -17,7 +17,7 @@
 
         <mat-form-field appearance="outline" class="span-2">
           <mat-label>Phone</mat-label>
-          <app-phone-input formControlName="phone" [required]="true"></app-phone-input>
+          <app-phone-input formControlName="phone" [required]="true" />
           <mat-icon matSuffix>phone</mat-icon>
         </mat-form-field>
 
@@ -46,8 +46,8 @@
         <mat-form-field appearance="outline">
           <mat-label>Date of birth</mat-label>
           <input matInput [matDatepicker]="picker" formControlName="dateBirth" appDateMask />
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker touchUi></mat-datepicker>
+          <mat-datepicker-toggle matSuffix [for]="picker" />
+          <mat-datepicker #picker touchUi />
         </mat-form-field>
 
         <!-- Password -->
@@ -93,7 +93,7 @@
         @if (!isLoading()) {
           Sign Up
         } @else {
-          <mat-spinner diameter="22"></mat-spinner>
+          <mat-spinner diameter="22" />
         }
       </button>
     </form>

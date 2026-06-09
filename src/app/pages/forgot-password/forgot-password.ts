@@ -31,7 +31,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('fadeIn', [
       transition(':enter', [

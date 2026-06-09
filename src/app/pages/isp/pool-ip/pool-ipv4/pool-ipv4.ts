@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -67,7 +67,7 @@ type PoolIpv4NetworkItem = {
   ],
   templateUrl: './pool-ipv4.html',
   styleUrls: ['./pool-ipv4.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
@@ -105,18 +105,18 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
     status: [1, [Validators.required]],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild('poolSort') poolSort?: MatSort;
-  @ViewChild('networkSort') networkSort?: MatSort;
-  @ViewChild('poolDialog') poolDialog?: TemplateRef<unknown>;
-  @ViewChild('networkDialog') networkDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly poolSort = viewChild<MatSort>('poolSort');
+  readonly networkSort = viewChild<MatSort>('networkSort');
+  readonly poolDialog = viewChild<TemplateRef<unknown>>('poolDialog');
+  readonly networkDialog = viewChild<TemplateRef<unknown>>('networkDialog');
   private poolDialogRef: MatDialogRef<unknown> | null = null;
   private networkDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.poolDataSource.paginator = this.paginator ?? null;
-    this.poolDataSource.sort = this.poolSort ?? null;
+    this.poolDataSource.paginator = this.paginator() ?? null;
+    this.poolDataSource.sort = this.poolSort() ?? null;
     this.poolDataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -287,7 +287,7 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
     try {
       const response = await this.api.get<any>(`isp/ipv4-pools/${selected.Ip4UUID}/networks`);
       this.networkDataSource.data = response?.data?.items ?? [];
-      this.networkDataSource.sort = this.networkSort ?? null;
+      this.networkDataSource.sort = this.networkSort() ?? null;
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to load IPv4 networks.'));
     }
@@ -401,9 +401,10 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
   }
 
   private openPoolDialog() {
-    if (!this.poolDialog || this.poolDialogRef) return;
+    const poolDialog = this.poolDialog();
+    if (!poolDialog || this.poolDialogRef) return;
     this.error.set(null);
-    this.poolDialogRef = this.dialog.open(this.poolDialog, {
+    this.poolDialogRef = this.dialog.open(poolDialog, {
       ...this.getDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,
@@ -428,9 +429,10 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
   }
 
   private openNetworkDialog() {
-    if (!this.networkDialog || this.networkDialogRef) return;
+    const networkDialog = this.networkDialog();
+    if (!networkDialog || this.networkDialogRef) return;
     this.error.set(null);
-    this.networkDialogRef = this.dialog.open(this.networkDialog, {
+    this.networkDialogRef = this.dialog.open(networkDialog, {
       ...this.getDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

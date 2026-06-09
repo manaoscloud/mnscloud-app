@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -58,7 +58,7 @@ type CategoryItem = {
   ],
   templateUrl: './category.html',
   styleUrls: ['./category.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SaleCategoryPage implements AfterViewInit, OnDestroy {
@@ -82,8 +82,8 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
 
   readonly displayedColumns = ['name', 'actions'];
   readonly dataSource = new MatTableDataSource<CategoryItem>([]);
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild('categoryFormDialog') categoryFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly categoryFormDialog = viewChild<TemplateRef<unknown>>('categoryFormDialog');
   private categoryFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -92,7 +92,7 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
   }
 
   async loadCategories() {
@@ -221,10 +221,11 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
   }
 
   private openCategoryDialog() {
-    if (!this.categoryFormDialog || this.categoryFormDialogRef) return;
+    const categoryFormDialog = this.categoryFormDialog();
+    if (!categoryFormDialog || this.categoryFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.categoryFormDialog,
+      categoryFormDialog,
       'sale-category-form-dialog',
     );
     this.categoryFormDialogRef = this.dialogBinding.ref;

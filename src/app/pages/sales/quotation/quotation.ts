@@ -3,13 +3,13 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -78,7 +78,6 @@ type OptionItem = {
   selector: 'app-sale-quotation',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -97,10 +96,11 @@ type OptionItem = {
     TranslocoPipe,
     DateMaskDirective,
     CurrencyMaskDirective,
+    DecimalPipe,
   ],
   templateUrl: './quotation.html',
   styleUrls: ['./quotation.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SaleQuotationPage implements AfterViewInit, OnDestroy {
@@ -163,8 +163,8 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   ];
   readonly itemColumns = ['product', 'quantity', 'unitPrice', 'discount', 'total', 'actions'];
   readonly dataSource = new MatTableDataSource<SaleQuotation>([]);
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild('quotationFormDialog') quotationFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly quotationFormDialog = viewChild<TemplateRef<unknown>>('quotationFormDialog');
   private quotationFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -199,7 +199,7 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
   }
 
   async loadLookups() {
@@ -544,10 +544,11 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   }
 
   private openQuotationDialog() {
-    if (!this.quotationFormDialog || this.quotationFormDialogRef) return;
+    const quotationFormDialog = this.quotationFormDialog();
+    if (!quotationFormDialog || this.quotationFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.quotationFormDialog,
+      quotationFormDialog,
       'sale-quotation-form-dialog',
     );
     this.quotationFormDialogRef = this.dialogBinding.ref;

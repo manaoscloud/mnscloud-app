@@ -58,15 +58,15 @@
     </div>
 
     <mat-tab-group class="list-tabs" (selectedIndexChange)="onTabChange($event)">
-      <mat-tab label="All"></mat-tab>
-      <mat-tab label="Asterisk"></mat-tab>
-      <mat-tab label="FreeSWITCH"></mat-tab>
+      <mat-tab label="All" />
+      <mat-tab label="Asterisk" />
+      <mat-tab label="FreeSWITCH" />
     </mat-tab-group>
 
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
 
@@ -142,6 +142,6 @@
       [pageSize]="pageSize"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-    ></mat-paginator>
+    />
   </mat-card>
 </section>

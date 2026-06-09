@@ -3,12 +3,12 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -83,7 +83,6 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   selector: 'app-sale-product',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -100,10 +99,11 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
     TranslocoPipe,
     MatSortModule,
     CurrencyMaskDirective,
+    DecimalPipe,
   ],
   templateUrl: './product.html',
   styleUrls: ['./product.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SaleProductPage implements AfterViewInit, OnDestroy {
@@ -155,9 +155,9 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
 
   dataSource = new MatTableDataSource<ProductItem>([]);
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('productFormDialog') productFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly productFormDialog = viewChild<TemplateRef<unknown>>('productFormDialog');
   private productFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -213,8 +213,8 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (item, property) => {
       switch (property) {
         case 'name':
@@ -589,10 +589,11 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
   }
 
   private openProductDialog() {
-    if (!this.productFormDialog || this.productFormDialogRef) return;
+    const productFormDialog = this.productFormDialog();
+    if (!productFormDialog || this.productFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.productFormDialog,
+      productFormDialog,
       'sale-product-form-dialog',
     );
     this.productFormDialogRef = this.dialogBinding.ref;

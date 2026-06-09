@@ -51,7 +51,7 @@
     <div class="table-wrapper" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading">
-          <mat-spinner diameter="38"></mat-spinner>
+          <mat-spinner diameter="38" />
         </div>
       }
 
@@ -141,7 +141,7 @@
       class="mobile-paginator"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-    ></mat-paginator>
+    />
   </mat-card>
 </section>
 
@@ -229,7 +229,9 @@
           <input
             matInput
             readonly
-            [value]="formatDate($safeNavigationMigration(lastCredential()?.TemporaryPasswordExpiresAt))"
+            [value]="
+              formatDate($safeNavigationMigration(lastCredential()?.TemporaryPasswordExpiresAt))
+            "
           />
         </mat-form-field>
       </div>

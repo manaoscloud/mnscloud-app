@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -63,7 +63,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   ],
   templateUrl: './list.html',
   styleUrls: ['./list.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxBlacklistListPage implements AfterViewInit, OnDestroy {
@@ -88,14 +88,14 @@ export class VoipPabxBlacklistListPage implements AfterViewInit, OnDestroy {
     enabled: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     setTimeout(() => void this.loadItems(), 0);
   }
@@ -282,8 +282,9 @@ export class VoipPabxBlacklistListPage implements AfterViewInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.formDialog || this.dialogBinding) return;
-    this.dialogBinding = openCrudTemplateDialog(this.dialog, this.formDialog, 'crud-form-dialog', {
+    const formDialog = this.formDialog();
+    if (!formDialog || this.dialogBinding) return;
+    this.dialogBinding = openCrudTemplateDialog(this.dialog, formDialog, 'crud-form-dialog', {
       onEscape: () => this.cancelForm(),
     });
     this.dialogBinding.ref.afterClosed().subscribe(() => {

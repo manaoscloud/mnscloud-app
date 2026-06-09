@@ -50,7 +50,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
       <table mat-table [dataSource]="dataSource" matSort>
@@ -61,14 +61,14 @@
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
               aria-label="Select visible portability records"
-            ></mat-checkbox>
+            />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
               [checked]="isSelected(row)"
               (change)="togglePortabilitySelection(row, $event.checked)"
               [attr.aria-label]="'Select ' + row.Number"
-            ></mat-checkbox>
+            />
           </td>
         </ng-container>
 
@@ -155,11 +155,7 @@
       </table>
     </div>
 
-    <mat-paginator
-      class="mobile-paginator"
-      [pageSizeOptions]="[10, 20, 50]"
-      showFirstLastButtons
-    ></mat-paginator>
+    <mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons />
   </mat-card>
 </section>
 
@@ -210,10 +206,7 @@
 
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Number</mat-label>
-                <app-phone-input
-                  formControlName="number"
-                  placeholder="5511999999999"
-                ></app-phone-input>
+                <app-phone-input formControlName="number" placeholder="5511999999999" />
                 <mat-icon matSuffix>phone</mat-icon>
                 @if (form.controls.number.hasError('pattern')) {
                   <mat-error> Invalid format. Use digits only. </mat-error>
@@ -321,8 +314,8 @@
                   formControlName="requestedAt"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="requestedAtPicker"></mat-datepicker-toggle>
-                <mat-datepicker #requestedAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="requestedAtPicker" />
+                <mat-datepicker #requestedAtPicker touchUi />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -333,8 +326,8 @@
                   formControlName="scheduledAt"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="scheduledAtPicker"></mat-datepicker-toggle>
-                <mat-datepicker #scheduledAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="scheduledAtPicker" />
+                <mat-datepicker #scheduledAtPicker touchUi />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -345,8 +338,8 @@
                   formControlName="confirmedAt"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="confirmedAtPicker"></mat-datepicker-toggle>
-                <mat-datepicker #confirmedAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="confirmedAtPicker" />
+                <mat-datepicker #confirmedAtPicker touchUi />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -357,8 +350,8 @@
                   formControlName="completedAt"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="completedAtPicker"></mat-datepicker-toggle>
-                <mat-datepicker #completedAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="completedAtPicker" />
+                <mat-datepicker #completedAtPicker touchUi />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-4">

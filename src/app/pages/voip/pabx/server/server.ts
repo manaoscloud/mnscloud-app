@@ -1,6 +1,14 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  TemplateRef,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -52,7 +60,6 @@ type ServerPayload = {
   selector: 'app-voip-pabx-server',
   standalone: true,
   imports: [
-    CommonModule,
     ClipboardModule,
     FormsModule,
     ReactiveFormsModule,
@@ -73,9 +80,10 @@ type ServerPayload = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    DatePipe,
   ],
   templateUrl: './server.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./server.scss'],
 })
 export class VoipPabxServerPage implements AfterViewInit {
@@ -130,10 +138,10 @@ export class VoipPabxServerPage implements AfterViewInit {
     status: [1, Validators.required],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
-  @ViewChild('installCommandDialog') installCommandDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
+  readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -165,8 +173,10 @@ export class VoipPabxServerPage implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    if (this.sort) this.dataSource.sort = this.sort;
-    if (this.paginator) this.dataSource.paginator = this.paginator;
+    const sort = this.sort();
+    if (sort) this.dataSource.sort = sort;
+    const paginator = this.paginator();
+    if (paginator) this.dataSource.paginator = paginator;
   }
 
   get selectedCount() {
@@ -179,14 +189,16 @@ export class VoipPabxServerPage implements AfterViewInit {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    if (this.paginator) this.paginator.firstPage();
+    const paginator = this.paginator();
+    if (paginator) paginator.firstPage();
     void this.load();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    if (this.paginator) this.paginator.firstPage();
+    const paginator = this.paginator();
+    if (paginator) paginator.firstPage();
     void this.load();
   }
 
@@ -314,8 +326,9 @@ export class VoipPabxServerPage implements AfterViewInit {
   }
 
   openInstallCommandDialog() {
-    if (!this.installCommandDialog) return;
-    this.dialog.open(this.installCommandDialog, {
+    const installCommandDialog = this.installCommandDialog();
+    if (!installCommandDialog) return;
+    this.dialog.open(installCommandDialog, {
       width: 'min(860px, calc(100vw - 32px))',
       maxWidth: '860px',
       disableClose: false,
@@ -477,10 +490,11 @@ export class VoipPabxServerPage implements AfterViewInit {
   }
 
   private openDialog() {
-    if (!this.formDialog || this.dialogRef) return;
+    const formDialog = this.formDialog();
+    if (!formDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.formDialog,
+      formDialog,
       'voip-pabx-server-dialog',
       { onEscape: () => this.closeDialog() },
     );
@@ -539,9 +553,10 @@ export class VoipPabxServerPage implements AfterViewInit {
     const rows = this.dataSource.filteredData.length
       ? this.dataSource.filteredData
       : this.dataSource.data;
-    if (!this.paginator) return rows;
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    return rows.slice(start, start + this.paginator.pageSize);
+    const paginator = this.paginator();
+    if (!paginator) return rows;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return rows.slice(start, start + paginator.pageSize);
   }
 
   private reconcileSelection() {

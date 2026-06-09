@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -59,7 +59,7 @@ type UnitItem = {
   ],
   templateUrl: './unit.html',
   styleUrls: ['./unit.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SaleUnitPage implements AfterViewInit, OnDestroy {
@@ -85,8 +85,8 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
 
   readonly displayedColumns = ['code', 'name', 'actions'];
   readonly dataSource = new MatTableDataSource<UnitItem>([]);
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild('unitFormDialog') unitFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly unitFormDialog = viewChild<TemplateRef<unknown>>('unitFormDialog');
   private unitFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -95,7 +95,7 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
   }
 
   async loadUnits() {
@@ -228,10 +228,11 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
   }
 
   private openUnitDialog() {
-    if (!this.unitFormDialog || this.unitFormDialogRef) return;
+    const unitFormDialog = this.unitFormDialog();
+    if (!unitFormDialog || this.unitFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.unitFormDialog,
+      unitFormDialog,
       'sale-unit-form-dialog',
     );
     this.unitFormDialogRef = this.dialogBinding.ref;

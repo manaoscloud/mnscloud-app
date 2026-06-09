@@ -1,14 +1,14 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   AfterViewInit,
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -54,7 +54,6 @@ type LookupOption = {
   selector: 'app-voip-pabx-queue-agent',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -74,10 +73,11 @@ type LookupOption = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    DatePipe,
   ],
   templateUrl: './queue-agent.html',
   styleUrls: ['./queue-agent.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
@@ -133,15 +133,15 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     this.filterOptions(this.extensionOptions(), this.extensionSearch()),
   );
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('queueAgentFormDialog') queueAgentFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly queueAgentFormDialog = viewChild<TemplateRef<unknown>>('queueAgentFormDialog');
 
   private queueAgentDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => {
       switch (column) {
         case 'loginCode':
@@ -515,10 +515,11 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   }
 
   private openQueueAgentDialog() {
-    if (!this.queueAgentFormDialog || this.queueAgentDialogBinding) return;
+    const queueAgentFormDialog = this.queueAgentFormDialog();
+    if (!queueAgentFormDialog || this.queueAgentDialogBinding) return;
     this.queueAgentDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.queueAgentFormDialog,
+      queueAgentFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );
@@ -548,7 +549,8 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   }
 
   resetPaginator() {
-    if (this.paginator) this.paginator.firstPage();
+    const paginator = this.paginator();
+    if (paginator) paginator.firstPage();
   }
 
   private reconcileSelection() {

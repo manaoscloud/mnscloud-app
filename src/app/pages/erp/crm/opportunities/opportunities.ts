@@ -2,9 +2,9 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -44,7 +44,7 @@ type Opportunity = {
     MatProgressSpinnerModule,
   ],
   templateUrl: './opportunities.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./opportunities.scss'],
 })
 export class CrmOpportunitiesPage implements AfterViewInit {
@@ -63,12 +63,12 @@ export class CrmOpportunitiesPage implements AfterViewInit {
   ];
   searchInput = '';
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':

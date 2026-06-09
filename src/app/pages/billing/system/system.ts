@@ -1,15 +1,14 @@
-import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   linkedSignal,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -62,7 +61,6 @@ type BillingScopeOption = {
 };
 
 export const BILLING_SYSTEM_IMPORTS = [
-  CommonModule,
   FormsModule,
   ReactiveFormsModule,
   MatButtonModule,
@@ -239,25 +237,25 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     idempotencyKey: [''],
   });
 
-  @ViewChild('productDialog') productDialog?: TemplateRef<unknown>;
-  @ViewChild('priceDialog') priceDialog?: TemplateRef<unknown>;
-  @ViewChild('creditDialog') creditDialog?: TemplateRef<unknown>;
-  @ViewChild('productPaginator') productPaginator?: MatPaginator;
-  @ViewChild('pricePaginator') pricePaginator?: MatPaginator;
-  @ViewChild('subscriptionPaginator') subscriptionPaginator?: MatPaginator;
-  @ViewChild('productSort') productSort?: MatSort;
-  @ViewChild('priceSort') priceSort?: MatSort;
-  @ViewChild('subscriptionSort') subscriptionSort?: MatSort;
+  readonly productDialog = viewChild<TemplateRef<unknown>>('productDialog');
+  readonly priceDialog = viewChild<TemplateRef<unknown>>('priceDialog');
+  readonly creditDialog = viewChild<TemplateRef<unknown>>('creditDialog');
+  readonly productPaginator = viewChild<MatPaginator>('productPaginator');
+  readonly pricePaginator = viewChild<MatPaginator>('pricePaginator');
+  readonly subscriptionPaginator = viewChild<MatPaginator>('subscriptionPaginator');
+  readonly productSort = viewChild<MatSort>('productSort');
+  readonly priceSort = viewChild<MatSort>('priceSort');
+  readonly subscriptionSort = viewChild<MatSort>('subscriptionSort');
   private activeDialogRef: MatDialogRef<unknown> | null = null;
   private activeDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.productSource.paginator = this.productPaginator ?? null;
-    this.priceSource.paginator = this.pricePaginator ?? null;
-    this.subscriptionSource.paginator = this.subscriptionPaginator ?? null;
-    this.productSource.sort = this.productSort ?? null;
-    this.priceSource.sort = this.priceSort ?? null;
-    this.subscriptionSource.sort = this.subscriptionSort ?? null;
+    this.productSource.paginator = this.productPaginator() ?? null;
+    this.priceSource.paginator = this.pricePaginator() ?? null;
+    this.subscriptionSource.paginator = this.subscriptionPaginator() ?? null;
+    this.productSource.sort = this.productSort() ?? null;
+    this.priceSource.sort = this.priceSort() ?? null;
+    this.subscriptionSource.sort = this.subscriptionSort() ?? null;
     this.productSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.priceSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
@@ -332,7 +330,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.editingProduct.set(null);
     this.resetProductForm();
     this.productForm.controls.code.enable({ emitEvent: false });
-    this.openDialog(this.productDialog, '980px');
+    this.openDialog(this.productDialog(), '980px');
   }
 
   openProductEdit(row: BillingProduct) {
@@ -357,7 +355,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       status: row.BprStatus,
     });
     this.productForm.controls.code.disable({ emitEvent: false });
-    this.openDialog(this.productDialog, '980px');
+    this.openDialog(this.productDialog(), '980px');
   }
 
   async saveProduct(keepOpen = false) {
@@ -442,7 +440,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   openPriceCreate() {
     this.editingPrice.set(null);
     this.resetPriceForm();
-    this.openDialog(this.priceDialog, '860px');
+    this.openDialog(this.priceDialog(), '860px');
   }
 
   openPriceEdit(row: BillingPrice) {
@@ -460,7 +458,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       configJson: row.BpcConfigJson ?? '',
       status: row.BpcStatus,
     });
-    this.openDialog(this.priceDialog, '860px');
+    this.openDialog(this.priceDialog(), '860px');
   }
 
   async savePrice(keepOpen = false) {
@@ -530,7 +528,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.selectedCreditTenant.set(null);
     this.tenantOptions.set([]);
     this.tenantSearchLoading.set(false);
-    this.openDialog(this.creditDialog, '720px');
+    this.openDialog(this.creditDialog(), '720px');
   }
 
   clearCreditTenantSelection() {

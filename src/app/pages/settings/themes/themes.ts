@@ -1,15 +1,15 @@
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   AfterViewInit,
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   computed,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -146,7 +146,6 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
   selector: 'app-settings-themes',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -165,10 +164,11 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    NgClass,
   ],
   templateUrl: './themes.html',
   styleUrls: ['./themes.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SettingsThemesPage implements AfterViewInit, OnDestroy {
@@ -178,9 +178,9 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('domainFormDialog') domainFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
 
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -228,8 +228,8 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
   }
 
   ngOnDestroy() {
@@ -243,7 +243,7 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
   applyFilters() {
     const values = this.filterForm.getRawValue();
     this.dataSource.filter = JSON.stringify(values);
-    this.paginator?.firstPage();
+    this.paginator()?.firstPage();
     this.reconcileThemeSelection();
   }
 
@@ -606,15 +606,16 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
   }
 
   private visibleRows() {
-    const pageIndex = this.paginator?.pageIndex ?? 0;
-    const pageSize = this.paginator?.pageSize ?? this.dataSource.filteredData.length;
+    const pageIndex = this.paginator()?.pageIndex ?? 0;
+    const pageSize = this.paginator()?.pageSize ?? this.dataSource.filteredData.length;
     const rows = this.sortFilteredRows(this.dataSource.filteredData);
     return rows.slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
   }
 
   private sortFilteredRows(rows: ThemeDomain[]) {
-    const active = this.sort?.active;
-    const direction = this.sort?.direction;
+    const sort = this.sort();
+    const active = sort?.active;
+    const direction = sort?.direction;
     if (!active || !direction) return rows;
     return [...rows].sort((a, b) => {
       const compared = this.compareValues(this.sortValue(a, active), this.sortValue(b, active));
@@ -695,10 +696,11 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.domainFormDialog || this.dialogBinding) return;
+    const domainFormDialog = this.domainFormDialog();
+    if (!domainFormDialog || this.dialogBinding) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.domainFormDialog,
+      domainFormDialog,
       'settings-theme-domain-dialog',
     );
     this.dialogBinding.ref.keydownEvents().subscribe((event: KeyboardEvent) => {

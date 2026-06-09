@@ -1,15 +1,15 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   AfterViewInit,
   Component,
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -56,7 +56,6 @@ type TenantInvite = {
   selector: 'settings-tenants',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -71,10 +70,11 @@ type TenantInvite = {
     MatTableModule,
     MatTabsModule,
     TranslocoPipe,
+    DatePipe,
   ],
   templateUrl: './tenants.html',
   styleUrl: './tenants.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -83,13 +83,13 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('inviteDialog') inviteDialog?: TemplateRef<unknown>;
-  @ViewChild('myTenantsPaginator') myTenantsPaginator?: MatPaginator;
-  @ViewChild('membersPaginator') membersPaginator?: MatPaginator;
-  @ViewChild('invitesPaginator') invitesPaginator?: MatPaginator;
-  @ViewChild('myTenantsSort') myTenantsSort?: MatSort;
-  @ViewChild('membersSort') membersSort?: MatSort;
-  @ViewChild('invitesSort') invitesSort?: MatSort;
+  readonly inviteDialog = viewChild<TemplateRef<unknown>>('inviteDialog');
+  readonly myTenantsPaginator = viewChild<MatPaginator>('myTenantsPaginator');
+  readonly membersPaginator = viewChild<MatPaginator>('membersPaginator');
+  readonly invitesPaginator = viewChild<MatPaginator>('invitesPaginator');
+  readonly myTenantsSort = viewChild<MatSort>('myTenantsSort');
+  readonly membersSort = viewChild<MatSort>('membersSort');
+  readonly invitesSort = viewChild<MatSort>('invitesSort');
 
   private inviteDialogBinding: CrudDialogBinding | null = null;
   private rawMyTenants: TenantAccess[] = [];
@@ -133,12 +133,12 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.myTenantsSource.paginator = this.myTenantsPaginator ?? null;
-    this.membersSource.paginator = this.membersPaginator ?? null;
-    this.invitesSource.paginator = this.invitesPaginator ?? null;
-    this.myTenantsSource.sort = this.myTenantsSort ?? null;
-    this.membersSource.sort = this.membersSort ?? null;
-    this.invitesSource.sort = this.invitesSort ?? null;
+    this.myTenantsSource.paginator = this.myTenantsPaginator() ?? null;
+    this.membersSource.paginator = this.membersPaginator() ?? null;
+    this.invitesSource.paginator = this.invitesPaginator() ?? null;
+    this.myTenantsSource.sort = this.myTenantsSort() ?? null;
+    this.membersSource.sort = this.membersSort() ?? null;
+    this.invitesSource.sort = this.invitesSort() ?? null;
   }
 
   ngOnDestroy() {
@@ -407,16 +407,17 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private firstPage() {
-    this.myTenantsPaginator?.firstPage();
-    this.membersPaginator?.firstPage();
-    this.invitesPaginator?.firstPage();
+    this.myTenantsPaginator()?.firstPage();
+    this.membersPaginator()?.firstPage();
+    this.invitesPaginator()?.firstPage();
   }
 
   private openInviteDialog() {
-    if (!this.inviteDialog || this.inviteDialogBinding) return;
+    const inviteDialog = this.inviteDialog();
+    if (!inviteDialog || this.inviteDialogBinding) return;
     this.inviteDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.inviteDialog,
+      inviteDialog,
       'crud-dialog-panel tenant-invite-dialog-panel',
       { onEscape: () => this.closeInviteDialog() },
     );

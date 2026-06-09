@@ -2,11 +2,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -94,7 +94,7 @@ type ProviderFormValue = {
   ],
   templateUrl: './providers.html',
   styleUrls: ['./providers.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingSmtpProvidersPage implements OnDestroy {
@@ -104,9 +104,9 @@ export class HostingSmtpProvidersPage implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('providerDialog') providerDialog?: TemplateRef<unknown>;
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
+  readonly providerDialog = viewChild<TemplateRef<unknown>>('providerDialog');
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
   private loadingStarted = 0;
@@ -277,13 +277,11 @@ export class HostingSmtpProvidersPage implements OnDestroy {
   }
 
   private openDialog() {
-    if (!this.providerDialog || this.dialogBinding) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      this.providerDialog,
-      'crud-form-dialog',
-      { onEscape: () => this.closeDialog() },
-    );
+    const providerDialog = this.providerDialog();
+    if (!providerDialog || this.dialogBinding) return;
+    this.dialogBinding = openCrudTemplateDialog(this.dialog, providerDialog, 'crud-form-dialog', {
+      onEscape: () => this.closeDialog(),
+    });
     this.dialogBinding.ref.afterClosed().subscribe(() => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;

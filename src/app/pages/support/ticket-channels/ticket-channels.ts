@@ -4,9 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -65,7 +65,7 @@ const MIN_LOADING_MS = 600;
     TranslocoPipe,
   ],
   templateUrl: './ticket-channels.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./ticket-channels.scss'],
 })
 export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -94,9 +94,9 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
     status: 1,
   };
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('ticketChannelFormDialog') ticketChannelFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly ticketChannelFormDialog = viewChild<TemplateRef<unknown>>('ticketChannelFormDialog');
   private ticketChannelFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -105,8 +105,8 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -188,9 +188,10 @@ export class SupportTicketChannelsPage implements OnInit, AfterViewInit, OnDestr
   }
 
   private openFormDialog() {
-    if (!this.ticketChannelFormDialog) return;
+    const ticketChannelFormDialog = this.ticketChannelFormDialog();
+    if (!ticketChannelFormDialog) return;
     if (this.ticketChannelFormDialogRef) return;
-    this.ticketChannelFormDialogRef = this.dialog.open(this.ticketChannelFormDialog, {
+    this.ticketChannelFormDialogRef = this.dialog.open(ticketChannelFormDialog, {
       ...this.getDialogViewportConfig(),
       panelClass: 'support-ticket-channel-form-dialog',
       disableClose: true,

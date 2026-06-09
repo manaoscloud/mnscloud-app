@@ -6,10 +6,10 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -196,7 +196,7 @@ class MapStyleControl {
     PhoneInputComponent,
   ],
   templateUrl: './customer.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./customer.scss'],
 })
 export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
@@ -244,12 +244,17 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   complexSearch = '';
   dueDaySearch = '';
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('customerFormDialog') customerFormDialog?: TemplateRef<unknown>;
-  @ViewChild('mainAddressNumberInput') mainAddressNumberInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('billingAddressNumberInput') billingAddressNumberInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('installAddressNumberInput') installAddressNumberInput?: ElementRef<HTMLInputElement>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly customerFormDialog = viewChild<TemplateRef<unknown>>('customerFormDialog');
+  readonly mainAddressNumberInput =
+    viewChild<ElementRef<HTMLInputElement>>('mainAddressNumberInput');
+  readonly billingAddressNumberInput = viewChild<ElementRef<HTMLInputElement>>(
+    'billingAddressNumberInput',
+  );
+  readonly installAddressNumberInput = viewChild<ElementRef<HTMLInputElement>>(
+    'installAddressNumberInput',
+  );
   private customerFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -305,8 +310,8 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -636,12 +641,13 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openCustomerDialog() {
-    if (!this.customerFormDialog) return;
+    const customerFormDialog = this.customerFormDialog();
+    if (!customerFormDialog) return;
     if (this.customerFormDialogRef) {
       return;
     }
     this.error = '';
-    this.customerFormDialogRef = this.dialog.open(this.customerFormDialog, {
+    this.customerFormDialogRef = this.dialog.open(customerFormDialog, {
       ...this.getCustomerDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,
@@ -1327,9 +1333,9 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
 
         setTimeout(() => {
-          if (section === 'main') this.mainAddressNumberInput?.nativeElement?.focus();
-          if (section === 'billing') this.billingAddressNumberInput?.nativeElement?.focus();
-          if (section === 'install') this.installAddressNumberInput?.nativeElement?.focus();
+          if (section === 'main') this.mainAddressNumberInput()?.nativeElement?.focus();
+          if (section === 'billing') this.billingAddressNumberInput()?.nativeElement?.focus();
+          if (section === 'install') this.installAddressNumberInput()?.nativeElement?.focus();
         }, 0);
       }, 0);
     } catch (err: any) {

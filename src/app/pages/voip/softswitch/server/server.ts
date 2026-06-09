@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, TemplateRef, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  TemplateRef,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -43,7 +51,6 @@ type ServerPayload = {
   selector: 'app-voip-softswitch-server',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -63,9 +70,10 @@ type ServerPayload = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    DatePipe,
   ],
   templateUrl: './server.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./server.scss'],
 })
 export class VoipSoftswitchServerPage implements AfterViewInit {
@@ -109,9 +117,9 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
     status: [1, Validators.required],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -141,8 +149,10 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    if (this.sort) this.dataSource.sort = this.sort;
-    if (this.paginator) this.dataSource.paginator = this.paginator;
+    const sort = this.sort();
+    if (sort) this.dataSource.sort = sort;
+    const paginator = this.paginator();
+    if (paginator) this.dataSource.paginator = paginator;
   }
 
   get selectedCount() {
@@ -155,14 +165,16 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    if (this.paginator) this.paginator.firstPage();
+    const paginator = this.paginator();
+    if (paginator) paginator.firstPage();
     void this.load();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    if (this.paginator) this.paginator.firstPage();
+    const paginator = this.paginator();
+    if (paginator) paginator.firstPage();
     void this.load();
   }
 
@@ -332,10 +344,11 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
   }
 
   private openDialog() {
-    if (!this.formDialog || this.dialogRef) return;
+    const formDialog = this.formDialog();
+    if (!formDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.formDialog,
+      formDialog,
       'voip-softswitch-server-dialog',
       { onEscape: () => this.closeDialog() },
     );
@@ -375,9 +388,10 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
     const rows = this.dataSource.filteredData.length
       ? this.dataSource.filteredData
       : this.dataSource.data;
-    if (!this.paginator) return rows;
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    return rows.slice(start, start + this.paginator.pageSize);
+    const paginator = this.paginator();
+    if (!paginator) return rows;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return rows.slice(start, start + paginator.pageSize);
   }
 
   private reconcileSelection() {

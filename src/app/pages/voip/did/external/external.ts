@@ -3,12 +3,12 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -36,7 +36,6 @@ import { VoipDidExternalItem, VoipDidExternalService } from './external.service'
   selector: 'app-voip-did-external',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -52,10 +51,11 @@ import { VoipDidExternalItem, VoipDidExternalService } from './external.service'
     MatTableModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    NgClass,
   ],
   templateUrl: './external.html',
   styleUrls: ['./external.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
@@ -85,16 +85,16 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
     notes: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('externalFormDialog') externalFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly externalFormDialog = viewChild<TemplateRef<unknown>>('externalFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   async ngAfterViewInit() {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => {
       switch (column) {
         case 'number':
@@ -251,10 +251,11 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
   private openDialog() {
     this.form.controls.number.enable();
     if (this.editing()) this.form.controls.number.disable();
-    if (!this.externalFormDialog || this.dialogRef) return;
+    const externalFormDialog = this.externalFormDialog();
+    if (!externalFormDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.externalFormDialog,
+      externalFormDialog,
       'voip-did-external-form-dialog',
     );
     this.dialogRef = this.dialogBinding.ref;

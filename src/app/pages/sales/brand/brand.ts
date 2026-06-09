@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -58,7 +58,7 @@ type BrandItem = {
   ],
   templateUrl: './brand.html',
   styleUrls: ['./brand.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SaleBrandPage implements AfterViewInit, OnDestroy {
@@ -82,8 +82,8 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
 
   readonly displayedColumns = ['name', 'actions'];
   readonly dataSource = new MatTableDataSource<BrandItem>([]);
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild('brandFormDialog') brandFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly brandFormDialog = viewChild<TemplateRef<unknown>>('brandFormDialog');
   private brandFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -92,7 +92,7 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
   }
 
   async loadBrands() {
@@ -198,10 +198,11 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
   }
 
   private openBrandDialog() {
-    if (!this.brandFormDialog || this.brandFormDialogRef) return;
+    const brandFormDialog = this.brandFormDialog();
+    if (!brandFormDialog || this.brandFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.brandFormDialog,
+      brandFormDialog,
       'sale-brand-form-dialog',
     );
     this.brandFormDialogRef = this.dialogBinding.ref;

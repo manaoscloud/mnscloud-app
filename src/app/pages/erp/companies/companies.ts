@@ -5,10 +5,10 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -83,7 +83,7 @@ type Company = {
     PhoneInputComponent,
   ],
   templateUrl: './companies.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./companies.scss'],
 })
 export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
@@ -114,9 +114,9 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('companyFormDialog') companyFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly companyFormDialog = viewChild<TemplateRef<unknown>>('companyFormDialog');
   private companyFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -157,8 +157,8 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -513,9 +513,10 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openCompanyDialog() {
-    if (!this.companyFormDialog || this.companyFormDialogRef) return;
+    const companyFormDialog = this.companyFormDialog();
+    if (!companyFormDialog || this.companyFormDialogRef) return;
     this.error = '';
-    this.companyFormDialogRef = this.dialog.open(this.companyFormDialog, {
+    this.companyFormDialogRef = this.dialog.open(companyFormDialog, {
       ...this.getCompanyDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

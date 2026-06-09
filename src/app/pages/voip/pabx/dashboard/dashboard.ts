@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -38,7 +46,6 @@ type SelectOption = {
   selector: 'app-voip-pabx-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
     MatButtonModule,
@@ -53,10 +60,11 @@ type SelectOption = {
     MatTableModule,
     MatTooltipModule,
     TranslocoPipe,
+    DatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxDashboardPage implements AfterViewInit {
@@ -142,12 +150,12 @@ export class VoipPabxDashboardPage implements AfterViewInit {
     ];
   });
 
-  @ViewChild('serverSort') serverSort?: MatSort;
-  @ViewChild('queueSort') queueSort?: MatSort;
-  @ViewChild('trunkSort') trunkSort?: MatSort;
-  @ViewChild('serverPaginator') serverPaginator?: MatPaginator;
-  @ViewChild('queuePaginator') queuePaginator?: MatPaginator;
-  @ViewChild('trunkPaginator') trunkPaginator?: MatPaginator;
+  readonly serverSort = viewChild<MatSort>('serverSort');
+  readonly queueSort = viewChild<MatSort>('queueSort');
+  readonly trunkSort = viewChild<MatSort>('trunkSort');
+  readonly serverPaginator = viewChild<MatPaginator>('serverPaginator');
+  readonly queuePaginator = viewChild<MatPaginator>('queuePaginator');
+  readonly trunkPaginator = viewChild<MatPaginator>('trunkPaginator');
 
   async ngAfterViewInit() {
     this.bindTables();
@@ -262,12 +270,18 @@ export class VoipPabxDashboardPage implements AfterViewInit {
       String((item as any)[column] ?? '').toLowerCase();
     this.trunkDataSource.sortingDataAccessor = (item, column) =>
       String((item as any)[column] ?? '').toLowerCase();
-    if (this.serverSort) this.serverDataSource.sort = this.serverSort;
-    if (this.queueSort) this.queueDataSource.sort = this.queueSort;
-    if (this.trunkSort) this.trunkDataSource.sort = this.trunkSort;
-    if (this.serverPaginator) this.serverDataSource.paginator = this.serverPaginator;
-    if (this.queuePaginator) this.queueDataSource.paginator = this.queuePaginator;
-    if (this.trunkPaginator) this.trunkDataSource.paginator = this.trunkPaginator;
+    const serverSort = this.serverSort();
+    if (serverSort) this.serverDataSource.sort = serverSort;
+    const queueSort = this.queueSort();
+    if (queueSort) this.queueDataSource.sort = queueSort;
+    const trunkSort = this.trunkSort();
+    if (trunkSort) this.trunkDataSource.sort = trunkSort;
+    const serverPaginator = this.serverPaginator();
+    if (serverPaginator) this.serverDataSource.paginator = serverPaginator;
+    const queuePaginator = this.queuePaginator();
+    if (queuePaginator) this.queueDataSource.paginator = queuePaginator;
+    const trunkPaginator = this.trunkPaginator();
+    if (trunkPaginator) this.trunkDataSource.paginator = trunkPaginator;
   }
 
   private filterOptions(options: SelectOption[], search: string) {

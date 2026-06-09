@@ -6,8 +6,8 @@ import {
   OnDestroy,
   signal,
   TemplateRef,
-  ViewChild,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
@@ -74,7 +74,7 @@ type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
   ],
   templateUrl: './routing.html',
   styleUrls: ['./routing.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
@@ -173,12 +173,9 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     enabled: [true],
   });
 
-  @ViewChild(MatPaginator)
-  paginator?: MatPaginator;
-  @ViewChild(MatSort)
-  sort?: MatSort;
-  @ViewChild('routingFormDialog')
-  routingFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly routingFormDialog = viewChild<TemplateRef<unknown>>('routingFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -198,8 +195,8 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
       this.resetForm();
       void this.refreshList();
     });
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.dataSource.filterPredicate = (row, filter) =>
       JSON.stringify(row).toLowerCase().includes(filter.trim().toLowerCase());
@@ -1007,10 +1004,11 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.routingFormDialog || this.dialogRef) return;
+    const routingFormDialog = this.routingFormDialog();
+    if (!routingFormDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.routingFormDialog,
+      routingFormDialog,
       'voip-pabx-routing-dialog',
     );
     this.dialogRef = this.dialogBinding.ref;

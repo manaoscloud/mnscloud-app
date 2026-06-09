@@ -4,11 +4,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -82,7 +82,7 @@ type CreateMode = 'single' | 'range';
   ],
   templateUrl: './extension.html',
   styleUrls: ['./extension.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
@@ -168,15 +168,15 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
     paramsJson: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('extensionFormDialog') extensionFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly extensionFormDialog = viewChild<TemplateRef<unknown>>('extensionFormDialog');
   private extensionFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) =>
       this.sortValue(data, sortHeaderId);
     this.dataSource.filterPredicate = (data) => this.matchesFilters(data);
@@ -619,7 +619,7 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
 
   private applyFilter() {
     this.dataSource.filter = `${this.search}|${this.statusFilter}|${this.pabxFilter}|${Date.now()}`;
-    this.paginator?.firstPage();
+    this.paginator()?.firstPage();
   }
 
   private reconcileSelection() {
@@ -1000,10 +1000,11 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   }
 
   private openExtensionDialog() {
-    if (!this.extensionFormDialog || this.extensionFormDialogRef) return;
+    const extensionFormDialog = this.extensionFormDialog();
+    if (!extensionFormDialog || this.extensionFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.extensionFormDialog,
+      extensionFormDialog,
       'voip-pabx-extension-form-dialog',
     );
     this.extensionFormDialogRef = this.dialogBinding.ref;

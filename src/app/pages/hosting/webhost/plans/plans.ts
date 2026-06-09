@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -70,7 +70,7 @@ import type {
   ],
   templateUrl: './plans.html',
   styleUrls: ['./plans.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingWebhostPlansPage implements OnDestroy {
@@ -80,7 +80,7 @@ export class HostingWebhostPlansPage implements OnDestroy {
   private readonly parameters = inject(SystemParameterService);
   private readonly dialog = inject(MatDialog);
 
-  @ViewChild('planFormDialog') planFormDialog?: TemplateRef<unknown>;
+  readonly planFormDialog = viewChild<TemplateRef<unknown>>('planFormDialog');
 
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
@@ -636,8 +636,9 @@ export class HostingWebhostPlansPage implements OnDestroy {
   }
 
   private openDialog() {
-    if (!this.planFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(this.planFormDialog, {
+    const planFormDialog = this.planFormDialog();
+    if (!planFormDialog || this.dialogRef) return;
+    this.dialogRef = this.dialog.open(planFormDialog, {
       ...getWebhostDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

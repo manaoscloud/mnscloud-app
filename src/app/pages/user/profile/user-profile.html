@@ -22,7 +22,7 @@
 
     @if (loading()) {
       <div class="profile-loading" aria-live="polite" aria-busy="true">
-        <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+        <mat-progress-spinner diameter="40" mode="indeterminate" />
         <span>{{ 'Loading your profile...' | transloco }}</span>
       </div>
     } @else {
@@ -70,8 +70,8 @@
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Date of Birth' | transloco }}</mat-label>
                 <input matInput [matDatepicker]="picker" formControlName="dateBirth" />
-                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-datepicker #picker></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="picker" />
+                <mat-datepicker #picker />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
@@ -147,10 +147,7 @@
                       [disabled]="savingAvatarDisabled()"
                     >
                       @if (savingAvatar()) {
-                        <mat-progress-spinner
-                          diameter="20"
-                          mode="indeterminate"
-                        ></mat-progress-spinner>
+                        <mat-progress-spinner diameter="20" mode="indeterminate" />
                       } @else {
                         <mat-icon>save</mat-icon>
                       }
@@ -182,7 +179,7 @@
         </mat-tab-group>
       </form>
 
-      <mat-divider></mat-divider>
+      <mat-divider />
 
       <footer class="profile-actions">
         <div class="secondary-actions">
@@ -206,7 +203,7 @@
             [disabled]="saving() || savingAvatar() || loading() || profileForm.invalid"
           >
             @if (saving()) {
-              <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+              <mat-progress-spinner diameter="20" mode="indeterminate" />
             } @else {
               <mat-icon>save</mat-icon>
             }

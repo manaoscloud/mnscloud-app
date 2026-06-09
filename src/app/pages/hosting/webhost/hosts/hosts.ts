@@ -4,11 +4,11 @@ import {
   DestroyRef,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -81,7 +81,7 @@ type CustomerOption = {
   ],
   templateUrl: './hosts.html',
   styleUrls: ['./hosts.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingWebhostHostsPage implements OnDestroy {
@@ -91,7 +91,7 @@ export class HostingWebhostHostsPage implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
-  @ViewChild('hostFormDialog') hostFormDialog?: TemplateRef<unknown>;
+  readonly hostFormDialog = viewChild<TemplateRef<unknown>>('hostFormDialog');
 
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
@@ -845,8 +845,9 @@ export class HostingWebhostHostsPage implements OnDestroy {
   }
 
   private openDialog() {
-    if (!this.hostFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(this.hostFormDialog, {
+    const hostFormDialog = this.hostFormDialog();
+    if (!hostFormDialog || this.dialogRef) return;
+    this.dialogRef = this.dialog.open(hostFormDialog, {
       ...getWebhostDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

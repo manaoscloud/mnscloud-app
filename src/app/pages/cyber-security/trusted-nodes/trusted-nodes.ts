@@ -3,12 +3,12 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass, DatePipe } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -43,7 +43,6 @@ import {
   selector: 'app-cyber-security-trusted-nodes',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -62,10 +61,12 @@ import {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    DatePipe,
+    NgClass,
   ],
   templateUrl: './trusted-nodes.html',
   styleUrls: ['./trusted-nodes.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
@@ -109,15 +110,15 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
     notes: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('trustedNodeFormDialog') trustedNodeFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly trustedNodeFormDialog = viewChild<TemplateRef<unknown>>('trustedNodeFormDialog');
 
   private trustedNodeDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -167,7 +168,8 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
     try {
       const trustedNodes = await this.trustedNodesApi.list(this.search(), this.listLimit);
       this.dataSource.data = trustedNodes.items;
-      if (this.paginator) this.paginator.firstPage();
+      const paginator = this.paginator();
+      if (paginator) paginator.firstPage();
       this.reconcileSelection();
     } catch (error: any) {
       this.dataSource.data = [];
@@ -469,10 +471,11 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
   }
 
   private openTrustedNodeDialog() {
-    if (!this.trustedNodeFormDialog || this.trustedNodeDialogBinding) return;
+    const trustedNodeFormDialog = this.trustedNodeFormDialog();
+    if (!trustedNodeFormDialog || this.trustedNodeDialogBinding) return;
     this.trustedNodeDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.trustedNodeFormDialog,
+      trustedNodeFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );

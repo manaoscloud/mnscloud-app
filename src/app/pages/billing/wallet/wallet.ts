@@ -1,13 +1,13 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   AfterViewInit,
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -43,7 +43,7 @@ import {
 export type BillingTenantSection = 'dashboard' | 'catalog' | 'subscriptions' | 'ledger';
 
 export const BILLING_WALLET_IMPORTS = [
-  CommonModule,
+  DatePipe,
   FormsModule,
   ReactiveFormsModule,
   MatButtonModule,
@@ -70,7 +70,7 @@ export const BILLING_WALLET_IMPORTS = [
   imports: BILLING_WALLET_IMPORTS,
   templateUrl: './wallet.html',
   styleUrls: ['./wallet.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class BillingWalletPage implements AfterViewInit, OnDestroy {
@@ -130,24 +130,24 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     idempotencyKey: [''],
   });
 
-  @ViewChild('subscriptionDialog') subscriptionDialog?: TemplateRef<unknown>;
-  @ViewChild('topupDialog') topupDialog?: TemplateRef<unknown>;
-  @ViewChild('catalogPaginator') catalogPaginator?: MatPaginator;
-  @ViewChild('subscriptionPaginator') subscriptionPaginator?: MatPaginator;
-  @ViewChild('ledgerPaginator') ledgerPaginator?: MatPaginator;
-  @ViewChild('catalogSort') catalogSort?: MatSort;
-  @ViewChild('subscriptionSort') subscriptionSort?: MatSort;
-  @ViewChild('ledgerSort') ledgerSort?: MatSort;
+  readonly subscriptionDialog = viewChild<TemplateRef<unknown>>('subscriptionDialog');
+  readonly topupDialog = viewChild<TemplateRef<unknown>>('topupDialog');
+  readonly catalogPaginator = viewChild<MatPaginator>('catalogPaginator');
+  readonly subscriptionPaginator = viewChild<MatPaginator>('subscriptionPaginator');
+  readonly ledgerPaginator = viewChild<MatPaginator>('ledgerPaginator');
+  readonly catalogSort = viewChild<MatSort>('catalogSort');
+  readonly subscriptionSort = viewChild<MatSort>('subscriptionSort');
+  readonly ledgerSort = viewChild<MatSort>('ledgerSort');
   private subscriptionDialogRef: MatDialogRef<unknown> | null = null;
   private subscriptionDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.catalogSource.paginator = this.catalogPaginator ?? null;
-    this.subscriptionSource.paginator = this.subscriptionPaginator ?? null;
-    this.ledgerSource.paginator = this.ledgerPaginator ?? null;
-    this.catalogSource.sort = this.catalogSort ?? null;
-    this.subscriptionSource.sort = this.subscriptionSort ?? null;
-    this.ledgerSource.sort = this.ledgerSort ?? null;
+    this.catalogSource.paginator = this.catalogPaginator() ?? null;
+    this.subscriptionSource.paginator = this.subscriptionPaginator() ?? null;
+    this.ledgerSource.paginator = this.ledgerPaginator() ?? null;
+    this.catalogSource.sort = this.catalogSort() ?? null;
+    this.subscriptionSource.sort = this.subscriptionSort() ?? null;
+    this.ledgerSource.sort = this.ledgerSort() ?? null;
     this.catalogSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.ledgerSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
@@ -226,11 +226,12 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       dueDate: '',
       idempotencyKey: crypto.randomUUID(),
     });
-    if (!this.topupDialog) return;
+    const topupDialog = this.topupDialog();
+    if (!topupDialog) return;
     this.closeSubscriptionDialog();
     this.subscriptionDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.topupDialog,
+      topupDialog,
       'crud-dialog-panel',
       { onEscape: () => this.closeSubscriptionDialog() },
     );
@@ -283,11 +284,12 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       resourceUUID: '',
       resourceLabel: '',
     });
-    if (!this.subscriptionDialog) return;
+    const subscriptionDialog = this.subscriptionDialog();
+    if (!subscriptionDialog) return;
     this.closeSubscriptionDialog();
     this.subscriptionDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.subscriptionDialog,
+      subscriptionDialog,
       'crud-dialog-panel',
       { onEscape: () => this.closeSubscriptionDialog() },
     );

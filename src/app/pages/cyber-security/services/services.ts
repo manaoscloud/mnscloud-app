@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -66,7 +66,7 @@ import {
   ],
   templateUrl: './services.html',
   styleUrls: ['./services.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
@@ -106,15 +106,15 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     enabled: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('serviceFormDialog') serviceFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly serviceFormDialog = viewChild<TemplateRef<unknown>>('serviceFormDialog');
 
   private serviceDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -164,7 +164,8 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     try {
       const response = await this.api.list(this.search(), this.listLimit);
       this.dataSource.data = response.items;
-      if (this.paginator) this.paginator.firstPage();
+      const paginator = this.paginator();
+      if (paginator) paginator.firstPage();
       this.reconcileSelection();
     } catch (error: any) {
       this.dataSource.data = [];
@@ -451,10 +452,11 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
   }
 
   private openServiceDialog() {
-    if (!this.serviceFormDialog || this.serviceDialogBinding) return;
+    const serviceFormDialog = this.serviceFormDialog();
+    if (!serviceFormDialog || this.serviceDialogBinding) return;
     this.serviceDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.serviceFormDialog,
+      serviceFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );

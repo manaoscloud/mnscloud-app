@@ -1,4 +1,12 @@
-import { Component, ElementRef, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 // Angular Material
@@ -47,7 +55,7 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
   ],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class UserProfileComponent {
@@ -93,7 +101,7 @@ export class UserProfileComponent {
     newPassword: [''],
   });
 
-  @ViewChild('avatarInput') avatarInput?: ElementRef<HTMLInputElement>;
+  readonly avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
 
   constructor() {
     this.loadProfile();
@@ -157,12 +165,13 @@ export class UserProfileComponent {
   }
 
   openAvatarFilePicker() {
-    this.avatarInput?.nativeElement.click();
+    this.avatarInput()?.nativeElement.click();
   }
 
   clearAvatarInput() {
-    if (this.avatarInput?.nativeElement) {
-      this.avatarInput.nativeElement.value = '';
+    const avatarInput = this.avatarInput();
+    if (avatarInput?.nativeElement) {
+      avatarInput.nativeElement.value = '';
     }
   }
 

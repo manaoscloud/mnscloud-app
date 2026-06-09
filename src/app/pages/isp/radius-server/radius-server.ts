@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -71,7 +71,7 @@ type IspRadiusServerItem = {
   ],
   templateUrl: './radius-server.html',
   styleUrls: ['./radius-server.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
@@ -116,15 +116,15 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
     isDefault: [false],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('radiusServerFormDialog') radiusServerFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly radiusServerFormDialog = viewChild<TemplateRef<unknown>>('radiusServerFormDialog');
   private radiusServerFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -305,9 +305,10 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
   }
 
   private openRadiusServerDialog() {
-    if (!this.radiusServerFormDialog || this.radiusServerFormDialogRef) return;
+    const radiusServerFormDialog = this.radiusServerFormDialog();
+    if (!radiusServerFormDialog || this.radiusServerFormDialogRef) return;
     this.error.set(null);
-    this.radiusServerFormDialogRef = this.dialog.open(this.radiusServerFormDialog, {
+    this.radiusServerFormDialogRef = this.dialog.open(radiusServerFormDialog, {
       ...this.getRadiusServerDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

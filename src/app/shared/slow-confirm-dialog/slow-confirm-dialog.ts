@@ -14,7 +14,7 @@ export type SlowConfirmDialogData = {
   selector: 'app-slow-confirm-dialog',
   standalone: true,
   imports: [MatDialogModule, MatButtonModule, MatIconModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <div mat-dialog-content>

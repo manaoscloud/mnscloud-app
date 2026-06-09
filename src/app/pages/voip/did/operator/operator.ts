@@ -6,9 +6,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
@@ -113,9 +113,9 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('operatorFormDialog') operatorFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly operatorFormDialog = viewChild<TemplateRef<unknown>>('operatorFormDialog');
   private operatorFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -125,8 +125,8 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
       switch (column) {
         case 'name':
@@ -444,10 +444,11 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openOperatorDialog() {
-    if (!this.operatorFormDialog || this.operatorFormDialogRef) return;
+    const operatorFormDialog = this.operatorFormDialog();
+    if (!operatorFormDialog || this.operatorFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.operatorFormDialog,
+      operatorFormDialog,
       'voip-did-operator-form-dialog',
     );
     this.operatorFormDialogRef = this.dialogBinding.ref;

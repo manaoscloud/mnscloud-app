@@ -6,10 +6,10 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -93,7 +93,7 @@ type PostalCodeLookupItem = {
     PhoneInputComponent,
   ],
   templateUrl: './complex.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./complex.scss'],
 })
 export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
@@ -117,10 +117,10 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('complexFormDialog') complexFormDialog?: TemplateRef<unknown>;
-  @ViewChild('addressNumberInput') addressNumberInput?: ElementRef<HTMLInputElement>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly complexFormDialog = viewChild<TemplateRef<unknown>>('complexFormDialog');
+  readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
   private complexFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -162,8 +162,8 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -389,7 +389,7 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
 
         setTimeout(() => {
-          this.addressNumberInput?.nativeElement?.focus();
+          this.addressNumberInput()?.nativeElement?.focus();
         }, 0);
       }, 0);
     } catch (err: any) {
@@ -565,9 +565,10 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openComplexDialog() {
-    if (!this.complexFormDialog || this.complexFormDialogRef) return;
+    const complexFormDialog = this.complexFormDialog();
+    if (!complexFormDialog || this.complexFormDialogRef) return;
     this.error = '';
-    this.complexFormDialogRef = this.dialog.open(this.complexFormDialog, {
+    this.complexFormDialogRef = this.dialog.open(complexFormDialog, {
       ...this.getComplexDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import {
   FormControl,
@@ -93,7 +93,7 @@ type OptionItem = {
   ],
   templateUrl: './employees.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy {
@@ -152,9 +152,9 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     notes: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('employeeFormDialog') employeeFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly employeeFormDialog = viewChild<TemplateRef<unknown>>('employeeFormDialog');
 
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -187,8 +187,8 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -474,9 +474,10 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     const rows = this.dataSource.filteredData?.length
       ? this.dataSource.filteredData
       : this.dataSource.data;
-    if (!this.paginator) return rows;
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    return rows.slice(start, start + this.paginator.pageSize);
+    const paginator = this.paginator();
+    if (!paginator) return rows;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return rows.slice(start, start + paginator.pageSize);
   }
 
   isAllVisibleSelected() {
@@ -513,10 +514,11 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
   }
 
   private openEmployeeDialog() {
-    if (!this.employeeFormDialog || this.dialogBinding) return;
+    const employeeFormDialog = this.employeeFormDialog();
+    if (!employeeFormDialog || this.dialogBinding) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.employeeFormDialog,
+      employeeFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );

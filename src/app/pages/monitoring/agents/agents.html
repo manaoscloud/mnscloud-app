@@ -107,7 +107,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
 
@@ -119,7 +119,7 @@
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
               aria-label="Select visible agents"
-            ></mat-checkbox>
+            />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
@@ -127,7 +127,7 @@
               (change)="toggleSelection(row, $event.checked)"
               (click)="$event.stopPropagation()"
               [attr.aria-label]="'Select agent ' + (row.name || row.uuid)"
-            ></mat-checkbox>
+            />
           </td>
         </ng-container>
 
@@ -267,7 +267,7 @@
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
       (page)="onPage($event)"
-    ></mat-paginator>
+    />
   </mat-card>
 </section>
 

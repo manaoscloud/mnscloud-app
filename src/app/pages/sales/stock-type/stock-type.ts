@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -58,7 +58,7 @@ type SaleStockTypeItem = {
   ],
   templateUrl: './stock-type.html',
   styleUrls: ['./stock-type.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SaleStockTypePage implements AfterViewInit, OnDestroy {
@@ -82,8 +82,8 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
 
   readonly displayedColumns = ['name', 'actions'];
   readonly dataSource = new MatTableDataSource<SaleStockTypeItem>([]);
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild('stockTypeFormDialog') stockTypeFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly stockTypeFormDialog = viewChild<TemplateRef<unknown>>('stockTypeFormDialog');
   private stockTypeFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -92,7 +92,7 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
   }
 
   async loadStockTypes() {
@@ -221,10 +221,11 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
   }
 
   private openStockTypeDialog() {
-    if (!this.stockTypeFormDialog || this.stockTypeFormDialogRef) return;
+    const stockTypeFormDialog = this.stockTypeFormDialog();
+    if (!stockTypeFormDialog || this.stockTypeFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.stockTypeFormDialog,
+      stockTypeFormDialog,
       'sale-stock-type-form-dialog',
     );
     this.stockTypeFormDialogRef = this.dialogBinding.ref;

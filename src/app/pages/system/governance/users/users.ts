@@ -2,10 +2,10 @@ import {
   AfterViewInit,
   Component,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -94,7 +94,7 @@ interface LegalHold {
   ],
   templateUrl: './users.html',
   styleUrls: ['./users.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class SystemGovernanceUsersPage implements AfterViewInit {
@@ -134,14 +134,14 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
     reference: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('actionDialog') actionDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly actionDialog = viewChild<TemplateRef<unknown>>('actionDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
 
   ngAfterViewInit() {
-    this.source.paginator = this.paginator ?? null;
-    this.source.sort = this.sort ?? null;
+    this.source.paginator = this.paginator() ?? null;
+    this.source.sort = this.sort() ?? null;
     this.source.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     setTimeout(() => this.load(), 0);
   }
@@ -192,8 +192,9 @@ export class SystemGovernanceUsersPage implements AfterViewInit {
       legalBasis: '',
       reference: '',
     });
-    if (!this.actionDialog) return;
-    this.dialogRef = this.dialog.open(this.actionDialog, {
+    const actionDialog = this.actionDialog();
+    if (!actionDialog) return;
+    this.dialogRef = this.dialog.open(actionDialog, {
       width: '720px',
       maxWidth: 'calc(100vw - 32px)',
       maxHeight: 'calc(100vh - 32px)',

@@ -6,8 +6,8 @@ import {
   OnDestroy,
   signal,
   TemplateRef,
-  ViewChild,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -78,7 +78,7 @@ type CustomerOption = {
   ],
   templateUrl: './instances.html',
   styleUrls: ['./instances.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingVpsInstancesPage implements OnDestroy {
@@ -88,10 +88,8 @@ export class HostingVpsInstancesPage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
 
-  @ViewChild('instanceFormDialog')
-  instanceFormDialog?: TemplateRef<unknown>;
-  @ViewChild('changePlanDialog')
-  changePlanDialog?: TemplateRef<unknown>;
+  readonly instanceFormDialog = viewChild<TemplateRef<unknown>>('instanceFormDialog');
+  readonly changePlanDialog = viewChild<TemplateRef<unknown>>('changePlanDialog');
 
   private activePlanUUID = '';
   private dialogRef: MatDialogRef<unknown> | null = null;
@@ -734,10 +732,11 @@ export class HostingVpsInstancesPage implements OnDestroy {
   }
 
   startChangePlan(item: HostingVpsInstance) {
-    if (!this.canChangePlan(item) || !this.changePlanDialog) return;
+    const changePlanDialog = this.changePlanDialog();
+    if (!this.canChangePlan(item) || !changePlanDialog) return;
     this.changePlanInstance.set(item);
     this.targetPlanUUID.set('');
-    this.changePlanDialogRef = this.dialog.open(this.changePlanDialog, {
+    this.changePlanDialogRef = this.dialog.open(changePlanDialog, {
       width: 'min(720px, calc(100vw - 24px))',
       maxWidth: 'calc(100vw - 24px)',
       maxHeight: 'calc(100dvh - 24px)',
@@ -1149,8 +1148,9 @@ export class HostingVpsInstancesPage implements OnDestroy {
   }
 
   private openDialog() {
-    if (!this.instanceFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(this.instanceFormDialog, {
+    const instanceFormDialog = this.instanceFormDialog();
+    if (!instanceFormDialog || this.dialogRef) return;
+    this.dialogRef = this.dialog.open(instanceFormDialog, {
       ...getVpsDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

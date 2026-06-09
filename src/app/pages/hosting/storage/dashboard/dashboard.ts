@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -78,7 +86,6 @@ type ProviderTypeRow = {
   selector: 'app-hosting-storage-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule,
     MatCardModule,
@@ -88,10 +95,11 @@ type ProviderTypeRow = {
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
+    NgClass,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingStorageDashboardPage implements AfterViewInit {
@@ -100,12 +108,12 @@ export class HostingStorageDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private loadingStarted = 0;
 
-  @ViewChild('providerSort') providerSort?: MatSort;
-  @ViewChild('providerPaginator') providerPaginator?: MatPaginator;
-  @ViewChild('accountSort') accountSort?: MatSort;
-  @ViewChild('accountPaginator') accountPaginator?: MatPaginator;
-  @ViewChild('typeSort') typeSort?: MatSort;
-  @ViewChild('typePaginator') typePaginator?: MatPaginator;
+  readonly providerSort = viewChild<MatSort>('providerSort');
+  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
+  readonly accountSort = viewChild<MatSort>('accountSort');
+  readonly accountPaginator = viewChild<MatPaginator>('accountPaginator');
+  readonly typeSort = viewChild<MatSort>('typeSort');
+  readonly typePaginator = viewChild<MatPaginator>('typePaginator');
 
   readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
@@ -220,12 +228,12 @@ export class HostingStorageDashboardPage implements AfterViewInit {
       this.accountSortValue(row, column);
     this.typeDataSource.sortingDataAccessor = (row, column) => this.typeSortValue(row, column);
 
-    this.providerDataSource.sort = this.providerSort ?? null;
-    this.providerDataSource.paginator = this.providerPaginator ?? null;
-    this.accountDataSource.sort = this.accountSort ?? null;
-    this.accountDataSource.paginator = this.accountPaginator ?? null;
-    this.typeDataSource.sort = this.typeSort ?? null;
-    this.typeDataSource.paginator = this.typePaginator ?? null;
+    this.providerDataSource.sort = this.providerSort() ?? null;
+    this.providerDataSource.paginator = this.providerPaginator() ?? null;
+    this.accountDataSource.sort = this.accountSort() ?? null;
+    this.accountDataSource.paginator = this.accountPaginator() ?? null;
+    this.typeDataSource.sort = this.typeSort() ?? null;
+    this.typeDataSource.paginator = this.typePaginator() ?? null;
 
     void this.load();
   }

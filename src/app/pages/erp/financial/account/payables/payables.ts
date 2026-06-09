@@ -4,9 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -98,7 +98,7 @@ type SupplierOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './payables.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./payables.scss'],
 })
 export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
@@ -133,10 +133,10 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
   settleAttachments: ErpFinAccPayableAttachment[] = [];
   settleFiles: File[] = [];
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('payableFormDialog') payableFormDialog?: TemplateRef<unknown>;
-  @ViewChild('payableSettleDialog') payableSettleDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly payableFormDialog = viewChild<TemplateRef<unknown>>('payableFormDialog');
+  readonly payableSettleDialog = viewChild<TemplateRef<unknown>>('payableSettleDialog');
   private payableFormDialogRef: MatDialogRef<unknown> | null = null;
   private payableSettleDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
@@ -186,8 +186,8 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     setTimeout(async () => {
-      this.dataSource.paginator = this.paginator ?? null;
-      this.dataSource.sort = this.sort ?? null;
+      this.dataSource.paginator = this.paginator() ?? null;
+      this.dataSource.sort = this.sort() ?? null;
       this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
         switch (sortHeaderId) {
           case 'description':
@@ -668,11 +668,12 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openPayableDialog() {
-    if (!this.payableFormDialog || this.payableFormDialogRef) return;
+    const payableFormDialog = this.payableFormDialog();
+    if (!payableFormDialog || this.payableFormDialogRef) return;
     this.error = '';
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.payableFormDialog,
+      payableFormDialog,
       'erp-payable-form-dialog',
     );
     this.payableFormDialogRef = this.dialogBinding.ref;
@@ -697,10 +698,11 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openSettleDialogInternal() {
-    if (!this.payableSettleDialog || this.payableSettleDialogRef) return;
+    const payableSettleDialog = this.payableSettleDialog();
+    if (!payableSettleDialog || this.payableSettleDialogRef) return;
     this.settleDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.payableSettleDialog,
+      payableSettleDialog,
       'erp-payable-form-dialog',
     );
     this.payableSettleDialogRef = this.settleDialogBinding.ref;

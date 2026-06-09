@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -133,7 +133,7 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
   ],
   templateUrl: './trunk-route.html',
   styleUrls: ['./trunk-route.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
@@ -206,15 +206,15 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     status: [true],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('resourceFormDialog') resourceFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly resourceFormDialog = viewChild<TemplateRef<unknown>>('resourceFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
       if (column === 'primary') return this.primaryValue(data);
       if (column === 'secondary') return this.secondaryValue(data);
@@ -623,10 +623,11 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     this.editing.set(null);
   }
   private openDialog() {
-    if (!this.resourceFormDialog || this.dialogRef) return;
+    const resourceFormDialog = this.resourceFormDialog();
+    if (!resourceFormDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.resourceFormDialog,
+      resourceFormDialog,
       'voip-pabx-trunk-route-form-dialog',
       { onEscape: () => this.cancelEdit() },
     );

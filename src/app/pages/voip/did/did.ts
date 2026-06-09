@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
@@ -73,7 +73,7 @@ type CreateMode = 'single' | 'range';
   ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipDidPage implements AfterViewInit, OnDestroy {
@@ -122,10 +122,10 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('didFormDialog') didFormDialog?: TemplateRef<unknown>;
-  @ViewChild('availableDidDialog') availableDidDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly didFormDialog = viewChild<TemplateRef<unknown>>('didFormDialog');
+  readonly availableDidDialog = viewChild<TemplateRef<unknown>>('availableDidDialog');
   private didFormDialogRef: MatDialogRef<unknown> | null = null;
   private availableDidDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
@@ -136,8 +136,8 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
 
   async ngAfterViewInit() {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'number':
@@ -292,8 +292,9 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   }
 
   async openAvailableDids() {
-    if (this.isMasterScope() || !this.availableDidDialog || this.availableDidDialogRef) return;
-    this.availableDidDialogRef = this.dialog.open(this.availableDidDialog, {
+    const availableDidDialog = this.availableDidDialog();
+    if (this.isMasterScope() || !availableDidDialog || this.availableDidDialogRef) return;
+    this.availableDidDialogRef = this.dialog.open(availableDidDialog, {
       panelClass: ['crud-dialog-panel', 'voip-did-available-dialog-panel'],
       width: 'min(960px, calc(100vw - 32px))',
       maxWidth: 'calc(100vw - 32px)',
@@ -616,12 +617,9 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   }
 
   private openDidDialog() {
-    if (!this.didFormDialog || this.didFormDialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      this.didFormDialog,
-      'voip-did-form-dialog',
-    );
+    const didFormDialog = this.didFormDialog();
+    if (!didFormDialog || this.didFormDialogRef) return;
+    this.dialogBinding = openCrudTemplateDialog(this.dialog, didFormDialog, 'voip-did-form-dialog');
     this.didFormDialogRef = this.dialogBinding.ref;
     this.didFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();

@@ -73,7 +73,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
       <table mat-table [dataSource]="dataSource">
@@ -145,7 +145,7 @@
       [pageSizeOptions]="[10, 25, 50]"
       showFirstLastButtons
       aria-label="Select page of quotations"
-    ></mat-paginator>
+    />
   </mat-card>
 </section>
 
@@ -238,8 +238,8 @@
                     formControlName="validUntil"
                     appDateMask
                   />
-                  <mat-datepicker-toggle matSuffix [for]="validUntilPicker"></mat-datepicker-toggle>
-                  <mat-datepicker #validUntilPicker touchUi></mat-datepicker>
+                  <mat-datepicker-toggle matSuffix [for]="validUntilPicker" />
+                  <mat-datepicker #validUntilPicker touchUi />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-2">

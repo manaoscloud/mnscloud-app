@@ -5,9 +5,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -88,7 +88,7 @@ type CustomerOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './boletos.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./boletos.scss'],
 })
 export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
@@ -108,9 +108,9 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
   editingBoleto: ErpFinInvBoleto | null = null;
   amountPrefix = '';
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('boletoFormDialog') boletoFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly boletoFormDialog = viewChild<TemplateRef<unknown>>('boletoFormDialog');
   private boletoFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -200,8 +200,8 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'title':
@@ -533,9 +533,10 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openBoletoDialog() {
-    if (!this.boletoFormDialog || this.boletoFormDialogRef) return;
+    const boletoFormDialog = this.boletoFormDialog();
+    if (!boletoFormDialog || this.boletoFormDialogRef) return;
     this.error = '';
-    this.boletoFormDialogRef = this.dialog.open(this.boletoFormDialog, {
+    this.boletoFormDialogRef = this.dialog.open(boletoFormDialog, {
       ...this.getBoletoDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

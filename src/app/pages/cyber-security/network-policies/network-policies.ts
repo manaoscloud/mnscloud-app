@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,7 +69,7 @@ import {
   ],
   templateUrl: './network-policies.html',
   styleUrls: ['./network-policies.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestroy {
@@ -130,15 +130,15 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
     enabled: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('networkPolicyFormDialog') networkPolicyFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly networkPolicyFormDialog = viewChild<TemplateRef<unknown>>('networkPolicyFormDialog');
 
   private networkPolicyDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -198,7 +198,8 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
       ]);
       this.dataSource.data = policies.items;
       this.trustedNodes.set(trustedNodes.items);
-      if (this.paginator) this.paginator.firstPage();
+      const paginator = this.paginator();
+      if (paginator) paginator.firstPage();
       this.reconcileSelection();
     } catch (error: any) {
       this.dataSource.data = [];
@@ -495,10 +496,11 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
   }
 
   private openNetworkPolicyDialog() {
-    if (!this.networkPolicyFormDialog || this.networkPolicyDialogBinding) return;
+    const networkPolicyFormDialog = this.networkPolicyFormDialog();
+    if (!networkPolicyFormDialog || this.networkPolicyDialogBinding) return;
     this.networkPolicyDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.networkPolicyFormDialog,
+      networkPolicyFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );

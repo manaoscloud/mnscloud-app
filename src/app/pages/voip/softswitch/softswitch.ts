@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -78,7 +78,7 @@ type CustomerOption = {
   ],
   templateUrl: './softswitch.html',
   styleUrls: ['./softswitch.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
@@ -160,15 +160,15 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
     isDefault: [false],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('softswitchFormDialog') softswitchFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly softswitchFormDialog = viewChild<TemplateRef<unknown>>('softswitchFormDialog');
   private softswitchFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -488,10 +488,11 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
   }
 
   private openAccountDialog() {
-    if (!this.softswitchFormDialog || this.softswitchFormDialogRef) return;
+    const softswitchFormDialog = this.softswitchFormDialog();
+    if (!softswitchFormDialog || this.softswitchFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.softswitchFormDialog,
+      softswitchFormDialog,
       'voip-softswitch-form-dialog',
       { onEscape: () => this.cancelEdit() },
     );

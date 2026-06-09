@@ -132,7 +132,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
   styleUrls: ['./parameters.scss'],
   animations: [fadeIn],
   encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[@fadeIn]': '' },
 })
 export class SettingsParametersPage implements OnInit {

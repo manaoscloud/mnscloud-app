@@ -4,9 +4,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -81,7 +81,7 @@ type CustomerOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './receivables.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./receivables.scss'],
 })
 export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestroy {
@@ -113,9 +113,9 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
   customerSearch = '';
   amountPrefix = '';
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('receivableFormDialog') receivableFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly receivableFormDialog = viewChild<TemplateRef<unknown>>('receivableFormDialog');
   private receivableFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
@@ -148,8 +148,8 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'description':
@@ -517,11 +517,12 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
   }
 
   private openReceivableDialog() {
-    if (!this.receivableFormDialog || this.receivableFormDialogRef) return;
+    const receivableFormDialog = this.receivableFormDialog();
+    if (!receivableFormDialog || this.receivableFormDialogRef) return;
     this.error = '';
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.receivableFormDialog,
+      receivableFormDialog,
       'erp-receivable-form-dialog',
     );
     this.receivableFormDialogRef = this.dialogBinding.ref;

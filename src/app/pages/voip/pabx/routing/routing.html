@@ -50,7 +50,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
 
@@ -62,7 +62,7 @@
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
               aria-label="Select visible records"
-            ></mat-checkbox>
+            />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
@@ -71,7 +71,7 @@
               [attr.aria-label]="
                 'Select ' + (row.VpxName || row.VpgName || row.VpqName || row.VpiName)
               "
-            ></mat-checkbox>
+            />
           </td>
         </ng-container>
 
@@ -159,7 +159,7 @@
       class="mobile-paginator"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-    ></mat-paginator>
+    />
   </mat-card>
 </section>
 
@@ -410,7 +410,7 @@
               <div class="table-wrapper member-table-wrapper" [class.is-loading]="membersLoading()">
                 @if (membersLoading()) {
                   <div class="table-loading" aria-live="polite" aria-busy="true">
-                    <mat-progress-spinner diameter="28" mode="indeterminate"></mat-progress-spinner>
+                    <mat-progress-spinner diameter="28" mode="indeterminate" />
                   </div>
                 }
 
@@ -566,7 +566,7 @@
               <div class="table-wrapper member-table-wrapper" [class.is-loading]="optionsLoading()">
                 @if (optionsLoading()) {
                   <div class="table-loading" aria-live="polite" aria-busy="true">
-                    <mat-progress-spinner diameter="28" mode="indeterminate"></mat-progress-spinner>
+                    <mat-progress-spinner diameter="28" mode="indeterminate" />
                   </div>
                 }
 

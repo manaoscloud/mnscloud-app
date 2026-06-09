@@ -11,7 +11,7 @@ import { InviteSessionService } from '../../../../services/invite-session.servic
   standalone: true,
   imports: [RouterModule, StateMessageComponent],
   templateUrl: './invite-validate.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./invite-validate.scss'],
 })
 export class InviteValidatePage {

@@ -5,12 +5,12 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -93,7 +93,6 @@ const MIN_LOADING_MS = 600;
   selector: 'app-support-tickets',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -116,9 +115,10 @@ const MIN_LOADING_MS = 600;
     TranslocoPipe,
     PhoneInputComponent,
     DateMaskDirective,
+    DatePipe,
   ],
   templateUrl: './tickets.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./tickets.scss'],
 })
 export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -224,9 +224,9 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     isInternal: true,
   };
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('ticketFormDialog') ticketFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly ticketFormDialog = viewChild<TemplateRef<unknown>>('ticketFormDialog');
   private ticketFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -244,8 +244,8 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'protocol':
@@ -504,9 +504,10 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openFormDialog() {
-    if (!this.ticketFormDialog) return;
+    const ticketFormDialog = this.ticketFormDialog();
+    if (!ticketFormDialog) return;
     if (this.ticketFormDialogRef) return;
-    this.ticketFormDialogRef = this.dialog.open(this.ticketFormDialog, {
+    this.ticketFormDialogRef = this.dialog.open(ticketFormDialog, {
       ...this.getDialogViewportConfig(),
       panelClass: 'support-ticket-form-dialog',
       disableClose: true,

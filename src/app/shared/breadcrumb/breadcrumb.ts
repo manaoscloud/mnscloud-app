@@ -14,7 +14,7 @@ interface Crumb {
   standalone: true,
   imports: [RouterModule, MatIconModule],
   templateUrl: './breadcrumb.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./breadcrumb.scss'],
 })
 export class BreadcrumbComponent {

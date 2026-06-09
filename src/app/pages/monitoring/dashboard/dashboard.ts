@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass, DatePipe } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -71,7 +79,6 @@ type KpiTile = {
   selector: 'app-monitoring-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule,
     MatCardModule,
@@ -81,10 +88,12 @@ type KpiTile = {
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
+    DatePipe,
+    NgClass,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class MonitoringDashboardPage implements AfterViewInit {
@@ -93,8 +102,8 @@ export class MonitoringDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private loadingStarted = 0;
 
-  @ViewChild(MatSort) activitySort?: MatSort;
-  @ViewChild(MatPaginator) activityPaginator?: MatPaginator;
+  readonly activitySort = viewChild(MatSort);
+  readonly activityPaginator = viewChild(MatPaginator);
 
   readonly loading = signal(false);
   readonly agents = signal<MonitoringAgent[]>([]);
@@ -172,8 +181,8 @@ export class MonitoringDashboardPage implements AfterViewInit {
   ngAfterViewInit() {
     this.activityDataSource.sortingDataAccessor = (row, column) =>
       this.activitySortValue(row, column);
-    this.activityDataSource.sort = this.activitySort ?? null;
-    this.activityDataSource.paginator = this.activityPaginator ?? null;
+    this.activityDataSource.sort = this.activitySort() ?? null;
+    this.activityDataSource.paginator = this.activityPaginator() ?? null;
     void this.load();
   }
 

@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -80,7 +80,7 @@ type CustomerItem = {
   ],
   templateUrl: './portability.html',
   styleUrls: ['./portability.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
@@ -153,15 +153,15 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
     { validators: [this.operatorMismatchValidator] },
   );
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('portabilityFormDialog') portabilityFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly portabilityFormDialog = viewChild<TemplateRef<unknown>>('portabilityFormDialog');
   private portabilityFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
   async ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'number':
@@ -542,10 +542,11 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
   }
 
   private openPortabilityDialog() {
-    if (!this.portabilityFormDialog || this.portabilityFormDialogRef) return;
+    const portabilityFormDialog = this.portabilityFormDialog();
+    if (!portabilityFormDialog || this.portabilityFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.portabilityFormDialog,
+      portabilityFormDialog,
       'voip-portability-form-dialog',
     );
     this.portabilityFormDialogRef = this.dialogBinding.ref;

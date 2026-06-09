@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -72,7 +72,7 @@ type Option = { value: string; label: string; pabxUUID?: string | null };
   ],
   templateUrl: './queue.html',
   styleUrls: ['./queue.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
@@ -158,14 +158,14 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
     enabled: [true],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('formDialog') formDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     setTimeout(() => void this.loadItems(), 0);
   }
@@ -199,7 +199,8 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
       const response = await this.api.list(params);
       this.dataSource.data = (response?.data?.items ?? []) as VoipPabxQueueItem[];
       this.reconcileSelection();
-      if (this.paginator) this.paginator.firstPage();
+      const paginator = this.paginator();
+      if (paginator) paginator.firstPage();
     } catch (err) {
       this.snack.error(this.messageFromError(err, 'Failed to load queues.'));
     } finally {
@@ -300,9 +301,10 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
     const rows = this.dataSource.filteredData.length
       ? this.dataSource.filteredData
       : this.dataSource.data;
-    if (!this.paginator) return rows;
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    return rows.slice(start, start + this.paginator.pageSize);
+    const paginator = this.paginator();
+    if (!paginator) return rows;
+    const start = paginator.pageIndex * paginator.pageSize;
+    return rows.slice(start, start + paginator.pageSize);
   }
 
   isSelected(item: VoipPabxQueueItem) {
@@ -576,13 +578,11 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.formDialog || this.dialogBinding) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      this.formDialog,
-      'voip-pabx-queue-dialog',
-      { onEscape: () => this.closeDialog() },
-    );
+    const formDialog = this.formDialog();
+    if (!formDialog || this.dialogBinding) return;
+    this.dialogBinding = openCrudTemplateDialog(this.dialog, formDialog, 'voip-pabx-queue-dialog', {
+      onEscape: () => this.closeDialog(),
+    });
   }
 
   private async confirm(title: string, message: string, confirmLabel: string) {

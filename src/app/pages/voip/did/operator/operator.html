@@ -50,7 +50,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
       <table mat-table [dataSource]="dataSource" matSort>
@@ -61,14 +61,14 @@
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
               matTooltip="Select visible operators"
-            ></mat-checkbox>
+            />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
               [checked]="isSelected(row)"
               (change)="toggleOperatorSelection(row, $event.checked)"
               [attr.aria-label]="'Select ' + row.VdoName"
-            ></mat-checkbox>
+            />
           </td>
         </ng-container>
 
@@ -139,11 +139,7 @@
       </table>
     </div>
 
-    <mat-paginator
-      class="mobile-paginator"
-      [pageSizeOptions]="[10, 20, 50]"
-      showFirstLastButtons
-    ></mat-paginator>
+    <mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons />
   </mat-card>
 </section>
 

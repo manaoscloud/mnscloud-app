@@ -2,11 +2,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -78,7 +78,7 @@ type HostingDnsProvider = {
   ],
   templateUrl: './providers.html',
   styleUrls: ['./providers.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingDnsProvidersPage implements OnDestroy {
@@ -87,7 +87,7 @@ export class HostingDnsProvidersPage implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('providerFormDialog') providerFormDialog?: TemplateRef<unknown>;
+  readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
 
   private providerDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
@@ -497,8 +497,9 @@ export class HostingDnsProvidersPage implements OnDestroy {
   }
 
   private openProviderDialog() {
-    if (!this.providerFormDialog || this.providerDialogRef) return;
-    this.providerDialogRef = this.dialog.open(this.providerFormDialog, {
+    const providerFormDialog = this.providerFormDialog();
+    if (!providerFormDialog || this.providerDialogRef) return;
+    this.providerDialogRef = this.dialog.open(providerFormDialog, {
       ...this.getDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

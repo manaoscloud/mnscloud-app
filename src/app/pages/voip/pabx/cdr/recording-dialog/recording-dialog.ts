@@ -21,7 +21,7 @@ export type VoipPabxCdrRecordingDialogData = {
   standalone: true,
   imports: [MatButtonModule, MatDialogModule, MatIconModule],
   templateUrl: './recording-dialog.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./recording-dialog.scss'],
 })
 export class VoipPabxCdrRecordingDialogComponent {

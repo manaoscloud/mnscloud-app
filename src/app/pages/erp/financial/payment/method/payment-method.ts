@@ -5,9 +5,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -63,7 +63,7 @@ type PaymentMethod = {
     TranslocoPipe,
   ],
   templateUrl: './payment-method.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./payment-method.scss'],
 })
 export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDestroy {
@@ -82,9 +82,9 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
   searchInput = '';
   editingPaymentMethod: PaymentMethod | null = null;
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('paymentMethodFormDialog') paymentMethodFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly paymentMethodFormDialog = viewChild<TemplateRef<unknown>>('paymentMethodFormDialog');
   private paymentMethodFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -107,8 +107,8 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -296,9 +296,10 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
   }
 
   private openPaymentMethodDialog() {
-    if (!this.paymentMethodFormDialog || this.paymentMethodFormDialogRef) return;
+    const paymentMethodFormDialog = this.paymentMethodFormDialog();
+    if (!paymentMethodFormDialog || this.paymentMethodFormDialogRef) return;
     this.error = '';
-    this.paymentMethodFormDialogRef = this.dialog.open(this.paymentMethodFormDialog, {
+    this.paymentMethodFormDialogRef = this.dialog.open(paymentMethodFormDialog, {
       ...this.getPaymentMethodDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

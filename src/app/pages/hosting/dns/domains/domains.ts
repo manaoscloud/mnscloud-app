@@ -2,11 +2,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -88,7 +88,7 @@ type CustomerOption = {
   ],
   templateUrl: './domains.html',
   styleUrls: ['./domains.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingDnsDomainsPage implements OnDestroy {
@@ -97,7 +97,7 @@ export class HostingDnsDomainsPage implements OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('domainFormDialog') domainFormDialog?: TemplateRef<unknown>;
+  readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
 
   private domainDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
@@ -574,8 +574,9 @@ export class HostingDnsDomainsPage implements OnDestroy {
   }
 
   private openDomainDialog() {
-    if (!this.domainFormDialog || this.domainDialogRef) return;
-    this.domainDialogRef = this.dialog.open(this.domainFormDialog, {
+    const domainFormDialog = this.domainFormDialog();
+    if (!domainFormDialog || this.domainDialogRef) return;
+    this.domainDialogRef = this.dialog.open(domainFormDialog, {
       ...this.getDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

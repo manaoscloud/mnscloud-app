@@ -5,9 +5,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -92,7 +92,7 @@ const MIN_LOADING_MS = 600;
     TranslocoPipe,
   ],
   templateUrl: './teams.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./teams.scss'],
 })
 export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -149,9 +149,9 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     status: 1,
   };
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('teamFormDialog') teamFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly teamFormDialog = viewChild<TemplateRef<unknown>>('teamFormDialog');
   private teamFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
@@ -162,8 +162,8 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -308,9 +308,10 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openFormDialog() {
-    if (!this.teamFormDialog) return;
+    const teamFormDialog = this.teamFormDialog();
+    if (!teamFormDialog) return;
     if (this.teamFormDialogRef) return;
-    this.teamFormDialogRef = this.dialog.open(this.teamFormDialog, {
+    this.teamFormDialogRef = this.dialog.open(teamFormDialog, {
       ...this.getDialogViewportConfig(),
       panelClass: 'support-team-form-dialog',
       disableClose: true,

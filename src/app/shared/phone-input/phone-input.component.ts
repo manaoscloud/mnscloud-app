@@ -17,7 +17,7 @@ import { Subject } from 'rxjs';
   standalone: true,
   templateUrl: './phone-input.component.html',
   styleUrls: ['./phone-input.component.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: MatFormFieldControl,

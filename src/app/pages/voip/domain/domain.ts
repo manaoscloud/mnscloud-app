@@ -4,10 +4,10 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -66,7 +66,7 @@ const DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?
   ],
   templateUrl: './domain.html',
   styleUrls: ['./domain.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
@@ -99,9 +99,9 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('domainFormDialog') domainFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
   private domainFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private routeSub: Subscription | null = null;
@@ -116,8 +116,8 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
 
   ngAfterViewInit() {
     this.viewReady = true;
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -399,10 +399,11 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   }
 
   private openDomainDialog() {
-    if (!this.domainFormDialog || this.domainFormDialogRef) return;
+    const domainFormDialog = this.domainFormDialog();
+    if (!domainFormDialog || this.domainFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.domainFormDialog,
+      domainFormDialog,
       'voip-domain-form-dialog',
     );
     this.domainFormDialogRef = this.dialogBinding.ref;

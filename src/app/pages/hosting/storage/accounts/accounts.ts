@@ -3,11 +3,11 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -87,7 +87,7 @@ type ApiResponse<T> = {
   ],
   templateUrl: './accounts.html',
   styleUrls: ['./accounts.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingStorageAccountsPage implements OnInit, OnDestroy {
@@ -97,9 +97,9 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('accountDialog') accountDialog?: TemplateRef<unknown>;
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
+  readonly accountDialog = viewChild<TemplateRef<unknown>>('accountDialog');
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
   private loadingStarted = 0;
@@ -285,8 +285,9 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   }
 
   private openDialog() {
-    if (!this.accountDialog || this.dialogBinding) return;
-    const binding = openCrudTemplateDialog(this.dialog, this.accountDialog, 'crud-dialog-panel', {
+    const accountDialog = this.accountDialog();
+    if (!accountDialog || this.dialogBinding) return;
+    const binding = openCrudTemplateDialog(this.dialog, accountDialog, 'crud-dialog-panel', {
       onEscape: () => this.closeDialog(),
     });
     this.dialogBinding = binding;

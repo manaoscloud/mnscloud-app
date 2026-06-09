@@ -48,20 +48,33 @@
   `*ngSwitch`.
 - Components, directives, pipes, and services must use `inject()` for dependency injection. Do not
   add constructor-based dependency injection in new code.
+- Standalone components must use `ChangeDetectionStrategy.OnPush`. Do not add
+  `ChangeDetectionStrategy.Eager` or omit `changeDetection` in new components/refactors.
 - Component/directive inputs must use signal inputs (`input()`) when they are externally bound
   values. If an Angular or Material interface requires a plain property, keep the external input as
   an aliased signal input and expose a compatible getter/property for the interface.
+- Template/content queries must use signal query APIs (`viewChild`, `viewChildren`,
+  `contentChild`, `contentChildren`). Do not introduce decorator query APIs such as `@ViewChild` or
+  `@ViewChildren`.
 - Use `signal`, `computed`, `linkedSignal`, and small explicit effects for UI state. Keep API/DB
   business decisions out of signals; signals only model presentation state and user interaction.
+- Prefer direct standalone imports (`DatePipe`, `JsonPipe`, `NgClass`, specific Material modules,
+  etc.) instead of broad `CommonModule` when the component can declare the exact template
+  dependency. Run the Angular unused-import cleanup after migration/refactor work.
 - Use `@defer` for heavy dashboard panels, maps, charts, large optional panels, and secondary
   sections that do not need to block the first paint. Do not defer critical auth, route guards,
   tenant/environment selection, or first-screen error states.
 - Route-level lazy loading remains mandatory through `loadComponent`.
+- Use self-closing component tags where the element has no projected content.
+- Keep `provideHttpClient(withXhr(), ...)` while upload progress depends on
+  `HttpEventType.UploadProgress` / `reportProgress`. Do not switch the global client to Fetch until
+  upload progress flows have a tested replacement.
 - Transloco is the only runtime i18n layer. Do not add component-local translation maps, custom
   translation pipes, DOM translation fallbacks, or Angular built-in i18n for runtime CRUD labels.
 - Before finishing any Angular migration/refactor, run a residue check for:
-  `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, constructor dependency injection, `ngx-translate`,
-  `TranslateService`, and `TranslateModule`.
+  `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, `@Output(`, `@ViewChild`, `@ViewChildren`,
+  `ChangeDetectionStrategy.Eager`, constructor dependency injection, `ngx-translate`,
+  `TranslateService`, `TranslateModule`, and `RouterTestingModule`.
 
 ## Commercial Menu Projection
 

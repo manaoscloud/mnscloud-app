@@ -3,10 +3,10 @@ import {
   Component,
   ElementRef,
   OnInit,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -55,7 +55,7 @@ type SignupPolicy = {
   ],
   templateUrl: './signup.html',
   styleUrls: ['./signup.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class Signup implements OnInit, AfterViewInit {
@@ -64,7 +64,7 @@ export class Signup implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
+  readonly captchaContainer = viewChild<ElementRef<HTMLDivElement>>('captchaContainer');
 
   readonly form: FormGroup = this.fb.group({
     firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -192,7 +192,7 @@ export class Signup implements OnInit, AfterViewInit {
 
   private async renderCaptcha(forceReset = false) {
     const policy = this.signupPolicy();
-    const container = this.captchaContainer?.nativeElement;
+    const container = this.captchaContainer()?.nativeElement;
     if (!policy.captchaEnabled || !policy.captchaProvider || !policy.captchaSiteKey || !container) {
       return;
     }

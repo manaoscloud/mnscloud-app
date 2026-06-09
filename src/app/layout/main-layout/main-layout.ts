@@ -13,7 +13,7 @@ import {
   HostBinding,
   effect,
   DestroyRef,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
@@ -107,7 +107,7 @@ interface UserAccessResponse {
   ],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('fadeContent', [
       transition(':enter', [

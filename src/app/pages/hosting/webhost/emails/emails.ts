@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -71,7 +71,7 @@ import type {
   ],
   templateUrl: './emails.html',
   styleUrls: ['./emails.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class HostingWebhostEmailsPage implements OnDestroy {
@@ -80,8 +80,8 @@ export class HostingWebhostEmailsPage implements OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  @ViewChild('emailFormDialog') emailFormDialog?: TemplateRef<unknown>;
-  @ViewChild('passwordDialog') passwordDialog?: TemplateRef<unknown>;
+  readonly emailFormDialog = viewChild<TemplateRef<unknown>>('emailFormDialog');
+  readonly passwordDialog = viewChild<TemplateRef<unknown>>('passwordDialog');
 
   private dialogRef: MatDialogRef<unknown> | null = null;
   private passwordDialogRef: MatDialogRef<unknown> | null = null;
@@ -429,11 +429,12 @@ export class HostingWebhostEmailsPage implements OnDestroy {
   }
 
   openPasswordAction(item: HostingWebhostEmailAccount, action: 'provision' | 'reset-password') {
-    if (!this.passwordDialog) return;
+    const passwordDialog = this.passwordDialog();
+    if (!passwordDialog) return;
     this.passwordTarget.set(item);
     this.passwordAction.set(action);
     this.passwordForm.reset({ password: '' });
-    this.passwordDialogRef = this.dialog.open(this.passwordDialog, {
+    this.passwordDialogRef = this.dialog.open(passwordDialog, {
       width: 'min(520px, calc(100vw - 24px))',
       maxWidth: 'calc(100vw - 24px)',
       disableClose: true,
@@ -728,8 +729,9 @@ export class HostingWebhostEmailsPage implements OnDestroy {
   }
 
   private openDialog() {
-    if (!this.emailFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(this.emailFormDialog, {
+    const emailFormDialog = this.emailFormDialog();
+    if (!emailFormDialog || this.dialogRef) return;
+    this.dialogRef = this.dialog.open(emailFormDialog, {
       ...getWebhostDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

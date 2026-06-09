@@ -3,10 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -62,7 +62,7 @@ type SupplierOption = {
   ],
   templateUrl: './vendor.html',
   styleUrls: ['./vendor.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class IspVendorPage implements AfterViewInit, OnDestroy {
@@ -94,15 +94,15 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('vendorFormDialog') vendorFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly vendorFormDialog = viewChild<TemplateRef<unknown>>('vendorFormDialog');
   private vendorFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
       const value = filter.trim().toLowerCase();
       if (!value) return true;
@@ -336,9 +336,10 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
   }
 
   private openVendorDialog() {
-    if (!this.vendorFormDialog || this.vendorFormDialogRef) return;
+    const vendorFormDialog = this.vendorFormDialog();
+    if (!vendorFormDialog || this.vendorFormDialogRef) return;
     this.error.set(null);
-    this.vendorFormDialogRef = this.dialog.open(this.vendorFormDialog, {
+    this.vendorFormDialogRef = this.dialog.open(vendorFormDialog, {
       ...this.getVendorDialogViewportConfig(),
       disableClose: true,
       autoFocus: false,

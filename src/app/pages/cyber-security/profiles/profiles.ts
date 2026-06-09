@@ -3,11 +3,11 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
-  ViewChild,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,7 +69,7 @@ import {
   ],
   templateUrl: './profiles.html',
   styleUrls: ['./profiles.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
@@ -124,15 +124,15 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
     enabled: [1],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('profileFormDialog') profileFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly profileFormDialog = viewChild<TemplateRef<unknown>>('profileFormDialog');
 
   private profileDialogBinding: CrudDialogBinding | null = null;
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'name':
@@ -190,7 +190,8 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
       ]);
       this.dataSource.data = profiles.items;
       this.services.set(services.items);
-      if (this.paginator) this.paginator.firstPage();
+      const paginator = this.paginator();
+      if (paginator) paginator.firstPage();
       this.reconcileSelection();
     } catch (error: any) {
       this.dataSource.data = [];
@@ -514,10 +515,11 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   }
 
   private openProfileDialog() {
-    if (!this.profileFormDialog || this.profileDialogBinding) return;
+    const profileFormDialog = this.profileFormDialog();
+    if (!profileFormDialog || this.profileDialogBinding) return;
     this.profileDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.profileFormDialog,
+      profileFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );

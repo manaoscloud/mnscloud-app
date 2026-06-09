@@ -1,5 +1,12 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass, DatePipe } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -49,7 +56,6 @@ type ActivityLog = {
   selector: 'app-monitoring-activity-logs',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -64,10 +70,12 @@ type ActivityLog = {
     MatTableModule,
     MatTooltipModule,
     TranslocoPipe,
+    DatePipe,
+    NgClass,
   ],
   templateUrl: './activity.html',
   styleUrls: ['./activity.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class MonitoringActivityLogsPage implements OnInit {
@@ -77,8 +85,8 @@ export class MonitoringActivityLogsPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
 
   private loadingStarted = 0;
 
@@ -145,12 +153,14 @@ export class MonitoringActivityLogsPage implements OnInit {
     this.pageIndex.set(0);
     this.sortActive.set('');
     this.sortDirection.set('');
-    if (this.paginator) {
-      this.paginator.firstPage();
+    const paginator = this.paginator();
+    if (paginator) {
+      paginator.firstPage();
     }
-    if (this.sort) {
-      this.sort.active = '';
-      this.sort.direction = '';
+    const sort = this.sort();
+    if (sort) {
+      sort.active = '';
+      sort.direction = '';
     }
     void this.load();
   }

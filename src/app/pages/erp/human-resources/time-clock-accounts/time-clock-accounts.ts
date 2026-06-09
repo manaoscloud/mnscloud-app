@@ -2,10 +2,10 @@ import {
   AfterViewInit,
   Component,
   TemplateRef,
-  ViewChild,
   inject,
   signal,
   ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -82,7 +82,7 @@ type CredentialResponse = {
   ],
   templateUrl: './time-clock-accounts.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
@@ -116,14 +116,14 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
     notes: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('accountDialog') accountDialog?: TemplateRef<unknown>;
-  @ViewChild('credentialDialog') credentialDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly accountDialog = viewChild<TemplateRef<unknown>>('accountDialog');
+  readonly credentialDialog = viewChild<TemplateRef<unknown>>('credentialDialog');
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => {
       switch (column) {
         case 'EmployeeName':
@@ -194,7 +194,7 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
   startCreate() {
     this.lastCredential.set(null);
     this.form.reset({ employeeUUID: '', status: 'active', notes: '' });
-    this.dialog.open(this.accountDialog!, {
+    this.dialog.open(this.accountDialog()!, {
       width: 'min(980px, 96vw)',
       maxHeight: '92vh',
       disableClose: true,
@@ -280,7 +280,7 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
   }
 
   private openCredentialDialog() {
-    this.dialog.open(this.credentialDialog!, {
+    this.dialog.open(this.credentialDialog()!, {
       width: 'min(720px, 96vw)',
       maxHeight: '92vh',
       disableClose: true,

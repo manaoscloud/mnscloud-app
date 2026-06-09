@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, TemplateRef, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgStyle } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  TemplateRef,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -53,7 +61,6 @@ type InfraGisResource = {
   selector: 'app-infragis-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatButtonModule,
     MatCardModule,
@@ -67,10 +74,11 @@ type InfraGisResource = {
     MatTabsModule,
     MatTooltipModule,
     TranslocoPipe,
+    NgStyle,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class InfraGisDashboardPage implements OnInit {
@@ -78,7 +86,7 @@ export class InfraGisDashboardPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  @ViewChild('recordDialog') recordDialog?: TemplateRef<unknown>;
+  readonly recordDialog = viewChild<TemplateRef<unknown>>('recordDialog');
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -445,11 +453,12 @@ export class InfraGisDashboardPage implements OnInit {
   }
 
   private openDialog(resource: InfraGisResource, row: InfraGisRecord | null) {
-    if (!this.recordDialog) return;
+    const recordDialog = this.recordDialog();
+    if (!recordDialog) return;
     this.editingResource.set(resource);
     this.editingRecord.set(row);
     this.formModel.set(this.toFormModel(resource, row));
-    this.dialogRef = this.dialog.open(this.recordDialog, {
+    this.dialogRef = this.dialog.open(recordDialog, {
       width: 'min(920px, 96vw)',
       maxHeight: '92vh',
       disableClose: true,

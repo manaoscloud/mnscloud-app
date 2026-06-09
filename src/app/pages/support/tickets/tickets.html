@@ -135,7 +135,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
       @if (loading) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
       <table mat-table [dataSource]="dataSource" matSort>
@@ -228,7 +228,7 @@
         class="mobile-paginator"
         [pageSizeOptions]="[5, 10, 25]"
         aria-label="Select page of tickets"
-      ></mat-paginator>
+      />
     </div>
   </mat-card>
 </section>
@@ -369,10 +369,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Contact phone</mat-label>
-                <app-phone-input
-                  [(ngModel)]="form.contactPhone"
-                  placeholder="5511999999999"
-                ></app-phone-input>
+                <app-phone-input [(ngModel)]="form.contactPhone" placeholder="5511999999999" />
                 <mat-icon matSuffix>phone</mat-icon>
               </mat-form-field>
               <mat-form-field appearance="outline">
@@ -402,8 +399,8 @@
                   [matDatepicker]="openedAtPicker"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="openedAtPicker"></mat-datepicker-toggle>
-                <mat-datepicker #openedAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="openedAtPicker" />
+                <mat-datepicker #openedAtPicker touchUi />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>First response at</mat-label>
@@ -413,11 +410,8 @@
                   [matDatepicker]="firstResponseAtPicker"
                   appDateMask
                 />
-                <mat-datepicker-toggle
-                  matSuffix
-                  [for]="firstResponseAtPicker"
-                ></mat-datepicker-toggle>
-                <mat-datepicker #firstResponseAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="firstResponseAtPicker" />
+                <mat-datepicker #firstResponseAtPicker touchUi />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Resolved at</mat-label>
@@ -427,8 +421,8 @@
                   [matDatepicker]="resolvedAtPicker"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="resolvedAtPicker"></mat-datepicker-toggle>
-                <mat-datepicker #resolvedAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="resolvedAtPicker" />
+                <mat-datepicker #resolvedAtPicker touchUi />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Closed at</mat-label>
@@ -438,8 +432,8 @@
                   [matDatepicker]="closedAtPicker"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="closedAtPicker"></mat-datepicker-toggle>
-                <mat-datepicker #closedAtPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="closedAtPicker" />
+                <mat-datepicker #closedAtPicker touchUi />
               </mat-form-field>
             </div>
 
@@ -456,8 +450,8 @@
                   [matDatepicker]="slaResponsePicker"
                   appDateMask
                 />
-                <mat-datepicker-toggle matSuffix [for]="slaResponsePicker"></mat-datepicker-toggle>
-                <mat-datepicker #slaResponsePicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="slaResponsePicker" />
+                <mat-datepicker #slaResponsePicker touchUi />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>SLA resolution deadline</mat-label>
@@ -467,11 +461,8 @@
                   [matDatepicker]="slaResolutionPicker"
                   appDateMask
                 />
-                <mat-datepicker-toggle
-                  matSuffix
-                  [for]="slaResolutionPicker"
-                ></mat-datepicker-toggle>
-                <mat-datepicker #slaResolutionPicker touchUi></mat-datepicker>
+                <mat-datepicker-toggle matSuffix [for]="slaResolutionPicker" />
+                <mat-datepicker #slaResolutionPicker touchUi />
               </mat-form-field>
               <div class="checkbox-field">
                 <mat-checkbox [(ngModel)]="form.slaBreached">SLA breached</mat-checkbox>

@@ -7,7 +7,7 @@ import { RouterModule } from '@angular/router';
   selector: 'app-invite-sent',
   imports: [RouterModule],
   templateUrl: './invite-sent.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./invite-sent.scss'],
 })
 export class InviteSentPage {

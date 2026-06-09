@@ -1,5 +1,13 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -57,7 +65,6 @@ type ExternalRow = {
   selector: 'app-voip-did-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule,
     MatCardModule,
@@ -67,10 +74,11 @@ type ExternalRow = {
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
+    NgClass,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class VoipDidDashboardPage implements AfterViewInit {
@@ -81,12 +89,12 @@ export class VoipDidDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private loadingStarted = 0;
 
-  @ViewChild('operatorSort') operatorSort?: MatSort;
-  @ViewChild('operatorPaginator') operatorPaginator?: MatPaginator;
-  @ViewChild('statusSort') statusSort?: MatSort;
-  @ViewChild('statusPaginator') statusPaginator?: MatPaginator;
-  @ViewChild('externalSort') externalSort?: MatSort;
-  @ViewChild('externalPaginator') externalPaginator?: MatPaginator;
+  readonly operatorSort = viewChild<MatSort>('operatorSort');
+  readonly operatorPaginator = viewChild<MatPaginator>('operatorPaginator');
+  readonly statusSort = viewChild<MatSort>('statusSort');
+  readonly statusPaginator = viewChild<MatPaginator>('statusPaginator');
+  readonly externalSort = viewChild<MatSort>('externalSort');
+  readonly externalPaginator = viewChild<MatPaginator>('externalPaginator');
 
   readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
@@ -197,12 +205,12 @@ export class VoipDidDashboardPage implements AfterViewInit {
     this.externalDataSource.sortingDataAccessor = (row, column) =>
       this.externalSortValue(row, column);
 
-    this.operatorDataSource.sort = this.operatorSort ?? null;
-    this.operatorDataSource.paginator = this.operatorPaginator ?? null;
-    this.statusDataSource.sort = this.statusSort ?? null;
-    this.statusDataSource.paginator = this.statusPaginator ?? null;
-    this.externalDataSource.sort = this.externalSort ?? null;
-    this.externalDataSource.paginator = this.externalPaginator ?? null;
+    this.operatorDataSource.sort = this.operatorSort() ?? null;
+    this.operatorDataSource.paginator = this.operatorPaginator() ?? null;
+    this.statusDataSource.sort = this.statusSort() ?? null;
+    this.statusDataSource.paginator = this.statusPaginator() ?? null;
+    this.externalDataSource.sort = this.externalSort() ?? null;
+    this.externalDataSource.paginator = this.externalPaginator() ?? null;
 
     void this.load();
   }

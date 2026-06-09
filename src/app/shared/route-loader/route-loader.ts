@@ -8,7 +8,7 @@ import { trigger, style, animate, transition } from '@angular/animations';
   imports: [],
   templateUrl: './route-loader.html',
   styleUrls: ['./route-loader.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('fadeInOut', [
       transition(':enter', [

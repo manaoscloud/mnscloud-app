@@ -3,10 +3,10 @@ import {
   Component,
   ElementRef,
   OnInit,
-  ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -55,7 +55,7 @@ type SigninPolicy = {
   ],
   templateUrl: './signin.html',
   styleUrls: ['./signin.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
 export class Signin implements OnInit, AfterViewInit {
@@ -67,7 +67,7 @@ export class Signin implements OnInit, AfterViewInit {
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
 
-  @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
+  readonly captchaContainer = viewChild<ElementRef<HTMLDivElement>>('captchaContainer');
 
   readonly currentLanguageOption = this.i18n.selectedLanguageOption;
   readonly languageOptions = this.i18n.languageOptions;
@@ -220,7 +220,7 @@ export class Signin implements OnInit, AfterViewInit {
 
   private async renderCaptcha(forceReset = false) {
     const policy = this.signinPolicy();
-    const container = this.captchaContainer?.nativeElement;
+    const container = this.captchaContainer()?.nativeElement;
     if (!policy.captchaEnabled || !policy.captchaProvider || !policy.captchaSiteKey || !container) {
       return;
     }

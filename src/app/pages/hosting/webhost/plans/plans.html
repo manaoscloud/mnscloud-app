@@ -61,7 +61,7 @@
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
 
@@ -73,7 +73,7 @@
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
               aria-label="Select visible Webhost plans"
-            ></mat-checkbox>
+            />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
@@ -81,7 +81,7 @@
               (click)="$event.stopPropagation()"
               (change)="togglePlanSelection(row, $event.checked)"
               [attr.aria-label]="'Select Webhost plan ' + row.HwlName"
-            ></mat-checkbox>
+            />
           </td>
         </ng-container>
 
@@ -163,7 +163,7 @@
       showFirstLastButtons
       aria-label="Select page of Webhost plans"
       (page)="onPage($event)"
-    ></mat-paginator>
+    />
   </mat-card>
 </section>
 
