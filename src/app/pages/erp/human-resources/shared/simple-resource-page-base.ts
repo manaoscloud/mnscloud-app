@@ -3,7 +3,10 @@ import {
   Directive,
   OnDestroy,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   viewChild,
 } from '@angular/core';
@@ -84,12 +87,19 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
   protected readonly snack = inject(SnackbarService);
   protected readonly listLimit = 200;
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
+  private readonly mutating = signal(false);
   readonly editing = signal<SimpleResource | null>(null);
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly selectedUUIDs = signal<Set<string>>(new Set());
+  private readonly itemsResource = resource({
+    params: () => this.search(),
+    defaultValue: [] as SimpleResource[],
+    loader: ({ params }) => this.loadResourceItems(params),
+  });
+
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 
   readonly dataSource = new MatTableDataSource<SimpleResource>([]);
   readonly displayedColumns = ['select', 'name', 'description', 'status', 'actions'];
@@ -105,8 +115,28 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
   readonly resourceFormDialog = viewChild<TemplateRef<unknown>>('resourceFormDialog');
 
   private dialogBinding: CrudDialogBinding | null = null;
+  private lastLoadError = '';
 
   protected constructor(readonly config: SimpleResourceConfig) {}
+
+  private readonly syncItems = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+
+    const message = this.extractErrorMessage(error, 'Failed to load records.');
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+  });
 
   get pageTitle() {
     return this.config.pageTitle;
@@ -143,7 +173,6 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
           return '';
       }
     };
-    setTimeout(() => void this.loadItems(), 0);
   }
 
   ngOnDestroy() {
@@ -151,43 +180,25 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    const nextSearch = this.searchInput().trim();
+    if (nextSearch === this.search()) {
+      this.itemsResource.reload();
+    } else {
+      this.search.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    this.search.set('');
-    void this.loadItems();
+    if (this.search()) {
+      this.search.set('');
+    } else {
+      this.itemsResource.reload();
+    }
   }
 
   refreshList() {
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search()) params.set('q', this.search());
-      const response = await this.api.get<any>(`${this.config.endpoint}?${params.toString()}`);
-      this.dataSource.data = (response?.data?.items ?? []).map((row: any) => this.mapRow(row));
-      this.reconcileSelection();
-    } catch (err: any) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load records.'));
-      this.dataSource.data = [];
-      this.reconcileSelection();
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    this.itemsResource.reload();
   }
 
   startCreate() {
@@ -227,7 +238,7 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
         await this.api.post(this.config.endpoint, payload);
         this.snack.success(`${this.config.deleteLabel} created successfully.`);
       }
-      await this.loadItems();
+      this.itemsResource.reload();
       if (saveAndNew && createMode) {
         this.form.reset({ name: '', description: '', status: 1, notes: '' });
         this.editing.set(null);
@@ -268,7 +279,7 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
     try {
       await this.api.delete(`${this.config.endpoint}/${item.UUID}`);
       this.snack.success(`${this.config.deleteLabel} deleted successfully.`);
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete record.'));
     }
@@ -295,7 +306,7 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.api.delete<any>(`${this.config.endpoint}/bulk`, { ids });
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -311,11 +322,11 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
       } else {
         this.snack.success(`${deleted.size || ids.length} selected record(s) deleted.`);
       }
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete selected records.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -378,6 +389,14 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
       Status: Number(row.Status ?? row.status ?? 1),
       Notes: row.Notes ?? row.notes ?? null,
     };
+  }
+
+  private async loadResourceItems(search: string) {
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (search) params.set('q', search);
+    const response = await this.api.get<any>(`${this.config.endpoint}?${params.toString()}`);
+    return (response?.data?.items ?? []).map((row: any) => this.mapRow(row));
   }
 
   private openDialog() {
