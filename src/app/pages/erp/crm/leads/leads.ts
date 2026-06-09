@@ -1,8 +1,8 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
-  inject,
+  effect,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -49,16 +49,30 @@ type Lead = {
   styleUrls: ['./leads.scss'],
 })
 export class CrmLeadsPage implements AfterViewInit {
-  private cdr = inject(ChangeDetectorRef);
-
   leads: Lead[] = [
     { name: 'Acme Corp', owner: 'John Doe', stage: 'New', value: '$5,000' },
     { name: 'Globex Ltd', owner: 'Jane Smith', stage: 'Contacted', value: '$12,500' },
     { name: 'Innotech', owner: 'Carlos Silva', stage: 'Qualified', value: '$32,000' },
   ];
   dataSource = new MatTableDataSource<Lead>([]);
+  private readonly leadsResource = resource({
+    defaultValue: [] as Lead[],
+    loader: () => this.fetchLeads(),
+  });
+  private readonly syncLeads = effect(() => {
+    this.error = '';
+    this.dataSource.data = this.leadsResource.value();
+    this.applyFilter();
+  });
+  private readonly reportLeadsError = effect(() => {
+    const error = this.leadsResource.error();
+    if (error) {
+      this.error = 'Failed to load leads.';
+      this.dataSource.data = [];
+    }
+  });
   displayedColumns: string[] = ['name', 'owner', 'stage', 'value', 'actions'];
-  loading = true;
+  readonly loading = this.leadsResource.isLoading;
   error = '';
   search = '';
   searchInput = '';
@@ -90,10 +104,6 @@ export class CrmLeadsPage implements AfterViewInit {
         String(field).toLowerCase().includes(value),
       );
     };
-
-    setTimeout(() => {
-      void this.loadLeads();
-    }, 0);
   }
 
   onSearchChange(value: string) {
@@ -112,7 +122,7 @@ export class CrmLeadsPage implements AfterViewInit {
   }
 
   refreshList() {
-    void this.loadLeads();
+    this.leadsResource.reload();
   }
 
   startCreate() {
@@ -127,29 +137,7 @@ export class CrmLeadsPage implements AfterViewInit {
     }
   }
 
-  async loadLeads() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      this.dataSource.data = [...this.leads];
-      this.applySearchFilters();
-    } catch {
-      this.error = 'Failed to load leads.';
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    }
+  private async fetchLeads(): Promise<Lead[]> {
+    return [...this.leads];
   }
 }

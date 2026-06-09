@@ -34,8 +34,8 @@
       </div>
     </div>
 
-    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
-      @if (loading) {
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
@@ -83,7 +83,7 @@
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" colspan="5">
             {{
-              loading
+              loading()
                 ? 'Loading opportunities...'
                 : 'No opportunities found for "' + (search || 'all') + '"'
             }}

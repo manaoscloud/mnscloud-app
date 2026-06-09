@@ -1,8 +1,8 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
-  inject,
+  effect,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -48,11 +48,25 @@ type Opportunity = {
   styleUrls: ['./opportunities.scss'],
 })
 export class CrmOpportunitiesPage implements AfterViewInit {
-  private cdr = inject(ChangeDetectorRef);
-
   dataSource = new MatTableDataSource<Opportunity>([]);
+  private readonly opportunitiesResource = resource({
+    defaultValue: [] as Opportunity[],
+    loader: () => this.fetchOpportunities(),
+  });
+  private readonly syncOpportunities = effect(() => {
+    this.error = '';
+    this.dataSource.data = this.opportunitiesResource.value();
+    this.applyFilter();
+  });
+  private readonly reportOpportunitiesError = effect(() => {
+    const error = this.opportunitiesResource.error();
+    if (error) {
+      this.error = 'Failed to load opportunities.';
+      this.dataSource.data = [];
+    }
+  });
   displayedColumns: string[] = ['name', 'account', 'stage', 'value', 'actions'];
-  loading = true;
+  readonly loading = this.opportunitiesResource.isLoading;
   error = '';
   search = '';
 
@@ -90,10 +104,6 @@ export class CrmOpportunitiesPage implements AfterViewInit {
         String(field).toLowerCase().includes(value),
       );
     };
-
-    setTimeout(() => {
-      void this.loadOpportunities();
-    }, 0);
   }
 
   onSearchChange(value: string) {
@@ -112,7 +122,7 @@ export class CrmOpportunitiesPage implements AfterViewInit {
   }
 
   refreshList() {
-    void this.loadOpportunities();
+    this.opportunitiesResource.reload();
   }
 
   startCreate() {
@@ -127,29 +137,7 @@ export class CrmOpportunitiesPage implements AfterViewInit {
     }
   }
 
-  async loadOpportunities() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      this.dataSource.data = [...this.opportunities];
-      this.applySearchFilters();
-    } catch {
-      this.error = 'Failed to load opportunities.';
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    }
+  private async fetchOpportunities(): Promise<Opportunity[]> {
+    return [...this.opportunities];
   }
 }
