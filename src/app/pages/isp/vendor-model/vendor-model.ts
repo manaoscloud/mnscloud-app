@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -65,7 +67,6 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<IspVendorModel | null>(null);
@@ -79,6 +80,11 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
     'UTP_CABLE',
     'SPLITTER',
   ] as const;
+  private readonly modelsResource = resource({
+    defaultValue: [] as IspVendorModel[],
+    loader: () => this.fetchModels(),
+  });
+  readonly loading = this.modelsResource.isLoading;
   vendorSearch = '';
 
   readonly dataSource = new MatTableDataSource<IspVendorModel>([]);
@@ -99,6 +105,17 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
   readonly vendorModelFormDialog = viewChild<TemplateRef<unknown>>('vendorModelFormDialog');
   private vendorModelFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncModels = effect(() => {
+    this.dataSource.data = this.modelsResource.value();
+    this.applySearchFilters();
+  });
+  private readonly reportModelsError = effect(() => {
+    const error = this.modelsResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load vendor models.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -111,10 +128,7 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      this.loadVendors();
-      this.loadModels();
-    }, 0);
+    this.loadVendors();
   }
 
   ngOnDestroy() {
@@ -155,7 +169,7 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadModels();
+    this.modelsResource.reload();
   }
 
   async loadVendors() {
@@ -176,27 +190,10 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  async loadModels() {
-    this.loading.set(true);
+  private async fetchModels() {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>('isp/vendor-models');
-      const items = response?.data?.items ?? [];
-      this.dataSource.data = items;
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load vendor models.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>('isp/vendor-models');
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -240,24 +237,12 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(
-          `isp/vendor-models/${editing.VendorModelUUID}`,
-          payload,
-        );
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = this.dataSource.data.map((row) =>
-            row.VendorModelUUID === item.VendorModelUUID ? item : row,
-          );
-        }
+        await this.api.put<any>(`isp/vendor-models/${editing.VendorModelUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('isp/vendor-models', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = [item, ...this.dataSource.data];
-        }
+        await this.api.post<any>('isp/vendor-models', payload);
       }
 
+      this.modelsResource.reload();
       this.closeVendorModelDialog();
       this.startCreate();
     } catch (err: any) {
@@ -282,9 +267,7 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/vendor-models/${item.VendorModelUUID}`);
-      this.dataSource.data = this.dataSource.data.filter(
-        (row) => row.VendorModelUUID !== item.VendorModelUUID,
-      );
+      this.modelsResource.reload();
     } catch (err) {
       console.error('Failed to delete vendor model.', err);
       alert('Failed to delete vendor model.');

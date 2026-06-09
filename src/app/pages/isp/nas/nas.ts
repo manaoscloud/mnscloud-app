@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -91,13 +93,17 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<IspNasItem | null>(null);
   readonly popOptions = signal<IspPopOption[]>([]);
   readonly vendorOptions = signal<VendorOption[]>([]);
   readonly vendorModelOptions = signal<VendorModelOption[]>([]);
+  private readonly nasResource = resource({
+    defaultValue: [] as IspNasItem[],
+    loader: () => this.fetchNas(),
+  });
+  readonly loading = this.nasResource.isLoading;
   popSearch = '';
   vendorSearch = '';
   vendorModelSearch = '';
@@ -122,6 +128,17 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
   readonly nasFormDialog = viewChild<TemplateRef<unknown>>('nasFormDialog');
   private nasFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncNas = effect(() => {
+    this.dataSource.data = this.nasResource.value();
+    this.applySearchFilters();
+  });
+  private readonly reportNasError = effect(() => {
+    const error = this.nasResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load NAS.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -140,12 +157,9 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      this.loadPops();
-      this.loadVendors();
-      this.loadVendorModels();
-      this.loadNas();
-    }, 0);
+    this.loadPops();
+    this.loadVendors();
+    this.loadVendorModels();
   }
 
   ngOnDestroy() {
@@ -212,7 +226,7 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadNas();
+    this.nasResource.reload();
   }
 
   async loadPops() {
@@ -268,28 +282,10 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  async loadNas() {
-    this.loading.set(true);
+  private async fetchNas() {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>('isp/nas');
-      const items = response?.data?.items ?? [];
-      this.dataSource.data = items;
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load NAS.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>('isp/nas');
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -339,21 +335,12 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`isp/nas/${editing.InsUUID}`, payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = this.dataSource.data.map((row) =>
-            row.InsUUID === item.InsUUID ? item : row,
-          );
-        }
+        await this.api.put<any>(`isp/nas/${editing.InsUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('isp/nas', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = [item, ...this.dataSource.data];
-        }
+        await this.api.post<any>('isp/nas', payload);
       }
 
+      this.nasResource.reload();
       this.closeNasDialog();
       this.startCreate();
     } catch (err: any) {
@@ -378,7 +365,7 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/nas/${item.InsUUID}`);
-      this.dataSource.data = this.dataSource.data.filter((row) => row.InsUUID !== item.InsUUID);
+      this.nasResource.reload();
     } catch (err) {
       console.error('Failed to delete NAS.', err);
       alert('Failed to delete NAS.');

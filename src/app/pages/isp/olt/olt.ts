@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -91,13 +93,17 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<IspOltItem | null>(null);
   readonly popOptions = signal<IspPopOption[]>([]);
   readonly vendorOptions = signal<VendorOption[]>([]);
   readonly vendorModelOptions = signal<VendorModelOption[]>([]);
+  private readonly oltsResource = resource({
+    defaultValue: [] as IspOltItem[],
+    loader: () => this.fetchOlts(),
+  });
+  readonly loading = this.oltsResource.isLoading;
   popSearch = '';
   vendorSearch = '';
   vendorModelSearch = '';
@@ -122,6 +128,17 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
   readonly oltFormDialog = viewChild<TemplateRef<unknown>>('oltFormDialog');
   private oltFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncOlts = effect(() => {
+    this.dataSource.data = this.oltsResource.value();
+    this.applySearchFilters();
+  });
+  private readonly reportOltsError = effect(() => {
+    const error = this.oltsResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load OLTs.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -140,12 +157,9 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      this.loadPops();
-      this.loadVendors();
-      this.loadVendorModels();
-      this.loadOlts();
-    }, 0);
+    this.loadPops();
+    this.loadVendors();
+    this.loadVendorModels();
   }
 
   ngOnDestroy() {
@@ -212,7 +226,7 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadOlts();
+    this.oltsResource.reload();
   }
 
   async loadPops() {
@@ -268,28 +282,10 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  async loadOlts() {
-    this.loading.set(true);
+  private async fetchOlts() {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>('isp/olts');
-      const items = response?.data?.items ?? [];
-      this.dataSource.data = items;
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load OLTs.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>('isp/olts');
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -339,21 +335,12 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`isp/olts/${editing.IolUUID}`, payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = this.dataSource.data.map((row) =>
-            row.IolUUID === item.IolUUID ? item : row,
-          );
-        }
+        await this.api.put<any>(`isp/olts/${editing.IolUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('isp/olts', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = [item, ...this.dataSource.data];
-        }
+        await this.api.post<any>('isp/olts', payload);
       }
 
+      this.oltsResource.reload();
       this.closeOltDialog();
       this.startCreate();
     } catch (err: any) {
@@ -378,7 +365,7 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/olts/${item.IolUUID}`);
-      this.dataSource.data = this.dataSource.data.filter((row) => row.IolUUID !== item.IolUUID);
+      this.oltsResource.reload();
     } catch (err) {
       console.error('Failed to delete OLT.', err);
       alert('Failed to delete OLT.');
