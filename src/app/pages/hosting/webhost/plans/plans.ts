@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -97,7 +99,11 @@ export class HostingWebhostPlansPage implements OnDestroy {
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly loading = signal(false);
+  private readonly plansResource = resource({
+    defaultValue: [] as HostingWebhostPlan[],
+    loader: () => this.fetchPlans(),
+  });
+  readonly loading = this.plansResource.isLoading;
   readonly saving = signal(false);
   readonly editing = signal<HostingWebhostPlan | null>(null);
   readonly defaultCurrency = signal('BRL');
@@ -188,9 +194,21 @@ export class HostingWebhostPlansPage implements OnDestroy {
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
   );
 
+  private readonly syncPlans = effect(() => {
+    this.plans.set(this.plansResource.value());
+    this.reconcilePlanSelection();
+  });
+
+  private readonly reportPlansError = effect(() => {
+    const error = this.plansResource.error();
+    if (error) {
+      this.snack.error(this.friendlyError(error, 'Failed to load Webhost plans.'));
+    }
+  });
+
   constructor() {
     void this.loadDefaultCurrency();
-    this.refreshList();
+    void this.loadProviders();
   }
 
   ngOnDestroy() {
@@ -200,7 +218,7 @@ export class HostingWebhostPlansPage implements OnDestroy {
 
   refreshList() {
     void this.loadProviders();
-    void this.loadPlans();
+    this.plansResource.reload();
   }
 
   applyFilters() {
@@ -209,7 +227,7 @@ export class HostingWebhostPlansPage implements OnDestroy {
     this.appliedProvider.set(values.provider);
     this.appliedStatus.set(values.status);
     this.resetPagination();
-    void this.loadPlans();
+    this.plansResource.reload();
   }
 
   clearFilters() {
@@ -276,9 +294,7 @@ export class HostingWebhostPlansPage implements OnDestroy {
     }
   }
 
-  async loadPlans() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchPlans(): Promise<HostingWebhostPlan[]> {
     const values = this.filterForm.getRawValue();
     const params = new URLSearchParams({ limit: '500', offset: '0' });
     if (values.search.trim()) params.set('search', values.search.trim());
@@ -290,20 +306,11 @@ export class HostingWebhostPlansPage implements OnDestroy {
     }
     if (values.status === '0' || values.status === '1') params.set('status', values.status);
 
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingWebhostPlan[] } }>(
-        `${this.planEndpoint}?${params.toString()}`,
-      );
-      const items = result?.data?.items ?? [];
-      this.plans.set(
-        items.map((item) => ({ ...item, HwlConfig: this.parseConfig(item.HwlConfig) })),
-      );
-      this.reconcilePlanSelection();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load Webhost plans.'));
-    } finally {
-      this.finishLoading(start);
-    }
+    const result = await this.api.get<{ data?: { items?: HostingWebhostPlan[] } }>(
+      `${this.planEndpoint}?${params.toString()}`,
+    );
+    const items = result?.data?.items ?? [];
+    return items.map((item) => ({ ...item, HwlConfig: this.parseConfig(item.HwlConfig) }));
   }
 
   startCreate() {
@@ -393,7 +400,7 @@ export class HostingWebhostPlansPage implements OnDestroy {
         await this.api.post(this.planEndpoint, payload);
         this.snack.success('Webhost plan created.');
       }
-      await this.loadPlans();
+      this.plansResource.reload();
       if (closeAfterSave || editing) {
         this.closeDialog();
         this.editing.set(null);
@@ -426,7 +433,7 @@ export class HostingWebhostPlansPage implements OnDestroy {
     try {
       await this.api.delete(`${this.planEndpoint}/${item.HwlUUID}`);
       this.snack.success('Webhost plan deleted.');
-      await this.loadPlans();
+      this.plansResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to delete Webhost plan.'));
     }
@@ -497,7 +504,7 @@ export class HostingWebhostPlansPage implements OnDestroy {
       );
       this.plans.update((rows) => rows.filter((row) => !deleted.has(row.HwlUUID)));
       this.selectedPlanUUIDs.set(failed);
-      await this.loadPlans();
+      this.plansResource.reload();
       failed.size
         ? this.snack.error(`${failed.size} Webhost plan(s) could not be deleted.`)
         : this.snack.success(`${deleted.size || ids.length} Webhost plan(s) deleted.`);
@@ -612,16 +619,6 @@ export class HostingWebhostPlansPage implements OnDestroy {
     if (value >= 1024 && value % 1024 === 0) return `${value / 1024} GB`;
     if (value >= 1024) return `${(value / 1024).toFixed(1)} GB`;
     return `${value} MB`;
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string) {

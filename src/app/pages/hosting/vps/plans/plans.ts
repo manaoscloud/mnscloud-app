@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -109,7 +111,11 @@ export class HostingVpsPlansPage implements OnDestroy {
     const start = this.pageIndex() * this.pageSize();
     return this.sortedRows().slice(start, start + this.pageSize());
   });
-  readonly loading = signal(false);
+  private readonly plansResource = resource({
+    defaultValue: [] as HostingVpsPlan[],
+    loader: () => this.fetchPlans(),
+  });
+  readonly loading = this.plansResource.isLoading;
   readonly saving = signal(false);
   readonly editing = signal<HostingVpsPlan | null>(null);
   readonly defaultCurrency = signal('BRL');
@@ -193,6 +199,18 @@ export class HostingVpsPlansPage implements OnDestroy {
     );
   });
 
+  private readonly syncPlans = effect(() => {
+    this.plans.set(this.plansResource.value());
+    this.reconcilePlanSelection();
+  });
+
+  private readonly reportPlansError = effect(() => {
+    const error = this.plansResource.error();
+    if (error) {
+      this.snack.error(this.friendlyError(error, 'Failed to load VPS plans.'));
+    }
+  });
+
   constructor() {
     void this.loadDefaultCurrency();
     this.planForm.controls.providerUUID.valueChanges.subscribe((uuid) => {
@@ -206,7 +224,7 @@ export class HostingVpsPlansPage implements OnDestroy {
       this.currentSize.set(value ?? '');
       this.applySelectedSizeSpecs(value);
     });
-    this.refreshList();
+    void this.loadProviders();
   }
 
   ngOnDestroy() {
@@ -216,7 +234,7 @@ export class HostingVpsPlansPage implements OnDestroy {
 
   refreshList() {
     void this.loadProviders();
-    void this.loadPlans();
+    this.plansResource.reload();
   }
 
   get filteredProviders() {
@@ -347,37 +365,26 @@ export class HostingVpsPlansPage implements OnDestroy {
     }
   }
 
-  async loadPlans() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchPlans(): Promise<HostingVpsPlan[]> {
     const values = this.filterForm.getRawValue();
     const params = new URLSearchParams({ limit: '500', offset: '0' });
     if (values.search.trim()) params.set('search', values.search.trim());
     if (values.status === '0' || values.status === '1') params.set('status', values.status);
 
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingVpsPlan[] } }>(
-        `${this.planEndpoint()}?${params.toString()}`,
-      );
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      this.plans.set(
-        list.map((item) => ({
-          ...item,
-          HvpConfig: this.parseConfig<HostingVpsPlanConfig>(item.HvpConfig),
-        })),
-      );
-      this.reconcilePlanSelection();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS plans.'));
-    } finally {
-      this.finishLoading(start);
-    }
+    const result = await this.api.get<{ data?: { items?: HostingVpsPlan[] } }>(
+      `${this.planEndpoint()}?${params.toString()}`,
+    );
+    const list = Array.isArray(result?.data?.items) ? result.data.items : [];
+    return list.map((item) => ({
+      ...item,
+      HvpConfig: this.parseConfig<HostingVpsPlanConfig>(item.HvpConfig),
+    }));
   }
 
   applyFilters() {
     this.resetPagination();
     this.providerFilter.set(this.filterForm.controls.provider.value);
-    void this.loadPlans();
+    this.plansResource.reload();
   }
 
   clearFilters() {
@@ -385,7 +392,7 @@ export class HostingVpsPlansPage implements OnDestroy {
     this.providerFilter.set('');
     this.providerFilterSearch.set('');
     this.resetPagination();
-    void this.loadPlans();
+    this.plansResource.reload();
   }
 
   async loadProviderCatalog() {
@@ -491,7 +498,7 @@ export class HostingVpsPlansPage implements OnDestroy {
         await this.api.post(this.planEndpoint(), payload);
         this.snack.success('VPS plan created.');
       }
-      await this.loadPlans();
+      this.plansResource.reload();
       if (closeAfterSave || editing) {
         this.closeDialog();
         this.editing.set(null);
@@ -524,7 +531,7 @@ export class HostingVpsPlansPage implements OnDestroy {
     try {
       await this.api.delete(`${this.planEndpoint()}/${item.HvpUUID}`);
       this.snack.success('VPS plan deleted.');
-      await this.loadPlans();
+      this.plansResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to delete VPS plan.'));
     }
@@ -598,7 +605,7 @@ export class HostingVpsPlansPage implements OnDestroy {
       const failed = new Set((response?.data?.failed ?? []).map((item) => item.HostingVpsPlanUUID));
       this.plans.update((rows) => rows.filter((row) => !deleted.has(row.HvpUUID)));
       this.selectedPlanUUIDs.set(failed);
-      await this.loadPlans();
+      this.plansResource.reload();
       if (failed.size) {
         this.snack.error(`${failed.size} VPS plan(s) could not be deleted.`);
       } else {
@@ -857,16 +864,6 @@ export class HostingVpsPlansPage implements OnDestroy {
       numeric: true,
       sensitivity: 'base',
     });
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private friendlyError(error: unknown, fallback: string) {
