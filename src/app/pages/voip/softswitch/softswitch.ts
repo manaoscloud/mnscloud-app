@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -102,7 +104,6 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
       : 'Register API accounts for Softswitch providers.',
   );
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly error = signal<string | null>(null);
@@ -110,6 +111,7 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
 
   search = '';
   searchInput = '';
+  readonly appliedSearch = signal('');
   readonly selectedAccountUUIDs = new Set<string>();
   readonly displayedColumns = [
     'select',
@@ -163,8 +165,37 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
   readonly softswitchFormDialog = viewChild<TemplateRef<unknown>>('softswitchFormDialog');
+  private readonly accountsResource = resource({
+    params: () => ({
+      isMaster: this.isMaster(),
+      search: this.appliedSearch(),
+      limit: this.listLimit,
+    }),
+    defaultValue: [] as VoipSoftswitchAccount[],
+    loader: async ({ params }) => {
+      const res = await this.api.list(params.isMaster, {
+        search: params.search,
+        limit: params.limit,
+      });
+      return res?.data?.items ?? [];
+    },
+  });
+  readonly loading = this.accountsResource.isLoading;
   private softswitchFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.accountsResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    this.dataSource.paginator?.firstPage();
+  });
+  private readonly reportLoadError = effect(() => {
+    const error = this.accountsResource.error();
+    if (!error) return;
+    const message = this.messageFromError(error, 'Failed to load accounts.');
+    this.error.set(message);
+    this.snack.error(message);
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -210,7 +241,6 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
 
     setTimeout(() => {
       void this.loadLookups();
-      void this.loadAccounts();
     }, 0);
   }
 
@@ -224,47 +254,17 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    this.dataSource.filter = this.search.toLowerCase();
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+    this.appliedSearch.set(this.search);
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.dataSource.filter = '';
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  async loadAccounts() {
-    this.loading.set(true);
-    this.error.set(null);
-    const start = performance.now();
-    try {
-      const res = await this.api.list(this.isMaster(), {
-        search: this.search,
-        limit: this.listLimit,
-      });
-      this.dataSource.data = res?.data?.items ?? [];
-      this.reconcileSelection();
-      this.applySearchFilters();
-    } catch (err: any) {
-      const message =
-        err?.error?.message || err?.error?.error || err?.message || 'Failed to load accounts.';
-      this.error.set(message);
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    this.appliedSearch.set('');
   }
 
   refresh() {
-    return this.loadAccounts();
+    this.accountsResource.reload();
   }
 
   startCreate() {
@@ -302,7 +302,7 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
       } else {
         await this.api.create(payload, this.isMaster());
       }
-      await this.loadAccounts();
+      this.accountsResource.reload();
       if (saveAndNew && !this.editing()) {
         this.resetForm();
         return;
@@ -361,9 +361,8 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.remove(item.VssUUID, this.isMaster());
-      this.dataSource.data = this.dataSource.data.filter((row) => row.VssUUID !== item.VssUUID);
       this.selectedAccountUUIDs.delete(item.VssUUID);
-      this.applySearchFilters();
+      this.accountsResource.reload();
     } catch (err: any) {
       const message =
         err?.error?.message || err?.error?.error || err?.message || 'Failed to delete account.';
@@ -441,7 +440,7 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
       if (failed.size) {
         this.error.set(`${failed.size} selected Softswitch account(s) could not be deleted.`);
       }
-      this.applySearchFilters();
+      this.accountsResource.reload();
     } catch (err: any) {
       const message =
         err?.error?.message ||
@@ -541,5 +540,10 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
         .toLowerCase()
         .includes(value),
     );
+  }
+
+  private messageFromError(error: unknown, fallback: string) {
+    const err = error as { error?: { message?: string; error?: string }; message?: string };
+    return err?.error?.message || err?.error?.error || err?.message || fallback;
   }
 }

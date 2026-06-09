@@ -2,8 +2,10 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
   OnDestroy,
+  resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
@@ -89,12 +91,12 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
       : 'Manage provider catalog used by your Softswitch accounts.',
   );
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipSoftswitchProviderItem | null>(null);
 
   readonly dataSource = new MatTableDataSource<VoipSoftswitchProviderItem>([]);
+  readonly appliedSearch = signal('');
   readonly displayedColumns = ['select', 'name', 'engine', 'status', 'actions'];
   readonly selectedProviderUUIDs = new Set<string>();
   search = '';
@@ -136,8 +138,35 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
   readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
+  private readonly providersResource = resource({
+    params: () => ({
+      isMaster: this.isMaster(),
+      search: this.appliedSearch(),
+      limit: this.listLimit,
+    }),
+    defaultValue: [] as VoipSoftswitchProviderItem[],
+    loader: async ({ params }) => {
+      const response = await this.api.list(params.isMaster, {
+        search: params.search || undefined,
+        limit: params.limit,
+      });
+      return response?.data?.items ?? [];
+    },
+  });
+  readonly loading = this.providersResource.isLoading;
   private providerFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly syncTableData = effect(() => {
+    this.dataSource.data = this.providersResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    this.dataSource.paginator?.firstPage();
+  });
+  private readonly reportLoadError = effect(() => {
+    const error = this.providersResource.error();
+    if (!error) return;
+    this.snack.error(this.messageFromError(error, 'Failed to load providers.'));
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -162,8 +191,6 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-
-    setTimeout(() => void this.loadProviders(), 0);
   }
 
   ngOnDestroy() {
@@ -176,44 +203,17 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadProviders();
+    this.appliedSearch.set(this.search);
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadProviders();
-  }
-
-  async loadProviders() {
-    this.loading.set(true);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.list(this.isMaster(), {
-        search: this.search || undefined,
-        limit: this.listLimit,
-      });
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.filter = '';
-      if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to load providers.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    this.appliedSearch.set('');
   }
 
   refreshList() {
-    void this.loadProviders();
+    this.providersResource.reload();
   }
 
   startCreate() {
@@ -278,7 +278,7 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
         this.snack.success('Softswitch provider created successfully.');
       }
 
-      await this.loadProviders();
+      this.providersResource.reload();
       if (createAnother && !editing) {
         this.resetForm();
         return;
@@ -318,7 +318,7 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
       await this.api.remove(item.VspUUID, this.isMaster());
       this.snack.success('Softswitch provider deleted successfully.');
       this.selectedProviderUUIDs.delete(item.VspUUID);
-      await this.loadProviders();
+      this.providersResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err, 'Failed to delete provider.'));
     }
@@ -394,7 +394,7 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
       } else {
         this.snack.success(`${deleted.size} selected provider(s) deleted successfully.`);
       }
-      this.dataSource.filter = this.search.trim().toLowerCase();
+      this.providersResource.reload();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err, 'Failed to delete selected providers.'));
     } finally {
@@ -498,13 +498,6 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
       if (normalized) uniq.add(normalized);
     });
     return Array.from(uniq);
-  }
-
-  private applyFilter() {
-    this.dataSource.filter = this.search.trim().toLowerCase();
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
   }
 
   private reconcileSelection() {
