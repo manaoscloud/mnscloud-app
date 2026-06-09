@@ -1,5 +1,13 @@
 import { NgClass } from '@angular/common';
-import { Component, inject, signal, ChangeDetectionStrategy, viewChild } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  effect,
+  inject,
+  resource,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -19,6 +27,18 @@ import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { PabxCdrKind, VoipPabxCdrService } from './cdr.service';
 import { VoipPabxCdrRecordingDialogComponent } from './recording-dialog/recording-dialog';
+
+type CdrFilters = {
+  search: string;
+  status: string;
+  direction: string;
+  dateFrom: string;
+  dateTo: string;
+};
+
+type CdrRequest = CdrFilters & {
+  kind: PabxCdrKind;
+};
 
 @Component({
   selector: 'app-voip-pabx-cdr',
@@ -50,8 +70,21 @@ export class VoipPabxCdrPage {
   private readonly api = inject(VoipPabxCdrService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
-  readonly loading = signal(false);
   readonly activeKind = signal<PabxCdrKind>('all');
+  private readonly appliedFilters = signal<CdrFilters>({
+    search: '',
+    status: '',
+    direction: '',
+    dateFrom: '',
+    dateTo: '',
+  });
+  private readonly cdrResource = resource({
+    params: () => ({ kind: this.activeKind(), ...this.appliedFilters() }),
+    defaultValue: [] as any[],
+    loader: ({ params }) => this.fetchCdrRows(params),
+  });
+
+  readonly loading = this.cdrResource.isLoading;
   readonly dataSource = new MatTableDataSource<any>([]);
 
   search = '';
@@ -78,11 +111,21 @@ export class VoipPabxCdrPage {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
 
+  private readonly syncRows = effect(() => {
+    this.dataSource.data = this.cdrResource.value();
+  });
+
+  private readonly reportError = effect(() => {
+    const error = this.cdrResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load PABX CDR.'));
+  });
+
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.refreshList();
+    this.refreshList();
   }
 
   onTabChange(index: number) {
@@ -90,7 +133,6 @@ export class VoipPabxCdrPage {
     this.activeKind.set(kinds[index] ?? 'all');
     this.dataSource.data = [];
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    void this.refreshList();
   }
 
   displayedColumns() {
@@ -99,7 +141,7 @@ export class VoipPabxCdrPage {
 
   applySearchFilters() {
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    void this.refreshList();
+    this.appliedFilters.set(this.currentFilters());
   }
 
   clearSearchFilters() {
@@ -109,29 +151,24 @@ export class VoipPabxCdrPage {
     this.dateFrom = '';
     this.dateTo = '';
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    void this.refreshList();
+    this.applySearchFilters();
   }
 
-  async refreshList() {
-    const started = performance.now();
-    this.loading.set(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.apiWindowLimit));
-      params.set('offset', '0');
-      if (this.search.trim()) params.set('search', this.search.trim());
-      if (this.status) params.set('status', this.status);
-      if (this.direction) params.set('direction', this.direction);
-      if (this.dateFrom) params.set('dateFrom', new Date(this.dateFrom).toISOString());
-      if (this.dateTo) params.set('dateTo', new Date(this.dateTo).toISOString());
-      const response = await this.api.list(this.activeKind(), params);
-      this.dataSource.data = response?.data?.items ?? [];
-    } catch (err: any) {
-      this.snack.error(err?.error?.error || err?.message || 'Failed to load PABX CDR.');
-    } finally {
-      const waitMs = Math.max(0, 600 - (performance.now() - started));
-      setTimeout(() => this.loading.set(false), waitMs);
-    }
+  refreshList() {
+    this.cdrResource.reload();
+  }
+
+  private async fetchCdrRows(request: CdrRequest): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.set('limit', String(this.apiWindowLimit));
+    params.set('offset', '0');
+    if (request.search.trim()) params.set('search', request.search.trim());
+    if (request.status) params.set('status', request.status);
+    if (request.direction) params.set('direction', request.direction);
+    if (request.dateFrom) params.set('dateFrom', new Date(request.dateFrom).toISOString());
+    if (request.dateTo) params.set('dateTo', new Date(request.dateTo).toISOString());
+    const response = await this.api.list(request.kind, params);
+    return response?.data?.items ?? [];
   }
 
   formatDate(value: string | null | undefined) {
@@ -199,5 +236,22 @@ export class VoipPabxCdrPage {
     };
     const value = sortMap[column] ?? '';
     return typeof value === 'number' ? value : String(value).toLowerCase();
+  }
+
+  private currentFilters(): CdrFilters {
+    return {
+      search: this.search,
+      status: this.status,
+      direction: this.direction,
+      dateFrom: this.dateFrom,
+      dateTo: this.dateTo,
+    };
+  }
+
+  private errorMessage(error: unknown, fallback: string): string {
+    const serverMessage = (error as any)?.error?.error || (error as any)?.error?.message;
+    if (typeof serverMessage === 'string' && serverMessage.trim()) return serverMessage;
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
   }
 }
