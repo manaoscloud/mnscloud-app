@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -174,7 +176,41 @@ export class HostingWebhostToolsPage implements OnDestroy {
   readonly hostEndpoint = 'hosting/webhost/hosts';
   readonly hosts = signal<HostingWebhostHost[]>([]);
   readonly items = signal<WebhostToolRow[]>([]);
-  readonly loading = signal(false);
+  private readonly itemsResource = resource({
+    params: () => {
+      const values = this.filterForm.getRawValue();
+      return {
+        search: values.search.trim(),
+        provider: values.provider.trim(),
+        hostUUID: values.hostUUID.trim(),
+        type: values.type.trim(),
+        status: values.status.trim(),
+        provisionStatus: values.provisionStatus.trim(),
+      };
+    },
+    defaultValue: [] as WebhostToolRow[],
+    loader: async ({ params }) => {
+      const query = new URLSearchParams();
+      query.set('limit', '1000');
+      query.set('offset', '0');
+      query.set('isActive', '1');
+      for (const key of ['search', 'hostUUID', 'status', 'provisionStatus'] as const) {
+        const value = params[key];
+        if (value) query.set(key, value);
+      }
+      if (params.type && this.config.zone) query.set('type', params.type);
+
+      const response = await this.api.get<{ data?: { items?: WebhostToolRow[] } }>(
+        `${this.config.endpoint}?${query.toString()}`,
+      );
+      const items = response?.data?.items ?? [];
+      return params.provider
+        ? items.filter((item) => item.HostingWebhostProviderHwpUUID === params.provider)
+        : items;
+    },
+  });
+
+  readonly loading = this.itemsResource.isLoading;
   readonly saving = signal(false);
   readonly editing = signal<WebhostToolRow | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
@@ -291,8 +327,21 @@ export class HostingWebhostToolsPage implements OnDestroy {
     return this.sortedRows().slice(start, start + this.pageSize());
   });
 
+  private readonly syncItems = effect(() => {
+    this.items.set(this.itemsResource.value());
+    this.pageIndex.set(0);
+    this.reconcileItemSelection();
+  });
+
+  private readonly reportItemsError = effect(() => {
+    const error = this.itemsResource.error();
+    if (error) {
+      this.notifyError(error, `Failed to load ${this.config.title}.`);
+    }
+  });
+
   constructor() {
-    this.refreshList();
+    void this.loadHosts();
   }
 
   ngOnDestroy() {
@@ -303,7 +352,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
 
   refreshList() {
     void this.loadHosts();
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   async loadHosts() {
@@ -317,39 +366,8 @@ export class HostingWebhostToolsPage implements OnDestroy {
     }
   }
 
-  async loadItems() {
-    const params = new URLSearchParams();
-    params.set('limit', '1000');
-    params.set('offset', '0');
-    params.set('isActive', '1');
-    const providerUUID = String(this.filterForm.controls.provider.value ?? '').trim();
-    for (const key of ['search', 'provider', 'hostUUID', 'status', 'provisionStatus', 'type']) {
-      const value = String(this.filterForm.get(key)?.value ?? '').trim();
-      if (key === 'provider') continue;
-      if (value && (key !== 'type' || this.config.zone)) params.set(key, value);
-    }
-    this.loading.set(true);
-    try {
-      const response = await this.api.get<{ data?: { items?: WebhostToolRow[] } }>(
-        `${this.config.endpoint}?${params.toString()}`,
-      );
-      const items = response?.data?.items ?? [];
-      this.items.set(
-        providerUUID
-          ? items.filter((item) => item.HostingWebhostProviderHwpUUID === providerUUID)
-          : items,
-      );
-      this.pageIndex.set(0);
-      this.selectedIds.set(new Set());
-    } catch (error) {
-      this.notifyError(error, `Failed to load ${this.config.title}.`);
-    } finally {
-      setTimeout(() => this.loading.set(false), 600);
-    }
-  }
-
   applyFilters() {
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
   clearFilters() {
@@ -431,7 +449,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
         await this.api.post(this.config.endpoint, payload);
         this.snack.success(`${this.config.primaryLabel} created.`);
       }
-      await this.loadItems();
+      this.itemsResource.reload();
       if (closeAfterSave) this.closeDialog();
       if (!editing && !closeAfterSave) this.startCreate();
     } catch (error) {
@@ -477,7 +495,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
     try {
       await this.api.post(`${this.config.endpoint}/${this.rowId(row)}/${action}`, body);
       this.snack.success(`${this.config.primaryLabel} ${action} queued.`);
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (error) {
       this.notifyError(error, `Failed to run ${action}.`);
     } finally {
@@ -491,7 +509,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
     try {
       await this.api.delete(`${this.config.endpoint}/${this.rowId(row)}`);
       this.snack.success(`${this.config.primaryLabel} deleted.`);
-      await this.loadItems();
+      this.itemsResource.reload();
     } catch (error) {
       this.notifyError(error, `Failed to delete ${this.config.primaryLabel}.`);
     }
@@ -510,7 +528,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
       const failedIds = new Set(
         (response?.data?.failed ?? []).map((item: any) => Object.values(item)[0] as string),
       );
-      await this.loadItems();
+      this.itemsResource.reload();
       this.selectedIds.set(failedIds);
       if (failedIds.size) {
         this.snack.error(`${failedIds.size} record(s) could not be deleted.`);
@@ -671,6 +689,17 @@ export class HostingWebhostToolsPage implements OnDestroy {
   private stopDialogViewportObserver() {
     this.dialogViewportObserver?.disconnect();
     this.dialogViewportObserver = null;
+  }
+
+  private reconcileItemSelection() {
+    const available = new Set(this.items().map((row) => this.rowId(row)));
+    this.selectedIds.update((current) => {
+      const next = new Set<string>();
+      current.forEach((id) => {
+        if (available.has(id)) next.add(id);
+      });
+      return next;
+    });
   }
 
   private sortRows(rows: WebhostToolRow[]) {
