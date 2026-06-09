@@ -2,9 +2,9 @@
   "product": "mnscloud-app",
   "channels": {
     "stable": {
-      "version": "0.1.95",
-      "ref": "v0.1.95",
-      "releasedAt": "2026-06-09T17:59:20Z",
+      "version": "0.1.96",
+      "ref": "v0.1.96",
+      "releasedAt": "2026-06-09T18:10:12Z",
       "minimumVersion": "0.1.0",
       "autoUpdate": false
     },
