@@ -2,7 +2,10 @@ import {
   AfterViewInit,
   Component,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -58,6 +61,11 @@ type CredentialResponse = {
   TemporaryPasswordExpiresAt: string;
 };
 
+type TimeClockAccountListParams = {
+  search: string;
+  status: string | null;
+};
+
 @Component({
   selector: 'app-erp-hr-time-clock-accounts',
   standalone: true,
@@ -92,12 +100,22 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly statusFilter = signal<string | null>(null);
   readonly lastCredential = signal<CredentialResponse | null>(null);
+  private readonly mutating = signal(false);
+  private readonly accountListParams = signal<TimeClockAccountListParams>({
+    search: '',
+    status: null,
+  });
+  private readonly accountsResource = resource({
+    params: () => this.accountListParams(),
+    defaultValue: [] as TimeClockAccount[],
+    loader: ({ params }) => this.fetchAccounts(params),
+  });
+  readonly loading = computed(() => this.accountsResource.isLoading() || this.mutating());
 
   readonly employees = signal<EmployeeOption[]>([]);
   readonly dataSource = new MatTableDataSource<TimeClockAccount>([]);
@@ -120,6 +138,23 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
   readonly sort = viewChild(MatSort);
   readonly accountDialog = viewChild<TemplateRef<unknown>>('accountDialog');
   readonly credentialDialog = viewChild<TemplateRef<unknown>>('credentialDialog');
+  private lastLoadError = '';
+  private readonly syncAccounts = effect(() => {
+    this.dataSource.data = this.accountsResource.value();
+  });
+  private readonly reportAccountsError = effect(() => {
+    const error = this.accountsResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+    const message = this.extractErrorMessage(error, 'Failed to load time clock accounts.');
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+    this.dataSource.data = [];
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -136,10 +171,7 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
           return String((row as any)[column] ?? '');
       }
     };
-    setTimeout(() => {
-      void this.loadEmployees();
-      void this.loadAccounts();
-    }, 0);
+    void this.loadEmployees();
   }
 
   async loadEmployees() {
@@ -153,34 +185,28 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
     }
   }
 
-  async loadAccounts() {
-    const startedAt = Date.now();
-    this.loading.set(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search()) params.set('q', this.search());
-      if (this.statusFilter()) params.set('status', this.statusFilter() ?? '');
-      const response = await this.api.get<any>(
-        `erp/human-resources/time-clock/accounts?${params.toString()}`,
-      );
-      this.dataSource.data = response?.data?.items ?? [];
-    } catch (error) {
-      this.snack.error(this.extractErrorMessage(error, 'Failed to load time clock accounts.'));
-    } finally {
-      const waitMs = Math.max(0, 600 - (Date.now() - startedAt));
-      setTimeout(() => this.loading.set(false), waitMs);
-    }
+  private async fetchAccounts(paramsValue: TimeClockAccountListParams) {
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (paramsValue.search) params.set('q', paramsValue.search);
+    if (paramsValue.status) params.set('status', paramsValue.status);
+    const response = await this.api.get<any>(
+      `erp/human-resources/time-clock/accounts?${params.toString()}`,
+    );
+    return response?.data?.items ?? [];
   }
 
   refreshList() {
-    void this.loadAccounts();
+    this.accountsResource.reload();
   }
 
   applyFilters() {
     this.search.set(this.searchInput().trim());
     this.dataSource.paginator?.firstPage();
-    void this.loadAccounts();
+    this.accountListParams.set({
+      search: this.search(),
+      status: this.statusFilter(),
+    });
   }
 
   clearFilters() {
@@ -188,7 +214,10 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
     this.search.set('');
     this.statusFilter.set(null);
     this.dataSource.paginator?.firstPage();
-    void this.loadAccounts();
+    this.accountListParams.set({
+      search: '',
+      status: null,
+    });
   }
 
   startCreate() {
@@ -218,7 +247,7 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
       this.dialog.closeAll();
       this.lastCredential.set(response?.data ?? null);
       this.snack.success('Time clock account created successfully.');
-      await this.loadAccounts();
+      this.accountsResource.reload();
       this.openCredentialDialog();
     } catch (error) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to create time clock account.'));
@@ -228,7 +257,7 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
   }
 
   async resetPassword(row: TimeClockAccount) {
-    this.saving.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.api.post<any>(
         `erp/human-resources/time-clock/accounts/${row.TimeClockAccountUUID}/reset-password`,
@@ -236,28 +265,28 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
       );
       this.lastCredential.set({ ...response?.data, LoginCode: row.LoginCode });
       this.snack.success('Temporary password generated successfully.');
-      await this.loadAccounts();
+      this.accountsResource.reload();
       this.openCredentialDialog();
     } catch (error) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to reset password.'));
     } finally {
-      this.saving.set(false);
+      this.mutating.set(false);
     }
   }
 
   async setStatus(row: TimeClockAccount, status: 'active' | 'inactive' | 'blocked') {
-    this.saving.set(true);
+    this.mutating.set(true);
     try {
       await this.api.put(`erp/human-resources/time-clock/accounts/${row.TimeClockAccountUUID}`, {
         status,
         notes: row.Notes ?? null,
       });
       this.snack.success('Time clock account updated successfully.');
-      await this.loadAccounts();
+      this.accountsResource.reload();
     } catch (error) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to update account.'));
     } finally {
-      this.saving.set(false);
+      this.mutating.set(false);
     }
   }
 

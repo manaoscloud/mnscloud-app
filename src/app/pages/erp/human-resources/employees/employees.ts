@@ -3,7 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -67,6 +70,14 @@ type OptionItem = {
   name: string;
 };
 
+type EmployeeListParams = {
+  search: string;
+  status: number | null;
+  companyUUID: string;
+  departmentUUID: string;
+  positionUUID: string;
+};
+
 @Component({
   selector: 'app-erp-hr-employees',
   standalone: true,
@@ -103,7 +114,6 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly editing = signal<Employee | null>(null);
   readonly searchInput = signal('');
@@ -113,6 +123,20 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
   readonly companyFilter = signal('');
   readonly departmentFilter = signal('');
   readonly positionFilter = signal('');
+  private readonly mutating = signal(false);
+  private readonly employeeListParams = signal<EmployeeListParams>({
+    search: '',
+    status: null,
+    companyUUID: '',
+    departmentUUID: '',
+    positionUUID: '',
+  });
+  private readonly employeesResource = resource({
+    params: () => this.employeeListParams(),
+    defaultValue: [] as Employee[],
+    loader: ({ params }) => this.fetchEmployees(params),
+  });
+  readonly loading = computed(() => this.employeesResource.isLoading() || this.mutating());
 
   readonly companySearch = new FormControl('');
   readonly departmentSearch = new FormControl('');
@@ -157,6 +181,25 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
   readonly employeeFormDialog = viewChild<TemplateRef<unknown>>('employeeFormDialog');
 
   private dialogBinding: CrudDialogBinding | null = null;
+  private lastLoadError = '';
+  private readonly syncEmployees = effect(() => {
+    this.dataSource.data = this.employeesResource.value();
+    this.reconcileSelection();
+  });
+  private readonly reportEmployeesError = effect(() => {
+    const error = this.employeesResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+    const message = this.extractErrorMessage(error, 'Failed to load employees.');
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+    this.dataSource.data = [];
+    this.reconcileSelection();
+  });
 
   get selectedCount() {
     return this.selectedEmployeeUUIDs().size;
@@ -209,10 +252,7 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
           return '';
       }
     };
-    setTimeout(() => {
-      void this.loadReferences();
-      void this.loadEmployees();
-    }, 0);
+    void this.loadReferences();
   }
 
   ngOnDestroy() {
@@ -221,7 +261,13 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
-    void this.loadEmployees();
+    this.employeeListParams.set({
+      search: this.search(),
+      status: this.statusFilter(),
+      companyUUID: this.companyFilter(),
+      departmentUUID: this.departmentFilter(),
+      positionUUID: this.positionFilter(),
+    });
   }
 
   clearSearchFilters() {
@@ -231,11 +277,17 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     this.companyFilter.set('');
     this.departmentFilter.set('');
     this.positionFilter.set('');
-    void this.loadEmployees();
+    this.employeeListParams.set({
+      search: '',
+      status: null,
+      companyUUID: '',
+      departmentUUID: '',
+      positionUUID: '',
+    });
   }
 
   refreshList() {
-    void this.loadEmployees();
+    this.employeesResource.reload();
   }
 
   async loadReferences() {
@@ -268,32 +320,18 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     }
   }
 
-  async loadEmployees() {
-    this.loading.set(true);
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search()) params.set('q', this.search());
-      if (this.statusFilter() !== null) params.set('status', String(this.statusFilter()));
-      if (this.companyFilter()) params.set('companyUUID', this.companyFilter());
-      if (this.departmentFilter()) params.set('departmentUUID', this.departmentFilter());
-      if (this.positionFilter()) params.set('positionUUID', this.positionFilter());
-      const response = await this.api.get<any>(
-        `erp/human-resources/employees?${params.toString()}`,
-      );
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-    } catch (err: any) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load employees.'));
-      this.dataSource.data = [];
-      this.reconcileSelection();
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) setTimeout(() => this.loading.set(false), waitMs);
-      else this.loading.set(false);
-    }
+  private async fetchEmployees(paramsValue: EmployeeListParams) {
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (paramsValue.search) params.set('q', paramsValue.search);
+    if (paramsValue.status !== null) params.set('status', String(paramsValue.status));
+    if (paramsValue.companyUUID) params.set('companyUUID', paramsValue.companyUUID);
+    if (paramsValue.departmentUUID) params.set('departmentUUID', paramsValue.departmentUUID);
+    if (paramsValue.positionUUID) params.set('positionUUID', paramsValue.positionUUID);
+    const response = await this.api.get<any>(
+      `erp/human-resources/employees?${params.toString()}`,
+    );
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -359,7 +397,7 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
         await this.api.post('erp/human-resources/employees', payload);
         this.snack.success('Employee created successfully.');
       }
-      await this.loadEmployees();
+      this.employeesResource.reload();
       if (saveAndNew && createMode) {
         this.startCreate();
         return;
@@ -397,7 +435,7 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     try {
       await this.api.delete(`erp/human-resources/employees/${employee.EmployeeUUID}`);
       this.snack.success('Employee deleted successfully.');
-      await this.loadEmployees();
+      this.employeesResource.reload();
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete employee.'));
     }
@@ -424,7 +462,7 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.api.delete<any>('erp/human-resources/employees/bulk', { ids });
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -440,11 +478,11 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
       } else {
         this.snack.success(`${deleted.size || ids.length} selected employee(s) deleted.`);
       }
-      await this.loadEmployees();
+      this.employeesResource.reload();
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete selected employees.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
