@@ -1,9 +1,10 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
+  effect,
   OnDestroy,
   OnInit,
+  resource,
   TemplateRef,
   inject,
   ChangeDetectionStrategy,
@@ -94,13 +95,21 @@ type CustomerOption = {
 export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
 
   boletos: ErpFinInvBoleto[] = [];
   dataSource = new MatTableDataSource<ErpFinInvBoleto>([]);
   displayedColumns: string[] = ['title', 'dueDate', 'amount', 'status', 'actions'];
-  loading = false;
+  private readonly boletosResource = resource({
+    defaultValue: [] as ErpFinInvBoleto[],
+    loader: async () => {
+      const res = await this.api.get<any>('erp/financial/invoicing/boletos');
+      return res?.data?.items ?? [];
+    },
+  });
+  get loading() {
+    return this.boletosResource.isLoading();
+  }
   saving = false;
   error = '';
   search = '';
@@ -113,6 +122,18 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
   readonly boletoFormDialog = viewChild<TemplateRef<unknown>>('boletoFormDialog');
   private boletoFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncBoletos = effect(() => {
+    this.boletos = this.boletosResource.value();
+    this.dataSource.data = [...this.boletos];
+    this.applyFilter();
+  });
+  private readonly reportBoletosError = effect(() => {
+    const error = this.boletosResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load boletos.'));
+      this.dataSource.data = [];
+    }
+  });
 
   statusOptions: { value: BoletoStatus; label: string }[] = [
     { value: 'open', label: 'Open' },
@@ -139,7 +160,6 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
     this.startCreate();
     void this.loadGatewayOptions();
     void this.loadCustomerOptions();
-    void this.loadBoletos();
   }
 
   ngOnDestroy() {
@@ -241,7 +261,7 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadBoletos();
+    this.boletosResource.reload();
   }
 
   applyFilter() {
@@ -249,34 +269,6 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
     this.dataSource.filter = q;
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
-    }
-  }
-
-  async loadBoletos() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      const res = await this.api.get<any>('erp/financial/invoicing/boletos');
-      this.boletos = res?.data?.items ?? [];
-      this.dataSource.data = [...this.boletos];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load boletos.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
     }
   }
 
@@ -359,13 +351,11 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
 
       if (!this.editingBoleto && keepOpenForNew) {
         this.startCreate();
-        this.cdr.detectChanges();
       } else {
         this.closeBoletoDialog();
         this.startCreate();
-        this.cdr.detectChanges();
       }
-      await this.loadBoletos();
+      this.boletosResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save boleto.');
     } finally {
@@ -424,16 +414,13 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/financial/invoicing/boletos/${boletoUUID}`);
       this.snack.success('Boleto deleted successfully.');
-      await this.loadBoletos();
+      this.boletosResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete boleto.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -633,6 +620,13 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
   private showError(message: string) {
     this.error = '';
     this.snack.error(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
   }
 
   private showWarning(message: string) {

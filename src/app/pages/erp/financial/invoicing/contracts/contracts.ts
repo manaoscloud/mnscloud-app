@@ -1,9 +1,10 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
+  effect,
   OnDestroy,
   OnInit,
+  resource,
   TemplateRef,
   inject,
   ChangeDetectionStrategy,
@@ -115,7 +116,6 @@ type CustomerOption = {
 export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
 
   amountPrefix = '';
@@ -131,7 +131,16 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
     'status',
     'actions',
   ];
-  loading = false;
+  private readonly contractsResource = resource({
+    defaultValue: [] as ErpFinInvContract[],
+    loader: async () => {
+      const res = await this.api.get<any>('erp/financial/invoicing/contracts');
+      return res?.data?.items ?? [];
+    },
+  });
+  get loading() {
+    return this.contractsResource.isLoading();
+  }
   saving = false;
   error = '';
   search = '';
@@ -147,6 +156,18 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
   readonly contractFormDialog = viewChild<TemplateRef<unknown>>('contractFormDialog');
   private contractFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncContracts = effect(() => {
+    this.contracts = this.contractsResource.value();
+    this.dataSource.data = [...this.contracts];
+    this.applyFilter();
+  });
+  private readonly reportContractsError = effect(() => {
+    const error = this.contractsResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load contracts.'));
+      this.dataSource.data = [];
+    }
+  });
 
   statusOptions: { value: ContractStatus; label: string }[] = [
     { value: 'draft', label: 'Draft' },
@@ -187,7 +208,6 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
     this.startCreate();
     void this.loadComplexes();
     void this.loadCustomers();
-    void this.loadContracts();
   }
 
   ngOnDestroy() {
@@ -242,7 +262,7 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
   }
 
   refreshList() {
-    void this.loadContracts();
+    this.contractsResource.reload();
   }
 
   applyFilter() {
@@ -250,34 +270,6 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
     this.dataSource.filter = q;
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
-    }
-  }
-
-  async loadContracts() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      const res = await this.api.get<any>('erp/financial/invoicing/contracts');
-      this.contracts = res?.data?.items ?? [];
-      this.dataSource.data = [...this.contracts];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load contracts.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
     }
   }
 
@@ -293,11 +285,8 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
         State: item.State ?? null,
         Zip: item.Zip ?? null,
       }));
-      setTimeout(() => {
-        this.complexes = mapped;
-        this.complexMap = new Map(mapped.map((c: ErpComplexOption) => [c.ComplexUUID, c]));
-        this.cdr.detectChanges();
-      }, 0);
+      this.complexes = mapped;
+      this.complexMap = new Map(mapped.map((c: ErpComplexOption) => [c.ComplexUUID, c]));
     } catch (err) {
       console.error('Failed to load complexes.', err);
     }
@@ -312,11 +301,8 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
         Name: item.Name,
         DueDayUUID: item.DueDayUUID ?? null,
       }));
-      setTimeout(() => {
-        this.customers = mapped;
-        this.customerMap = new Map(mapped.map((c: CustomerOption) => [c.CustomerUUID, c]));
-        this.cdr.detectChanges();
-      }, 0);
+      this.customers = mapped;
+      this.customerMap = new Map(mapped.map((c: CustomerOption) => [c.CustomerUUID, c]));
     } catch (err) {
       console.error('Failed to load customers.', err);
     }
@@ -487,8 +473,7 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
 
       this.closeContractDialog();
       this.startCreate();
-      this.cdr.detectChanges();
-      await this.loadContracts();
+      this.contractsResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save contract.');
     } finally {
@@ -517,7 +502,7 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
     try {
       await this.api.delete(`erp/financial/invoicing/contracts/${contractUUID}`);
       this.snack.success('Contract deleted successfully.');
-      await this.loadContracts();
+      this.contractsResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete contract.');
     }
@@ -725,6 +710,13 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
   private showError(message: string) {
     this.error = '';
     this.snack.error(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
   }
 
   private showWarning(message: string) {
