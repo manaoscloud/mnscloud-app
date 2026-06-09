@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -74,10 +76,14 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<IspPopItem | null>(null);
+  private readonly popsResource = resource({
+    defaultValue: [] as IspPopItem[],
+    loader: () => this.fetchPops(),
+  });
+  readonly loading = this.popsResource.isLoading;
 
   readonly dataSource = new MatTableDataSource<IspPopItem>([]);
   readonly displayedColumns = ['name', 'city', 'state', 'status', 'actions'];
@@ -98,6 +104,17 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
   readonly popFormDialog = viewChild<TemplateRef<unknown>>('popFormDialog');
   private popFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncPops = effect(() => {
+    this.dataSource.data = this.popsResource.value();
+    this.applySearchFilters();
+  });
+  private readonly reportPopsError = effect(() => {
+    const error = this.popsResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load POPs.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -110,7 +127,6 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => this.loadPops(), 0);
   }
 
   ngOnDestroy() {
@@ -137,31 +153,13 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadPops();
+    this.popsResource.reload();
   }
 
-  async loadPops() {
-    this.loading.set(true);
+  private async fetchPops() {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>('isp/pops');
-      const items = response?.data?.items ?? [];
-      this.dataSource.data = items;
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load POPs.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>('isp/pops');
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -208,21 +206,12 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`isp/pops/${editing.IppUUID}`, payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = this.dataSource.data.map((row) =>
-            row.IppUUID === item.IppUUID ? item : row,
-          );
-        }
+        await this.api.put<any>(`isp/pops/${editing.IppUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('isp/pops', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = [item, ...this.dataSource.data];
-        }
+        await this.api.post<any>('isp/pops', payload);
       }
 
+      this.popsResource.reload();
       this.closePopDialog();
       this.startCreate();
     } catch (err: any) {
@@ -247,7 +236,7 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/pops/${pop.IppUUID}`);
-      this.dataSource.data = this.dataSource.data.filter((row) => row.IppUUID !== pop.IppUUID);
+      this.popsResource.reload();
     } catch (err) {
       console.error('Failed to delete POP.', err);
       alert('Failed to delete POP.');

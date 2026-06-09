@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -79,12 +81,16 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<PppoeClientItem | null>(null);
   readonly hidePassword = signal(true);
   readonly fixedIpv4Options = signal<FixedIpv4Option[]>([]);
+  private readonly clientsResource = resource({
+    defaultValue: [] as PppoeClientItem[],
+    loader: () => this.fetchClients(),
+  });
+  readonly loading = this.clientsResource.isLoading;
 
   readonly dataSource = new MatTableDataSource<PppoeClientItem>([]);
   readonly displayedColumns = ['username', 'plan', 'ip', 'status', 'actions'];
@@ -104,6 +110,17 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
   readonly pppoeClientFormDialog = viewChild<TemplateRef<unknown>>('pppoeClientFormDialog');
   private pppoeClientFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncClients = effect(() => {
+    this.dataSource.data = this.clientsResource.value();
+    this.applySearchFilters();
+  });
+  private readonly reportClientsError = effect(() => {
+    const error = this.clientsResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load PPPoE clients.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -116,9 +133,7 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      void Promise.all([this.loadClients(), this.loadFixedIpv4Options()]);
-    }, 0);
+    void this.loadFixedIpv4Options();
   }
 
   ngOnDestroy() {
@@ -145,30 +160,14 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void Promise.all([this.loadClients(), this.loadFixedIpv4Options()]);
+    this.clientsResource.reload();
+    void this.loadFixedIpv4Options();
   }
 
-  async loadClients() {
-    this.loading.set(true);
+  private async fetchClients() {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>('isp/radius-servers/pppoe-clients');
-      const items = response?.data?.items ?? [];
-      this.dataSource.data = items;
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load PPPoE clients.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>('isp/radius-servers/pppoe-clients');
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -217,7 +216,7 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
         await this.api.post<any>('isp/radius-servers/pppoe-clients', payload);
       }
 
-      await this.loadClients();
+      this.clientsResource.reload();
       if (createAnother) {
         this.startCreate();
         return;
@@ -250,7 +249,7 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/radius-servers/pppoe-clients/${client.PpcUUID}`);
-      this.dataSource.data = this.dataSource.data.filter((row) => row.PpcUUID !== client.PpcUUID);
+      this.clientsResource.reload();
     } catch (err) {
       console.error('Failed to delete PPPoE client.', err);
       alert('Failed to delete PPPoE client.');

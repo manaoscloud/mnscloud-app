@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -70,12 +72,16 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<IspVendor | null>(null);
   readonly supportEmailError = signal('');
   readonly supplierSearch = signal('');
+  private readonly vendorsResource = resource({
+    defaultValue: [] as IspVendor[],
+    loader: () => this.fetchVendors(),
+  });
+  readonly loading = this.vendorsResource.isLoading;
 
   readonly dataSource = new MatTableDataSource<IspVendor>([]);
   readonly displayedColumns = ['name', 'supplier', 'website', 'support', 'status', 'actions'];
@@ -99,6 +105,17 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
   readonly vendorFormDialog = viewChild<TemplateRef<unknown>>('vendorFormDialog');
   private vendorFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncVendors = effect(() => {
+    this.dataSource.data = this.vendorsResource.value();
+    this.applySearchFilters();
+  });
+  private readonly reportVendorsError = effect(() => {
+    const error = this.vendorsResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load vendors.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -118,10 +135,7 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      this.loadVendors();
-      this.loadSuppliers();
-    }, 0);
+    this.loadSuppliers();
   }
 
   ngOnDestroy() {
@@ -158,30 +172,13 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadVendors();
+    this.vendorsResource.reload();
   }
 
-  async loadVendors() {
-    this.loading.set(true);
+  private async fetchVendors() {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>('isp/vendors');
-      const items = response?.data?.items ?? [];
-      this.dataSource.data = items;
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load vendors.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>('isp/vendors');
+    return response?.data?.items ?? [];
   }
 
   async loadSuppliers() {
@@ -247,21 +244,12 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
     try {
       const editing = this.editing();
       if (editing) {
-        const response = await this.api.put<any>(`isp/vendors/${editing.VendorUUID}`, payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = this.dataSource.data.map((row) =>
-            row.VendorUUID === item.VendorUUID ? item : row,
-          );
-        }
+        await this.api.put<any>(`isp/vendors/${editing.VendorUUID}`, payload);
       } else {
-        const response = await this.api.post<any>('isp/vendors', payload);
-        const item = response?.data?.item ?? null;
-        if (item) {
-          this.dataSource.data = [item, ...this.dataSource.data];
-        }
+        await this.api.post<any>('isp/vendors', payload);
       }
 
+      this.vendorsResource.reload();
       this.closeVendorDialog();
       this.startCreate();
     } catch (err: any) {
@@ -286,9 +274,7 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`isp/vendors/${item.VendorUUID}`);
-      this.dataSource.data = this.dataSource.data.filter(
-        (row) => row.VendorUUID !== item.VendorUUID,
-      );
+      this.vendorsResource.reload();
     } catch (err) {
       console.error('Failed to delete vendor.', err);
       alert('Failed to delete vendor.');

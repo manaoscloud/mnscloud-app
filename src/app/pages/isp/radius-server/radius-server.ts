@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -86,11 +88,16 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
     this.isMaster() ? 'system/isp/radius-servers' : 'isp/radius-servers',
   );
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editing = signal<IspRadiusServerItem | null>(null);
   readonly hideSecret = signal(true);
+  private readonly serversResource = resource({
+    params: () => this.baseEndpoint(),
+    defaultValue: [] as IspRadiusServerItem[],
+    loader: ({ params }) => this.fetchServers(params),
+  });
+  readonly loading = this.serversResource.isLoading;
 
   readonly dataSource = new MatTableDataSource<IspRadiusServerItem>([]);
   readonly displayedColumns = [
@@ -121,6 +128,17 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
   readonly radiusServerFormDialog = viewChild<TemplateRef<unknown>>('radiusServerFormDialog');
   private radiusServerFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  private readonly syncServers = effect(() => {
+    this.dataSource.data = this.serversResource.value();
+    this.applySearchFilters();
+  });
+  private readonly reportServersError = effect(() => {
+    const error = this.serversResource.error();
+    if (error) {
+      this.error.set(this.extractErrorMessage(error, 'Failed to load RADIUS servers.'));
+      this.dataSource.data = [];
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -133,7 +151,6 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => this.loadServers(), 0);
   }
 
   ngOnDestroy() {
@@ -160,30 +177,13 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadServers();
+    this.serversResource.reload();
   }
 
-  async loadServers() {
-    this.loading.set(true);
+  private async fetchServers(endpoint: string) {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.get<any>(this.baseEndpoint());
-      const items = response?.data?.items ?? [];
-      this.dataSource.data = items;
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to load RADIUS servers.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.get<any>(endpoint);
+    return response?.data?.items ?? [];
   }
 
   startCreate() {
@@ -249,7 +249,7 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
         await this.api.post<any>(this.baseEndpoint(), payload);
       }
 
-      await this.loadServers();
+      this.serversResource.reload();
       this.closeRadiusServerDialog();
       this.startCreate();
     } catch (err: any) {
@@ -274,7 +274,7 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
 
     try {
       await this.api.delete(`${this.baseEndpoint()}/${server.IrsUUID}`);
-      await this.loadServers();
+      this.serversResource.reload();
     } catch (err) {
       console.error('Failed to delete RADIUS server.', err);
       alert('Failed to delete RADIUS server.');
