@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -44,6 +46,11 @@ import {
   CyberSecurityProfilesService,
 } from './cyber-security-profiles.service';
 
+type CyberSecurityProfilesSnapshot = {
+  profiles: CyberSecurityProfile[];
+  services: CyberSecurityProtectedService[];
+};
+
 @Component({
   selector: 'app-cyber-security-profiles',
   standalone: true,
@@ -81,14 +88,21 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
+  private readonly mutating = signal(false);
   readonly editing = signal<CyberSecurityProfile | null>(null);
-  readonly services = signal<CyberSecurityProtectedService[]>([]);
   readonly serviceSearch = signal('');
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly selectedProfileUUIDs = signal<Set<string>>(new Set());
+  private readonly profilesResource = resource({
+    params: () => this.search(),
+    defaultValue: { profiles: [], services: [] } as CyberSecurityProfilesSnapshot,
+    loader: ({ params }) => this.loadProfilesSnapshot(params),
+  });
+
+  readonly loading = computed(() => this.profilesResource.isLoading() || this.mutating());
+  readonly services = computed(() => this.profilesResource.value().services);
 
   readonly filteredServices = computed(() => {
     const search = this.serviceSearch().trim().toLowerCase();
@@ -129,6 +143,26 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   readonly profileFormDialog = viewChild<TemplateRef<unknown>>('profileFormDialog');
 
   private profileDialogBinding: CrudDialogBinding | null = null;
+  private lastLoadError = '';
+
+  private readonly syncProfiles = effect(() => {
+    this.dataSource.data = this.profilesResource.value().profiles;
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.profilesResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+
+    const message = this.extractErrorMessage(error, 'Failed to load security profiles.');
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -151,10 +185,6 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-
-    setTimeout(() => {
-      void this.loadItems();
-    }, 0);
   }
 
   ngOnDestroy() {
@@ -162,14 +192,21 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    const nextSearch = this.searchInput().trim();
+    if (nextSearch === this.search()) {
+      this.profilesResource.reload();
+    } else {
+      this.search.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    this.search.set('');
-    void this.loadItems();
+    if (this.search()) {
+      this.search.set('');
+    } else {
+      this.profilesResource.reload();
+    }
   }
 
   clearServiceSearch(open: boolean) {
@@ -177,33 +214,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    const started = performance.now();
-    try {
-      const [profiles, services] = await Promise.all([
-        this.profilesApi.list(this.search(), this.listLimit),
-        this.servicesApi.list('', this.listLimit),
-      ]);
-      this.dataSource.data = profiles.items;
-      this.services.set(services.items);
-      const paginator = this.paginator();
-      if (paginator) paginator.firstPage();
-      this.reconcileSelection();
-    } catch (error: any) {
-      this.dataSource.data = [];
-      this.services.set([]);
-      this.reconcileSelection();
-      this.snack.error(this.extractErrorMessage(error, 'Failed to load security profiles.'));
-    } finally {
-      const elapsed = performance.now() - started;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) setTimeout(() => this.loading.set(false), waitMs);
-      else this.loading.set(false);
-    }
+    this.profilesResource.reload();
   }
 
   startCreate() {
@@ -258,7 +269,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
         this.snack.success('Security profile created successfully.');
       }
 
-      await this.loadItems();
+      this.profilesResource.reload();
 
       if (saveAndNew && createMode) {
         this.form.reset({
@@ -319,15 +330,15 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.profilesApi.remove(profile.uuid);
       this.snack.success('Security profile deleted successfully.');
-      await this.loadItems();
+      this.profilesResource.reload();
     } catch (error: any) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to delete security profile.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -400,7 +411,7 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.profilesApi.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -420,13 +431,13 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
           `${deleted.size || ids.length} ${this.t('selected security profile(s) deleted.')}`,
         );
       }
-      await this.loadItems();
+      this.profilesResource.reload();
     } catch (error: any) {
       this.snack.error(
         this.extractErrorMessage(error, 'Failed to delete selected security profiles.'),
       );
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -512,6 +523,19 @@ export class CyberSecurityProfilesPage implements AfterViewInit, OnDestroy {
 
   private pretty(value: unknown) {
     return JSON.stringify(value ?? null, null, 2);
+  }
+
+  private async loadProfilesSnapshot(search: string): Promise<CyberSecurityProfilesSnapshot> {
+    const [profiles, services] = await Promise.all([
+      this.profilesApi.list(search, this.listLimit),
+      this.servicesApi.list('', this.listLimit),
+    ]);
+    const paginator = this.paginator();
+    if (paginator) queueMicrotask(() => paginator.firstPage());
+    return {
+      profiles: profiles.items,
+      services: services.items,
+    };
   }
 
   private openProfileDialog() {

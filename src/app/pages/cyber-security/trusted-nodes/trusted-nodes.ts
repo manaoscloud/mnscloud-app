@@ -3,7 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -77,12 +80,19 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
+  private readonly mutating = signal(false);
   readonly editing = signal<CyberSecurityTrustedNode | null>(null);
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly selectedTrustedNodeUUIDs = signal<Set<string>>(new Set());
+  private readonly trustedNodesResource = resource({
+    params: () => this.search(),
+    defaultValue: [] as CyberSecurityTrustedNode[],
+    loader: ({ params }) => this.loadTrustedNodes(params),
+  });
+
+  readonly loading = computed(() => this.trustedNodesResource.isLoading() || this.mutating());
 
   readonly dataSource = new MatTableDataSource<CyberSecurityTrustedNode>([]);
   readonly displayedColumns = [
@@ -115,6 +125,26 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
   readonly trustedNodeFormDialog = viewChild<TemplateRef<unknown>>('trustedNodeFormDialog');
 
   private trustedNodeDialogBinding: CrudDialogBinding | null = null;
+  private lastLoadError = '';
+
+  private readonly syncTrustedNodes = effect(() => {
+    this.dataSource.data = this.trustedNodesResource.value();
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.trustedNodesResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+
+    const message = this.extractErrorMessage(error, 'Failed to load trusted nodes.');
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -137,10 +167,6 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-
-    setTimeout(() => {
-      void this.loadItems();
-    }, 0);
   }
 
   ngOnDestroy() {
@@ -148,39 +174,25 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    const nextSearch = this.searchInput().trim();
+    if (nextSearch === this.search()) {
+      this.trustedNodesResource.reload();
+    } else {
+      this.search.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    this.search.set('');
-    void this.loadItems();
+    if (this.search()) {
+      this.search.set('');
+    } else {
+      this.trustedNodesResource.reload();
+    }
   }
 
   refreshList() {
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    const started = performance.now();
-    try {
-      const trustedNodes = await this.trustedNodesApi.list(this.search(), this.listLimit);
-      this.dataSource.data = trustedNodes.items;
-      const paginator = this.paginator();
-      if (paginator) paginator.firstPage();
-      this.reconcileSelection();
-    } catch (error: any) {
-      this.dataSource.data = [];
-      this.reconcileSelection();
-      this.snack.error(this.extractErrorMessage(error, 'Failed to load trusted nodes.'));
-    } finally {
-      const elapsed = performance.now() - started;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) setTimeout(() => this.loading.set(false), waitMs);
-      else this.loading.set(false);
-    }
+    this.trustedNodesResource.reload();
   }
 
   startCreate() {
@@ -231,7 +243,7 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
         this.snack.success('Trusted node created successfully.');
       }
 
-      await this.loadItems();
+      this.trustedNodesResource.reload();
 
       if (saveAndNew && createMode) {
         this.form.reset({
@@ -296,15 +308,15 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.trustedNodesApi.remove(trustedNode.uuid);
       this.snack.success('Trusted node revoked successfully.');
-      await this.loadItems();
+      this.trustedNodesResource.reload();
     } catch (error: any) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to revoke trusted node.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -377,7 +389,7 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.trustedNodesApi.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -397,11 +409,11 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
           `${deleted.size || ids.length} ${this.t('selected trusted node(s) revoked.')}`,
         );
       }
-      await this.loadItems();
+      this.trustedNodesResource.reload();
     } catch (error: any) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to revoke selected trusted nodes.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -468,6 +480,13 @@ export class CyberSecurityTrustedNodesPage implements AfterViewInit, OnDestroy {
 
   private pretty(value: unknown) {
     return JSON.stringify(value ?? null, null, 2);
+  }
+
+  private async loadTrustedNodes(search: string) {
+    const trustedNodes = await this.trustedNodesApi.list(search, this.listLimit);
+    const paginator = this.paginator();
+    if (paginator) queueMicrotask(() => paginator.firstPage());
+    return trustedNodes.items;
   }
 
   private openTrustedNodeDialog() {

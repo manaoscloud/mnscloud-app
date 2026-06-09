@@ -3,7 +3,10 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -77,12 +80,19 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
+  private readonly mutating = signal(false);
   readonly editing = signal<CyberSecurityProtectedService | null>(null);
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly selectedServiceUUIDs = signal<Set<string>>(new Set());
+  private readonly servicesResource = resource({
+    params: () => this.search(),
+    defaultValue: [] as CyberSecurityProtectedService[],
+    loader: ({ params }) => this.loadProtectedServices(params),
+  });
+
+  readonly loading = computed(() => this.servicesResource.isLoading() || this.mutating());
 
   readonly dataSource = new MatTableDataSource<CyberSecurityProtectedService>([]);
   readonly displayedColumns = [
@@ -111,6 +121,26 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
   readonly serviceFormDialog = viewChild<TemplateRef<unknown>>('serviceFormDialog');
 
   private serviceDialogBinding: CrudDialogBinding | null = null;
+  private lastLoadError = '';
+
+  private readonly syncServices = effect(() => {
+    this.dataSource.data = this.servicesResource.value();
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.servicesResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+
+    const message = this.extractErrorMessage(error, 'Failed to load protected services.');
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -133,10 +163,6 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-
-    setTimeout(() => {
-      void this.loadItems();
-    }, 0);
   }
 
   ngOnDestroy() {
@@ -144,39 +170,25 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    const nextSearch = this.searchInput().trim();
+    if (nextSearch === this.search()) {
+      this.servicesResource.reload();
+    } else {
+      this.search.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    this.search.set('');
-    void this.loadItems();
+    if (this.search()) {
+      this.search.set('');
+    } else {
+      this.servicesResource.reload();
+    }
   }
 
   refreshList() {
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    const started = performance.now();
-    try {
-      const response = await this.api.list(this.search(), this.listLimit);
-      this.dataSource.data = response.items;
-      const paginator = this.paginator();
-      if (paginator) paginator.firstPage();
-      this.reconcileSelection();
-    } catch (error: any) {
-      this.dataSource.data = [];
-      this.reconcileSelection();
-      this.snack.error(this.extractErrorMessage(error, 'Failed to load protected services.'));
-    } finally {
-      const elapsed = performance.now() - started;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) setTimeout(() => this.loading.set(false), waitMs);
-      else this.loading.set(false);
-    }
+    this.servicesResource.reload();
   }
 
   startCreate() {
@@ -231,7 +243,7 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
         this.snack.success('Protected service created successfully.');
       }
 
-      await this.loadItems();
+      this.servicesResource.reload();
 
       if (saveAndNew && createMode) {
         this.form.reset({
@@ -288,15 +300,15 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.api.remove(service.uuid);
       this.snack.success('Protected service deleted successfully.');
-      await this.loadItems();
+      this.servicesResource.reload();
     } catch (error: any) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to delete protected service.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -369,7 +381,7 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.api.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -389,13 +401,13 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
           `${deleted.size || ids.length} ${this.t('selected protected service(s) deleted.')}`,
         );
       }
-      await this.loadItems();
+      this.servicesResource.reload();
     } catch (error: any) {
       this.snack.error(
         this.extractErrorMessage(error, 'Failed to delete selected protected services.'),
       );
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -449,6 +461,13 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
 
   private pretty(value: unknown) {
     return JSON.stringify(value ?? null, null, 2);
+  }
+
+  private async loadProtectedServices(search: string) {
+    const response = await this.api.list(search, this.listLimit);
+    const paginator = this.paginator();
+    if (paginator) queueMicrotask(() => paginator.firstPage());
+    return response.items;
   }
 
   private openServiceDialog() {

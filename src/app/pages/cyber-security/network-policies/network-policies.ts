@@ -4,7 +4,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -44,6 +46,11 @@ import {
   CyberSecurityNetworkPoliciesService,
 } from './cyber-security-network-policies.service';
 
+type CyberSecurityNetworkPoliciesSnapshot = {
+  policies: CyberSecurityNetworkPolicy[];
+  trustedNodes: CyberSecurityTrustedNode[];
+};
+
 @Component({
   selector: 'app-cyber-security-network-policies',
   standalone: true,
@@ -81,14 +88,21 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 1000;
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
+  private readonly mutating = signal(false);
   readonly editing = signal<CyberSecurityNetworkPolicy | null>(null);
-  readonly trustedNodes = signal<CyberSecurityTrustedNode[]>([]);
   readonly trustedNodeSearch = signal('');
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly selectedPolicyUUIDs = signal<Set<string>>(new Set());
+  private readonly networkPoliciesResource = resource({
+    params: () => this.search(),
+    defaultValue: { policies: [], trustedNodes: [] } as CyberSecurityNetworkPoliciesSnapshot,
+    loader: ({ params }) => this.loadNetworkPoliciesSnapshot(params),
+  });
+
+  readonly loading = computed(() => this.networkPoliciesResource.isLoading() || this.mutating());
+  readonly trustedNodes = computed(() => this.networkPoliciesResource.value().trustedNodes);
 
   readonly filteredTrustedNodes = computed(() => {
     const search = this.trustedNodeSearch().trim().toLowerCase();
@@ -135,6 +149,26 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
   readonly networkPolicyFormDialog = viewChild<TemplateRef<unknown>>('networkPolicyFormDialog');
 
   private networkPolicyDialogBinding: CrudDialogBinding | null = null;
+  private lastLoadError = '';
+
+  private readonly syncNetworkPolicies = effect(() => {
+    this.dataSource.data = this.networkPoliciesResource.value().policies;
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.networkPoliciesResource.error();
+    if (!error) {
+      this.lastLoadError = '';
+      return;
+    }
+
+    const message = this.extractErrorMessage(error, 'Failed to load network policies.');
+    if (message !== this.lastLoadError) {
+      this.lastLoadError = message;
+      this.snack.error(message);
+    }
+  });
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -159,10 +193,6 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
           return '';
       }
     };
-
-    setTimeout(() => {
-      void this.loadItems();
-    }, 0);
   }
 
   ngOnDestroy() {
@@ -170,14 +200,21 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    const nextSearch = this.searchInput().trim();
+    if (nextSearch === this.search()) {
+      this.networkPoliciesResource.reload();
+    } else {
+      this.search.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    this.search.set('');
-    void this.loadItems();
+    if (this.search()) {
+      this.search.set('');
+    } else {
+      this.networkPoliciesResource.reload();
+    }
   }
 
   clearTrustedNodeSearch(open: boolean) {
@@ -185,33 +222,7 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
   }
 
   refreshList() {
-    void this.loadItems();
-  }
-
-  async loadItems() {
-    this.loading.set(true);
-    const started = performance.now();
-    try {
-      const [policies, trustedNodes] = await Promise.all([
-        this.policiesApi.list(this.search(), this.listLimit),
-        this.trustedNodesApi.list('', this.listLimit),
-      ]);
-      this.dataSource.data = policies.items;
-      this.trustedNodes.set(trustedNodes.items);
-      const paginator = this.paginator();
-      if (paginator) paginator.firstPage();
-      this.reconcileSelection();
-    } catch (error: any) {
-      this.dataSource.data = [];
-      this.trustedNodes.set([]);
-      this.reconcileSelection();
-      this.snack.error(this.extractErrorMessage(error, 'Failed to load network policies.'));
-    } finally {
-      const elapsed = performance.now() - started;
-      const waitMs = Math.max(0, 600 - elapsed);
-      if (waitMs) setTimeout(() => this.loading.set(false), waitMs);
-      else this.loading.set(false);
-    }
+    this.networkPoliciesResource.reload();
   }
 
   startCreate() {
@@ -250,7 +261,7 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
         this.snack.success('Network policy created successfully.');
       }
 
-      await this.loadItems();
+      this.networkPoliciesResource.reload();
 
       if (saveAndNew && createMode) {
         this.form.reset(this.defaultFormValue());
@@ -291,15 +302,15 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.policiesApi.remove(policy.uuid);
       this.snack.success('Network policy deleted successfully.');
-      await this.loadItems();
+      this.networkPoliciesResource.reload();
     } catch (error: any) {
       this.snack.error(this.extractErrorMessage(error, 'Failed to delete network policy.'));
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -372,7 +383,7 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       const response = await this.policiesApi.removeMany(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
@@ -392,13 +403,13 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
           `${deleted.size || ids.length} ${this.t('selected network policy(ies) deleted.')}`,
         );
       }
-      await this.loadItems();
+      this.networkPoliciesResource.reload();
     } catch (error: any) {
       this.snack.error(
         this.extractErrorMessage(error, 'Failed to delete selected network policies.'),
       );
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -493,6 +504,21 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
 
   private pretty(value: unknown) {
     return JSON.stringify(value ?? null, null, 2);
+  }
+
+  private async loadNetworkPoliciesSnapshot(
+    search: string,
+  ): Promise<CyberSecurityNetworkPoliciesSnapshot> {
+    const [policies, trustedNodes] = await Promise.all([
+      this.policiesApi.list(search, this.listLimit),
+      this.trustedNodesApi.list('', this.listLimit),
+    ]);
+    const paginator = this.paginator();
+    if (paginator) queueMicrotask(() => paginator.firstPage());
+    return {
+      policies: policies.items,
+      trustedNodes: trustedNodes.items,
+    };
   }
 
   private openNetworkPolicyDialog() {
