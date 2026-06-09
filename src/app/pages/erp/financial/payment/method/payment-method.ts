@@ -1,11 +1,12 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -69,13 +70,21 @@ type PaymentMethod = {
 export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+
+  private readonly paymentMethodsResource = resource({
+    defaultValue: [] as PaymentMethod[],
+    loader: async () => {
+      const res = await this.api.get<{ data?: { items?: PaymentMethod[] } }>(
+        'erp/financial/payment/methods',
+      );
+      return res?.data?.items ?? [];
+    },
+  });
 
   paymentMethods: PaymentMethod[] = [];
   dataSource = new MatTableDataSource<PaymentMethod>([]);
   displayedColumns: string[] = ['name', 'type', 'code', 'status', 'actions'];
-  loading = false;
   saving = false;
   error = '';
   search = '';
@@ -96,9 +105,26 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
     status: 1,
   };
 
+  get loading() {
+    return this.paymentMethodsResource.isLoading();
+  }
+
+  private readonly syncPaymentMethods = effect(() => {
+    this.paymentMethods = this.paymentMethodsResource.value();
+    this.dataSource.data = [...this.paymentMethods];
+    this.applyFilter();
+  });
+
+  private readonly reportPaymentMethodError = effect(() => {
+    const error = this.paymentMethodsResource.error();
+    if (error) {
+      this.showError(this.extractErrorMessage(error, 'Failed to load payment methods.'));
+      this.dataSource.data = [];
+    }
+  });
+
   ngOnInit() {
     this.startCreate();
-    void this.loadPaymentMethods();
   }
 
   ngOnDestroy() {
@@ -148,7 +174,7 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
   }
 
   refreshList() {
-    void this.loadPaymentMethods();
+    this.paymentMethodsResource.reload();
   }
 
   applyFilter() {
@@ -156,34 +182,6 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
     this.dataSource.filter = q;
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
-    }
-  }
-
-  async loadPaymentMethods() {
-    this.loading = true;
-    this.error = '';
-    const start = performance.now();
-    try {
-      const res = await this.api.get<any>('erp/financial/payment/methods');
-      this.paymentMethods = res?.data?.items ?? [];
-      this.dataSource.data = [...this.paymentMethods];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load payment methods.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
     }
   }
 
@@ -246,13 +244,11 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
 
       if (!this.editingPaymentMethod && keepOpenForNew) {
         this.startCreate();
-        this.cdr.detectChanges();
       } else {
         this.closePaymentMethodDialog();
         this.startCreate();
-        this.cdr.detectChanges();
       }
-      await this.loadPaymentMethods();
+      this.paymentMethodsResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to save payment method.');
     } finally {
@@ -282,16 +278,13 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
     this.error = '';
     try {
       await this.api.delete(`erp/financial/payment/methods/${paymentMethodUUID}`);
       this.snack.success('Payment method deleted successfully.');
-      await this.loadPaymentMethods();
+      this.paymentMethodsResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete payment method.');
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -401,5 +394,14 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
   private showWarning(message: string) {
     this.error = '';
     this.snack.warning(message);
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error && typeof error === 'object' && 'error' in error) {
+      const payload = (error as { error?: { error?: string; message?: string } }).error;
+      return payload?.error || payload?.message || fallback;
+    }
+    if (error instanceof Error) return error.message;
+    return fallback;
   }
 }
