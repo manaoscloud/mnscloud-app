@@ -1,5 +1,13 @@
-import { Component, OnInit, ViewEncapsulation, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  ViewEncapsulation,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
@@ -108,7 +116,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
   selector: 'app-settings-parameters',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatCardModule,
     MatFormFieldModule,

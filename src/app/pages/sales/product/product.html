@@ -152,10 +152,14 @@
           <th mat-header-cell *matHeaderCellDef>Image</th>
           <td mat-cell *matCellDef="let row">
             <div class="image-cell">
-              <img *ngIf="row.CoverUrl" [src]="row.CoverUrl" alt="product" />
-              <div *ngIf="!row.CoverUrl" class="image-placeholder">
-                <mat-icon>image</mat-icon>
-              </div>
+              @if (row.CoverUrl) {
+                <img [src]="row.CoverUrl" alt="product" />
+              }
+              @if (!row.CoverUrl) {
+                <div class="image-placeholder">
+                  <mat-icon>image</mat-icon>
+                </div>
+              }
             </div>
           </td>
         </ng-container>

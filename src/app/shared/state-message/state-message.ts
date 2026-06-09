@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 
 // Angular Material
 import { MatIconModule } from '@angular/material/icon';
@@ -19,30 +19,30 @@ export class StateMessageComponent {
    *  - 'error'   → erro
    *  - 'success' → sucesso
    */
-  @Input() type: 'empty' | 'error' | 'success' = 'empty';
+  readonly type = input<'empty' | 'error' | 'success'>('empty');
 
-  @Input() icon = 'info';
-  @Input() title = '';
-  @Input() message = '';
+  readonly icon = input('info');
+  readonly title = input('');
+  readonly message = input('');
 
-  @Input() primaryLabel?: string;
-  @Input() secondaryLabel?: string;
+  readonly primaryLabel = input<string>();
+  readonly secondaryLabel = input<string>();
 
   /**
    * Layout:
    *  - 'inline' (padrão) → ocupa só o espaço do container pai
    *  - 'page'            → tela cheia, estilo Signin / Forgot Password
    */
-  @Input() layout: 'inline' | 'page' = 'inline';
+  readonly layout = input<'inline' | 'page'>('inline');
 
-  @Input() primaryAction?: () => void;
-  @Input() secondaryAction?: () => void;
+  readonly primaryAction = input<() => void>();
+  readonly secondaryAction = input<() => void>();
 
   onPrimary() {
-    this.primaryAction?.();
+    this.primaryAction()?.();
   }
 
   onSecondary() {
-    this.secondaryAction?.();
+    this.secondaryAction()?.();
   }
 }

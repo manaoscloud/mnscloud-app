@@ -6,9 +6,9 @@ import {
   ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
@@ -49,7 +49,6 @@ type PoolIpv6NetworkItem = {
   selector: 'app-isp-pool-ipv6',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,

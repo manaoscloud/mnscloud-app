@@ -39,6 +39,30 @@
   - `src/app/layout/main-layout/main-layout.ts`
   - `src/app/layout/main-layout/main-layout.html`
 
+## Angular Runtime Baseline
+
+- The app targets Angular 22+ and must use the modern Angular template/runtime model for all new
+  components and refactors.
+- Templates must use block control flow: `@if`, `@for`, `@switch`, `@empty`, and `@defer` where
+  appropriate. Do not introduce legacy structural directives such as `*ngIf`, `*ngFor`, or
+  `*ngSwitch`.
+- Components, directives, pipes, and services must use `inject()` for dependency injection. Do not
+  add constructor-based dependency injection in new code.
+- Component/directive inputs must use signal inputs (`input()`) when they are externally bound
+  values. If an Angular or Material interface requires a plain property, keep the external input as
+  an aliased signal input and expose a compatible getter/property for the interface.
+- Use `signal`, `computed`, `linkedSignal`, and small explicit effects for UI state. Keep API/DB
+  business decisions out of signals; signals only model presentation state and user interaction.
+- Use `@defer` for heavy dashboard panels, maps, charts, large optional panels, and secondary
+  sections that do not need to block the first paint. Do not defer critical auth, route guards,
+  tenant/environment selection, or first-screen error states.
+- Route-level lazy loading remains mandatory through `loadComponent`.
+- Transloco is the only runtime i18n layer. Do not add component-local translation maps, custom
+  translation pipes, DOM translation fallbacks, or Angular built-in i18n for runtime CRUD labels.
+- Before finishing any Angular migration/refactor, run a residue check for:
+  `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, constructor dependency injection, `ngx-translate`,
+  `TranslateService`, and `TranslateModule`.
+
 ## Commercial Menu Projection
 
 - The app may hide tenant-facing commercial modules based on API-provided billing grants, but this is

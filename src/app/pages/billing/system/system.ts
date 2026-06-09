@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
-  Input,
   OnDestroy,
   TemplateRef,
   ViewChild,
@@ -102,7 +101,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private readonly i18n = inject(AppI18nService);
   private readonly parameters = inject(SystemParameterService);
 
-  @Input() section: BillingSystemSection = 'dashboard';
+  section: BillingSystemSection = 'dashboard';
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -116,7 +115,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly defaultCurrency = signal('');
   readonly priceProductSearchInput = signal('');
   readonly priceFormProductSearchInput = signal('');
-  readonly priceProductOptions = computed(() => this.filterProducts(this.priceProductSearchInput()));
+  readonly priceProductOptions = computed(() =>
+    this.filterProducts(this.priceProductSearchInput()),
+  );
   readonly priceFormProductOptions = computed(() =>
     this.filterProducts(this.priceFormProductSearchInput()),
   );

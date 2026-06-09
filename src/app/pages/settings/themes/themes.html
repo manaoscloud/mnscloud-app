@@ -230,23 +230,23 @@
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Domain</mat-label>
               <input matInput placeholder="app.yourcompany.com" formControlName="domain" />
-              <mat-error *ngIf="domainForm.controls.domain.hasError('required')">
-                Please provide a domain.
-              </mat-error>
-              <mat-error *ngIf="domainForm.controls.domain.hasError('domain')">
-                Use only the hostname, without scheme, port, or path.
-              </mat-error>
+              @if (domainForm.controls.domain.hasError('required')) {
+                <mat-error> Please provide a domain. </mat-error>
+              }
+              @if (domainForm.controls.domain.hasError('domain')) {
+                <mat-error> Use only the hostname, without scheme, port, or path. </mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Page Title</mat-label>
               <input matInput placeholder="Main portal" formControlName="pageTitle" />
-              <mat-error *ngIf="domainForm.controls.pageTitle.hasError('required')">
-                Please provide a page title.
-              </mat-error>
-              <mat-error *ngIf="domainForm.controls.pageTitle.hasError('minlength')">
-                Page title too short.
-              </mat-error>
+              @if (domainForm.controls.pageTitle.hasError('required')) {
+                <mat-error> Please provide a page title. </mat-error>
+              }
+              @if (domainForm.controls.pageTitle.hasError('minlength')) {
+                <mat-error> Page title too short. </mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
@@ -257,9 +257,9 @@
                 placeholder="Short description for browser previews"
                 formControlName="metaDescription"
               ></textarea>
-              <mat-error *ngIf="domainForm.controls.metaDescription.hasError('maxlength')">
-                Use 255 characters or fewer.
-              </mat-error>
+              @if (domainForm.controls.metaDescription.hasError('maxlength')) {
+                <mat-error> Use 255 characters or fewer. </mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -269,9 +269,9 @@
                 placeholder="https://cdn.example.com/logo.svg"
                 formControlName="logoUrl"
               />
-              <mat-error *ngIf="domainForm.controls.logoUrl.hasError('url')">
-                Use a valid http(s) URL.
-              </mat-error>
+              @if (domainForm.controls.logoUrl.hasError('url')) {
+                <mat-error> Use a valid http(s) URL. </mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -281,17 +281,17 @@
                 placeholder="https://cdn.example.com/favicon.ico"
                 formControlName="faviconUrl"
               />
-              <mat-error *ngIf="domainForm.controls.faviconUrl.hasError('url')">
-                Use a valid http(s) URL.
-              </mat-error>
+              @if (domainForm.controls.faviconUrl.hasError('url')) {
+                <mat-error> Use a valid http(s) URL. </mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Primary Color</mat-label>
               <input matInput placeholder="#2563eb" formControlName="primaryColor" />
-              <mat-error *ngIf="domainForm.controls.primaryColor.hasError('color')">
-                Use #RRGGBB format.
-              </mat-error>
+              @if (domainForm.controls.primaryColor.hasError('color')) {
+                <mat-error> Use #RRGGBB format. </mat-error>
+              }
             </mat-form-field>
           </form>
         </mat-tab>

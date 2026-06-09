@@ -1,13 +1,12 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   HostBinding,
-  Input,
   OnDestroy,
-  Optional,
-  Self,
   inject,
-  ChangeDetectionStrategy
+  input,
+  signal,
 } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { MatFormFieldControl } from '@angular/material/form-field';
@@ -29,6 +28,8 @@ import { Subject } from 'rxjs';
 export class PhoneInputComponent
   implements ControlValueAccessor, MatFormFieldControl<string>, OnDestroy
 {
+  ngControl = inject(NgControl, { optional: true, self: true });
+
   static nextId = 0;
 
   readonly stateChanges = new Subject<void>();
@@ -40,9 +41,22 @@ export class PhoneInputComponent
 
   private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  @Input() placeholder = '';
-  @Input() required = false;
-  @Input() disabled = false;
+  readonly placeholderInput = input('', { alias: 'placeholder' });
+  readonly requiredInput = input(false, { alias: 'required' });
+  readonly disabledInput = input(false, { alias: 'disabled' });
+  private readonly disabledState = signal(false);
+
+  get placeholder() {
+    return this.placeholderInput();
+  }
+
+  get required() {
+    return this.requiredInput();
+  }
+
+  get disabled() {
+    return this.disabledInput() || this.disabledState();
+  }
 
   focused = false;
   touched = false;
@@ -74,7 +88,7 @@ export class PhoneInputComponent
   onChange = (_: any) => {};
   onTouched = () => {};
 
-  constructor(@Optional() @Self() public ngControl: NgControl) {
+  constructor() {
     if (this.ngControl) {
       this.ngControl.valueAccessor = this;
     }
@@ -106,7 +120,7 @@ export class PhoneInputComponent
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.disabledState.set(isDisabled);
     this.stateChanges.next();
   }
 

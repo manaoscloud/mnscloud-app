@@ -173,9 +173,11 @@
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
                 <mat-select formControlName="status">
-                  <mat-option *ngFor="let option of statusOptions" [value]="option.value">
-                    {{ option.label }}
-                  </mat-option>
+                  @for (option of statusOptions; track option) {
+                    <mat-option [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 

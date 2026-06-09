@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
 export type AppLanguage = 'pt-BR' | 'en-US' | 'es-ES';
@@ -36,6 +36,8 @@ function isAppLanguage(value: unknown): value is AppLanguage {
 
 @Injectable({ providedIn: 'root' })
 export class AppI18nService {
+  private readonly transloco = inject(TranslocoService);
+
   readonly languageOptions = [
     { code: 'auto' as const, labelKey: 'lang.auto' },
     { code: 'pt-BR' as AppLanguage, labelKey: 'lang.portuguese' },
@@ -55,7 +57,7 @@ export class AppI18nService {
     this.languageMode() === 'auto' ? 'auto' : this.language(),
   );
 
-  constructor(private readonly transloco: TranslocoService) {
+  constructor() {
     const initialLanguage = this.language();
     this.transloco.setActiveLang(initialLanguage);
     this.syncDocumentLanguage(initialLanguage);

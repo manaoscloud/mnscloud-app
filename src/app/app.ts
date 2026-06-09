@@ -1,4 +1,10 @@
-import { Component, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  ViewChild,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  inject,
+} from '@angular/core';
 import {
   Router,
   RouterOutlet,
@@ -56,9 +62,9 @@ import { RouteLoader } from './shared/route-loader/route-loader';
   ],
 })
 export class App implements AfterViewInit {
-  @ViewChild(RouteLoader) loader!: RouteLoader;
+  private router = inject(Router);
 
-  constructor(private router: Router) {}
+  @ViewChild(RouteLoader) loader!: RouteLoader;
 
   ngAfterViewInit() {
     this.router.events.subscribe((event) => {

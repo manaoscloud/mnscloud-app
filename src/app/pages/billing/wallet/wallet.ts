@@ -2,13 +2,12 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
-  Input,
   OnDestroy,
   TemplateRef,
   ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -80,7 +79,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
 
-  @Input() section: BillingTenantSection = 'dashboard';
+  section: BillingTenantSection = 'dashboard';
 
   readonly loading = signal(false);
   readonly saving = signal(false);

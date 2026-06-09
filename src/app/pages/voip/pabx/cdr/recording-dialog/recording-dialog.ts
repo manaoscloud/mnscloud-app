@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,16 +19,15 @@ export type VoipPabxCdrRecordingDialogData = {
 @Component({
   selector: 'app-voip-pabx-cdr-recording-dialog',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatDialogModule, MatIconModule],
+  imports: [MatButtonModule, MatDialogModule, MatIconModule],
   templateUrl: './recording-dialog.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./recording-dialog.scss'],
 })
 export class VoipPabxCdrRecordingDialogComponent {
-  constructor(
-    private readonly dialogRef: MatDialogRef<VoipPabxCdrRecordingDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) readonly data: VoipPabxCdrRecordingDialogData,
-  ) {}
+  private readonly dialogRef =
+    inject<MatDialogRef<VoipPabxCdrRecordingDialogComponent>>(MatDialogRef);
+  readonly data = inject<VoipPabxCdrRecordingDialogData>(MAT_DIALOG_DATA);
 
   close() {
     this.dialogRef.close();

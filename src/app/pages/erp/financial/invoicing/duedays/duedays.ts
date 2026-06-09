@@ -6,10 +6,9 @@ import {
   TemplateRef,
   ViewChild,
   inject,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,7 +49,6 @@ type ErpFinInvDueDay = {
   selector: 'app-invoicing-duedays',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatCardModule,
     MatButtonModule,

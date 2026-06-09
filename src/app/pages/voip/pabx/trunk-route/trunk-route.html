@@ -192,25 +192,31 @@
                         (click)="$event.stopPropagation()"
                       />
                     </mat-option>
-                    <mat-option *ngFor="let option of filteredAccounts()" [value]="option.VpaUUID">
-                      {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
-                    </mat-option>
+                    @for (option of filteredAccounts(); track option) {
+                      <mat-option [value]="option.VpaUUID">
+                        {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
+                      </mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Direction</mat-label>
                   <mat-select formControlName="secondary">
-                    <mat-option *ngFor="let option of directionOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
+                    @for (option of directionOptions; track option) {
+                      <mat-option [value]="option">
+                        {{ option }}
+                      </mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Auth Mode</mat-label>
                   <mat-select formControlName="authMode">
-                    <mat-option *ngFor="let option of authModeOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
+                    @for (option of authModeOptions; track option) {
+                      <mat-option [value]="option">
+                        {{ option }}
+                      </mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
@@ -262,9 +268,11 @@
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Transport</mat-label>
                   <mat-select formControlName="transport">
-                    <mat-option *ngFor="let option of transportOptions" [value]="option">
-                      {{ option }}
-                    </mat-option>
+                    @for (option of transportOptions; track option) {
+                      <mat-option [value]="option">
+                        {{ option }}
+                      </mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
@@ -304,9 +312,11 @@
                         (click)="$event.stopPropagation()"
                       />
                     </mat-option>
-                    <mat-option *ngFor="let codec of filteredAudioCodecs()" [value]="codec">
-                      {{ codec }}
-                    </mat-option>
+                    @for (codec of filteredAudioCodecs(); track codec) {
+                      <mat-option [value]="codec">
+                        {{ codec }}
+                      </mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-2">
@@ -326,9 +336,11 @@
                         (click)="$event.stopPropagation()"
                       />
                     </mat-option>
-                    <mat-option *ngFor="let codec of filteredVideoCodecs()" [value]="codec">
-                      {{ codec }}
-                    </mat-option>
+                    @for (codec of filteredVideoCodecs(); track codec) {
+                      <mat-option [value]="codec">
+                        {{ codec }}
+                      </mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
               </div>
@@ -353,9 +365,11 @@
                         (click)="$event.stopPropagation()"
                       />
                     </mat-option>
-                    <mat-option *ngFor="let option of filteredAccounts()" [value]="option.VpaUUID">
-                      {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
-                    </mat-option>
+                    @for (option of filteredAccounts(); track option) {
+                      <mat-option [value]="option.VpaUUID">
+                        {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
+                      </mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
                 @if (usesTrunk()) {
@@ -376,9 +390,12 @@
                         />
                       </mat-option>
                       <mat-option value="">None</mat-option>
-                      <mat-option *ngFor="let option of filteredTrunks()" [value]="option.uuid">
-                        {{ option.name }} - {{ option['host'] || option['direction'] || 'No host' }}
-                      </mat-option>
+                      @for (option of filteredTrunks(); track option) {
+                        <mat-option [value]="option.uuid">
+                          {{ option.name }} -
+                          {{ option['host'] || option['direction'] || 'No host' }}
+                        </mat-option>
+                      }
                     </mat-select>
                   </mat-form-field>
                 }
@@ -404,9 +421,11 @@
                           (click)="$event.stopPropagation()"
                         />
                       </mat-option>
-                      <mat-option *ngFor="let option of filteredDids()" [value]="option.VddUUID">
-                        {{ option.VddNumber }}
-                      </mat-option>
+                      @for (option of filteredDids(); track option) {
+                        <mat-option [value]="option.VddUUID">
+                          {{ option.VddNumber }}
+                        </mat-option>
+                      }
                     </mat-select>
                   </mat-form-field>
                   <mat-form-field appearance="outline">
@@ -439,9 +458,11 @@
                           (click)="$event.stopPropagation()"
                         />
                       </mat-option>
-                      <mat-option *ngFor="let option of filteredTargets()" [value]="option.uuid">
-                        {{ option.name }}
-                      </mat-option>
+                      @for (option of filteredTargets(); track option) {
+                        <mat-option [value]="option.uuid">
+                          {{ option.name }}
+                        </mat-option>
+                      }
                     </mat-select>
                   </mat-form-field>
                 }

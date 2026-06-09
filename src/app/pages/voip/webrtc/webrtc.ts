@@ -8,10 +8,10 @@ import {
   computed,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -179,7 +179,6 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   selector: 'app-voip-webrtc',
   standalone: true,
   imports: [
-    CommonModule,
     ClipboardModule,
     FormsModule,
     ReactiveFormsModule,

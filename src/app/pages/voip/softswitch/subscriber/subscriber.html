@@ -198,9 +198,11 @@
                       (click)="$event.stopPropagation()"
                     />
                   </mat-option>
-                  <mat-option *ngFor="let option of filteredAccounts()" [value]="option.VssUUID">
-                    {{ option.VssName }} - {{ option.DomainName || 'No domain' }}
-                  </mat-option>
+                  @for (option of filteredAccounts(); track option) {
+                    <mat-option [value]="option.VssUUID">
+                      {{ option.VssName }} - {{ option.DomainName || 'No domain' }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">

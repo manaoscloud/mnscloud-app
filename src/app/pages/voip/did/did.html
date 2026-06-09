@@ -65,21 +65,23 @@
       <table mat-table [dataSource]="dataSource" matSort>
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
-            <mat-checkbox
-              *ngIf="isMasterScope()"
-              [checked]="isAllVisibleSelected()"
-              [indeterminate]="isSomeVisibleSelected()"
-              (change)="toggleVisibleSelection($event.checked)"
-              aria-label="Select visible DIDs"
-            ></mat-checkbox>
+            @if (isMasterScope()) {
+              <mat-checkbox
+                [checked]="isAllVisibleSelected()"
+                [indeterminate]="isSomeVisibleSelected()"
+                (change)="toggleVisibleSelection($event.checked)"
+                aria-label="Select visible DIDs"
+              ></mat-checkbox>
+            }
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
-            <mat-checkbox
-              *ngIf="isMasterScope()"
-              [checked]="isSelected(row)"
-              (change)="toggleDidSelection(row, $event.checked)"
-              aria-label="Select DID"
-            ></mat-checkbox>
+            @if (isMasterScope()) {
+              <mat-checkbox
+                [checked]="isSelected(row)"
+                (change)="toggleDidSelection(row, $event.checked)"
+                aria-label="Select DID"
+              ></mat-checkbox>
+            }
           </td>
         </ng-container>
 
@@ -183,9 +185,11 @@
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
                 <mat-select formControlName="status">
-                  <mat-option *ngFor="let option of statusOptions" [value]="option.value">
-                    {{ option.label }}
-                  </mat-option>
+                  @for (option of statusOptions; track option) {
+                    <mat-option [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 
@@ -210,9 +214,9 @@
                     placeholder="5511999999999"
                   ></app-phone-input>
                   <mat-icon matSuffix>phone</mat-icon>
-                  <mat-error *ngIf="form.controls.number.hasError('pattern')">
-                    Invalid format. Use digits only.
-                  </mat-error>
+                  @if (form.controls.number.hasError('pattern')) {
+                    <mat-error> Invalid format. Use digits only. </mat-error>
+                  }
                 </mat-form-field>
               }
 
@@ -226,9 +230,9 @@
                   />
                   <mat-icon matSuffix>linear_scale</mat-icon>
                   <mat-hint>Creates all DIDs in range. Max 100.</mat-hint>
-                  <mat-error *ngIf="form.controls.didRange.hasError('pattern')">
-                    Use start-end with 8 to 15 digits.
-                  </mat-error>
+                  @if (form.controls.didRange.hasError('pattern')) {
+                    <mat-error> Use start-end with 8 to 15 digits. </mat-error>
+                  }
                 </mat-form-field>
               }
 

@@ -6,9 +6,9 @@ import {
   TemplateRef,
   ViewChild,
   inject,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -47,7 +47,6 @@ const MIN_LOADING_MS = 600;
   selector: 'app-support-ticket-channels',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatCardModule,
     MatButtonModule,

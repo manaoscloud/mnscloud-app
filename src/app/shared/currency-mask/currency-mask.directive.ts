@@ -2,12 +2,12 @@ import {
   Directive,
   ElementRef,
   HostListener,
-  Input,
   OnChanges,
   Renderer2,
   SimpleChanges,
   forwardRef,
   inject,
+  input,
 } from '@angular/core';
 import { LOCALE_ID } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
@@ -28,7 +28,7 @@ export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
   private renderer = inject(Renderer2);
   private locale = inject(LOCALE_ID, { optional: true }) as string | null;
 
-  @Input() appCurrencyMaskCurrency: string | null = null;
+  readonly appCurrencyMaskCurrency = input<string | null>(null);
 
   private onChange: (value: number) => void = () => {};
   private onTouched: () => void = () => {};
@@ -169,7 +169,7 @@ export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
   }
 
   private resolveLocale() {
-    const currency = this.appCurrencyMaskCurrency?.trim().toUpperCase();
+    const currency = this.appCurrencyMaskCurrency()?.trim().toUpperCase();
     const currencyLocale: Record<string, string> = {
       BRL: 'pt-BR',
       EUR: 'de-DE',

@@ -219,9 +219,11 @@
                       (click)="$event.stopPropagation()"
                     />
                   </mat-option>
-                  <mat-option *ngFor="let option of filteredProviders()" [value]="option.VspUUID">
-                    {{ option.VspName }}
-                  </mat-option>
+                  @for (option of filteredProviders(); track option) {
+                    <mat-option [value]="option.VspUUID">
+                      {{ option.VspName }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 
@@ -241,9 +243,11 @@
                       (click)="$event.stopPropagation()"
                     />
                   </mat-option>
-                  <mat-option *ngFor="let option of filteredServers()" [value]="option.VsrUUID">
-                    {{ option.VsrName }}
-                  </mat-option>
+                  @for (option of filteredServers(); track option) {
+                    <mat-option [value]="option.VsrUUID">
+                      {{ option.VsrName }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 
@@ -263,12 +267,11 @@
                       (click)="$event.stopPropagation()"
                     />
                   </mat-option>
-                  <mat-option
-                    *ngFor="let option of filteredCustomers()"
-                    [value]="option.CustomerUUID"
-                  >
-                    {{ option.Name }}
-                  </mat-option>
+                  @for (option of filteredCustomers(); track option) {
+                    <mat-option [value]="option.CustomerUUID">
+                      {{ option.Name }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 
@@ -288,9 +291,11 @@
                       (click)="$event.stopPropagation()"
                     />
                   </mat-option>
-                  <mat-option *ngFor="let option of filteredDomains()" [value]="option.VdmUUID">
-                    {{ option.VdmName }}
-                  </mat-option>
+                  @for (option of filteredDomains(); track option) {
+                    <mat-option [value]="option.VdmUUID">
+                      {{ option.VdmName }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 

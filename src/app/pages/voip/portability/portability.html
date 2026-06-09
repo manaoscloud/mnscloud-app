@@ -189,18 +189,22 @@
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
                 <mat-select formControlName="status">
-                  <mat-option *ngFor="let option of statusOptions" [value]="option.value">
-                    {{ option.label }}
-                  </mat-option>
+                  @for (option of statusOptions; track option) {
+                    <mat-option [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Direction</mat-label>
                 <mat-select formControlName="direction">
-                  <mat-option *ngFor="let option of directionOptions" [value]="option.value">
-                    {{ option.label }}
-                  </mat-option>
+                  @for (option of directionOptions; track option) {
+                    <mat-option [value]="option.value">
+                      {{ option.label }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
 
@@ -211,9 +215,9 @@
                   placeholder="5511999999999"
                 ></app-phone-input>
                 <mat-icon matSuffix>phone</mat-icon>
-                <mat-error *ngIf="form.controls.number.hasError('pattern')">
-                  Invalid format. Use digits only.
-                </mat-error>
+                @if (form.controls.number.hasError('pattern')) {
+                  <mat-error> Invalid format. Use digits only. </mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -304,9 +308,9 @@
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
                 </mat-select>
-                <mat-error *ngIf="form.hasError('sameOperator')">
-                  Donor and recipient operators must be different.
-                </mat-error>
+                @if (form.hasError('sameOperator')) {
+                  <mat-error> Donor and recipient operators must be different. </mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">

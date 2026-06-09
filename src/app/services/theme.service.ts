@@ -1,15 +1,17 @@
-import { effect, Injectable, Injector, runInInjectionContext, signal } from '@angular/core';
+import { effect, Injectable, Injector, runInInjectionContext, signal, inject } from '@angular/core';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
+  private injector = inject(Injector);
+
   private readonly STORAGE_KEY = 'mnscloud-theme';
 
   /** Tema atual */
   readonly theme = signal<ThemeMode>('system');
 
-  constructor(private injector: Injector) {
+  constructor() {
     runInInjectionContext(this.injector, () => {
       const initial = this.loadInitialTheme();
       this.theme.set(initial);
