@@ -61,11 +61,16 @@
 - Use Angular `resource()` for dashboard/read-model data that is loaded from one or more GET
   endpoints and refreshed as a unit. Keep the loader typed, return a single immutable snapshot, and
   derive UI state with `computed()` instead of maintaining parallel `loading/error/items` signals.
+- `resource()` declarations must provide a stable `defaultValue` snapshot so templates do not need
+  nullable fallbacks for first render. Use `params` for values that should trigger a reload, and keep
+  Apply/Clear filters backed by an explicit applied-filter signal when typing/selecting should not
+  reload immediately.
 - `resource()` loaders may combine multiple API calls when the screen needs a consistent dashboard
   snapshot. Required panels should reject the loader on failure; optional counters/panels may use
   settled fallbacks inside the snapshot so one secondary metric does not blank the full dashboard.
 - Use `resource.reload()` for explicit refresh actions. Do not duplicate resource state into manual
-  mutable signals unless a UI integration requires an adapter such as `MatTableDataSource`.
+  mutable signals unless a UI integration requires an adapter such as `MatTableDataSource`; in that
+  case, synchronize the adapter from the resource snapshot with a small explicit `effect()`.
 - Keep mutations (`POST`, `PUT`, `DELETE`, uploads, queue actions, provisioning actions) explicit
   through service methods. Do not hide business workflow side effects inside `resource()` loaders.
 - `httpResource` can be introduced for simple same-service GET resources after the endpoint typing is

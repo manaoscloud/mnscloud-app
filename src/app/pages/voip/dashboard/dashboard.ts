@@ -1,5 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  resource,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +26,24 @@ import {
   VoipDashboardService,
   VoipDashboardSummary,
 } from './dashboard.service';
+
+type VoipDashboardSnapshot = {
+  summary: VoipDashboardSummary;
+  modules: VoipDashboardModule[];
+  runtimeBreakdown: VoipDashboardRuntime[];
+  callBreakdown: VoipDashboardMetric[];
+  generatedAt: string | null;
+  startAt: string | null;
+};
+
+const EMPTY_VOIP_DASHBOARD: VoipDashboardSnapshot = {
+  summary: {},
+  modules: [],
+  runtimeBreakdown: [],
+  callBreakdown: [],
+  generatedAt: null,
+  startAt: null,
+};
 
 @Component({
   selector: 'app-voip-dashboard',
@@ -45,16 +70,23 @@ export class VoipDashboardPage {
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(false);
   readonly period = signal('today');
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  readonly generatedAt = signal<string | null>(null);
-  readonly startAt = signal<string | null>(null);
-  readonly summary = signal<VoipDashboardSummary>({});
-  readonly modules = signal<VoipDashboardModule[]>([]);
-  readonly runtimeBreakdown = signal<VoipDashboardRuntime[]>([]);
-  readonly callBreakdown = signal<VoipDashboardMetric[]>([]);
+  private readonly dashboardResource = resource({
+    params: () => ({ period: this.period(), isMaster: this.isMaster() }),
+    defaultValue: EMPTY_VOIP_DASHBOARD,
+    loader: ({ params }) => this.loadDashboardSnapshot(params.period, params.isMaster),
+  });
+
+  readonly loading = this.dashboardResource.isLoading;
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly generatedAt = computed(() => this.dashboard().generatedAt);
+  readonly startAt = computed(() => this.dashboard().startAt);
+  readonly summary = computed(() => this.dashboard().summary);
+  readonly modules = computed(() => this.dashboard().modules);
+  readonly runtimeBreakdown = computed(() => this.dashboard().runtimeBreakdown);
+  readonly callBreakdown = computed(() => this.dashboard().callBreakdown);
 
   readonly periodOptions = [
     { value: 'today', label: 'Today' },
@@ -99,21 +131,17 @@ export class VoipDashboardPage {
     ];
   });
 
-  constructor() {
-    void this.loadDashboard();
-  }
-
   refreshList() {
-    void this.loadDashboard();
+    this.dashboardResource.reload();
   }
 
   applySearchFilters() {
-    void this.loadDashboard();
+    this.dashboardResource.reload();
   }
 
   clearSearchFilters() {
     this.period.set('today');
-    void this.loadDashboard();
+    this.dashboardResource.reload();
   }
 
   metricPercent(item: VoipDashboardMetric, items: VoipDashboardMetric[]) {
@@ -146,21 +174,24 @@ export class VoipDashboardPage {
     return `${Number(current ?? 0)}/${Number(total ?? 0)}`;
   }
 
-  private async loadDashboard() {
-    this.loading.set(true);
+  private async loadDashboardSnapshot(
+    period: string,
+    isMaster: boolean,
+  ): Promise<VoipDashboardSnapshot> {
     try {
-      const response = await this.api.get(this.period(), this.isMaster());
+      const response = await this.api.get(period, isMaster);
       const data = response.data;
-      this.summary.set(data.summary ?? {});
-      this.modules.set(data.modules ?? []);
-      this.runtimeBreakdown.set(data.runtimeBreakdown ?? []);
-      this.callBreakdown.set(data.callBreakdown ?? []);
-      this.generatedAt.set(data.generatedAt ?? null);
-      this.startAt.set(data.startAt ?? null);
+      return {
+        summary: data.summary ?? {},
+        modules: data.modules ?? [],
+        runtimeBreakdown: data.runtimeBreakdown ?? [],
+        callBreakdown: data.callBreakdown ?? [],
+        generatedAt: data.generatedAt ?? null,
+        startAt: data.startAt ?? null,
+      };
     } catch (error) {
       this.snack.error(this.messageFromError(error, 'Failed to load VoIP dashboard.'));
-    } finally {
-      this.loading.set(false);
+      throw error;
     }
   }
 

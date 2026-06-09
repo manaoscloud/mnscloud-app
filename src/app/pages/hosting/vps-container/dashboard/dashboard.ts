@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -70,6 +72,20 @@ type PlanRow = {
   instances: number;
 };
 
+type VpsContainerDashboardSnapshot = {
+  providers: HostingVpsContainerProvider[];
+  plans: HostingVpsContainerPlan[];
+  instances: HostingVpsContainerInstance[];
+  failedSections: number;
+};
+
+const EMPTY_VPS_CONTAINER_DASHBOARD: VpsContainerDashboardSnapshot = {
+  providers: [],
+  plans: [],
+  instances: [],
+  failedSections: 0,
+};
+
 @Component({
   selector: 'app-hosting-vps-container-dashboard',
   standalone: true,
@@ -94,7 +110,6 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
-  private loadingStarted = 0;
 
   readonly statusSort = viewChild<MatSort>('statusSort');
   readonly statusPaginator = viewChild<MatPaginator>('statusPaginator');
@@ -103,13 +118,20 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
   readonly planSort = viewChild<MatSort>('planSort');
   readonly planPaginator = viewChild<MatPaginator>('planPaginator');
 
-  readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
 
-  readonly providers = signal<HostingVpsContainerProvider[]>([]);
-  readonly plans = signal<HostingVpsContainerPlan[]>([]);
-  readonly instances = signal<HostingVpsContainerInstance[]>([]);
+  private readonly dashboardResource = resource({
+    params: () => ({ scope: this.scope() }),
+    defaultValue: EMPTY_VPS_CONTAINER_DASHBOARD,
+    loader: () => this.loadDashboardSnapshot(),
+  });
+
+  readonly loading = this.dashboardResource.isLoading;
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly providers = computed(() => this.dashboard().providers);
+  readonly plans = computed(() => this.dashboard().plans);
+  readonly instances = computed(() => this.dashboard().instances);
 
   readonly statusDataSource = new MatTableDataSource<StatusRow>([]);
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
@@ -137,6 +159,25 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
     'instances',
     'active',
   ];
+
+  private readonly syncDashboardTables = effect(() => {
+    this.statusDataSource.data = this.statusRows();
+    this.providerDataSource.data = this.providerRows();
+    this.planDataSource.data = this.planRows();
+  });
+
+  private readonly reportDashboardState = effect(() => {
+    const error = this.dashboardResource.error();
+    if (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to load VPS Container dashboard.'));
+      return;
+    }
+
+    const failedSections = this.dashboard().failedSections;
+    if (failedSections > 0 && !this.loading()) {
+      this.snack.warning('Some VPS Container dashboard sections could not be loaded.');
+    }
+  });
 
   readonly instanceSummary = computed(() => {
     const rows = this.instances();
@@ -226,77 +267,56 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
     this.providerDataSource.paginator = this.providerPaginator() ?? null;
     this.planDataSource.sort = this.planSort() ?? null;
     this.planDataSource.paginator = this.planPaginator() ?? null;
-
-    void this.load();
   }
 
   refreshList() {
-    void this.load();
+    this.dashboardResource.reload();
   }
 
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
+  async loadDashboardSnapshot(): Promise<VpsContainerDashboardSnapshot> {
+    const [providersResult, plansResult, instancesResult] = await Promise.allSettled([
+      this.api.get<{ data?: { items?: HostingVpsContainerProvider[] } }>(
+        `${this.providerEndpoint()}?limit=500&offset=0`,
+      ),
+      this.api.get<{ data?: { items?: HostingVpsContainerPlan[] } }>(
+        `${this.planEndpoint()}?limit=500&offset=0`,
+      ),
+      this.api.get<{ data?: { items?: HostingVpsContainerInstance[] } }>(
+        `${this.instanceEndpoint()}?limit=500&offset=0`,
+      ),
+    ]);
 
-    try {
-      const [providersResult, plansResult, instancesResult] = await Promise.allSettled([
-        this.api.get<{ data?: { items?: HostingVpsContainerProvider[] } }>(
-          `${this.providerEndpoint()}?limit=500&offset=0`,
-        ),
-        this.api.get<{ data?: { items?: HostingVpsContainerPlan[] } }>(
-          `${this.planEndpoint()}?limit=500&offset=0`,
-        ),
-        this.api.get<{ data?: { items?: HostingVpsContainerInstance[] } }>(
-          `${this.instanceEndpoint()}?limit=500&offset=0`,
-        ),
-      ]);
+    const results = [providersResult, plansResult, instancesResult];
+    const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-      const failed = [providersResult, plansResult, instancesResult].filter(
-        (result) => result.status === 'rejected',
-      ).length;
+    if (failedSections === results.length) {
+      throw new Error('Failed to load VPS Container dashboard.');
+    }
 
-      this.providers.set(
+    return {
+      providers:
         providersResult.status === 'fulfilled'
           ? this.items(providersResult.value).map((item) => ({
               ...item,
               HcpConfig: this.parseJson<VpsContainerProviderConfig>(item.HcpConfig),
             }))
           : [],
-      );
-      this.plans.set(
+      plans:
         plansResult.status === 'fulfilled'
           ? this.items(plansResult.value).map((item) => ({
               ...item,
               HcnConfig: this.parseJson<HostingVpsContainerPlanConfig>(item.HcnConfig),
             }))
           : [],
-      );
-      this.instances.set(
+      instances:
         instancesResult.status === 'fulfilled'
           ? this.items(instancesResult.value).map((item) => ({
               ...item,
               HciConfig: this.parseJson<HostingVpsContainerInstanceConfig>(item.HciConfig),
             }))
           : [],
-      );
-
-      this.applyDataSources();
-
-      if (failed === 3) {
-        this.snack.error('Failed to load VPS Container dashboard.');
-      } else if (failed > 0) {
-        this.snack.warning('Some VPS Container dashboard sections could not be loaded.');
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load VPS Container dashboard.'));
-      this.providers.set([]);
-      this.plans.set([]);
-      this.instances.set([]);
-      this.applyDataSources();
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+      failedSections,
+    };
   }
 
   routeTo(section: 'instances' | 'provider' | 'plans') {
@@ -350,12 +370,6 @@ export class HostingVpsContainerDashboardPage implements AfterViewInit {
     return this.isMaster()
       ? 'system/hosting/vps-container/instances'
       : 'hosting/vps-container/instances';
-  }
-
-  private applyDataSources() {
-    this.statusDataSource.data = this.statusRows();
-    this.providerDataSource.data = this.providerRows();
-    this.planDataSource.data = this.planRows();
   }
 
   private statusRows(): StatusRow[] {

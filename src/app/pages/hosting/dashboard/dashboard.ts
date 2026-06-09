@@ -3,8 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
-  signal,
+  resource,
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
@@ -107,6 +108,18 @@ const EMPTY_HOSTING_DATA: Record<HostingDatasetKey, GenericRow[]> = {
   webhostZoneRecords: [],
 };
 
+type HostingDashboardSnapshot = {
+  data: Record<HostingDatasetKey, GenericRow[]>;
+  generatedAt: string | null;
+  failedSections: number;
+};
+
+const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
+  data: { ...EMPTY_HOSTING_DATA },
+  generatedAt: null,
+  failedSections: 0,
+};
+
 @Component({
   selector: 'app-hosting-dashboard',
   standalone: true,
@@ -131,7 +144,6 @@ export class HostingDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
-  private loadingStarted = 0;
 
   readonly workloadSort = viewChild<MatSort>('workloadSort');
   readonly workloadPaginator = viewChild<MatPaginator>('workloadPaginator');
@@ -140,9 +152,16 @@ export class HostingDashboardPage implements AfterViewInit {
   readonly issueSort = viewChild<MatSort>('issueSort');
   readonly issuePaginator = viewChild<MatPaginator>('issuePaginator');
 
-  readonly loading = signal(false);
-  readonly data = signal<Record<HostingDatasetKey, GenericRow[]>>({ ...EMPTY_HOSTING_DATA });
-  readonly generatedAt = signal<string | null>(null);
+  private readonly dashboardResource = resource({
+    params: () => ({ role: this.auth.user()?.role ?? 'TENANT' }),
+    defaultValue: EMPTY_HOSTING_DASHBOARD,
+    loader: () => this.loadDashboardSnapshot(),
+  });
+
+  readonly loading = this.dashboardResource.isLoading;
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly data = computed(() => this.dashboard().data);
+  readonly generatedAt = computed(() => this.dashboard().generatedAt);
 
   readonly workloadDataSource = new MatTableDataSource<WorkloadRow>([]);
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
@@ -151,6 +170,25 @@ export class HostingDashboardPage implements AfterViewInit {
   readonly workloadColumns = ['resource', 'total', 'active', 'issues', 'actions'];
   readonly providerColumns = ['provider', 'total', 'active', 'defaults', 'actions'];
   readonly issueColumns = ['type', 'name', 'status', 'message', 'actions'];
+
+  private readonly syncDashboardTables = effect(() => {
+    this.workloadDataSource.data = this.workloads();
+    this.providerDataSource.data = this.providers();
+    this.issueDataSource.data = this.issues();
+  });
+
+  private readonly reportDashboardState = effect(() => {
+    const error = this.dashboardResource.error();
+    if (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to load hosting dashboard.'));
+      return;
+    }
+
+    const failedSections = this.dashboard().failedSections;
+    if (failedSections > 0 && !this.loading()) {
+      this.snack.warning('Some hosting dashboard sections could not be loaded.');
+    }
+  });
 
   readonly computeSummary = computed(() => {
     const data = this.data();
@@ -237,50 +275,36 @@ export class HostingDashboardPage implements AfterViewInit {
     this.providerDataSource.paginator = this.providerPaginator() ?? null;
     this.issueDataSource.sort = this.issueSort() ?? null;
     this.issueDataSource.paginator = this.issuePaginator() ?? null;
-
-    void this.load();
   }
 
   refreshList() {
-    void this.load();
+    this.dashboardResource.reload();
   }
 
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
-
+  async loadDashboardSnapshot(): Promise<HostingDashboardSnapshot> {
     const endpointMap = this.endpointMap();
     const entries = Object.entries(endpointMap) as [HostingDatasetKey, string][];
 
-    try {
-      const results = await Promise.allSettled(
-        entries.map(([, endpoint]) => this.fetchItems(endpoint)),
-      );
-      const nextData: Record<HostingDatasetKey, GenericRow[]> = { ...EMPTY_HOSTING_DATA };
-      const failed = results.filter((result) => result.status === 'rejected').length;
+    const results = await Promise.allSettled(
+      entries.map(([, endpoint]) => this.fetchItems(endpoint)),
+    );
+    const nextData: Record<HostingDatasetKey, GenericRow[]> = { ...EMPTY_HOSTING_DATA };
+    const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-      entries.forEach(([key], index) => {
-        const result = results[index];
-        nextData[key] = result.status === 'fulfilled' ? result.value : [];
-      });
+    entries.forEach(([key], index) => {
+      const result = results[index];
+      nextData[key] = result.status === 'fulfilled' ? result.value : [];
+    });
 
-      this.data.set(nextData);
-      this.applyDataSources();
-      this.generatedAt.set(new Date().toISOString());
-
-      if (failed === entries.length) {
-        this.snack.error('Failed to load hosting dashboard.');
-      } else if (failed > 0) {
-        this.snack.warning('Some hosting dashboard sections could not be loaded.');
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load hosting dashboard.'));
-      this.data.set({ ...EMPTY_HOSTING_DATA });
-      this.applyDataSources();
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
+    if (failedSections === entries.length) {
+      throw new Error('Failed to load hosting dashboard.');
     }
+
+    return {
+      data: nextData,
+      generatedAt: new Date().toISOString(),
+      failedSections,
+    };
   }
 
   hostingRoute(route: string[]) {
@@ -375,12 +399,6 @@ export class HostingDashboardPage implements AfterViewInit {
     const data = body?.data as { items?: unknown } | undefined;
     if (Array.isArray(data?.items)) return data.items as GenericRow[];
     return [];
-  }
-
-  private applyDataSources() {
-    this.workloadDataSource.data = this.workloads();
-    this.providerDataSource.data = this.providers();
-    this.issueDataSource.data = this.issues();
   }
 
   private workloads(): WorkloadRow[] {

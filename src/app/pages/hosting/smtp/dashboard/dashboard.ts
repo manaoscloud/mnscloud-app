@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -93,6 +95,20 @@ type RouteRow = {
   active: boolean;
 };
 
+type SmtpDashboardSnapshot = {
+  providers: SmtpProvider[];
+  accounts: SmtpAccount[];
+  routes: SmtpRoute[];
+  failedSections: number;
+};
+
+const EMPTY_SMTP_DASHBOARD: SmtpDashboardSnapshot = {
+  providers: [],
+  accounts: [],
+  routes: [],
+  failedSections: 0,
+};
+
 @Component({
   selector: 'app-hosting-smtp-dashboard',
   standalone: true,
@@ -117,7 +133,6 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
-  private loadingStarted = 0;
 
   readonly providerSort = viewChild<MatSort>('providerSort');
   readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
@@ -126,13 +141,20 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
   readonly routeSort = viewChild<MatSort>('routeSort');
   readonly routePaginator = viewChild<MatPaginator>('routePaginator');
 
-  readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
 
-  readonly providers = signal<SmtpProvider[]>([]);
-  readonly accounts = signal<SmtpAccount[]>([]);
-  readonly routes = signal<SmtpRoute[]>([]);
+  private readonly dashboardResource = resource({
+    params: () => ({ scope: this.scope() }),
+    defaultValue: EMPTY_SMTP_DASHBOARD,
+    loader: () => this.loadDashboardSnapshot(),
+  });
+
+  readonly loading = this.dashboardResource.isLoading;
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly providers = computed(() => this.dashboard().providers);
+  readonly accounts = computed(() => this.dashboard().accounts);
+  readonly routes = computed(() => this.dashboard().routes);
 
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
   readonly accountDataSource = new MatTableDataSource<AccountRow>([]);
@@ -158,6 +180,25 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
     'actions',
   ];
   readonly routeColumns = ['event', 'account', 'provider', 'from', 'active', 'actions'];
+
+  private readonly syncDashboardTables = effect(() => {
+    this.providerDataSource.data = this.providerRows();
+    this.accountDataSource.data = this.accountRows();
+    this.routeDataSource.data = this.routeRows();
+  });
+
+  private readonly reportDashboardState = effect(() => {
+    const error = this.dashboardResource.error();
+    if (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to load SMTP dashboard.'));
+      return;
+    }
+
+    const failedSections = this.dashboard().failedSections;
+    if (failedSections > 0 && !this.loading()) {
+      this.snack.warning('Some SMTP dashboard sections could not be loaded.');
+    }
+  });
 
   readonly providerSummary = computed(() => {
     const rows = this.providers();
@@ -247,58 +288,36 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
     this.accountDataSource.paginator = this.accountPaginator() ?? null;
     this.routeDataSource.sort = this.routeSort() ?? null;
     this.routeDataSource.paginator = this.routePaginator() ?? null;
-
-    void this.load();
   }
 
   refreshList() {
-    void this.load();
+    this.dashboardResource.reload();
   }
 
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
+  async loadDashboardSnapshot(): Promise<SmtpDashboardSnapshot> {
+    const [providersResult, accountsResult, routesResult] = await Promise.allSettled([
+      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`),
+      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`),
+      this.api.get<unknown>(`${this.routeEndpoint()}?limit=500&offset=0`),
+    ]);
 
-    try {
-      const [providersResult, accountsResult, routesResult] = await Promise.allSettled([
-        this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`),
-        this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`),
-        this.api.get<unknown>(`${this.routeEndpoint()}?limit=500&offset=0`),
-      ]);
+    const results = [providersResult, accountsResult, routesResult];
+    const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-      const failed = [providersResult, accountsResult, routesResult].filter(
-        (result) => result.status === 'rejected',
-      ).length;
+    if (failedSections === results.length) {
+      throw new Error('Failed to load SMTP dashboard.');
+    }
 
-      this.providers.set(
+    return {
+      providers:
         providersResult.status === 'fulfilled'
           ? this.items<SmtpProvider>(providersResult.value)
           : [],
-      );
-      this.accounts.set(
+      accounts:
         accountsResult.status === 'fulfilled' ? this.items<SmtpAccount>(accountsResult.value) : [],
-      );
-      this.routes.set(
-        routesResult.status === 'fulfilled' ? this.items<SmtpRoute>(routesResult.value) : [],
-      );
-
-      this.applyDataSources();
-
-      if (failed === 3) {
-        this.snack.error('Failed to load SMTP dashboard.');
-      } else if (failed > 0) {
-        this.snack.warning('Some SMTP dashboard sections could not be loaded.');
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load SMTP dashboard.'));
-      this.providers.set([]);
-      this.accounts.set([]);
-      this.routes.set([]);
-      this.applyDataSources();
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+      routes: routesResult.status === 'fulfilled' ? this.items<SmtpRoute>(routesResult.value) : [],
+      failedSections,
+    };
   }
 
   routeTo(section: 'providers' | 'accounts' | 'routes') {
@@ -323,12 +342,6 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
 
   private routeEndpoint() {
     return this.isMaster() ? 'system/hosting/smtp/routes' : 'hosting/smtp/routes';
-  }
-
-  private applyDataSources() {
-    this.providerDataSource.data = this.providerRows();
-    this.accountDataSource.data = this.accountRows();
-    this.routeDataSource.data = this.routeRows();
   }
 
   private providerRows(): ProviderRow[] {

@@ -1,9 +1,10 @@
 import { NgStyle } from '@angular/common';
 import {
   Component,
-  OnInit,
   TemplateRef,
+  computed,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -57,6 +58,32 @@ type InfraGisResource = {
   fieldGroups: InfraGisFieldGroup[];
 };
 
+type InfraGisDashboardFilters = {
+  search: string;
+  status: number | null;
+};
+
+type InfraGisDashboardSnapshot = {
+  summary: InfraGisRecord;
+  rows: Record<InfraGisResourceKey, InfraGisRecord[]>;
+  mapAssets: InfraGisRecord[];
+};
+
+const EMPTY_INFRAGIS_ROWS: Record<InfraGisResourceKey, InfraGisRecord[]> = {
+  projects: [],
+  layers: [],
+  categories: [],
+  'asset-types': [],
+  statuses: [],
+  assets: [],
+};
+
+const EMPTY_INFRAGIS_DASHBOARD: InfraGisDashboardSnapshot = {
+  summary: {},
+  rows: { ...EMPTY_INFRAGIS_ROWS },
+  mapAssets: [],
+};
+
 @Component({
   selector: 'app-infragis-dashboard',
   standalone: true,
@@ -81,27 +108,18 @@ type InfraGisResource = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn],
 })
-export class InfraGisDashboardPage implements OnInit {
+export class InfraGisDashboardPage {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
   readonly recordDialog = viewChild<TemplateRef<unknown>>('recordDialog');
 
-  readonly loading = signal(false);
   readonly saving = signal(false);
+  readonly mutating = signal(false);
   readonly search = signal('');
   readonly statusFilter = signal<number | null>(null);
-  readonly summary = signal<InfraGisRecord>({});
-  readonly rows = signal<Record<InfraGisResourceKey, InfraGisRecord[]>>({
-    projects: [],
-    layers: [],
-    categories: [],
-    'asset-types': [],
-    statuses: [],
-    assets: [],
-  });
-  readonly mapAssets = signal<InfraGisRecord[]>([]);
+  private readonly appliedFilters = signal<InfraGisDashboardFilters>({ search: '', status: null });
   readonly editingResource = signal<InfraGisResource | null>(null);
   readonly editingRecord = signal<InfraGisRecord | null>(null);
   readonly formModel = signal<InfraGisRecord>({});
@@ -329,40 +347,33 @@ export class InfraGisDashboardPage implements OnInit {
     },
   ];
 
-  async ngOnInit() {
-    await this.refresh();
-  }
+  private readonly dashboardResource = resource({
+    params: () => this.appliedFilters(),
+    defaultValue: EMPTY_INFRAGIS_DASHBOARD,
+    loader: ({ params }) => this.loadDashboardSnapshot(params),
+  });
 
-  async refresh() {
-    this.loading.set(true);
-    try {
-      const [dashboard, ...responses] = await Promise.all([
-        this.api.get<any>('infragis/'),
-        ...this.resources.map((resource) => this.api.get<any>(this.listUrl(resource))),
-        this.api.get<any>('infragis/map/assets?limit=1000'),
-      ]);
-      const nextRows = { ...this.rows() };
-      this.resources.forEach((resource, index) => {
-        nextRows[resource.key] = responses[index]?.data?.items ?? [];
-      });
-      this.rows.set(nextRows);
-      this.summary.set(dashboard?.data?.summary ?? {});
-      this.mapAssets.set(responses[responses.length - 1]?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Unable to load InfraGIS.');
-    } finally {
-      this.loading.set(false);
-    }
+  readonly loading = computed(() => this.dashboardResource.isLoading() || this.mutating());
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly summary = computed(() => this.dashboard().summary);
+  readonly rows = computed(() => this.dashboard().rows);
+  readonly mapAssets = computed(() => this.dashboard().mapAssets);
+
+  refresh() {
+    this.dashboardResource.reload();
   }
 
   applyFilters() {
-    void this.refresh();
+    this.updateAppliedFilters({
+      search: this.search().trim(),
+      status: this.statusFilter(),
+    });
   }
 
   clearFilters() {
     this.search.set('');
     this.statusFilter.set(null);
-    void this.refresh();
+    this.updateAppliedFilters({ search: '', status: null });
   }
 
   openCreate(resource: InfraGisResource) {
@@ -387,7 +398,7 @@ export class InfraGisDashboardPage implements OnInit {
       await request;
       this.snack.success('InfraGIS record saved.');
       this.dialogRef?.close();
-      await this.refresh();
+      this.dashboardResource.reload();
     } catch (error) {
       this.snack.error(error instanceof Error ? error.message : 'Unable to save InfraGIS record.');
     } finally {
@@ -408,17 +419,17 @@ export class InfraGisDashboardPage implements OnInit {
     });
     const confirmed = await ref.afterClosed().toPromise();
     if (!confirmed) return;
-    this.loading.set(true);
+    this.mutating.set(true);
     try {
       await this.api.delete<any>(`${resource.endpoint}/${uuid}`);
       this.snack.success('InfraGIS record deleted.');
-      await this.refresh();
+      this.dashboardResource.reload();
     } catch (error) {
       this.snack.error(
         error instanceof Error ? error.message : 'Unable to delete InfraGIS record.',
       );
     } finally {
-      this.loading.set(false);
+      this.mutating.set(false);
     }
   }
 
@@ -512,10 +523,43 @@ export class InfraGisDashboardPage implements OnInit {
     }[resource.key];
   }
 
-  private listUrl(resource: InfraGisResource) {
+  private updateAppliedFilters(next: InfraGisDashboardFilters) {
+    const current = this.appliedFilters();
+    if (current.search === next.search && current.status === next.status) {
+      this.dashboardResource.reload();
+      return;
+    }
+    this.appliedFilters.set(next);
+  }
+
+  private async loadDashboardSnapshot(
+    filters: InfraGisDashboardFilters,
+  ): Promise<InfraGisDashboardSnapshot> {
+    try {
+      const [dashboard, ...responses] = await Promise.all([
+        this.api.get<any>('infragis/'),
+        ...this.resources.map((resource) => this.api.get<any>(this.listUrl(resource, filters))),
+        this.api.get<any>('infragis/map/assets?limit=1000'),
+      ]);
+      const nextRows = { ...EMPTY_INFRAGIS_ROWS };
+      this.resources.forEach((resource, index) => {
+        nextRows[resource.key] = responses[index]?.data?.items ?? [];
+      });
+      return {
+        summary: dashboard?.data?.summary ?? {},
+        rows: nextRows,
+        mapAssets: responses[responses.length - 1]?.data?.items ?? [],
+      };
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : 'Unable to load InfraGIS.');
+      throw error;
+    }
+  }
+
+  private listUrl(resource: InfraGisResource, filters: InfraGisDashboardFilters) {
     const params = new URLSearchParams();
-    if (this.search()) params.set('search', this.search());
-    if (this.statusFilter() !== null) params.set('status', String(this.statusFilter()));
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status !== null) params.set('status', String(filters.status));
     params.set('limit', '5000');
     return `${resource.endpoint}?${params.toString()}`;
   }

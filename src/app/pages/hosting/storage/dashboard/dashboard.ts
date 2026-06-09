@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -82,6 +84,18 @@ type ProviderTypeRow = {
   issues: number;
 };
 
+type StorageDashboardSnapshot = {
+  providers: StorageProvider[];
+  accounts: StorageAccount[];
+  failedSections: number;
+};
+
+const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
+  providers: [],
+  accounts: [],
+  failedSections: 0,
+};
+
 @Component({
   selector: 'app-hosting-storage-dashboard',
   standalone: true,
@@ -106,7 +120,6 @@ export class HostingStorageDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
-  private loadingStarted = 0;
 
   readonly providerSort = viewChild<MatSort>('providerSort');
   readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
@@ -115,12 +128,19 @@ export class HostingStorageDashboardPage implements AfterViewInit {
   readonly typeSort = viewChild<MatSort>('typeSort');
   readonly typePaginator = viewChild<MatPaginator>('typePaginator');
 
-  readonly loading = signal(false);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
 
-  readonly providers = signal<StorageProvider[]>([]);
-  readonly accounts = signal<StorageAccount[]>([]);
+  private readonly dashboardResource = resource({
+    params: () => ({ scope: this.scope() }),
+    defaultValue: EMPTY_STORAGE_DASHBOARD,
+    loader: () => this.loadDashboardSnapshot(),
+  });
+
+  readonly loading = this.dashboardResource.isLoading;
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly providers = computed(() => this.dashboard().providers);
+  readonly accounts = computed(() => this.dashboard().accounts);
 
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
   readonly accountDataSource = new MatTableDataSource<AccountRow>([]);
@@ -146,6 +166,25 @@ export class HostingStorageDashboardPage implements AfterViewInit {
     'actions',
   ];
   readonly typeColumns = ['type', 'providers', 'accounts', 'activeAccounts', 'issues', 'actions'];
+
+  private readonly syncDashboardTables = effect(() => {
+    this.providerDataSource.data = this.providerRows();
+    this.accountDataSource.data = this.accountRows();
+    this.typeDataSource.data = this.typeRows();
+  });
+
+  private readonly reportDashboardState = effect(() => {
+    const error = this.dashboardResource.error();
+    if (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to load Storage dashboard.'));
+      return;
+    }
+
+    const failedSections = this.dashboard().failedSections;
+    if (failedSections > 0 && !this.loading()) {
+      this.snack.warning('Some Storage dashboard sections could not be loaded.');
+    }
+  });
 
   readonly providerSummary = computed(() => {
     const rows = this.providers();
@@ -234,61 +273,42 @@ export class HostingStorageDashboardPage implements AfterViewInit {
     this.accountDataSource.paginator = this.accountPaginator() ?? null;
     this.typeDataSource.sort = this.typeSort() ?? null;
     this.typeDataSource.paginator = this.typePaginator() ?? null;
-
-    void this.load();
   }
 
   refreshList() {
-    void this.load();
+    this.dashboardResource.reload();
   }
 
-  async load() {
-    this.loadingStarted = performance.now();
-    this.loading.set(true);
+  async loadDashboardSnapshot(): Promise<StorageDashboardSnapshot> {
+    const [providersResult, accountsResult] = await Promise.allSettled([
+      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`),
+      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`),
+    ]);
 
-    try {
-      const [providersResult, accountsResult] = await Promise.allSettled([
-        this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`),
-        this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`),
-      ]);
+    const results = [providersResult, accountsResult];
+    const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-      const failed = [providersResult, accountsResult].filter(
-        (result) => result.status === 'rejected',
-      ).length;
+    if (failedSections === results.length) {
+      throw new Error('Failed to load Storage dashboard.');
+    }
 
-      this.providers.set(
+    return {
+      providers:
         providersResult.status === 'fulfilled'
           ? this.items<StorageProvider>(providersResult.value).map((row) => ({
               ...row,
               HspConfig: this.parseJson(row.HspConfig),
             }))
           : [],
-      );
-      this.accounts.set(
+      accounts:
         accountsResult.status === 'fulfilled'
           ? this.items<StorageAccount>(accountsResult.value).map((row) => ({
               ...row,
               HsaConfig: this.parseJson(row.HsaConfig),
             }))
           : [],
-      );
-
-      this.applyDataSources();
-
-      if (failed === 2) {
-        this.snack.error('Failed to load Storage dashboard.');
-      } else if (failed > 0) {
-        this.snack.warning('Some Storage dashboard sections could not be loaded.');
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load Storage dashboard.'));
-      this.providers.set([]);
-      this.accounts.set([]);
-      this.applyDataSources();
-    } finally {
-      const elapsed = performance.now() - this.loadingStarted;
-      setTimeout(() => this.loading.set(false), Math.max(0, 600 - elapsed));
-    }
+      failedSections,
+    };
   }
 
   routeTo(section: 'providers' | 'accounts') {
@@ -309,12 +329,6 @@ export class HostingStorageDashboardPage implements AfterViewInit {
 
   private accountEndpoint() {
     return this.isMaster() ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts';
-  }
-
-  private applyDataSources() {
-    this.providerDataSource.data = this.providerRows();
-    this.accountDataSource.data = this.accountRows();
-    this.typeDataSource.data = this.typeRows();
   }
 
   private providerRows(): ProviderRow[] {

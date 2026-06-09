@@ -125,11 +125,12 @@ export class MonitoringDashboardPage implements AfterViewInit {
   readonly activityPaginator = viewChild(MatPaginator);
 
   private readonly dashboardResource = resource({
+    defaultValue: EMPTY_DASHBOARD,
     loader: () => this.loadDashboardSnapshot(),
   });
 
   readonly loading = this.dashboardResource.isLoading;
-  readonly dashboard = computed(() => this.dashboardResource.value() ?? EMPTY_DASHBOARD);
+  readonly dashboard = computed(() => this.dashboardResource.value());
   readonly agents = computed(() => this.dashboard().agents);
   readonly runtimeProducts = computed(() => this.dashboard().runtimeProducts);
   readonly latestLogs = computed(() => this.dashboard().latestLogs);

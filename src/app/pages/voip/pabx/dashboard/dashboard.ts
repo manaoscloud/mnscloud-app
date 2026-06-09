@@ -3,7 +3,9 @@ import {
   AfterViewInit,
   Component,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -42,6 +44,40 @@ type SelectOption = {
   label: string;
 };
 
+type PabxDashboardSnapshot = {
+  summary: PabxDashboardSummary;
+  generatedAt: string | null;
+  startAt: string | null;
+  callBreakdown: PabxDashboardMetric[];
+  agentBreakdown: PabxDashboardMetric[];
+  servers: PabxDashboardServer[];
+  queues: PabxDashboardQueue[];
+  trunks: PabxDashboardTrunk[];
+};
+
+type PabxDashboardOptions = {
+  pabxOptions: SelectOption[];
+  serverOptions: SelectOption[];
+  domainOptions: SelectOption[];
+};
+
+const EMPTY_PABX_DASHBOARD: PabxDashboardSnapshot = {
+  summary: {},
+  generatedAt: null,
+  startAt: null,
+  callBreakdown: [],
+  agentBreakdown: [],
+  servers: [],
+  queues: [],
+  trunks: [],
+};
+
+const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
+  pabxOptions: [],
+  serverOptions: [],
+  domainOptions: [],
+};
+
 @Component({
   selector: 'app-voip-pabx-dashboard',
   standalone: true,
@@ -76,7 +112,6 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 5000;
 
-  readonly loading = signal(false);
   readonly period = signal('today');
   readonly pabxUUID = signal('');
   readonly serverUUID = signal('');
@@ -84,13 +119,39 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   readonly pabxSearch = signal('');
   readonly serverSearch = signal('');
   readonly domainSearch = signal('');
-  readonly generatedAt = signal<string | null>(null);
-  readonly startAt = signal<string | null>(null);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  readonly summary = signal<PabxDashboardSummary>({});
-  readonly callBreakdown = signal<PabxDashboardMetric[]>([]);
-  readonly agentBreakdown = signal<PabxDashboardMetric[]>([]);
+
+  private readonly dashboardResource = resource({
+    params: () => ({
+      period: this.period(),
+      pabxUUID: this.pabxUUID(),
+      serverUUID: this.serverUUID(),
+      domainUUID: this.domainUUID(),
+      isMaster: this.isMaster(),
+    }),
+    defaultValue: EMPTY_PABX_DASHBOARD,
+    loader: ({ params }) => this.loadDashboardSnapshot(params),
+  });
+
+  private readonly optionsResource = resource({
+    params: () => ({ isMaster: this.isMaster() }),
+    defaultValue: EMPTY_PABX_OPTIONS,
+    loader: ({ params }) => this.loadOptionsSnapshot(params.isMaster),
+  });
+
+  readonly loading = computed(
+    () => this.dashboardResource.isLoading() || this.optionsResource.isLoading(),
+  );
+  readonly dashboard = computed(() => this.dashboardResource.value());
+  readonly summary = computed(() => this.dashboard().summary);
+  readonly generatedAt = computed(() => this.dashboard().generatedAt);
+  readonly startAt = computed(() => this.dashboard().startAt);
+  readonly callBreakdown = computed(() => this.dashboard().callBreakdown);
+  readonly agentBreakdown = computed(() => this.dashboard().agentBreakdown);
+  readonly pabxOptions = computed(() => this.optionsResource.value().pabxOptions);
+  readonly serverOptions = computed(() => this.optionsResource.value().serverOptions);
+  readonly domainOptions = computed(() => this.optionsResource.value().domainOptions);
 
   readonly serverDataSource = new MatTableDataSource<PabxDashboardServer>([]);
   readonly queueDataSource = new MatTableDataSource<PabxDashboardQueue>([]);
@@ -99,18 +160,14 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   readonly queueColumns = ['name', 'pabxName', 'strategy', 'members', 'availableAgents', 'status'];
   readonly trunkColumns = ['name', 'pabxName', 'direction', 'host', 'transport', 'status'];
 
-  pabxOptions: SelectOption[] = [];
-  serverOptions: SelectOption[] = [];
-  domainOptions: SelectOption[] = [];
-
   readonly filteredPabxOptions = computed(() =>
-    this.filterOptions(this.pabxOptions, this.pabxSearch()),
+    this.filterOptions(this.pabxOptions(), this.pabxSearch()),
   );
   readonly filteredServerOptions = computed(() =>
-    this.filterOptions(this.serverOptions, this.serverSearch()),
+    this.filterOptions(this.serverOptions(), this.serverSearch()),
   );
   readonly filteredDomainOptions = computed(() =>
-    this.filterOptions(this.domainOptions, this.domainSearch()),
+    this.filterOptions(this.domainOptions(), this.domainSearch()),
   );
   readonly periodOptions = [
     { value: 'today', label: 'Today' },
@@ -157,17 +214,36 @@ export class VoipPabxDashboardPage implements AfterViewInit {
   readonly queuePaginator = viewChild<MatPaginator>('queuePaginator');
   readonly trunkPaginator = viewChild<MatPaginator>('trunkPaginator');
 
-  async ngAfterViewInit() {
+  private readonly syncDashboardTables = effect(() => {
+    const dashboard = this.dashboard();
+    this.serverDataSource.data = dashboard.servers;
+    this.queueDataSource.data = dashboard.queues;
+    this.trunkDataSource.data = dashboard.trunks;
+  });
+
+  private readonly reportDashboardState = effect(() => {
+    const dashboardError = this.dashboardResource.error();
+    if (dashboardError) {
+      this.snack.error(this.errorMessage(dashboardError, 'Failed to load PABX dashboard.'));
+    }
+
+    const optionsError = this.optionsResource.error();
+    if (optionsError) {
+      this.snack.error(this.errorMessage(optionsError, 'Failed to load PABX dashboard filters.'));
+    }
+  });
+
+  ngAfterViewInit() {
     this.bindTables();
-    await Promise.all([this.loadOptions(), this.loadDashboard()]);
   }
 
   refreshList() {
-    void this.loadDashboard();
+    this.dashboardResource.reload();
+    this.optionsResource.reload();
   }
 
   applySearchFilters() {
-    void this.loadDashboard();
+    this.dashboardResource.reload();
   }
 
   clearSearchFilters() {
@@ -178,7 +254,7 @@ export class VoipPabxDashboardPage implements AfterViewInit {
     this.pabxSearch.set('');
     this.serverSearch.set('');
     this.domainSearch.set('');
-    void this.loadDashboard();
+    this.dashboardResource.reload();
   }
 
   onPabxSelectOpened(open: boolean) {
@@ -208,57 +284,56 @@ export class VoipPabxDashboardPage implements AfterViewInit {
     return labels[value] ?? value.toUpperCase();
   }
 
-  private async loadDashboard() {
-    this.loading.set(true);
-    try {
-      const response = await this.api.get(
-        {
-          period: this.period(),
-          pabxUUID: this.pabxUUID(),
-          serverUUID: this.serverUUID(),
-          domainUUID: this.domainUUID(),
-        },
-        this.isMaster(),
-      );
-      const data = response?.data;
-      this.summary.set(data?.summary ?? {});
-      this.generatedAt.set(data?.generatedAt ?? null);
-      this.startAt.set(data?.startAt ?? null);
-      this.callBreakdown.set(data?.callBreakdown ?? []);
-      this.agentBreakdown.set(data?.agentBreakdown ?? []);
-      this.serverDataSource.data = data?.servers ?? [];
-      this.queueDataSource.data = data?.queues ?? [];
-      this.trunkDataSource.data = data?.trunks ?? [];
-    } catch (error: any) {
-      this.snack.error(error?.error?.error || 'Failed to load PABX dashboard.');
-    } finally {
-      this.loading.set(false);
-    }
+  private async loadDashboardSnapshot(params: {
+    period: string;
+    pabxUUID: string;
+    serverUUID: string;
+    domainUUID: string;
+    isMaster: boolean;
+  }): Promise<PabxDashboardSnapshot> {
+    const response = await this.api.get(
+      {
+        period: params.period,
+        pabxUUID: params.pabxUUID,
+        serverUUID: params.serverUUID,
+        domainUUID: params.domainUUID,
+      },
+      params.isMaster,
+    );
+    const data = response?.data;
+    return {
+      summary: data?.summary ?? {},
+      generatedAt: data?.generatedAt ?? null,
+      startAt: data?.startAt ?? null,
+      callBreakdown: data?.callBreakdown ?? [],
+      agentBreakdown: data?.agentBreakdown ?? [],
+      servers: data?.servers ?? [],
+      queues: data?.queues ?? [],
+      trunks: data?.trunks ?? [],
+    };
   }
 
-  private async loadOptions() {
-    try {
-      const [pabxResponse, serverResponse, domainResponse] = await Promise.allSettled([
-        this.pabxApi.list({ limit: this.listLimit }, this.isMaster()),
-        this.serverApi.list(this.isMaster(), { limit: this.listLimit }),
-        this.domainApi.list({ limit: this.listLimit }, this.isMaster() ? 'master' : 'tenant'),
-      ]);
+  private async loadOptionsSnapshot(isMaster: boolean): Promise<PabxDashboardOptions> {
+    const [pabxResponse, serverResponse, domainResponse] = await Promise.allSettled([
+      this.pabxApi.list({ limit: this.listLimit }, isMaster),
+      this.serverApi.list(isMaster, { limit: this.listLimit }),
+      this.domainApi.list({ limit: this.listLimit }, isMaster ? 'master' : 'tenant'),
+    ]);
 
-      this.pabxOptions = this.items<VoipPabxAccount>(pabxResponse).map((item) => ({
+    return {
+      pabxOptions: this.items<VoipPabxAccount>(pabxResponse).map((item) => ({
         value: item.VpaUUID,
         label: item.VpaName,
-      }));
-      this.serverOptions = this.items<VoipPabxServerItem>(serverResponse).map((item) => ({
+      })),
+      serverOptions: this.items<VoipPabxServerItem>(serverResponse).map((item) => ({
         value: item.VpsUUID,
         label: `${item.VpsName} (${item.VpsEngine})`,
-      }));
-      this.domainOptions = this.items<VoipDomainItem>(domainResponse).map((item) => ({
+      })),
+      domainOptions: this.items<VoipDomainItem>(domainResponse).map((item) => ({
         value: item.VdmUUID,
         label: item.VdmName,
-      }));
-    } catch (error: any) {
-      this.snack.error(error?.error?.error || 'Failed to load PABX dashboard filters.');
-    }
+      })),
+    };
   }
 
   private bindTables() {
@@ -305,5 +380,11 @@ export class VoipPabxDashboardPage implements AfterViewInit {
     if (Array.isArray(response?.data)) return response.data as T[];
     if (Array.isArray(response?.data?.items)) return response.data.items as T[];
     return [];
+  }
+
+  private errorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error) return error.message;
+    const apiError = error as { error?: { error?: string }; message?: string } | null;
+    return apiError?.error?.error || apiError?.message || fallback;
   }
 }
