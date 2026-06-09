@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -85,7 +87,11 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  readonly loading = signal(false);
+  private readonly didsResource = resource({
+    defaultValue: [] as VoipDidItem[],
+    loader: () => this.fetchDids(),
+  });
+  readonly loading = this.didsResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipDidItem | null>(null);
@@ -129,6 +135,18 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   private didFormDialogRef: MatDialogRef<unknown> | null = null;
   private availableDidDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly didsEffect = effect(() => {
+    this.dataSource.data = this.didsResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+  });
+  private readonly didsErrorEffect = effect(() => {
+    const error = this.didsResource.error();
+    if (!error) return;
+    this.snack.error(this.extractErrorMessage(error, 'Failed to load DIDs.'));
+    this.dataSource.data = [];
+  });
 
   get displayedColumns() {
     return this.isMasterScope() ? this.masterDisplayedColumns : this.tenantDisplayedColumns;
@@ -160,7 +178,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => void this.refreshList(), 0);
+    void this.refreshList();
   }
 
   ngOnDestroy() {
@@ -174,13 +192,13 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadDids();
+    this.didsResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadDids();
+    this.didsResource.reload();
   }
 
   selectedCount() {
@@ -256,39 +274,20 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  async loadDids() {
-    this.loading.set(true);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.list(
-        {
-          search: this.search || undefined,
-          limit: this.listLimit,
-        },
-        this.isMasterScope(),
-      );
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.filter = '';
-      if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    } catch (err: any) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load DIDs.'));
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+  private async fetchDids(): Promise<VoipDidItem[]> {
+    const response = await this.api.list(
+      {
+        search: this.search || undefined,
+        limit: this.listLimit,
+      },
+      this.isMasterScope(),
+    );
+    return response?.data?.items ?? [];
   }
 
   async refreshList() {
     await this.loadOperators();
-    await this.loadDids();
+    this.didsResource.reload();
   }
 
   async openAvailableDids() {
@@ -356,7 +355,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
       await this.api.claim(item.VddUUID);
       this.snack.success('DID contracted successfully.');
       this.availableDids.set(this.availableDids().filter((row) => row.VddUUID !== item.VddUUID));
-      await this.loadDids();
+      this.didsResource.reload();
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to contract DID.'));
       await this.loadAvailableDids();
@@ -428,7 +427,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
 
         this.skippedExisting.set(response?.data?.skippedExisting ?? []);
         this.failedBulkItems.set(response?.data?.failed ?? []);
-        await this.loadDids();
+        this.didsResource.reload();
 
         if (!this.skippedExisting().length && !this.failedBulkItems().length) {
           this.snack.success('DID range created successfully.');
@@ -442,7 +441,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
         await this.api.create(payload, this.isMasterScope());
       }
 
-      await this.loadDids();
+      this.didsResource.reload();
       this.snack.success(editing ? 'DID updated successfully.' : 'DID created successfully.');
       if (saveAndNew && !editing) {
         this.resetForm();

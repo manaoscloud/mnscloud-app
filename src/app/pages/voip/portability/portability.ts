@@ -3,7 +3,9 @@ import {
   Component,
   OnDestroy,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -92,7 +94,11 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  readonly loading = signal(false);
+  private readonly portabilityResource = resource({
+    defaultValue: [] as VoipPortabilityItem[],
+    loader: () => this.fetchPortability(),
+  });
+  readonly loading = this.portabilityResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly error = signal<string | null>(null);
@@ -158,6 +164,20 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
   readonly portabilityFormDialog = viewChild<TemplateRef<unknown>>('portabilityFormDialog');
   private portabilityFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly portabilityEffect = effect(() => {
+    this.dataSource.data = this.portabilityResource.value();
+    this.reconcileSelection();
+    this.dataSource.filter = '';
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+  });
+  private readonly portabilityErrorEffect = effect(() => {
+    const error = this.portabilityResource.error();
+    if (!error) return;
+    const message = this.extractErrorMessage(error, 'Failed to load portability records.');
+    this.error.set(message);
+    this.snack.error(message);
+    this.dataSource.data = [];
+  });
 
   async ngAfterViewInit() {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -201,7 +221,7 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => void this.refresh(), 0);
+    void this.refresh();
   }
 
   onSearchChange(value: string) {
@@ -210,13 +230,13 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadPortability();
+    this.portabilityResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadPortability();
+    this.portabilityResource.reload();
   }
 
   async loadOperators() {
@@ -252,43 +272,19 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  async loadPortability() {
-    this.loading.set(true);
+  private async fetchPortability(): Promise<VoipPortabilityItem[]> {
     this.error.set(null);
-    const start = performance.now();
-
-    try {
-      const response = await this.api.list({
-        search: this.search || undefined,
-        limit: this.listLimit,
-      });
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-      this.dataSource.filter = '';
-      if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    } catch (err: any) {
-      const message =
-        err?.error?.message ||
-        err?.error?.error ||
-        err?.message ||
-        'Failed to load portability records.';
-      this.error.set(message);
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
-      } else {
-        this.loading.set(false);
-      }
-    }
+    const response = await this.api.list({
+      search: this.search || undefined,
+      limit: this.listLimit,
+    });
+    return response?.data?.items ?? [];
   }
 
   async refreshList() {
     await this.loadOperators();
     await this.loadCustomers();
-    await this.loadPortability();
+    this.portabilityResource.reload();
   }
 
   refresh() {
@@ -356,7 +352,7 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
         await this.api.create(payload);
       }
 
-      await this.loadPortability();
+      this.portabilityResource.reload();
       if (saveAndNew && !this.editing()) {
         this.resetForm();
         return;
@@ -483,7 +479,7 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
       if (failed.size) {
         this.error.set(`${failed.size} selected portability record(s) could not be deleted.`);
       }
-      this.applySearchFilters();
+      this.portabilityResource.reload();
     } catch (err: any) {
       const message =
         err?.error?.message ||
@@ -621,6 +617,10 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
     const month = String(value.getMonth() + 1).padStart(2, '0');
     const day = String(value.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private extractErrorMessage(err: any, fallback: string) {
+    return err?.error?.message || err?.error?.error || err?.message || fallback;
   }
 
   private operatorMismatchValidator(control: AbstractControl) {
