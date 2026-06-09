@@ -3,7 +3,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -102,7 +104,34 @@ export class HostingDnsDomainsPage implements OnDestroy {
   private domainDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
-  readonly loading = signal(false);
+  private readonly domainsResource = resource({
+    params: () => {
+      const { name, customerUUID, providerUUID, status } = this.filterForm.getRawValue();
+      return {
+        name: name.trim(),
+        customerUUID: customerUUID.trim(),
+        providerUUID: providerUUID.trim(),
+        status,
+      };
+    },
+    defaultValue: [] as HostingDnsDomain[],
+    loader: async ({ params }) => {
+      const query = new URLSearchParams();
+      if (params.name) query.set('name', params.name);
+      if (params.customerUUID) query.set('customerUUID', params.customerUUID);
+      if (params.providerUUID) query.set('providerUUID', params.providerUUID);
+      if (params.status === '0' || params.status === '1') query.set('status', params.status);
+      query.set('limit', '500');
+      query.set('offset', '0');
+
+      const response = await this.api.get<{ data?: { items?: HostingDnsDomain[] } }>(
+        `hosting/dns/domains?${query.toString()}`,
+      );
+      return response?.data?.items ?? [];
+    },
+  });
+
+  readonly loading = this.domainsResource.isLoading;
   readonly saving = signal(false);
   readonly domains = signal<HostingDnsDomain[]>([]);
   readonly customers = signal<CustomerOption[]>([]);
@@ -154,10 +183,22 @@ export class HostingDnsDomainsPage implements OnDestroy {
     this.filterCustomers(this.customerFilterSearch()),
   );
 
+  private readonly syncDomains = effect(() => {
+    this.domains.set(this.domainsResource.value());
+    this.pageIndex.set(0);
+    this.reconcileDomainSelection();
+  });
+
+  private readonly reportDomainsError = effect(() => {
+    const error = this.domainsResource.error();
+    if (error) {
+      this.snack.error(this.extractErrorMessage(error, 'Failed to load domains.'));
+    }
+  });
+
   ngOnInit() {
     void this.loadCustomers();
     void this.loadDomainProviders();
-    void this.loadDomains();
   }
 
   ngOnDestroy() {
@@ -166,34 +207,7 @@ export class HostingDnsDomainsPage implements OnDestroy {
   }
 
   refreshList() {
-    void this.loadDomains();
-  }
-
-  async loadDomains() {
-    this.loading.set(true);
-    const start = performance.now();
-
-    const { name, customerUUID, providerUUID, status } = this.filterForm.getRawValue();
-    const params = new URLSearchParams();
-    if (name?.trim()) params.set('name', name.trim());
-    if (customerUUID?.trim()) params.set('customerUUID', customerUUID.trim());
-    if (providerUUID?.trim()) params.set('providerUUID', providerUUID.trim());
-    if (status === '0' || status === '1') params.set('status', status);
-    params.set('limit', '500');
-    params.set('offset', '0');
-
-    try {
-      const response = await this.api.get<{ data?: { items?: HostingDnsDomain[] } }>(
-        `hosting/dns/domains?${params.toString()}`,
-      );
-      this.domains.set(response?.data?.items ?? []);
-      this.pageIndex.set(0);
-      this.reconcileDomainSelection();
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load domains.'));
-    } finally {
-      this.finishLoading(start);
-    }
+    this.domainsResource.reload();
   }
 
   async loadDomainProviders() {
@@ -219,12 +233,12 @@ export class HostingDnsDomainsPage implements OnDestroy {
   }
 
   applyFilters() {
-    void this.loadDomains();
+    this.domainsResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ name: '', customerUUID: '', providerUUID: '', status: '' });
-    void this.loadDomains();
+    this.domainsResource.reload();
   }
 
   onPage(event: PageEvent) {
@@ -298,7 +312,7 @@ export class HostingDnsDomainsPage implements OnDestroy {
         this.snack.success('Domain created successfully.');
       }
 
-      await this.loadDomains();
+      this.domainsResource.reload();
       if (closeAfterSave || editing) {
         this.closeDomainDialog();
         this.resetForm();
@@ -338,7 +352,7 @@ export class HostingDnsDomainsPage implements OnDestroy {
     try {
       await this.api.delete(`hosting/dns/domains/${domain.HddUUID}`);
       this.snack.success('Domain deleted successfully.');
-      await this.loadDomains();
+      this.domainsResource.reload();
     } catch (err) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete domain.'));
     }
@@ -419,7 +433,7 @@ export class HostingDnsDomainsPage implements OnDestroy {
         ),
       );
       this.domains.update((rows) => rows.filter((row) => !deleted.has(row.HddUUID)));
-      await this.loadDomains();
+      this.domainsResource.reload();
       this.selectedDomainUUIDs.set(failed);
       if (failed.size) {
         this.snack.warning(`${failed.size} domain(s) could not be deleted.`);
@@ -561,16 +575,6 @@ export class HostingDnsDomainsPage implements OnDestroy {
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term)),
     );
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private openDomainDialog() {

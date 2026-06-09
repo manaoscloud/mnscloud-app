@@ -3,7 +3,9 @@ import {
   OnDestroy,
   TemplateRef,
   computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -92,7 +94,32 @@ export class HostingDnsProvidersPage implements OnDestroy {
   private providerDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
-  readonly loading = signal(false);
+  private readonly providersResource = resource({
+    params: () => {
+      const { search, provider, status } = this.filterForm.getRawValue();
+      return {
+        search: search.trim(),
+        provider: provider.trim(),
+        status,
+      };
+    },
+    defaultValue: [] as HostingDnsProvider[],
+    loader: async ({ params }) => {
+      const query = new URLSearchParams();
+      if (params.search) query.set('search', params.search);
+      if (params.provider) query.set('provider', params.provider);
+      if (params.status === '0' || params.status === '1') query.set('status', params.status);
+      query.set('limit', '500');
+      query.set('offset', '0');
+
+      const response = await this.api.get<{ data?: { items?: HostingDnsProvider[] } }>(
+        `hosting/dns/providers?${query.toString()}`,
+      );
+      return response?.data?.items ?? [];
+    },
+  });
+
+  readonly loading = this.providersResource.isLoading;
   readonly saving = signal(false);
   readonly providers = signal<HostingDnsProvider[]>([]);
   readonly catalog = signal<DomainProviderCatalogItem[]>([]);
@@ -127,9 +154,21 @@ export class HostingDnsProvidersPage implements OnDestroy {
     notes: [''],
   });
 
+  private readonly syncProviders = effect(() => {
+    this.providers.set(this.providersResource.value());
+    this.pageIndex.set(0);
+    this.reconcileProviderSelection();
+  });
+
+  private readonly reportProvidersError = effect(() => {
+    const error = this.providersResource.error();
+    if (error) {
+      this.snack.error(this.extractErrorMessage(error, 'Failed to load domain providers.'));
+    }
+  });
+
   ngOnInit() {
     void this.loadCatalog();
-    void this.loadProviders();
   }
 
   ngOnDestroy() {
@@ -138,7 +177,7 @@ export class HostingDnsProvidersPage implements OnDestroy {
   }
 
   refreshList() {
-    void this.loadProviders();
+    this.providersResource.reload();
   }
 
   async loadCatalog() {
@@ -152,38 +191,13 @@ export class HostingDnsProvidersPage implements OnDestroy {
     }
   }
 
-  async loadProviders() {
-    this.loading.set(true);
-    const start = performance.now();
-    const { search, provider, status } = this.filterForm.getRawValue();
-    const params = new URLSearchParams();
-    if (search.trim()) params.set('search', search.trim());
-    if (provider.trim()) params.set('provider', provider.trim());
-    if (status === '0' || status === '1') params.set('status', status);
-    params.set('limit', '500');
-    params.set('offset', '0');
-
-    try {
-      const response = await this.api.get<{ data?: { items?: HostingDnsProvider[] } }>(
-        `hosting/dns/providers?${params.toString()}`,
-      );
-      this.providers.set(response?.data?.items ?? []);
-      this.pageIndex.set(0);
-      this.reconcileProviderSelection();
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load domain providers.'));
-    } finally {
-      this.finishLoading(start);
-    }
-  }
-
   applyFilters() {
-    void this.loadProviders();
+    this.providersResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ search: '', provider: '', status: '' });
-    void this.loadProviders();
+    this.providersResource.reload();
   }
 
   onPage(event: PageEvent) {
@@ -275,7 +289,7 @@ export class HostingDnsProvidersPage implements OnDestroy {
         this.snack.success('Domain provider created successfully.');
       }
 
-      await this.loadProviders();
+      this.providersResource.reload();
       if (closeAfterSave || editing) {
         this.closeProviderDialog();
         this.resetForm();
@@ -317,7 +331,7 @@ export class HostingDnsProvidersPage implements OnDestroy {
     try {
       await this.api.delete(`hosting/dns/providers/${provider.HdpUUID}`);
       this.snack.success('Domain provider deleted successfully.');
-      await this.loadProviders();
+      this.providersResource.reload();
     } catch (err) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete domain provider.'));
     }
@@ -390,7 +404,7 @@ export class HostingDnsProvidersPage implements OnDestroy {
           (item) => item.HostingDnsProviderUUID ?? item.HdpUUID ?? '',
         ),
       );
-      await this.loadProviders();
+      this.providersResource.reload();
       this.selectedProviderUUIDs.set(failed);
       if (failed.size) {
         this.snack.warning(`${failed.size} provider(s) could not be deleted.`);
@@ -484,16 +498,6 @@ export class HostingDnsProvidersPage implements OnDestroy {
       numeric: true,
       sensitivity: 'base',
     });
-  }
-
-  private finishLoading(start: number) {
-    const elapsed = performance.now() - start;
-    const waitMs = Math.max(0, 600 - elapsed);
-    if (waitMs) {
-      setTimeout(() => this.loading.set(false), waitMs);
-      return;
-    }
-    this.loading.set(false);
   }
 
   private openProviderDialog() {
