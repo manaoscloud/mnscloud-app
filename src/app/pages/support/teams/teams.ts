@@ -5,8 +5,12 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  inject,
   ChangeDetectionStrategy,
+  computed,
+  effect,
+  inject,
+  resource,
+  signal,
   viewChild,
 } from '@angular/core';
 
@@ -67,8 +71,6 @@ type Option = { value: string | number; label: string };
 
 type UserOption = { value: string; label: string; email?: string | null };
 
-const MIN_LOADING_MS = 600;
-
 @Component({
   selector: 'app-support-teams',
   standalone: true,
@@ -105,8 +107,25 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   displayedColumns: string[] = ['name', 'code', 'status', 'members', 'default', 'actions'];
   search = '';
   searchInput = '';
-  loading = true;
   error = '';
+  private readonly saving = signal(false);
+  private readonly teamsResource = resource({
+    defaultValue: [] as SupportTeam[],
+    loader: () => this.fetchTeams(),
+  });
+  readonly loading = computed(() => this.teamsResource.isLoading() || this.saving());
+  private readonly teamsEffect = effect(() => {
+    this.teams = this.teamsResource.value();
+    this.dataSource.data = [...this.teams];
+    this.applySearchFilters();
+  });
+  private readonly teamsErrorEffect = effect(() => {
+    const error = this.teamsResource.error();
+    if (!error) return;
+    this.error = error instanceof Error ? error.message : 'Failed to load teams.';
+    this.teams = [];
+    this.dataSource.data = [];
+  });
 
   editing: SupportTeam | null = null;
 
@@ -157,7 +176,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.resetTeamForm();
-    void this.loadTeams();
     void this.loadUsers();
   }
 
@@ -212,7 +230,7 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshList() {
-    void this.loadTeams();
+    this.teamsResource.reload();
   }
 
   statusLabel(status: number) {
@@ -235,25 +253,10 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadTeams() {
-    const startedAt = Date.now();
-    this.loading = true;
+  private async fetchTeams(): Promise<SupportTeam[]> {
     this.error = '';
-    try {
-      const res = await this.api.get<any>('support/teams');
-      this.teams = res?.data?.items ?? [];
-      this.dataSource.data = [...this.teams];
-      this.applySearchFilters();
-    } catch (err: any) {
-      this.error = err?.message ?? 'Failed to load teams.';
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_LOADING_MS) {
-        await new Promise((resolve) => setTimeout(resolve, MIN_LOADING_MS - elapsed));
-      }
-      this.loading = false;
-    }
+    const res = await this.api.get<any>('support/teams');
+    return res?.data?.items ?? [];
   }
 
   async loadUsers() {
@@ -446,7 +449,7 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
 
     try {
@@ -466,7 +469,7 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
         await this.api.post('support/teams', payload);
       }
 
-      await this.loadTeams();
+      this.teamsResource.reload();
       if (createAndNew && !this.editing) {
         this.resetTeamForm();
       } else {
@@ -476,7 +479,7 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to save team.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 
@@ -494,16 +497,16 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
+    this.saving.set(true);
     this.error = '';
     try {
       await this.api.delete(`support/teams/${item.SupportTeamUUID}`);
-      await this.loadTeams();
+      this.teamsResource.reload();
       this.resetTeamForm();
     } catch (err: any) {
       this.error = err?.message ?? 'Failed to delete team.';
     } finally {
-      this.loading = false;
+      this.saving.set(false);
     }
   }
 
