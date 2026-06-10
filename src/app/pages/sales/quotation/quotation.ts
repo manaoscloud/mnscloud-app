@@ -76,6 +76,18 @@ type OptionItem = {
   price?: number;
 };
 
+type QuotationFilters = {
+  search: string;
+  status: string;
+  customerUUID: string;
+};
+
+const emptyQuotationFilters = (): QuotationFilters => ({
+  search: '',
+  status: '',
+  customerUUID: '',
+});
+
 @Component({
   selector: 'app-sale-quotation',
   standalone: true,
@@ -164,9 +176,11 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   ];
   readonly itemColumns = ['product', 'quantity', 'unitPrice', 'discount', 'total', 'actions'];
   readonly dataSource = new MatTableDataSource<SaleQuotation>([]);
+  private readonly appliedFilters = signal<QuotationFilters>(emptyQuotationFilters());
   private readonly quotationsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as SaleQuotation[],
-    loader: () => this.fetchQuotations(),
+    loader: ({ params }) => this.fetchQuotations(params),
   });
   private readonly syncQuotations = effect(() => {
     const items = this.quotationsResource.value();
@@ -243,12 +257,11 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchQuotations(): Promise<SaleQuotation[]> {
-    const { search, status, customerUUID } = this.filterForm.getRawValue();
+  private async fetchQuotations(filters: QuotationFilters): Promise<SaleQuotation[]> {
     const params = new URLSearchParams();
-    if (search?.trim()) params.set('q', search.trim());
-    if (status) params.set('status', status);
-    if (customerUUID) params.set('customerUUID', customerUUID);
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.customerUUID) params.set('customerUUID', filters.customerUUID);
 
     const query = params.toString();
     const response = await this.api.get<any>(`sale/quotations${query ? `?${query}` : ''}`);
@@ -256,12 +269,22 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   }
 
   applyFilters() {
-    this.quotationsResource.reload();
+    const nextFilters = this.currentQuotationFilters();
+    if (this.sameQuotationFilters(nextFilters, this.appliedFilters())) {
+      this.quotationsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   clearFilters() {
     this.filterForm.reset({ search: '', status: '', customerUUID: '' });
-    this.quotationsResource.reload();
+    const nextFilters = emptyQuotationFilters();
+    if (this.sameQuotationFilters(nextFilters, this.appliedFilters())) {
+      this.quotationsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   refreshList() {
@@ -602,6 +625,23 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
 
   private extractErrorMessage(err: any, fallback: string) {
     return err?.error?.error || err?.error?.message || err?.message || fallback;
+  }
+
+  private currentQuotationFilters(): QuotationFilters {
+    const { search, status, customerUUID } = this.filterForm.getRawValue();
+    return {
+      search: search?.trim() ?? '',
+      status: status ?? '',
+      customerUUID: customerUUID ?? '',
+    };
+  }
+
+  private sameQuotationFilters(left: QuotationFilters, right: QuotationFilters) {
+    return (
+      left.search === right.search &&
+      left.status === right.status &&
+      left.customerUUID === right.customerUUID
+    );
   }
 
   private getCurrencyAffixes(currency?: string) {
