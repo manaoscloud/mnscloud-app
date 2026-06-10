@@ -11,6 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -31,7 +32,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -120,7 +121,6 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
   private domainFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
-  private routeSub: Subscription | null = null;
   private readonly domainsEffect = effect(() => {
     this.dataSource.data = this.domainsResource.value();
     this.reconcileSelection();
@@ -137,10 +137,12 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   });
 
   ngOnInit() {
-    this.routeSub = this.route.data.subscribe((data) => {
-      this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
-      this.domainsResource.reload();
-    });
+    this.route.data
+      .pipe(takeUntilDestroyed())
+      .subscribe((data) => {
+        this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
+        this.domainsResource.reload();
+      });
   }
 
   ngAfterViewInit() {
@@ -168,7 +170,6 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   }
 
   ngOnDestroy() {
-    this.routeSub?.unsubscribe();
     this.closeDomainDialog();
   }
 

@@ -11,6 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -217,11 +218,13 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.dataSource.filterPredicate = (row, filter) =>
       JSON.stringify(row).toLowerCase().includes(filter.trim().toLowerCase());
-    this.route.data.subscribe((data) => {
-      this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
-      this.resetForm();
-      void this.bootstrap();
-    });
+    this.route.data
+      .pipe(takeUntilDestroyed())
+      .subscribe((data) => {
+        this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
+        this.resetForm();
+        void this.bootstrap();
+      });
   }
 
   ngOnDestroy() {

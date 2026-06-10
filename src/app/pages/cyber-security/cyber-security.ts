@@ -11,6 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -523,9 +524,11 @@ export class CyberSecurityPage implements OnInit {
           return row[column] ?? '';
       }
     };
-    this.route.paramMap.subscribe((params) => {
-      this.activeSection.set(this.normalizeSection(params.get('section')));
-    });
+    this.route.paramMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((params) => {
+        this.activeSection.set(this.normalizeSection(params.get('section')));
+      });
     this.refreshList();
   }
 

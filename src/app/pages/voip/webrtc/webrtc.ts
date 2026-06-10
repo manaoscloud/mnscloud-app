@@ -12,6 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -32,7 +33,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -235,7 +236,6 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
-  private routeSub: Subscription | null = null;
   private viewReady = false;
 
   private readonly recordsResource = resource({
@@ -272,15 +272,17 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   });
 
   ngOnInit() {
-    this.routeSub = this.route.data.subscribe((data) => {
-      this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
-      this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
-      this.searchInput = '';
-      this.search = '';
-      this.dataSource.filter = '';
-      this.selected.clear();
-      if (this.viewReady) this.recordsResource.reload();
-    });
+    this.route.data
+      .pipe(takeUntilDestroyed())
+      .subscribe((data) => {
+        this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
+        this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
+        this.searchInput = '';
+        this.search = '';
+        this.dataSource.filter = '';
+        this.selected.clear();
+        if (this.viewReady) this.recordsResource.reload();
+      });
   }
   ngAfterViewInit() {
     this.viewReady = true;
@@ -292,7 +294,6 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       String(this.cell(row, column) ?? '').toLowerCase();
   }
   ngOnDestroy() {
-    this.routeSub?.unsubscribe();
     this.binding?.stop();
   }
   uuid(row: WebRtcRecord) {
