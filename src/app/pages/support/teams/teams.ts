@@ -280,7 +280,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async loadMembers(teamUUID: string) {
-    await Promise.resolve();
     this.loadingMembers = true;
     this.memberError = '';
     this.cdr.detectChanges();
@@ -291,7 +290,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       this.memberError = this.resolveApiError(err, 'Failed to load team members.');
       this.members = [];
     } finally {
-      await Promise.resolve();
       this.loadingMembers = false;
       this.cdr.detectChanges();
     }
@@ -511,16 +509,14 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startCreateMember() {
-    Promise.resolve().then(() => {
-      this.memberEditing = null;
-      this.memberForm.memberUserUUID = '';
-      this.memberForm.role = 'member';
-      this.memberForm.isPrimary = false;
-      this.memberForm.canAssign = false;
-      this.memberForm.canClose = false;
-      this.memberForm.status = 1;
-      this.cdr.detectChanges();
-    });
+    this.memberEditing = null;
+    this.memberForm.memberUserUUID = '';
+    this.memberForm.role = 'member';
+    this.memberForm.isPrimary = false;
+    this.memberForm.canAssign = false;
+    this.memberForm.canClose = false;
+    this.memberForm.status = 1;
+    this.cdr.detectChanges();
   }
 
   startEditMember(member: SupportTeamMember) {
@@ -541,7 +537,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    await Promise.resolve();
     this.loadingMembers = true;
     this.memberError = '';
     this.cdr.detectChanges();
@@ -570,7 +565,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.memberError = this.resolveApiError(err, 'Failed to save member.');
     } finally {
-      await Promise.resolve();
       this.loadingMembers = false;
       this.cdr.detectChanges();
     }
@@ -592,7 +586,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (!confirmed) return;
 
-    await Promise.resolve();
     this.loadingMembers = true;
     this.memberError = '';
     this.cdr.detectChanges();
@@ -607,7 +600,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.memberError = this.resolveApiError(err, 'Failed to delete member.');
     } finally {
-      await Promise.resolve();
       this.loadingMembers = false;
       this.cdr.detectChanges();
     }
