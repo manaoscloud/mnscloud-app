@@ -58,6 +58,18 @@ type PabxOption = {
 type JsonRecord = Record<string, unknown>;
 type CreateMode = 'single' | 'range';
 
+type ExtensionFilters = {
+  search: string;
+  status: number | '';
+  pabxUUID: string;
+};
+
+const emptyExtensionFilters = (): ExtensionFilters => ({
+  search: '',
+  status: '',
+  pabxUUID: '',
+});
+
 @Component({
   selector: 'app-voip-pabx-extension',
   standalone: true,
@@ -107,9 +119,11 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   readonly generatedCredentials = signal<VoipPabxExtensionGeneratedCredential[]>([]);
 
   readonly dataSource = new MatTableDataSource<VoipPabxExtensionItem>([]);
+  private readonly appliedFilters = signal<ExtensionFilters>(emptyExtensionFilters());
   private readonly extensionsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as VoipPabxExtensionItem[],
-    loader: () => this.fetchExtensions(),
+    loader: ({ params }) => this.fetchExtensions(params),
   });
   readonly loading = computed(() => this.extensionsResource.isLoading() || this.mutating());
   readonly displayedColumns = [
@@ -256,8 +270,13 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.extensionsResource.reload();
+    const nextFilters = this.currentExtensionFilters();
+    this.search = nextFilters.search;
+    if (this.sameExtensionFilters(nextFilters, this.appliedFilters())) {
+      this.extensionsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   clearSearchFilters() {
@@ -265,7 +284,12 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
     this.search = '';
     this.statusFilter = '';
     this.pabxFilter = '';
-    this.extensionsResource.reload();
+    const nextFilters = emptyExtensionFilters();
+    if (this.sameExtensionFilters(nextFilters, this.appliedFilters())) {
+      this.extensionsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   refreshList() {
@@ -698,16 +722,32 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  private async fetchExtensions(): Promise<VoipPabxExtensionItem[]> {
+  private async fetchExtensions(filters: ExtensionFilters): Promise<VoipPabxExtensionItem[]> {
     this.error.set(null);
     await this.loadPabxOptions();
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (this.search) params.set('search', this.search);
-    if (this.statusFilter !== '') params.set('status', String(this.statusFilter));
-    if (this.pabxFilter) params.set('pabxUUID', this.pabxFilter);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status !== '') params.set('status', String(filters.status));
+    if (filters.pabxUUID) params.set('pabxUUID', filters.pabxUUID);
     const response = await this.api.list(params);
     return response?.data?.items ?? [];
+  }
+
+  private currentExtensionFilters(): ExtensionFilters {
+    return {
+      search: this.searchInput.trim(),
+      status: this.statusFilter,
+      pabxUUID: this.pabxFilter,
+    };
+  }
+
+  private sameExtensionFilters(left: ExtensionFilters, right: ExtensionFilters) {
+    return (
+      left.search === right.search &&
+      left.status === right.status &&
+      left.pabxUUID === right.pabxUUID
+    );
   }
 
   private parseParams(params: string): Record<string, unknown> | null {
