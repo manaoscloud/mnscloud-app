@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   AfterViewInit,
   Component,
@@ -313,23 +314,20 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
 
   async saveSubscription(keepOpen = false) {
     if (this.subscriptionForm.invalid || this.saving()) return;
-    const selected = this.selectedCatalogItem();
     const showQuantity = this.shouldShowSubscriptionQuantity();
+    const payload: Record<string, unknown> = {
+      priceUUID: this.subscriptionForm.value.priceUUID,
+      quantity: showQuantity ? this.subscriptionForm.value.quantity : 1,
+    };
     this.saving.set(true);
     try {
-      await this.billing.createSubscription({
-        priceUUID: this.subscriptionForm.value.priceUUID,
-        quantity: showQuantity ? this.subscriptionForm.value.quantity : 1,
-        resourceType: null,
-        resourceUUID: null,
-        resourceLabel: selected?.BprName || selected?.BprCode || null,
-      });
+      await this.billing.createSubscription(payload);
       this.snack.success('Subscription created.');
       if (!keepOpen) this.closeSubscriptionDialog();
       this.refresh();
       if (keepOpen) this.resetSubscriptionForm();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to create subscription.');
+      this.snack.error(this.extractErrorMessage(error, 'Failed to create subscription.'));
     } finally {
       this.saving.set(false);
     }
@@ -539,5 +537,13 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     Array.from(this.selectedSubscriptionUUIDs).forEach((uuid) => {
       if (!valid.has(uuid)) this.selectedSubscriptionUUIDs.delete(uuid);
     });
+  }
+
+  private extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof HttpErrorResponse) {
+      const message = error.error?.error || error.error?.message;
+      if (typeof message === 'string' && message.trim()) return message;
+    }
+    return error instanceof Error && error.message ? error.message : fallback;
   }
 }
