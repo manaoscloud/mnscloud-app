@@ -48,6 +48,11 @@ import type {
   VpsProviderConfig,
 } from '../vps.types';
 
+type VpsPlanFilters = {
+  search: string;
+  status: string;
+};
+
 @Component({
   selector: 'app-hosting-vps-plans',
   standalone: true,
@@ -104,6 +109,8 @@ export class HostingVpsPlansPage implements OnDestroy {
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
+  readonly appliedSearch = signal('');
+  readonly appliedStatus = signal('');
   readonly providerFilter = signal('');
   readonly rows = computed(() => this.filterPlansByProvider(this.plans()));
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
@@ -113,7 +120,11 @@ export class HostingVpsPlansPage implements OnDestroy {
   });
   private readonly plansResource = resource({
     defaultValue: [] as HostingVpsPlan[],
-    loader: () => this.fetchPlans(),
+    params: (): VpsPlanFilters => ({
+      search: this.appliedSearch().trim(),
+      status: this.appliedStatus(),
+    }),
+    loader: ({ params }) => this.fetchPlans(params),
   });
   readonly loading = this.plansResource.isLoading;
   readonly saving = signal(false);
@@ -365,11 +376,10 @@ export class HostingVpsPlansPage implements OnDestroy {
     }
   }
 
-  private async fetchPlans(): Promise<HostingVpsPlan[]> {
-    const values = this.filterForm.getRawValue();
+  private async fetchPlans(filters: VpsPlanFilters): Promise<HostingVpsPlan[]> {
     const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (values.search.trim()) params.set('search', values.search.trim());
-    if (values.status === '0' || values.status === '1') params.set('status', values.status);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status === '0' || filters.status === '1') params.set('status', filters.status);
 
     const result = await this.api.get<{ data?: { items?: HostingVpsPlan[] } }>(
       `${this.planEndpoint()}?${params.toString()}`,
@@ -382,13 +392,18 @@ export class HostingVpsPlansPage implements OnDestroy {
   }
 
   applyFilters() {
+    const values = this.filterForm.getRawValue();
+    this.appliedSearch.set(values.search);
+    this.appliedStatus.set(values.status);
     this.resetPagination();
-    this.providerFilter.set(this.filterForm.controls.provider.value);
+    this.providerFilter.set(values.provider);
     this.plansResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ search: '', provider: '', status: '' });
+    this.appliedSearch.set('');
+    this.appliedStatus.set('');
     this.providerFilter.set('');
     this.providerFilterSearch.set('');
     this.resetPagination();

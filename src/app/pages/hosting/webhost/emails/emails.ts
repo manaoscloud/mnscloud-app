@@ -48,6 +48,13 @@ import type {
   WebhostProviderType,
 } from '../webhost.types';
 
+type WebhostEmailFilters = {
+  search: string;
+  hostUUID: string;
+  status: string;
+  provisionStatus: string;
+};
+
 @Component({
   selector: 'app-hosting-webhost-emails',
   standalone: true,
@@ -105,7 +112,13 @@ export class HostingWebhostEmailsPage implements OnDestroy {
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
   private readonly emailsResource = resource({
     defaultValue: [] as HostingWebhostEmailAccount[],
-    loader: () => this.fetchEmails(),
+    params: (): WebhostEmailFilters => ({
+      search: this.appliedSearch().trim(),
+      hostUUID: this.appliedHostUUID(),
+      status: this.appliedStatus(),
+      provisionStatus: this.appliedProvisionStatus(),
+    }),
+    loader: ({ params }) => this.fetchEmails(params),
   });
   readonly loading = this.emailsResource.isLoading;
   readonly saving = signal(false);
@@ -329,13 +342,12 @@ export class HostingWebhostEmailsPage implements OnDestroy {
     }
   }
 
-  private async fetchEmails(): Promise<HostingWebhostEmailAccount[]> {
-    const values = this.filterForm.getRawValue();
+  private async fetchEmails(filters: WebhostEmailFilters): Promise<HostingWebhostEmailAccount[]> {
     const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (values.search.trim()) params.set('search', values.search.trim());
-    if (values.hostUUID) params.set('hostUUID', values.hostUUID);
-    if (values.status) params.set('status', values.status);
-    if (values.provisionStatus) params.set('provisionStatus', values.provisionStatus);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.hostUUID) params.set('hostUUID', filters.hostUUID);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.provisionStatus) params.set('provisionStatus', filters.provisionStatus);
 
     const result = await this.api.get<{ data?: { items?: HostingWebhostEmailAccount[] } }>(
       `${this.emailEndpoint}?${params.toString()}`,

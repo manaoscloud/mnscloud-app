@@ -58,6 +58,15 @@ type CustomerOption = {
   Status?: number | null;
 };
 
+type WebhostHostFilters = {
+  search: string;
+  customerUUID: string;
+  planUUID: string;
+  hostingDnsDomainUUID: string;
+  status: string;
+  provisionStatus: string;
+};
+
 @Component({
   selector: 'app-hosting-webhost-hosts',
   standalone: true,
@@ -124,7 +133,15 @@ export class HostingWebhostHostsPage implements OnDestroy {
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
   private readonly hostsResource = resource({
     defaultValue: [] as HostingWebhostHost[],
-    loader: () => this.fetchHosts(),
+    params: (): WebhostHostFilters => ({
+      search: this.appliedSearch().trim(),
+      customerUUID: this.appliedCustomerUUID(),
+      planUUID: this.appliedPlanUUID(),
+      hostingDnsDomainUUID: this.appliedHostingDnsDomainUUID(),
+      status: this.appliedStatus(),
+      provisionStatus: this.appliedProvisionStatus(),
+    }),
+    loader: ({ params }) => this.fetchHosts(params),
   });
   readonly loading = this.hostsResource.isLoading;
   readonly saving = signal(false);
@@ -448,16 +465,15 @@ export class HostingWebhostHostsPage implements OnDestroy {
     }
   }
 
-  private async fetchHosts(): Promise<HostingWebhostHost[]> {
-    const values = this.filterForm.getRawValue();
+  private async fetchHosts(filters: WebhostHostFilters): Promise<HostingWebhostHost[]> {
     const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (values.search.trim()) params.set('search', values.search.trim());
-    if (values.customerUUID) params.set('customerUUID', values.customerUUID);
-    if (values.planUUID) params.set('planUUID', values.planUUID);
-    if (values.hostingDnsDomainUUID)
-      params.set('hostingDnsDomainUUID', values.hostingDnsDomainUUID);
-    if (values.status) params.set('status', values.status);
-    if (values.provisionStatus) params.set('provisionStatus', values.provisionStatus);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.customerUUID) params.set('customerUUID', filters.customerUUID);
+    if (filters.planUUID) params.set('planUUID', filters.planUUID);
+    if (filters.hostingDnsDomainUUID)
+      params.set('hostingDnsDomainUUID', filters.hostingDnsDomainUUID);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.provisionStatus) params.set('provisionStatus', filters.provisionStatus);
 
     const result = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
       `${this.hostEndpoint}?${params.toString()}`,

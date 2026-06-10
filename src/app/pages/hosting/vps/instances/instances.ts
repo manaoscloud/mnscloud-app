@@ -55,6 +55,12 @@ type CustomerOption = {
   Status?: number | null;
 };
 
+type VpsInstanceFilters = {
+  search: string;
+  customerUUID: string;
+  status: string;
+};
+
 @Component({
   selector: 'app-hosting-vps-instances',
   standalone: true,
@@ -115,9 +121,17 @@ export class HostingVpsInstancesPage implements OnDestroy {
   readonly providers = signal<HostingVpsProvider[]>([]);
   readonly plans = signal<HostingVpsPlan[]>([]);
   readonly vpsInstances = signal<HostingVpsInstance[]>([]);
+  readonly appliedSearch = signal('');
+  readonly appliedCustomerUUID = signal('');
+  readonly appliedStatus = signal('');
   private readonly instancesResource = resource({
     defaultValue: [] as HostingVpsInstance[],
-    loader: () => this.fetchInstances(),
+    params: (): VpsInstanceFilters => ({
+      search: this.appliedSearch().trim(),
+      customerUUID: this.appliedCustomerUUID(),
+      status: this.appliedStatus(),
+    }),
+    loader: ({ params }) => this.fetchInstances(params),
   });
   private readonly syncInstances = effect(() => {
     this.vpsInstances.set(this.instancesResource.value());
@@ -127,9 +141,6 @@ export class HostingVpsInstancesPage implements OnDestroy {
     const error = this.instancesResource.error();
     if (error) this.snack.error(this.friendlyError(error, 'Failed to load VPS instances.'));
   });
-  readonly appliedSearch = signal('');
-  readonly appliedCustomerUUID = signal('');
-  readonly appliedStatus = signal('');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
@@ -528,12 +539,11 @@ export class HostingVpsInstancesPage implements OnDestroy {
     }
   }
 
-  private async fetchInstances(): Promise<HostingVpsInstance[]> {
-    const values = this.filterForm.getRawValue();
+  private async fetchInstances(filters: VpsInstanceFilters): Promise<HostingVpsInstance[]> {
     const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (values.search.trim()) params.set('search', values.search.trim());
-    if (values.customerUUID) params.set('customerUUID', values.customerUUID);
-    if (values.status === '0' || values.status === '1') params.set('status', values.status);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.customerUUID) params.set('customerUUID', filters.customerUUID);
+    if (filters.status === '0' || filters.status === '1') params.set('status', filters.status);
 
     const result = await this.api.get<{ data?: { items?: HostingVpsInstance[] } }>(
       `${this.instanceEndpoint()}?${params.toString()}`,

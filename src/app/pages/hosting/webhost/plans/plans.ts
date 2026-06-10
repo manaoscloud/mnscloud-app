@@ -47,6 +47,12 @@ import type {
   WebhostProviderType,
 } from '../webhost.types';
 
+type WebhostPlanFilters = {
+  search: string;
+  providerUUID: string;
+  status: string;
+};
+
 @Component({
   selector: 'app-hosting-webhost-plans',
   standalone: true,
@@ -101,7 +107,12 @@ export class HostingWebhostPlansPage implements OnDestroy {
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
   private readonly plansResource = resource({
     defaultValue: [] as HostingWebhostPlan[],
-    loader: () => this.fetchPlans(),
+    params: (): WebhostPlanFilters => ({
+      search: this.appliedSearch().trim(),
+      providerUUID: this.appliedProvider(),
+      status: this.appliedStatus(),
+    }),
+    loader: ({ params }) => this.fetchPlans(params),
   });
   readonly loading = this.plansResource.isLoading;
   readonly saving = signal(false);
@@ -294,17 +305,16 @@ export class HostingWebhostPlansPage implements OnDestroy {
     }
   }
 
-  private async fetchPlans(): Promise<HostingWebhostPlan[]> {
-    const values = this.filterForm.getRawValue();
+  private async fetchPlans(filters: WebhostPlanFilters): Promise<HostingWebhostPlan[]> {
     const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (values.search.trim()) params.set('search', values.search.trim());
-    if (values.provider) {
+    if (filters.search) params.set('search', filters.search);
+    if (filters.providerUUID) {
       const selectedProvider = this.providers().find(
-        (provider) => provider.HwpUUID === values.provider,
+        (provider) => provider.HwpUUID === filters.providerUUID,
       );
       if (selectedProvider?.HwpProvider) params.set('provider', selectedProvider.HwpProvider);
     }
-    if (values.status === '0' || values.status === '1') params.set('status', values.status);
+    if (filters.status === '0' || filters.status === '1') params.set('status', filters.status);
 
     const result = await this.api.get<{ data?: { items?: HostingWebhostPlan[] } }>(
       `${this.planEndpoint}?${params.toString()}`,

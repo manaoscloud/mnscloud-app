@@ -58,6 +58,12 @@ type CustomerOption = {
   Status?: number | null;
 };
 
+type VpsContainerInstanceFilters = {
+  search: string;
+  customerUUID: string;
+  status: string;
+};
+
 @Component({
   selector: 'app-hosting-vps-container-instances',
   standalone: true,
@@ -118,9 +124,17 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
   readonly providers = signal<HostingVpsContainerProvider[]>([]);
   readonly plans = signal<HostingVpsContainerPlan[]>([]);
   readonly vpsInstances = signal<HostingVpsContainerInstance[]>([]);
+  readonly appliedSearch = signal('');
+  readonly appliedCustomerUUID = signal('');
+  readonly appliedStatus = signal('');
   private readonly instancesResource = resource({
     defaultValue: [] as HostingVpsContainerInstance[],
-    loader: () => this.fetchInstances(),
+    params: (): VpsContainerInstanceFilters => ({
+      search: this.appliedSearch().trim(),
+      customerUUID: this.appliedCustomerUUID(),
+      status: this.appliedStatus(),
+    }),
+    loader: ({ params }) => this.fetchInstances(params),
   });
   private readonly syncInstances = effect(() => {
     this.vpsInstances.set(this.instancesResource.value());
@@ -132,9 +146,6 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
       this.snack.error(this.friendlyError(error, 'Failed to load VPS Container instances.'));
     }
   });
-  readonly appliedSearch = signal('');
-  readonly appliedCustomerUUID = signal('');
-  readonly appliedStatus = signal('');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
@@ -533,12 +544,13 @@ export class HostingVpsContainerInstancesPage implements OnDestroy {
     }
   }
 
-  private async fetchInstances(): Promise<HostingVpsContainerInstance[]> {
-    const values = this.filterForm.getRawValue();
+  private async fetchInstances(
+    filters: VpsContainerInstanceFilters,
+  ): Promise<HostingVpsContainerInstance[]> {
     const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (values.search.trim()) params.set('search', values.search.trim());
-    if (values.customerUUID) params.set('customerUUID', values.customerUUID);
-    if (values.status === '0' || values.status === '1') params.set('status', values.status);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.customerUUID) params.set('customerUUID', filters.customerUUID);
+    if (filters.status === '0' || filters.status === '1') params.set('status', filters.status);
 
     const result = await this.api.get<{ data?: { items?: HostingVpsContainerInstance[] } }>(
       `${this.instanceEndpoint()}?${params.toString()}`,
