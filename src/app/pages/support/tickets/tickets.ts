@@ -435,7 +435,6 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
         value: item.CustomerUUID,
         label: item.Name,
       }));
-      await Promise.resolve();
       this.customers = mapped;
       this.customerMap = new Map(mapped.map((c: CustomerOption) => [c.value, c]));
       this.cdr.detectChanges();
@@ -452,7 +451,6 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
         value: item.SupportTicketChannelUUID,
         label: item.Name,
       }));
-      await Promise.resolve();
       this.channels = mapped;
       this.channelMap = new Map(mapped.map((c: ChannelOption) => [c.value, c]));
       this.cdr.detectChanges();
@@ -631,9 +629,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     this.form.slaResolutionDeadline = this.parseDateInput(item.SlaResolutionDeadline);
     this.form.slaBreached = Number(item.SlaBreached ?? 0) === 1;
     this.form.assignedToUserUUID = item.AssignedToUserUUID ?? '';
-    setTimeout(() => {
-      void this.loadEvents(item.SupportTicketUUID);
-    }, 0);
+    void this.loadEvents(item.SupportTicketUUID);
     this.openFormDialog();
   }
 
@@ -649,11 +645,10 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
       errorMessage = err?.message ?? 'Failed to load events.';
     }
 
-    setTimeout(() => {
-      this.events = items;
-      this.eventError = errorMessage;
-      this.loadingEvents = false;
-    }, 0);
+    this.events = items;
+    this.eventError = errorMessage;
+    this.loadingEvents = false;
+    this.cdr.detectChanges();
   }
 
   async saveTicket(createAndNew = false) {
