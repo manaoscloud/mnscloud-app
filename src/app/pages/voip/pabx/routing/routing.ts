@@ -127,9 +127,11 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   });
 
   readonly dataSource = new MatTableDataSource<any>([]);
+  private readonly appliedSearch = signal('');
   private readonly itemsResource = resource({
+    params: () => this.appliedSearch(),
     defaultValue: [] as any[],
-    loader: () => this.fetchItems(),
+    loader: ({ params }) => this.fetchItems(params),
   });
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly displayedColumns = computed(() => {
@@ -231,14 +233,23 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.itemsResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.itemsResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.itemsResource.reload();
+    }
   }
 
   startCreate() {
@@ -592,10 +603,10 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     this.itemsResource.reload();
   }
 
-  private async fetchItems(): Promise<any[]> {
+  private async fetchItems(search: string): Promise<any[]> {
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (this.search) params.set('search', this.search);
+    if (search) params.set('search', search);
     const response = await this.api.list(this.resource(), params);
     return response?.data?.items ?? [];
   }
