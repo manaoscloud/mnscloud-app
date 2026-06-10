@@ -1,10 +1,19 @@
-import { effect, Injectable, Injector, runInInjectionContext, signal, inject } from '@angular/core';
+import {
+  DestroyRef,
+  effect,
+  Injectable,
+  Injector,
+  runInInjectionContext,
+  signal,
+  inject,
+} from '@angular/core';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly STORAGE_KEY = 'mnscloud-theme';
 
@@ -27,19 +36,26 @@ export class ThemeService {
 
       if (this.hasWindow()) {
         const media = window.matchMedia('(prefers-color-scheme: dark)');
-        media.addEventListener('change', () => {
+        const handleSystemThemeChange = () => {
           if (this.theme() === 'system') {
             this.applyTheme('system');
           }
-        });
+        };
+        media.addEventListener('change', handleSystemThemeChange);
 
-        window.addEventListener('storage', (event: StorageEvent) => {
+        const handleStorageChange = (event: StorageEvent) => {
           if (event.key === this.STORAGE_KEY && event.newValue) {
             const next = event.newValue as ThemeMode;
             if (next !== this.theme()) {
               this.theme.set(next);
             }
           }
+        };
+        window.addEventListener('storage', handleStorageChange);
+
+        this.destroyRef.onDestroy(() => {
+          media.removeEventListener('change', handleSystemThemeChange);
+          window.removeEventListener('storage', handleStorageChange);
         });
       }
     });

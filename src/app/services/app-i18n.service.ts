@@ -1,4 +1,4 @@
-import { computed, Injectable, signal, inject } from '@angular/core';
+import { DestroyRef, computed, Injectable, signal, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
 export type AppLanguage = 'pt-BR' | 'en-US' | 'es-ES';
@@ -37,6 +37,7 @@ function isAppLanguage(value: unknown): value is AppLanguage {
 @Injectable({ providedIn: 'root' })
 export class AppI18nService {
   private readonly transloco = inject(TranslocoService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly languageOptions = [
     { code: 'auto' as const, labelKey: 'lang.auto' },
@@ -112,12 +113,15 @@ export class AppI18nService {
   private bindNavigatorLanguageChange() {
     if (typeof window === 'undefined') return;
 
-    window.addEventListener('languagechange', () => {
+    const handleLanguageChange = () => {
       if (this.languageMode() !== 'auto') return;
       const systemLanguage = detectAppLanguage();
       this.language.set(systemLanguage);
       this.transloco.setActiveLang(systemLanguage);
       this.syncDocumentLanguage(systemLanguage);
-    });
+    };
+
+    window.addEventListener('languagechange', handleLanguageChange);
+    this.destroyRef.onDestroy(() => window.removeEventListener('languagechange', handleLanguageChange));
   }
 }
