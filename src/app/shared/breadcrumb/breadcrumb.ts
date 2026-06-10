@@ -1,4 +1,5 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon'; // ✅ IMPORT NECESSÁRIO
@@ -19,12 +20,13 @@ interface Crumb {
 })
 export class BreadcrumbComponent {
   private router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly crumbs = signal<Crumb[]>([]);
 
   constructor() {
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
+      .pipe(filter((event) => event instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.buildBreadcrumbs());
 
     this.buildBreadcrumbs();

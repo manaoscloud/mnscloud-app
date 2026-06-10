@@ -2,9 +2,11 @@ import {
   Component,
   AfterViewInit,
   ChangeDetectionStrategy,
+  DestroyRef,
   inject,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   Router,
   RouterOutlet,
@@ -63,23 +65,26 @@ import { RouteLoader } from './shared/route-loader/route-loader';
 })
 export class App implements AfterViewInit {
   private router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly loader = viewChild.required(RouteLoader);
 
   ngAfterViewInit() {
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationStart) {
-        this.loader()?.show?.();
-      }
+    this.router.events
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        if (event instanceof NavigationStart) {
+          this.loader()?.show?.();
+        }
 
-      if (
-        event instanceof NavigationEnd ||
-        event instanceof NavigationCancel ||
-        event instanceof NavigationError
-      ) {
-        setTimeout(() => this.loader()?.hide?.(), 200);
-      }
-    });
+        if (
+          event instanceof NavigationEnd ||
+          event instanceof NavigationCancel ||
+          event instanceof NavigationError
+        ) {
+          setTimeout(() => this.loader()?.hide?.(), 200);
+        }
+      });
   }
 
   getRouteAnimationState(outlet: RouterOutlet): string {

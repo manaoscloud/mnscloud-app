@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 // Shared
@@ -239,11 +240,10 @@ export class MainLayout {
     }
 
     // Auto expand menus
-    const sub = this.router.events.subscribe((e) => {
+    this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((e) => {
       if (e instanceof NavigationEnd) this.scheduleAutoExpandSections();
     });
 
-    this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.destroyRef.onDestroy(() => this.clearCompactCloseTimer());
     this.scheduleAutoExpandSections();
 
