@@ -91,11 +91,13 @@ export class Signin implements OnInit, AfterViewInit {
     rememberMeEnabled: true,
   });
   readonly captchaToken = signal<string | null>(null);
+  private readonly captchaPollTimers = new Set<ReturnType<typeof setInterval>>();
 
   constructor() {
     merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
+    this.destroyRef.onDestroy(() => this.clearCaptchaPollTimers());
   }
 
   // token de convite vindo da URL: /signin?inviteToken=XYZ
@@ -261,15 +263,18 @@ export class Signin implements OnInit, AfterViewInit {
           const loaded = (window as any)[globalName];
           if (loaded?.render) {
             window.clearInterval(timer);
+            this.captchaPollTimers.delete(timer);
             resolve(loaded);
             return;
           }
           attempts += 1;
           if (attempts >= 100) {
             window.clearInterval(timer);
+            this.captchaPollTimers.delete(timer);
             reject(new Error('Captcha challenge did not become available.'));
           }
         }, 100);
+        this.captchaPollTimers.add(timer);
       });
     }
 
@@ -286,5 +291,12 @@ export class Signin implements OnInit, AfterViewInit {
       script.onerror = () => reject(new Error('Could not load captcha challenge.'));
       document.head.appendChild(script);
     });
+  }
+
+  private clearCaptchaPollTimers() {
+    for (const timer of this.captchaPollTimers) {
+      window.clearInterval(timer);
+    }
+    this.captchaPollTimers.clear();
   }
 }
