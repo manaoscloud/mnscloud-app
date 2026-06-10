@@ -6,7 +6,9 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
@@ -97,6 +99,10 @@ type PostalCodeLookupItem = {
   district?: string | null;
   city?: string | null;
   state?: string | null;
+};
+
+type CustomerFilters = {
+  search: string;
 };
 
 type MapStyleMode = 'street' | 'satellite';
@@ -229,7 +235,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     'actions',
   ];
   selectedCustomerUUIDs = new Set<string>();
-  loading = true;
   saving = false;
   searchingMainPostalCode = false;
   searchingBillingPostalCode = false;
@@ -239,6 +244,8 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   searchInput = '';
   editingCustomer: Customer | null = null;
   mapVisible = false;
+  private readonly customerFilters = signal<CustomerFilters>({ search: '' });
+  private readonly mutating = signal(false);
   readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
   complexSearch = '';
@@ -296,6 +303,27 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   billingSameAsMain = false;
   installSameAsMain = false;
 
+  private readonly customersResource = resource({
+    params: () => this.customerFilters(),
+    defaultValue: [] as Customer[],
+    loader: ({ params }) => this.fetchCustomers(params),
+  });
+
+  private readonly syncCustomers = effect(() => {
+    const customers = this.customersResource.value();
+    this.customers = [...customers];
+    this.dataSource.data = [...customers];
+    this.reconcileSelection();
+    this.applyFilter();
+  });
+
+  private readonly reportCustomerLoadError = effect(() => {
+    const error = this.customersResource.error();
+    if (!error) return;
+    this.showError(error instanceof Error ? error.message : 'Failed to load customers.');
+    this.dataSource.data = [];
+  });
+
   constructor() {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
       .pipe(takeUntilDestroyed())
@@ -340,10 +368,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
         .concat([this.complexLabel(data.ComplexUUID), this.dueDayLabel(data.DueDayUUID)])
         .some((field) => String(field).toLowerCase().includes(value));
     };
-
-    setTimeout(() => {
-      void this.loadCustomers();
-    }, 0);
   }
 
   ngOnDestroy() {
@@ -359,17 +383,21 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    void this.loadCustomers();
+    this.customerFilters.set({ search: this.search });
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    void this.loadCustomers();
+    this.customerFilters.set({ search: '' });
   }
 
   refreshList() {
-    void this.loadCustomers();
+    this.customersResource.reload();
+  }
+
+  get loading() {
+    return this.customersResource.isLoading() || this.mutating();
   }
 
   applyFilter() {
@@ -380,38 +408,12 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  async loadCustomers() {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    this.loading = true;
-    this.cdr.detectChanges();
-    this.error = '';
-    const start = performance.now();
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search) params.set('q', this.search);
-      const res = await this.api.get<any>(`erp/customers?${params.toString()}`);
-      this.customers = res?.data?.items ?? [];
-      this.dataSource.data = [...this.customers];
-      this.reconcileSelection();
-      this.applyFilter();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to load customers.');
-      this.dataSource.data = [];
-    } finally {
-      const elapsed = performance.now() - start;
-      const minMs = 600;
-      const waitMs = Math.max(0, minMs - elapsed);
-      if (waitMs) {
-        setTimeout(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }, waitMs);
-      } else {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    }
+  private async fetchCustomers(filters: CustomerFilters): Promise<Customer[]> {
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (filters.search) params.set('q', filters.search);
+    const res = await this.api.get<any>(`erp/customers?${params.toString()}`);
+    return res?.data?.items ?? [];
   }
 
   async loadComplexes() {
@@ -602,7 +604,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
         this.snack.success('Customer created successfully.');
       }
 
-      await this.loadCustomers();
+      this.customersResource.reload();
       if (createAnother && isCreateMode) {
         this.resetForm();
         this.openCustomerDialog();
@@ -768,17 +770,17 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.loading = true;
+    this.mutating.set(true);
     this.error = '';
     try {
       await this.api.delete(`erp/customers/${customerUUID}`);
       this.selectedCustomerUUIDs.delete(customerUUID);
-      await this.loadCustomers();
+      this.customersResource.reload();
       this.snack.success('Customer deleted successfully.');
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete customer.');
     } finally {
-      this.loading = false;
+      this.mutating.set(false);
     }
   }
 
@@ -845,7 +847,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading = true;
+    this.mutating.set(true);
     this.error = '';
     try {
       const response = await this.api.delete<any>('erp/customers/bulk', { ids });
@@ -857,7 +859,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       this.customers = this.customers.filter((row) => !deleted.has(row.CustomerUUID));
       this.selectedCustomerUUIDs.clear();
       failed.forEach((uuid) => this.selectedCustomerUUIDs.add(uuid));
-      await this.loadCustomers();
+      this.customersResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected customer(s) could not be deleted.`);
       } else {
@@ -866,7 +868,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete selected customers.');
     } finally {
-      this.loading = false;
+      this.mutating.set(false);
     }
   }
 
