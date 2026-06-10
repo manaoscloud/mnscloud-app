@@ -93,16 +93,16 @@ export class HostingDnsProvidersPage implements OnDestroy {
 
   private providerDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  readonly appliedSearch = signal('');
+  readonly appliedProvider = signal('');
+  readonly appliedStatus = signal('');
 
   private readonly providersResource = resource({
-    params: () => {
-      const { search, provider, status } = this.filterForm.getRawValue();
-      return {
-        search: search.trim(),
-        provider: provider.trim(),
-        status,
-      };
-    },
+    params: () => ({
+      search: this.appliedSearch().trim(),
+      provider: this.appliedProvider().trim(),
+      status: this.appliedStatus(),
+    }),
     defaultValue: [] as HostingDnsProvider[],
     loader: async ({ params }) => {
       const query = new URLSearchParams();
@@ -192,11 +192,18 @@ export class HostingDnsProvidersPage implements OnDestroy {
   }
 
   applyFilters() {
+    const { search, provider, status } = this.filterForm.getRawValue();
+    this.appliedSearch.set(search);
+    this.appliedProvider.set(provider);
+    this.appliedStatus.set(status);
     this.providersResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ search: '', provider: '', status: '' });
+    this.appliedSearch.set('');
+    this.appliedProvider.set('');
+    this.appliedStatus.set('');
     this.providersResource.reload();
   }
 

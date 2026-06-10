@@ -176,18 +176,21 @@ export class HostingWebhostToolsPage implements OnDestroy {
   readonly hostEndpoint = 'hosting/webhost/hosts';
   readonly hosts = signal<HostingWebhostHost[]>([]);
   readonly items = signal<WebhostToolRow[]>([]);
+  readonly appliedSearch = signal('');
+  readonly appliedProvider = signal('');
+  readonly appliedHostUUID = signal('');
+  readonly appliedType = signal('');
+  readonly appliedStatus = signal('');
+  readonly appliedProvisionStatus = signal('');
   private readonly itemsResource = resource({
-    params: () => {
-      const values = this.filterForm.getRawValue();
-      return {
-        search: values.search.trim(),
-        provider: values.provider.trim(),
-        hostUUID: values.hostUUID.trim(),
-        type: values.type.trim(),
-        status: values.status.trim(),
-        provisionStatus: values.provisionStatus.trim(),
-      };
-    },
+    params: () => ({
+      search: this.appliedSearch().trim(),
+      provider: this.appliedProvider().trim(),
+      hostUUID: this.appliedHostUUID().trim(),
+      type: this.appliedType().trim(),
+      status: this.appliedStatus().trim(),
+      provisionStatus: this.appliedProvisionStatus().trim(),
+    }),
     defaultValue: [] as WebhostToolRow[],
     loader: async ({ params }) => {
       const query = new URLSearchParams();
@@ -367,6 +370,13 @@ export class HostingWebhostToolsPage implements OnDestroy {
   }
 
   applyFilters() {
+    const values = this.filterForm.getRawValue();
+    this.appliedSearch.set(values.search);
+    this.appliedProvider.set(values.provider);
+    this.appliedHostUUID.set(values.hostUUID);
+    this.appliedType.set(values.type);
+    this.appliedStatus.set(values.status);
+    this.appliedProvisionStatus.set(values.provisionStatus);
     this.itemsResource.reload();
   }
 
@@ -379,7 +389,13 @@ export class HostingWebhostToolsPage implements OnDestroy {
       status: '',
       provisionStatus: '',
     });
-    this.applyFilters();
+    this.appliedSearch.set('');
+    this.appliedProvider.set('');
+    this.appliedHostUUID.set('');
+    this.appliedType.set('');
+    this.appliedStatus.set('');
+    this.appliedProvisionStatus.set('');
+    this.itemsResource.reload();
   }
 
   startCreate() {

@@ -103,17 +103,18 @@ export class HostingDnsDomainsPage implements OnDestroy {
 
   private domainDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
+  readonly appliedName = signal('');
+  readonly appliedCustomerUUID = signal('');
+  readonly appliedProviderUUID = signal('');
+  readonly appliedStatus = signal('');
 
   private readonly domainsResource = resource({
-    params: () => {
-      const { name, customerUUID, providerUUID, status } = this.filterForm.getRawValue();
-      return {
-        name: name.trim(),
-        customerUUID: customerUUID.trim(),
-        providerUUID: providerUUID.trim(),
-        status,
-      };
-    },
+    params: () => ({
+      name: this.appliedName().trim(),
+      customerUUID: this.appliedCustomerUUID().trim(),
+      providerUUID: this.appliedProviderUUID().trim(),
+      status: this.appliedStatus(),
+    }),
     defaultValue: [] as HostingDnsDomain[],
     loader: async ({ params }) => {
       const query = new URLSearchParams();
@@ -233,11 +234,20 @@ export class HostingDnsDomainsPage implements OnDestroy {
   }
 
   applyFilters() {
+    const { name, customerUUID, providerUUID, status } = this.filterForm.getRawValue();
+    this.appliedName.set(name);
+    this.appliedCustomerUUID.set(customerUUID);
+    this.appliedProviderUUID.set(providerUUID);
+    this.appliedStatus.set(status);
     this.domainsResource.reload();
   }
 
   clearFilters() {
     this.filterForm.reset({ name: '', customerUUID: '', providerUUID: '', status: '' });
+    this.appliedName.set('');
+    this.appliedCustomerUUID.set('');
+    this.appliedProviderUUID.set('');
+    this.appliedStatus.set('');
     this.domainsResource.reload();
   }
 
