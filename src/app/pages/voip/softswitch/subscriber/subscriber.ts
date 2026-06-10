@@ -167,7 +167,7 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-    setTimeout(() => void this.loadLookups(), 0);
+    void this.loadLookups();
   }
 
   ngOnDestroy() {

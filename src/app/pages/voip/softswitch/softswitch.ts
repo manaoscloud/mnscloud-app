@@ -239,9 +239,7 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    setTimeout(() => {
-      void this.loadLookups();
-    }, 0);
+    void this.loadLookups();
   }
 
   ngOnDestroy() {

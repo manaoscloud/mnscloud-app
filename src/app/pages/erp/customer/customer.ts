@@ -420,11 +420,9 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     try {
       const res = await this.api.get<any>('erp/complexes');
       const items = res?.data?.items ?? [];
-      setTimeout(() => {
-        this.complexes = items;
-        this.complexMap = new Map(items.map((item: ErpComplexOption) => [item.ComplexUUID, item]));
-        this.cdr.detectChanges();
-      }, 0);
+      this.complexes = items;
+      this.complexMap = new Map(items.map((item: ErpComplexOption) => [item.ComplexUUID, item]));
+      this.cdr.detectChanges();
     } catch (err) {
       console.error('Failed to load complexes.', err);
     }
@@ -436,13 +434,11 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       const items = (res?.data?.items ?? []).filter(
         (item: DueDayOption) => item?.Status === 'active',
       );
-      setTimeout(() => {
-        this.dueDays = items;
-        this.dueDayMap = new Map(
-          items.map((item: DueDayOption) => [item.ErpFinInvDueDayUUID, item]),
-        );
-        this.cdr.detectChanges();
-      }, 0);
+      this.dueDays = items;
+      this.dueDayMap = new Map(
+        items.map((item: DueDayOption) => [item.ErpFinInvDueDayUUID, item]),
+      );
+      this.cdr.detectChanges();
     } catch (err) {
       console.error('Failed to load due days.', err);
     }
@@ -991,9 +987,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       this.fallbackToBrasilia();
     }
     this.requestUserLocation();
-    setTimeout(() => {
-      void this.initMap();
-    }, 0);
+    queueMicrotask(() => void this.initMap());
   }
 
   private updateEmailError() {
@@ -1323,29 +1317,24 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     try {
       const res = await this.api.get<any>(`postal-codes/${normalizedZip}`);
       const item = (res?.data?.item ?? {}) as PostalCodeLookupItem;
-      setTimeout(() => {
-        this.form[streetKey] = item.street ?? this.form[streetKey];
-        this.form[districtKey] = item.district ?? this.form[districtKey];
-        this.form[cityKey] = item.city ?? this.form[cityKey];
-        this.form[stateKey] = item.state ?? this.form[stateKey];
-        if (section === 'main') {
-          this.onMainAddressChange();
-        }
-        this.setSearchingPostalCode(section, false);
-        this.cdr.detectChanges();
-
-        setTimeout(() => {
-          if (section === 'main') this.mainAddressNumberInput()?.nativeElement?.focus();
-          if (section === 'billing') this.billingAddressNumberInput()?.nativeElement?.focus();
-          if (section === 'install') this.installAddressNumberInput()?.nativeElement?.focus();
-        }, 0);
-      }, 0);
+      this.form[streetKey] = item.street ?? this.form[streetKey];
+      this.form[districtKey] = item.district ?? this.form[districtKey];
+      this.form[cityKey] = item.city ?? this.form[cityKey];
+      this.form[stateKey] = item.state ?? this.form[stateKey];
+      if (section === 'main') {
+        this.onMainAddressChange();
+      }
+      this.setSearchingPostalCode(section, false);
+      this.cdr.detectChanges();
+      queueMicrotask(() => {
+        if (section === 'main') this.mainAddressNumberInput()?.nativeElement?.focus();
+        if (section === 'billing') this.billingAddressNumberInput()?.nativeElement?.focus();
+        if (section === 'install') this.installAddressNumberInput()?.nativeElement?.focus();
+      });
     } catch (err: any) {
-      setTimeout(() => {
-        this.showError(err?.message ?? 'Failed to search postal code.');
-        this.setSearchingPostalCode(section, false);
-        this.cdr.detectChanges();
-      }, 0);
+      this.showError(err?.message ?? 'Failed to search postal code.');
+      this.setSearchingPostalCode(section, false);
+      this.cdr.detectChanges();
     }
   }
 
