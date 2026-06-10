@@ -1,12 +1,14 @@
 import {
-  AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
-  ViewChild,
+  afterNextRender,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -64,11 +66,13 @@ type Entity = {
   ],
   templateUrl: './page.html',
   styleUrls: ['./page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CrudPage implements AfterViewInit, OnDestroy {
+export class CrudPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
 
@@ -88,33 +92,34 @@ export class CrudPage implements AfterViewInit, OnDestroy {
     notes: [''],
   });
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  @ViewChild('entityFormDialog') entityFormDialog?: TemplateRef<unknown>;
+  readonly paginator = viewChild(MatPaginator);
+  readonly sort = viewChild(MatSort);
+  readonly entityFormDialog = viewChild<TemplateRef<unknown>>('entityFormDialog');
 
   private entityDialogBinding: CrudDialogBinding | null = null;
+  private loadingTimer: ReturnType<typeof setTimeout> | null = null;
 
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator ?? null;
-    this.dataSource.sort = this.sort ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'status':
-          return this.isActive(data) ? 'ACTIVE' : 'INACTIVE';
-        default:
-          return '';
-      }
-    };
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.clearLoadingTimer();
+      this.closeEntityDialog();
+    });
 
-    setTimeout(() => {
+    afterNextRender(() => {
+      this.dataSource.paginator = this.paginator() ?? null;
+      this.dataSource.sort = this.sort() ?? null;
+      this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
+        switch (sortHeaderId) {
+          case 'name':
+            return data.Name ?? '';
+          case 'status':
+            return this.isActive(data) ? 'ACTIVE' : 'INACTIVE';
+          default:
+            return '';
+        }
+      };
       void this.loadItems();
-    }, 0);
-  }
-
-  ngOnDestroy() {
-    this.closeEntityDialog();
+    });
   }
 
   applySearchFilters() {
@@ -150,8 +155,12 @@ export class CrudPage implements AfterViewInit, OnDestroy {
     } finally {
       const elapsed = performance.now() - start;
       const waitMs = Math.max(0, 600 - elapsed);
+      this.clearLoadingTimer();
       if (waitMs) {
-        setTimeout(() => this.loading.set(false), waitMs);
+        this.loadingTimer = setTimeout(() => {
+          this.loading.set(false);
+          this.loadingTimer = null;
+        }, waitMs);
       } else {
         this.loading.set(false);
       }
@@ -357,17 +366,21 @@ export class CrudPage implements AfterViewInit, OnDestroy {
   }
 
   private openEntityDialog() {
-    if (!this.entityFormDialog || this.entityDialogBinding) return;
+    const entityFormDialog = this.entityFormDialog();
+    if (!entityFormDialog || this.entityDialogBinding) return;
     this.entityDialogBinding = openCrudTemplateDialog(
       this.dialog,
-      this.entityFormDialog,
+      entityFormDialog,
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );
-    this.entityDialogBinding.ref.afterClosed().subscribe(() => {
-      this.entityDialogBinding?.stop();
-      this.entityDialogBinding = null;
-    });
+    this.entityDialogBinding.ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.entityDialogBinding?.stop();
+        this.entityDialogBinding = null;
+      });
   }
 
   private closeEntityDialog() {
@@ -397,5 +410,11 @@ export class CrudPage implements AfterViewInit, OnDestroy {
       });
       return next;
     });
+  }
+
+  private clearLoadingTimer() {
+    if (!this.loadingTimer) return;
+    clearTimeout(this.loadingTimer);
+    this.loadingTimer = null;
   }
 }

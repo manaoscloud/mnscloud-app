@@ -93,6 +93,11 @@
   `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, `@Output(`, `@ViewChild`, `@ViewChildren`,
   `ChangeDetectionStrategy.Eager`, constructor dependency injection, `ngx-translate`,
   `TranslateService`, `TranslateModule`, and `RouterTestingModule`.
+- New module/page scaffolding must start from the Angular 22 CRUD template in `templates/crud`.
+  Do not copy older pages as a baseline. The template validator intentionally fails decorator
+  queries, manual lifecycle teardown, old animation packages/triggers, constructor DI, the legacy
+  `| t` pipe alias, and old `Data`/`Details` CRUD tab labels so new modules do not inherit Angular
+  21-era patterns.
 
 ## Commercial Menu Projection
 

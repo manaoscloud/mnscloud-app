@@ -60,7 +60,7 @@ const htmlRules = [
   ['dialog header', 'dialog-header'],
   ['dialog content', 'dialog-content'],
   ['form tabs', 'form-tabs'],
-  ['translated record tab label', /<mat-tab[^>]*\[label\]="'Record'\s*\|\s*t"/],
+  ['translated record tab label', /<mat-tab[^>]*\[label\]="'Record'\s*\|\s*transloco"/],
   ['tab content', 'tab-content'],
   ['form actions', 'form-actions'],
   ['secondary actions', 'secondary-actions'],
@@ -73,9 +73,13 @@ const htmlRules = [
 ];
 
 const tsRules = [
+  ['OnPush change detection', 'ChangeDetectionStrategy.OnPush'],
+  ['DestroyRef', 'DestroyRef'],
+  ['signal query api', /viewChild|viewChildren/],
+  ['takeUntilDestroyed', 'takeUntilDestroyed'],
   ['MatTableDataSource', 'MatTableDataSource'],
-  ['MatPaginator view child', /ViewChild\(MatPaginator\)/],
-  ['MatSort view child', /ViewChild\(MatSort\)/],
+  ['MatPaginator signal query', /viewChild\(MatPaginator\)/],
+  ['MatSort signal query', /viewChild\(MatSort\)/],
   ['sortingDataAccessor', 'sortingDataAccessor'],
   ['openCrudTemplateDialog', 'openCrudTemplateDialog'],
   ['SlowConfirmDialogComponent', 'SlowConfirmDialogComponent'],
@@ -87,11 +91,24 @@ const tsRules = [
 const forbiddenHtmlRules = [
   ['raw column label', /\{\{\s*column\s*\}\}/],
   ['legacy data tab label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*t"/],
+  ['legacy data tab transloco label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*transloco"/],
   ['legacy details tab label', /<mat-tab[^>]*\[label\]="'Details'\s*\|\s*t"/],
+  ['legacy details tab transloco label', /<mat-tab[^>]*\[label\]="'Details'\s*\|\s*transloco"/],
+  ['legacy t pipe alias', /\|\s*t\b/],
   ['old inactive status class', /\[class\.inactive\]/],
   ['inline notes tab hack', /config\(\)\.fields\s*\|\s*json/],
   ['browser confirm', /\bconfirm\s*\(/],
   ['browser alert', /\balert\s*\(/],
+];
+
+const forbiddenTsRules = [
+  ['decorator ViewChild query', /@ViewChild\b/],
+  ['decorator ViewChildren query', /@ViewChildren\b/],
+  ['legacy OnDestroy lifecycle', /\bimplements\s+OnDestroy\b|\bngOnDestroy\s*\(/],
+  ['legacy AfterViewInit lifecycle', /\bimplements\s+AfterViewInit\b|\bngAfterViewInit\s*\(/],
+  ['Angular animations import', /@angular\/animations/],
+  ['constructor dependency injection', /constructor\s*\([^)]*(private|public|protected|readonly)\s+/s],
+  ['ngx-translate residue', /ngx-translate|TranslateService|TranslateModule/],
 ];
 
 let failed = false;
@@ -118,10 +135,12 @@ for (const file of tsFiles) {
   if (!content.includes('@Component')) continue;
   if (!content.includes('erp-page') && !htmlFiles.length) continue;
   const missing = tsRules.filter(([, pattern]) => !has(content, pattern)).map(([name]) => name);
-  if (missing.length) {
+  const forbidden = forbiddenTsRules.filter(([, pattern]) => has(content, pattern)).map(([name]) => name);
+  if (missing.length || forbidden.length) {
     failed = true;
     console.error(`\n${relative(root, file)}`);
     for (const name of missing) console.error(`  missing: ${name}`);
+    for (const name of forbidden) console.error(`  forbidden: ${name}`);
   }
 }
 
