@@ -366,23 +366,17 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
     try {
       const res = await this.api.get<any>(`postal-codes/${normalizedZip}`);
       const item = (res?.data?.item ?? {}) as PostalCodeLookupItem;
-      setTimeout(() => {
-        this.form.street = item.street ?? this.form.street;
-        this.form.district = item.district ?? this.form.district;
-        this.form.city = item.city ?? this.form.city;
-        this.form.state = item.state ?? this.form.state;
-        this.searchingPostalCode = false;
-        this.cdr.detectChanges();
-        setTimeout(() => {
-          this.addressNumberInput()?.nativeElement?.focus();
-        }, 0);
-      }, 0);
+      this.form.street = item.street ?? this.form.street;
+      this.form.district = item.district ?? this.form.district;
+      this.form.city = item.city ?? this.form.city;
+      this.form.state = item.state ?? this.form.state;
+      this.searchingPostalCode = false;
+      this.cdr.detectChanges();
+      queueMicrotask(() => this.addressNumberInput()?.nativeElement?.focus());
     } catch (err: any) {
-      setTimeout(() => {
-        this.showError(err?.message ?? 'Failed to search postal code.');
-        this.searchingPostalCode = false;
-        this.cdr.detectChanges();
-      }, 0);
+      this.showError(err?.message ?? 'Failed to search postal code.');
+      this.searchingPostalCode = false;
+      this.cdr.detectChanges();
     }
   }
 
