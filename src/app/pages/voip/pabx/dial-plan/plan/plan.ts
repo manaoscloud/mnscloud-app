@@ -76,9 +76,11 @@ export class VoipPabxDialPlanPlanPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
+  private readonly appliedSearch = signal('');
   private readonly itemsResource = resource({
+    params: () => this.appliedSearch(),
     defaultValue: [] as VoipPabxDialPlanItem[],
-    loader: () => this.fetchItems(),
+    loader: ({ params }) => this.fetchItems(params),
   });
   private readonly mutating = signal(false);
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
@@ -130,18 +132,27 @@ export class VoipPabxDialPlanPlanPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    this.itemsResource.reload();
+    const nextSearch = this.searchInput().trim();
+    this.search.set(nextSearch);
+    if (nextSearch === this.appliedSearch()) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
-    this.itemsResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.itemsResource.reload();
+    }
   }
 
-  private async fetchItems(): Promise<VoipPabxDialPlanItem[]> {
-    const response = await this.api.listPlans({ search: this.search(), limit: this.listLimit });
+  private async fetchItems(search: string): Promise<VoipPabxDialPlanItem[]> {
+    const response = await this.api.listPlans({ search, limit: this.listLimit });
     return (response?.data?.items ?? []) as VoipPabxDialPlanItem[];
   }
 

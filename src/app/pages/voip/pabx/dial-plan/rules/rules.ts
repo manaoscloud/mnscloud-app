@@ -45,6 +45,16 @@ import {
   VoipPabxDialPlanUiService,
 } from '../dial-plan.service';
 
+type DialPlanRuleFilters = {
+  search: string;
+  dialPlanUUID: string;
+};
+
+const emptyDialPlanRuleFilters = (): DialPlanRuleFilters => ({
+  search: '',
+  dialPlanUUID: '',
+});
+
 @Component({
   selector: 'app-voip-pabx-dial-plan-rules',
   standalone: true,
@@ -81,9 +91,11 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
+  private readonly appliedFilters = signal<DialPlanRuleFilters>(emptyDialPlanRuleFilters());
   private readonly itemsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as VoipPabxDialPlanRuleItem[],
-    loader: () => this.fetchItems(),
+    loader: ({ params }) => this.fetchItems(params),
   });
   private readonly mutating = signal(false);
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
@@ -188,15 +200,25 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    this.itemsResource.reload();
+    const nextFilters = this.currentDialPlanRuleFilters();
+    this.search.set(nextFilters.search);
+    if (this.sameDialPlanRuleFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
     this.dialPlanFilter.set('');
-    this.itemsResource.reload();
+    const nextFilters = emptyDialPlanRuleFilters();
+    if (this.sameDialPlanRuleFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   onDialPlanSelectOpened(opened: boolean) {
@@ -217,13 +239,24 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     this.trunks.set((response?.data?.items ?? []) as VoipPabxTrunkOption[]);
   }
 
-  private async fetchItems(): Promise<VoipPabxDialPlanRuleItem[]> {
+  private async fetchItems(filters: DialPlanRuleFilters): Promise<VoipPabxDialPlanRuleItem[]> {
     const response = await this.api.listAllRules({
-      search: this.search(),
-      dialPlanUUID: this.dialPlanFilter(),
+      search: filters.search,
+      dialPlanUUID: filters.dialPlanUUID,
       limit: this.listLimit,
     });
     return (response?.data?.items ?? []) as VoipPabxDialPlanRuleItem[];
+  }
+
+  private currentDialPlanRuleFilters(): DialPlanRuleFilters {
+    return {
+      search: this.searchInput().trim(),
+      dialPlanUUID: this.dialPlanFilter(),
+    };
+  }
+
+  private sameDialPlanRuleFilters(left: DialPlanRuleFilters, right: DialPlanRuleFilters) {
+    return left.search === right.search && left.dialPlanUUID === right.dialPlanUUID;
   }
 
   startCreate() {

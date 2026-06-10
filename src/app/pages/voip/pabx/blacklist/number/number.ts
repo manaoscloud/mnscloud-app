@@ -44,6 +44,16 @@ import {
   VoipBlacklistUiService,
 } from '../blacklist.service';
 
+type BlacklistNumberFilters = {
+  search: string;
+  blacklistUUID: string;
+};
+
+const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
+  search: '',
+  blacklistUUID: '',
+});
+
 @Component({
   selector: 'app-voip-pabx-blacklist-number',
   standalone: true,
@@ -80,9 +90,11 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
+  private readonly appliedFilters = signal<BlacklistNumberFilters>(emptyBlacklistNumberFilters());
   private readonly itemsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as VoipBlacklistNumberItem[],
-    loader: () => this.fetchItems(),
+    loader: ({ params }) => this.fetchItems(params),
   });
   private readonly mutating = signal(false);
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
@@ -159,15 +171,25 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    this.itemsResource.reload();
+    const nextFilters = this.currentBlacklistNumberFilters();
+    this.search.set(nextFilters.search);
+    if (this.sameBlacklistNumberFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
     this.blacklistFilter.set('');
-    this.itemsResource.reload();
+    const nextFilters = emptyBlacklistNumberFilters();
+    if (this.sameBlacklistNumberFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   onBlacklistOpened(opened: boolean) {
@@ -179,12 +201,26 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
     this.lists.set((response?.data?.items ?? []) as VoipBlacklistItem[]);
   }
 
-  private async fetchItems(): Promise<VoipBlacklistNumberItem[]> {
-    const response = await this.api.listNumbers(this.blacklistFilter(), {
-      search: this.search(),
+  private async fetchItems(filters: BlacklistNumberFilters): Promise<VoipBlacklistNumberItem[]> {
+    const response = await this.api.listNumbers(filters.blacklistUUID, {
+      search: filters.search,
       limit: this.listLimit,
     });
     return (response?.data?.items ?? []) as VoipBlacklistNumberItem[];
+  }
+
+  private currentBlacklistNumberFilters(): BlacklistNumberFilters {
+    return {
+      search: this.searchInput().trim(),
+      blacklistUUID: this.blacklistFilter(),
+    };
+  }
+
+  private sameBlacklistNumberFilters(
+    left: BlacklistNumberFilters,
+    right: BlacklistNumberFilters,
+  ) {
+    return left.search === right.search && left.blacklistUUID === right.blacklistUUID;
   }
 
   startCreate() {

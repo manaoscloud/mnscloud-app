@@ -54,6 +54,16 @@ import { TranslocoPipe } from '@jsverse/transloco';
 type StorageAccountOption = { value: string; label: string };
 type PabxOption = { value: string; label: string };
 
+type MediaFileFilters = {
+  search: string;
+  status: string;
+};
+
+const emptyMediaFileFilters = (): MediaFileFilters => ({
+  search: '',
+  status: '',
+});
+
 @Component({
   selector: 'app-voip-pabx-media-files',
   standalone: true,
@@ -92,10 +102,6 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
-  private readonly itemsResource = resource({
-    defaultValue: [] as VoipPabxMediaFileItem[],
-    loader: () => this.fetchItems(),
-  });
   private readonly mutating = signal(false);
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly saving = signal(false);
@@ -103,6 +109,12 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly statusFilter = signal('');
+  private readonly appliedFilters = signal<MediaFileFilters>(emptyMediaFileFilters());
+  private readonly itemsResource = resource({
+    params: () => this.appliedFilters(),
+    defaultValue: [] as VoipPabxMediaFileItem[],
+    loader: ({ params }) => this.fetchItems(params),
+  });
   readonly editing = signal<VoipPabxMediaFileItem | null>(null);
   readonly selectedUUIDs = signal<Set<string>>(new Set());
   readonly selectedFile = signal<File | null>(null);
@@ -187,24 +199,45 @@ export class VoipPabxMediaFilesPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    this.itemsResource.reload();
+    const nextFilters = this.currentMediaFileFilters();
+    this.search.set(nextFilters.search);
+    if (this.sameMediaFileFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
     this.statusFilter.set('');
-    this.itemsResource.reload();
+    const nextFilters = emptyMediaFileFilters();
+    if (this.sameMediaFileFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
-  private async fetchItems(): Promise<VoipPabxMediaFileItem[]> {
+  private async fetchItems(filters: MediaFileFilters): Promise<VoipPabxMediaFileItem[]> {
     const response = await this.api.list({
-      search: this.search(),
-      status: this.statusFilter(),
+      search: filters.search,
+      status: filters.status,
       limit: this.listLimit,
     });
     return (response?.data?.items ?? []) as VoipPabxMediaFileItem[];
+  }
+
+  private currentMediaFileFilters(): MediaFileFilters {
+    return {
+      search: this.searchInput().trim(),
+      status: this.statusFilter(),
+    };
+  }
+
+  private sameMediaFileFilters(left: MediaFileFilters, right: MediaFileFilters) {
+    return left.search === right.search && left.status === right.status;
   }
 
   startCreate() {
