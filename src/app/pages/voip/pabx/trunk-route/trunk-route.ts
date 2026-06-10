@@ -75,6 +75,11 @@ type ResourceMeta = {
   trunkMode?: 'optional' | 'required';
 };
 
+type TrunkRouteFilters = {
+  resource: ResourceKind;
+  search: string;
+};
+
 const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
   trunks: {
     title: 'PABX Trunks',
@@ -169,9 +174,14 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     'actions',
   ];
   readonly dataSource = new MatTableDataSource<ResourceRow>([]);
+  private readonly appliedFilters = signal<TrunkRouteFilters>({
+    resource: this.resource(),
+    search: '',
+  });
   private readonly itemsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as ResourceRow[],
-    loader: () => this.fetchItems(),
+    loader: ({ params }) => this.fetchItems(params),
   });
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly audioCodecOptions = ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'];
@@ -251,13 +261,23 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     this.searchInput = value;
   }
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.itemsResource.reload();
+    const nextFilters = this.currentTrunkRouteFilters();
+    this.search = nextFilters.search;
+    if (this.sameTrunkRouteFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
   clearSearchFilters() {
     this.search = '';
     this.searchInput = '';
-    this.itemsResource.reload();
+    const nextFilters = { resource: this.resource(), search: '' };
+    if (this.sameTrunkRouteFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
   refreshList() {
     return this.bootstrap();
@@ -665,12 +685,21 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     await this.loadLookups();
     this.itemsResource.reload();
   }
-  private async fetchItems(): Promise<ResourceRow[]> {
-    const res = await this.api.list(this.resource(), {
-      search: this.search,
+  private async fetchItems(filters: TrunkRouteFilters): Promise<ResourceRow[]> {
+    const res = await this.api.list(filters.resource, {
+      search: filters.search,
       limit: this.listLimit,
     });
     return res?.data?.items ?? [];
+  }
+  private currentTrunkRouteFilters(): TrunkRouteFilters {
+    return {
+      resource: this.resource(),
+      search: this.searchInput.trim(),
+    };
+  }
+  private sameTrunkRouteFilters(left: TrunkRouteFilters, right: TrunkRouteFilters) {
+    return left.resource === right.resource && left.search === right.search;
   }
   private async refreshInboundLookupsForSelectedPabx(includeDidUUID = '') {
     if (!this.isInboundRouteResource() || !this.form.controls.pabxUUID.value) {

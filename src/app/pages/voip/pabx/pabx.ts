@@ -91,6 +91,14 @@ type StorageAccountOption = {
   label: string;
 };
 
+type PabxAccountFilters = {
+  search: string;
+};
+
+const emptyPabxAccountFilters = (): PabxAccountFilters => ({
+  search: '',
+});
+
 @Component({
   selector: 'app-voip-pabx',
   standalone: true,
@@ -141,9 +149,11 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   searchInput = '';
 
   readonly dataSource = new MatTableDataSource<VoipPabxAccount>([]);
+  private readonly appliedFilters = signal<PabxAccountFilters>(emptyPabxAccountFilters());
   private readonly accountsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as VoipPabxAccount[],
-    loader: () => this.fetchAccounts(),
+    loader: ({ params }) => this.fetchAccounts(params),
   });
   readonly loading = computed(() => this.accountsResource.isLoading() || this.mutating());
   readonly displayedColumns = [
@@ -340,14 +350,24 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.accountsResource.reload();
+    const nextFilters = this.currentPabxAccountFilters();
+    this.search = nextFilters.search;
+    if (this.samePabxAccountFilters(nextFilters, this.appliedFilters())) {
+      this.accountsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.accountsResource.reload();
+    const nextFilters = emptyPabxAccountFilters();
+    if (this.samePabxAccountFilters(nextFilters, this.appliedFilters())) {
+      this.accountsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   refreshList() {
@@ -792,7 +812,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchAccounts(): Promise<VoipPabxAccount[]> {
+  private async fetchAccounts(filters: PabxAccountFilters): Promise<VoipPabxAccount[]> {
     await this.loadServers();
     await this.loadDomains();
     await this.loadCustomers();
@@ -800,10 +820,20 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     await this.loadBlacklists();
     await this.loadStorageAccounts();
     const res = await this.api.list({
-      search: this.search,
+      search: filters.search,
       limit: this.listLimit,
     });
     return res?.data?.items ?? [];
+  }
+
+  private currentPabxAccountFilters(): PabxAccountFilters {
+    return {
+      search: this.searchInput.trim(),
+    };
+  }
+
+  private samePabxAccountFilters(left: PabxAccountFilters, right: PabxAccountFilters) {
+    return left.search === right.search;
   }
 
   private parseCodecs(value: string | null | undefined, fallback: string[]): string[] {
