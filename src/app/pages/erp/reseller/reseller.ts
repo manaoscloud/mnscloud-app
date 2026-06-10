@@ -103,9 +103,11 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   resellers: Reseller[] = [];
   dataSource = new MatTableDataSource<Reseller>([]);
   displayedColumns: string[] = ['select', 'name', 'type', 'document', 'email', 'status', 'actions'];
+  private readonly appliedSearch = signal('');
   private readonly resellersResource = resource({
+    params: () => this.appliedSearch(),
     defaultValue: [] as Reseller[],
-    loader: () => this.fetchResellers(),
+    loader: ({ params }) => this.fetchResellers(params),
   });
   get loading() {
     return this.resellersResource.isLoading();
@@ -205,14 +207,23 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.resellersResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.resellersResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.resellersResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.resellersResource.reload();
+    }
   }
 
   refreshList() {
@@ -227,11 +238,11 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchResellers() {
+  private async fetchResellers(search: string) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (this.search) params.set('q', this.search);
+    if (search) params.set('q', search);
     const res = await this.api.get<any>(`erp/resellers?${params.toString()}`);
     return res?.data?.items ?? [];
   }

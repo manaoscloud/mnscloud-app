@@ -108,9 +108,11 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   complexes: ErpComplex[] = [];
   dataSource = new MatTableDataSource<ErpComplex>([]);
   displayedColumns: string[] = ['select', 'name', 'document', 'cityState', 'status', 'actions'];
+  private readonly appliedSearch = signal('');
   private readonly complexesResource = resource({
+    params: () => this.appliedSearch(),
     defaultValue: [] as ErpComplex[],
-    loader: () => this.fetchComplexes(),
+    loader: ({ params }) => this.fetchComplexes(params),
   });
   get loading() {
     return this.complexesResource.isLoading();
@@ -212,14 +214,23 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.complexesResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.complexesResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.complexesResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.complexesResource.reload();
+    }
   }
 
   refreshList() {
@@ -234,11 +245,11 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchComplexes() {
+  private async fetchComplexes(search: string) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (this.search) params.set('q', this.search);
+    if (search) params.set('q', search);
     const res = await this.api.get<any>(`erp/complexes?${params.toString()}`);
     return res?.data?.items ?? [];
   }

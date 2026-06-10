@@ -103,9 +103,11 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   carriers: Carrier[] = [];
   dataSource = new MatTableDataSource<Carrier>([]);
   displayedColumns: string[] = ['select', 'name', 'type', 'document', 'email', 'status', 'actions'];
+  private readonly appliedSearch = signal('');
   private readonly carriersResource = resource({
+    params: () => this.appliedSearch(),
     defaultValue: [] as Carrier[],
-    loader: () => this.fetchCarriers(),
+    loader: ({ params }) => this.fetchCarriers(params),
   });
   get loading() {
     return this.carriersResource.isLoading();
@@ -205,14 +207,23 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.carriersResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.carriersResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.carriersResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.carriersResource.reload();
+    }
   }
 
   refreshList() {
@@ -227,11 +238,11 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchCarriers() {
+  private async fetchCarriers(search: string) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (this.search) params.set('q', this.search);
+    if (search) params.set('q', search);
     const res = await this.api.get<any>(`erp/carriers?${params.toString()}`);
     return res?.data?.items ?? [];
   }
