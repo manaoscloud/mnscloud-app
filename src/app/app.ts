@@ -66,8 +66,13 @@ import { RouteLoader } from './shared/route-loader/route-loader';
 export class App implements AfterViewInit {
   private router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private hideLoaderTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly loader = viewChild.required(RouteLoader);
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.clearLoaderHideTimer());
+  }
 
   ngAfterViewInit() {
     this.router.events
@@ -82,9 +87,23 @@ export class App implements AfterViewInit {
           event instanceof NavigationCancel ||
           event instanceof NavigationError
         ) {
-          setTimeout(() => this.loader()?.hide?.(), 200);
+          this.scheduleLoaderHide();
         }
       });
+  }
+
+  private scheduleLoaderHide() {
+    this.clearLoaderHideTimer();
+    this.hideLoaderTimer = setTimeout(() => {
+      this.hideLoaderTimer = null;
+      this.loader()?.hide?.();
+    }, 200);
+  }
+
+  private clearLoaderHideTimer() {
+    if (!this.hideLoaderTimer) return;
+    clearTimeout(this.hideLoaderTimer);
+    this.hideLoaderTimer = null;
   }
 
   getRouteAnimationState(outlet: RouterOutlet): string {

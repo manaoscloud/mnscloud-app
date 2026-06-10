@@ -60,6 +60,7 @@ export class ResetPasswordComponent {
   readonly showPassword = signal(false);
 
   readonly formValid = signal(false);
+  private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly form = this.fb.group(
     {
@@ -79,6 +80,7 @@ export class ResetPasswordComponent {
     this.form.statusChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.formValid.set(this.form.valid));
+    this.destroyRef.onDestroy(() => this.clearRedirectTimer());
   }
 
   readonly canSubmit = computed(() => this.formValid() && !this.isLoading());
@@ -114,9 +116,7 @@ export class ResetPasswordComponent {
 
       this.success.set(true);
 
-      setTimeout(() => {
-        this.router.navigate(['/signin']);
-      }, 2000);
+      this.scheduleRedirect();
     } catch (err: any) {
       const msg =
         err?.error?.message ||
@@ -127,5 +127,19 @@ export class ResetPasswordComponent {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private scheduleRedirect() {
+    this.clearRedirectTimer();
+    this.redirectTimer = setTimeout(() => {
+      this.redirectTimer = null;
+      void this.router.navigate(['/signin']);
+    }, 2000);
+  }
+
+  private clearRedirectTimer() {
+    if (!this.redirectTimer) return;
+    clearTimeout(this.redirectTimer);
+    this.redirectTimer = null;
   }
 }

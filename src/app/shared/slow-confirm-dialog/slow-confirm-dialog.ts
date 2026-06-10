@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,13 +34,25 @@ export type SlowConfirmDialogData = {
 export class SlowConfirmDialogComponent {
   readonly data = inject<SlowConfirmDialogData>(MAT_DIALOG_DATA);
   readonly dialogRef = inject<MatDialogRef<SlowConfirmDialogComponent>>(MatDialogRef);
+  private readonly destroyRef = inject(DestroyRef);
+  private readyTimer: ReturnType<typeof setTimeout> | null = null;
   readonly ready = signal(false);
 
   constructor() {
-    setTimeout(() => this.ready.set(true), 700);
+    this.readyTimer = setTimeout(() => {
+      this.readyTimer = null;
+      this.ready.set(true);
+    }, 700);
+    this.destroyRef.onDestroy(() => this.clearReadyTimer());
   }
 
   confirm() {
     this.dialogRef.close(true);
+  }
+
+  private clearReadyTimer() {
+    if (!this.readyTimer) return;
+    clearTimeout(this.readyTimer);
+    this.readyTimer = null;
   }
 }

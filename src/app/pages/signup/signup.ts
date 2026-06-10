@@ -88,11 +88,13 @@ export class Signup implements OnInit, AfterViewInit {
     captchaSiteKey: null,
   });
   readonly captchaToken = signal<string | null>(null);
+  private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
+    this.destroyRef.onDestroy(() => this.clearRedirectTimer());
   }
 
   ngOnInit() {
@@ -147,7 +149,7 @@ export class Signup implements OnInit, AfterViewInit {
       this.form.reset();
       this.captchaToken.set(null);
       await this.renderCaptcha(true);
-      setTimeout(() => void this.router.navigate(['/signin']), 2500);
+      this.scheduleRedirect();
     } catch (err: any) {
       const msg = err?.error?.error || err?.message || 'Registration failed.';
       this.apiError.set(msg);
@@ -155,6 +157,20 @@ export class Signup implements OnInit, AfterViewInit {
     }
 
     this.isLoading.set(false);
+  }
+
+  private scheduleRedirect() {
+    this.clearRedirectTimer();
+    this.redirectTimer = setTimeout(() => {
+      this.redirectTimer = null;
+      void this.router.navigate(['/signin']);
+    }, 2500);
+  }
+
+  private clearRedirectTimer() {
+    if (!this.redirectTimer) return;
+    clearTimeout(this.redirectTimer);
+    this.redirectTimer = null;
   }
 
   togglePassword(event?: MouseEvent) {

@@ -1,5 +1,5 @@
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { Subscription } from 'rxjs';
+import { Subscription, takeUntil } from 'rxjs';
 
 export type CrudDialogBinding = {
   ref: MatDialogRef<unknown>;
@@ -72,15 +72,18 @@ export function openCrudTemplateDialog(
   const subscriptions = new Subscription();
 
   subscriptions.add(
-    ref.keydownEvents().subscribe((event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      if (options.onEscape) {
-        options.onEscape();
-      } else {
-        ref.close();
-      }
-    }),
+    ref
+      .keydownEvents()
+      .pipe(takeUntil(ref.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        if (options.onEscape) {
+          options.onEscape();
+        } else {
+          ref.close();
+        }
+      }),
   );
 
   const updateLayout = () => {
