@@ -26,7 +26,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -268,7 +268,7 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pop-form-dialog',
     });
-    this.popFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.popFormDialogRef.keydownEvents().pipe(takeUntil(this.popFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closePopDialog();
       }

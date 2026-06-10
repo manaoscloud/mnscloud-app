@@ -33,7 +33,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -424,7 +424,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
       'voip-domain-form-dialog',
     );
     this.domainFormDialogRef = this.dialogBinding.ref;
-    this.domainFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.domainFormDialogRef.keydownEvents().pipe(takeUntil(this.domainFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

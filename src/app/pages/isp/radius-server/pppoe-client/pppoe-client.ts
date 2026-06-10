@@ -26,7 +26,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
@@ -286,7 +286,7 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pppoe-client-form-dialog',
     });
-    this.pppoeClientFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.pppoeClientFormDialogRef.keydownEvents().pipe(takeUntil(this.pppoeClientFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closePppoeClientDialog();
       }

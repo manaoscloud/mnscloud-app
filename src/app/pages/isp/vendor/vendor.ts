@@ -14,7 +14,7 @@ import {
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom, merge } from 'rxjs';
+import { firstValueFrom, merge, takeUntil } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -334,7 +334,7 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-vendor-form-dialog',
     });
-    this.vendorFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.vendorFormDialogRef.keydownEvents().pipe(takeUntil(this.vendorFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeVendorDialog();
       }

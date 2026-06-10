@@ -28,7 +28,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -197,7 +197,7 @@ export class SupportTicketChannelsPage implements AfterViewInit, OnDestroy {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.ticketChannelFormDialogRef.keydownEvents().subscribe((event) => {
+    this.ticketChannelFormDialogRef.keydownEvents().pipe(takeUntil(this.ticketChannelFormDialogRef.afterClosed())).subscribe((event) => {
       if (event.key === 'Escape') this.ticketChannelFormDialogRef?.close();
     });
     this.startDialogViewportObserver();

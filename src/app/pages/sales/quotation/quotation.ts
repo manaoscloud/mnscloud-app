@@ -29,7 +29,7 @@ import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
@@ -567,7 +567,7 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
       'sale-quotation-form-dialog',
     );
     this.quotationFormDialogRef = this.dialogBinding.ref;
-    this.quotationFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.quotationFormDialogRef.keydownEvents().pipe(takeUntil(this.quotationFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

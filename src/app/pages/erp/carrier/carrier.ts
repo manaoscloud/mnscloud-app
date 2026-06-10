@@ -32,7 +32,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge } from 'rxjs';
+import { firstValueFrom, merge, takeUntil } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ApiService } from '../../../services/api.service';
@@ -549,7 +549,7 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-carrier-form-dialog',
     });
-    this.carrierFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.carrierFormDialogRef.keydownEvents().pipe(takeUntil(this.carrierFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeCarrierDialog();
       }

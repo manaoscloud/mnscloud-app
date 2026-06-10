@@ -34,7 +34,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, merge } from 'rxjs';
+import { firstValueFrom, merge, takeUntil } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ApiService } from '../../../services/api.service';
@@ -562,7 +562,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.ticketFormDialogRef.keydownEvents().subscribe((event) => {
+    this.ticketFormDialogRef.keydownEvents().pipe(takeUntil(this.ticketFormDialogRef.afterClosed())).subscribe((event) => {
       if (event.key === 'Escape') this.ticketFormDialogRef?.close();
     });
     this.startDialogViewportObserver();

@@ -26,7 +26,7 @@ import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
@@ -603,7 +603,7 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
       'sale-product-form-dialog',
     );
     this.productFormDialogRef = this.dialogBinding.ref;
-    this.productFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.productFormDialogRef.keydownEvents().pipe(takeUntil(this.productFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

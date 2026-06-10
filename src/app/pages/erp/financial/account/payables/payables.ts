@@ -27,7 +27,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -674,7 +674,7 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
       'erp-payable-form-dialog',
     );
     this.payableFormDialogRef = this.dialogBinding.ref;
-    this.payableFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.payableFormDialogRef.keydownEvents().pipe(takeUntil(this.payableFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.cancelPayableForm();
       }
@@ -703,7 +703,7 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
       'erp-payable-form-dialog',
     );
     this.payableSettleDialogRef = this.settleDialogBinding.ref;
-    this.payableSettleDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.payableSettleDialogRef.keydownEvents().pipe(takeUntil(this.payableSettleDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeSettleDialog();
       }

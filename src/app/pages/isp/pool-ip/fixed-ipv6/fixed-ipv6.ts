@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -259,7 +259,7 @@ export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-fixed-ipv6-form-dialog',
     });
-    this.formDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.formDialogRef.keydownEvents().pipe(takeUntil(this.formDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeDialog();
       }

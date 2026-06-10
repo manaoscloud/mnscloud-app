@@ -32,7 +32,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge } from 'rxjs';
+import { firstValueFrom, merge, takeUntil } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ApiService } from '../../../services/api.service';
@@ -549,7 +549,7 @@ export class ErpResellerPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-reseller-form-dialog',
     });
-    this.resellerFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.resellerFormDialogRef.keydownEvents().pipe(takeUntil(this.resellerFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeResellerDialog();
       }

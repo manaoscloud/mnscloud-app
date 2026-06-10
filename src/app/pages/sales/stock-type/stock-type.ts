@@ -24,7 +24,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
@@ -219,7 +219,7 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
       'sale-stock-type-form-dialog',
     );
     this.stockTypeFormDialogRef = this.dialogBinding.ref;
-    this.stockTypeFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.stockTypeFormDialogRef.keydownEvents().pipe(takeUntil(this.stockTypeFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

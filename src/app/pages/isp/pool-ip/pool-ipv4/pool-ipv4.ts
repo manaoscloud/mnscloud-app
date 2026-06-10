@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -407,7 +407,7 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pool-ipv4-form-dialog',
     });
-    this.poolDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.poolDialogRef.keydownEvents().pipe(takeUntil(this.poolDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.closePoolDialog();
     });
     this.startDialogViewportObserver();
@@ -435,7 +435,7 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pool-ipv4-network-form-dialog',
     });
-    this.networkDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.networkDialogRef.keydownEvents().pipe(takeUntil(this.networkDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.closeNetworkDialog();
     });
     this.startDialogViewportObserver();

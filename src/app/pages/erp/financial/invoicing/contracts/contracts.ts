@@ -29,7 +29,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -620,7 +620,7 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
       restoreFocus: true,
       panelClass: 'erp-contract-form-dialog',
     });
-    this.contractFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.contractFormDialogRef.keydownEvents().pipe(takeUntil(this.contractFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.cancelContractForm();
       }

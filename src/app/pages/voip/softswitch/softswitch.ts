@@ -32,7 +32,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -494,7 +494,7 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
       { onEscape: () => this.cancelEdit() },
     );
     this.softswitchFormDialogRef = this.dialogBinding.ref;
-    this.softswitchFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.softswitchFormDialogRef.keydownEvents().pipe(takeUntil(this.softswitchFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

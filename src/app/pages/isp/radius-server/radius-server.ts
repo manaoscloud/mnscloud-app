@@ -29,7 +29,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
@@ -315,7 +315,7 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-radius-server-form-dialog',
     });
-    this.radiusServerFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.radiusServerFormDialogRef.keydownEvents().pipe(takeUntil(this.radiusServerFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeRadiusServerDialog();
       }

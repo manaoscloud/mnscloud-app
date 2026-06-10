@@ -27,7 +27,7 @@ import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -335,7 +335,7 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-due-day-form-dialog',
     });
-    this.dueDayFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.dueDayFormDialogRef.keydownEvents().pipe(takeUntil(this.dueDayFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.cancelDueDayForm();
       }

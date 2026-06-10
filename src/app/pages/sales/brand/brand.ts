@@ -24,7 +24,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
@@ -198,7 +198,7 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
       'sale-brand-form-dialog',
     );
     this.brandFormDialogRef = this.dialogBinding.ref;
-    this.brandFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.brandFormDialogRef.keydownEvents().pipe(takeUntil(this.brandFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

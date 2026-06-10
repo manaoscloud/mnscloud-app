@@ -32,7 +32,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
@@ -1047,7 +1047,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
       'voip-pabx-routing-dialog',
     );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.closeDialog();
     });
   }

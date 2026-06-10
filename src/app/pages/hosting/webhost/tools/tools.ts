@@ -29,7 +29,7 @@ import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -680,7 +680,7 @@ export class HostingWebhostToolsPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'webhost-tool-dialog',
     });
-    this.dialogRef.keydownEvents().subscribe((event) => {
+    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event) => {
       if (event.key === 'Escape') this.closeDialog();
     });
     this.startDialogViewportObserver();

@@ -32,7 +32,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
@@ -468,7 +468,7 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
       'voip-did-operator-form-dialog',
     );
     this.operatorFormDialogRef = this.dialogBinding.ref;
-    this.operatorFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.operatorFormDialogRef.keydownEvents().pipe(takeUntil(this.operatorFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

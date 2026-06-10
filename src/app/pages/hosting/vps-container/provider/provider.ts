@@ -31,7 +31,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -670,7 +670,7 @@ export class HostingVpsContainerProviderPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'hosting-vps-container-provider-dialog',
     });
-    this.dialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelForm();
     });
     this.startDialogViewportObserver();

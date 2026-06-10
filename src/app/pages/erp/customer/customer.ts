@@ -32,7 +32,7 @@ import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge } from 'rxjs';
+import { firstValueFrom, merge, takeUntil } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ApiService } from '../../../services/api.service';
@@ -654,7 +654,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-customer-form-dialog',
     });
-    this.customerFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.customerFormDialogRef.keydownEvents().pipe(takeUntil(this.customerFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeCustomerDialog();
       }

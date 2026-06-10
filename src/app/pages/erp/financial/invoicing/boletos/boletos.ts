@@ -29,7 +29,7 @@ import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -530,7 +530,7 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-boleto-form-dialog',
     });
-    this.boletoFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.boletoFormDialogRef.keydownEvents().pipe(takeUntil(this.boletoFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.cancelBoletoForm();
       }

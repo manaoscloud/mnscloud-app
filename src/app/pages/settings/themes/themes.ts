@@ -36,7 +36,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
@@ -703,7 +703,7 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
       domainFormDialog,
       'settings-theme-domain-dialog',
     );
-    this.dialogBinding.ref.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.dialogBinding.ref.keydownEvents().pipe(takeUntil(this.dialogBinding.ref.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelForm();
     });
     this.dialogBinding.ref.afterClosed().subscribe(() => {

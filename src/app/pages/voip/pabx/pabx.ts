@@ -30,7 +30,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -905,7 +905,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
       'voip-pabx-form-dialog',
     );
     this.pabxFormDialogRef = this.dialogBinding.ref;
-    this.pabxFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.pabxFormDialogRef.keydownEvents().pipe(takeUntil(this.pabxFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

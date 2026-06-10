@@ -26,7 +26,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -421,7 +421,7 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-nas-form-dialog',
     });
-    this.nasFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.nasFormDialogRef.keydownEvents().pipe(takeUntil(this.nasFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.closeNasDialog();
       }

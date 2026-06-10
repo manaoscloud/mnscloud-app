@@ -30,7 +30,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -639,7 +639,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     if (!didFormDialog || this.didFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(this.dialog, didFormDialog, 'voip-did-form-dialog');
     this.didFormDialogRef = this.dialogBinding.ref;
-    this.didFormDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.didFormDialogRef.keydownEvents().pipe(takeUntil(this.didFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') this.cancelEdit();
     });
   }

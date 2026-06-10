@@ -31,7 +31,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -319,7 +319,7 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.teamFormDialogRef.keydownEvents().subscribe((event) => {
+    this.teamFormDialogRef.keydownEvents().pipe(takeUntil(this.teamFormDialogRef.afterClosed())).subscribe((event) => {
       if (event.key === 'Escape') this.teamFormDialogRef?.close();
     });
     this.startDialogViewportObserver();

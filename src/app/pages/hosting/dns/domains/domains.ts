@@ -27,7 +27,7 @@ import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -597,7 +597,7 @@ export class HostingDnsDomainsPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'hosting-dns-domain-form-dialog',
     });
-    this.domainDialogRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+    this.domainDialogRef.keydownEvents().pipe(takeUntil(this.domainDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         this.cancelForm();
       }
