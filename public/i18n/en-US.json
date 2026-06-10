@@ -1542,5 +1542,11 @@
   "WhatsApp number": "WhatsApp number",
   "You must enter a value": "You must enter a value",
   "You were invited to join:": "You were invited to join:",
-  "Zip": "Zip"
+  "Zip": "Zip",
+  "Top up": "Top up",
+  "New subscription": "New subscription",
+  "Module subscription": "Module subscription",
+  "This module is contracted once per tenant. It does not require resource details.": "This module is contracted once per tenant. It does not require resource details.",
+  "The module will be enabled for this tenant after confirmation.": "The module will be enabled for this tenant after confirmation.",
+  "Already subscribed": "Already subscribed"
 }

@@ -1542,5 +1542,11 @@
   "WhatsApp number": "Número do WhatsApp",
   "You must enter a value": "Você deve informar um valor",
   "You were invited to join:": "Você foi convidado a participar:",
-  "Zip": "CEP"
+  "Zip": "CEP",
+  "Top up": "Recarga",
+  "New subscription": "Nova assinatura",
+  "Module subscription": "Assinatura de módulo",
+  "This module is contracted once per tenant. It does not require resource details.": "Este módulo é contratado uma vez por tenant. Não exige detalhes de recurso.",
+  "The module will be enabled for this tenant after confirmation.": "O módulo será liberado para este tenant após a confirmação.",
+  "Already subscribed": "Já assinado"
 }

@@ -9,7 +9,7 @@
         @if (!isSection('dashboard')) {
           <button mat-stroked-button color="primary" type="button" (click)="openTopupDialog()">
             <mat-icon>add_card</mat-icon>
-            Add balance
+            {{ 'Top up' | transloco }}
           </button>
         }
         <button mat-stroked-button color="primary" type="button" (click)="refresh()">
@@ -61,7 +61,7 @@
           <strong>{{ pendingTopupCount }}</strong>
           <button mat-stroked-button color="primary" type="button" (click)="openTopupDialog()">
             <mat-icon>add_card</mat-icon>
-            Add balance
+            {{ 'Top up' | transloco }}
           </button>
         </article>
       </div>
@@ -130,8 +130,13 @@
               <button
                 mat-icon-button
                 type="button"
-                [matTooltip]="'Subscribe' | transloco"
+                [matTooltip]="
+                  isCatalogItemAlreadySubscribed(row)
+                    ? ('Already subscribed' | transloco)
+                    : ('Subscribe' | transloco)
+                "
                 (click)="openSubscribeDialog(row)"
+                [disabled]="isCatalogItemAlreadySubscribed(row)"
               >
                 <mat-icon>add_shopping_cart</mat-icon>
               </button>
@@ -387,7 +392,7 @@
   <div class="crud-dialog billing-dialog">
     <div class="dialog-header">
       <div>
-        <h2>New subscription</h2>
+        <h2>{{ 'New subscription' | transloco }}</h2>
         <p>{{ selectedCatalogItem()?.BprName }}</p>
       </div>
     </div>
@@ -396,28 +401,36 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid" [formGroup]="subscriptionForm" (ngSubmit)="saveSubscription()">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Quantity' | transloco }}</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  min="0.000001"
-                  step="0.000001"
-                  formControlName="quantity"
-                />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Resource type' | transloco }}</mat-label>
-                <input matInput formControlName="resourceType" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Resource UUID' | transloco }}</mat-label>
-                <input matInput formControlName="resourceUUID" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Resource label' | transloco }}</mat-label>
-                <input matInput formControlName="resourceLabel" />
-              </mat-form-field>
+              @if (isModuleCatalogItem()) {
+                <section class="metric-card span-2">
+                  <span>{{ 'Module subscription' | transloco }}</span>
+                  <strong>{{
+                    selectedCatalogItem()?.BprName || selectedCatalogItem()?.BprCode
+                  }}</strong>
+                  <small>
+                    {{
+                      'This module is contracted once per tenant. It does not require resource details.'
+                        | transloco
+                    }}
+                  </small>
+                  <small>
+                    {{
+                      'The module will be enabled for this tenant after confirmation.' | transloco
+                    }}
+                  </small>
+                </section>
+              } @else {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ 'Quantity' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="0.000001"
+                    step="0.000001"
+                    formControlName="quantity"
+                  />
+                </mat-form-field>
+              }
             </form>
           </div>
         </mat-tab>
@@ -427,7 +440,10 @@
       <div class="secondary-actions">
         <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
       </div>
-      <div class="primary-actions save-split-action" [class.is-single-action]="false">
+      <div
+        class="primary-actions save-split-action"
+        [class.is-single-action]="isModuleCatalogItem()"
+      >
         <button
           class="dialog-action-button save-main-button"
           mat-flat-button
@@ -439,18 +455,20 @@
           <mat-icon>save</mat-icon>
           Save
         </button>
-        <button
-          class="save-more-button"
-          mat-flat-button
-          color="primary"
-          [matMenuTriggerFor]="subscriptionSaveMenu"
-          [disabled]="saving()"
-          type="button"
-          aria-label="More save actions"
-          [matTooltip]="'More save actions' | transloco"
-        >
-          <mat-icon>expand_more</mat-icon>
-        </button>
+        @if (!isModuleCatalogItem()) {
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            [matMenuTriggerFor]="subscriptionSaveMenu"
+            [disabled]="saving()"
+            type="button"
+            aria-label="More save actions"
+            [matTooltip]="'More save actions' | transloco"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        }
       </div>
       <mat-menu
         #subscriptionSaveMenu="matMenu"
@@ -476,7 +494,7 @@
   <div class="crud-dialog billing-dialog compact-dialog">
     <div class="dialog-header">
       <div>
-        <h2>Add balance</h2>
+        <h2>{{ 'Top up' | transloco }}</h2>
         <p>Create a payment request. Wallet credit is applied only after confirmation.</p>
       </div>
     </div>

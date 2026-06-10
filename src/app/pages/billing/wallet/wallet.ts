@@ -133,9 +133,6 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   readonly subscriptionForm = this.fb.nonNullable.group({
     priceUUID: ['', Validators.required],
     quantity: [1, [Validators.required, Validators.min(0.000001)]],
-    resourceType: [''],
-    resourceUUID: [''],
-    resourceLabel: [''],
   });
 
   readonly topupForm = this.fb.nonNullable.group({
@@ -294,9 +291,6 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.subscriptionForm.reset({
       priceUUID: row.BpcUUID,
       quantity: 1,
-      resourceType: '',
-      resourceUUID: '',
-      resourceLabel: '',
     });
     const subscriptionDialog = this.subscriptionDialog();
     if (!subscriptionDialog) return;
@@ -319,14 +313,16 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
 
   async saveSubscription(keepOpen = false) {
     if (this.subscriptionForm.invalid || this.saving()) return;
+    const selected = this.selectedCatalogItem();
+    const showQuantity = this.shouldShowSubscriptionQuantity();
     this.saving.set(true);
     try {
       await this.billing.createSubscription({
         priceUUID: this.subscriptionForm.value.priceUUID,
-        quantity: this.subscriptionForm.value.quantity,
-        resourceType: this.emptyToNull(this.subscriptionForm.value.resourceType),
-        resourceUUID: this.emptyToNull(this.subscriptionForm.value.resourceUUID),
-        resourceLabel: this.emptyToNull(this.subscriptionForm.value.resourceLabel),
+        quantity: showQuantity ? this.subscriptionForm.value.quantity : 1,
+        resourceType: null,
+        resourceUUID: null,
+        resourceLabel: selected?.BprName || selected?.BprCode || null,
       });
       this.snack.success('Subscription created.');
       if (!keepOpen) this.closeSubscriptionDialog();
@@ -372,6 +368,27 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
 
   statusLabel(value: unknown) {
     return String(value ?? '').replace(/_/g, ' ');
+  }
+
+  billingScopeLabel(row: BillingCatalogItem | null = this.selectedCatalogItem()) {
+    return String(row?.BprBillingScope ?? '').toUpperCase();
+  }
+
+  isModuleCatalogItem(row: BillingCatalogItem | null = this.selectedCatalogItem()) {
+    return this.billingScopeLabel(row) === 'MODULE';
+  }
+
+  shouldShowSubscriptionQuantity() {
+    return !this.isModuleCatalogItem();
+  }
+
+  isCatalogItemAlreadySubscribed(row: BillingCatalogItem) {
+    if (!this.isModuleCatalogItem(row)) return false;
+    return this.subscriptionSource.data.some(
+      (subscription) =>
+        subscription.BsuStatus === 'ACTIVE' &&
+        (subscription.BprCode === row.BprCode || subscription.BpcName === row.BpcName),
+    );
   }
 
   closeDialog() {
@@ -502,9 +519,6 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.subscriptionForm.reset({
       priceUUID: item?.BpcUUID ?? '',
       quantity: 1,
-      resourceType: '',
-      resourceUUID: '',
-      resourceLabel: '',
     });
   }
 
@@ -526,5 +540,4 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       if (!valid.has(uuid)) this.selectedSubscriptionUUIDs.delete(uuid);
     });
   }
-
 }
