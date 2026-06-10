@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -90,6 +91,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly resource = signal<PabxRoutingResource>('external');
   private readonly mutating = signal(false);
@@ -219,7 +221,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     this.dataSource.filterPredicate = (row, filter) =>
       JSON.stringify(row).toLowerCase().includes(filter.trim().toLowerCase());
     this.route.data
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => {
         this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
         this.resetForm();

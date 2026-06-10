@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   TemplateRef,
@@ -237,6 +238,7 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly currentResource = signal<SbcResource>('providers');
   readonly currentScopeMaster = signal(false);
   readonly isMaster = computed(() => this.currentScopeMaster());
@@ -292,7 +294,7 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
 
   ngOnInit() {
     this.route.data
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => {
         this.currentResource.set((data['resource'] ?? 'providers') as SbcResource);
         this.currentScopeMaster.set(data['scope'] === 'master');

@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   OnDestroy,
   TemplateRef,
   effect,
@@ -71,6 +72,7 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -148,7 +150,7 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
       this.vendorForm.controls.supportEmail.statusChanges,
       this.vendorForm.controls.supportEmail.valueChanges,
     )
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateSupportEmailError());
     this.updateSupportEmailError();
   }

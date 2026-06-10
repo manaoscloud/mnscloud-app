@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   TemplateRef,
@@ -84,6 +85,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
@@ -138,7 +140,7 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
 
   ngOnInit() {
     this.route.data
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => {
         this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
         this.domainsResource.reload();

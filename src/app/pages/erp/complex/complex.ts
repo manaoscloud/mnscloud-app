@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   effect,
   OnDestroy,
@@ -103,6 +104,7 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   private snack = inject(SnackbarService);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 200;
 
   complexes: ErpComplex[] = [];
@@ -170,7 +172,7 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
   }
 

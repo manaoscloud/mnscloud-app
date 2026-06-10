@@ -1,4 +1,11 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -42,6 +49,7 @@ export class ResetPasswordComponent {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   // 🔥 Agora só token — email foi removido do fluxo
   private token = this.route.snapshot.queryParamMap.get('token');
@@ -69,7 +77,7 @@ export class ResetPasswordComponent {
 
   constructor() {
     this.form.statusChanges
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.formValid.set(this.form.valid));
   }
 

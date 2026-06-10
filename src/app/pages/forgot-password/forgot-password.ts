@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -44,6 +44,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 export class ForgotPasswordComponent {
   private fb = inject(FormBuilder);
   private api = inject(ApiService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -56,7 +57,7 @@ export class ForgotPasswordComponent {
 
   constructor() {
     merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
   }
 

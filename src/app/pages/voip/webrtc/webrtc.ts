@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   TemplateRef,
@@ -213,6 +214,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly currentResource = signal<WebRtcResource>('servers');
   readonly scope = signal<WebRtcScope>('tenant');
   readonly config = computed(() => CONFIGS[this.currentResource()]);
@@ -273,7 +275,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
 
   ngOnInit() {
     this.route.data
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => {
         this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
         this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');

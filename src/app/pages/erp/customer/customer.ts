@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   OnDestroy,
   OnInit,
@@ -211,6 +212,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   private snack = inject(SnackbarService);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
   private map: any;
   private mapMarker: any;
   private mapboxgl?: any;
@@ -326,7 +328,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
   }
 

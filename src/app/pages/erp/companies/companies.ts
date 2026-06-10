@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   effect,
   OnDestroy,
   OnInit,
@@ -91,6 +92,7 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 200;
 
   companies: Company[] = [];
@@ -164,7 +166,7 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
   }
 

@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
   inject,
@@ -63,6 +64,7 @@ export class Signup implements OnInit, AfterViewInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly captchaContainer = viewChild<ElementRef<HTMLDivElement>>('captchaContainer');
 
@@ -89,7 +91,7 @@ export class Signup implements OnInit, AfterViewInit {
 
   constructor() {
     merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
   }
 

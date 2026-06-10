@@ -1,6 +1,7 @@
 import { NgClass, JsonPipe, DatePipe } from '@angular/common';
 import {
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -204,6 +205,7 @@ export class CyberSecurityPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly listDialog = viewChild<TemplateRef<unknown>>('listDialog');
   readonly jobDialog = viewChild<TemplateRef<unknown>>('jobDialog');
@@ -525,7 +527,7 @@ export class CyberSecurityPage implements OnInit {
       }
     };
     this.route.paramMap
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         this.activeSection.set(this.normalizeSection(params.get('section')));
       });

@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   TemplateRef,
@@ -140,6 +141,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   tickets: Ticket[] = [];
   dataSource = new MatTableDataSource<Ticket>([]);
@@ -266,7 +268,7 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
   }
 
