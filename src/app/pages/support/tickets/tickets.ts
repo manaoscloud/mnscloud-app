@@ -90,6 +90,20 @@ type CustomerOption = { value: string; label: string };
 
 type ChannelOption = { value: string; label: string };
 
+type TicketFilters = {
+  status: string;
+  priority: string;
+  customerUUID: string;
+  channelUUID: string;
+};
+
+const emptyTicketFilters = (): TicketFilters => ({
+  status: '',
+  priority: '',
+  customerUUID: '',
+  channelUUID: '',
+});
+
 @Component({
   selector: 'app-support-tickets',
   standalone: true,
@@ -143,9 +157,11 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   searchInput = '';
   error = '';
   private readonly saving = signal(false);
+  private readonly appliedFilters = signal<TicketFilters>(emptyTicketFilters());
   private readonly ticketsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as Ticket[],
-    loader: () => this.fetchTickets(),
+    loader: ({ params }) => this.fetchTickets(params),
   });
   readonly loading = computed(() => this.ticketsResource.isLoading() || this.saving());
   private readonly ticketsEffect = effect(() => {
@@ -330,6 +346,12 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
+    const nextFilters = this.currentTicketFilters();
+    if (this.sameTicketFilters(nextFilters, this.appliedFilters())) {
+      this.ticketsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
     this.applyFilter();
   }
 
@@ -340,6 +362,12 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     this.filters.priority = '';
     this.filters.customerUUID = '';
     this.filters.channelUUID = '';
+    const nextFilters = emptyTicketFilters();
+    if (this.sameTicketFilters(nextFilters, this.appliedFilters())) {
+      this.ticketsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
     this.applyFilter();
   }
 
@@ -459,16 +487,34 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchTickets(): Promise<Ticket[]> {
+  private async fetchTickets(filters: TicketFilters): Promise<Ticket[]> {
     this.error = '';
     const params = new URLSearchParams();
-    if (this.filters.status) params.set('status', this.filters.status);
-    if (this.filters.priority) params.set('priority', this.filters.priority);
-    if (this.filters.customerUUID) params.set('customerUUID', this.filters.customerUUID);
-    if (this.filters.channelUUID) params.set('channelUUID', this.filters.channelUUID);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.priority) params.set('priority', filters.priority);
+    if (filters.customerUUID) params.set('customerUUID', filters.customerUUID);
+    if (filters.channelUUID) params.set('channelUUID', filters.channelUUID);
     const query = params.toString();
     const res = await this.api.get<any>(`support/tickets${query ? `?${query}` : ''}`);
     return res?.data?.items ?? [];
+  }
+
+  private currentTicketFilters(): TicketFilters {
+    return {
+      status: this.filters.status,
+      priority: this.filters.priority,
+      customerUUID: this.filters.customerUUID,
+      channelUUID: this.filters.channelUUID,
+    };
+  }
+
+  private sameTicketFilters(left: TicketFilters, right: TicketFilters) {
+    return (
+      left.status === right.status &&
+      left.priority === right.priority &&
+      left.customerUUID === right.customerUUID &&
+      left.channelUUID === right.channelUUID
+    );
   }
 
   private resetForm() {
