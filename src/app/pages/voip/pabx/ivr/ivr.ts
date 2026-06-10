@@ -97,6 +97,7 @@ export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {
   readonly optionSaving = signal(false);
   readonly searchInput = signal('');
   readonly search = signal('');
+  private readonly appliedSearch = signal('');
   readonly pabxSearch = signal('');
   readonly mediaFileSearch = signal('');
   readonly optionTargetSearch = signal('');
@@ -109,8 +110,9 @@ export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {
   readonly optionRows = signal<VoipPabxIvrOptionItem[]>([]);
   readonly dataSource = new MatTableDataSource<VoipPabxIvrItem>([]);
   private readonly itemsResource = resource({
+    params: () => this.appliedSearch(),
     defaultValue: [] as VoipPabxIvrItem[],
-    loader: () => this.fetchItems(),
+    loader: ({ params }) => this.fetchItems(params),
   });
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly displayedColumns = [
@@ -193,14 +195,23 @@ export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    this.itemsResource.reload();
+    const nextSearch = this.searchInput().trim();
+    this.search.set(nextSearch);
+    if (nextSearch === this.appliedSearch()) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
-    this.itemsResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.itemsResource.reload();
+    }
   }
 
   startCreate() {
@@ -486,10 +497,10 @@ export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {
     );
   }
 
-  private async fetchItems(): Promise<VoipPabxIvrItem[]> {
+  private async fetchItems(search: string): Promise<VoipPabxIvrItem[]> {
     await this.loadLookups();
     const params = new URLSearchParams({ limit: String(this.listLimit) });
-    if (this.search()) params.set('search', this.search());
+    if (search) params.set('search', search);
     const response = await this.api.list(params);
     return (response?.data?.items ?? []) as VoipPabxIvrItem[];
   }

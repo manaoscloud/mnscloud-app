@@ -52,6 +52,18 @@ type LookupOption = {
   detail?: string | null;
 };
 
+type QueueAgentFilters = {
+  search: string;
+  runtimeStatus: RuntimeStatus | '';
+  status: '1' | '0' | '';
+};
+
+const emptyQueueAgentFilters = (): QueueAgentFilters => ({
+  search: '',
+  runtimeStatus: '',
+  status: '',
+});
+
 @Component({
   selector: 'app-voip-pabx-queue-agent',
   standalone: true,
@@ -91,9 +103,11 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
+  private readonly appliedFilters = signal<QueueAgentFilters>(emptyQueueAgentFilters());
   private readonly itemsResource = resource({
+    params: () => this.appliedFilters(),
     defaultValue: [] as VoipPabxQueueAgentItem[],
-    loader: () => this.fetchItems(),
+    loader: ({ params }) => this.fetchItems(params),
   });
   private readonly mutating = signal(false);
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
@@ -192,9 +206,14 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
+    const nextFilters = this.currentQueueAgentFilters();
+    this.search.set(nextFilters.search);
     this.resetPaginator();
-    this.itemsResource.reload();
+    if (this.sameQueueAgentFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   clearSearchFilters() {
@@ -203,21 +222,42 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     this.runtimeFilter.set('');
     this.statusFilter.set('');
     this.resetPaginator();
-    this.itemsResource.reload();
+    const nextFilters = emptyQueueAgentFilters();
+    if (this.sameQueueAgentFilters(nextFilters, this.appliedFilters())) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedFilters.set(nextFilters);
+    }
   }
 
   refreshList() {
     this.itemsResource.reload();
   }
 
-  private async fetchItems(): Promise<VoipPabxQueueAgentItem[]> {
+  private async fetchItems(filters: QueueAgentFilters): Promise<VoipPabxQueueAgentItem[]> {
     const params = new URLSearchParams({ limit: String(this.listLimit) });
-    if (this.search()) params.set('search', this.search());
-    if (this.runtimeFilter()) params.set('runtimeStatus', this.runtimeFilter());
-    if (this.statusFilter()) params.set('status', this.statusFilter());
+    if (filters.search) params.set('search', filters.search);
+    if (filters.runtimeStatus) params.set('runtimeStatus', filters.runtimeStatus);
+    if (filters.status) params.set('status', filters.status);
 
     const response = await this.api.list(params);
     return response?.data?.items ?? [];
+  }
+
+  private currentQueueAgentFilters(): QueueAgentFilters {
+    return {
+      search: this.searchInput().trim(),
+      runtimeStatus: this.runtimeFilter(),
+      status: this.statusFilter(),
+    };
+  }
+
+  private sameQueueAgentFilters(left: QueueAgentFilters, right: QueueAgentFilters) {
+    return (
+      left.search === right.search &&
+      left.runtimeStatus === right.runtimeStatus &&
+      left.status === right.status
+    );
   }
 
   async loadLookups() {
