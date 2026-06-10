@@ -40,6 +40,10 @@ type BrandItem = {
   SbrDateUpdated: string | null;
 };
 
+type BrandFilters = {
+  name: string;
+};
+
 @Component({
   selector: 'app-sale-brand',
   standalone: true,
@@ -72,15 +76,17 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly brands = signal<BrandItem[]>([]);
   readonly editing = signal<BrandItem | null>(null);
-  private readonly brandsResource = resource({
-    defaultValue: [] as BrandItem[],
-    loader: () => this.fetchBrands(),
-  });
-  readonly loading = this.brandsResource.isLoading;
-
   readonly filterForm = this.fb.nonNullable.group({
     name: [''],
   });
+  private readonly brandsResource = resource({
+    defaultValue: [] as BrandItem[],
+    params: (): BrandFilters => ({
+      name: this.filterForm.controls.name.value.trim(),
+    }),
+    loader: ({ params }) => this.fetchBrands(params),
+  });
+  readonly loading = this.brandsResource.isLoading;
 
   readonly brandForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -109,12 +115,11 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
     this.dataSource.paginator = this.paginator() ?? null;
   }
 
-  private async fetchBrands() {
+  private async fetchBrands(filters: BrandFilters) {
     this.error.set(null);
 
-    const { name } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
-    if (name?.trim()) params.set('name', name.trim());
+    if (filters.name) params.set('name', filters.name);
 
     const response = await this.api.get<any>(`sale/brands?${params.toString()}`);
     return response?.data?.items ?? [];

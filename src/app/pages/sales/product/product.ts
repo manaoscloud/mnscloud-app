@@ -72,6 +72,16 @@ type ProductTypeOption = {
   label: string;
 };
 
+type ProductFilters = {
+  search: string;
+  saleUnitUUID: string;
+  saleCategoryUUID: string;
+  saleBrandUUID: string;
+  type: string;
+  status: string;
+  barcode: string;
+};
+
 const PRODUCT_TYPES: ProductTypeOption[] = [
   { value: 'COMMERCE', label: 'Commerce' },
   { value: 'SERVICE', label: 'Service' },
@@ -157,7 +167,19 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
   dataSource = new MatTableDataSource<ProductItem>([]);
   private readonly productsResource = resource({
     defaultValue: [] as ProductItem[],
-    loader: () => this.fetchProducts(),
+    params: (): ProductFilters => {
+      const values = this.filterForm.getRawValue();
+      return {
+        search: values.search.trim(),
+        saleUnitUUID: values.saleUnitUUID,
+        saleCategoryUUID: values.saleCategoryUUID,
+        saleBrandUUID: values.saleBrandUUID,
+        type: values.type,
+        status: values.status,
+        barcode: values.barcode.trim(),
+      };
+    },
+    loader: ({ params }) => this.fetchProducts(params),
   });
   private readonly syncProducts = effect(() => {
     const items = this.productsResource.value();
@@ -254,17 +276,15 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     };
   }
 
-  private async fetchProducts(): Promise<ProductItem[]> {
-    const { search, saleUnitUUID, saleCategoryUUID, saleBrandUUID, type, status, barcode } =
-      this.filterForm.getRawValue();
+  private async fetchProducts(filters: ProductFilters): Promise<ProductItem[]> {
     const params = new URLSearchParams();
-    if (search?.trim()) params.set('search', search.trim());
-    if (saleUnitUUID) params.set('saleUnitUuid', saleUnitUUID);
-    if (saleCategoryUUID) params.set('saleCategoryUuid', saleCategoryUUID);
-    if (saleBrandUUID) params.set('saleBrandUuid', saleBrandUUID);
-    if (type) params.set('type', type);
-    if (status !== '') params.set('status', String(status));
-    if (barcode?.trim()) params.set('barcode', barcode.trim());
+    if (filters.search) params.set('search', filters.search);
+    if (filters.saleUnitUUID) params.set('saleUnitUuid', filters.saleUnitUUID);
+    if (filters.saleCategoryUUID) params.set('saleCategoryUuid', filters.saleCategoryUUID);
+    if (filters.saleBrandUUID) params.set('saleBrandUuid', filters.saleBrandUUID);
+    if (filters.type) params.set('type', filters.type);
+    if (filters.status !== '') params.set('status', filters.status);
+    if (filters.barcode) params.set('barcode', filters.barcode);
 
     const query = params.toString();
     const response = await this.api.get<any>(`sale/products${query ? `?${query}` : ''}`);

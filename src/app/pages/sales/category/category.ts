@@ -40,6 +40,10 @@ type CategoryItem = {
   ScaDateUpdated: string | null;
 };
 
+type CategoryFilters = {
+  name: string;
+};
+
 @Component({
   selector: 'app-sale-category',
   standalone: true,
@@ -72,15 +76,17 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly categories = signal<CategoryItem[]>([]);
   readonly editing = signal<CategoryItem | null>(null);
-  private readonly categoriesResource = resource({
-    defaultValue: [] as CategoryItem[],
-    loader: () => this.fetchCategories(),
-  });
-  readonly loading = this.categoriesResource.isLoading;
-
   readonly filterForm = this.fb.nonNullable.group({
     name: [''],
   });
+  private readonly categoriesResource = resource({
+    defaultValue: [] as CategoryItem[],
+    params: (): CategoryFilters => ({
+      name: this.filterForm.controls.name.value.trim(),
+    }),
+    loader: ({ params }) => this.fetchCategories(params),
+  });
+  readonly loading = this.categoriesResource.isLoading;
 
   readonly categoryForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -109,12 +115,11 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
     this.dataSource.paginator = this.paginator() ?? null;
   }
 
-  private async fetchCategories() {
+  private async fetchCategories(filters: CategoryFilters) {
     this.error.set(null);
 
-    const { name } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
-    if (name?.trim()) params.set('name', name.trim());
+    if (filters.name) params.set('name', filters.name);
 
     const response = await this.api.get<any>(`sale/categories?${params.toString()}`);
     return response?.data?.items ?? [];

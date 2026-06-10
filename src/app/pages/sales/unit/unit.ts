@@ -41,6 +41,11 @@ type UnitItem = {
   SunDateUpdated: string | null;
 };
 
+type UnitFilters = {
+  code: string;
+  name: string;
+};
+
 @Component({
   selector: 'app-sale-unit',
   standalone: true,
@@ -73,16 +78,19 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly units = signal<UnitItem[]>([]);
   readonly editing = signal<UnitItem | null>(null);
-  private readonly unitsResource = resource({
-    defaultValue: [] as UnitItem[],
-    loader: () => this.fetchUnits(),
-  });
-  readonly loading = this.unitsResource.isLoading;
-
   readonly filterForm = this.fb.nonNullable.group({
     code: [''],
     name: [''],
   });
+  private readonly unitsResource = resource({
+    defaultValue: [] as UnitItem[],
+    params: (): UnitFilters => ({
+      code: this.filterForm.controls.code.value.trim(),
+      name: this.filterForm.controls.name.value.trim(),
+    }),
+    loader: ({ params }) => this.fetchUnits(params),
+  });
+  readonly loading = this.unitsResource.isLoading;
 
   readonly unitForm = this.fb.nonNullable.group({
     code: ['', [Validators.required]],
@@ -112,13 +120,12 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
     this.dataSource.paginator = this.paginator() ?? null;
   }
 
-  private async fetchUnits() {
+  private async fetchUnits(filters: UnitFilters) {
     this.error.set(null);
 
-    const { code, name } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
-    if (code?.trim()) params.set('code', code.trim());
-    if (name?.trim()) params.set('name', name.trim());
+    if (filters.code) params.set('code', filters.code);
+    if (filters.name) params.set('name', filters.name);
 
     const response = await this.api.get<any>(`sale/units?${params.toString()}`);
     return response?.data?.items ?? [];

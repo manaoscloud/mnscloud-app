@@ -49,6 +49,10 @@ type SaleStockTypeItem = {
   SstName: string;
 };
 
+type StockFilters = {
+  search: string;
+};
+
 @Component({
   selector: 'app-sales-stocks',
   standalone: true,
@@ -99,7 +103,10 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
   readonly dataSource = new MatTableDataSource<SaleStockItem>([]);
   private readonly stocksResource = resource({
     defaultValue: [] as SaleStockItem[],
-    loader: () => this.fetchStocks(),
+    params: (): StockFilters => ({
+      search: this.filterForm.controls.search.value.trim(),
+    }),
+    loader: ({ params }) => this.fetchStocks(params),
   });
   private readonly syncStocks = effect(() => {
     const items = this.stocksResource.value();
@@ -146,10 +153,9 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchStocks(): Promise<SaleStockItem[]> {
-    const { search } = this.filterForm.getRawValue();
+  private async fetchStocks(filters: StockFilters): Promise<SaleStockItem[]> {
     const params = new URLSearchParams();
-    if (search?.trim()) params.set('search', search.trim());
+    if (filters.search) params.set('search', filters.search);
 
     const query = params.toString();
     const response = await this.api.get<any>(`sale/stocks${query ? `?${query}` : ''}`);

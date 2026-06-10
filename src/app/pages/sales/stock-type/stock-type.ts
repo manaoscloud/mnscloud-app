@@ -40,6 +40,10 @@ type SaleStockTypeItem = {
   SstDateUpdated: string | null;
 };
 
+type StockTypeFilters = {
+  search: string;
+};
+
 @Component({
   selector: 'app-sale-stock-type',
   standalone: true,
@@ -72,15 +76,17 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly stockTypes = signal<SaleStockTypeItem[]>([]);
   readonly editing = signal<SaleStockTypeItem | null>(null);
-  private readonly stockTypesResource = resource({
-    defaultValue: [] as SaleStockTypeItem[],
-    loader: () => this.fetchStockTypes(),
-  });
-  readonly loading = this.stockTypesResource.isLoading;
-
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
   });
+  private readonly stockTypesResource = resource({
+    defaultValue: [] as SaleStockTypeItem[],
+    params: (): StockTypeFilters => ({
+      search: this.filterForm.controls.search.value.trim(),
+    }),
+    loader: ({ params }) => this.fetchStockTypes(params),
+  });
+  readonly loading = this.stockTypesResource.isLoading;
 
   readonly stockTypeForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -109,12 +115,11 @@ export class SaleStockTypePage implements AfterViewInit, OnDestroy {
     this.dataSource.paginator = this.paginator() ?? null;
   }
 
-  private async fetchStockTypes() {
+  private async fetchStockTypes(filters: StockTypeFilters) {
     this.error.set(null);
 
-    const { search } = this.filterForm.getRawValue();
     const params = new URLSearchParams();
-    if (search?.trim()) params.set('search', search.trim());
+    if (filters.search) params.set('search', filters.search);
 
     const response = await this.api.get<any>(`sale/stock-types?${params.toString()}`);
     return response?.data?.items ?? [];
