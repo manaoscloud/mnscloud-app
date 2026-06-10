@@ -104,9 +104,11 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
     'status',
     'actions',
   ];
+  private readonly appliedSearch = signal('');
   private readonly companiesResource = resource({
+    params: () => this.appliedSearch(),
     defaultValue: [] as Company[],
-    loader: () => this.fetchCompanies(),
+    loader: ({ params }) => this.fetchCompanies(params),
   });
   get loading() {
     return this.companiesResource.isLoading();
@@ -209,14 +211,23 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.companiesResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.companiesResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.companiesResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.companiesResource.reload();
+    }
   }
 
   refreshList() {
@@ -231,11 +242,11 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchCompanies() {
+  private async fetchCompanies(search: string) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (this.search) params.set('q', this.search);
+    if (search) params.set('q', search);
     const res = await this.api.get<any>(`erp/companies?${params.toString()}`);
     return res?.data?.items ?? [];
   }
