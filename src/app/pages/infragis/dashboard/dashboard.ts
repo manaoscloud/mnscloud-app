@@ -21,6 +21,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { firstValueFrom } from 'rxjs';
 
 import { fadeIn } from '../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -417,7 +418,7 @@ export class InfraGisDashboardPage {
         confirmLabel: 'Delete',
       },
     });
-    const confirmed = await ref.afterClosed().toPromise();
+    const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
     this.mutating.set(true);
     try {
