@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  DestroyRef,
   OnDestroy,
   TemplateRef,
   computed,
@@ -11,6 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -91,6 +93,7 @@ export class HostingVpsContainerPlansPage implements OnDestroy {
   private readonly parameters = inject(SystemParameterService);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly planFormDialog = viewChild<TemplateRef<unknown>>('planFormDialog');
 
@@ -224,17 +227,21 @@ export class HostingVpsContainerPlansPage implements OnDestroy {
 
   constructor() {
     void this.loadDefaultCurrency();
-    this.planForm.controls.providerUUID.valueChanges.subscribe((uuid) => {
-      this.syncProviderFromProvider(uuid);
-      void this.loadProviderCatalog();
-    });
-    this.planForm.controls.region.valueChanges.subscribe((value) =>
-      this.currentRegion.set(value ?? ''),
-    );
-    this.planForm.controls.size.valueChanges.subscribe((value) => {
-      this.currentSize.set(value ?? '');
-      this.applySelectedSizeSpecs(value);
-    });
+    this.planForm.controls.providerUUID.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((uuid) => {
+        this.syncProviderFromProvider(uuid);
+        void this.loadProviderCatalog();
+      });
+    this.planForm.controls.region.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => this.currentRegion.set(value ?? ''));
+    this.planForm.controls.size.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        this.currentSize.set(value ?? '');
+        this.applySelectedSizeSpecs(value);
+      });
     void this.loadProviders();
   }
 

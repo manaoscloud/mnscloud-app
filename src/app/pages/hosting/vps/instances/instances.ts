@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -11,6 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -95,6 +97,7 @@ export class HostingVpsInstancesPage implements OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly instanceFormDialog = viewChild<TemplateRef<unknown>>('instanceFormDialog');
   readonly changePlanDialog = viewChild<TemplateRef<unknown>>('changePlanDialog');
@@ -274,12 +277,12 @@ export class HostingVpsInstancesPage implements OnDestroy {
   });
 
   constructor() {
-    this.instanceForm.controls.planUUID.valueChanges.subscribe((value) =>
-      this.applySelectedPlan(value),
-    );
-    this.instanceForm.controls.image.valueChanges.subscribe((value) =>
-      this.currentImage.set(value ?? ''),
-    );
+    this.instanceForm.controls.planUUID.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => this.applySelectedPlan(value));
+    this.instanceForm.controls.image.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => this.currentImage.set(value ?? ''));
     void this.loadProviders();
     void this.loadCustomers();
     void this.loadPlans();

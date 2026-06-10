@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -67,9 +68,9 @@ export class ResetPasswordComponent {
   );
 
   constructor() {
-    this.form.statusChanges.subscribe(() => {
-      this.formValid.set(this.form.valid);
-    });
+    this.form.statusChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.formValid.set(this.form.valid));
   }
 
   readonly canSubmit = computed(() => this.formValid() && !this.isLoading());

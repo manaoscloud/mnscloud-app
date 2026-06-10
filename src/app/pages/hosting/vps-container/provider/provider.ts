@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  DestroyRef,
   OnDestroy,
   TemplateRef,
   computed,
@@ -11,6 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -81,6 +83,7 @@ export class HostingVpsContainerProviderPage implements OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
 
@@ -208,11 +211,13 @@ export class HostingVpsContainerProviderPage implements OnDestroy {
 
   constructor() {
     this.applyProviderValidators(this.providerSelection(), false);
-    this.providerForm.controls.provider.valueChanges.subscribe((value) => {
-      if (!value) return;
-      this.providerSelection.set(value);
-      this.applyProviderValidators(value, !!this.editing());
-    });
+    this.providerForm.controls.provider.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        if (!value) return;
+        this.providerSelection.set(value);
+        this.applyProviderValidators(value, !!this.editing());
+      });
   }
 
   ngOnDestroy() {

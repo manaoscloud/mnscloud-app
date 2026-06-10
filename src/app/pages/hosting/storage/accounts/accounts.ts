@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   TemplateRef,
@@ -11,6 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -98,6 +100,7 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly accountDialog = viewChild<TemplateRef<unknown>>('accountDialog');
   readonly paginator = viewChild(MatPaginator);
@@ -222,9 +225,9 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.form.controls.providerUuid.valueChanges.subscribe((providerUuid) => {
-      this.syncSelectedProvider(providerUuid);
-    });
+    this.form.controls.providerUuid.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((providerUuid) => this.syncSelectedProvider(providerUuid));
   }
 
   ngOnDestroy() {

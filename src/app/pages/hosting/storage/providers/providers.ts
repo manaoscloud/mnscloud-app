@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   OnDestroy,
   TemplateRef,
   computed,
@@ -10,6 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -87,6 +89,7 @@ export class HostingStorageProvidersPage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly providerDialog = viewChild<TemplateRef<unknown>>('providerDialog');
   readonly paginator = viewChild(MatPaginator);
@@ -203,10 +206,12 @@ export class HostingStorageProvidersPage implements OnDestroy {
 
   ngOnInit() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.form.controls.provider.valueChanges.subscribe((provider) => {
-      this.selectedProvider.set(provider);
-      this.applyProviderValidators(provider);
-    });
+    this.form.controls.provider.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((provider) => {
+        this.selectedProvider.set(provider);
+        this.applyProviderValidators(provider);
+      });
     this.applyProviderValidators(this.form.controls.provider.value);
   }
 
