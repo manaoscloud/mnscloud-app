@@ -219,6 +219,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   private mapboxToken: string | null = null;
   private styleControl?: MapStyleControl;
   private mapStyle: MapStyleMode = 'street';
+  private mapResizeTimers: ReturnType<typeof setTimeout>[] = [];
   customers: Customer[] = [];
   complexes: ErpComplexOption[] = [];
   complexMap = new Map<string, ErpComplexOption>();
@@ -374,6 +375,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.closeCustomerDialog();
+    this.clearMapResizeTimers();
     if (this.map) {
       this.map.remove();
     }
@@ -1185,14 +1187,22 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
 
   private scheduleMapResize() {
     if (!this.map) return;
-    setTimeout(() => {
+    this.clearMapResizeTimers();
+    this.mapResizeTimers.push(setTimeout(() => {
       this.map?.resize?.();
       this.updateMapMarker();
-    }, 0);
-    setTimeout(() => {
+    }, 0));
+    this.mapResizeTimers.push(setTimeout(() => {
       this.map?.resize?.();
       this.updateMapMarker();
-    }, 200);
+    }, 200));
+  }
+
+  private clearMapResizeTimers() {
+    for (const timer of this.mapResizeTimers) {
+      clearTimeout(timer);
+    }
+    this.mapResizeTimers = [];
   }
 
   private updateMapMarker() {
@@ -1238,6 +1248,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private teardownMap() {
+    this.clearMapResizeTimers();
     if (this.mapMarker) {
       this.mapMarker.remove();
     }
