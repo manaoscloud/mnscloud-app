@@ -23,7 +23,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -107,7 +106,6 @@ const EMPTY_INFRAGIS_DASHBOARD: InfraGisDashboardSnapshot = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class InfraGisDashboardPage {
   private readonly api = inject(ApiService);

@@ -34,7 +34,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -92,7 +91,6 @@ type ApiResponse<T> = {
   templateUrl: './accounts.html',
   styleUrls: ['./accounts.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingStorageAccountsPage implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);

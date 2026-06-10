@@ -33,7 +33,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import {
   CrudDialogBinding,
@@ -72,7 +71,6 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
   templateUrl: './provider.html',
   styleUrls: ['./provider.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
   private readonly listLimit = 5000;

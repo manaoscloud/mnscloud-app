@@ -29,7 +29,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -82,7 +81,6 @@ export const BILLING_WALLET_IMPORTS = [
   templateUrl: './wallet.html',
   styleUrls: ['./wallet.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private readonly billing = inject(BillingService);

@@ -19,7 +19,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipDidItem, VoipDidService } from '../did.service';
@@ -95,7 +94,6 @@ const EMPTY_DID_DASHBOARD: DidDashboardSnapshot = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipDidDashboardPage implements AfterViewInit {
   private readonly didApi = inject(VoipDidService);

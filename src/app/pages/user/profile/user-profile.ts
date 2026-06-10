@@ -35,7 +35,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { UserProfile } from '../../../models/user-profile.model';
 
 // Animations
-import { fadeIn } from '../../../shared/animations/fade.animation';
 
 @Component({
   selector: 'app-user-profile',
@@ -58,7 +57,6 @@ import { fadeIn } from '../../../shared/animations/fade.animation';
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class UserProfileComponent {
   private readonly fb = inject(FormBuilder);

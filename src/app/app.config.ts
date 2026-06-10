@@ -15,8 +15,6 @@ import localePt from '@angular/common/locales/pt';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 
-import { provideAnimations } from '@angular/platform-browser/animations';
-
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { TitleStrategy } from '@angular/router';
 import { apiInterceptor } from './core/interceptors/api.interceptor';
@@ -36,7 +34,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(routes),
-    provideAnimations(),
     provideAppInitializer(() => inject(PublicThemeContextService).load()),
     provideAppInitializer(() =>
       firstValueFrom(inject(TranslocoService).load(inject(AppI18nService).language())),

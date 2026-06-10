@@ -29,7 +29,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../services/snackbar.service';
-import { fadeIn } from '../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../shared/dialog/crud-dialog.util';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -86,7 +85,6 @@ type TenantsSnapshot = {
   templateUrl: './tenants.html',
   styleUrl: './tenants.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly service = inject(TenantsService);

@@ -34,7 +34,6 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -93,7 +92,6 @@ type WebhostHostFilters = {
   templateUrl: './hosts.html',
   styleUrls: ['./hosts.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingWebhostHostsPage implements OnDestroy {
   private readonly fb = inject(FormBuilder);

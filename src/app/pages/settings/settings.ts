@@ -10,7 +10,6 @@ import { MatDividerModule } from '@angular/material/divider';
 import { ThemeService, ThemeMode } from '../../services/theme.service';
 
 // Animação
-import { fadeIn } from '../../shared/animations/fade.animation';
 
 @Component({
   selector: 'app-settings',
@@ -18,11 +17,8 @@ import { fadeIn } from '../../shared/animations/fade.animation';
   imports: [MatCardModule, MatRadioModule, MatIconModule, MatDividerModule],
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss'],
-  animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    '[@fadeIn]': '', // aplica animação no host em vez do template
-  },
+  host: { class: 'app-fade-in-host' },
 })
 export class SettingsComponent {
   private readonly themeService = inject(ThemeService);

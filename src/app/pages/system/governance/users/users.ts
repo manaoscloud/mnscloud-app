@@ -26,7 +26,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type AccountAction = 'suspend' | 'close' | 'anonymize' | 'legal-hold' | 'release-hold';
@@ -108,7 +107,6 @@ const EMPTY_GOVERNANCE_USER_FILTERS: GovernanceUserFilters = {
   templateUrl: './users.html',
   styleUrls: ['./users.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class SystemGovernanceUsersPage implements AfterViewInit {
   private readonly api = inject(ApiService);

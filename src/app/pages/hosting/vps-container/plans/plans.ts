@@ -36,7 +36,6 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { SystemParameterService } from '../../../../services/system-parameter.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -84,7 +83,6 @@ type VpsContainerPlanFilters = {
   templateUrl: './plans.html',
   styleUrls: ['./plans.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingVpsContainerPlansPage implements OnDestroy {
   private readonly fb = inject(FormBuilder);

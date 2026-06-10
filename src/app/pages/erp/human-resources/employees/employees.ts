@@ -39,7 +39,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -105,7 +104,6 @@ type EmployeeListParams = {
   templateUrl: './employees.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

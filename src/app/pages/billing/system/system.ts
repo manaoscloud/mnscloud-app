@@ -29,7 +29,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
@@ -110,7 +109,6 @@ export const BILLING_SYSTEM_IMPORTS = [
   templateUrl: './system.html',
   styleUrls: ['./system.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private readonly billing = inject(BillingService);

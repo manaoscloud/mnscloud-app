@@ -33,7 +33,6 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import {
   getWebhostDialogViewportConfig,
@@ -156,7 +155,6 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   templateUrl: './tools.html',
   styleUrls: ['./tools.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingWebhostToolsPage implements OnDestroy {
   private readonly fb = inject(FormBuilder);

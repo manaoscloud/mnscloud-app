@@ -25,7 +25,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { VoipDomainItem, VoipDomainService } from '../../domain/domain.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
@@ -101,7 +100,6 @@ const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipPabxDashboardPage implements AfterViewInit {
   private readonly api = inject(VoipPabxDashboardService);

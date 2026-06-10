@@ -31,7 +31,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -77,7 +76,6 @@ type IvrRouteType = 'extension' | 'ivr' | 'queue' | 'group' | 'external';
   templateUrl: './ivr.html',
   styleUrls: ['../queue/queue.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipPabxIvrPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(VoipPabxIvrService);

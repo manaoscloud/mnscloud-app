@@ -34,7 +34,6 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -154,7 +153,6 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   templateUrl: './agents.html',
   styleUrls: ['./agents.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class MonitoringAgentsPage implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);

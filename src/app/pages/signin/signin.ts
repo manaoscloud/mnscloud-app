@@ -14,7 +14,6 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge } from 'rxjs';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { fadeIn } from '../../shared/animations/fade.animation';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -57,7 +56,6 @@ type SigninPolicy = {
   templateUrl: './signin.html',
   styleUrls: ['./signin.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class Signin implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);

@@ -41,7 +41,6 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -176,7 +175,6 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
   templateUrl: './themes.html',
   styleUrls: ['./themes.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class SettingsThemesPage implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);

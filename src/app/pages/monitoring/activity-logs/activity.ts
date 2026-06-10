@@ -27,7 +27,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type ActivityLog = {
@@ -107,7 +106,6 @@ const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
   templateUrl: './activity.html',
   styleUrls: ['./activity.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class MonitoringActivityLogsPage implements OnInit {
   private readonly api = inject(ApiService);

@@ -21,7 +21,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type HostingDatasetKey =
@@ -138,7 +137,6 @@ const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);

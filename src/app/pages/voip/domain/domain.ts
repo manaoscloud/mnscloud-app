@@ -35,7 +35,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -76,7 +75,6 @@ type DomainFilters = {
   templateUrl: './domain.html',
   styleUrls: ['./domain.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly listLimit = 5000;

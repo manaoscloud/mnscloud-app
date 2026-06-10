@@ -32,7 +32,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { VoipDidService, VoipDidItem } from './did.service';
@@ -81,7 +80,6 @@ type CreateMode = 'single' | 'range';
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipDidPage implements AfterViewInit, OnDestroy {
   private readonly listLimit = 5000;

@@ -35,7 +35,6 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { getVpsDialogViewportConfig, updateVpsDialogViewport } from '../vps-dialog-viewport';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -89,7 +88,6 @@ type VpsInstanceFilters = {
   templateUrl: './instances.html',
   styleUrls: ['./instances.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingVpsInstancesPage implements OnDestroy {
   private readonly fb = inject(FormBuilder);

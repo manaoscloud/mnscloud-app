@@ -17,7 +17,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { SnackbarService } from '../../../services/snackbar.service';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   VoipDashboardMetric,
@@ -63,7 +62,6 @@ const EMPTY_VOIP_DASHBOARD: VoipDashboardSnapshot = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipDashboardPage {
   private readonly api = inject(VoipDashboardService);

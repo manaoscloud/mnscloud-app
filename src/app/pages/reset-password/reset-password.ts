@@ -24,7 +24,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ApiService } from '../../services/api.service';
-import { fadeIn } from '../../shared/animations/fade.animation';
 
 @Component({
   standalone: true,
@@ -42,7 +41,6 @@ import { fadeIn } from '../../shared/animations/fade.animation';
     MatIconModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class ResetPasswordComponent {
   private fb = inject(FormBuilder);

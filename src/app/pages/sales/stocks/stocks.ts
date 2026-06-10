@@ -28,7 +28,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -76,7 +75,6 @@ type StockFilters = {
   templateUrl: './stocks.html',
   styleUrls: ['./stocks.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class SalesStocksPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

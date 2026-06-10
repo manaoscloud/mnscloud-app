@@ -30,7 +30,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -66,7 +65,6 @@ type SupplierOption = {
   templateUrl: './vendor.html',
   styleUrls: ['./vendor.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class IspVendorPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

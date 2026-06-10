@@ -7,7 +7,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -27,11 +26,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { firstValueFrom } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type Entity = {
@@ -44,7 +42,6 @@ type Entity = {
   selector: 'app-crud',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -63,11 +60,10 @@ type Entity = {
     MatTabsModule,
     MatMenuModule,
     MatChipsModule,
-    TranslatePipe,
+    TranslocoPipe,
   ],
   templateUrl: './page.html',
   styleUrls: ['./page.scss'],
-  animations: [fadeIn],
 })
 export class CrudPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

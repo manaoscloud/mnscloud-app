@@ -26,7 +26,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -58,7 +57,6 @@ import { VoipDidExternalItem, VoipDidExternalService } from './external.service'
   templateUrl: './external.html',
   styleUrls: ['./external.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(VoipDidExternalService);

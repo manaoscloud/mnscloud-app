@@ -31,7 +31,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
-import { fadeIn } from '../../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -81,7 +80,6 @@ const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
   templateUrl: './number.html',
   styleUrls: ['./number.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(VoipBlacklistUiService);

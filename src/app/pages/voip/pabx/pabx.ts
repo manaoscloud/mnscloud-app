@@ -32,7 +32,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { VoipPabxAccount, VoipPabxService } from './voip-pabx.service';
@@ -126,7 +125,6 @@ const emptyPabxAccountFilters = (): PabxAccountFilters => ({
   templateUrl: './pabx.html',
   styleUrls: ['./pabx.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipPabxPage implements AfterViewInit, OnDestroy {
   private readonly listLimit = 5000;

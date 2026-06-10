@@ -15,8 +15,6 @@ import {
   NavigationCancel,
   NavigationError,
 } from '@angular/router';
-import { trigger, transition, style, animate, query, group } from '@angular/animations';
-
 import { RouteLoader } from './shared/route-loader/route-loader';
 
 @Component({
@@ -27,8 +25,8 @@ import { RouteLoader } from './shared/route-loader/route-loader';
     <!-- Loader global durante navegação -->
     <app-route-loader />
 
-    <!-- Conteúdo principal com animação entre rotas -->
-    <main [@routeFadeAnimation]="getRouteAnimationState(outlet)" class="app-container">
+    <!-- Conteúdo principal -->
+    <main class="app-container" animate.enter="app-route-enter">
       <router-outlet #outlet="outlet" />
     </main>
   `,
@@ -44,24 +42,6 @@ import { RouteLoader } from './shared/route-loader/route-loader';
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [
-    trigger('routeFadeAnimation', [
-      transition('* <=> *', [
-        // garante layout consistente no enter/leave
-        query(':enter, :leave', style({ position: 'fixed', width: '100%' }), { optional: true }),
-        group([
-          // fade-out rota anterior
-          query(':leave', [style({ opacity: 1 }), animate('250ms ease', style({ opacity: 0 }))], {
-            optional: true,
-          }),
-          // fade-in rota nova
-          query(':enter', [style({ opacity: 0 }), animate('300ms ease', style({ opacity: 1 }))], {
-            optional: true,
-          }),
-        ]),
-      ]),
-    ]),
-  ],
 })
 export class App implements AfterViewInit {
   private router = inject(Router);
@@ -104,15 +84,5 @@ export class App implements AfterViewInit {
     if (!this.hideLoaderTimer) return;
     clearTimeout(this.hideLoaderTimer);
     this.hideLoaderTimer = null;
-  }
-
-  getRouteAnimationState(outlet: RouterOutlet): string {
-    if (!outlet?.isActivated) return 'none';
-
-    const route = outlet.activatedRoute;
-    const data = route.snapshot.data;
-
-    // Nunca retorna null — isso elimina o NG0100
-    return data?.['animation'] || route.snapshot.url.map((u) => u.path).join('/') || 'none';
   }
 }

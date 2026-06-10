@@ -23,7 +23,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 
 import { ApiService } from '../../../services/api.service';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type SystemParametersItem = {
@@ -136,10 +135,9 @@ const DEFAULT_ITEM: SystemParametersItem = {
   ],
   templateUrl: './parameters.html',
   styleUrls: ['./parameters.scss'],
-  animations: [fadeIn],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[@fadeIn]': '' },
+  host: { class: 'app-fade-in-host' },
 })
 export class SettingsParametersPage {
   private readonly api = inject(ApiService);

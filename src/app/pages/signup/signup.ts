@@ -14,7 +14,6 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
-import { fadeIn } from '../../shared/animations/fade.animation';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -57,7 +56,6 @@ type SignupPolicy = {
   templateUrl: './signup.html',
   styleUrls: ['./signup.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class Signup implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);

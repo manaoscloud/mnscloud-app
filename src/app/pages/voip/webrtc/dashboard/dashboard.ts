@@ -25,7 +25,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { VoipWebRtcService, WebRtcRecord } from '../webrtc.service';
 import {
@@ -81,7 +80,6 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipWebRtcDashboardPage implements AfterViewInit {
   private readonly api = inject(VoipWebRtcDashboardService);

@@ -33,7 +33,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom, takeUntil } from 'rxjs';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -79,7 +78,6 @@ type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
   templateUrl: './routing.html',
   styleUrls: ['./routing.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
   private readonly listLimit = 5000;

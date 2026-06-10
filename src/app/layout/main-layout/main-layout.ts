@@ -18,7 +18,6 @@ import {
 
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { trigger, transition, style, animate } from '@angular/animations';
 
 // Shared
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
@@ -109,17 +108,6 @@ interface UserAccessResponse {
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [
-    trigger('fadeContent', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(8px)' }),
-        animate('250ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-      transition(':leave', [
-        animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(4px)' })),
-      ]),
-    ]),
-  ],
 })
 export class MainLayout {
   // =======================================================

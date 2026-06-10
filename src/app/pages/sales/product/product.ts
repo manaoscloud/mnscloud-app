@@ -28,7 +28,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -116,7 +115,6 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   templateUrl: './product.html',
   styleUrls: ['./product.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class SaleProductPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

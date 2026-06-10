@@ -21,7 +21,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   HostingVpsContainerInstance,
@@ -104,7 +103,6 @@ const EMPTY_VPS_CONTAINER_DASHBOARD: VpsContainerDashboardSnapshot = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingVpsContainerDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);

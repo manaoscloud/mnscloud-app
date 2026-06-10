@@ -5,7 +5,6 @@ import { TenantsService } from '../../tenants.service';
 import { StateMessageComponent } from '../../../../shared/state-message/state-message';
 import { InviteSessionService } from '../../../../services/invite-session.service';
 import type { InviteValidateData } from '../../../../models/invite-validate.model';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -35,7 +34,6 @@ import { MatNativeDateModule } from '@angular/material/core';
   templateUrl: './invite-accept.html',
   styleUrls: ['./invite-accept.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class InviteAcceptPage {
   private route = inject(ActivatedRoute);

@@ -14,7 +14,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApiService } from '../../services/api.service';
-import { fadeIn } from '../../shared/animations/fade.animation';
 
 type VerifyState = 'loading' | 'success' | 'error';
 
@@ -25,7 +24,6 @@ type VerifyState = 'loading' | 'success' | 'error';
   styleUrls: ['./email-verify.scss'],
   imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class EmailVerifyPage implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);

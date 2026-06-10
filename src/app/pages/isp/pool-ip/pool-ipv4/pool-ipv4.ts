@@ -30,7 +30,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 
 import { ApiService } from '../../../../services/api.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -71,7 +70,6 @@ type PoolIpv4NetworkItem = {
   templateUrl: './pool-ipv4.html',
   styleUrls: ['./pool-ipv4.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

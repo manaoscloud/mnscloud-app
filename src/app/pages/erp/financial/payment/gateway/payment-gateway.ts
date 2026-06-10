@@ -36,7 +36,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
-import { fadeIn } from '../../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -225,11 +224,8 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   ],
   templateUrl: './payment-gateway.html',
   styleUrls: ['./payment-gateway.scss'],
-  animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    '[@fadeIn]': '',
-  },
+  host: { class: 'app-fade-in-host' },
 })
 export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);

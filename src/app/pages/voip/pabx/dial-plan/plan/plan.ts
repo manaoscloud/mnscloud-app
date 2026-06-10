@@ -31,7 +31,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
-import { fadeIn } from '../../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -67,7 +66,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
   templateUrl: './plan.html',
   styleUrls: ['./plan.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipPabxDialPlanPlanPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(VoipPabxDialPlanUiService);

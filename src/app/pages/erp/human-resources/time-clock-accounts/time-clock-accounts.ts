@@ -28,7 +28,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type EmployeeOption = {
@@ -91,7 +90,6 @@ type TimeClockAccountListParams = {
   templateUrl: './time-clock-accounts.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
   private readonly api = inject(ApiService);

@@ -31,7 +31,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../../services/api.service';
 import { SnackbarService } from '../../services/snackbar.service';
-import { fadeIn } from '../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type CyberRecord = {
@@ -196,7 +195,6 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
   templateUrl: './cyber-security.html',
   styleUrls: ['./cyber-security.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class CyberSecurityPage implements OnInit {
   private readonly api = inject(ApiService);

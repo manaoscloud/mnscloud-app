@@ -32,7 +32,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -96,7 +95,6 @@ type SmtpEventTypeResponse = {
   templateUrl: './routes.html',
   styleUrls: ['./routes.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingSmtpRoutesPage implements OnDestroy {
   private readonly api = inject(ApiService);

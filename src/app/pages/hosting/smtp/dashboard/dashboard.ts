@@ -21,7 +21,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type SmtpProvider = {
@@ -127,7 +126,6 @@ const EMPTY_SMTP_DASHBOARD: SmtpDashboardSnapshot = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingSmtpDashboardPage implements AfterViewInit {
   private readonly api = inject(ApiService);

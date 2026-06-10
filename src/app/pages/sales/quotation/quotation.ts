@@ -31,7 +31,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -115,7 +114,6 @@ const emptyQuotationFilters = (): QuotationFilters => ({
   templateUrl: './quotation.html',
   styleUrls: ['./quotation.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class SaleQuotationPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

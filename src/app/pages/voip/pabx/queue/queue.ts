@@ -31,7 +31,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -75,7 +74,6 @@ type Option = { value: string; label: string; pabxUUID?: string | null };
   templateUrl: './queue.html',
   styleUrls: ['./queue.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
   private readonly api = inject(VoipPabxQueueService);

@@ -28,7 +28,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { ApiService } from '../../../services/api.service';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
 import { IspVendor } from '../../../models/isp-vendor.model';
@@ -60,7 +59,6 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
   templateUrl: './vendor-model.html',
   styleUrls: ['./vendor-model.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class IspVendorModelPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(ApiService);

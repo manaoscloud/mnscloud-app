@@ -1,7 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
-import { fadeIn } from '../../shared/animations/fade.animation';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -11,7 +10,6 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class Dashboard {
   private auth = inject(AuthService);

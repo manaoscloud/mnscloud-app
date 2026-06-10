@@ -34,7 +34,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -78,7 +77,6 @@ type DidOperatorFilters = {
   ],
   templateUrl: './operator.html',
   styleUrls: ['./operator.scss'],
-  animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {

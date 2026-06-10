@@ -33,7 +33,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { fadeIn } from '../../../shared/animations/fade.animation';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -70,7 +69,6 @@ import {
   templateUrl: './services.html',
   styleUrls: ['./services.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
   private readonly api = inject(CyberSecurityServicesService);

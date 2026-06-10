@@ -31,7 +31,6 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -91,7 +90,6 @@ type CustomerOption = {
   templateUrl: './domains.html',
   styleUrls: ['./domains.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingDnsDomainsPage implements OnDestroy {
   private readonly api = inject(ApiService);

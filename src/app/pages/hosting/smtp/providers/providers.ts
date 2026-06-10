@@ -32,7 +32,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { fadeIn } from '../../../../shared/animations/fade.animation';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -97,7 +96,6 @@ type ProviderFormValue = {
   templateUrl: './providers.html',
   styleUrls: ['./providers.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [fadeIn],
 })
 export class HostingSmtpProvidersPage implements OnDestroy {
   private readonly api = inject(ApiService);

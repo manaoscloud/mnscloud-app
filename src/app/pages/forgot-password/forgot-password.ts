@@ -14,8 +14,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApiService } from '../../services/api.service';
 
-import { trigger, transition, style, animate } from '@angular/animations';
-
 @Component({
   standalone: true,
   selector: 'app-forgot-password',
@@ -32,14 +30,6 @@ import { trigger, transition, style, animate } from '@angular/animations';
     MatProgressSpinnerModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(4px)' }),
-        animate('180ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-    ]),
-  ],
 })
 export class ForgotPasswordComponent {
   private fb = inject(FormBuilder);
