@@ -46,6 +46,11 @@ type OperatorOption = {
   label: string;
 };
 
+type DidFilters = {
+  search: string;
+  isMasterScope: boolean;
+};
+
 type CreateMode = 'single' | 'range';
 
 @Component({
@@ -87,11 +92,6 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  private readonly didsResource = resource({
-    defaultValue: [] as VoipDidItem[],
-    loader: () => this.fetchDids(),
-  });
-  readonly loading = this.didsResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipDidItem | null>(null);
@@ -112,6 +112,16 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   private readonly tenantDisplayedColumns = ['number', 'operator', 'status', 'actions'];
   search = '';
   searchInput = '';
+  private readonly appliedSearch = signal('');
+  private readonly didsResource = resource({
+    params: (): DidFilters => ({
+      search: this.appliedSearch(),
+      isMasterScope: this.isMasterScope(),
+    }),
+    defaultValue: [] as VoipDidItem[],
+    loader: ({ params }) => this.fetchDids(params),
+  });
+  readonly loading = this.didsResource.isLoading;
   availableSearch = '';
   availableSearchInput = '';
 
@@ -191,14 +201,23 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.didsResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.didsResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.didsResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.didsResource.reload();
+    }
   }
 
   selectedCount() {
@@ -274,13 +293,13 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchDids(): Promise<VoipDidItem[]> {
+  private async fetchDids(filters: DidFilters): Promise<VoipDidItem[]> {
     const response = await this.api.list(
       {
-        search: this.search || undefined,
+        search: filters.search || undefined,
         limit: this.listLimit,
       },
-      this.isMasterScope(),
+      filters.isMasterScope,
     );
     return response?.data?.items ?? [];
   }

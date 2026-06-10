@@ -53,6 +53,10 @@ type CustomerItem = {
   Document?: string | null;
 };
 
+type PortabilityFilters = {
+  search: string;
+};
+
 @Component({
   selector: 'app-voip-portability',
   standalone: true,
@@ -94,11 +98,6 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  private readonly portabilityResource = resource({
-    defaultValue: [] as VoipPortabilityItem[],
-    loader: () => this.fetchPortability(),
-  });
-  readonly loading = this.portabilityResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly error = signal<string | null>(null);
@@ -113,6 +112,15 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
   recipientSearch = '';
   search = '';
   searchInput = '';
+  private readonly appliedSearch = signal('');
+  private readonly portabilityResource = resource({
+    params: (): PortabilityFilters => ({
+      search: this.appliedSearch(),
+    }),
+    defaultValue: [] as VoipPortabilityItem[],
+    loader: ({ params }) => this.fetchPortability(params),
+  });
+  readonly loading = this.portabilityResource.isLoading;
 
   readonly dataSource = new MatTableDataSource<VoipPortabilityItem>([]);
   readonly displayedColumns = [
@@ -229,14 +237,23 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.portabilityResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.portabilityResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.portabilityResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.portabilityResource.reload();
+    }
   }
 
   async loadOperators() {
@@ -272,10 +289,10 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async fetchPortability(): Promise<VoipPortabilityItem[]> {
+  private async fetchPortability(filters: PortabilityFilters): Promise<VoipPortabilityItem[]> {
     this.error.set(null);
     const response = await this.api.list({
-      search: this.search || undefined,
+      search: filters.search || undefined,
       limit: this.listLimit,
     });
     return response?.data?.items ?? [];

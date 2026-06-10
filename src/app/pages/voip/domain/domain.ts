@@ -42,6 +42,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 const DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
+type DomainFilters = {
+  search: string;
+  scope: VoipDomainScope;
+};
+
 @Component({
   selector: 'app-voip-domain',
   standalone: true,
@@ -79,11 +84,6 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  private readonly domainsResource = resource({
-    defaultValue: [] as VoipDomainItem[],
-    loader: () => this.fetchDomains(),
-  });
-  readonly loading = this.domainsResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipDomainItem | null>(null);
@@ -94,6 +94,16 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   readonly displayedColumns = ['select', 'name', 'status', 'actions'];
   search = '';
   searchInput = '';
+  private readonly appliedSearch = signal('');
+  private readonly domainsResource = resource({
+    params: (): DomainFilters => ({
+      search: this.appliedSearch(),
+      scope: this.scope(),
+    }),
+    defaultValue: [] as VoipDomainItem[],
+    loader: ({ params }) => this.fetchDomains(params),
+  });
+  readonly loading = this.domainsResource.isLoading;
 
   readonly statusOptions = [
     { value: 1, label: 'Active' },
@@ -167,14 +177,23 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.domainsResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.domainsResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.domainsResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.domainsResource.reload();
+    }
   }
 
   refreshList() {
@@ -233,13 +252,13 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
     this.selectedDomainUUIDs.set(next);
   }
 
-  private async fetchDomains(): Promise<VoipDomainItem[]> {
+  private async fetchDomains(filters: DomainFilters): Promise<VoipDomainItem[]> {
     const response = await this.api.list(
       {
-        search: this.search || undefined,
+        search: filters.search || undefined,
         limit: this.listLimit,
       },
-      this.scope(),
+      filters.scope,
     );
     return response?.data?.items ?? [];
   }

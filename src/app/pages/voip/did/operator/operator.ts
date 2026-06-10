@@ -47,6 +47,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 type SupplierOption = { value: string; label: string };
 
+type DidOperatorFilters = {
+  search: string;
+  isMasterScope: boolean;
+};
+
 @Component({
   selector: 'app-voip-did-operator',
   standalone: true,
@@ -86,11 +91,6 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  private readonly operatorsResource = resource({
-    defaultValue: [] as VoipDidOperatorItem[],
-    loader: () => this.fetchOperators(),
-  });
-  readonly loading = this.operatorsResource.isLoading;
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipDidOperatorItem | null>(null);
@@ -100,6 +100,16 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   readonly displayedColumns = ['select', 'name', 'nick', 'supplier', 'status', 'actions'];
   search = '';
   searchInput = '';
+  private readonly appliedSearch = signal('');
+  private readonly operatorsResource = resource({
+    params: (): DidOperatorFilters => ({
+      search: this.appliedSearch(),
+      isMasterScope: this.isMasterScope(),
+    }),
+    defaultValue: [] as VoipDidOperatorItem[],
+    loader: ({ params }) => this.fetchOperators(params),
+  });
+  readonly loading = this.operatorsResource.isLoading;
   suppliers: SupplierOption[] = [];
   supplierMap = new Map<string, SupplierOption>();
   readonly suppliersReady = signal(false);
@@ -180,14 +190,23 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.operatorsResource.reload();
+    const nextSearch = this.searchInput.trim();
+    this.search = nextSearch;
+    if (nextSearch === this.appliedSearch()) {
+      this.operatorsResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.operatorsResource.reload();
+    if (this.appliedSearch()) {
+      this.appliedSearch.set('');
+    } else {
+      this.operatorsResource.reload();
+    }
   }
 
   selectedCount() {
@@ -246,13 +265,13 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     this.selectedOperatorUUIDs.set(new Set());
   }
 
-  private async fetchOperators(): Promise<VoipDidOperatorItem[]> {
+  private async fetchOperators(filters: DidOperatorFilters): Promise<VoipDidOperatorItem[]> {
     const response = await this.api.list(
       {
-        search: this.search || undefined,
+        search: filters.search || undefined,
         limit: this.listLimit,
       },
-      this.isMasterScope(),
+      filters.isMasterScope,
     );
     return response?.data?.items ?? [];
   }
