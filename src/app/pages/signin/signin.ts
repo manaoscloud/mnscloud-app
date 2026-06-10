@@ -255,12 +255,19 @@ export class Signin implements OnInit, AfterViewInit {
     const scriptId = `mnscloud-${provider}-captcha`;
     const existingScript = document.getElementById(scriptId);
     if (existingScript) {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
+        let attempts = 0;
         const timer = window.setInterval(() => {
           const loaded = (window as any)[globalName];
           if (loaded?.render) {
             window.clearInterval(timer);
             resolve(loaded);
+            return;
+          }
+          attempts += 1;
+          if (attempts >= 100) {
+            window.clearInterval(timer);
+            reject(new Error('Captcha challenge did not become available.'));
           }
         }, 100);
       });

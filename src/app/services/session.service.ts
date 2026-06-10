@@ -1,4 +1,4 @@
-import { Injectable, effect, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
@@ -9,6 +9,7 @@ export class SessionService {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly intervalMs = 10 * 60 * 1000; // 10 minutos
   private heartbeatHandle = signal<any | null>(null);
@@ -23,6 +24,7 @@ export class SessionService {
         this.stopHeartbeat();
       }
     });
+    this.destroyRef.onDestroy(() => this.stopHeartbeat());
   }
 
   private startHeartbeat() {
