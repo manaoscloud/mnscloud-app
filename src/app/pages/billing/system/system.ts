@@ -240,8 +240,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     publicSummary: [''],
     publicDescription: [''],
     publicFeaturesJson: [''],
-    publicSortOrder: [1000, [Validators.required, Validators.min(0)]],
-    sortOrder: [1000, [Validators.required, Validators.min(0)]],
+    publicSortOrder: [null as number | null, [Validators.min(0)]],
+    sortOrder: [null as number | null, [Validators.min(0)]],
     status: [1],
   });
 
@@ -318,7 +318,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.billingResource.reload();
   }
 
-  private async fetchBillingSnapshot(filters: BillingSystemFilters): Promise<BillingSystemSnapshot> {
+  private async fetchBillingSnapshot(
+    filters: BillingSystemFilters,
+  ): Promise<BillingSystemSnapshot> {
     this.error.set(null);
     const status = filters.status === '' ? null : filters.status;
     const [products, prices, subscriptions] = await Promise.all([
@@ -419,8 +421,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       publicSummary: this.emptyToNull(value.publicSummary),
       publicDescription: this.emptyToNull(value.publicDescription),
       publicFeatures,
-      publicSortOrder: Number(value.publicSortOrder),
-      sortOrder: Number(value.sortOrder),
+      publicSortOrder: this.optionalNumber(value.publicSortOrder),
+      sortOrder: this.optionalNumber(value.sortOrder),
       status: Number(value.status),
     };
     try {
@@ -954,10 +956,16 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       publicSummary: '',
       publicDescription: '',
       publicFeaturesJson: '',
-      publicSortOrder: 1000,
-      sortOrder: 1000,
+      publicSortOrder: null,
+      sortOrder: null,
       status: 1,
     });
+  }
+
+  private optionalNumber(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
   }
 
   private filterProducts(search: string) {

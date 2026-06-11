@@ -1553,5 +1553,8 @@
   "Module subscription": "Assinatura de módulo",
   "This module is contracted once per tenant. It does not require resource details.": "Este módulo é contratado uma vez por tenant. Não exige detalhes de recurso.",
   "The module will be enabled for this tenant after confirmation.": "O módulo será liberado para este tenant após a confirmação.",
-  "Already subscribed": "Já assinado"
+  "Already subscribed": "Já assinado",
+  "Auto": "Auto",
+  "Leave blank to assign the next order within this module.": "Deixe em branco para atribuir a próxima ordem dentro deste módulo.",
+  "Leave blank to reuse the product order in the public catalog.": "Deixe em branco para reutilizar a ordem do produto no catálogo público."
 }

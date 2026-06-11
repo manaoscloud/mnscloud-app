@@ -1553,5 +1553,8 @@
   "Module subscription": "Module subscription",
   "This module is contracted once per tenant. It does not require resource details.": "This module is contracted once per tenant. It does not require resource details.",
   "The module will be enabled for this tenant after confirmation.": "The module will be enabled for this tenant after confirmation.",
-  "Already subscribed": "Already subscribed"
+  "Already subscribed": "Already subscribed",
+  "Auto": "Auto",
+  "Leave blank to assign the next order within this module.": "Leave blank to assign the next order within this module.",
+  "Leave blank to reuse the product order in the public catalog.": "Leave blank to reuse the product order in the public catalog."
 }

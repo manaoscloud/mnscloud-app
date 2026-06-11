@@ -618,7 +618,10 @@
                   min="0"
                   step="1"
                   formControlName="sortOrder"
-                  [matTooltip]="'Lower numbers appear first in billing lists.' | transloco"
+                  [placeholder]="'Auto' | transloco"
+                  [matTooltip]="
+                    'Leave blank to assign the next order within this module.' | transloco
+                  "
                 />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
@@ -663,7 +666,17 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public sort order' | transloco }}</mat-label>
-                <input matInput type="number" min="0" step="1" formControlName="publicSortOrder" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  formControlName="publicSortOrder"
+                  [placeholder]="'Auto' | transloco"
+                  [matTooltip]="
+                    'Leave blank to reuse the product order in the public catalog.' | transloco
+                  "
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public slug' | transloco }}</mat-label>
