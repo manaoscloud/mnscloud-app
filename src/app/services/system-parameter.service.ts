@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { ApiService } from './api.service';
+import { AppLanguage, isAppLanguage } from './app-i18n.service';
 
 export type SystemParameterKey =
   | 'GOOGLE_MAPS_EMBED_API_KEY'
@@ -24,6 +25,11 @@ export class SystemParameterService {
     return request;
   }
 
+  clearCache(key?: SystemParameterKey) {
+    if (key) this.cache.delete(key);
+    else this.cache.clear();
+  }
+
   async resolveDefaultCurrency(fallback = 'BRL'): Promise<string> {
     const value = await this.resolveValue('DEFAULT_CURRENCY');
     return this.normalizeCurrency(value) ?? fallback;
@@ -32,6 +38,11 @@ export class SystemParameterService {
   async resolveDefaultTimezone(fallback = 'UTC'): Promise<string> {
     const value = await this.resolveValue('DEFAULT_TIMEZONE');
     return value?.trim() || fallback;
+  }
+
+  async resolveDefaultLanguage(fallback: AppLanguage = 'pt-BR'): Promise<AppLanguage> {
+    const value = await this.resolveValue('DEFAULT_LANGUAGE');
+    return isAppLanguage(value) ? value : fallback;
   }
 
   private async fetchResolvedValue(key: SystemParameterKey): Promise<string | null> {

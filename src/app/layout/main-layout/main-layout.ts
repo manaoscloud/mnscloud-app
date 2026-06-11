@@ -39,6 +39,7 @@ import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
 import { AppI18nService, AppLanguage, LanguageOptionCode } from '../../services/app-i18n.service';
 import { RuntimeVersionService } from '../../services/runtime-version.service';
+import { SystemParameterService } from '../../services/system-parameter.service';
 import { BillingService } from '../../pages/billing/shared/billing.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -121,6 +122,7 @@ export class MainLayout {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(AppI18nService);
   private readonly runtimeVersion = inject(RuntimeVersionService);
+  private readonly parameters = inject(SystemParameterService);
   private readonly billing = inject(BillingService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -768,6 +770,7 @@ export class MainLayout {
           this.auth.user()?.role ??
           'USER',
       });
+      await this.syncEnvironmentLanguage();
       await this.refreshCommercialEntitlements();
     } catch (e) {
       console.error('❌ Failed to load environments:', e);
@@ -778,6 +781,7 @@ export class MainLayout {
       this.activeEnvironmentId.set(preservedEnv);
       if (preservedEnv) {
         this.auth.updateUser({ EnvironmentUUID: preservedEnv });
+        await this.syncEnvironmentLanguage();
         await this.refreshCommercialEntitlements();
       } else {
         this.commercialEntitlements.set([]);
@@ -807,8 +811,20 @@ export class MainLayout {
         this.auth.user()?.role ??
         'USER',
     });
+    await this.syncEnvironmentLanguage();
     await this.refreshCommercialEntitlements();
     this.router.navigate(['/dashboard']);
+  }
+
+  private async syncEnvironmentLanguage() {
+    if (this.i18n.languageMode() !== 'auto') return;
+    this.parameters.clearCache('DEFAULT_LANGUAGE');
+    try {
+      const language = await this.parameters.resolveDefaultLanguage(this.currentLanguage());
+      this.i18n.applyResolvedSystemLanguage(language);
+    } catch (error) {
+      console.error('❌ Failed to resolve default environment language:', error);
+    }
   }
 
   private async refreshCommercialEntitlements() {

@@ -45,13 +45,18 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default Language</mat-label>
-                <input
-                  matInput
+                <mat-select
                   [ngModel]="item().defaultLanguage"
                   (ngModelChange)="updateItem({ defaultLanguage: $event })"
                   [ngModelOptions]="{ standalone: true }"
                   placeholder="pt-BR"
-                />
+                >
+                  @for (language of languageOptions; track language.code) {
+                    <mat-option [value]="language.code">
+                      {{ language.labelKey | transloco }}
+                    </mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">

@@ -30,7 +30,7 @@ function resolveInitialLanguageMode(): AppLanguageMode {
   return localStorage.getItem(LANGUAGE_MODE_STORAGE_KEY) === 'manual' ? 'manual' : 'auto';
 }
 
-function isAppLanguage(value: unknown): value is AppLanguage {
+export function isAppLanguage(value: unknown): value is AppLanguage {
   return value === 'pt-BR' || value === 'en-US' || value === 'es-ES';
 }
 
@@ -86,8 +86,8 @@ export class AppI18nService {
     }
   }
 
-  useSystemLanguage(reload = false) {
-    const systemLanguage = detectAppLanguage();
+  useSystemLanguage(reload = false, preferredLanguage?: AppLanguage | null) {
+    const systemLanguage = preferredLanguage ?? detectAppLanguage();
     this.languageMode.set('auto');
     this.language.set(systemLanguage);
     this.transloco.setActiveLang(systemLanguage);
@@ -102,6 +102,11 @@ export class AppI18nService {
     if (reload && typeof window !== 'undefined') {
       window.location.reload();
     }
+  }
+
+  applyResolvedSystemLanguage(language: string | null | undefined, reload = false) {
+    if (this.languageMode() !== 'auto' || !isAppLanguage(language)) return;
+    this.useSystemLanguage(reload, language);
   }
 
   private syncDocumentLanguage(language: AppLanguage) {
@@ -122,6 +127,8 @@ export class AppI18nService {
     };
 
     window.addEventListener('languagechange', handleLanguageChange);
-    this.destroyRef.onDestroy(() => window.removeEventListener('languagechange', handleLanguageChange));
+    this.destroyRef.onDestroy(() =>
+      window.removeEventListener('languagechange', handleLanguageChange),
+    );
   }
 }

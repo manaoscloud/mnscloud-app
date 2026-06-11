@@ -23,6 +23,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 
 import { ApiService } from '../../../services/api.service';
+import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type SystemParametersItem = {
@@ -142,6 +143,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
 export class SettingsParametersPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(AppI18nService);
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
@@ -169,6 +171,7 @@ export class SettingsParametersPage {
   readonly baseEndpoint = computed(() =>
     this.isMaster() ? 'system/parameters' : 'settings/parameters',
   );
+  readonly languageOptions = this.i18n.availableLanguages;
 
   private readonly parametersResource = resource({
     params: () => ({
@@ -250,6 +253,9 @@ export class SettingsParametersPage {
       this.baselineItem.set({ ...savedItem });
       this.baselineSignature.set(this.buildSignature(savedItem));
       this.success.set('Parameters saved successfully.');
+      if (savedItem.defaultLanguageIsActive && isAppLanguage(savedItem.defaultLanguage)) {
+        this.i18n.applyResolvedSystemLanguage(savedItem.defaultLanguage, true);
+      }
     } catch (error) {
       this.feedback.set(this.friendlyError(error, 'Failed to save parameters.'));
     } finally {
@@ -384,7 +390,7 @@ export class SettingsParametersPage {
       mapboxToken: value.mapboxToken.trim(),
       signalWireRepoToken: this.isMaster() ? value.signalWireRepoToken.trim() : '',
       defaultCurrency: (value.defaultCurrency.trim() || 'BRL').toUpperCase(),
-      defaultLanguage: value.defaultLanguage.trim() || 'pt-BR',
+      defaultLanguage: isAppLanguage(value.defaultLanguage) ? value.defaultLanguage : 'pt-BR',
       defaultTimezone: value.defaultTimezone.trim(),
       voipPabxRecordingStorageMode: value.voipPabxRecordingStorageMode,
       voipPabxRecordingStorageAccountUUID:
