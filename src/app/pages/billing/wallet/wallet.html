@@ -495,7 +495,12 @@
     <div class="dialog-header">
       <div>
         <h2>{{ 'Top up' | transloco }}</h2>
-        <p>Create a payment request. Wallet credit is applied only after confirmation.</p>
+        <p>
+          {{
+            'Create a payment request. Wallet credit is applied only after confirmation.'
+              | transloco
+          }}
+        </p>
       </div>
     </div>
     <mat-dialog-content class="dialog-content">
@@ -503,44 +508,42 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid topup-form-grid" [formGroup]="topupForm">
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Amount' | transloco }}</mat-label>
-                <input matInput type="number" step="0.000001" formControlName="amount" />
+                <input
+                  matInput
+                  type="text"
+                  formControlName="amount"
+                  appCurrencyMask
+                  [appCurrencyMaskCurrency]="topupCurrency()"
+                />
               </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Currency' | transloco }}</mat-label>
-                <input matInput maxlength="3" formControlName="currency" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Reference' | transloco }}</mat-label>
-                <input matInput formControlName="reference" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Payer name' | transloco }}</mat-label>
-                <input matInput formControlName="payerName" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Payer document' | transloco }}</mat-label>
-                <input matInput formControlName="payerDocument" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Payer email' | transloco }}</mat-label>
-                <input matInput type="email" formControlName="payerEmail" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Payer type' | transloco }}</mat-label>
                 <mat-select formControlName="payerType">
                   <mat-option value="FISICA">{{ 'Individual' | transloco }}</mat-option>
                   <mat-option value="JURIDICA">{{ 'Company' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Payer name' | transloco }}</mat-label>
+                <input matInput formControlName="payerName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Payer email' | transloco }}</mat-label>
+                <input matInput type="email" formControlName="payerEmail" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Payer document' | transloco }}</mat-label>
+                <input matInput formControlName="payerDocument" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Due date' | transloco }}</mat-label>
                 <input matInput type="date" formControlName="dueDate" />
               </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Idempotency key' | transloco }}</mat-label>
-                <input matInput formControlName="idempotencyKey" />
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Reference' | transloco }}</mat-label>
+                <input matInput formControlName="reference" />
               </mat-form-field>
             </form>
           </div>

@@ -34,6 +34,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import {
   BillingCatalogItem,
   BillingLedgerEntry,
@@ -73,6 +74,7 @@ export const BILLING_WALLET_IMPORTS = [
   MatTabsModule,
   MatTooltipModule,
   TranslocoPipe,
+  CurrencyMaskDirective,
 ];
 
 @Component({
@@ -138,7 +140,6 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
 
   readonly topupForm = this.fb.nonNullable.group({
     amount: [0, [Validators.required, Validators.min(0.000001)]],
-    currency: [''],
     reference: [''],
     payerName: ['', Validators.required],
     payerDocument: ['', Validators.required],
@@ -229,7 +230,6 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   openTopupDialog() {
     this.topupForm.reset({
       amount: 0,
-      currency: this.wallets()[0]?.BwaCurrency ?? '',
       reference: '',
       payerName: '',
       payerDocument: '',
@@ -264,7 +264,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     try {
       await this.billing.createTopup({
         amount: Number(value.amount),
-        currency: this.emptyToNull(value.currency),
+        currency: null,
         reference: this.emptyToNull(value.reference),
         dueDate: this.emptyToNull(value.dueDate),
         payer: {
@@ -403,6 +403,10 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
 
   isSubscriptionSelected(row: BillingSubscription) {
     return this.selectedSubscriptionUUIDs.has(row.BsuUUID);
+  }
+
+  topupCurrency() {
+    return this.wallets()[0]?.BwaCurrency ?? null;
   }
 
   isAllVisibleSubscriptionsSelected() {
