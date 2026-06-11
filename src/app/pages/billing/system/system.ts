@@ -38,7 +38,9 @@ import { AppI18nService } from '../../../services/app-i18n.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
 import {
   BillingPrice,
+  BillingPackage,
   BillingProduct,
+  BillingPromotion,
   BillingService,
   BillingSubscription,
   BillingTenantLookupItem,
@@ -48,6 +50,8 @@ export type BillingSystemSection =
   | 'dashboard'
   | 'products'
   | 'prices'
+  | 'packages'
+  | 'promotions'
   | 'subscriptions'
   | 'wallets';
 
@@ -71,12 +75,16 @@ type BillingSystemFilters = {
 type BillingSystemSnapshot = {
   products: BillingProduct[];
   prices: BillingPrice[];
+  packages: BillingPackage[];
+  promotions: BillingPromotion[];
   subscriptions: BillingSubscription[];
 };
 
 const EMPTY_BILLING_SYSTEM_SNAPSHOT: BillingSystemSnapshot = {
   products: [],
   prices: [],
+  packages: [],
+  promotions: [],
   subscriptions: [],
 };
 
@@ -138,6 +146,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly editingProduct = signal<BillingProduct | null>(null);
   readonly editingPrice = signal<BillingPrice | null>(null);
+  readonly editingPackage = signal<BillingPackage | null>(null);
+  readonly editingPromotion = signal<BillingPromotion | null>(null);
   readonly products = signal<BillingProduct[]>([]);
   readonly tenantOptions = signal<BillingTenantLookupItem[]>([]);
   readonly selectedCreditTenant = signal<BillingTenantLookupItem | null>(null);
@@ -145,11 +155,19 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly defaultCurrency = signal('');
   readonly priceProductSearchInput = signal('');
   readonly priceFormProductSearchInput = signal('');
+  readonly packageFormProductSearchInput = signal('');
+  readonly promotionRuleProductSearchInput = signal('');
   readonly priceProductOptions = computed(() =>
     this.filterProducts(this.priceProductSearchInput()),
   );
   readonly priceFormProductOptions = computed(() =>
     this.filterProducts(this.priceFormProductSearchInput()),
+  );
+  readonly packageFormProductOptions = computed(() =>
+    this.filterProducts(this.packageFormProductSearchInput()),
+  );
+  readonly promotionRuleProductOptions = computed(() =>
+    this.filterProducts(this.promotionRuleProductSearchInput()),
   );
   readonly defaultPriceProductUUID = linkedSignal<BillingProduct[], string>({
     source: this.products,
@@ -164,6 +182,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   readonly productSource = new MatTableDataSource<BillingProduct>([]);
   readonly priceSource = new MatTableDataSource<BillingPrice>([]);
+  readonly packageSource = new MatTableDataSource<BillingPackage>([]);
+  readonly promotionSource = new MatTableDataSource<BillingPromotion>([]);
   readonly subscriptionSource = new MatTableDataSource<BillingSubscription>([]);
 
   readonly productColumns = [
@@ -184,6 +204,17 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     'mode',
     'unitPrice',
     'setup',
+    'status',
+    'actions',
+  ];
+  readonly packageColumns = ['code', 'name', 'product', 'items', 'public', 'status', 'actions'];
+  readonly promotionColumns = [
+    'code',
+    'name',
+    'currency',
+    'coupon',
+    'rules',
+    'period',
     'status',
     'actions',
   ];
@@ -259,6 +290,47 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     status: [1],
   });
 
+  readonly packageForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(9)]],
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    description: [''],
+    productUUID: ['', [Validators.required]],
+    isPublic: [0],
+    sortOrder: [1000, [Validators.min(0)]],
+    status: [1],
+    itemProductUUID: ['', [Validators.required]],
+    itemEntitlementCode: ['', [Validators.required, Validators.minLength(4)]],
+    itemIncludedQuantity: [1, [Validators.required, Validators.min(0)]],
+    itemRequired: [1],
+    itemConfigJson: [''],
+  });
+
+  readonly promotionForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(7)]],
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    description: [''],
+    currency: [''],
+    requiresCoupon: [0],
+    maxRedemptions: [null as number | null, [Validators.min(0)]],
+    maxRedemptionsPerTenant: [null as number | null, [Validators.min(0)]],
+    stackingPolicy: ['EXCLUSIVE', [Validators.required]],
+    eligibilityJson: [''],
+    isPublic: [0],
+    startsAt: [''],
+    endsAt: [''],
+    status: [1],
+    ruleProductUUID: [''],
+    rulePriceUUID: [''],
+    discountType: ['PERCENT'],
+    appliesTo: ['ALL'],
+    discountValue: [0, [Validators.min(0)]],
+    cycles: [null as number | null, [Validators.min(0)]],
+    couponCode: [''],
+    couponMaxUses: [null as number | null, [Validators.min(0)]],
+    couponMaxUsesPerTenant: [null as number | null, [Validators.min(0)]],
+    couponExpiresAt: [''],
+  });
+
   readonly creditForm = this.fb.nonNullable.group({
     tenantSearch: ['', [Validators.required]],
     environmentUUID: ['', [Validators.required]],
@@ -271,6 +343,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   readonly productDialog = viewChild<TemplateRef<unknown>>('productDialog');
   readonly priceDialog = viewChild<TemplateRef<unknown>>('priceDialog');
+  readonly packageDialog = viewChild<TemplateRef<unknown>>('packageDialog');
+  readonly promotionDialog = viewChild<TemplateRef<unknown>>('promotionDialog');
   readonly creditDialog = viewChild<TemplateRef<unknown>>('creditDialog');
   readonly productPaginator = viewChild<MatPaginator>('productPaginator');
   readonly pricePaginator = viewChild<MatPaginator>('pricePaginator');
@@ -286,6 +360,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.products.set(snapshot.products);
     this.productSource.data = snapshot.products;
     this.priceSource.data = snapshot.prices;
+    this.packageSource.data = snapshot.packages;
+    this.promotionSource.data = snapshot.promotions;
     this.subscriptionSource.data = snapshot.subscriptions;
     this.reconcileSelections();
   });
@@ -323,12 +399,14 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   ): Promise<BillingSystemSnapshot> {
     this.error.set(null);
     const status = filters.status === '' ? null : filters.status;
-    const [products, prices, subscriptions] = await Promise.all([
+    const [products, prices, packages, promotions, subscriptions] = await Promise.all([
       this.billing.listProducts(filters.search, status),
       this.billing.listPrices(filters.search, filters.priceProductUUID, status),
+      this.billing.listPackages(filters.search, status),
+      this.billing.listPromotions(filters.search, status),
       this.billing.listSystemSubscriptions(filters.search, filters.subscriptionStatus),
     ]);
-    return { products, prices, subscriptions };
+    return { products, prices, packages, promotions, subscriptions };
   }
 
   applyFilters() {
@@ -353,6 +431,14 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   get activePriceCount() {
     return this.priceSource.data.filter((row) => row.BpcStatus === 1).length;
+  }
+
+  get activePackageCount() {
+    return this.packageSource.data.filter((row) => row.BpaStatus === 1).length;
+  }
+
+  get activePromotionCount() {
+    return this.promotionSource.data.filter((row) => row.BpmStatus === 1).length;
   }
 
   get activeSystemSubscriptionCount() {
@@ -541,6 +627,214 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     await this.savePrice(true);
   }
 
+  openPackageCreate() {
+    this.editingPackage.set(null);
+    this.resetPackageForm();
+    this.packageForm.controls.code.enable({ emitEvent: false });
+    this.openDialog(this.packageDialog(), '860px');
+  }
+
+  openPackageEdit(row: BillingPackage) {
+    this.editingPackage.set(row);
+    this.packageForm.reset({
+      code: row.BpaCode,
+      name: row.BpaName,
+      description: row.BpaDescription ?? '',
+      productUUID: row.BillingProductBprUUID,
+      isPublic: Number(row.BpaIsPublic ?? 0),
+      sortOrder: Number(row.BpaSortOrder ?? 1000),
+      status: Number(row.BpaStatus ?? 1),
+      itemProductUUID: row.BillingProductBprUUID,
+      itemEntitlementCode: '',
+      itemIncludedQuantity: 1,
+      itemRequired: 1,
+      itemConfigJson: '',
+    });
+    this.packageForm.controls.code.disable({ emitEvent: false });
+    this.openDialog(this.packageDialog(), '860px');
+  }
+
+  async savePackage(keepOpen = false) {
+    if (this.packageForm.invalid || this.saving()) return;
+    this.saving.set(true);
+    const value = this.packageForm.getRawValue();
+    const itemConfig = this.parseJson(value.itemConfigJson);
+    if (itemConfig === false) {
+      this.saving.set(false);
+      this.snack.error(this.i18n.t('Item config JSON is invalid.'));
+      return;
+    }
+    const payload = {
+      code: value.code,
+      name: value.name,
+      description: this.emptyToNull(value.description),
+      productUUID: value.productUUID,
+      isPublic: Number(value.isPublic),
+      sortOrder: Number(value.sortOrder ?? 1000),
+      status: Number(value.status),
+    };
+    try {
+      const current = this.editingPackage();
+      const saved = current
+        ? await this.billing.updatePackage(current.BpaUUID, payload)
+        : await this.billing.createPackage(payload);
+      const packageUUID = current?.BpaUUID ?? saved?.BpaUUID;
+      if (!current && packageUUID) {
+        await this.billing.createPackageItem(packageUUID, {
+          productUUID: value.itemProductUUID,
+          entitlementCode: value.itemEntitlementCode,
+          includedQuantity: this.parseLocalizedNumber(value.itemIncludedQuantity),
+          required: Number(value.itemRequired),
+          config: itemConfig,
+          status: 1,
+        });
+      }
+      this.snack.success(this.i18n.t(current ? 'Package updated.' : 'Package created.'));
+      if (!keepOpen) this.closeActiveDialog();
+      this.refresh();
+      if (keepOpen && !current) this.resetPackageForm();
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to save package.'));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async saveAndNewPackage() {
+    await this.savePackage(true);
+  }
+
+  async deletePackage(row: BillingPackage) {
+    if (!(await this.confirm(this.i18n.t('Delete package'), `${this.i18n.t('Delete')} ${row.BpaName}?`, this.i18n.t('Delete')))) return;
+    try {
+      await this.billing.deletePackage(row.BpaUUID);
+      this.snack.success(this.i18n.t('Package deleted.'));
+      this.refresh();
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to delete package.'));
+    }
+  }
+
+  openPromotionCreate() {
+    this.editingPromotion.set(null);
+    this.resetPromotionForm();
+    this.promotionForm.controls.code.enable({ emitEvent: false });
+    this.openDialog(this.promotionDialog(), '980px');
+  }
+
+  openPromotionEdit(row: BillingPromotion) {
+    this.editingPromotion.set(row);
+    this.promotionForm.reset({
+      code: row.BpmCode,
+      name: row.BpmName,
+      description: row.BpmDescription ?? '',
+      currency: row.BpmCurrency ?? this.defaultCurrency(),
+      requiresCoupon: Number(row.BpmRequiresCoupon ?? 0),
+      maxRedemptions: row.BpmMaxRedemptions ?? null,
+      maxRedemptionsPerTenant: row.BpmMaxRedemptionsPerTenant ?? null,
+      stackingPolicy: row.BpmStackingPolicy || 'EXCLUSIVE',
+      eligibilityJson: row.BpmEligibilityJson ?? '',
+      isPublic: Number(row.BpmIsPublic ?? 0),
+      startsAt: this.datetimeLocalValue(row.BpmStartsAt),
+      endsAt: this.datetimeLocalValue(row.BpmEndsAt),
+      status: Number(row.BpmStatus ?? 1),
+      ruleProductUUID: '',
+      rulePriceUUID: '',
+      discountType: 'PERCENT',
+      appliesTo: 'ALL',
+      discountValue: 0,
+      cycles: null,
+      couponCode: '',
+      couponMaxUses: null,
+      couponMaxUsesPerTenant: null,
+      couponExpiresAt: '',
+    });
+    this.promotionForm.controls.code.disable({ emitEvent: false });
+    this.openDialog(this.promotionDialog(), '980px');
+  }
+
+  async savePromotion(keepOpen = false) {
+    if (this.promotionForm.invalid || this.saving()) return;
+    this.saving.set(true);
+    const value = this.promotionForm.getRawValue();
+    const eligibility = this.parseJson(value.eligibilityJson);
+    if (eligibility === false) {
+      this.saving.set(false);
+      this.snack.error(this.i18n.t('Eligibility JSON is invalid.'));
+      return;
+    }
+    const current = this.editingPromotion();
+    if (!current && !value.ruleProductUUID && !value.rulePriceUUID) {
+      this.saving.set(false);
+      this.snack.error(this.i18n.t('Promotion rule requires a product or price.'));
+      return;
+    }
+    const payload = {
+      code: value.code,
+      name: value.name,
+      description: this.emptyToNull(value.description),
+      currency: this.normalizeCurrencyInput(value.currency),
+      requiresCoupon: Number(value.requiresCoupon),
+      maxRedemptions: this.optionalNumber(value.maxRedemptions),
+      maxRedemptionsPerTenant: this.optionalNumber(value.maxRedemptionsPerTenant),
+      stackingPolicy: value.stackingPolicy,
+      eligibility,
+      isPublic: Number(value.isPublic),
+      startsAt: this.emptyToNull(value.startsAt),
+      endsAt: this.emptyToNull(value.endsAt),
+      status: Number(value.status),
+    };
+    try {
+      const saved = current
+        ? await this.billing.updatePromotion(current.BpmUUID, payload)
+        : await this.billing.createPromotion(payload);
+      const promotionUUID = current?.BpmUUID ?? saved?.BpmUUID;
+      if (!current && promotionUUID && (value.ruleProductUUID || value.rulePriceUUID)) {
+        await this.billing.createPromotionRule(promotionUUID, {
+          productUUID: this.emptyToNull(value.ruleProductUUID),
+          priceUUID: this.emptyToNull(value.rulePriceUUID),
+          discountType: value.discountType,
+          appliesTo: value.appliesTo,
+          discountValue: this.parseLocalizedNumber(value.discountValue),
+          cycles: this.optionalNumber(value.cycles),
+          status: 1,
+        });
+      }
+      if (!current && promotionUUID && value.couponCode.trim()) {
+        await this.billing.createPromotionCoupon(promotionUUID, {
+          code: value.couponCode,
+          maxUses: this.optionalNumber(value.couponMaxUses),
+          maxUsesPerTenant: this.optionalNumber(value.couponMaxUsesPerTenant),
+          expiresAt: this.emptyToNull(value.couponExpiresAt),
+          status: 1,
+        });
+      }
+      this.snack.success(this.i18n.t(current ? 'Promotion updated.' : 'Promotion created.'));
+      if (!keepOpen) this.closeActiveDialog();
+      this.refresh();
+      if (keepOpen && !current) this.resetPromotionForm();
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to save promotion.'));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async saveAndNewPromotion() {
+    await this.savePromotion(true);
+  }
+
+  async deletePromotion(row: BillingPromotion) {
+    if (!(await this.confirm(this.i18n.t('Delete promotion'), `${this.i18n.t('Delete')} ${row.BpmName}?`, this.i18n.t('Delete')))) return;
+    try {
+      await this.billing.deletePromotion(row.BpmUUID);
+      this.snack.success(this.i18n.t('Promotion deleted.'));
+      this.refresh();
+    } catch (error) {
+      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to delete promotion.'));
+    }
+  }
+
   async deletePrice(row: BillingPrice) {
     if (!(await this.confirm('Delete price', `Delete ${row.BpcName}?`, 'Delete'))) return;
     try {
@@ -668,6 +962,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   clearProductSelectSearch() {
     this.priceProductSearchInput.set('');
     this.priceFormProductSearchInput.set('');
+    this.packageFormProductSearchInput.set('');
+    this.promotionRuleProductSearchInput.set('');
   }
 
   closeDialog() {
@@ -938,6 +1234,55 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     });
   }
 
+  private resetPackageForm() {
+    this.editingPackage.set(null);
+    this.packageForm.controls.code.enable({ emitEvent: false });
+    this.packageForm.reset({
+      code: 'package.',
+      name: '',
+      description: '',
+      productUUID: this.defaultPriceProductUUID(),
+      isPublic: 0,
+      sortOrder: 1000,
+      status: 1,
+      itemProductUUID: this.defaultPriceProductUUID(),
+      itemEntitlementCode: '',
+      itemIncludedQuantity: 1,
+      itemRequired: 1,
+      itemConfigJson: '',
+    });
+  }
+
+  private resetPromotionForm() {
+    this.editingPromotion.set(null);
+    this.promotionForm.controls.code.enable({ emitEvent: false });
+    this.promotionForm.reset({
+      code: 'promo.',
+      name: '',
+      description: '',
+      currency: this.defaultCurrency(),
+      requiresCoupon: 0,
+      maxRedemptions: null,
+      maxRedemptionsPerTenant: null,
+      stackingPolicy: 'EXCLUSIVE',
+      eligibilityJson: '',
+      isPublic: 0,
+      startsAt: '',
+      endsAt: '',
+      status: 1,
+      ruleProductUUID: this.defaultPriceProductUUID(),
+      rulePriceUUID: '',
+      discountType: 'PERCENT',
+      appliesTo: 'ALL',
+      discountValue: 0,
+      cycles: null,
+      couponCode: '',
+      couponMaxUses: null,
+      couponMaxUsesPerTenant: null,
+      couponExpiresAt: '',
+    });
+  }
+
   private resetProductForm() {
     this.editingProduct.set(null);
     this.productForm.controls.code.enable({ emitEvent: false });
@@ -1113,13 +1458,13 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   private sortValue(row: any, column: string) {
     const productColumns: Record<string, unknown> = {
-      code: row?.BprCode,
+      code: row?.BpaCode ?? row?.BpmCode ?? row?.BprCode,
       name: row?.BprName ?? row?.BpcName,
       module: row?.BprModule,
       scope: row?.BprBillingScope,
       entitlement: row?.BprEntitlementPattern,
       resourceType: row?.BprResourceType,
-      public: row?.BprIsPublic,
+      public: row?.BpaIsPublic ?? row?.BpmIsPublic ?? row?.BprIsPublic,
       prices: row?.PriceCount ?? row?.ActivePrices ?? 0,
       sortOrder: row?.BpdSortOrder ?? 0,
       status: row?.BprStatus ?? row?.BpcStatus ?? row?.BsuStatus,
@@ -1132,8 +1477,18 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       mode: row?.BpcBillingMode,
       unitPrice: row?.BpcUnitPrice,
       setup: row?.BpcSetupAmount,
+      currency: row?.BpmCurrency,
+      coupon: row?.BpmRequiresCoupon,
+      rules: row?.RuleCount,
+      items: row?.ItemCount,
+      period: row?.BpmStartsAt ?? row?.BpmEndsAt,
     };
     const value = productColumns[column] ?? row?.[column] ?? '';
     return String(value).toLowerCase();
+  }
+
+  private datetimeLocalValue(value: string | null | undefined) {
+    if (!value) return '';
+    return value.replace(' ', 'T').slice(0, 16);
   }
 }

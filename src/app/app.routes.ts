@@ -1194,6 +1194,24 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'billing/packages',
+                loadComponent: () =>
+                  import('./pages/billing/system/packages/packages').then(
+                    (m) => m.BillingSystemPackagesPage,
+                  ),
+                title: 'System Billing • Packages | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'billing/promotions',
+                loadComponent: () =>
+                  import('./pages/billing/system/promotions/promotions').then(
+                    (m) => m.BillingSystemPromotionsPage,
+                  ),
+                title: 'System Billing • Promotions | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'billing/subscriptions',
                 loadComponent: () =>
                   import('./pages/billing/system/subscriptions/subscriptions').then(

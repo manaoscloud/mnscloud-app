@@ -918,6 +918,18 @@ export class MainLayout {
           masterRoute: '/system/billing/prices',
         },
         {
+          id: 'billing/packages',
+          label: 'Packages',
+          icon: 'redeem',
+          masterRoute: '/system/billing/packages',
+        },
+        {
+          id: 'billing/promotions',
+          label: 'Promotions',
+          icon: 'local_offer',
+          masterRoute: '/system/billing/promotions',
+        },
+        {
           id: 'billing/subscriptions',
           label: 'Subscriptions',
           icon: 'subscriptions',

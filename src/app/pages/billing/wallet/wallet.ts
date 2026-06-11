@@ -136,6 +136,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   readonly subscriptionForm = this.fb.nonNullable.group({
     priceUUID: ['', Validators.required],
     quantity: [1, [Validators.required, Validators.min(0.000001)]],
+    promotionCode: [''],
   });
 
   readonly topupForm = this.fb.nonNullable.group({
@@ -292,6 +293,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.subscriptionForm.reset({
       priceUUID: row.BpcUUID,
       quantity: 1,
+      promotionCode: row.PromotionCode ?? '',
     });
     const subscriptionDialog = this.subscriptionDialog();
     if (!subscriptionDialog) return;
@@ -318,6 +320,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     const payload: Record<string, unknown> = {
       priceUUID: this.subscriptionForm.value.priceUUID,
       quantity: showQuantity ? this.subscriptionForm.value.quantity : 1,
+      promotionCode: this.emptyToNull(this.subscriptionForm.value.promotionCode),
     };
     this.saving.set(true);
     try {
@@ -521,6 +524,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.subscriptionForm.reset({
       priceUUID: item?.BpcUUID ?? '',
       quantity: 1,
+      promotionCode: item?.PromotionCode ?? '',
     });
   }
 

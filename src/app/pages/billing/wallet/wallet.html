@@ -431,6 +431,10 @@
                   />
                 </mat-form-field>
               }
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Promotion or coupon code' | transloco }}</mat-label>
+                <input matInput maxlength="120" formControlName="promotionCode" />
+              </mat-form-field>
             </form>
           </div>
         </mat-tab>
