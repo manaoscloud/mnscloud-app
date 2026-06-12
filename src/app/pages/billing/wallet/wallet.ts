@@ -287,7 +287,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       this.refresh();
     } catch (error) {
       this.snack.error(
-        error instanceof Error ? error.message : this.i18n.t('Failed to create top-up request.'),
+        this.extractErrorMessage(error, this.i18n.t('Failed to create top-up request.')),
       );
     } finally {
       this.saving.set(false);
@@ -604,7 +604,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private extractErrorMessage(error: unknown, fallback: string) {
     if (error instanceof HttpErrorResponse) {
       const message = error.error?.error || error.error?.message;
-      if (typeof message === 'string' && message.trim()) return message;
+      if (typeof message === 'string' && message.trim()) return this.i18n.t(message.trim());
     }
     return error instanceof Error && error.message ? error.message : fallback;
   }

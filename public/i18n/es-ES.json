@@ -1608,6 +1608,7 @@
   "Failed to cancel subscription.": "No se pudo cancelar la suscripción.",
   "Failed to create subscription.": "No se pudo crear la suscripción.",
   "Failed to create top-up request.": "No se pudo crear la solicitud de recarga.",
+  "Online wallet top-up is unavailable because no active default master payment gateway is configured. Ask a MASTER user to add manual prepaid credit or configure a payment gateway.": "La recarga online de la cartera no está disponible porque no hay un gateway de pago master predeterminado activo. Solicite a un usuario MASTER agregar crédito manual prepago o configure un gateway de pago.",
   "Failed to load billing data.": "No se pudieron cargar los datos de facturación.",
   "Failed to save package.": "No se pudo guardar el paquete.",
   "Failed to save promotion.": "No se pudo guardar la promoción.",
