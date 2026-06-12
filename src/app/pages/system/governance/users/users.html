@@ -1,6 +1,6 @@
-<section class="governance-page" animate.enter="app-fade-in">
-  <mat-card class="governance-card">
-    <header class="page-header">
+<section class="erp-page" animate.enter="app-fade-in">
+  <mat-card class="erp-card">
+    <header class="erp-header">
       <div>
         <h1>{{ 'User Governance' | transloco }}</h1>
         <p>
@@ -10,10 +10,12 @@
           }}
         </p>
       </div>
-      <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
-        <mat-icon>refresh</mat-icon>
-        {{ 'Refresh' | transloco }}
-      </button>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | transloco }}
+        </button>
+      </div>
     </header>
 
     @if (error()) {
@@ -33,17 +35,17 @@
           <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
-    </div>
 
-    <div class="filter-actions">
-      <button mat-stroked-button type="button" (click)="applyFilters()">
-        <mat-icon>filter_alt</mat-icon>
-        {{ 'Apply' | transloco }}
-      </button>
-      <button mat-stroked-button type="button" (click)="clearFilters()">
-        <mat-icon>backspace</mat-icon>
-        {{ 'Clear' | transloco }}
-      </button>
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
+        </button>
+        <button mat-stroked-button type="button" (click)="clearFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
+        </button>
+      </div>
     </div>
 
     <div class="content-grid">
