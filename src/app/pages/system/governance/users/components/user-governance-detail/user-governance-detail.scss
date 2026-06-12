@@ -1,5 +1,5 @@
 .detail-panel {
-  min-height: 360px;
+  min-height: 220px;
   padding: 1rem;
   border: 1px solid var(--mat-sys-color-outline-variant);
   border-radius: 8px;
@@ -43,7 +43,7 @@
 }
 
 .empty-panel {
-  min-height: 300px;
+  min-height: 160px;
   display: grid;
   place-items: center;
   gap: 0.5rem;
