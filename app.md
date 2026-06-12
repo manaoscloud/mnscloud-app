@@ -429,6 +429,7 @@
 
 ```bash
 npm run check:crud -- src/app/pages/<area>/<component>
+npm run check:crud:layout -- src/app/pages/<area>/<component>
 ```
 
 - The validator checks the required global CSS hooks, including:
@@ -439,6 +440,16 @@ npm run check:crud -- src/app/pages/<area>/<component>
   - `.save-split-action`, `.save-main-button`, `.save-more-button`, and `is-single-action`
   - `openCrudTemplateDialog`, `SlowConfirmDialogComponent`, visible-row bulk selection, and partial-failure handling
 - A component must not be considered "100% template" until this validator passes and `npm run build` passes.
+- The layout validator is the lightweight enforcement layer for every changed CRUD page. It checks
+  that the root page uses the global hooks (`.erp-page`, `.erp-card`, `.erp-header`,
+  `.header-actions`, `.filter-grid`, `.filter-actions`), that `filter-actions` is inside
+  `filter-grid`, and that filter buttons use `filter_alt`/`backspace`.
+- The layout validator also blocks component-local SCSS definitions for shared CRUD layout hooks:
+  `.erp-page`, `.erp-card`, `.erp-header`, `.header-actions`, `.filter-grid`, and
+  `.filter-actions`. If one of those needs a reusable adjustment, change `src/styles.scss`, not a
+  page component.
+- CI runs `npm run check:crud:layout -- --changed <base> HEAD` before build so newly touched CRUD
+  pages cannot drift from the global layout baseline.
 
 ## Non-negotiables (Blockers)
 

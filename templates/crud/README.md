@@ -26,7 +26,10 @@ How to use:
 7. Update `sortingDataAccessor` whenever a displayed column uses a derived value, related-entity label, formatted value, or a field name different from the API/model field.
 8. Keep the real `<mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons>` after `.table-wrapper`.
 9. Use `span.status-pill.status-chip.state-chip` for status values, with Activity Log palette classes such as `chip-success` and `chip-skipped`, plus `is-active`/`is-inactive` for boolean status.
-10. Keep list styling aligned with the ERP baseline: card radius `1rem`, 3-column desktop filters, dedicated right-aligned `filter-actions`, equal-width short action buttons, table header background, row hover, cell borders, and fixed status/actions widths.
+10. Keep list styling aligned with the ERP baseline by using the global hook classes only. Do not
+    redefine `.erp-page`, `.erp-card`, `.erp-header`, `.header-actions`, `.filter-grid`, or
+    `.filter-actions` in component SCSS. Shared layout belongs in `src/styles.scss`; component SCSS
+    is for resource-specific details only.
 11. Keep filter button icons standardized: `Apply` uses `filter_alt`; `Clear` uses `backspace`.
 12. Keep responsive breakpoints ordered `1400px` → `1200px` → `900px`.
 13. Keep the leading `select` checkbox column, selected count, `Delete selected` action in `filter-actions`, and call `ApiService.delete('<resource>/bulk', { ids })`; only remove bulk delete when the resource has a documented explicit exception.
@@ -39,10 +42,13 @@ How to use:
 20. Keep the dialog visual contract aligned with this CRUD template and `app.md`: root padding `1.5rem 1.75rem 1.25rem`, compact tab content, sticky translucent `.form-actions` with `margin: auto 0 0`, internal horizontal padding, blur/shadow, desktop Cancel left and Save split right, mobile Save first and Cancel second.
 21. For currency defaults, resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`; tenant parameters must win and master parameters are the fallback. Do not hardcode `BRL`/`USD` as the source of truth for create/reset flows.
 22. Add the dialog `panelClass` to global overlay styles in `src/styles.scss` when the page uses a new panel class, so `.mat-mdc-dialog-surface`, content, and actions match the shared CRUD surface.
-23. Run the CRUD template validator before finishing:
+23. Run the CRUD validators before finishing:
 
 ```bash
 npm run check:crud -- src/app/pages/<area>/<component>
+npm run check:crud:layout -- src/app/pages/<area>/<component>
 ```
 
 The validator is mandatory because the global CSS depends on exact hook classes such as `mat-elevation-z8`, `is-loading`, `select-col`, `status-col`, `actions-col`, `save-main-button`, `save-more-button`, and `is-single-action`.
+The layout validator is mandatory because it blocks local CSS overrides and enforces that `filter-actions`
+stays inside `filter-grid` on a dedicated right-aligned row.

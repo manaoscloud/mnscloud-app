@@ -6,6 +6,7 @@
     "start": "ng serve --host 0.0.0.0 --port 4200 --poll 2000",
     "build": "ng build",
     "check:crud": "node scripts/validate-crud-template.mjs",
+    "check:crud:layout": "node scripts/validate-crud-layout.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build-watch": "ng build --configuration production --watch"
