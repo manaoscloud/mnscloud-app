@@ -525,10 +525,10 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     try {
       const current = this.editingProduct();
       if (current) {
-        if (!current.BpdUUID) throw new Error(this.i18n.t('Product definition UUID is missing.'));
-        await this.billing.updateProductDefinition(current.BpdUUID, payload);
+        if (!current.BprUUID) throw new Error(this.i18n.t('Product UUID is missing.'));
+        await this.billing.updateProduct(current.BprUUID, payload);
       } else {
-        await this.billing.createProductDefinition(payload);
+        await this.billing.createProduct(payload);
       }
       this.snack.success(this.i18n.t(current ? 'Product updated.' : 'Product created.'));
       if (!keepOpen) this.closeActiveDialog();
@@ -599,8 +599,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   async deleteProduct(row: BillingProduct) {
-    if (!row.BpdUUID) {
-      this.snack.error(this.i18n.t('Product definition UUID is missing.'));
+    if (!row.BprUUID) {
+      this.snack.error(this.i18n.t('Product UUID is missing.'));
       return;
     }
     if (
@@ -612,8 +612,8 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     )
       return;
     try {
-      await this.billing.deleteProductDefinition(row.BpdUUID);
-      this.selectedProductUUIDs.delete(row.BpdUUID);
+      await this.billing.deleteProduct(row.BprUUID);
+      this.selectedProductUUIDs.delete(row.BprUUID);
       this.snack.success(this.i18n.t('Product deleted.'));
       this.refresh();
     } catch (error) {
@@ -1181,7 +1181,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       return;
     await this.runBulkAction(
       ids,
-      (uuid) => this.billing.deleteProductDefinition(uuid),
+      (uuid) => this.billing.deleteProduct(uuid),
       this.selectedProductUUIDs,
       this.i18n.t('product'),
       this.i18n.t('deleted'),
@@ -1458,7 +1458,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   private productSelectionUUID(row: BillingProduct) {
-    return row.BpdUUID ?? null;
+    return row.BprUUID ?? null;
   }
 
   private emptyToNull(value: unknown) {

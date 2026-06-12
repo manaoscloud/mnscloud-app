@@ -272,6 +272,26 @@ export class BillingService {
     return response.data?.items ?? [];
   }
 
+  async createProduct(payload: Record<string, unknown>) {
+    const response = await this.api.post<ApiListResponse<BillingProduct>>(
+      'system/billing/products',
+      payload,
+    );
+    return response.data?.item ?? null;
+  }
+
+  async updateProduct(uuid: string, payload: Record<string, unknown>) {
+    const response = await this.api.put<ApiListResponse<BillingProduct>>(
+      `system/billing/products/${uuid}`,
+      payload,
+    );
+    return response.data?.item ?? null;
+  }
+
+  async deleteProduct(uuid: string) {
+    await this.api.delete(`system/billing/products/${uuid}`);
+  }
+
   async createProductDefinition(payload: Record<string, unknown>) {
     const response = await this.api.post<ApiListResponse<BillingProduct>>(
       'system/billing/product-definitions',
