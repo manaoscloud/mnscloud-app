@@ -1,0 +1,131 @@
+<div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+  @if (loading()) {
+    <div class="table-loading" aria-live="polite" aria-busy="true">
+      <mat-progress-spinner diameter="36" mode="indeterminate" />
+    </div>
+  }
+  <table mat-table [dataSource]="source" matSort>
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
+      <td mat-cell *matCellDef="let row">
+        <span class="status-pill" [class.is-active]="row.Status === 1 && !row.DateDeleted">
+          {{ statusLabel(row) | transloco }}
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+      <td mat-cell *matCellDef="let row">
+        <button class="link-button" type="button" (click)="inspect.emit(row)">
+          {{ fullName(row) }}
+        </button>
+        <small>{{ row.UserUUID }}</small>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Email' | transloco }}</th>
+      <td mat-cell *matCellDef="let row">{{ row.Email || '-' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="access">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Access' | transloco }}</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.AccessCount ?? 0 }}
+        @if ((row.MasterAccessCount ?? 0) > 0) {
+          <small>{{ 'Master' | transloco }}</small>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="emailVerified">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+        {{ 'Email verified' | transloco }}
+      </th>
+      <td mat-cell *matCellDef="let row">{{ yesNo(row.EmailVerifiedAt) | transloco }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="legalHolds">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+        {{ 'Legal holds' | transloco }}
+      </th>
+      <td mat-cell *matCellDef="let row">{{ row.ActiveLegalHoldCount ?? 0 }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="lastAction">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Last action' | transloco }}</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.LastAction || '-' }}
+        <small>{{ row.LastActionAt || '-' }}</small>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="created">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | transloco }}</th>
+      <td mat-cell *matCellDef="let row">{{ row.DateCreated || '-' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+        {{ 'Actions' | transloco }}
+      </th>
+      <td mat-cell *matCellDef="let row" class="actions-col-cell">
+        <div class="actions-col">
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'Details' | transloco"
+            (click)="inspect.emit(row)"
+          >
+            <mat-icon>visibility</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'Suspend' | transloco"
+            (click)="openAction(row, 'suspend')"
+          >
+            <mat-icon>block</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'Close account' | transloco"
+            (click)="openAction(row, 'close')"
+          >
+            <mat-icon>lock</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'Anonymize' | transloco"
+            (click)="openAction(row, 'anonymize')"
+          >
+            <mat-icon>person_off</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'Legal hold' | transloco"
+            (click)="openAction(row, 'legal-hold')"
+          >
+            <mat-icon>gavel</mat-icon>
+          </button>
+        </div>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columns"></tr>
+    <tr
+      mat-row
+      *matRowDef="let row; columns: columns"
+      [class.is-selected]="selectedUserUUID() === row.UserUUID"
+    ></tr>
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell" [attr.colspan]="columns.length">{{ 'No users found.' | transloco }}</td>
+    </tr>
+  </table>
+</div>
+
+<mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 25, 100]" showFirstLastButtons />

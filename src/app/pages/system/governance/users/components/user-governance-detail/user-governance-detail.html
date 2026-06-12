@@ -1,0 +1,57 @@
+<aside class="detail-panel">
+  @if (user(); as selectedUser) {
+    <header class="detail-header">
+      <div>
+        <h2>{{ fullName(selectedUser) }}</h2>
+        <p>{{ selectedUser.Email || '-' }}</p>
+      </div>
+      <span class="detail-count">
+        {{ selectedUser.ActiveLegalHoldCount ?? 0 }} {{ 'Legal holds' | transloco }}
+      </span>
+    </header>
+
+    <mat-tab-group>
+      <mat-tab [label]="'Activity' | transloco">
+        <div class="list-panel">
+          @for (action of actions(); track action.UaaID) {
+            <article>
+              <strong>{{ action.UaaAction || '-' }}</strong>
+              <span>{{ action.UaaReason || '-' }}</span>
+              <small>
+                {{ action.RequestedByEmail || '-' }} &middot;
+                {{ action.UaaDateCreated || '-' }}
+              </small>
+            </article>
+          } @empty {
+            <p class="empty-state">{{ 'No governance actions found.' | transloco }}</p>
+          }
+        </div>
+      </mat-tab>
+      <mat-tab [label]="'Legal holds' | transloco">
+        <div class="list-panel">
+          @for (hold of legalHolds(); track hold.UlhUUID) {
+            <article>
+              <strong>{{ holdStatusLabel(hold) | transloco }} &middot; {{ hold.UlhID }}</strong>
+              <span>{{ hold.UlhReason || '-' }}</span>
+              <small
+                >{{ hold.UlhLegalBasis || '-' }} &middot; {{ hold.UlhDateCreated || '-' }}</small
+              >
+              @if (hold.UlhStatus === 1) {
+                <button mat-stroked-button type="button" (click)="releaseHold.emit(hold)">
+                  {{ 'Release' | transloco }}
+                </button>
+              }
+            </article>
+          } @empty {
+            <p class="empty-state">{{ 'No legal holds found.' | transloco }}</p>
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  } @else {
+    <div class="empty-panel">
+      <mat-icon>manage_accounts</mat-icon>
+      <p>{{ 'Select a user to inspect governance history.' | transloco }}</p>
+    </div>
+  }
+</aside>
