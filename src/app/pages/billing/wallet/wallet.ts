@@ -34,6 +34,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { AppI18nService } from '../../../services/app-i18n.service';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import {
   BillingCatalogItem,
@@ -90,6 +91,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
+  private readonly i18n = inject(AppI18nService);
 
   section: BillingTenantSection = 'dashboard';
 
@@ -172,7 +174,9 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private readonly walletErrorEffect = effect(() => {
     const error = this.walletResource.error();
     if (!error) return;
-    this.error.set(error instanceof Error ? error.message : 'Failed to load billing data.');
+    this.error.set(
+      error instanceof Error ? error.message : this.i18n.t('Failed to load billing data.'),
+    );
   });
 
   ngAfterViewInit() {
@@ -277,12 +281,14 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
         idempotencyKey: this.emptyToNull(value.idempotencyKey),
       });
       this.snack.success(
-        'Top-up request created. Credit will be applied after payment confirmation.',
+        this.i18n.t('Top-up request created. Credit will be applied after payment confirmation.'),
       );
       this.closeSubscriptionDialog();
       this.refresh();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to create top-up request.');
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to create top-up request.'),
+      );
     } finally {
       this.saving.set(false);
     }
@@ -325,12 +331,14 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.saving.set(true);
     try {
       await this.billing.createSubscription(payload);
-      this.snack.success('Subscription created.');
+      this.snack.success(this.i18n.t('Subscription created.'));
       if (!keepOpen) this.closeSubscriptionDialog();
       this.refresh();
       if (keepOpen) this.resetSubscriptionForm();
     } catch (error) {
-      this.snack.error(this.extractErrorMessage(error, 'Failed to create subscription.'));
+      this.snack.error(
+        this.extractErrorMessage(error, this.i18n.t('Failed to create subscription.')),
+      );
     } finally {
       this.saving.set(false);
     }
@@ -344,7 +352,9 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     if (
       !(await this.confirm(
         'Cancel subscription',
-        `Cancel ${row.BprName ?? row.BprCode ?? 'this subscription'}?`,
+        this.i18n.t('Cancel subscription confirmation', {
+          name: row.BprName ?? row.BprCode ?? this.i18n.t('this subscription'),
+        }),
         'Cancel subscription',
       ))
     )
@@ -352,10 +362,12 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     try {
       await this.billing.cancelSubscription(row.BsuUUID);
       this.selectedSubscriptionUUIDs.delete(row.BsuUUID);
-      this.snack.success('Subscription canceled.');
+      this.snack.success(this.i18n.t('Subscription canceled.'));
       this.refresh();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to cancel subscription.');
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to cancel subscription.'),
+      );
     }
   }
 
@@ -368,7 +380,36 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   }
 
   statusLabel(value: unknown) {
-    return String(value ?? '').replace(/_/g, ' ');
+    const code = String(value ?? '').trim().toUpperCase();
+    const labels: Record<string, string> = {
+      ACTIVE: 'Active',
+      SUSPENDED: 'Suspended',
+      CANCELED: 'Canceled',
+      PENDING: 'Pending',
+      PENDING_PAYMENT: 'Pending payment',
+      APPROVED: 'Approved',
+      REJECTED: 'Rejected',
+      EXPIRED: 'Expired',
+      ONE_TIME: 'One time',
+      MONTHLY: 'Monthly',
+      HOURLY: 'Hourly',
+      MINUTELY: 'Minutely',
+      SECONDLY: 'Secondly',
+      USAGE_UNIT: 'Usage unit',
+      GB_HOUR: 'GB hour',
+      GB_MONTH: 'GB month',
+      MODULE_MONTHLY: 'Module monthly',
+      TIERED_USAGE: 'Tiered usage',
+      CREDIT: 'Credit',
+      DEBIT: 'Debit',
+      CREDIT_MANUAL: 'Manual credit',
+      CREDIT_TOPUP: 'Top-up credit',
+      CREDIT_REFUND: 'Refund credit',
+      DEBIT_SUBSCRIPTION: 'Subscription debit',
+      IN: 'Incoming',
+      OUT: 'Outgoing',
+    };
+    return this.i18n.t(labels[code] ?? String(value ?? '').replace(/_/g, ' '));
   }
 
   billingScopeLabel(row: BillingCatalogItem | null = this.selectedCatalogItem()) {
@@ -434,13 +475,19 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.visibleSubscriptionRows().forEach((row) => this.toggleSubscriptionSelection(row, checked));
   }
 
+  subscriptionSelectLabel(row: BillingSubscription) {
+    return this.i18n.t('Select subscription', {
+      name: row.BprName || row.BprCode || this.i18n.t('subscription'),
+    });
+  }
+
   async cancelSelectedSubscriptions() {
     const ids = Array.from(this.selectedSubscriptionUUIDs);
     if (!ids.length) return;
     if (
       !(await this.confirm(
         'Cancel selected subscriptions',
-        `Cancel ${ids.length} selected active subscription record(s)?`,
+        this.i18n.t('Cancel selected subscriptions confirmation', { count: ids.length }),
         'Cancel selected',
       ))
     )
@@ -460,9 +507,11 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       this.refresh();
       if (failed.size) {
         failed.forEach((uuid) => this.selectedSubscriptionUUIDs.add(uuid));
-        this.snack.error(`${failed.size} selected subscription record(s) could not be canceled.`);
+        this.snack.error(
+          this.i18n.t('Selected subscriptions could not be canceled.', { count: failed.size }),
+        );
       } else {
-        this.snack.success(`${ids.length} subscription record(s) canceled.`);
+        this.snack.success(this.i18n.t('Subscriptions canceled.', { count: ids.length }));
       }
     } finally {
       this.mutating.set(false);
@@ -505,7 +554,12 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   private async confirm(title: string, message: string, confirmText: string) {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       width: '440px',
-      data: { title, message, confirmText, confirmLabel: confirmText },
+      data: {
+        title: this.i18n.t(title),
+        message,
+        confirmText: this.i18n.t(confirmText),
+        confirmLabel: this.i18n.t(confirmText),
+      },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
     });
