@@ -323,6 +323,27 @@ mat-icon {
   opacity: 1;
 }
 
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .product-code-option {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.2rem 0;
+  line-height: 1.25;
+}
+
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .product-code-option strong,
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .product-code-option small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cdk-overlay-pane .mat-mdc-autocomplete-panel .product-code-option small {
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+}
+
 /* =========================================================
    6) BOTÕES GLOBAIS DE SUBMISSÃO
 ========================================================= */

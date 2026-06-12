@@ -21,6 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -40,6 +41,7 @@ import {
   BillingPrice,
   BillingPackage,
   BillingProduct,
+  BillingProductDefinition,
   BillingPromotion,
   BillingService,
   BillingSubscription,
@@ -73,6 +75,7 @@ type BillingSystemFilters = {
 };
 
 type BillingSystemSnapshot = {
+  definitions: BillingProductDefinition[];
   products: BillingProduct[];
   prices: BillingPrice[];
   packages: BillingPackage[];
@@ -81,6 +84,7 @@ type BillingSystemSnapshot = {
 };
 
 const EMPTY_BILLING_SYSTEM_SNAPSHOT: BillingSystemSnapshot = {
+  definitions: [],
   products: [],
   prices: [],
   packages: [],
@@ -91,6 +95,7 @@ const EMPTY_BILLING_SYSTEM_SNAPSHOT: BillingSystemSnapshot = {
 export const BILLING_SYSTEM_IMPORTS = [
   FormsModule,
   ReactiveFormsModule,
+  MatAutocompleteModule,
   MatButtonModule,
   MatCardModule,
   MatCheckboxModule,
@@ -145,6 +150,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly editingProduct = signal<BillingProduct | null>(null);
+  readonly productDefinitions = signal<BillingProductDefinition[]>([]);
   readonly editingPrice = signal<BillingPrice | null>(null);
   readonly editingPackage = signal<BillingPackage | null>(null);
   readonly editingPromotion = signal<BillingPromotion | null>(null);
@@ -157,6 +163,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   readonly priceFormProductSearchInput = signal('');
   readonly packageFormProductSearchInput = signal('');
   readonly promotionRuleProductSearchInput = signal('');
+  productCodeFilter = '';
   readonly priceProductOptions = computed(() =>
     this.filterProducts(this.priceProductSearchInput()),
   );
@@ -357,6 +364,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   private readonly syncBillingData = effect(() => {
     const snapshot = this.billingResource.value();
+    this.productDefinitions.set(snapshot.definitions);
     this.products.set(snapshot.products);
     this.productSource.data = snapshot.products;
     this.priceSource.data = snapshot.prices;
@@ -399,14 +407,15 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   ): Promise<BillingSystemSnapshot> {
     this.error.set(null);
     const status = filters.status === '' ? null : filters.status;
-    const [products, prices, packages, promotions, subscriptions] = await Promise.all([
+    const [definitions, products, prices, packages, promotions, subscriptions] = await Promise.all([
+      this.billing.listProductDefinitions('', null),
       this.billing.listProducts(filters.search, status),
       this.billing.listPrices(filters.search, filters.priceProductUUID, status),
       this.billing.listPackages(filters.search, status),
       this.billing.listPromotions(filters.search, status),
       this.billing.listSystemSubscriptions(filters.search, filters.subscriptionStatus),
     ]);
-    return { products, prices, packages, promotions, subscriptions };
+    return { definitions, products, prices, packages, promotions, subscriptions };
   }
 
   applyFilters() {
@@ -454,6 +463,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.editingProduct.set(null);
     this.resetProductForm();
     this.productForm.controls.code.enable({ emitEvent: false });
+    this.productCodeFilter = '';
     this.openDialog(this.productDialog(), '980px');
   }
 
@@ -479,6 +489,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       status: row.BprStatus,
     });
     this.productForm.controls.code.disable({ emitEvent: false });
+    this.productCodeFilter = row.BprCode;
     this.openDialog(this.productDialog(), '980px');
   }
 
@@ -534,6 +545,57 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   async saveAndNewProduct() {
     await this.saveProduct(true);
+  }
+
+  productDefinitionOptions() {
+    const term = String(this.productCodeFilter || this.productForm.controls.code.value || '')
+      .trim()
+      .toLowerCase();
+    const definitions = this.productDefinitions();
+    const options = term
+      ? definitions.filter((definition) =>
+          [
+            definition.BpdCode,
+            definition.BpdName,
+            definition.BpdModule,
+            definition.BpdBillingScope,
+            definition.BpdDescription,
+            definition.BpdEntitlementPattern,
+            definition.BpdResourceType,
+          ]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(term)),
+        )
+      : definitions;
+    return options.slice(0, 80);
+  }
+
+  selectProductDefinitionCode(code: string) {
+    const definition = this.productDefinitions().find((item) => item.BpdCode === code);
+    if (!definition || this.editingProduct()) return;
+    const current = this.productForm.getRawValue();
+    this.productCodeFilter = definition.BpdCode;
+    this.productForm.patchValue({
+      code: definition.BpdCode,
+      name: current.name || definition.BpdName,
+      module: current.module || definition.BpdModule,
+      billingScope: definition.BpdBillingScope,
+      description: current.description || definition.BpdDescription || '',
+      entitlementPattern:
+        current.entitlementPattern || definition.BpdEntitlementPattern || definition.BpdCode,
+      requiresEntitlementCode:
+        current.requiresEntitlementCode || definition.BpdRequiresEntitlementCode || '',
+      resourceType: current.resourceType || definition.BpdResourceType || '',
+      isPublic: Number(current.isPublic || definition.BpdIsPublic || 0),
+      publicSlug: current.publicSlug || definition.BpdPublicSlug || '',
+      publicName: current.publicName || definition.BpdPublicName || '',
+      publicSummary: current.publicSummary || definition.BpdPublicSummary || '',
+      publicDescription: current.publicDescription || definition.BpdPublicDescription || '',
+      publicFeaturesJson: current.publicFeaturesJson || definition.BpdPublicFeaturesJson || '',
+      publicSortOrder: current.publicSortOrder ?? definition.BpdPublicSortOrder ?? null,
+      sortOrder: current.sortOrder ?? definition.BpdSortOrder ?? null,
+      status: Number(current.status ?? definition.BpdStatus ?? 1),
+    });
   }
 
   async deleteProduct(row: BillingProduct) {
@@ -1286,6 +1348,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   private resetProductForm() {
     this.editingProduct.set(null);
     this.productForm.controls.code.enable({ emitEvent: false });
+    this.productCodeFilter = '';
     this.productForm.reset({
       code: '',
       name: '',

@@ -25,6 +25,28 @@ export interface BillingProduct {
   PriceCount?: number;
 }
 
+export interface BillingProductDefinition {
+  BpdUUID: string;
+  BpdID?: string | null;
+  BpdCode: string;
+  BpdName: string;
+  BpdModule: string;
+  BpdBillingScope: 'MODULE' | 'RESOURCE' | 'USAGE';
+  BpdDescription?: string | null;
+  BpdEntitlementPattern?: string | null;
+  BpdRequiresEntitlementCode?: string | null;
+  BpdResourceType?: string | null;
+  BpdIsPublic?: number | null;
+  BpdPublicSlug?: string | null;
+  BpdPublicName?: string | null;
+  BpdPublicSummary?: string | null;
+  BpdPublicDescription?: string | null;
+  BpdPublicFeaturesJson?: string | null;
+  BpdPublicSortOrder?: number | null;
+  BpdSortOrder?: number | null;
+  BpdStatus: number;
+}
+
 export interface BillingPrice {
   BpcUUID: string;
   BillingProductBprUUID: string;
@@ -236,6 +258,16 @@ export class BillingService {
     if (status !== null) params.set('status', String(status));
     const response = await this.api.get<ApiListResponse<BillingProduct>>(
       `system/billing/products${this.query(params)}`,
+    );
+    return response.data?.items ?? [];
+  }
+
+  async listProductDefinitions(search = '', status: number | null = null) {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('search', search.trim());
+    if (status !== null) params.set('status', String(status));
+    const response = await this.api.get<ApiListResponse<BillingProductDefinition>>(
+      `system/billing/product-definitions${this.query(params)}`,
     );
     return response.data?.items ?? [];
   }

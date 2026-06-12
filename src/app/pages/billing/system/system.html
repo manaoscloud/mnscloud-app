@@ -98,33 +98,32 @@
             <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
-      </div>
-
-      <div class="filter-actions">
-        @if (selectedProductCount) {
-          <span class="selection-count"
-            >{{ selectedProductCount }} {{ 'selected' | transloco }}</span
-          >
-          <button
-            class="context-action"
-            mat-stroked-button
-            color="warn"
-            type="button"
-            (click)="deleteSelectedProducts()"
-            [disabled]="loading()"
-          >
-            <mat-icon>delete</mat-icon>
-            {{ 'Delete selected' | transloco }}
+        <div class="filter-actions span-4">
+          @if (selectedProductCount) {
+            <span class="selection-count"
+              >{{ selectedProductCount }} {{ 'selected' | transloco }}</span
+            >
+            <button
+              class="context-action"
+              mat-stroked-button
+              color="warn"
+              type="button"
+              (click)="deleteSelectedProducts()"
+              [disabled]="loading()"
+            >
+              <mat-icon>delete</mat-icon>
+              {{ 'Delete selected' | transloco }}
+            </button>
+          }
+          <button mat-stroked-button type="button" (click)="applyFilters()">
+            <mat-icon>filter_alt</mat-icon>
+            {{ 'Apply' | transloco }}
           </button>
-        }
-        <button mat-stroked-button type="button" (click)="applyFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | transloco }}
-        </button>
-        <button mat-stroked-button type="button" (click)="clearFilters()">
-          <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | transloco }}
-        </button>
+          <button mat-stroked-button type="button" (click)="clearFilters()">
+            <mat-icon>backspace</mat-icon>
+            {{ 'Clear' | transloco }}
+          </button>
+        </div>
       </div>
 
       <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
@@ -776,7 +775,29 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Product code' | transloco }}</mat-label>
-                <input matInput maxlength="120" formControlName="code" />
+                <input
+                  matInput
+                  maxlength="120"
+                  formControlName="code"
+                  [matAutocomplete]="productCodeAutocomplete"
+                  (input)="productCodeFilter = productForm.controls.code.value"
+                />
+                <mat-autocomplete
+                  #productCodeAutocomplete="matAutocomplete"
+                  (optionSelected)="selectProductDefinitionCode($event.option.value)"
+                >
+                  @for (definition of productDefinitionOptions(); track definition.BpdCode) {
+                    <mat-option [value]="definition.BpdCode">
+                      <span class="product-code-option">
+                        <strong>{{ definition.BpdCode }}</strong>
+                        <small>
+                          {{ definition.BpdName }} · {{ definition.BpdBillingScope }} ·
+                          {{ definition.BpdModule }}
+                        </small>
+                      </span>
+                    </mat-option>
+                  }
+                </mat-autocomplete>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Module' | transloco }}</mat-label>

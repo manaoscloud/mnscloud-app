@@ -108,6 +108,10 @@
   `module.hosting.vps.instance`.
 - The app must obtain grants from `/api/v1/billing/entitlements/grants`; do not hardcode tenant
   commercial access, product prices, subscription state, or free module exceptions in frontend code.
+- Master billing screens must obtain official product-code suggestions from
+  `/api/v1/system/billing/product-definitions`. A product-code field may allow free typing to create
+  a missing canonical definition, but the suggestion list must come from DB/API seeded
+  `BillingProductDefinition` rows and never from page-local hardcoded arrays.
 - If a feature is intentionally free/base, it must still come from an explicit API/DB grant backed
   by a zero-value product/price/subscription. Do not show commercial menus because a product/policy
   is missing.
@@ -227,6 +231,9 @@
 ## Searchable Select Baseline (Current)
 
 - Any `mat-select` bound to records from another table/entity (FK-like fields) must be searchable.
+- Any free-text code field backed by a canonical DB/API registry, such as Billing Product Code, must
+  use `mat-autocomplete` with API-provided suggestions and still preserve manual typing when the
+  workflow intentionally creates a new registry entry.
 - Mandatory implementation pattern:
   - first `mat-option` reserved for search input (`select-search-option`)
   - nested search field class `select-search-field`
