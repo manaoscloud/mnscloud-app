@@ -1037,6 +1037,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   subscriptionStatusLabel(status: string) {
     const labels: Record<string, string> = {
       ACTIVE: 'Active',
+      PENDING_CANCEL: 'Pending cancellation',
       SUSPENDED: 'Suspended',
       CANCELED: 'Canceled',
       PENDING_PAYMENT: 'Pending payment',
@@ -1077,7 +1078,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   subscriptionVisibleRows() {
-    return this.visibleRows(this.subscriptionSource).filter((row) => row.BsuStatus !== 'CANCELED');
+    return this.visibleRows(this.subscriptionSource).filter(
+      (row) => !this.isSubscriptionCanceled(row),
+    );
   }
 
   isProductSelected(row: BillingProduct) {
@@ -1091,6 +1094,10 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
 
   isSubscriptionSelected(row: BillingSubscription) {
     return this.selectedSubscriptionUUIDs.has(row.BsuUUID);
+  }
+
+  isSubscriptionCanceled(row: BillingSubscription) {
+    return ['CANCELED', 'PENDING_CANCEL'].includes(String(row.BsuStatus ?? '').toUpperCase());
   }
 
   isAllVisiblePricesSelected() {

@@ -207,6 +207,12 @@ export interface BillingSubscription {
   BsuResourceType?: string | null;
   BsuResourceUUID?: string | null;
   BsuResourceLabel?: string | null;
+  BsuStartedAt?: string | null;
+  BsuCurrentPeriodStart?: string | null;
+  BsuCurrentPeriodEnd?: string | null;
+  BsuNextBillAt?: string | null;
+  BsuCancelAtPeriodEnd?: number | boolean | null;
+  BsuCanceledAt?: string | null;
   BsuDateCreated?: string | null;
   EnvironmentUUID?: string | null;
   EnvironmentName?: string | null;

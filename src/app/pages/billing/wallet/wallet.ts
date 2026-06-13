@@ -387,6 +387,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
       .toUpperCase();
     const labels: Record<string, string> = {
       ACTIVE: 'Active',
+      PENDING_CANCEL: 'Pending cancellation',
       SUSPENDED: 'Suspended',
       CANCELED: 'Canceled',
       PENDING: 'Pending',
@@ -446,11 +447,17 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   }
 
   visibleSubscriptionRows() {
-    return this.visibleRows(this.subscriptionSource).filter((row) => row.BsuStatus !== 'CANCELED');
+    return this.visibleRows(this.subscriptionSource).filter(
+      (row) => !this.isSubscriptionCanceled(row),
+    );
   }
 
   isSubscriptionSelected(row: BillingSubscription) {
     return this.selectedSubscriptionUUIDs.has(row.BsuUUID);
+  }
+
+  isSubscriptionCanceled(row: BillingSubscription) {
+    return ['CANCELED', 'PENDING_CANCEL'].includes(String(row.BsuStatus ?? '').toUpperCase());
   }
 
   topupCurrency() {
