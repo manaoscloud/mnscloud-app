@@ -58,6 +58,10 @@
   `@ViewChildren`.
 - Use `signal`, `computed`, `linkedSignal`, and small explicit effects for UI state. Keep API/DB
   business decisions out of signals; signals only model presentation state and user interaction.
+- Do not inject `ChangeDetectorRef` or call `detectChanges()` in application components. Convert
+  local state to signals/resources or adapt third-party callbacks at their boundary instead of
+  forcing change detection from inside page code. Unit-test fixtures may still call
+  `fixture.detectChanges()`.
 - Use Angular `resource()` for dashboard/read-model data that is loaded from one or more GET
   endpoints and refreshed as a unit. Keep the loader typed, return a single immutable snapshot, and
   derive UI state with `computed()` instead of maintaining parallel `loading/error/items` signals.
@@ -76,6 +80,12 @@
 - `httpResource` can be introduced for simple same-service GET resources after the endpoint typing is
   stable. Continue using `ApiService` where request headers, tenant context, auth behavior, upload
   progress, or custom error handling are required.
+- Signal Forms are the default for new simple/native-input forms and small refactors where controls
+  can use `form()`, `FormField`, `[formField]`, and `[formRoot]` directly. Existing Material-heavy
+  CRUDs that depend on `mat-select`, datepickers, uploads, dialogs, or complex control-value
+  accessors may keep Reactive Forms until a shared Signal Forms adapter exists. Do not perform a
+  cosmetic migration that wraps the old form API without reducing state, validation, or template
+  complexity.
 - Prefer direct standalone imports (`DatePipe`, `JsonPipe`, `NgClass`, specific Material modules,
   etc.) instead of broad `CommonModule` when the component can declare the exact template
   dependency. Run the Angular unused-import cleanup after migration/refactor work.

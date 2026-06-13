@@ -102,6 +102,8 @@ const forbiddenHtmlRules = [
 ];
 
 const forbiddenTsRules = [
+  ['manual ChangeDetectorRef injection', /ChangeDetectorRef/],
+  ['manual detectChanges call', /\bdetectChanges\s*\(/],
   ['decorator ViewChild query', /@ViewChild\b/],
   ['decorator ViewChildren query', /@ViewChildren\b/],
   ['legacy OnDestroy lifecycle', /\bimplements\s+OnDestroy\b|\bngOnDestroy\s*\(/],

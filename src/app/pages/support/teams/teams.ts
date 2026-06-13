@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
@@ -101,7 +100,6 @@ type UserOption = { value: string; label: string; email?: string | null };
 })
 export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
 
   teams: SupportTeam[] = [];
@@ -284,7 +282,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   async loadMembers(teamUUID: string) {
     this.loadingMembers = true;
     this.memberError = '';
-    this.cdr.detectChanges();
     try {
       const res = await this.api.get<any>(`support/teams/${teamUUID}/members`);
       this.members = res?.data?.items ?? [];
@@ -293,7 +290,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       this.members = [];
     } finally {
       this.loadingMembers = false;
-      this.cdr.detectChanges();
     }
   }
 
@@ -521,7 +517,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
     this.memberForm.canAssign = false;
     this.memberForm.canClose = false;
     this.memberForm.status = 1;
-    this.cdr.detectChanges();
   }
 
   startEditMember(member: SupportTeamMember) {
@@ -544,7 +539,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
 
     this.loadingMembers = true;
     this.memberError = '';
-    this.cdr.detectChanges();
 
     try {
       const payload = {
@@ -571,7 +565,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       this.memberError = this.resolveApiError(err, 'Failed to save member.');
     } finally {
       this.loadingMembers = false;
-      this.cdr.detectChanges();
     }
   }
 
@@ -593,7 +586,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
 
     this.loadingMembers = true;
     this.memberError = '';
-    this.cdr.detectChanges();
     try {
       await this.api.delete(
         `support/teams/${this.editing.SupportTeamUUID}/members/${member.SupportTeamMemberUUID}`,
@@ -606,7 +598,6 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       this.memberError = this.resolveApiError(err, 'Failed to delete member.');
     } finally {
       this.loadingMembers = false;
-      this.cdr.detectChanges();
     }
   }
 }

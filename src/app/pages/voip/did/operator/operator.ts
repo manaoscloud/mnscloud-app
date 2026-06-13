@@ -1,7 +1,6 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
@@ -87,7 +86,6 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly coreApi = inject(ApiService);
   private readonly fb = inject(FormBuilder);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -178,7 +176,6 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {
@@ -293,7 +290,6 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
       this.suppliers = mapped;
       this.supplierMap = new Map(mapped.map((s: { value: string; label: string }) => [s.value, s]));
       this.suppliersReady.set(true);
-      this.cdr.detectChanges();
     } catch (err) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to load suppliers.'));
     }

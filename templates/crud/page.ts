@@ -4,7 +4,10 @@ import {
   DestroyRef,
   TemplateRef,
   afterNextRender,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   viewChild,
 } from '@angular/core';
@@ -76,12 +79,18 @@ export class CrudPage {
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
 
-  readonly loading = signal(false);
+  private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly editing = signal<Entity | null>(null);
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly selectedEntityUUIDs = signal<Set<string>>(new Set());
+  private readonly itemsResource = resource({
+    params: () => this.search(),
+    defaultValue: [] as Entity[],
+    loader: ({ params }) => this.fetchItems(params),
+  });
+  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 
   readonly dataSource = new MatTableDataSource<Entity>([]);
   readonly displayedColumns = ['select', 'name', 'status', 'actions'];
@@ -97,73 +106,75 @@ export class CrudPage {
   readonly entityFormDialog = viewChild<TemplateRef<unknown>>('entityFormDialog');
 
   private entityDialogBinding: CrudDialogBinding | null = null;
-  private loadingTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.clearLoadingTimer();
-      this.closeEntityDialog();
-    });
+  private readonly cleanup = this.destroyRef.onDestroy(() => this.closeEntityDialog());
 
-    afterNextRender(() => {
-      this.dataSource.paginator = this.paginator() ?? null;
-      this.dataSource.sort = this.sort() ?? null;
-      this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-        switch (sortHeaderId) {
-          case 'name':
-            return data.Name ?? '';
-          case 'status':
-            return this.isActive(data) ? 'ACTIVE' : 'INACTIVE';
-          default:
-            return '';
-        }
-      };
-      void this.loadItems();
-    });
-  }
+  private readonly setupTable = afterNextRender(() => {
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
+    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
+      switch (sortHeaderId) {
+        case 'name':
+          return data.Name ?? '';
+        case 'status':
+          return this.isActive(data) ? 'ACTIVE' : 'INACTIVE';
+        default:
+          return '';
+      }
+    };
+  });
+
+  private readonly syncItems = effect(() => {
+    this.dataSource.data = this.itemsResource.value();
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.itemsResource.error();
+    if (!error) return;
+    this.snack.error(this.extractErrorMessage(error, 'Failed to load items.'));
+  });
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
-    void this.loadItems();
+    const nextSearch = this.searchInput().trim();
+    if (nextSearch === this.search()) {
+      this.itemsResource.reload();
+    } else {
+      this.search.set(nextSearch);
+    }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    this.search.set('');
-    void this.loadItems();
+    if (this.search()) {
+      this.search.set('');
+    } else {
+      this.itemsResource.reload();
+    }
   }
 
   refreshList() {
-    void this.loadItems();
+    this.itemsResource.reload();
   }
 
-  async loadItems() {
-    this.loading.set(true);
-    const start = performance.now();
+  private async fetchItems(search: string) {
+    const params = new URLSearchParams();
+    params.set('limit', String(this.listLimit));
+    if (search) params.set('q', search);
+    const response = await this.api.get<any>(`endpoint?${params.toString()}`);
+    return response?.data?.items ?? [];
+  }
 
+  private reloadItems() {
+    this.itemsResource.reload();
+  }
+
+  private async runMutation(action: () => Promise<void>) {
+    this.mutating.set(true);
     try {
-      const params = new URLSearchParams();
-      params.set('limit', String(this.listLimit));
-      if (this.search()) params.set('q', this.search());
-      const response = await this.api.get<any>(`endpoint?${params.toString()}`);
-      this.dataSource.data = response?.data?.items ?? [];
-      this.reconcileSelection();
-    } catch (err: any) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load items.'));
-      this.dataSource.data = [];
-      this.reconcileSelection();
+      await action();
     } finally {
-      const elapsed = performance.now() - start;
-      const waitMs = Math.max(0, 600 - elapsed);
-      this.clearLoadingTimer();
-      if (waitMs) {
-        this.loadingTimer = setTimeout(() => {
-          this.loading.set(false);
-          this.loadingTimer = null;
-        }, waitMs);
-      } else {
-        this.loading.set(false);
-      }
+      this.mutating.set(false);
     }
   }
 
@@ -210,7 +221,7 @@ export class CrudPage {
         this.snack.success('Item created successfully.');
       }
 
-      await this.loadItems();
+      this.reloadItems();
 
       if (saveAndNew && createMode) {
         this.form.reset({ name: '', status: 1, notes: '' });
@@ -252,16 +263,13 @@ export class CrudPage {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
-    try {
+    await this.runMutation(async () => {
       await this.api.delete(`endpoint/${item.UUID}`);
-      await this.loadItems();
+      this.reloadItems();
       this.snack.success('Item deleted successfully.');
-    } catch (err: any) {
+    }).catch((err: any) => {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete item.'));
-    } finally {
-      this.loading.set(false);
-    }
+    });
   }
 
   get selectedCount() {
@@ -336,8 +344,7 @@ export class CrudPage {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.loading.set(true);
-    try {
+    await this.runMutation(async () => {
       const response = await this.api.delete<any>('endpoint/bulk', { ids });
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       const failed = new Set<string>(
@@ -352,12 +359,10 @@ export class CrudPage {
       } else {
         this.snack.success(`${deleted.size || ids.length} selected item(s) deleted.`);
       }
-      await this.loadItems();
-    } catch (err: any) {
+      this.reloadItems();
+    }).catch((err: any) => {
       this.snack.error(this.extractErrorMessage(err, 'Failed to delete selected items.'));
-    } finally {
-      this.loading.set(false);
-    }
+    });
   }
 
   isActive(item: Entity) {
@@ -412,9 +417,4 @@ export class CrudPage {
     });
   }
 
-  private clearLoadingTimer() {
-    if (!this.loadingTimer) return;
-    clearTimeout(this.loadingTimer);
-    this.loadingTimer = null;
-  }
 }

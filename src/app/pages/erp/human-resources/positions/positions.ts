@@ -14,16 +14,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpHumanResourcesPositionsPage extends SimpleResourcePageBase {
-  constructor() {
-    super({
-      endpoint: 'erp/human-resources/positions',
-      uuidField: 'PositionUUID',
-      pageTitle: 'Positions',
-      pageDescription: 'Manage human resources job positions.',
-      dialogCreateTitle: 'New Position',
-      dialogEditTitle: 'Edit Position',
-      dialogDescription: 'Define the position name, status and notes.',
-      deleteLabel: 'Position',
-    });
-  }
+  protected override readonly config = {
+    endpoint: 'erp/human-resources/positions',
+    uuidField: 'PositionUUID',
+    pageTitle: 'Positions',
+    pageDescription: 'Manage human resources job positions.',
+    dialogCreateTitle: 'New Position',
+    dialogEditTitle: 'Edit Position',
+    dialogDescription: 'Define the position name, status and notes.',
+    deleteLabel: 'Position',
+  };
 }

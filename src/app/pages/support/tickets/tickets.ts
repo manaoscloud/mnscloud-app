@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   OnDestroy,
@@ -141,7 +140,6 @@ const emptyTicketFilters = (): TicketFilters => ({
 })
 export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -469,7 +467,6 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
       }));
       this.customers = mapped;
       this.customerMap = new Map(mapped.map((c: CustomerOption) => [c.value, c]));
-      this.cdr.detectChanges();
     } catch (err) {
       console.error('Failed to load customers.', err);
     }
@@ -485,7 +482,6 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
       }));
       this.channels = mapped;
       this.channelMap = new Map(mapped.map((c: ChannelOption) => [c.value, c]));
-      this.cdr.detectChanges();
     } catch (err) {
       console.error('Failed to load channels.', err);
     }
@@ -701,7 +697,6 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
     this.events = items;
     this.eventError = errorMessage;
     this.loadingEvents = false;
-    this.cdr.detectChanges();
   }
 
   async saveTicket(createAndNew = false) {

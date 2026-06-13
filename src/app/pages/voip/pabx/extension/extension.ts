@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   TemplateRef,
@@ -105,7 +104,6 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
   private readonly pabxApi = inject(VoipPabxService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly snack = inject(SnackbarService);
 
   readonly pageTitle = computed(() => 'PABX Extension');
@@ -719,7 +717,6 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
         };
       });
     this.updateCodecOptions(this.form.controls.pabxUUID.value);
-    this.cdr.detectChanges();
   }
 
   private async fetchExtensions(filters: ExtensionFilters): Promise<VoipPabxExtensionItem[]> {

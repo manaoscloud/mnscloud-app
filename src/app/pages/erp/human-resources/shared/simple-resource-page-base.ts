@@ -118,8 +118,7 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
 
   private dialogBinding: CrudDialogBinding | null = null;
   private lastLoadError = '';
-
-  protected constructor(readonly config: SimpleResourceConfig) {}
+  protected abstract readonly config: SimpleResourceConfig;
 
   private readonly syncItems = effect(() => {
     this.dataSource.data = this.itemsResource.value();

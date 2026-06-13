@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   ElementRef,
@@ -104,7 +103,6 @@ type PostalCodeLookupItem = {
 export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 200;
@@ -351,11 +349,9 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
 
       if (!this.editingComplex && keepOpenForNew) {
         this.resetForm();
-        this.cdr.detectChanges();
       } else {
         this.closeComplexDialog();
         this.resetForm();
-        this.cdr.detectChanges();
       }
       this.complexesResource.reload();
     } catch (err: any) {
@@ -395,12 +391,10 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
       this.form.city = item.city ?? this.form.city;
       this.form.state = item.state ?? this.form.state;
       this.searchingPostalCode = false;
-      this.cdr.detectChanges();
       queueMicrotask(() => this.addressNumberInput()?.nativeElement?.focus());
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to search postal code.');
       this.searchingPostalCode = false;
-      this.cdr.detectChanges();
     }
   }
 

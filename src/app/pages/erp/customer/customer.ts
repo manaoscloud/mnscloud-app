@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   ElementRef,
@@ -212,7 +211,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly listLimit = 200;
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
-  private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private map: any;
@@ -428,7 +426,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       const items = res?.data?.items ?? [];
       this.complexes = items;
       this.complexMap = new Map(items.map((item: ErpComplexOption) => [item.ComplexUUID, item]));
-      this.cdr.detectChanges();
     } catch (err) {
       console.error('Failed to load complexes.', err);
     }
@@ -442,7 +439,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       );
       this.dueDays = items;
       this.dueDayMap = new Map(items.map((item: DueDayOption) => [item.ErpFinInvDueDayUUID, item]));
-      this.cdr.detectChanges();
     } catch (err) {
       console.error('Failed to load due days.', err);
     }
@@ -1065,7 +1061,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     const token = await this.getMapboxToken();
     if (!token) {
       this.showError('Mapbox token missing in system parameters (MAPBOX_TOKEN).');
-      this.cdr.detectChanges();
       return;
     }
     this.error = '';
@@ -1101,7 +1096,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       this.form.lat = Number(lat.toFixed(6));
       this.form.lng = Number(lng.toFixed(6));
       this.updateMapMarker();
-      this.cdr.detectChanges();
     });
 
     this.updateMapMarker();
@@ -1134,14 +1128,12 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   private requestUserLocation() {
     if (!('geolocation' in navigator)) {
       this.showWarning('Geolocation is not available in this browser.');
-      this.cdr.detectChanges();
       this.fallbackToBrasilia();
       return;
     }
 
     if (!window.isSecureContext) {
       this.showWarning('Geolocation requires HTTPS.');
-      this.cdr.detectChanges();
       this.fallbackToBrasilia();
       return;
     }
@@ -1157,7 +1149,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
           this.map.setZoom(Math.max(this.map.getZoom?.() ?? 14, 14));
         }
         this.error = '';
-        this.cdr.detectChanges();
       },
       (err) => {
         if (err?.code === 1) {
@@ -1169,7 +1160,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
         } else {
           this.showError('Failed to retrieve location.');
         }
-        this.cdr.detectChanges();
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
     );
@@ -1185,7 +1175,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       this.map.setCenter([this.form.lng, this.form.lat]);
       this.map.setZoom(Math.max(this.map.getZoom?.() ?? 12, 12));
     }
-    this.cdr.detectChanges();
   }
 
   private scheduleMapResize() {
@@ -1241,7 +1230,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
           const pos = this.mapMarker.getLngLat();
           this.form.lat = Number(pos.lat.toFixed(6));
           this.form.lng = Number(pos.lng.toFixed(6));
-          this.cdr.detectChanges();
         });
       } else {
         this.mapMarker.setLngLat(coords);
@@ -1345,7 +1333,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
         this.onMainAddressChange();
       }
       this.setSearchingPostalCode(section, false);
-      this.cdr.detectChanges();
       queueMicrotask(() => {
         if (section === 'main') this.mainAddressNumberInput()?.nativeElement?.focus();
         if (section === 'billing') this.billingAddressNumberInput()?.nativeElement?.focus();
@@ -1354,7 +1341,6 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to search postal code.');
       this.setSearchingPostalCode(section, false);
-      this.cdr.detectChanges();
     }
   }
 

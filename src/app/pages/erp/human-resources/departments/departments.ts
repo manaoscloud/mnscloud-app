@@ -14,16 +14,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpHumanResourcesDepartmentsPage extends SimpleResourcePageBase {
-  constructor() {
-    super({
-      endpoint: 'erp/human-resources/departments',
-      uuidField: 'DepartmentUUID',
-      pageTitle: 'Departments',
-      pageDescription: 'Manage human resources departments.',
-      dialogCreateTitle: 'New Department',
-      dialogEditTitle: 'Edit Department',
-      dialogDescription: 'Define the department name, status and notes.',
-      deleteLabel: 'Department',
-    });
-  }
+  protected override readonly config = {
+    endpoint: 'erp/human-resources/departments',
+    uuidField: 'DepartmentUUID',
+    pageTitle: 'Departments',
+    pageDescription: 'Manage human resources departments.',
+    dialogCreateTitle: 'New Department',
+    dialogEditTitle: 'Edit Department',
+    dialogDescription: 'Define the department name, status and notes.',
+    deleteLabel: 'Department',
+  };
 }
