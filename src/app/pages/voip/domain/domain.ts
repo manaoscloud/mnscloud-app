@@ -10,6 +10,7 @@ import {
   resource,
   signal,
   ChangeDetectionStrategy,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -407,7 +408,9 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
 
   private reconcileSelection() {
     const available = new Set(this.dataSource.data.map((item) => item.VdmUUID));
-    const next = new Set([...this.selectedDomainUUIDs()].filter((uuid) => available.has(uuid)));
+    const current = untracked(() => this.selectedDomainUUIDs());
+    const next = new Set([...current].filter((uuid) => available.has(uuid)));
+    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
     this.selectedDomainUUIDs.set(next);
   }
 
