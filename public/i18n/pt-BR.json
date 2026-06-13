@@ -1608,7 +1608,7 @@
   "Failed to cancel subscription.": "Falha ao cancelar assinatura.",
   "Failed to create subscription.": "Falha ao criar assinatura.",
   "Failed to create top-up request.": "Falha ao criar solicitação de recarga.",
-  "Online wallet top-up is unavailable because no active default master payment gateway is configured. Ask a MASTER user to add manual prepaid credit or configure a payment gateway.": "A recarga online está temporariamente indisponível. Entre em contato com o suporte ou tente novamente mais tarde.",
+  "Online top-up is temporarily unavailable. Contact support or try again later.": "A recarga online está temporariamente indisponível. Entre em contato com o suporte ou tente novamente mais tarde.",
   "Failed to load billing data.": "Falha ao carregar dados de faturamento.",
   "Failed to save package.": "Falha ao salvar pacote.",
   "Failed to save promotion.": "Falha ao salvar promoção.",
