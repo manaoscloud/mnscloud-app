@@ -1,30 +1,179 @@
-<section class="dashboard-container" animate.enter="app-fade-in">
-  <header class="header-block">
-    <h1 class="title mat-headline-medium">Dashboard</h1>
-    <p class="subtitle mat-body-large">Welcome back, {{ firstName }} 👋</p>
-  </header>
+<section class="erp-page main-dashboard" animate.enter="app-fade-in">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'Dashboard' | transloco }}</h1>
+        <p>{{ 'Operational overview for your tenant environment.' | transloco }}</p>
+      </div>
 
-  <!-- SUMMARY CARDS -->
-  <div class="cards">
-    <mat-card class="card elevation-md">
-      <h3 class="card-title">User</h3>
-      <p class="card-value">{{ user()?.firstName }} {{ user()?.lastName }}</p>
-    </mat-card>
+      <div class="header-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'Refresh' | transloco }}
+        </button>
+      </div>
+    </header>
 
-    <mat-card class="card elevation-md">
-      <h3 class="card-title">Email</h3>
-      <p class="card-value">{{ user()?.email }}</p>
-    </mat-card>
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+        </div>
+      }
 
-    <mat-card class="card elevation-md">
-      <h3 class="card-title">Status</h3>
-      <p class="card-value success">Online ✔️</p>
-    </mat-card>
-  </div>
+      <div class="hero-panel">
+        <div>
+          <span class="eyebrow">{{ 'Welcome back' | transloco }}</span>
+          <h2>{{ fullName() }}</h2>
+          <p>
+            {{
+              'Your account overview is synchronized with billing, entitlement and wallet status.'
+                | transloco
+            }}
+          </p>
+        </div>
 
-  <!-- WELCOME BOX -->
-  <mat-card class="welcome-box elevation-lg">
-    <h2 class="welcome-title mat-headline-small">Welcome to mnscloud 🎉</h2>
-    <p class="welcome-text mat-body-medium">Your multi-tenant cloud environment is ready.</p>
+        <div class="hero-actions">
+          <a mat-stroked-button color="primary" routerLink="/billing">
+            <mat-icon>add_card</mat-icon>
+            {{ 'Add credit' | transloco }}
+          </a>
+          <a mat-stroked-button color="primary" routerLink="/billing/catalog">
+            <mat-icon>storefront</mat-icon>
+            {{ 'View catalog' | transloco }}
+          </a>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        @for (item of kpis(); track item.label) {
+          <article class="kpi-tile" [ngClass]="'state-' + item.state">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label | transloco }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.detail | transloco }}</small>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-panel account-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Account status' | transloco }}</h2>
+              <p>{{ 'Tenant session and wallet state for the selected environment.' | transloco }}</p>
+            </div>
+          </div>
+
+          <dl class="definition-grid">
+            <div>
+              <dt>{{ 'Email' | transloco }}</dt>
+              <dd>{{ dashboard().account.email || user()?.email || '-' }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'Role' | transloco }}</dt>
+              <dd>{{ dashboard().account.role }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'Reserved balance' | transloco }}</dt>
+              <dd>{{ formatMoney(dashboard().wallet.reserved, dashboard().wallet.currency) }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'Ledger entries' | transloco }}</dt>
+              <dd>{{ dashboard().billing.ledgerEntries }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Attention points' | transloco }}</h2>
+              <p>{{ 'Commercial signals returned by the API for this tenant.' | transloco }}</p>
+            </div>
+          </div>
+
+          <div class="alert-list">
+            @for (alert of dashboard().alerts; track alert.code) {
+              <article class="dashboard-alert" [ngClass]="'severity-' + alert.severity">
+                <mat-icon>{{ alert.severity === 'warning' ? 'warning' : 'info' }}</mat-icon>
+                <span>{{ alert.message | transloco }}</span>
+              </article>
+            } @empty {
+              <article class="empty-state compact">
+                <mat-icon>check_circle</mat-icon>
+                <span>{{ 'No attention points right now.' | transloco }}</span>
+              </article>
+            }
+          </div>
+        </section>
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Enabled modules' | transloco }}</h2>
+              <p>{{ 'Commercial modules granted by active subscriptions.' | transloco }}</p>
+            </div>
+          </div>
+
+          <div class="module-grid">
+            @for (module of dashboard().modules; track trackModule($index, module)) {
+              @if (module.route) {
+                <a class="module-item" [routerLink]="module.route">
+                  <span>{{ module.module }}</span>
+                  <strong>{{ module.label }}</strong>
+                  <small>{{ module.code }}</small>
+                </a>
+              } @else {
+                <article class="module-item">
+                  <span>{{ module.module }}</span>
+                  <strong>{{ module.label }}</strong>
+                  <small>{{ module.code }}</small>
+                </article>
+              }
+            } @empty {
+              <article class="empty-state compact">
+                <mat-icon>lock</mat-icon>
+                <span>{{ 'No enabled modules yet.' | transloco }}</span>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Recent billing activity' | transloco }}</h2>
+              <p>{{ 'Latest wallet and subscription ledger movements.' | transloco }}</p>
+            </div>
+          </div>
+
+          <div class="activity-list">
+            @for (entry of dashboard().activity; track trackActivity($index, entry)) {
+              <article class="activity-item">
+                <mat-icon>{{ entry.direction === 'CREDIT' ? 'south_west' : 'north_east' }}</mat-icon>
+                <div>
+                  <strong>{{ entry.reason | transloco }}</strong>
+                  <small>
+                    {{ entry.type }}
+                    @if (entry.createdAt) {
+                      - {{ entry.createdAt | date: 'short' }}
+                    }
+                  </small>
+                </div>
+                <span>{{ formatMoney(entry.amount, entry.currency) }}</span>
+              </article>
+            } @empty {
+              <article class="empty-state compact">
+                <mat-icon>receipt_long</mat-icon>
+                <span>{{ 'No recent billing activity.' | transloco }}</span>
+              </article>
+            }
+          </div>
+        </section>
+      </div>
+    </div>
   </mat-card>
 </section>
