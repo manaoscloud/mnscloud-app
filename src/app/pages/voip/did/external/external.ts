@@ -32,11 +32,13 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipDidExternalItem, VoipDidExternalService } from './external.service';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 @Component({
   selector: 'app-voip-did-external',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

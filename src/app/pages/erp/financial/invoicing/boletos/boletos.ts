@@ -37,6 +37,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 
 type BoletoStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 
@@ -66,6 +67,7 @@ type CustomerOption = {
   selector: 'app-invoicing-boletos',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -530,11 +532,14 @@ export class InvoicingBoletosPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-boleto-form-dialog',
     });
-    this.boletoFormDialogRef.keydownEvents().pipe(takeUntil(this.boletoFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelBoletoForm();
-      }
-    });
+    this.boletoFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.boletoFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelBoletoForm();
+        }
+      });
     this.startDialogViewportObserver();
     this.boletoFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

@@ -37,8 +37,10 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 export const HUMAN_RESOURCES_CRUD_IMPORTS = [
+  RefreshButtonComponent,
   FormsModule,
   ReactiveFormsModule,
   MatButtonModule,

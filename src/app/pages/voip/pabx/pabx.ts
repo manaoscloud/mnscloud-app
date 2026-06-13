@@ -40,6 +40,7 @@ import { VoipDomainItem, VoipDomainService } from '../domain/domain.service';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type ServerOption = {
   value: string;
@@ -102,6 +103,7 @@ const emptyPabxAccountFilters = (): PabxAccountFilters => ({
   selector: 'app-voip-pabx',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -903,9 +905,12 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
       'voip-pabx-form-dialog',
     );
     this.pabxFormDialogRef = this.dialogBinding.ref;
-    this.pabxFormDialogRef.keydownEvents().pipe(takeUntil(this.pabxFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.pabxFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.pabxFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closePabxDialog() {

@@ -18,6 +18,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import {
   VoipDashboardMetric,
   VoipDashboardModule,
@@ -48,6 +49,7 @@ const EMPTY_VOIP_DASHBOARD: VoipDashboardSnapshot = {
   selector: 'app-voip-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     RouterModule,
     MatButtonModule,

@@ -36,6 +36,7 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type SupportTeam = {
   SupportTeamUUID: string;
@@ -75,6 +76,7 @@ type UserOption = { value: string; label: string; email?: string | null };
   selector: 'app-support-teams',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -319,9 +321,12 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.teamFormDialogRef.keydownEvents().pipe(takeUntil(this.teamFormDialogRef.afterClosed())).subscribe((event) => {
-      if (event.key === 'Escape') this.teamFormDialogRef?.close();
-    });
+    this.teamFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.teamFormDialogRef.afterClosed()))
+      .subscribe((event) => {
+        if (event.key === 'Escape') this.teamFormDialogRef?.close();
+      });
     this.startDialogViewportObserver();
     this.teamFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

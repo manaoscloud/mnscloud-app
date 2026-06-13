@@ -30,6 +30,7 @@ import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type BrandItem = {
   SbrUUID: string;
@@ -47,6 +48,7 @@ type BrandFilters = {
   selector: 'app-sale-brand',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -196,9 +198,12 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
       'sale-brand-form-dialog',
     );
     this.brandFormDialogRef = this.dialogBinding.ref;
-    this.brandFormDialogRef.keydownEvents().pipe(takeUntil(this.brandFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.brandFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.brandFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeBrandDialog() {

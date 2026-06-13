@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { AppI18nService } from '../../services/app-i18n.service';
+import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
 
 type ApiResponse<T> = {
   status: string;
@@ -99,6 +100,7 @@ const EMPTY_DASHBOARD: TenantDashboardSnapshot = {
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     DatePipe,
     NgClass,
     RouterLink,

@@ -36,6 +36,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import {
   CyberSecurityProtectedService,
   CyberSecurityProtectedServicePayload,
@@ -46,6 +47,7 @@ import {
   selector: 'app-cyber-security-services',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

@@ -30,6 +30,7 @@ import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type CategoryItem = {
   ScaUUID: string;
@@ -47,6 +48,7 @@ type CategoryFilters = {
   selector: 'app-sale-category',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -217,9 +219,12 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
       'sale-category-form-dialog',
     );
     this.categoryFormDialogRef = this.dialogBinding.ref;
-    this.categoryFormDialogRef.keydownEvents().pipe(takeUntil(this.categoryFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.categoryFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.categoryFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeCategoryDialog() {

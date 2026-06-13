@@ -33,6 +33,7 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type SupportTicketChannel = {
   SupportTicketChannelUUID: string;
@@ -48,6 +49,7 @@ type SupportTicketChannel = {
   selector: 'app-support-ticket-channels',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -197,9 +199,12 @@ export class SupportTicketChannelsPage implements AfterViewInit, OnDestroy {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.ticketChannelFormDialogRef.keydownEvents().pipe(takeUntil(this.ticketChannelFormDialogRef.afterClosed())).subscribe((event) => {
-      if (event.key === 'Escape') this.ticketChannelFormDialogRef?.close();
-    });
+    this.ticketChannelFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.ticketChannelFormDialogRef.afterClosed()))
+      .subscribe((event) => {
+        if (event.key === 'Escape') this.ticketChannelFormDialogRef?.close();
+      });
     this.startDialogViewportObserver();
     this.ticketChannelFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

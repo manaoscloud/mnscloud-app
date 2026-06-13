@@ -22,6 +22,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type SmtpProvider = {
   HspUUID: string;
@@ -112,6 +113,7 @@ const EMPTY_SMTP_DASHBOARD: SmtpDashboardSnapshot = {
   selector: 'app-hosting-smtp-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
     MatCardModule,

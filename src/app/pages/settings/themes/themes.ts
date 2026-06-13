@@ -44,6 +44,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type ThemeDomain = {
   ThemeUUID: string;
@@ -152,6 +153,7 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
   selector: 'app-settings-themes',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -701,9 +703,12 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
       domainFormDialog,
       'settings-theme-domain-dialog',
     );
-    this.dialogBinding.ref.keydownEvents().pipe(takeUntil(this.dialogBinding.ref.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelForm();
-    });
+    this.dialogBinding.ref
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogBinding.ref.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelForm();
+      });
     this.dialogBinding.ref.afterClosed().subscribe(() => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;

@@ -37,6 +37,7 @@ import {
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
   VoipPabxDialPlanItem,
   VoipPabxDialPlanRuleItem,
@@ -58,6 +59,7 @@ const emptyDialPlanRuleFilters = (): DialPlanRuleFilters => ({
   selector: 'app-voip-pabx-dial-plan-rules',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

@@ -32,6 +32,7 @@ import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 
 type PaymentMethod = {
   ErpFinPayMethodUUID: string;
@@ -46,6 +47,7 @@ type PaymentMethod = {
   selector: 'app-finance-payment-method',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -299,11 +301,14 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
       restoreFocus: true,
       panelClass: 'erp-payment-method-form-dialog',
     });
-    this.paymentMethodFormDialogRef.keydownEvents().pipe(takeUntil(this.paymentMethodFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelPaymentMethodForm();
-      }
-    });
+    this.paymentMethodFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.paymentMethodFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelPaymentMethodForm();
+        }
+      });
     this.startDialogViewportObserver();
     this.paymentMethodFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

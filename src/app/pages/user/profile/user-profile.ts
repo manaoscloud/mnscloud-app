@@ -30,6 +30,7 @@ import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { isSignedStorageUrl } from '../../../shared/storage/signed-url';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 // Models
 import { UserProfile } from '../../../models/user-profile.model';
@@ -40,6 +41,7 @@ import { UserProfile } from '../../../models/user-profile.model';
   selector: 'app-user-profile',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,

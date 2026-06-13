@@ -33,6 +33,7 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type SupportChannel = {
   SupportChannelUUID: string;
@@ -65,6 +66,7 @@ type ChannelConfig = {
   selector: 'app-support-channels',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -292,9 +294,12 @@ export class SupportChannelsPage implements AfterViewInit, OnDestroy {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.channelFormDialogRef.keydownEvents().pipe(takeUntil(this.channelFormDialogRef.afterClosed())).subscribe((event) => {
-      if (event.key === 'Escape') this.channelFormDialogRef?.close();
-    });
+    this.channelFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.channelFormDialogRef.afterClosed()))
+      .subscribe((event) => {
+        if (event.key === 'Escape') this.channelFormDialogRef?.close();
+      });
     this.startDialogViewportObserver();
     this.channelFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

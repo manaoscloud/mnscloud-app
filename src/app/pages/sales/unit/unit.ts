@@ -30,6 +30,7 @@ import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type UnitItem = {
   SunUUID: string;
@@ -49,6 +50,7 @@ type UnitFilters = {
   selector: 'app-sale-unit',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -226,9 +228,12 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
       'sale-unit-form-dialog',
     );
     this.unitFormDialogRef = this.dialogBinding.ref;
-    this.unitFormDialogRef.keydownEvents().pipe(takeUntil(this.unitFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.unitFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.unitFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeUnitDialog() {

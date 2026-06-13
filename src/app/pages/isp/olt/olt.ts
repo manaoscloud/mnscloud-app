@@ -33,6 +33,7 @@ import { ApiService } from '../../../services/api.service';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type IspPopOption = {
   IppUUID: string;
@@ -66,6 +67,7 @@ type IspOltItem = {
   selector: 'app-isp-olt',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -419,11 +421,14 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-olt-form-dialog',
     });
-    this.oltFormDialogRef.keydownEvents().pipe(takeUntil(this.oltFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeOltDialog();
-      }
-    });
+    this.oltFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.oltFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeOltDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.oltFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

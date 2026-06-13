@@ -33,6 +33,7 @@ import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type ProviderStatus = 0 | 1;
 
@@ -58,6 +59,7 @@ type HostingDnsProvider = {
   selector: 'app-hosting-dns-providers',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -515,9 +517,12 @@ export class HostingDnsProvidersPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'hosting-dns-provider-form-dialog',
     });
-    this.providerDialogRef.keydownEvents().pipe(takeUntil(this.providerDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelForm();
-    });
+    this.providerDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.providerDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelForm();
+      });
     this.startDialogViewportObserver();
     this.providerDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

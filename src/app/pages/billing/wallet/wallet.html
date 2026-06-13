@@ -12,10 +12,7 @@
             {{ 'Top up' | transloco }}
           </button>
         }
-        <button mat-stroked-button color="primary" type="button" (click)="refresh()">
-          <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | transloco }}
-        </button>
+        <app-refresh-button [loading]="loading()" (refresh)="refresh()" />
       </div>
     </header>
 
@@ -49,7 +46,9 @@
         <article class="metric-card">
           <span>{{ 'Active subscriptions' | transloco }}</span>
           <strong>{{ activeSubscriptionCount }}</strong>
-          <small>{{ subscriptionSource.data.length }} {{ 'total subscriptions' | transloco }}</small>
+          <small
+            >{{ subscriptionSource.data.length }} {{ 'total subscriptions' | transloco }}</small
+          >
         </article>
         <article class="metric-card">
           <span>{{ 'Ledger entries' | transloco }}</span>
@@ -439,7 +438,9 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | transloco }}</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div
         class="primary-actions save-split-action"
@@ -553,7 +554,9 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | transloco }}</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div class="primary-actions save-split-action is-single-action">
         <button

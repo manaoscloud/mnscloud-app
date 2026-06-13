@@ -49,6 +49,7 @@ import { VoipPabxCdrRecordingDialogComponent } from '../cdr/recording-dialog/rec
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxMediaFileItem, VoipPabxMediaFilesService } from './media-files.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type StorageAccountOption = { value: string; label: string };
 type PabxOption = { value: string; label: string };
@@ -67,6 +68,7 @@ const emptyMediaFileFilters = (): MediaFileFilters => ({
   selector: 'app-voip-pabx-media-files',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

@@ -33,6 +33,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../shared/dialog/c
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TenantsService } from './tenants.service';
+import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
 
 type TenantAccess = {
   UscUUID?: string | null;
@@ -66,6 +67,7 @@ type TenantsSnapshot = {
   selector: 'settings-tenants',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,

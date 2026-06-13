@@ -31,6 +31,7 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { ApiService } from '../../../services/api.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type IspPopItem = {
   IppUUID: string;
@@ -49,6 +50,7 @@ type IspPopItem = {
   selector: 'app-isp-pop',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -124,7 +126,6 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-
   }
 
   ngOnDestroy() {
@@ -266,11 +267,14 @@ export class IspPopPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pop-form-dialog',
     });
-    this.popFormDialogRef.keydownEvents().pipe(takeUntil(this.popFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closePopDialog();
-      }
-    });
+    this.popFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.popFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closePopDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.popFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

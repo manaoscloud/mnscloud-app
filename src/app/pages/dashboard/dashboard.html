@@ -7,10 +7,7 @@
       </div>
 
       <div class="header-actions">
-        <button mat-stroked-button color="primary" type="button" (click)="refresh()">
-          <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | transloco }}
-        </button>
+        <app-refresh-button [loading]="loading()" (refresh)="refresh()" />
       </div>
     </header>
 
@@ -61,7 +58,9 @@
           <div class="panel-header">
             <div>
               <h2>{{ 'Account status' | transloco }}</h2>
-              <p>{{ 'Tenant session and wallet state for the selected environment.' | transloco }}</p>
+              <p>
+                {{ 'Tenant session and wallet state for the selected environment.' | transloco }}
+              </p>
             </div>
           </div>
 
@@ -153,7 +152,9 @@
           <div class="activity-list">
             @for (entry of dashboard().activity; track trackActivity($index, entry)) {
               <article class="activity-item">
-                <mat-icon>{{ entry.direction === 'CREDIT' ? 'south_west' : 'north_east' }}</mat-icon>
+                <mat-icon>{{
+                  entry.direction === 'CREDIT' ? 'south_west' : 'north_east'
+                }}</mat-icon>
                 <div>
                   <strong>{{ entry.reason | transloco }}</strong>
                   <small>

@@ -38,6 +38,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type SmtpAccount = {
   HsaUUID: string;
@@ -73,6 +74,7 @@ type SmtpEventTypeResponse = {
   selector: 'app-hosting-smtp-routes',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,

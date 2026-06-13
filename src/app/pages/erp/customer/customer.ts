@@ -40,6 +40,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type Customer = {
   CustomerUUID: string;
@@ -181,6 +182,7 @@ class MapStyleControl {
   selector: 'app-erp-customer',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -439,9 +441,7 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
         (item: DueDayOption) => item?.Status === 'active',
       );
       this.dueDays = items;
-      this.dueDayMap = new Map(
-        items.map((item: DueDayOption) => [item.ErpFinInvDueDayUUID, item]),
-      );
+      this.dueDayMap = new Map(items.map((item: DueDayOption) => [item.ErpFinInvDueDayUUID, item]));
       this.cdr.detectChanges();
     } catch (err) {
       console.error('Failed to load due days.', err);
@@ -656,11 +656,14 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-customer-form-dialog',
     });
-    this.customerFormDialogRef.keydownEvents().pipe(takeUntil(this.customerFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeCustomerDialog();
-      }
-    });
+    this.customerFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.customerFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeCustomerDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.customerFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();
@@ -1188,14 +1191,18 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
   private scheduleMapResize() {
     if (!this.map) return;
     this.clearMapResizeTimers();
-    this.mapResizeTimers.push(setTimeout(() => {
-      this.map?.resize?.();
-      this.updateMapMarker();
-    }, 0));
-    this.mapResizeTimers.push(setTimeout(() => {
-      this.map?.resize?.();
-      this.updateMapMarker();
-    }, 200));
+    this.mapResizeTimers.push(
+      setTimeout(() => {
+        this.map?.resize?.();
+        this.updateMapMarker();
+      }, 0),
+    );
+    this.mapResizeTimers.push(
+      setTimeout(() => {
+        this.map?.resize?.();
+        this.updateMapMarker();
+      }, 200),
+    );
   }
 
   private clearMapResizeTimers() {

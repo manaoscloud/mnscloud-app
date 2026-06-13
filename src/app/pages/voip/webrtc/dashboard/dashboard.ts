@@ -27,6 +27,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { VoipWebRtcService, WebRtcRecord } from '../webrtc.service';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import {
   VoipWebRtcDashboardService,
   WebRtcDashboardDomain,
@@ -61,6 +62,7 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   selector: 'app-voip-webrtc-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     RouterModule,
     MatButtonModule,

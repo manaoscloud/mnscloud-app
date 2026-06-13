@@ -40,6 +40,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type Carrier = {
   CarrierUUID: string;
@@ -70,6 +71,7 @@ type PostalCodeLookupItem = {
   selector: 'app-erp-carrier',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -201,7 +203,6 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-
   }
 
   onSearchChange(value: string) {
@@ -549,11 +550,14 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-carrier-form-dialog',
     });
-    this.carrierFormDialogRef.keydownEvents().pipe(takeUntil(this.carrierFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeCarrierDialog();
-      }
-    });
+    this.carrierFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.carrierFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeCarrierDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.carrierFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

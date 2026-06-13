@@ -42,6 +42,7 @@ import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.com
 import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type Ticket = {
   SupportTicketUUID: string;
@@ -109,6 +110,7 @@ const emptyTicketFilters = (): TicketFilters => ({
   selector: 'app-support-tickets',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -562,9 +564,12 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.ticketFormDialogRef.keydownEvents().pipe(takeUntil(this.ticketFormDialogRef.afterClosed())).subscribe((event) => {
-      if (event.key === 'Escape') this.ticketFormDialogRef?.close();
-    });
+    this.ticketFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.ticketFormDialogRef.afterClosed()))
+      .subscribe((event) => {
+        if (event.key === 'Escape') this.ticketFormDialogRef?.close();
+      });
     this.startDialogViewportObserver();
     this.ticketFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

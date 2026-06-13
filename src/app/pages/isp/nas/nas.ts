@@ -33,6 +33,7 @@ import { ApiService } from '../../../services/api.service';
 import { IspVendor } from '../../../models/isp-vendor.model';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type IspPopOption = {
   IppUUID: string;
@@ -66,6 +67,7 @@ type IspNasItem = {
   selector: 'app-isp-nas',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -419,11 +421,14 @@ export class IspNasPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-nas-form-dialog',
     });
-    this.nasFormDialogRef.keydownEvents().pipe(takeUntil(this.nasFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeNasDialog();
-      }
-    });
+    this.nasFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.nasFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeNasDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.nasFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

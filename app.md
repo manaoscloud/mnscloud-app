@@ -160,7 +160,10 @@
 - List actions:
   - `Refresh` should call `refreshList()`.
   - `New` should open the create flow.
-  - `Refresh` and `New` use `mat-stroked-button color="primary"` with icons.
+  - Header refresh actions must use `RefreshButtonComponent` (`<app-refresh-button />`) instead
+    of hand-written refresh buttons. Bind the component to the page loading state so the button is
+    disabled and shows its inline spinner while the refresh request is in progress.
+  - `New` uses `mat-stroked-button color="primary"` with an icon.
   - Short header action buttons share the global fixed width from `--crud-action-button-width` so actions in the same group feel visually equal on desktop and mobile.
 - Filter behavior:
   - Use explicit `Apply` and `Clear` actions.
@@ -178,6 +181,10 @@
 - Loading behavior:
   - Use list loading state + overlay (`.table-loading`) on table wrapper.
   - Keep minimum visible loading duration around `600ms`.
+  - Header-level refresh actions must show local progress inside the refresh button. Do not rely
+    only on the table overlay or a silent network request after the user clicks refresh.
+  - Dashboard/read-model refresh buttons should use the same inline loading state and should not
+    block the whole page unless the screen has no meaningful previous snapshot to keep visible.
 - CRUD feedback:
   - Operational feedback (`success`, `error`, `warning`, `info`) must use `SnackbarService` / app snackbar.
   - Do not render transient CRUD success/error/warning/info messages inline in pages, tables, dialogs, or form footers.

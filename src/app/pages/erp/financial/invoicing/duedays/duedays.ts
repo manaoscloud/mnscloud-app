@@ -33,6 +33,7 @@ import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 
 type DueDayStatus = 'active' | 'inactive';
 
@@ -51,6 +52,7 @@ type ErpFinInvDueDay = {
   selector: 'app-invoicing-duedays',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -335,11 +337,14 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-due-day-form-dialog',
     });
-    this.dueDayFormDialogRef.keydownEvents().pipe(takeUntil(this.dueDayFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelDueDayForm();
-      }
-    });
+    this.dueDayFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dueDayFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelDueDayForm();
+        }
+      });
     this.startDialogViewportObserver();
     this.dueDayFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

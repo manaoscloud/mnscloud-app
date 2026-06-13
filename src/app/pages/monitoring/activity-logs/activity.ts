@@ -28,6 +28,7 @@ import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type ActivityLog = {
   uuid: string;
@@ -86,6 +87,7 @@ const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
   selector: 'app-monitoring-activity-logs',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,

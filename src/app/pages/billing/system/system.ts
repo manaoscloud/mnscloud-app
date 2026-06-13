@@ -37,6 +37,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import {
   BillingPrice,
   BillingPackage,
@@ -93,6 +94,7 @@ const EMPTY_BILLING_SYSTEM_SNAPSHOT: BillingSystemSnapshot = {
 };
 
 export const BILLING_SYSTEM_IMPORTS = [
+  RefreshButtonComponent,
   FormsModule,
   ReactiveFormsModule,
   MatAutocompleteModule,
@@ -756,7 +758,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       this.refresh();
       if (keepOpen && !current) this.resetPackageForm();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to save package.'));
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to save package.'),
+      );
     } finally {
       this.saving.set(false);
     }
@@ -767,13 +771,22 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   async deletePackage(row: BillingPackage) {
-    if (!(await this.confirm(this.i18n.t('Delete package'), `${this.i18n.t('Delete')} ${row.BpaName}?`, this.i18n.t('Delete')))) return;
+    if (
+      !(await this.confirm(
+        this.i18n.t('Delete package'),
+        `${this.i18n.t('Delete')} ${row.BpaName}?`,
+        this.i18n.t('Delete'),
+      ))
+    )
+      return;
     try {
       await this.billing.deletePackage(row.BpaUUID);
       this.snack.success(this.i18n.t('Package deleted.'));
       this.refresh();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to delete package.'));
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to delete package.'),
+      );
     }
   }
 
@@ -876,7 +889,9 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
       this.refresh();
       if (keepOpen && !current) this.resetPromotionForm();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to save promotion.'));
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to save promotion.'),
+      );
     } finally {
       this.saving.set(false);
     }
@@ -887,13 +902,22 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
   }
 
   async deletePromotion(row: BillingPromotion) {
-    if (!(await this.confirm(this.i18n.t('Delete promotion'), `${this.i18n.t('Delete')} ${row.BpmName}?`, this.i18n.t('Delete')))) return;
+    if (
+      !(await this.confirm(
+        this.i18n.t('Delete promotion'),
+        `${this.i18n.t('Delete')} ${row.BpmName}?`,
+        this.i18n.t('Delete'),
+      ))
+    )
+      return;
     try {
       await this.billing.deletePromotion(row.BpmUUID);
       this.snack.success(this.i18n.t('Promotion deleted.'));
       this.refresh();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : this.i18n.t('Failed to delete promotion.'));
+      this.snack.error(
+        error instanceof Error ? error.message : this.i18n.t('Failed to delete promotion.'),
+      );
     }
   }
 

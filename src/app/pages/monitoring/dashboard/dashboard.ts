@@ -23,6 +23,7 @@ import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type MonitoringAgent = {
   uuid: string;
@@ -98,6 +99,7 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
   selector: 'app-monitoring-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
     MatCardModule,

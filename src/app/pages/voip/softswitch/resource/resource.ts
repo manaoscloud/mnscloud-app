@@ -41,6 +41,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipSoftswitchAccount, VoipSoftswitchAccountService } from '../softswitch.service';
 import { VoipSoftswitchResourceUiService } from './resource.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type ResourceKind = 'trunks' | 'routes' | 'policies' | 'rates' | 'cdrs';
 type ResourceRow = {
@@ -132,6 +133,7 @@ const RESOURCE_META: Record<
   selector: 'app-voip-softswitch-resource',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -454,9 +456,12 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
       { onEscape: () => this.cancelEdit() },
     );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.dialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
   private closeDialog() {
     this.dialogBinding?.stop();

@@ -23,6 +23,7 @@ import { AppI18nService } from '../../../../services/app-i18n.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { UserGovernanceDetailComponent } from './components/user-governance-detail/user-governance-detail';
 import { UserGovernanceTableComponent } from './components/user-governance-table/user-governance-table';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import {
   AccountAction,
   ApiListResponse,
@@ -38,6 +39,7 @@ import {
   selector: 'app-system-governance-users',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

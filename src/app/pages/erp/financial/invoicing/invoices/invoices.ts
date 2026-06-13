@@ -36,6 +36,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 
 type InvoiceStatus = 'draft' | 'issued' | 'paid' | 'canceled';
 
@@ -52,6 +53,7 @@ type ErpFinInvInvoice = {
   selector: 'app-invoicing-invoices',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -414,11 +416,14 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-invoice-form-dialog',
     });
-    this.invoiceFormDialogRef.keydownEvents().pipe(takeUntil(this.invoiceFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelInvoiceForm();
-      }
-    });
+    this.invoiceFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.invoiceFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelInvoiceForm();
+        }
+      });
     this.startDialogViewportObserver();
     this.invoiceFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

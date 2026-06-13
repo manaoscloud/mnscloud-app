@@ -37,6 +37,7 @@ import {
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
   VoipBlacklistItem,
   VoipBlacklistNumberItem,
@@ -57,6 +58,7 @@ const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
   selector: 'app-voip-pabx-blacklist-number',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -214,10 +216,7 @@ export class VoipPabxBlacklistNumberPage implements AfterViewInit, OnDestroy {
     };
   }
 
-  private sameBlacklistNumberFilters(
-    left: BlacklistNumberFilters,
-    right: BlacklistNumberFilters,
-  ) {
+  private sameBlacklistNumberFilters(left: BlacklistNumberFilters, right: BlacklistNumberFilters) {
     return left.search === right.search && left.blacklistUUID === right.blacklistUUID;
   }
 

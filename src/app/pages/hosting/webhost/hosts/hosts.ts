@@ -36,6 +36,7 @@ import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import {
   getWebhostDialogViewportConfig,
   updateWebhostDialogViewport,
@@ -70,6 +71,7 @@ type WebhostHostFilters = {
   selector: 'app-hosting-webhost-hosts',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -867,9 +869,12 @@ export class HostingWebhostHostsPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'hosting-webhost-host-dialog',
     });
-    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelForm();
-    });
+    this.dialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelForm();
+      });
     this.startDialogViewportObserver();
     this.dialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

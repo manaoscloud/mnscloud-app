@@ -38,6 +38,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type SmtpProvider = 'smtp' | 'sendgrid' | 'ses' | 'mailersend';
 
@@ -74,6 +75,7 @@ type ProviderFormValue = {
   selector: 'app-hosting-smtp-providers',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,

@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type AttendanceStatus = 'automation' | 'waiting' | 'serving';
 
@@ -43,6 +44,7 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   selector: 'app-support-attendance',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,

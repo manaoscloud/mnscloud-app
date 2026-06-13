@@ -31,6 +31,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type FixedIpv4Item = {
   If4UUID: string;
@@ -44,6 +45,7 @@ type FixedIpv4Item = {
   selector: 'app-isp-fixed-ipv4',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -257,11 +259,14 @@ export class IspFixedIpv4Page implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-fixed-ipv4-form-dialog',
     });
-    this.formDialogRef.keydownEvents().pipe(takeUntil(this.formDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeDialog();
-      }
-    });
+    this.formDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.formDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.formDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

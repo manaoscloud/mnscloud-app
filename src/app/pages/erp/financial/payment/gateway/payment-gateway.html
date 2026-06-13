@@ -6,16 +6,7 @@
         <p>{{ pageSubtitle() }}</p>
       </div>
       <div class="header-actions">
-        <button
-          mat-stroked-button
-          color="primary"
-          type="button"
-          (click)="refreshList()"
-          [disabled]="loadingGateways()"
-        >
-          <mat-icon>refresh</mat-icon>
-          Refresh
-        </button>
+        <app-refresh-button [loading]="loadingGateways()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="openCreateDialog()">
           <mat-icon>add</mat-icon>
           New

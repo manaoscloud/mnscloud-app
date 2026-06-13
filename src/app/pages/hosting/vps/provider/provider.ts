@@ -38,6 +38,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { getVpsDialogViewportConfig, updateVpsDialogViewport } from '../vps-dialog-viewport';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import type {
   HostingVpsProvider,
   VpsProvider,
@@ -49,6 +50,7 @@ import type {
   selector: 'app-hosting-vps-provider',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -866,9 +868,12 @@ export class HostingVpsProviderPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'hosting-vps-provider-dialog',
     });
-    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelForm();
-    });
+    this.dialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelForm();
+      });
     this.startDialogViewportObserver();
     this.dialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

@@ -31,6 +31,7 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type PppoeClientItem = {
   PpcUUID: string;
@@ -54,6 +55,7 @@ type FixedIpv4Option = {
   selector: 'app-pppoe-client',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -284,11 +286,14 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pppoe-client-form-dialog',
     });
-    this.pppoeClientFormDialogRef.keydownEvents().pipe(takeUntil(this.pppoeClientFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closePppoeClientDialog();
-      }
-    });
+    this.pppoeClientFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.pppoeClientFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closePppoeClientDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.pppoeClientFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

@@ -11,10 +11,7 @@
         </p>
       </div>
       <div class="header-actions">
-        <button mat-stroked-button color="primary" type="button" (click)="refresh()">
-          <mat-icon>refresh</mat-icon>
-          {{ 'Refresh' | transloco }}
-        </button>
+        <app-refresh-button [loading]="loading()" (refresh)="refresh()" />
         @if (isSection('products')) {
           <button mat-stroked-button color="primary" type="button" (click)="openProductCreate()">
             <mat-icon>add</mat-icon>
@@ -470,19 +467,35 @@
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>{{ 'Status' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
-              <span class="status-pill" [class.is-active]="row.BpaStatus === 1" [class.is-inactive]="row.BpaStatus !== 1">
+              <span
+                class="status-pill"
+                [class.is-active]="row.BpaStatus === 1"
+                [class.is-inactive]="row.BpaStatus !== 1"
+              >
                 {{ (row.BpaStatus === 1 ? 'Active' : 'Inactive') | transloco }}
               </span>
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | transloco }}
+            </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
-                <button mat-icon-button type="button" [matTooltip]="'Edit' | transloco" (click)="openPackageEdit(row)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'Edit' | transloco"
+                  (click)="openPackageEdit(row)"
+                >
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button type="button" [matTooltip]="'Delete' | transloco" (click)="deletePackage(row)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'Delete' | transloco"
+                  (click)="deletePackage(row)"
+                >
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
@@ -549,24 +562,42 @@
           </ng-container>
           <ng-container matColumnDef="period">
             <th mat-header-cell *matHeaderCellDef>{{ 'Period' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.BpmStartsAt || '-' }} / {{ row.BpmEndsAt || '-' }}</td>
+            <td mat-cell *matCellDef="let row">
+              {{ row.BpmStartsAt || '-' }} / {{ row.BpmEndsAt || '-' }}
+            </td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>{{ 'Status' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
-              <span class="status-pill" [class.is-active]="row.BpmStatus === 1" [class.is-inactive]="row.BpmStatus !== 1">
+              <span
+                class="status-pill"
+                [class.is-active]="row.BpmStatus === 1"
+                [class.is-inactive]="row.BpmStatus !== 1"
+              >
                 {{ (row.BpmStatus === 1 ? 'Active' : 'Inactive') | transloco }}
               </span>
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | transloco }}
+            </th>
             <td mat-cell *matCellDef="let row" class="actions-col-cell">
               <div class="actions-col">
-                <button mat-icon-button type="button" [matTooltip]="'Edit' | transloco" (click)="openPromotionEdit(row)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'Edit' | transloco"
+                  (click)="openPromotionEdit(row)"
+                >
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button type="button" [matTooltip]="'Delete' | transloco" (click)="deletePromotion(row)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'Delete' | transloco"
+                  (click)="deletePromotion(row)"
+                >
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
@@ -1225,7 +1256,12 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Description' | transloco }}</mat-label>
-                <textarea matInput rows="2" maxlength="500" formControlName="description"></textarea>
+                <textarea
+                  matInput
+                  rows="2"
+                  maxlength="500"
+                  formControlName="description"
+                ></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -1302,17 +1338,37 @@
         </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editingPackage()">
-        <button class="dialog-action-button save-main-button" mat-flat-button color="primary" type="button" (click)="savePackage()" [disabled]="saving()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="savePackage()"
+          [disabled]="saving()"
+        >
           <mat-icon>save</mat-icon>
           {{ 'Save' | transloco }}
         </button>
         @if (!editingPackage()) {
-          <button class="save-more-button" mat-flat-button color="primary" [matMenuTriggerFor]="packageSaveMenu" [disabled]="saving()" type="button" [attr.aria-label]="'More save actions' | transloco">
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            [matMenuTriggerFor]="packageSaveMenu"
+            [disabled]="saving()"
+            type="button"
+            [attr.aria-label]="'More save actions' | transloco"
+          >
             <mat-icon>expand_more</mat-icon>
           </button>
         }
       </div>
-      <mat-menu #packageSaveMenu="matMenu" class="save-more-menu" xPosition="before" yPosition="below">
+      <mat-menu
+        #packageSaveMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
         <button mat-menu-item (click)="saveAndNewPackage()" [disabled]="saving()" type="button">
           <mat-icon>add</mat-icon>
           <span>{{ 'Save/New' | transloco }}</span>
@@ -1381,7 +1437,12 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Description' | transloco }}</mat-label>
-                <textarea matInput rows="2" maxlength="500" formControlName="description"></textarea>
+                <textarea
+                  matInput
+                  rows="2"
+                  maxlength="500"
+                  formControlName="description"
+                ></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -1454,7 +1515,17 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Discount value' | transloco }}</mat-label>
-                <input matInput type="text" appCurrencyMask [appCurrencyMaskCurrency]="promotionForm.controls.discountType.value === 'PERCENT' ? '' : promotionForm.controls.currency.value" formControlName="discountValue" />
+                <input
+                  matInput
+                  type="text"
+                  appCurrencyMask
+                  [appCurrencyMaskCurrency]="
+                    promotionForm.controls.discountType.value === 'PERCENT'
+                      ? ''
+                      : promotionForm.controls.currency.value
+                  "
+                  formControlName="discountValue"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Cycles' | transloco }}</mat-label>
@@ -1476,7 +1547,13 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Max uses per tenant' | transloco }}</mat-label>
-                <input matInput type="number" min="0" step="1" formControlName="couponMaxUsesPerTenant" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  formControlName="couponMaxUsesPerTenant"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Expires at' | transloco }}</mat-label>
@@ -1498,17 +1575,37 @@
         </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editingPromotion()">
-        <button class="dialog-action-button save-main-button" mat-flat-button color="primary" type="button" (click)="savePromotion()" [disabled]="saving()">
+        <button
+          class="dialog-action-button save-main-button"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="savePromotion()"
+          [disabled]="saving()"
+        >
           <mat-icon>save</mat-icon>
           {{ 'Save' | transloco }}
         </button>
         @if (!editingPromotion()) {
-          <button class="save-more-button" mat-flat-button color="primary" [matMenuTriggerFor]="promotionSaveMenu" [disabled]="saving()" type="button" [attr.aria-label]="'More save actions' | transloco">
+          <button
+            class="save-more-button"
+            mat-flat-button
+            color="primary"
+            [matMenuTriggerFor]="promotionSaveMenu"
+            [disabled]="saving()"
+            type="button"
+            [attr.aria-label]="'More save actions' | transloco"
+          >
             <mat-icon>expand_more</mat-icon>
           </button>
         }
       </div>
-      <mat-menu #promotionSaveMenu="matMenu" class="save-more-menu" xPosition="before" yPosition="below">
+      <mat-menu
+        #promotionSaveMenu="matMenu"
+        class="save-more-menu"
+        xPosition="before"
+        yPosition="below"
+      >
         <button mat-menu-item (click)="saveAndNewPromotion()" [disabled]="saving()" type="button">
           <mat-icon>add</mat-icon>
           <span>{{ 'Save/New' | transloco }}</span>

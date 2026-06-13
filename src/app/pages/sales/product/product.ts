@@ -33,6 +33,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type ProductItem = {
   SprUUID: string;
@@ -94,6 +95,7 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   selector: 'app-sale-product',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -601,9 +603,12 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
       'sale-product-form-dialog',
     );
     this.productFormDialogRef = this.dialogBinding.ref;
-    this.productFormDialogRef.keydownEvents().pipe(takeUntil(this.productFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.productFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.productFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeProductDialog() {

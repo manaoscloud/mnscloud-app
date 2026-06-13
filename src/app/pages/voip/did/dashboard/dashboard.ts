@@ -24,6 +24,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipDidItem, VoipDidService } from '../did.service';
 import { VoipDidExternalItem, VoipDidExternalService } from '../external/external.service';
 import { VoipDidOperatorItem, VoipDidOperatorService } from '../operator/operator.service';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type KpiTile = {
   label: string;
@@ -80,6 +81,7 @@ const EMPTY_DID_DASHBOARD: DidDashboardSnapshot = {
   selector: 'app-voip-did-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
     MatCardModule,

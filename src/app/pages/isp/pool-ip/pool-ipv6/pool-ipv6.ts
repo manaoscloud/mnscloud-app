@@ -32,6 +32,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type PoolIpv6Item = {
   Ip6UUID: string;
@@ -51,6 +52,7 @@ type PoolIpv6NetworkItem = {
   selector: 'app-isp-pool-ipv6',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -405,9 +407,12 @@ export class IspPoolIpv6Page implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pool-ipv6-form-dialog',
     });
-    this.poolDialogRef.keydownEvents().pipe(takeUntil(this.poolDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.closePoolDialog();
-    });
+    this.poolDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.poolDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.closePoolDialog();
+      });
     this.startDialogViewportObserver();
     this.poolDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();
@@ -433,9 +438,12 @@ export class IspPoolIpv6Page implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-pool-ipv6-network-form-dialog',
     });
-    this.networkDialogRef.keydownEvents().pipe(takeUntil(this.networkDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.closeNetworkDialog();
-    });
+    this.networkDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.networkDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.closeNetworkDialog();
+      });
     this.startDialogViewportObserver();
     this.networkDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

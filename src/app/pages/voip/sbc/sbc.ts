@@ -39,6 +39,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SbcRecord, SbcResource, VoipSbcService } from './sbc.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type LookupKey = 'providers' | 'servers' | 'trunks';
 type LookupOption = { value: string; label: string };
@@ -208,6 +209,7 @@ const CONFIGS: Record<SbcResource, Config> = {
   selector: 'app-voip-sbc',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -293,17 +295,15 @@ export class VoipSbcPage implements AfterViewInit, OnDestroy, OnInit {
   });
 
   ngOnInit() {
-    this.route.data
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        this.currentResource.set((data['resource'] ?? 'providers') as SbcResource);
-        this.currentScopeMaster.set(data['scope'] === 'master');
-        this.searchInput = '';
-        this.search = '';
-        this.dataSource.filter = '';
-        this.selected.clear();
-        if (this.viewReady) this.recordsResource.reload();
-      });
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+      this.currentResource.set((data['resource'] ?? 'providers') as SbcResource);
+      this.currentScopeMaster.set(data['scope'] === 'master');
+      this.searchInput = '';
+      this.search = '';
+      this.dataSource.filter = '';
+      this.selected.clear();
+      if (this.viewReady) this.recordsResource.reload();
+    });
   }
   ngAfterViewInit() {
     this.viewReady = true;

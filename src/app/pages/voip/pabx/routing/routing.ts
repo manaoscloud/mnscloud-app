@@ -47,6 +47,7 @@ import {
 import { PabxRoutingResource, VoipPabxRoutingService } from './routing.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
@@ -55,6 +56,7 @@ type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
   selector: 'app-voip-pabx-routing',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -218,13 +220,11 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.dataSource.filterPredicate = (row, filter) =>
       JSON.stringify(row).toLowerCase().includes(filter.trim().toLowerCase());
-    this.route.data
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
-        this.resetForm();
-        void this.bootstrap();
-      });
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+      this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
+      this.resetForm();
+      void this.bootstrap();
+    });
   }
 
   ngOnDestroy() {
@@ -1045,9 +1045,12 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
       'voip-pabx-routing-dialog',
     );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.closeDialog();
-    });
+    this.dialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.closeDialog();
+      });
   }
 
   closeDialog() {

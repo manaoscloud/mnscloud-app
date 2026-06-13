@@ -43,6 +43,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { VoipDidOperatorService, VoipDidOperatorItem } from './operator.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type SupplierOption = { value: string; label: string };
 
@@ -55,6 +56,7 @@ type DidOperatorFilters = {
   selector: 'app-voip-did-operator',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -466,9 +468,12 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
       'voip-did-operator-form-dialog',
     );
     this.operatorFormDialogRef = this.dialogBinding.ref;
-    this.operatorFormDialogRef.keydownEvents().pipe(takeUntil(this.operatorFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.operatorFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.operatorFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeOperatorDialog() {

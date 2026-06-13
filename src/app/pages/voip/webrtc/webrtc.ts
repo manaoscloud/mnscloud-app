@@ -40,6 +40,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SnackbarService } from '../../../services/snackbar.service';
 import { VoipWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type LookupKey = 'servers' | 'domains';
 type LookupOption = { value: string; label: string };
@@ -183,6 +184,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   selector: 'app-voip-webrtc',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ClipboardModule,
     FormsModule,
     ReactiveFormsModule,
@@ -274,17 +276,15 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
   });
 
   ngOnInit() {
-    this.route.data
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
-        this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
-        this.searchInput = '';
-        this.search = '';
-        this.dataSource.filter = '';
-        this.selected.clear();
-        if (this.viewReady) this.recordsResource.reload();
-      });
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+      this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
+      this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
+      this.searchInput = '';
+      this.search = '';
+      this.dataSource.filter = '';
+      this.selected.clear();
+      if (this.viewReady) this.recordsResource.reload();
+    });
   }
   ngAfterViewInit() {
     this.viewReady = true;

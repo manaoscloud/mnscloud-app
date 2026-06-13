@@ -35,6 +35,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -79,6 +80,7 @@ type SupplierOption = {
   selector: 'app-financial-payables',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -674,11 +676,14 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
       'erp-payable-form-dialog',
     );
     this.payableFormDialogRef = this.dialogBinding.ref;
-    this.payableFormDialogRef.keydownEvents().pipe(takeUntil(this.payableFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelPayableForm();
-      }
-    });
+    this.payableFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.payableFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelPayableForm();
+        }
+      });
     this.payableFormDialogRef.afterClosed().subscribe(() => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
@@ -703,11 +708,14 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
       'erp-payable-form-dialog',
     );
     this.payableSettleDialogRef = this.settleDialogBinding.ref;
-    this.payableSettleDialogRef.keydownEvents().pipe(takeUntil(this.payableSettleDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeSettleDialog();
-      }
-    });
+    this.payableSettleDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.payableSettleDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeSettleDialog();
+        }
+      });
     this.payableSettleDialogRef.afterClosed().subscribe(() => {
       this.settleDialogBinding?.stop();
       this.settleDialogBinding = null;

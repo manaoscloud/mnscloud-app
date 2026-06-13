@@ -46,6 +46,7 @@ import {
   VoipSoftswitchProviderService,
 } from './provider/provider.service';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server/server.service';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -57,6 +58,7 @@ type CustomerOption = {
   selector: 'app-voip-softswitch',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -492,9 +494,12 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
       { onEscape: () => this.cancelEdit() },
     );
     this.softswitchFormDialogRef = this.dialogBinding.ref;
-    this.softswitchFormDialogRef.keydownEvents().pipe(takeUntil(this.softswitchFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.softswitchFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.softswitchFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeAccountDialog() {

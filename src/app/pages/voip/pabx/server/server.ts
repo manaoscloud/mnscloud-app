@@ -37,6 +37,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipPabxServerItem, VoipPabxServerService } from './server.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type ServerPayload = {
   name: string;
@@ -62,6 +63,7 @@ type ServerPayload = {
   selector: 'app-voip-pabx-server',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ClipboardModule,
     FormsModule,
     ReactiveFormsModule,

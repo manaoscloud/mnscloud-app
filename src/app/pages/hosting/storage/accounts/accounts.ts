@@ -40,6 +40,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type HostingStorageProvider = {
   HspUUID: string;
@@ -70,6 +71,7 @@ type ApiResponse<T> = {
   selector: 'app-hosting-storage-accounts',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,

@@ -35,6 +35,7 @@ import { IspVendor } from '../../../models/isp-vendor.model';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type SupplierOption = {
   value: string;
@@ -45,6 +46,7 @@ type SupplierOption = {
   selector: 'app-isp-vendor',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -332,11 +334,14 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-vendor-form-dialog',
     });
-    this.vendorFormDialogRef.keydownEvents().pipe(takeUntil(this.vendorFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeVendorDialog();
-      }
-    });
+    this.vendorFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.vendorFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeVendorDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.vendorFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

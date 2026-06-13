@@ -34,6 +34,7 @@ import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type IspRadiusServerItem = {
   IrsUUID: string;
@@ -53,6 +54,7 @@ type IspRadiusServerItem = {
   selector: 'app-isp-radius-server',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -148,7 +150,6 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-
   }
 
   ngOnDestroy() {
@@ -313,11 +314,14 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'isp-radius-server-form-dialog',
     });
-    this.radiusServerFormDialogRef.keydownEvents().pipe(takeUntil(this.radiusServerFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeRadiusServerDialog();
-      }
-    });
+    this.radiusServerFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.radiusServerFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeRadiusServerDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.radiusServerFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

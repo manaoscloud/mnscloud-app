@@ -29,6 +29,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type EmployeeOption = {
   EmployeeUUID: string;
@@ -69,6 +70,7 @@ type TimeClockAccountListParams = {
   selector: 'app-erp-hr-time-clock-accounts',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

@@ -37,6 +37,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type MonitoringAgent = {
   uuid: string;
@@ -129,6 +130,7 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   selector: 'app-monitoring-agents',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ClipboardModule,
     ReactiveFormsModule,
     MatButtonModule,

@@ -41,6 +41,7 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { VoipPabxExtensionItem, VoipPabxExtensionService } from '../extension/extension.service';
 import { VoipPabxQueueAgentItem, VoipPabxQueueAgentService } from './queue-agent.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type RuntimeStatus = VoipPabxQueueAgentItem['VqaRuntimeStatus'];
 type RuntimeAction = 'login' | 'logout' | 'pause' | 'unpause';
@@ -67,6 +68,7 @@ const emptyQueueAgentFilters = (): QueueAgentFilters => ({
   selector: 'app-voip-pabx-queue-agent',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

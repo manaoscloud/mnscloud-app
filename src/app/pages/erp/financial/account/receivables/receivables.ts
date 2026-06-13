@@ -35,6 +35,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -62,6 +63,7 @@ type CustomerOption = {
   selector: 'app-financial-receivables',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -528,11 +530,14 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
       'erp-receivable-form-dialog',
     );
     this.receivableFormDialogRef = this.dialogBinding.ref;
-    this.receivableFormDialogRef.keydownEvents().pipe(takeUntil(this.receivableFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelReceivableForm();
-      }
-    });
+    this.receivableFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.receivableFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelReceivableForm();
+        }
+      });
     this.receivableFormDialogRef.afterClosed().subscribe(() => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;

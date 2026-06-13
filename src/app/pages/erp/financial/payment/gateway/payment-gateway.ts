@@ -42,6 +42,7 @@ import {
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 
 type PaymentGatewayProvider = 'pagarme' | 'asaas' | 'stripe' | 'efi' | 'inter_business';
 
@@ -202,6 +203,7 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   selector: 'app-financial-payment-gateway',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,

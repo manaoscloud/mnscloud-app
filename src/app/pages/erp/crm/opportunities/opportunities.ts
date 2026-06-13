@@ -19,6 +19,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type Opportunity = {
   name: string;
@@ -31,6 +32,7 @@ type Opportunity = {
   selector: 'app-crm-opportunities',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,

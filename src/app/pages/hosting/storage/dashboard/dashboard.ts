@@ -22,6 +22,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type StorageProviderType = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
 
@@ -99,6 +100,7 @@ const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
   selector: 'app-hosting-storage-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
     MatCardModule,

@@ -44,6 +44,7 @@ import {
 } from '../media-files/media-files.service';
 import { VoipPabxQueueItem, VoipPabxQueueMemberItem, VoipPabxQueueService } from './queue.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 
@@ -51,6 +52,7 @@ type Option = { value: string; label: string; pabxUUID?: string | null };
   selector: 'app-voip-pabx-queue',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

@@ -38,11 +38,13 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipPabxDialPlanItem, VoipPabxDialPlanUiService } from '../dial-plan.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 
 @Component({
   selector: 'app-voip-pabx-dial-plan-plan',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

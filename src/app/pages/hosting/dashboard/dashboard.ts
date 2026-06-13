@@ -22,6 +22,7 @@ import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type HostingDatasetKey =
   | 'dnsDomains'
@@ -123,6 +124,7 @@ const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
   selector: 'app-hosting-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
     MatCardModule,

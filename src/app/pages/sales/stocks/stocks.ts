@@ -32,6 +32,7 @@ import { ApiService } from '../../../services/api.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type SaleStockItem = {
   SskUUID: string;
@@ -56,6 +57,7 @@ type StockFilters = {
   selector: 'app-sales-stocks',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -272,9 +274,12 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
       'sale-stocks-form-dialog',
     );
     this.stockFormDialogRef = this.dialogBinding.ref;
-    this.stockFormDialogRef.keydownEvents().pipe(takeUntil(this.stockFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.stockFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.stockFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeStockDialog() {

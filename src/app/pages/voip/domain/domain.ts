@@ -40,6 +40,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { VoipDomainService, VoipDomainItem, VoipDomainScope } from './domain.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 const DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
@@ -52,6 +53,7 @@ type DomainFilters = {
   selector: 'app-voip-domain',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -130,19 +132,16 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
   private readonly domainsErrorEffect = effect(() => {
     const error = this.domainsResource.error();
     if (!error) return;
-    const message =
-      error instanceof Error ? error.message : 'Failed to load domains.';
+    const message = error instanceof Error ? error.message : 'Failed to load domains.';
     this.snack.error(message);
     this.dataSource.data = [];
   });
 
   ngOnInit() {
-    this.route.data
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
-        this.domainsResource.reload();
-      });
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+      this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
+      this.domainsResource.reload();
+    });
   }
 
   ngAfterViewInit() {
@@ -166,7 +165,6 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-
   }
 
   ngOnDestroy() {
@@ -422,9 +420,12 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
       'voip-domain-form-dialog',
     );
     this.domainFormDialogRef = this.dialogBinding.ref;
-    this.domainFormDialogRef.keydownEvents().pipe(takeUntil(this.domainFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.domainFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.domainFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeDomainDialog() {

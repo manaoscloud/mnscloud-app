@@ -29,6 +29,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { VoipDomainItem, VoipDomainService } from '../../domain/domain.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxServerItem, VoipPabxServerService } from '../server/server.service';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import {
   PabxDashboardMetric,
   PabxDashboardQueue,
@@ -81,6 +82,7 @@ const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
   selector: 'app-voip-pabx-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     RouterModule,
     MatButtonModule,

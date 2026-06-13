@@ -45,6 +45,7 @@ import {
 import { PabxRoutingResource, VoipPabxRoutingService } from '../routing/routing.service';
 import { VoipPabxIvrItem, VoipPabxIvrOptionItem, VoipPabxIvrService } from './ivr.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type IvrRouteType = 'extension' | 'ivr' | 'queue' | 'group' | 'external';
@@ -53,6 +54,7 @@ type IvrRouteType = 'extension' | 'ivr' | 'queue' | 'group' | 'external';
   selector: 'app-voip-pabx-ivr',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

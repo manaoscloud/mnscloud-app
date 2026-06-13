@@ -22,6 +22,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import {
   HostingVpsInstance,
   HostingVpsInstanceConfig,
@@ -88,6 +89,7 @@ const EMPTY_VPS_DASHBOARD: VpsDashboardSnapshot = {
   selector: 'app-hosting-vps-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
     MatCardModule,

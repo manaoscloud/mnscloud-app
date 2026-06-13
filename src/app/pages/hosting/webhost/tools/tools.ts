@@ -40,6 +40,7 @@ import {
 } from '../webhost-dialog-viewport';
 import type { HostingWebhostHost, WebhostProviderType } from '../webhost.types';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type ToolKind = 'databases' | 'mailing-lists' | 'zone-records';
 
@@ -133,6 +134,7 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   selector: 'app-hosting-webhost-tools',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -678,9 +680,12 @@ export class HostingWebhostToolsPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'webhost-tool-dialog',
     });
-    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event) => {
-      if (event.key === 'Escape') this.closeDialog();
-    });
+    this.dialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogRef.afterClosed()))
+      .subscribe((event) => {
+        if (event.key === 'Escape') this.closeDialog();
+      });
     this.startDialogViewportObserver();
     this.dialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

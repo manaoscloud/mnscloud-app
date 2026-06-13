@@ -33,6 +33,7 @@ import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type DomainStatus = 0 | 1;
 
@@ -68,6 +69,7 @@ type CustomerOption = {
   selector: 'app-hosting-dns-domains',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -595,11 +597,14 @@ export class HostingDnsDomainsPage implements OnDestroy {
       restoreFocus: true,
       panelClass: 'hosting-dns-domain-form-dialog',
     });
-    this.domainDialogRef.keydownEvents().pipe(takeUntil(this.domainDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelForm();
-      }
-    });
+    this.domainDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.domainDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelForm();
+        }
+      });
     this.startDialogViewportObserver();
     this.domainDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

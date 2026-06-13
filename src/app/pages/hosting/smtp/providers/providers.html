@@ -6,10 +6,7 @@
         <p>Manage SMTP platforms and credentials.</p>
       </div>
       <div class="header-actions">
-        <button mat-stroked-button color="primary" type="button" (click)="refreshList()">
-          <mat-icon>refresh</mat-icon>
-          Refresh
-        </button>
+        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
           New

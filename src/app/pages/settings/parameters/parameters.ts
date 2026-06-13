@@ -25,6 +25,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -122,6 +123,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
   selector: 'app-settings-parameters',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatFormFieldModule,

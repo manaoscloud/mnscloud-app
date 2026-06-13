@@ -36,6 +36,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type ServerPayload = {
   name: string;
@@ -53,6 +54,7 @@ type ServerPayload = {
   selector: 'app-voip-softswitch-server',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

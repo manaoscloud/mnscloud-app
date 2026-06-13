@@ -27,6 +27,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type InfraGisResourceKey =
   | 'projects'
@@ -88,6 +89,7 @@ const EMPTY_INFRAGIS_DASHBOARD: InfraGisDashboardSnapshot = {
   selector: 'app-infragis-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatButtonModule,
     MatCardModule,

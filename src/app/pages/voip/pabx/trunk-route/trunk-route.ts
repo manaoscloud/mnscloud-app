@@ -41,6 +41,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxTrunkRouteUiService } from './trunk-route.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type ResourceKind = 'trunks' | 'inbound-routes';
 type ResourceRow = {
@@ -117,6 +118,7 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
   selector: 'app-voip-pabx-trunk-route',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -655,9 +657,12 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       { onEscape: () => this.cancelEdit() },
     );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.dialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
   private closeDialog() {
     this.dialogBinding?.stop();

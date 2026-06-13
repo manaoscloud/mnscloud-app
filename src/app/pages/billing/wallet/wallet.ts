@@ -33,6 +33,7 @@ import { firstValueFrom } from 'rxjs';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
@@ -74,6 +75,7 @@ export const BILLING_WALLET_IMPORTS = [
   MatTableModule,
   MatTabsModule,
   MatTooltipModule,
+  RefreshButtonComponent,
   TranslocoPipe,
   CurrencyMaskDirective,
 ];
@@ -380,7 +382,9 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
   }
 
   statusLabel(value: unknown) {
-    const code = String(value ?? '').trim().toUpperCase();
+    const code = String(value ?? '')
+      .trim()
+      .toUpperCase();
     const labels: Record<string, string> = {
       ACTIVE: 'Active',
       SUSPENDED: 'Suspended',

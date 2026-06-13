@@ -37,6 +37,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 
 type ContractStatus = 'draft' | 'active' | 'expired' | 'canceled';
 
@@ -87,6 +88,7 @@ type CustomerOption = {
   selector: 'app-invoicing-contracts',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -620,11 +622,14 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
       restoreFocus: true,
       panelClass: 'erp-contract-form-dialog',
     });
-    this.contractFormDialogRef.keydownEvents().pipe(takeUntil(this.contractFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.cancelContractForm();
-      }
-    });
+    this.contractFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.contractFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.cancelContractForm();
+        }
+      });
     this.startDialogViewportObserver();
     this.contractFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

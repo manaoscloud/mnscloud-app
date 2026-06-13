@@ -32,6 +32,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
 
 type CyberRecord = {
   [key: string]: any;
@@ -172,6 +173,7 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
   selector: 'app-cyber-security',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -524,11 +526,9 @@ export class CyberSecurityPage implements OnInit {
           return row[column] ?? '';
       }
     };
-    this.route.paramMap
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((params) => {
-        this.activeSection.set(this.normalizeSection(params.get('section')));
-      });
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.activeSection.set(this.normalizeSection(params.get('section')));
+    });
     this.refreshList();
   }
 

@@ -40,6 +40,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type ComplexStatus = 'active' | 'inactive';
 
@@ -74,6 +75,7 @@ type PostalCodeLookupItem = {
   selector: 'app-erp-complex',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -575,11 +577,14 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
       restoreFocus: true,
       panelClass: 'erp-complex-form-dialog',
     });
-    this.complexFormDialogRef.keydownEvents().pipe(takeUntil(this.complexFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.closeComplexDialog();
-      }
-    });
+    this.complexFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.complexFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.closeComplexDialog();
+        }
+      });
     this.startDialogViewportObserver();
     this.complexFormDialogRef.afterClosed().subscribe(() => {
       this.stopDialogViewportObserver();

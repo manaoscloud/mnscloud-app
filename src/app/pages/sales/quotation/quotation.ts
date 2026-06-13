@@ -38,6 +38,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
 type SaleQuotation = {
   SqtUUID: string;
@@ -91,6 +92,7 @@ const emptyQuotationFilters = (): QuotationFilters => ({
   selector: 'app-sale-quotation',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -565,9 +567,12 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
       'sale-quotation-form-dialog',
     );
     this.quotationFormDialogRef = this.dialogBinding.ref;
-    this.quotationFormDialogRef.keydownEvents().pipe(takeUntil(this.quotationFormDialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.quotationFormDialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.quotationFormDialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeQuotationDialog() {

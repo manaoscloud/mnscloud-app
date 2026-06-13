@@ -42,11 +42,13 @@ import {
   VoipSoftswitchSubscriberService,
 } from './subscriber.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 @Component({
   selector: 'app-voip-softswitch-subscriber',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     ReactiveFormsModule,
     MatCardModule,
     MatDialogModule,
@@ -385,9 +387,12 @@ export class VoipSoftswitchSubscriberPage implements AfterViewInit, OnDestroy {
       { onEscape: () => this.cancelEdit() },
     );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef.keydownEvents().pipe(takeUntil(this.dialogRef.afterClosed())).subscribe((event: KeyboardEvent) => {
-      if (event.key === 'Escape') this.cancelEdit();
-    });
+    this.dialogRef
+      .keydownEvents()
+      .pipe(takeUntil(this.dialogRef.afterClosed()))
+      .subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape') this.cancelEdit();
+      });
   }
 
   private closeDialog() {

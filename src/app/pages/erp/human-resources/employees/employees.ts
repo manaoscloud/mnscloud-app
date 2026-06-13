@@ -45,6 +45,7 @@ import {
 } from '../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type Employee = {
   EmployeeUUID: string;
@@ -81,6 +82,7 @@ type EmployeeListParams = {
   selector: 'app-erp-hr-employees',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -326,9 +328,7 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     if (paramsValue.companyUUID) params.set('companyUUID', paramsValue.companyUUID);
     if (paramsValue.departmentUUID) params.set('departmentUUID', paramsValue.departmentUUID);
     if (paramsValue.positionUUID) params.set('positionUUID', paramsValue.positionUUID);
-    const response = await this.api.get<any>(
-      `erp/human-resources/employees?${params.toString()}`,
-    );
+    const response = await this.api.get<any>(`erp/human-resources/employees?${params.toString()}`);
     return response?.data?.items ?? [];
   }
 
