@@ -20,7 +20,7 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [value]="searchInput"
+          [value]="searchInput()"
           placeholder="Search portability"
           (input)="onSearchChange($any($event.target).value)"
         />
@@ -178,10 +178,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="portabilityForm" class="form-grid" (ngSubmit)="submit()" [formGroup]="form">
+            <form id="portabilityForm" class="form-grid" (ngSubmit)="submit()">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="form.status">
                   @for (option of statusOptions; track option) {
                     <mat-option [value]="option.value">
                       {{ option.label }}
@@ -192,7 +192,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Direction</mat-label>
-                <mat-select formControlName="direction">
+                <mat-select [formField]="form.direction">
                   @for (option of directionOptions; track option) {
                     <mat-option [value]="option.value">
                       {{ option.label }}
@@ -203,17 +203,14 @@
 
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Number</mat-label>
-                <app-phone-input formControlName="number" placeholder="5511999999999" />
+                <app-phone-input [formField]="form.number" placeholder="5511999999999" />
                 <mat-icon matSuffix>phone</mat-icon>
-                @if (form.controls.number.hasError('pattern')) {
-                  <mat-error> Invalid format. Use digits only. </mat-error>
-                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Customer</mat-label>
                 <mat-select
-                  formControlName="customerUUID"
+                  [formField]="form.customerUUID"
                   (openedChange)="onCustomerOpened($event)"
                 >
                   <mat-option
@@ -225,8 +222,8 @@
                     <mat-form-field appearance="outline" class="select-search-field">
                       <input
                         matInput
-                        [value]="customerSearch"
-                        (input)="customerSearch = $any($event.target).value"
+                        [value]="customerSearch()"
+                        (input)="customerSearch.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                         placeholder="Search customer"
@@ -243,7 +240,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Donor Operator</mat-label>
                 <mat-select
-                  formControlName="donorOperatorUUID"
+                  [formField]="form.donorOperatorUUID"
                   (openedChange)="onDonorOpened($event)"
                 >
                   <mat-option
@@ -255,8 +252,8 @@
                     <mat-form-field appearance="outline" class="select-search-field">
                       <input
                         matInput
-                        [value]="donorSearch"
-                        (input)="donorSearch = $any($event.target).value"
+                        [value]="donorSearch()"
+                        (input)="donorSearch.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                         placeholder="Search operator"
@@ -273,7 +270,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Recipient Operator</mat-label>
                 <mat-select
-                  formControlName="recipientOperatorUUID"
+                  [formField]="form.recipientOperatorUUID"
                   (openedChange)="onRecipientOpened($event)"
                 >
                   <mat-option
@@ -285,8 +282,8 @@
                     <mat-form-field appearance="outline" class="select-search-field">
                       <input
                         matInput
-                        [value]="recipientSearch"
-                        (input)="recipientSearch = $any($event.target).value"
+                        [value]="recipientSearch()"
+                        (input)="recipientSearch.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                         placeholder="Search operator"
@@ -298,7 +295,7 @@
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
                 </mat-select>
-                @if (form.hasError('sameOperator')) {
+                @if (hasSameOperator()) {
                   <mat-error> Donor and recipient operators must be different. </mat-error>
                 }
               </mat-form-field>
@@ -308,7 +305,7 @@
                 <input
                   matInput
                   [matDatepicker]="requestedAtPicker"
-                  formControlName="requestedAt"
+                  [formField]="form.requestedAt"
                   appDateMask
                 />
                 <mat-datepicker-toggle matSuffix [for]="requestedAtPicker" />
@@ -320,7 +317,7 @@
                 <input
                   matInput
                   [matDatepicker]="scheduledAtPicker"
-                  formControlName="scheduledAt"
+                  [formField]="form.scheduledAt"
                   appDateMask
                 />
                 <mat-datepicker-toggle matSuffix [for]="scheduledAtPicker" />
@@ -332,7 +329,7 @@
                 <input
                   matInput
                   [matDatepicker]="confirmedAtPicker"
-                  formControlName="confirmedAt"
+                  [formField]="form.confirmedAt"
                   appDateMask
                 />
                 <mat-datepicker-toggle matSuffix [for]="confirmedAtPicker" />
@@ -344,7 +341,7 @@
                 <input
                   matInput
                   [matDatepicker]="completedAtPicker"
-                  formControlName="completedAt"
+                  [formField]="form.completedAt"
                   appDateMask
                 />
                 <mat-datepicker-toggle matSuffix [for]="completedAtPicker" />
@@ -353,12 +350,12 @@
 
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Reason</mat-label>
-                <input matInput formControlName="reason" />
+                <input matInput [formField]="form.reason" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Notes</mat-label>
-                <textarea matInput rows="3" formControlName="notes"></textarea>
+                <textarea matInput rows="3" [formField]="form.notes"></textarea>
               </mat-form-field>
             </form>
 
@@ -381,7 +378,7 @@
           color="primary"
           type="submit"
           form="portabilityForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || hasSameOperator() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -393,7 +390,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="portabilitySaveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || hasSameOperator() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -411,7 +408,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewPortability()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || hasSameOperator() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

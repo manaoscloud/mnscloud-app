@@ -11,7 +11,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, pattern, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -56,13 +56,27 @@ type CustomerItem = {
 type PortabilityFilters = {
   search: string;
 };
+type PortabilityFormModel = {
+  customerUUID: string;
+  number: string;
+  direction: string;
+  donorOperatorUUID: string;
+  recipientOperatorUUID: string;
+  status: string;
+  requestedAt: Date | null;
+  scheduledAt: Date | null;
+  confirmedAt: Date | null;
+  completedAt: Date | null;
+  reason: string;
+  notes: string;
+};
 
 @Component({
   selector: 'app-voip-portability',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -94,7 +108,6 @@ export class VoipPortabilityPage {
   private readonly api = inject(VoipPortabilityService);
   private readonly operatorApi = inject(VoipDidOperatorService);
   private readonly customerApi = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
@@ -107,11 +120,11 @@ export class VoipPortabilityPage {
   readonly operatorMap = signal<Map<string, VoipDidOperatorItem>>(new Map());
   readonly customers = signal<CustomerOption[]>([]);
   readonly customerMap = signal<Map<string, CustomerItem>>(new Map());
-  customerSearch = '';
-  donorSearch = '';
-  recipientSearch = '';
-  search = '';
-  searchInput = '';
+  readonly customerSearch = signal('');
+  readonly donorSearch = signal('');
+  readonly recipientSearch = signal('');
+  readonly search = signal('');
+  readonly searchInput = signal('');
   private readonly appliedSearch = signal('');
   private readonly portabilityResource = resource({
     params: (): PortabilityFilters => ({
@@ -149,23 +162,15 @@ export class VoipPortabilityPage {
     { value: 'port_out', label: 'Port Out' },
   ];
 
-  readonly form = this.fb.nonNullable.group(
-    {
-      customerUUID: ['', [Validators.required]],
-      number: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
-      direction: ['port_in', [Validators.required]],
-      donorOperatorUUID: ['', [Validators.required]],
-      recipientOperatorUUID: ['', [Validators.required]],
-      status: ['requested'],
-      requestedAt: [null as Date | null],
-      scheduledAt: [null as Date | null],
-      confirmedAt: [null as Date | null],
-      completedAt: [null as Date | null],
-      reason: [''],
-      notes: [''],
-    },
-    { validators: [this.operatorMismatchValidator] },
-  );
+  readonly formModel = signal<PortabilityFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.customerUUID);
+    required(schema.number);
+    pattern(schema.number, /^\d{8,15}$/);
+    required(schema.direction);
+    required(schema.donorOperatorUUID);
+    required(schema.recipientOperatorUUID);
+  });
 
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
@@ -234,12 +239,12 @@ export class VoipPortabilityPage {
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
-    this.search = nextSearch;
+    const nextSearch = this.searchInput().trim();
+    this.search.set(nextSearch);
     if (nextSearch === this.appliedSearch()) {
       this.portabilityResource.reload();
     } else {
@@ -248,8 +253,8 @@ export class VoipPortabilityPage {
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
     } else {
@@ -316,7 +321,7 @@ export class VoipPortabilityPage {
 
   editPortability(item: VoipPortabilityItem) {
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       customerUUID: item.CustomerCusUUID,
       number: item.Number,
       direction: item.Direction,
@@ -339,12 +344,13 @@ export class VoipPortabilityPage {
   }
 
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) return;
+    if (this.hasSameOperator()) {
+      this.snack.warning('Donor and recipient operators must be different.');
       return;
     }
 
-    const raw = this.form.getRawValue();
+    const raw = this.formModel();
     const payload = {
       customerUUID: raw.customerUUID,
       number: raw.number,
@@ -539,20 +545,7 @@ export class VoipPortabilityPage {
   }
 
   private resetForm() {
-    this.form.reset({
-      customerUUID: '',
-      number: '',
-      direction: 'port_in',
-      donorOperatorUUID: '',
-      recipientOperatorUUID: '',
-      status: 'requested',
-      requestedAt: null,
-      scheduledAt: null,
-      confirmedAt: null,
-      completedAt: null,
-      reason: '',
-      notes: '',
-    });
+    this.formModel.set(this.emptyFormModel());
     this.editing.set(null);
   }
 
@@ -581,38 +574,38 @@ export class VoipPortabilityPage {
   }
 
   get filteredCustomers() {
-    const value = this.customerSearch.trim().toLowerCase();
+    const value = this.customerSearch().trim().toLowerCase();
     if (!value) return this.customers();
     return this.customers().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredOperators() {
-    const value = this.donorSearch.trim().toLowerCase();
+    const value = this.donorSearch().trim().toLowerCase();
     if (!value) return this.operators();
     return this.operators().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredRecipientOperators() {
-    const value = this.recipientSearch.trim().toLowerCase();
+    const value = this.recipientSearch().trim().toLowerCase();
     if (!value) return this.operators();
     return this.operators().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   onCustomerOpened(opened: boolean) {
     if (!opened) {
-      this.customerSearch = '';
+      this.customerSearch.set('');
     }
   }
 
   onDonorOpened(opened: boolean) {
     if (!opened) {
-      this.donorSearch = '';
+      this.donorSearch.set('');
     }
   }
 
   onRecipientOpened(opened: boolean) {
     if (!opened) {
-      this.recipientSearch = '';
+      this.recipientSearch.set('');
     }
   }
 
@@ -645,12 +638,28 @@ export class VoipPortabilityPage {
     return err?.error?.message || err?.error?.error || err?.message || fallback;
   }
 
-  private operatorMismatchValidator(control: AbstractControl) {
-    const donor = control.get('donorOperatorUUID')?.value;
-    const recipient = control.get('recipientOperatorUUID')?.value;
+  hasSameOperator() {
+    const { donorOperatorUUID: donor, recipientOperatorUUID: recipient } = this.formModel();
     if (donor && recipient && donor === recipient) {
-      return { sameOperator: true };
+      return true;
     }
-    return null;
+    return false;
+  }
+
+  private emptyFormModel(): PortabilityFormModel {
+    return {
+      customerUUID: '',
+      number: '',
+      direction: 'port_in',
+      donorOperatorUUID: '',
+      recipientOperatorUUID: '',
+      status: 'requested',
+      requestedAt: null,
+      scheduledAt: null,
+      confirmedAt: null,
+      completedAt: null,
+      reason: '',
+      notes: '',
+    };
   }
 }
