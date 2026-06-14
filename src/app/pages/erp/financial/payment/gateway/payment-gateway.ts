@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -224,7 +223,6 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   ],
   templateUrl: './payment-gateway.html',
   styleUrls: ['./payment-gateway.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'app-fade-in-host' },
 })
 export class FinancialPaymentGatewayPage {

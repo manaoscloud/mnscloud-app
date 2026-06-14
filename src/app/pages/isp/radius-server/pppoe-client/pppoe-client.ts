@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -74,7 +73,6 @@ type FixedIpv4Option = {
   ],
   templateUrl: './pppoe-client.html',
   styleUrls: ['./pppoe-client.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PppoeClientPage {
   private readonly api = inject(ApiService);

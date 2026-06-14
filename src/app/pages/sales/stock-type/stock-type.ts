@@ -7,7 +7,6 @@ import {
   TemplateRef,
   inject,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -65,7 +64,6 @@ type StockTypeFilters = {
   ],
   templateUrl: './stock-type.html',
   styleUrls: ['./stock-type.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SaleStockTypePage {
   private readonly api = inject(ApiService);

@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   TemplateRef,
@@ -70,7 +69,6 @@ type Entity = {
   ],
   templateUrl: './page.html',
   styleUrls: ['./page.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CrudPage {
   private readonly api = inject(ApiService);

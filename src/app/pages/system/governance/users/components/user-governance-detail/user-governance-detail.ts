@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -11,7 +11,6 @@ import { GovernanceAction, GovernanceUser, LegalHold } from '../../user-governan
   imports: [MatButtonModule, MatIconModule, MatTabsModule, TranslocoPipe],
   templateUrl: './user-governance-detail.html',
   styleUrls: ['./user-governance-detail.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserGovernanceDetailComponent {
   readonly user = input<GovernanceUser | null>(null);

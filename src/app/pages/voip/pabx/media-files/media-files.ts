@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -99,7 +98,6 @@ const emptyMediaFileFilters = (): MediaFileFilters => ({
   ],
   templateUrl: './media-files.html',
   styleUrls: ['./media-files.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxMediaFilesPage {
   private readonly api = inject(VoipPabxMediaFilesService);
@@ -187,12 +185,10 @@ export class VoipPabxMediaFilesPage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     void this.bootstrap();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   async bootstrap() {

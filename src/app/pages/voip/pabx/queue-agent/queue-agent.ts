@@ -1,5 +1,4 @@
-import {
-  DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   Component,
   TemplateRef,
@@ -8,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -101,7 +99,6 @@ const emptyQueueAgentFilters = (): QueueAgentFilters => ({
   ],
   templateUrl: './queue-agent.html',
   styleUrls: ['./queue-agent.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxQueueAgentPage {
   private readonly api = inject(VoipPabxQueueAgentService);
@@ -203,12 +200,10 @@ export class VoipPabxQueueAgentPage {
     };
 
     void this.bootstrap();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeQueueAgentDialog();
-  
   });
 
   async bootstrap() {

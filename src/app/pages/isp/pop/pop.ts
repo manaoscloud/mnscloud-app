@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -69,7 +68,6 @@ type IspPopItem = {
   ],
   templateUrl: './pop.html',
   styleUrls: ['./pop.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspPopPage {
   private readonly api = inject(ApiService);

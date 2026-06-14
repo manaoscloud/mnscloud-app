@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -71,7 +70,6 @@ type PoolIpv4NetworkItem = {
   ],
   templateUrl: './pool-ipv4.html',
   styleUrls: ['./pool-ipv4.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspPoolIpv4Page {
   private readonly api = inject(ApiService);

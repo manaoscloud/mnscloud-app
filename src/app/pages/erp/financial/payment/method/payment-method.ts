@@ -4,7 +4,6 @@ import {
   effect,
   inject,
   resource,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -63,7 +62,6 @@ type PaymentMethod = {
     TranslocoPipe,
   ],
   templateUrl: './payment-method.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./payment-method.scss'],
 })
 export class FinancialPaymentMethodPage {
@@ -124,14 +122,13 @@ export class FinancialPaymentMethodPage {
 
   private readonly initializePage = (() => {
     this.startCreate();
-  
+
     return true;
   })();
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closePaymentMethodDialog();
-  
   });
 
   private readonly afterViewReady = afterNextRender(() => {
@@ -158,7 +155,6 @@ export class FinancialPaymentMethodPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   onSearchChange(value: string) {

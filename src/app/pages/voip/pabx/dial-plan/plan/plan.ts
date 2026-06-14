@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -72,7 +71,6 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
   ],
   templateUrl: './plan.html',
   styleUrls: ['./plan.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxDialPlanPlanPage {
   private readonly api = inject(VoipPabxDialPlanUiService);

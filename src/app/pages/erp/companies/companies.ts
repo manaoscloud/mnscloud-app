@@ -7,7 +7,6 @@ import {
   TemplateRef,
   inject,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -81,7 +80,6 @@ type Company = {
     PhoneInputComponent,
   ],
   templateUrl: './companies.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./companies.scss'],
 })
 export class ErpCompaniesPage {

@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -17,7 +17,6 @@ import { ThemeService, ThemeMode } from '../../services/theme.service';
   imports: [MatCardModule, MatRadioModule, MatIconModule, MatDividerModule],
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'app-fade-in-host' },
 })
 export class SettingsComponent {

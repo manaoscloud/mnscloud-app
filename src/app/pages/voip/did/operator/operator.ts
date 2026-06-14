@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   TemplateRef,
   effect,
@@ -83,7 +82,6 @@ type DidOperatorFormModel = {
   ],
   templateUrl: './operator.html',
   styleUrls: ['./operator.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipDidOperatorPage {
   private readonly listLimit = 5000;

@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { NgClass, DatePipe } from '@angular/common';
@@ -69,7 +68,6 @@ import {
   ],
   templateUrl: './trusted-nodes.html',
   styleUrls: ['./trusted-nodes.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CyberSecurityTrustedNodesPage {
   private readonly trustedNodesApi = inject(CyberSecurityTrustedNodesService);

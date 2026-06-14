@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   BILLING_WALLET_IMPORTS,
   BillingWalletPage,
@@ -10,7 +10,6 @@ import {
   standalone: true,
   imports: BILLING_WALLET_IMPORTS,
   templateUrl: '../../wallet/wallet.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['../../wallet/wallet.scss'],
 })
 export class BillingTenantLedgerPage extends BillingWalletPage {

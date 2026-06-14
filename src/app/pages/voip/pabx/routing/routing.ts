@@ -7,7 +7,6 @@ import {
   resource,
   signal,
   TemplateRef,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -114,7 +113,6 @@ type OptionFormModel = {
   ],
   templateUrl: './routing.html',
   styleUrls: ['./routing.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxRoutingPage {
   private readonly listLimit = 5000;
@@ -236,12 +234,10 @@ export class VoipPabxRoutingPage {
       this.resetForm();
       void this.bootstrap();
     });
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   async refreshList() {

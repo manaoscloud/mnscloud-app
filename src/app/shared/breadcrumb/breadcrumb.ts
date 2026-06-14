@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
@@ -15,7 +15,6 @@ interface Crumb {
   standalone: true,
   imports: [RouterModule, MatIconModule],
   templateUrl: './breadcrumb.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./breadcrumb.scss'],
 })
 export class BreadcrumbComponent {
@@ -26,7 +25,10 @@ export class BreadcrumbComponent {
 
   constructor() {
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe(() => this.buildBreadcrumbs());
 
     this.buildBreadcrumbs();

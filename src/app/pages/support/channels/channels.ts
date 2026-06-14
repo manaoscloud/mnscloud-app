@@ -1,7 +1,6 @@
 import {
   Component,
   TemplateRef,
-  ChangeDetectionStrategy,
   computed,
   effect,
   inject,
@@ -84,7 +83,6 @@ type ChannelConfig = {
     DatePipe,
   ],
   templateUrl: './channels.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./channels.scss'],
 })
 export class SupportChannelsPage {
@@ -171,13 +169,11 @@ export class SupportChannelsPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.channelFormDialogRef?.close();
-  
   });
 
   onSearchChange(value: string) {

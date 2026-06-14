@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
@@ -137,7 +136,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
   templateUrl: './parameters.html',
   styleUrls: ['./parameters.scss'],
   encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'app-fade-in-host' },
 })
 export class SettingsParametersPage {

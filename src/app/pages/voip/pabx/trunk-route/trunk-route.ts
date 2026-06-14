@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -165,7 +164,6 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
   ],
   templateUrl: './trunk-route.html',
   styleUrls: ['./trunk-route.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxTrunkRoutePage {
   private readonly listLimit = 5000;
@@ -261,12 +259,10 @@ export class VoipPabxTrunkRoutePage {
       return String((data as Record<string, unknown>)[column] ?? '');
     };
     void this.bootstrap();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
   onSearchChange(value: string) {
     this.searchInput.set(value);
@@ -339,10 +335,7 @@ export class VoipPabxTrunkRoutePage {
       this.snack.warning('Select a trunk before saving this route.');
       return;
     }
-    if (
-      this.isInboundRouteResource() &&
-      (!value.didUUID || !value.routeTargetUUID)
-    ) {
+    if (this.isInboundRouteResource() && (!value.didUUID || !value.routeTargetUUID)) {
       this.snack.warning('Select a DID and destination before saving this inbound route.');
       return;
     }

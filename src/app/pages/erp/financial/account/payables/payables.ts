@@ -4,7 +4,6 @@ import {
   effect,
   inject,
   resource,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -99,7 +98,6 @@ type SupplierOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './payables.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./payables.scss'],
 })
 export class FinancialPayablesPage {
@@ -206,14 +204,13 @@ export class FinancialPayablesPage {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
     void this.fetchSuppliers();
-  
+
     return true;
   })();
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closePayableDialog();
     this.closeSettleDialog();
-  
   });
 
   private readonly afterViewReady = afterNextRender(() => {
@@ -245,7 +242,6 @@ export class FinancialPayablesPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   onSearchChange(value: string) {

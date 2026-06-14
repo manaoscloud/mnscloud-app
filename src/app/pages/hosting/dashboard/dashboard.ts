@@ -6,7 +6,6 @@ import {
   effect,
   inject,
   resource,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
@@ -138,7 +137,6 @@ const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingDashboardPage {
   private readonly api = inject(ApiService);

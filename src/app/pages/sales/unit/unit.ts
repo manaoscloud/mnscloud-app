@@ -7,7 +7,6 @@ import {
   TemplateRef,
   inject,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -67,7 +66,6 @@ type UnitFilters = {
   ],
   templateUrl: './unit.html',
   styleUrls: ['./unit.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SaleUnitPage {
   private readonly api = inject(ApiService);

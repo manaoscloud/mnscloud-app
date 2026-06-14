@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -119,7 +118,6 @@ const emptyExtensionFilters = (): ExtensionFilters => ({
   ],
   templateUrl: './extension.html',
   styleUrls: ['./extension.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxExtensionPage {
   private readonly listLimit = 5000;
@@ -231,12 +229,10 @@ export class VoipPabxExtensionPage {
       this.sortValue(data, sortHeaderId);
     this.dataSource.filterPredicate = (data) => this.matchesFilters(data);
     this.extensionsResource.reload();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeExtensionDialog();
-  
   });
 
   onSearchChange(value: string) {
@@ -361,7 +357,10 @@ export class VoipPabxExtensionPage {
     this.generatedCredentials.set([]);
 
     if (value === 'single' && !this.formModel().password.trim().length) {
-      this.formModel.update((current) => ({ ...current, password: this.generateRandomPassword(16) }));
+      this.formModel.update((current) => ({
+        ...current,
+        password: this.generateRandomPassword(16),
+      }));
     }
 
     if (value === 'range') {

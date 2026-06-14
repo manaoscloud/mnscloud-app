@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  afterNextRender,
-  effect,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, afterNextRender, effect, input, output, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -32,7 +24,6 @@ import { AccountAction, GovernanceUser } from '../../user-governance.models';
   ],
   templateUrl: './user-governance-table.html',
   styleUrls: ['./user-governance-table.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserGovernanceTableComponent {
   readonly users = input<GovernanceUser[]>([]);

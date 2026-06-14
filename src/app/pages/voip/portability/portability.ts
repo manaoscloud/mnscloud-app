@@ -5,7 +5,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -101,7 +100,6 @@ type PortabilityFormModel = {
   ],
   templateUrl: './portability.html',
   styleUrls: ['./portability.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPortabilityPage {
   private readonly listLimit = 5000;
@@ -235,7 +233,6 @@ export class VoipPortabilityPage {
     };
 
     void this.refresh();
-  
   });
 
   onSearchChange(value: string) {
@@ -519,7 +516,6 @@ export class VoipPortabilityPage {
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closePortabilityDialog();
-  
   });
 
   operatorLabel(uuid: string) {

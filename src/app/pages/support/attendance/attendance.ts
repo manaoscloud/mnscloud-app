@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, resource } from '@angular/core';
+import { Component, effect, inject, resource } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 import { MatCardModule } from '@angular/material/card';
@@ -55,7 +55,6 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
     DatePipe,
   ],
   templateUrl: './attendance.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./attendance.scss'],
 })
 export class SupportAttendancePage {

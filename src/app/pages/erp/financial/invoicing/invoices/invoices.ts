@@ -4,7 +4,6 @@ import {
   effect,
   inject,
   resource,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -73,7 +72,6 @@ type ErpFinInvInvoice = {
     CurrencyMaskDirective,
   ],
   templateUrl: './invoices.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./invoices.scss'],
 })
 export class InvoicingInvoicesPage {
@@ -143,14 +141,13 @@ export class InvoicingInvoicesPage {
   private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
-  
+
     return true;
   })();
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closeInvoiceDialog();
-  
   });
 
   private readonly afterViewReady = afterNextRender(() => {
@@ -177,7 +174,6 @@ export class InvoicingInvoicesPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   onSearchChange(value: string) {

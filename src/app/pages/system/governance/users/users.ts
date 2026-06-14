@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   TemplateRef,
   computed,
@@ -65,7 +64,6 @@ type GovernanceActionFormModel = {
   ],
   templateUrl: './users.html',
   styleUrls: ['./users.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemGovernanceUsersPage {
   private readonly api = inject(ApiService);

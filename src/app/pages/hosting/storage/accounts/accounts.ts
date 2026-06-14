@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
@@ -101,7 +100,6 @@ type StorageAccountFormModel = {
   ],
   templateUrl: './accounts.html',
   styleUrls: ['./accounts.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingStorageAccountsPage {
   private readonly api = inject(ApiService);

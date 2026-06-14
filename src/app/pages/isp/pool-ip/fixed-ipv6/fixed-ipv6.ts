@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -64,7 +63,6 @@ type FixedIpv6Item = {
   ],
   templateUrl: './fixed-ipv6.html',
   styleUrls: ['./fixed-ipv6.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspFixedIpv6Page {
   private readonly api = inject(ApiService);

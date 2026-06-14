@@ -6,7 +6,6 @@ import {
   resource,
   signal,
   TemplateRef,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -144,7 +143,6 @@ const emptyPabxAccountFilters = (): PabxAccountFilters => ({
   ],
   templateUrl: './pabx.html',
   styleUrls: ['./pabx.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxPage {
   private readonly listLimit = 5000;

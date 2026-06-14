@@ -1,11 +1,4 @@
-import {
-  Component,
-  DestroyRef,
-  computed,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormField, form, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
@@ -33,7 +26,6 @@ import { ApiService } from '../../services/api.service';
     MatProgressSpinnerModule,
     MatIconModule,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResetPasswordComponent {
   private api = inject(ApiService);

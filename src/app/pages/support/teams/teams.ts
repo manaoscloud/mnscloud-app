@@ -1,7 +1,6 @@
 import {
   Component,
   TemplateRef,
-  ChangeDetectionStrategy,
   computed,
   effect,
   inject,
@@ -11,7 +10,6 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -92,7 +90,6 @@ type UserOption = { value: string; label: string; email?: string | null };
     TranslocoPipe,
   ],
   templateUrl: './teams.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./teams.scss'],
 })
 export class SupportTeamsPage {
@@ -174,7 +171,7 @@ export class SupportTeamsPage {
   private readonly initializePage = (() => {
     this.resetTeamForm();
     void this.fetchUsers();
-  
+
     return true;
   })();
 
@@ -204,13 +201,11 @@ export class SupportTeamsPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.teamFormDialogRef?.close();
-  
   });
 
   onSearchChange(value: string) {

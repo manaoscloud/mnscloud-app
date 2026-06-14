@@ -9,7 +9,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, email, form as createForm, required } from '@angular/forms/signals';
@@ -95,7 +94,6 @@ type TenantInviteFormModel = {
   ],
   templateUrl: './tenants.html',
   styleUrl: './tenants.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsTenantsPage {
   private readonly service = inject(TenantsService);

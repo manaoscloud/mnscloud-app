@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -105,7 +104,6 @@ const EMPTY_INFRAGIS_DASHBOARD: InfraGisDashboardSnapshot = {
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InfraGisDashboardPage {
   private readonly api = inject(ApiService);

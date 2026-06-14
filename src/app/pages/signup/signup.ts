@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -55,7 +54,6 @@ type SignupPolicy = {
   ],
   templateUrl: './signup.html',
   styleUrls: ['./signup.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Signup {
   private readonly api = inject(ApiService);

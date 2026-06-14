@@ -9,7 +9,6 @@ import {
   linkedSignal,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
@@ -207,7 +206,6 @@ export const BILLING_SYSTEM_IMPORTS = [
   imports: BILLING_SYSTEM_IMPORTS,
   templateUrl: './system.html',
   styleUrls: ['./system.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BillingSystemPage {
   private readonly billing = inject(BillingService);

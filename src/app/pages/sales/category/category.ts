@@ -7,7 +7,6 @@ import {
   TemplateRef,
   inject,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -65,7 +64,6 @@ type CategoryFilters = {
   ],
   templateUrl: './category.html',
   styleUrls: ['./category.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SaleCategoryPage {
   private readonly api = inject(ApiService);

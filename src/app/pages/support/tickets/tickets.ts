@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -129,7 +128,6 @@ const emptyTicketFilters = (): TicketFilters => ({
     DatePipe,
   ],
   templateUrl: './tickets.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./tickets.scss'],
 })
 export class SupportTicketsPage {

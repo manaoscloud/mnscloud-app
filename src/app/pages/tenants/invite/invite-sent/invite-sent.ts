@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 
@@ -7,7 +7,6 @@ import { RouterModule } from '@angular/router';
   selector: 'app-invite-sent',
   imports: [RouterModule],
   templateUrl: './invite-sent.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./invite-sent.scss'],
 })
 export class InviteSentPage {

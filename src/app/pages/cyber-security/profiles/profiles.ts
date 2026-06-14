@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -76,7 +75,6 @@ type CyberSecurityProfilesSnapshot = {
   ],
   templateUrl: './profiles.html',
   styleUrls: ['./profiles.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CyberSecurityProfilesPage {
   private readonly profilesApi = inject(CyberSecurityProfilesService);

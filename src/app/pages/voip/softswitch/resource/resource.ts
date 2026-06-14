@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -156,7 +155,6 @@ const RESOURCE_META: Record<
   ],
   templateUrl: './resource.html',
   styleUrls: ['./resource.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipSoftswitchResourcePage {
   private readonly listLimit = 5000;
@@ -259,12 +257,10 @@ export class VoipSoftswitchResourcePage {
       if (column === 'status') return this.statusLabel(data);
       return String((data as Record<string, unknown>)[column] ?? '');
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
   onSearchChange(value: string) {
     this.searchInput.set(value);

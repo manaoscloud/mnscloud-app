@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -90,7 +89,6 @@ type TimeClockAccountListParams = {
   ],
   templateUrl: './time-clock-accounts.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpHumanResourcesTimeClockAccountsPage {
   private readonly api = inject(ApiService);

@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -71,7 +70,6 @@ type PoolIpv6NetworkItem = {
   ],
   templateUrl: './pool-ipv6.html',
   styleUrls: ['./pool-ipv6.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspPoolIpv6Page {
   private readonly api = inject(ApiService);

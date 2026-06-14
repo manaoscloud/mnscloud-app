@@ -4,7 +4,6 @@ import {
   resource,
   TemplateRef,
   inject,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -88,7 +87,6 @@ type CustomerOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './boletos.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./boletos.scss'],
 })
 export class InvoicingBoletosPage {
@@ -159,14 +157,13 @@ export class InvoicingBoletosPage {
     this.startCreate();
     void this.fetchGatewayOptions();
     void this.fetchCustomerOptions();
-  
+
     return true;
   })();
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closeBoletoDialog();
-  
   });
 
   private providerLabel(provider: PaymentGatewayProvider) {
@@ -245,7 +242,6 @@ export class InvoicingBoletosPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   onSearchChange(value: string) {

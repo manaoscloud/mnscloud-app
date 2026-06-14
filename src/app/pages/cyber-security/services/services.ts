@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -75,7 +74,6 @@ import {
   ],
   templateUrl: './services.html',
   styleUrls: ['./services.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CyberSecurityServicesPage {
   private readonly api = inject(CyberSecurityServicesService);

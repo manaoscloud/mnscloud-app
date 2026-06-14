@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -90,7 +89,6 @@ type QueueMemberFormModel = {
   ],
   templateUrl: './queue.html',
   styleUrls: ['./queue.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxQueuePage {
   private readonly api = inject(VoipPabxQueueService);
@@ -209,12 +207,10 @@ export class VoipPabxQueuePage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.itemsResource.reload();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   refreshList() {

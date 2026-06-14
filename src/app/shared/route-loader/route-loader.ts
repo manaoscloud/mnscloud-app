@@ -1,4 +1,4 @@
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, signal } from '@angular/core';
 
 @Component({
   selector: 'app-route-loader',
@@ -6,7 +6,6 @@ import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
   imports: [],
   templateUrl: './route-loader.html',
   styleUrls: ['./route-loader.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RouteLoader {
   visible = signal(false);

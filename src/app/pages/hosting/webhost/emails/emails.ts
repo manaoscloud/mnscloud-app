@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
@@ -101,7 +100,6 @@ type WebhostEmailPasswordFormModel = {
   ],
   templateUrl: './emails.html',
   styleUrls: ['./emails.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingWebhostEmailsPage {
   private readonly api = inject(ApiService);

@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   ElementRef,
@@ -19,7 +18,6 @@ import { Subject } from 'rxjs';
   standalone: true,
   templateUrl: './phone-input.component.html',
   styleUrls: ['./phone-input.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: MatFormFieldControl,
@@ -27,8 +25,7 @@ import { Subject } from 'rxjs';
     },
   ],
 })
-export class PhoneInputComponent
-  implements ControlValueAccessor, MatFormFieldControl<string> {
+export class PhoneInputComponent implements ControlValueAccessor, MatFormFieldControl<string> {
   ngControl = inject(NgControl, { optional: true, self: true });
 
   static nextId = 0;
@@ -106,7 +103,6 @@ export class PhoneInputComponent
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stateChanges.complete();
-  
   });
 
   setDescribedByIds(ids: string[]) {

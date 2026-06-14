@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -153,7 +152,6 @@ const emptyQuotationItemForm = (): QuotationItemFormModel => ({
   ],
   templateUrl: './quotation.html',
   styleUrls: ['./quotation.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SaleQuotationPage {
   private readonly api = inject(ApiService);

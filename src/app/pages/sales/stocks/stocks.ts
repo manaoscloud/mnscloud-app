@@ -5,7 +5,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -81,7 +80,6 @@ type StockFormModel = {
   ],
   templateUrl: './stocks.html',
   styleUrls: ['./stocks.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SalesStocksPage {
   private readonly api = inject(ApiService);

@@ -13,7 +13,6 @@ import {
   HostBinding,
   effect,
   DestroyRef,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
@@ -108,7 +107,6 @@ interface UserAccessResponse {
   ],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayout {
   // =======================================================

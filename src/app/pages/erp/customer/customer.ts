@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -198,7 +197,6 @@ class MapStyleControl {
     PhoneInputComponent,
   ],
   templateUrl: './customer.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./customer.scss'],
 })
 export class ErpCustomerPage {

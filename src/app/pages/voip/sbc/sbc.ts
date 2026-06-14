@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -226,7 +225,6 @@ const CONFIGS: Record<SbcResource, Config> = {
     MatTooltipModule,
   ],
   templateUrl: './sbc.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./sbc.scss'],
 })
 export class VoipSbcPage {
@@ -302,7 +300,7 @@ export class VoipSbcPage {
       this.selected.clear();
       if (this.viewReady) this.recordsResource.reload();
     });
-  
+
     return true;
   })();
   private readonly afterViewReady = afterNextRender(() => {
@@ -313,11 +311,9 @@ export class VoipSbcPage {
       JSON.stringify(row).toLowerCase().includes(filter);
     this.dataSource.sortingDataAccessor = (row, column) =>
       String(this.cell(row, column) ?? '').toLowerCase();
-  
   });
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.binding?.stop();
-  
   });
   uuid(row: SbcRecord) {
     return String(row[this.config().uuid] ?? '');

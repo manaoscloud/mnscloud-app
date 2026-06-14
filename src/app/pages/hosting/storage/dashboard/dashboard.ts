@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -114,7 +113,6 @@ const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingStorageDashboardPage {
   private readonly api = inject(ApiService);

@@ -4,7 +4,6 @@ import {
   resource,
   TemplateRef,
   inject,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -109,7 +108,6 @@ type CustomerOption = {
     CurrencyMaskDirective,
   ],
   templateUrl: './contracts.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./contracts.scss'],
 })
 export class InvoicingContractsPage {
@@ -207,14 +205,13 @@ export class InvoicingContractsPage {
     this.startCreate();
     void this.fetchComplexes();
     void this.fetchCustomers();
-  
+
     return true;
   })();
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closeContractDialog();
-  
   });
 
   private readonly afterViewReady = afterNextRender(() => {
@@ -246,7 +243,6 @@ export class InvoicingContractsPage {
         .concat(this.customerLabel(data.CustomerUUID))
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   onSearchChange(value: string) {

@@ -1,6 +1,6 @@
 // src/app/pages/not-found/not-found.ts
 
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import { Router, RouterModule } from '@angular/router';
 import { StateMessageComponent } from '../../shared/state-message/state-message';
@@ -9,7 +9,6 @@ import { StateMessageComponent } from '../../shared/state-message/state-message'
   selector: 'app-not-found',
   standalone: true,
   imports: [RouterModule, StateMessageComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-state-message
       layout="page"

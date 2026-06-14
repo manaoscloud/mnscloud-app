@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -112,7 +111,6 @@ type EmployeeFormModel = {
   ],
   templateUrl: './employees.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpHumanResourcesEmployeesPage {
   private readonly api = inject(ApiService);

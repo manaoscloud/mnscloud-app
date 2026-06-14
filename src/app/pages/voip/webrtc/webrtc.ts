@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -202,7 +201,6 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     MatTooltipModule,
   ],
   templateUrl: './webrtc.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./webrtc.scss'],
 })
 export class VoipWebRtcPage {
@@ -279,7 +277,7 @@ export class VoipWebRtcPage {
       this.selected.clear();
       if (this.viewReady) this.recordsResource.reload();
     });
-  
+
     return true;
   })();
   private readonly afterViewReady = afterNextRender(() => {
@@ -290,11 +288,9 @@ export class VoipWebRtcPage {
       JSON.stringify(row).toLowerCase().includes(filter);
     this.dataSource.sortingDataAccessor = (row, column) =>
       String(this.cell(row, column) ?? '').toLowerCase();
-  
   });
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.binding?.stop();
-  
   });
   uuid(row: WebRtcRecord) {
     return String(row[this.config().uuid] ?? '');

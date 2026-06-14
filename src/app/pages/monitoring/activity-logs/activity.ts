@@ -1,14 +1,5 @@
 import { NgClass, DatePipe } from '@angular/common';
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  ChangeDetectionStrategy,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { FormField, form as createForm } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -106,7 +97,6 @@ const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
   ],
   templateUrl: './activity.html',
   styleUrls: ['./activity.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MonitoringActivityLogsPage {
   private readonly api = inject(ApiService);

@@ -4,7 +4,6 @@ import {
   effect,
   inject,
   resource,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -69,7 +68,6 @@ type ErpFinInvDueDay = {
     TranslocoPipe,
   ],
   templateUrl: './duedays.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./duedays.scss'],
 })
 export class InvoicingDueDaysPage {
@@ -137,14 +135,13 @@ export class InvoicingDueDaysPage {
 
   private readonly initializePage = (() => {
     this.startCreate();
-  
+
     return true;
   })();
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closeDueDayDialog();
-  
   });
 
   private readonly afterViewReady = afterNextRender(() => {
@@ -180,7 +177,6 @@ export class InvoicingDueDaysPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   onSearchChange(value: string) {

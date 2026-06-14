@@ -10,7 +10,6 @@ import {
   resource,
   signal,
   computed,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import {
@@ -169,7 +168,6 @@ function isValidHexColor(value: string) {
   ],
   templateUrl: './themes.html',
   styleUrls: ['./themes.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsThemesPage {
   private readonly api = inject(ApiService);

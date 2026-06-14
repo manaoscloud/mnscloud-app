@@ -1,7 +1,6 @@
 import {
   Component,
   TemplateRef,
-  ChangeDetectionStrategy,
   computed,
   effect,
   inject,
@@ -11,7 +10,6 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -66,7 +64,6 @@ type SupportTicketChannel = {
     TranslocoPipe,
   ],
   templateUrl: './ticket-channels.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./ticket-channels.scss'],
 })
 export class SupportTicketChannelsPage {
@@ -140,13 +137,11 @@ export class SupportTicketChannelsPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.ticketChannelFormDialogRef?.close();
-  
   });
 
   onSearchChange(value: string) {

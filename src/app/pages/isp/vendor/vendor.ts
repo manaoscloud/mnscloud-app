@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -71,7 +70,6 @@ type SupplierOption = {
   ],
   templateUrl: './vendor.html',
   styleUrls: ['./vendor.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspVendorPage {
   private readonly api = inject(ApiService);

@@ -5,7 +5,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -68,7 +67,6 @@ type ExternalDidFormModel = {
   ],
   templateUrl: './external.html',
   styleUrls: ['./external.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipDidExternalPage {
   private readonly api = inject(VoipDidExternalService);

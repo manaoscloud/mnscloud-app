@@ -1,12 +1,4 @@
-import {
-  afterNextRender,
-  Component,
-  effect,
-  resource,
-  ChangeDetectionStrategy,
-  viewChild,
-} from '@angular/core';
-
+import { afterNextRender, Component, effect, resource, viewChild } from '@angular/core';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -45,7 +37,6 @@ type Lead = {
     MatProgressSpinnerModule,
   ],
   templateUrl: './leads.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./leads.scss'],
 })
 export class CrmLeadsPage {

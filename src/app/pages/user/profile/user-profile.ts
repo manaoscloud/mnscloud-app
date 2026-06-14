@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, form, minLength, required } from '@angular/forms/signals';
@@ -58,7 +57,6 @@ import { UserProfile } from '../../../models/user-profile.model';
   ],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserProfileComponent {
   private readonly api = inject(ApiService);

@@ -1,8 +1,6 @@
-import {
-  NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import {
   Component,
-  ChangeDetectionStrategy,
   effect,
   inject,
   resource,
@@ -64,7 +62,6 @@ type CdrRequest = CdrFilters & {
   ],
   templateUrl: './cdr.html',
   styleUrls: ['./cdr.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxCdrPage {
   private readonly api = inject(VoipPabxCdrService);
@@ -126,7 +123,6 @@ export class VoipPabxCdrPage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.refreshList();
-  
   });
 
   onTabChange(index: number) {

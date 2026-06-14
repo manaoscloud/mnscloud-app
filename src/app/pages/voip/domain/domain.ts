@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   untracked,
   viewChild,
   afterNextRender,
@@ -79,7 +78,6 @@ type DomainFormModel = {
   ],
   templateUrl: './domain.html',
   styleUrls: ['./domain.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipDomainPage {
   private readonly listLimit = 5000;

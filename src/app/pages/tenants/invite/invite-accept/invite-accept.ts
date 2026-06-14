@@ -1,4 +1,4 @@
-import { afterNextRender, Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { afterNextRender, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormField, form, minLength, required } from '@angular/forms/signals';
 import { TenantsService } from '../../tenants.service';
@@ -33,7 +33,6 @@ import { MatNativeDateModule } from '@angular/material/core';
   ],
   templateUrl: './invite-accept.html',
   styleUrls: ['./invite-accept.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InviteAcceptPage {
   private route = inject(ActivatedRoute);

@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, email, form as createForm, required } from '@angular/forms/signals';
@@ -96,7 +95,6 @@ type SmtpEventTypeResponse = {
   ],
   templateUrl: './routes.html',
   styleUrls: ['./routes.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingSmtpRoutesPage {
   private readonly api = inject(ApiService);

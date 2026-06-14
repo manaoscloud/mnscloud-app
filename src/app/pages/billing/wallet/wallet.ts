@@ -10,7 +10,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, email, form as createForm, min, required } from '@angular/forms/signals';
@@ -85,7 +84,6 @@ export const BILLING_WALLET_IMPORTS = [
   imports: BILLING_WALLET_IMPORTS,
   templateUrl: './wallet.html',
   styleUrls: ['./wallet.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BillingWalletPage {
   private readonly billing = inject(BillingService);

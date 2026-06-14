@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -73,7 +72,6 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
   ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipSoftswitchDidPage {
   private readonly listLimit = 5000;
@@ -195,12 +193,10 @@ export class VoipSoftswitchDidPage {
           return '';
       }
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   onSearchChange(value: string) {

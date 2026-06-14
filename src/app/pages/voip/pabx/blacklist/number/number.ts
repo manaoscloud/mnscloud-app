@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -80,7 +79,6 @@ const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
   ],
   templateUrl: './number.html',
   styleUrls: ['./number.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxBlacklistNumberPage {
   private readonly api = inject(VoipBlacklistUiService);

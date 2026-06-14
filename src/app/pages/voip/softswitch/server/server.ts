@@ -1,5 +1,4 @@
-import {
-  DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   Component,
   TemplateRef,
@@ -7,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -77,7 +75,6 @@ type ServerPayload = {
     DatePipe,
   ],
   templateUrl: './server.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./server.scss'],
 })
 export class VoipSoftswitchServerPage {
@@ -174,7 +171,6 @@ export class VoipSoftswitchServerPage {
     if (sort) this.dataSource.sort = sort;
     const paginator = this.paginator();
     if (paginator) this.dataSource.paginator = paginator;
-  
   });
 
   get selectedCount() {

@@ -6,18 +6,12 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
 
-import {
-  FormField,
-  form as createForm,
-  minLength,
-  required,
-} from '@angular/forms/signals';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -86,7 +80,6 @@ type CustomerOption = {
   ],
   templateUrl: './softswitch.html',
   styleUrls: ['./softswitch.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipSoftswitchPage {
   private readonly listLimit = 5000;
@@ -241,12 +234,10 @@ export class VoipSoftswitchPage {
     };
 
     void this.fetchLookups();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeAccountDialog();
-  
   });
 
   onSearchChange(value: string) {

@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -86,7 +85,6 @@ type IspNasItem = {
   ],
   templateUrl: './nas.html',
   styleUrls: ['./nas.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspNasPage {
   private readonly api = inject(ApiService);

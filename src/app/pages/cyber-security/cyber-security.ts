@@ -8,7 +8,6 @@ import {
   resource,
   signal,
   TemplateRef,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -195,7 +194,6 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
   ],
   templateUrl: './cyber-security.html',
   styleUrls: ['./cyber-security.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CyberSecurityPage {
   private readonly api = inject(ApiService);

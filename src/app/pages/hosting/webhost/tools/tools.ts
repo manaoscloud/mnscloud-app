@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
@@ -190,7 +189,6 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   ],
   templateUrl: './tools.html',
   styleUrls: ['./tools.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingWebhostToolsPage {
   private readonly api = inject(ApiService);

@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -76,7 +75,6 @@ type CyberSecurityNetworkPoliciesSnapshot = {
   ],
   templateUrl: './network-policies.html',
   styleUrls: ['./network-policies.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CyberSecurityNetworkPoliciesPage {
   private readonly policiesApi = inject(CyberSecurityNetworkPoliciesService);

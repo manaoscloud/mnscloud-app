@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -66,7 +65,6 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
   ],
   templateUrl: './list.html',
   styleUrls: ['./list.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxBlacklistListPage {
   private readonly api = inject(VoipBlacklistUiService);

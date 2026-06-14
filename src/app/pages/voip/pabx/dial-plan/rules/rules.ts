@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -81,7 +80,6 @@ const emptyDialPlanRuleFilters = (): DialPlanRuleFilters => ({
   ],
   templateUrl: './rules.html',
   styleUrls: ['./rules.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxDialPlanRulesPage {
   private readonly api = inject(VoipPabxDialPlanUiService);

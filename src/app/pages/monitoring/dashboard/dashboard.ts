@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
@@ -114,7 +113,6 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MonitoringDashboardPage {
   private readonly api = inject(ApiService);

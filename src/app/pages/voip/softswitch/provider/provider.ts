@@ -6,18 +6,12 @@ import {
   resource,
   signal,
   TemplateRef,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
 
-import {
-  FormField,
-  form as createForm,
-  minLength,
-  required,
-} from '@angular/forms/signals';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -76,7 +70,6 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
   ],
   templateUrl: './provider.html',
   styleUrls: ['./provider.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipSoftswitchProviderPage {
   private readonly listLimit = 5000;
@@ -191,12 +184,10 @@ export class VoipSoftswitchProviderPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeProviderDialog();
-  
   });
 
   onSearchChange(value: string) {
@@ -252,8 +243,7 @@ export class VoipSoftswitchProviderPage {
       return;
     }
 
-    const { name, engine, baseUrl, defaultCodecs, apiKey, apiSecret, status } =
-      this.formModel();
+    const { name, engine, baseUrl, defaultCodecs, apiKey, apiSecret, status } = this.formModel();
     const payload = {
       name: name.trim(),
       engine: this.normalizeEngine(engine),

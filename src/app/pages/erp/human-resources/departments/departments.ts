@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component } from '@angular/core';
 
 import {
   HUMAN_RESOURCES_CRUD_IMPORTS,
@@ -11,7 +11,6 @@ import {
   imports: HUMAN_RESOURCES_CRUD_IMPORTS,
   templateUrl: '../shared/simple-resource-page.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpHumanResourcesDepartmentsPage extends SimpleResourcePageBase {
   protected override readonly config = {

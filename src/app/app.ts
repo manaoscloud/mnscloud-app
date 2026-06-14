@@ -1,11 +1,4 @@
-import {
-  afterNextRender,
-  Component,
-  ChangeDetectionStrategy,
-  DestroyRef,
-  inject,
-  viewChild,
-} from '@angular/core';
+import { afterNextRender, Component, DestroyRef, inject, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   Router,
@@ -41,7 +34,6 @@ import { RouteLoader } from './shared/route-loader/route-loader';
       }
     `,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   private router = inject(Router);

@@ -6,7 +6,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -93,7 +92,6 @@ type IvrOptionFormModel = {
   ],
   templateUrl: './ivr.html',
   styleUrls: ['../queue/queue.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxIvrPage {
   private readonly api = inject(VoipPabxIvrService);
@@ -197,12 +195,10 @@ export class VoipPabxIvrPage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.itemsResource.reload();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   refreshList() {

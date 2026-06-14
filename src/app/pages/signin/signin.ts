@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -55,7 +54,6 @@ type SigninPolicy = {
   ],
   templateUrl: './signin.html',
   styleUrls: ['./signin.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Signin {
   private readonly api = inject(ApiService);

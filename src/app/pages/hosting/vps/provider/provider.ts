@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
@@ -70,7 +69,6 @@ import type {
   ],
   templateUrl: './provider.html',
   styleUrls: ['./provider.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingVpsProviderPage {
   private readonly api = inject(ApiService);

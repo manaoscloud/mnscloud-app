@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -86,7 +85,6 @@ type IspOltItem = {
   ],
   templateUrl: './olt.html',
   styleUrls: ['./olt.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspOltPage {
   private readonly api = inject(ApiService);

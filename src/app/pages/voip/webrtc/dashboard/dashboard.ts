@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -79,7 +78,6 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipWebRtcDashboardPage {
   private readonly api = inject(VoipWebRtcDashboardService);

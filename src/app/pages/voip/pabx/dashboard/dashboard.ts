@@ -7,7 +7,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -99,7 +98,6 @@ const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipPabxDashboardPage {
   private readonly api = inject(VoipPabxDashboardService);

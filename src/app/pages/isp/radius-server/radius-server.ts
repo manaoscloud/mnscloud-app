@@ -8,7 +8,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -74,7 +73,6 @@ type IspRadiusServerItem = {
   ],
   templateUrl: './radius-server.html',
   styleUrls: ['./radius-server.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IspRadiusServerPage {
   private readonly api = inject(ApiService);

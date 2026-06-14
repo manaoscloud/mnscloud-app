@@ -8,7 +8,6 @@ import {
   TemplateRef,
   inject,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -86,7 +85,6 @@ type PostalCodeLookupItem = {
     PhoneInputComponent,
   ],
   templateUrl: './carrier.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./carrier.scss'],
 })
 export class ErpCarrierPage {

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,7 +21,6 @@ export type VoipPabxCdrRecordingDialogData = {
   standalone: true,
   imports: [MatButtonModule, MatDialogModule, MatIconModule],
   templateUrl: './recording-dialog.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./recording-dialog.scss'],
 })
 export class VoipPabxCdrRecordingDialogComponent {

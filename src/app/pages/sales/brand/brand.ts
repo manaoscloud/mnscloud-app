@@ -7,7 +7,6 @@ import {
   TemplateRef,
   inject,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 
@@ -65,7 +64,6 @@ type BrandFilters = {
   ],
   templateUrl: './brand.html',
   styleUrls: ['./brand.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SaleBrandPage {
   private readonly api = inject(ApiService);

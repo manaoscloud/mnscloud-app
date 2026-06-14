@@ -5,7 +5,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -87,7 +86,6 @@ type DidFormModel = {
   ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoipDidPage {
   private readonly listLimit = 5000;
@@ -197,13 +195,11 @@ export class VoipDidPage {
     };
 
     void this.refreshList();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDidDialog();
     this.closeAvailableDidDialog();
-  
   });
 
   onSearchChange(value: string) {

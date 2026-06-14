@@ -9,7 +9,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
@@ -163,7 +162,6 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   ],
   templateUrl: './agents.html',
   styleUrls: ['./agents.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MonitoringAgentsPage {
   private readonly api = inject(ApiService);

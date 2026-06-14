@@ -5,7 +5,6 @@ import {
   inject,
   resource,
   signal,
-  ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -129,7 +128,6 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   ],
   templateUrl: './product.html',
   styleUrls: ['./product.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SaleProductPage {
   private readonly api = inject(ApiService);

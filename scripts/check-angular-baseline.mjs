@@ -23,15 +23,36 @@ const hardChecks = [
   ['legacy structural directive', ['.html'], /\*ngIf|\*ngFor|\*ngSwitch/],
   ['decorator input/output/query', ['.ts'], /@Input\(|@Output\(|@ViewChild\b|@ViewChildren\b/],
   ['manual change detection', ['.ts'], /ChangeDetectorRef|\bdetectChanges\s*\(/],
-  ['old animation package', ['.ts', '.json'], /@angular\/animations|provideAnimations|animations:\s*\[/],
-  ['legacy translation layer', ['.ts', '.html', '.json'], /ngx-translate|TranslateService|TranslateModule|\|\s*t\b/],
-  ['constructor dependency injection', ['.ts'], /constructor\s*\([^)]*(private|public|protected|readonly)\s+/s],
+  ['explicit OnPush change detection', ['.ts'], /ChangeDetectionStrategy\.OnPush/],
+  [
+    'old animation package',
+    ['.ts', '.json'],
+    /@angular\/animations|provideAnimations|animations:\s*\[/,
+  ],
+  [
+    'legacy translation layer',
+    ['.ts', '.html', '.json'],
+    /ngx-translate|TranslateService|TranslateModule|\|\s*t\b/,
+  ],
+  [
+    'constructor dependency injection',
+    ['.ts'],
+    /constructor\s*\([^)]*(private|public|protected|readonly)\s+/s,
+  ],
   ['RouterTestingModule residue', ['.ts'], /RouterTestingModule/],
 ];
 
 const migrationChecks = [
-  ['component lifecycle hook', ['.ts'], /\bimplements\s+(?:OnInit|AfterViewInit|OnDestroy)\b|\bngOnInit\s*\(|\bngAfterViewInit\s*\(|\bngOnDestroy\s*\(/],
-  ['Reactive Forms usage', ['.ts'], /ReactiveFormsModule|FormBuilder|FormGroup|FormControl|FormArray|Validators/],
+  [
+    'component lifecycle hook',
+    ['.ts'],
+    /\bimplements\s+(?:OnInit|AfterViewInit|OnDestroy)\b|\bngOnInit\s*\(|\bngAfterViewInit\s*\(|\bngOnDestroy\s*\(/,
+  ],
+  [
+    'Reactive Forms usage',
+    ['.ts'],
+    /ReactiveFormsModule|FormBuilder|FormGroup|FormControl|FormArray|Validators/,
+  ],
   ['manual list loader', ['.ts'], /\bloadItems\s*\(|\bload[A-Z][A-Za-z0-9]*\s*\(\)\s*\{/],
 ];
 
@@ -69,9 +90,9 @@ function printFindings(title, findings) {
   }
 }
 
-const files = roots.flatMap(walk).filter((file) =>
-  ['.ts', '.html', '.json'].includes(extname(file)),
-);
+const files = roots
+  .flatMap(walk)
+  .filter((file) => ['.ts', '.html', '.json'].includes(extname(file)));
 const hardFindings = scan(files, hardChecks);
 const migrationFindings = scan(files, migrationChecks);
 

@@ -1,12 +1,4 @@
-import {
-  afterNextRender,
-  Component,
-  effect,
-  resource,
-  ChangeDetectionStrategy,
-  viewChild,
-} from '@angular/core';
-
+import { afterNextRender, Component, effect, resource, viewChild } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,7 +36,6 @@ type Opportunity = {
     MatProgressSpinnerModule,
   ],
   templateUrl: './opportunities.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./opportunities.scss'],
 })
 export class CrmOpportunitiesPage {
