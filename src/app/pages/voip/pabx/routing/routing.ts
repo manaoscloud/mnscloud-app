@@ -14,7 +14,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -50,14 +50,50 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
+type RouteTargetType = 'extension' | 'external' | 'group' | 'queue' | 'ivr';
+type RoutingFormModel = {
+  pabxUUID: string;
+  name: string;
+  number: string;
+  routeType: RouteTargetType;
+  routeTargetUUID: string;
+  routeTargetValue: string;
+  context: string;
+  description: string;
+  strategy: string;
+  ringStrategy: string;
+  timeoutSeconds: number;
+  retrySeconds: number;
+  maxWaitSeconds: number;
+  mediaFileUUID: string;
+  greetingText: string;
+  invalidRetries: number;
+  callerId: string;
+  dialPrefix: string;
+  enabled: boolean;
+};
+type MemberFormModel = {
+  extensionUUID: string;
+  priority: number;
+  penalty: number;
+  delaySeconds: number;
+  enabled: boolean;
+};
+type OptionFormModel = {
+  digit: string;
+  routeType: RouteTargetType;
+  routeTargetUUID: string;
+  routeTargetValue: string;
+  description: string;
+  enabled: boolean;
+};
 
 @Component({
   selector: 'app-voip-pabx-routing',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
@@ -88,7 +124,6 @@ export class VoipPabxRoutingPage {
   private readonly extensionApi = inject(VoipPabxExtensionService);
   private readonly mediaFileApi = inject(VoipPabxMediaFilesService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -121,7 +156,7 @@ export class VoipPabxRoutingPage {
     this.filterOptions(this.targetOptions(), this.targetSearch()),
   );
   readonly filteredMediaFileOptions = computed(() => {
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const pabxUUID = this.formModel().pabxUUID;
     return this.filterOptions(
       this.mediaFileOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
       this.mediaFileSearch(),
@@ -143,45 +178,22 @@ export class VoipPabxRoutingPage {
     return ['select', 'name', 'pabx', 'engine', 'status', 'actions'];
   });
 
-  searchInput = '';
-  search = '';
+  readonly searchInput = signal('');
+  readonly search = signal('');
   readonly selectedRoutingUUIDs = new Set<string>();
 
-  readonly form = this.fb.group({
-    pabxUUID: ['', Validators.required],
-    name: [''],
-    number: [''],
-    routeType: ['extension'],
-    routeTargetUUID: [''],
-    routeTargetValue: [''],
-    context: ['default'],
-    description: [''],
-    strategy: ['ring_all'],
-    ringStrategy: ['simultaneous'],
-    timeoutSeconds: [30],
-    retrySeconds: [5],
-    maxWaitSeconds: [300],
-    mediaFileUUID: [''],
-    greetingText: [''],
-    invalidRetries: [3],
-    callerId: [''],
-    dialPrefix: [''],
-    enabled: [true],
+  readonly formModel = signal<RoutingFormModel>(this.emptyRoutingFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.pabxUUID);
   });
-  readonly memberForm = this.fb.group({
-    extensionUUID: ['', Validators.required],
-    priority: [0],
-    penalty: [0],
-    delaySeconds: [0],
-    enabled: [true],
+  readonly memberFormModel = signal<MemberFormModel>(this.emptyMemberFormModel());
+  readonly memberForm = createForm(this.memberFormModel, (schema) => {
+    required(schema.extensionUUID);
   });
-  readonly optionForm = this.fb.group({
-    digit: ['', Validators.required],
-    routeType: ['extension', Validators.required],
-    routeTargetUUID: [''],
-    routeTargetValue: [''],
-    description: [''],
-    enabled: [true],
+  readonly optionFormModel = signal<OptionFormModel>(this.emptyOptionFormModel());
+  readonly optionForm = createForm(this.optionFormModel, (schema) => {
+    required(schema.digit);
+    required(schema.routeType);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -237,8 +249,8 @@ export class VoipPabxRoutingPage {
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
-    this.search = nextSearch;
+    const nextSearch = this.searchInput().trim();
+    this.search.set(nextSearch);
     if (nextSearch === this.appliedSearch()) {
       this.itemsResource.reload();
     } else {
@@ -247,8 +259,8 @@ export class VoipPabxRoutingPage {
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
     } else {
@@ -264,7 +276,7 @@ export class VoipPabxRoutingPage {
   startEdit(row: any) {
     this.editing.set(row);
     const resource = this.resource();
-    this.form.patchValue({
+    this.formModel.set({
       pabxUUID: row.VoipPabxAccountVpaUUID ?? '',
       name: row.VpxName ?? row.VpgName ?? row.VpqName ?? row.VpiName ?? '',
       number: row.VpxNumber ?? '',
@@ -299,10 +311,7 @@ export class VoipPabxRoutingPage {
 
   async save(keepOpen = false) {
     if (this.saving()) return;
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (!this.form().valid()) return;
     this.saving.set(true);
     try {
       const payload = this.payload();
@@ -434,7 +443,7 @@ export class VoipPabxRoutingPage {
       } else {
         this.snack.success(`${deleted.size} selected record(s) deleted successfully.`);
       }
-      this.dataSource.filter = this.search.trim().toLowerCase();
+      this.dataSource.filter = this.search().trim().toLowerCase();
     } catch (err: any) {
       this.snack.error(this.messageFromError(err));
     } finally {
@@ -443,15 +452,15 @@ export class VoipPabxRoutingPage {
   }
 
   async onRouteTypeChange() {
-    this.form.controls.routeTargetUUID.setValue('');
+    this.formModel.update((current) => ({ ...current, routeTargetUUID: '' }));
     this.targetSearch.set('');
     await this.loadTargets();
   }
 
   async onPabxChange() {
-    this.form.controls.routeTargetUUID.setValue('');
-    this.memberForm.controls.extensionUUID.setValue('');
-    this.optionForm.controls.routeTargetUUID.setValue('');
+    this.formModel.update((current) => ({ ...current, routeTargetUUID: '' }));
+    this.memberFormModel.update((current) => ({ ...current, extensionUUID: '' }));
+    this.optionFormModel.update((current) => ({ ...current, routeTargetUUID: '' }));
     this.targetSearch.set('');
     this.memberExtensionSearch.set('');
     this.optionTargetSearch.set('');
@@ -482,13 +491,13 @@ export class VoipPabxRoutingPage {
   }
 
   async onOptionRouteTypeChange() {
-    this.optionForm.controls.routeTargetUUID.setValue('');
+    this.optionFormModel.update((current) => ({ ...current, routeTargetUUID: '' }));
     this.optionTargetSearch.set('');
     await this.loadOptionTargets();
   }
 
   filteredMemberExtensionOptions() {
-    const selectedPabxUUID = this.form.controls.pabxUUID.value;
+    const selectedPabxUUID = this.formModel().pabxUUID;
     const linkedExtensions = new Set(
       this.memberRows()
         .map((row) => row.VoipPabxExtensionVpeUUID)
@@ -528,7 +537,7 @@ export class VoipPabxRoutingPage {
   }
 
   private payload() {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const base: Record<string, unknown> = {
       pabxUUID: value.pabxUUID,
       enabled: value.enabled,
@@ -616,8 +625,8 @@ export class VoipPabxRoutingPage {
   }
 
   private async loadTargets() {
-    const routeType = this.form.controls.routeType.value;
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const routeType = this.formModel().routeType;
+    const pabxUUID = this.formModel().pabxUUID;
     if (routeType === 'extension') {
       this.targetOptions.set(
         this.extensionOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
@@ -662,8 +671,8 @@ export class VoipPabxRoutingPage {
       this.optionTargetOptions.set([]);
       return;
     }
-    const routeType = this.optionForm.controls.routeType.value;
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const routeType = this.optionFormModel().routeType;
+    const pabxUUID = this.formModel().pabxUUID;
     if (routeType === 'extension') {
       this.optionTargetOptions.set(
         this.extensionOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
@@ -718,10 +727,7 @@ export class VoipPabxRoutingPage {
 
   async addMember() {
     if (!this.isMemberResource() || this.memberSaving()) return;
-    if (this.memberForm.invalid) {
-      this.memberForm.markAllAsTouched();
-      return;
-    }
+    if (!this.memberForm().valid()) return;
     const resource = this.resource() as MemberResource;
     const payload = this.memberPayload();
 
@@ -816,10 +822,7 @@ export class VoipPabxRoutingPage {
 
   async addIvrOption() {
     if (this.resource() !== 'ivr' || this.optionSaving()) return;
-    if (this.optionForm.invalid) {
-      this.optionForm.markAllAsTouched();
-      return;
-    }
+    if (!this.optionForm().valid()) return;
     const payload = this.ivrOptionPayload();
     const digit = String(payload.digit ?? '').trim();
     const duplicateDigit = this.ivrOptionRows().some(
@@ -900,45 +903,19 @@ export class VoipPabxRoutingPage {
     this.memberRows.set([]);
     this.ivrOptionRows.set([]);
     this.optionTargetOptions.set([]);
-    this.form.reset({
-      pabxUUID: '',
-      name: '',
-      number: '',
-      routeType: 'extension',
-      routeTargetUUID: '',
-      routeTargetValue: '',
-      context: 'default',
-      description: '',
-      strategy: 'ring_all',
-      ringStrategy: 'simultaneous',
-      timeoutSeconds: 30,
-      retrySeconds: 5,
-      maxWaitSeconds: 300,
-      mediaFileUUID: '',
-      greetingText: '',
-      invalidRetries: 3,
-      callerId: '',
-      dialPrefix: '',
-      enabled: true,
-    });
+    this.formModel.set(this.emptyRoutingFormModel());
     this.resetMemberForm();
     this.resetOptionForm();
   }
 
   private resetMemberForm() {
     this.memberExtensionSearch.set('');
-    this.memberForm.reset({
-      extensionUUID: '',
-      priority: 0,
-      penalty: 0,
-      delaySeconds: 0,
-      enabled: true,
-    });
+    this.memberFormModel.set(this.emptyMemberFormModel());
   }
 
   private memberPayload() {
     const resource = this.resource() as MemberResource;
-    const value = this.memberForm.getRawValue();
+    const value = this.memberFormModel();
     const payload: Record<string, unknown> = {
       extensionUUID: value.extensionUUID,
       priority: value.priority,
@@ -992,18 +969,11 @@ export class VoipPabxRoutingPage {
 
   private resetOptionForm() {
     this.optionTargetSearch.set('');
-    this.optionForm.reset({
-      digit: '',
-      routeType: 'extension',
-      routeTargetUUID: '',
-      routeTargetValue: '',
-      description: '',
-      enabled: true,
-    });
+    this.optionFormModel.set(this.emptyOptionFormModel());
   }
 
   private ivrOptionPayload() {
-    const value = this.optionForm.getRawValue();
+    const value = this.optionFormModel();
     return {
       digit: value.digit,
       routeType: value.routeType,
@@ -1107,6 +1077,51 @@ export class VoipPabxRoutingPage {
 
   private isMemberResource() {
     return this.resource() === 'group' || this.resource() === 'queue';
+  }
+
+  private emptyRoutingFormModel(): RoutingFormModel {
+    return {
+      pabxUUID: '',
+      name: '',
+      number: '',
+      routeType: 'extension',
+      routeTargetUUID: '',
+      routeTargetValue: '',
+      context: 'default',
+      description: '',
+      strategy: 'ring_all',
+      ringStrategy: 'simultaneous',
+      timeoutSeconds: 30,
+      retrySeconds: 5,
+      maxWaitSeconds: 300,
+      mediaFileUUID: '',
+      greetingText: '',
+      invalidRetries: 3,
+      callerId: '',
+      dialPrefix: '',
+      enabled: true,
+    };
+  }
+
+  private emptyMemberFormModel(): MemberFormModel {
+    return {
+      extensionUUID: '',
+      priority: 0,
+      penalty: 0,
+      delaySeconds: 0,
+      enabled: true,
+    };
+  }
+
+  private emptyOptionFormModel(): OptionFormModel {
+    return {
+      digit: '',
+      routeType: 'extension',
+      routeTargetUUID: '',
+      routeTargetValue: '',
+      description: '',
+      enabled: true,
+    };
   }
 
   private memberUuidOf(row: any) {

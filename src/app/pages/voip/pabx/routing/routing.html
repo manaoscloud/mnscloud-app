@@ -17,7 +17,12 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-4">
         <mat-label>Search</mat-label>
-        <input matInput [(ngModel)]="searchInput" placeholder="Name, number, route, status..." />
+        <input
+          matInput
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+          placeholder="Name, number, route, status..."
+        />
       </mat-form-field>
       <div class="filter-actions">
         @if (selectedCount) {
@@ -173,14 +178,14 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <mat-tab-group class="form-tabs" [formGroup]="form">
+      <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="voipPabxRoutingForm" class="form-grid" [formGroup]="form" (ngSubmit)="save()">
+            <form id="voipPabxRoutingForm" class="form-grid" (ngSubmit)="save()">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>PABX</mat-label>
                 <mat-select
-                  formControlName="pabxUUID"
+                  [formField]="form.pabxUUID"
                   (openedChange)="onPabxOpened($event)"
                   (selectionChange)="onPabxChange()"
                 >
@@ -209,27 +214,27 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
+                <input matInput [formField]="form.name" />
               </mat-form-field>
 
               @if (resource() === 'external') {
                 <mat-form-field appearance="outline">
                   <mat-label>Number</mat-label>
-                  <input matInput formControlName="number" />
+                  <input matInput [formField]="form.number" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Caller ID</mat-label>
-                  <input matInput formControlName="callerId" />
+                  <input matInput [formField]="form.callerId" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Dial prefix</mat-label>
-                  <input matInput formControlName="dialPrefix" />
+                  <input matInput [formField]="form.dialPrefix" />
                 </mat-form-field>
               }
               @if (resource() === 'group') {
                 <mat-form-field appearance="outline">
                   <mat-label>Ring strategy</mat-label>
-                  <mat-select formControlName="ringStrategy">
+                  <mat-select [formField]="form.ringStrategy">
                     <mat-option value="simultaneous">Simultaneous</mat-option>
                     <mat-option value="sequence">Sequence</mat-option>
                   </mat-select>
@@ -238,7 +243,7 @@
               @if (resource() === 'queue') {
                 <mat-form-field appearance="outline">
                   <mat-label>Strategy</mat-label>
-                  <mat-select formControlName="strategy">
+                  <mat-select [formField]="form.strategy">
                     <mat-option value="ring_all">Ring all</mat-option>
                     <mat-option value="round_robin">Round robin</mat-option>
                     <mat-option value="least_recent">Least recent</mat-option>
@@ -248,7 +253,7 @@
                 <mat-form-field appearance="outline">
                   <mat-label>Hold media file</mat-label>
                   <mat-select
-                    formControlName="mediaFileUUID"
+                    [formField]="form.mediaFileUUID"
                     (openedChange)="onMediaFileOpened($event)"
                   >
                     <mat-option [value]="''">None</mat-option>
@@ -279,12 +284,12 @@
               @if (resource() === 'ivr') {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Greeting text</mat-label>
-                  <input matInput formControlName="greetingText" />
+                  <input matInput [formField]="form.greetingText" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Greeting media file</mat-label>
                   <mat-select
-                    formControlName="mediaFileUUID"
+                    [formField]="form.mediaFileUUID"
                     (openedChange)="onMediaFileOpened($event)"
                   >
                     <mat-option [value]="''">None</mat-option>
@@ -313,17 +318,17 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Invalid retries</mat-label>
-                  <input matInput type="number" formControlName="invalidRetries" />
+                  <input matInput type="number" [formField]="form.invalidRetries" />
                 </mat-form-field>
               }
               <mat-form-field appearance="outline">
                 <mat-label>Timeout seconds</mat-label>
-                <input matInput type="number" formControlName="timeoutSeconds" />
+                <input matInput type="number" [formField]="form.timeoutSeconds" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="enabled">
+                <mat-select [formField]="form.enabled">
                   <mat-option [value]="true">Active</mat-option>
                   <mat-option [value]="false">Inactive</mat-option>
                 </mat-select>
@@ -335,11 +340,11 @@
         @if (resource() === 'group' || resource() === 'queue') {
           <mat-tab label="Members">
             <div class="tab-content members-tab">
-              <form class="member-form-grid" [formGroup]="memberForm" (ngSubmit)="addMember()">
+              <form class="member-form-grid" (ngSubmit)="addMember()">
                 <mat-form-field appearance="outline" class="member-extension-field">
                   <mat-label>Extension</mat-label>
                   <mat-select
-                    formControlName="extensionUUID"
+                    [formField]="memberForm.extensionUUID"
                     (openedChange)="onMemberExtensionOpened($event)"
                   >
                     <mat-option
@@ -368,24 +373,24 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Priority</mat-label>
-                  <input matInput type="number" formControlName="priority" />
+                  <input matInput type="number" [formField]="memberForm.priority" />
                 </mat-form-field>
 
                 @if (resource() === 'queue') {
                   <mat-form-field appearance="outline">
                     <mat-label>Penalty</mat-label>
-                    <input matInput type="number" formControlName="penalty" />
+                    <input matInput type="number" [formField]="memberForm.penalty" />
                   </mat-form-field>
                 } @else {
                   <mat-form-field appearance="outline">
                     <mat-label>Delay seconds</mat-label>
-                    <input matInput type="number" formControlName="delaySeconds" />
+                    <input matInput type="number" [formField]="memberForm.delaySeconds" />
                   </mat-form-field>
                 }
 
                 <mat-form-field appearance="outline">
                   <mat-label>Status</mat-label>
-                  <mat-select formControlName="enabled">
+                  <mat-select [formField]="memberForm.enabled">
                     <mat-option [value]="true">Active</mat-option>
                     <mat-option [value]="false">Inactive</mat-option>
                   </mat-select>
@@ -396,7 +401,7 @@
                     mat-stroked-button
                     color="primary"
                     type="submit"
-                    [disabled]="memberForm.invalid || memberSaving()"
+                    [disabled]="!memberForm().valid() || memberSaving()"
                   >
                     <mat-icon>add</mat-icon>
                     Add
@@ -477,18 +482,17 @@
             <div class="tab-content members-tab">
               <form
                 class="ivr-option-form-grid"
-                [formGroup]="optionForm"
                 (ngSubmit)="addIvrOption()"
               >
                 <mat-form-field appearance="outline">
                   <mat-label>Digit</mat-label>
-                  <input matInput formControlName="digit" maxlength="8" />
+                  <input matInput [formField]="optionForm.digit" maxlength="8" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Route type</mat-label>
                   <mat-select
-                    formControlName="routeType"
+                    [formField]="optionForm.routeType"
                     (selectionChange)="onOptionRouteTypeChange()"
                   >
                     <mat-option value="extension">Extension</mat-option>
@@ -502,7 +506,7 @@
                 <mat-form-field appearance="outline" class="option-target-field">
                   <mat-label>Destination</mat-label>
                   <mat-select
-                    formControlName="routeTargetUUID"
+                    [formField]="optionForm.routeTargetUUID"
                     (openedChange)="onOptionTargetOpened($event)"
                   >
                     <mat-option
@@ -531,12 +535,12 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Target value</mat-label>
-                  <input matInput formControlName="routeTargetValue" />
+                  <input matInput [formField]="optionForm.routeTargetValue" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Status</mat-label>
-                  <mat-select formControlName="enabled">
+                  <mat-select [formField]="optionForm.enabled">
                     <mat-option [value]="true">Active</mat-option>
                     <mat-option [value]="false">Inactive</mat-option>
                   </mat-select>
@@ -544,7 +548,7 @@
 
                 <mat-form-field appearance="outline" class="option-description-field">
                   <mat-label>Description</mat-label>
-                  <input matInput formControlName="description" />
+                  <input matInput [formField]="optionForm.description" />
                 </mat-form-field>
 
                 <div class="member-form-actions">
@@ -552,7 +556,7 @@
                     mat-stroked-button
                     color="primary"
                     type="submit"
-                    [disabled]="optionForm.invalid || optionSaving()"
+                    [disabled]="!optionForm().valid() || optionSaving()"
                   >
                     <mat-icon>add</mat-icon>
                     Add
@@ -628,7 +632,7 @@
           color="primary"
           type="submit"
           form="voipPabxRoutingForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -640,7 +644,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -658,7 +662,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNew()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
