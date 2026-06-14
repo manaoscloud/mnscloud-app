@@ -1,3 +1,5 @@
+import { Observable, Subscription } from 'rxjs';
+
 export type FileUploadPhase =
   | 'preparing'
   | 'uploading'
@@ -24,6 +26,19 @@ export interface FileUploadViewModel {
   progressValue: number;
   progressMode: 'determinate' | 'indeterminate';
   busy: boolean;
+}
+
+export interface FileUploadExecution {
+  done: Promise<void>;
+  cancel(): void;
+}
+
+export interface FileUploadExecutionOptions<T = unknown> {
+  fileSize: number | null;
+  source: Observable<FileUploadProgress<T>>;
+  setProgress: (progress: FileUploadProgress<T>) => void;
+  currentProgress: () => FileUploadProgress<T> | null;
+  errorMessage: (error: unknown) => string;
 }
 
 export class UploadCancelledError extends Error {
@@ -177,4 +192,64 @@ function detailForProgress<T = unknown>(
       .join(' · ');
   }
   return 'Opening secure upload stream.';
+}
+
+export function runFileUploadExecution<T = unknown>({
+  fileSize,
+  source,
+  setProgress,
+  currentProgress,
+  errorMessage,
+}: FileUploadExecutionOptions<T>): FileUploadExecution {
+  let settled = false;
+  let subscription: Subscription | null = null;
+  let rejectDone: ((error: Error) => void) | null = null;
+
+  const cleanup = () => {
+    subscription = null;
+    rejectDone = null;
+  };
+
+  const done = new Promise<void>((resolve, reject) => {
+    rejectDone = reject;
+    setProgress(createInitialFileUploadProgress<T>(fileSize));
+
+    subscription = source.subscribe({
+      next: (progress) => {
+        setProgress(progress);
+        if (progress.phase !== 'completed' || settled) return;
+        settled = true;
+        cleanup();
+        resolve();
+      },
+      error: (error: unknown) => {
+        if (settled) return;
+        settled = true;
+        setProgress(
+          createFailedFileUploadProgress<T>(currentProgress(), errorMessage(error), fileSize),
+        );
+        cleanup();
+        reject(error instanceof Error ? error : new Error(errorMessage(error)));
+      },
+      complete: () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve();
+      },
+    });
+  });
+
+  return {
+    done,
+    cancel: () => {
+      if (settled) return;
+      settled = true;
+      const reject = rejectDone;
+      subscription?.unsubscribe();
+      setProgress(createCancelledFileUploadProgress<T>(currentProgress()));
+      cleanup();
+      reject?.(new UploadCancelledError());
+    },
+  };
 }

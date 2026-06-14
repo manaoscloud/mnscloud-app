@@ -27,7 +27,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -38,12 +38,13 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import {
   buildFileUploadViewModel,
-  createCancelledFileUploadProgress,
-  createFailedFileUploadProgress,
-  createInitialFileUploadProgress,
+  runFileUploadExecution,
   UploadCancelledError,
 } from '../../../../shared/upload/file-upload-progress';
-import type { FileUploadProgress } from '../../../../shared/upload/file-upload-progress';
+import type {
+  FileUploadExecution,
+  FileUploadProgress,
+} from '../../../../shared/upload/file-upload-progress';
 import { VoipPabxCdrRecordingDialogComponent } from '../cdr/recording-dialog/recording-dialog';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxMediaFileItem, VoipPabxMediaFilesService } from './media-files.service';
@@ -167,8 +168,7 @@ export class VoipPabxMediaFilesPage {
   readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
-  private activeUploadSubscription: Subscription | null = null;
-  private activeUploadReject: ((error: Error) => void) | null = null;
+  private activeUpload: FileUploadExecution | null = null;
   private readonly itemsEffect = effect(() => {
     this.dataSource.data = this.itemsResource.value();
     this.reconcileSelection();
@@ -362,7 +362,7 @@ export class VoipPabxMediaFilesPage {
   }
 
   cancelForm() {
-    if (this.uploading() && this.activeUploadSubscription) {
+    if (this.uploading() && this.activeUpload) {
       this.cancelActiveUpload();
       return;
     }
@@ -551,62 +551,25 @@ export class VoipPabxMediaFilesPage {
   }
 
   private uploadFileWithProgress(uuid: string, file: File) {
-    return new Promise<void>((resolve, reject) => {
-      this.uploadProgress.set(createInitialFileUploadProgress(file.size || null));
+    const upload = runFileUploadExecution({
+      fileSize: file.size || null,
+      source: this.api.uploadWithProgress(uuid, file),
+      setProgress: (progress) => this.uploadProgress.set(progress),
+      currentProgress: () => this.uploadProgress(),
+      errorMessage: (error) => this.messageFromError(error, 'Failed to upload media file.'),
+    });
 
-      let settled = false;
-      const cleanup = () => {
-        this.activeUploadSubscription = null;
-        this.activeUploadReject = null;
-      };
-
-      this.activeUploadReject = (error: Error) => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        reject(error);
-      };
-
-      this.activeUploadSubscription = this.api.uploadWithProgress(uuid, file).subscribe({
-        next: (progress) => {
-          this.uploadProgress.set(progress);
-          if (progress.phase === 'completed' && !settled) {
-            settled = true;
-            cleanup();
-            resolve();
-          }
-        },
-        error: (error) => {
-          if (settled) return;
-          settled = true;
-          this.uploadProgress.set(
-            createFailedFileUploadProgress(
-              this.uploadProgress(),
-              this.messageFromError(error, 'Failed to upload media file.'),
-              file.size || null,
-            ),
-          );
-          cleanup();
-          reject(error);
-        },
-        complete: () => {
-          if (settled) return;
-          settled = true;
-          cleanup();
-          resolve();
-        },
-      });
+    this.activeUpload = upload;
+    return upload.done.finally(() => {
+      if (this.activeUpload === upload) this.activeUpload = null;
     });
   }
 
   private cancelActiveUpload() {
-    const reject = this.activeUploadReject;
-    this.activeUploadSubscription?.unsubscribe();
-    this.activeUploadSubscription = null;
-    this.activeUploadReject = null;
+    const upload = this.activeUpload;
+    this.activeUpload = null;
     this.uploading.set(false);
-    this.uploadProgress.set(createCancelledFileUploadProgress(this.uploadProgress()));
-    reject?.(new UploadCancelledError());
+    upload?.cancel();
   }
 
   private async confirmDelete(title: string, message: string, confirmLabel: string) {

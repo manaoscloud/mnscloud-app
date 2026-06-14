@@ -48,7 +48,7 @@ const hardCheckAllowedFiles = new Map([
     'direct observable subscription',
     new Set([
       'src/app/shared/dialog/dialog-events.util.ts',
-      'src/app/pages/voip/pabx/media-files/media-files.ts',
+      'src/app/shared/upload/file-upload-progress.ts',
     ]),
   ],
 ]);

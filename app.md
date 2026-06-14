@@ -78,8 +78,9 @@
   case, synchronize the adapter from the resource snapshot with a small explicit `effect()`.
 - Do not scatter long-lived `.subscribe()` calls inside pages/components. Router events, route data,
   and read models must be adapted with `toSignal()`, `resource()`, and `effect()`. Keep direct
-  subscriptions only in shared boundary helpers that intentionally adapt callback/event APIs, or in
-  cancellable upload-progress flows where the active subscription is part of the cancel contract.
+  subscriptions only in shared boundary helpers that intentionally adapt callback/event APIs. Pages
+  must not create local `.subscribe()` calls for uploads; use the shared upload execution helper so
+  cancellation remains centralized and testable.
 - Keep mutations (`POST`, `PUT`, `DELETE`, uploads, queue actions, provisioning actions) explicit
   through service methods. Do not hide business workflow side effects inside `resource()` loaders.
 - `httpResource` can be introduced for simple same-service GET resources after the endpoint typing is
@@ -338,8 +339,9 @@
 - Component contract:
   - keep `uploading`, `selectedFile`, and `uploadProgress` state
   - expose a computed view model with `buildFileUploadViewModel()`
-  - keep the active upload subscription cancellable
-  - unsubscribe on user cancellation and reject with `UploadCancelledError`
+  - create uploads with `runFileUploadExecution()` and keep only its `FileUploadExecution` handle
+  - call `FileUploadExecution.cancel()` on user cancellation; the helper unsubscribes and rejects
+    with `UploadCancelledError`
   - keep saved metadata when the upload is cancelled or fails, when the API workflow creates
     metadata before uploading the binary
 - The progress UI must include:
