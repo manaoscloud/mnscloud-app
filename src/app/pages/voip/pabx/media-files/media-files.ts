@@ -11,7 +11,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -53,6 +53,15 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 
 type StorageAccountOption = { value: string; label: string };
 type PabxOption = { value: string; label: string };
+type MediaFileFormModel = {
+  pabxUUID: string;
+  name: string;
+  storageMode: 'default' | 'filesystem' | 'storage';
+  storageAccountUUID: string;
+  deliveryMode: 'default' | 'online' | 'offline';
+  description: string;
+  enabled: number;
+};
 
 type MediaFileFilters = {
   search: string;
@@ -69,8 +78,7 @@ const emptyMediaFileFilters = (): MediaFileFilters => ({
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -98,7 +106,6 @@ export class VoipPabxMediaFilesPage {
   private readonly pabxApi = inject(VoipPabxService);
   private readonly genericApi = inject(ApiService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -150,14 +157,11 @@ export class VoipPabxMediaFilesPage {
 
   readonly storageAccountOptions = signal<StorageAccountOption[]>([]);
 
-  readonly form = this.fb.nonNullable.group({
-    pabxUUID: ['', Validators.required],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    storageMode: ['default' as 'default' | 'filesystem' | 'storage'],
-    storageAccountUUID: [''],
-    deliveryMode: ['default' as 'default' | 'online' | 'offline'],
-    description: [''],
-    enabled: [1],
+  readonly formModel = signal<MediaFileFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.pabxUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -246,7 +250,7 @@ export class VoipPabxMediaFilesPage {
     this.editing.set(null);
     this.selectedFile.set(null);
     this.uploadProgress.set(null);
-    this.form.reset({
+    this.formModel.set({
       pabxUUID: this.pabxOptions()[0]?.value ?? '',
       name: '',
       storageMode: 'default',
@@ -263,7 +267,7 @@ export class VoipPabxMediaFilesPage {
     this.editing.set(item);
     this.selectedFile.set(null);
     this.uploadProgress.set(null);
-    this.form.reset({
+    this.formModel.set({
       pabxUUID: item.pabxUUID ?? '',
       name: item.name,
       storageMode: item.storageMode ?? 'default',
@@ -283,7 +287,11 @@ export class VoipPabxMediaFilesPage {
 
   onStorageModeChange(value: 'default' | 'filesystem' | 'storage') {
     this.storageMode.set(value);
-    if (value !== 'storage') this.form.patchValue({ storageAccountUUID: '' });
+    this.formModel.update((current) => ({
+      ...current,
+      storageMode: value,
+      storageAccountUUID: value === 'storage' ? current.storageAccountUUID : '',
+    }));
   }
 
   clearPabxSearch(open: boolean) {
@@ -291,8 +299,8 @@ export class VoipPabxMediaFilesPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
-    const value = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const value = this.formModel();
     const payload = {
       pabxUUID: value.pabxUUID,
       name: value.name.trim(),
@@ -628,5 +636,17 @@ export class VoipPabxMediaFilesPage {
 
   private messageFromError(err: any, fallback: string) {
     return err?.error?.error || err?.message || fallback;
+  }
+
+  private emptyFormModel(): MediaFileFormModel {
+    return {
+      pabxUUID: '',
+      name: '',
+      storageMode: 'default',
+      storageAccountUUID: '',
+      deliveryMode: 'default',
+      description: '',
+      enabled: 1,
+    };
   }
 }

@@ -15,13 +15,13 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-2">
-        <mat-label>Search</mat-label>
-        <input matInput [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)" />
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Search</mat-label>
+        <input matInput [value]="searchInput()" (input)="searchInput.set($any($event.target).value)" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -177,18 +177,17 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>PABX</mat-label>
-              <mat-select formControlName="pabxUUID" (openedChange)="clearPabxSearch($event)">
+              <mat-select [formField]="form.pabxUUID" (openedChange)="clearPabxSearch($event)">
                 <mat-option class="select-search-option" disabled>
                   <input
                     matInput
                     class="select-search-field"
                     placeholder="Search PABX"
-                    [ngModel]="pabxSearch()"
-                    (ngModelChange)="pabxSearch.set($event)"
-                    [ngModelOptions]="{ standalone: true }"
+                    [value]="pabxSearch()"
+                    (input)="pabxSearch.set($any($event.target).value)"
                     (click)="$event.stopPropagation()"
                     (keydown)="$event.stopPropagation()"
                   />
@@ -200,19 +199,19 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
+              <mat-select [formField]="form.enabled">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Name</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput [formField]="form.name" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Storage</mat-label>
               <mat-select
-                formControlName="storageMode"
+                [formField]="form.storageMode"
                 (selectionChange)="onStorageModeChange($event.value)"
               >
                 <mat-option value="default">Default</mat-option>
@@ -222,7 +221,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Delivery</mat-label>
-              <mat-select formControlName="deliveryMode">
+              <mat-select [formField]="form.deliveryMode">
                 <mat-option value="default">Default</mat-option>
                 <mat-option value="online">Online</mat-option>
                 <mat-option value="offline">Offline</mat-option>
@@ -231,7 +230,7 @@
             @if (storageMode() === 'storage') {
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Storage account</mat-label>
-                <mat-select formControlName="storageAccountUUID">
+                <mat-select [formField]="form.storageAccountUUID">
                   <mat-option value="">Default storage account</mat-option>
                   @for (account of storageAccountOptions(); track account.value) {
                     <mat-option [value]="account.value">{{ account.label }}</mat-option>
@@ -242,10 +241,10 @@
           </form>
         </mat-tab>
         <mat-tab label="File">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Description</mat-label>
-              <textarea matInput formControlName="description" rows="4"></textarea>
+              <textarea matInput [formField]="form.description" rows="4"></textarea>
             </mat-form-field>
             <label class="file-field span-4">
               <span>Audio file</span>
@@ -303,7 +302,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving() || uploading()"
+          [disabled]="!form().valid() || saving() || uploading()"
         >
           <mat-icon>save</mat-icon>
           {{ saveActionLabel() }}
@@ -315,7 +314,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="form.invalid || saving() || uploading()"
+            [disabled]="!form().valid() || saving() || uploading()"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
