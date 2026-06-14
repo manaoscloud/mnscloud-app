@@ -17,7 +17,11 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-4">
         <mat-label>Search</mat-label>
-        <input matInput [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)" />
+        <input
+          matInput
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -160,14 +164,14 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <mat-tab-group class="form-tabs" [formGroup]="form">
+      <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="voipPabxQueueForm" class="form-grid" [formGroup]="form" (ngSubmit)="save()">
+            <form id="voipPabxQueueForm" class="form-grid" (ngSubmit)="save()">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>PABX</mat-label>
                 <mat-select
-                  formControlName="pabxUUID"
+                  [formField]="form.pabxUUID"
                   (openedChange)="onPabxOpened($event)"
                   (selectionChange)="onPabxChange()"
                 >
@@ -197,12 +201,12 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
+                <input matInput [formField]="form.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Strategy</mat-label>
-                <mat-select formControlName="strategy">
+                <mat-select [formField]="form.strategy">
                   <mat-option value="ring_all">Ring all</mat-option>
                   <mat-option value="round_robin">Round robin</mat-option>
                   <mat-option value="least_recent">Least recent</mat-option>
@@ -212,23 +216,23 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Timeout seconds</mat-label>
-                <input matInput type="number" formControlName="timeoutSeconds" />
+                <input matInput type="number" [formField]="form.timeoutSeconds" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Retry seconds</mat-label>
-                <input matInput type="number" formControlName="retrySeconds" />
+                <input matInput type="number" [formField]="form.retrySeconds" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Max wait seconds</mat-label>
-                <input matInput type="number" formControlName="maxWaitSeconds" />
+                <input matInput type="number" [formField]="form.maxWaitSeconds" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Hold media file</mat-label>
                 <mat-select
-                  formControlName="mediaFileUUID"
+                  [formField]="form.mediaFileUUID"
                   (openedChange)="onMediaFileOpened($event)"
                 >
                   <mat-option [value]="''">None</mat-option>
@@ -258,7 +262,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="enabled">
+                <mat-select [formField]="form.enabled">
                   <mat-option [value]="true">Active</mat-option>
                   <mat-option [value]="false">Inactive</mat-option>
                 </mat-select>
@@ -269,11 +273,11 @@
 
         <mat-tab label="Members">
           <div class="tab-content members-tab">
-            <form class="member-form-grid" [formGroup]="memberForm" (ngSubmit)="addMember()">
+            <form class="member-form-grid" (ngSubmit)="addMember()">
               <mat-form-field appearance="outline" class="member-extension-field">
                 <mat-label>Extension</mat-label>
                 <mat-select
-                  formControlName="extensionUUID"
+                  [formField]="memberForm.extensionUUID"
                   (openedChange)="onMemberExtensionOpened($event)"
                 >
                   <mat-option
@@ -302,17 +306,17 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Priority</mat-label>
-                <input matInput type="number" formControlName="priority" />
+                <input matInput type="number" [formField]="memberForm.priority" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Penalty</mat-label>
-                <input matInput type="number" formControlName="penalty" />
+                <input matInput type="number" [formField]="memberForm.penalty" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="enabled">
+                <mat-select [formField]="memberForm.enabled">
                   <mat-option [value]="true">Active</mat-option>
                   <mat-option [value]="false">Inactive</mat-option>
                 </mat-select>
@@ -323,7 +327,7 @@
                   mat-stroked-button
                   color="primary"
                   type="submit"
-                  [disabled]="memberForm.invalid || memberSaving()"
+                  [disabled]="!memberForm().valid() || memberSaving()"
                 >
                   <mat-icon>add</mat-icon>
                   Add
@@ -406,7 +410,7 @@
           color="primary"
           type="button"
           (click)="save()"
-          [disabled]="saving() || form.invalid"
+          [disabled]="saving() || !form().valid()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -418,7 +422,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="saving() || form.invalid"
+            [disabled]="saving() || !form().valid()"
             aria-label="More save actions"
           >
             <mat-icon>expand_more</mat-icon>

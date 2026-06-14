@@ -13,7 +13,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -46,6 +46,15 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 
 type RuntimeStatus = VoipPabxQueueAgentItem['VqaRuntimeStatus'];
 type RuntimeAction = 'login' | 'logout' | 'pause' | 'unpause';
+type QueueAgentFormModel = {
+  employeeUUID: string;
+  extensionUUID: string;
+  loginCode: string;
+  displayName: string;
+  runtimeStatus: RuntimeStatus;
+  pauseReason: string;
+  enabled: boolean;
+};
 
 type LookupOption = {
   uuid: string;
@@ -70,8 +79,7 @@ const emptyQueueAgentFilters = (): QueueAgentFilters => ({
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -100,7 +108,6 @@ export class VoipPabxQueueAgentPage {
   private readonly extensionApi = inject(VoipPabxExtensionService);
   private readonly genericApi = inject(ApiService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -137,14 +144,15 @@ export class VoipPabxQueueAgentPage {
     'actions',
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    employeeUUID: ['', Validators.required],
-    extensionUUID: ['', Validators.required],
-    loginCode: ['', [Validators.required, Validators.maxLength(32)]],
-    displayName: ['', Validators.maxLength(150)],
-    runtimeStatus: ['LOGGED_OUT' as RuntimeStatus, Validators.required],
-    pauseReason: ['', Validators.maxLength(120)],
-    enabled: [true],
+  readonly formModel = signal<QueueAgentFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.employeeUUID);
+    required(schema.extensionUUID);
+    required(schema.loginCode);
+    maxLength(schema.loginCode, 32);
+    maxLength(schema.displayName, 150);
+    required(schema.runtimeStatus);
+    maxLength(schema.pauseReason, 120);
   });
 
   readonly filteredEmployeeOptions = computed(() =>
@@ -298,7 +306,7 @@ export class VoipPabxQueueAgentPage {
 
   startEdit(item: VoipPabxQueueAgentItem) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       employeeUUID: item.ErpHrEmployeeEmpUUID,
       extensionUUID: item.VoipPabxExtensionVpeUUID,
       loginCode: item.VqaLoginCode,
@@ -311,9 +319,9 @@ export class VoipPabxQueueAgentPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload = {
       employeeUUID: value.employeeUUID,
       extensionUUID: value.extensionUUID,
@@ -547,7 +555,13 @@ export class VoipPabxQueueAgentPage {
   }
 
   private resetForm() {
-    this.form.reset({
+    this.formModel.set(this.emptyFormModel());
+    this.employeeSearch.set('');
+    this.extensionSearch.set('');
+  }
+
+  private emptyFormModel(): QueueAgentFormModel {
+    return {
       employeeUUID: '',
       extensionUUID: '',
       loginCode: '',
@@ -555,9 +569,7 @@ export class VoipPabxQueueAgentPage {
       runtimeStatus: 'LOGGED_OUT',
       pauseReason: '',
       enabled: true,
-    });
-    this.employeeSearch.set('');
-    this.extensionSearch.set('');
+    };
   }
 
   private openQueueAgentDialog() {

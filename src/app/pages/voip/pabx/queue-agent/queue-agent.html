@@ -20,8 +20,8 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [ngModel]="searchInput()"
-          (ngModelChange)="searchInput.set($event)"
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
           (keyup.enter)="applySearchFilters()"
           placeholder="Employee, extension, login code"
         />
@@ -30,8 +30,8 @@
       <mat-form-field appearance="outline">
         <mat-label>Runtime</mat-label>
         <mat-select
-          [ngModel]="runtimeFilter()"
-          (ngModelChange)="runtimeFilter.set($event); resetPaginator()"
+          [value]="runtimeFilter()"
+          (selectionChange)="runtimeFilter.set($event.value); resetPaginator()"
         >
           <mat-option value="">All</mat-option>
           <mat-option value="LOGGED_OUT">Logged out</mat-option>
@@ -42,7 +42,10 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+        <mat-select
+          [value]="statusFilter()"
+          (selectionChange)="statusFilter.set($event.value)"
+        >
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -248,11 +251,11 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Employee</mat-label>
               <mat-select
-                formControlName="employeeUUID"
+                [formField]="form.employeeUUID"
                 (openedChange)="onEmployeeSelectOpened($event)"
               >
                 <mat-option class="select-search-option" disabled>
@@ -260,9 +263,8 @@
                     class="select-search-field"
                     matInput
                     placeholder="Search employee"
-                    [ngModel]="employeeSearch()"
-                    [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="employeeSearch.set($event)"
+                    [value]="employeeSearch()"
+                    (input)="employeeSearch.set($any($event.target).value)"
                     (click)="$event.stopPropagation()"
                     (keydown)="$event.stopPropagation()"
                   />
@@ -278,7 +280,7 @@
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Extension</mat-label>
               <mat-select
-                formControlName="extensionUUID"
+                [formField]="form.extensionUUID"
                 (openedChange)="onExtensionSelectOpened($event)"
               >
                 <mat-option class="select-search-option" disabled>
@@ -286,9 +288,8 @@
                     class="select-search-field"
                     matInput
                     placeholder="Search extension"
-                    [ngModel]="extensionSearch()"
-                    [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="extensionSearch.set($event)"
+                    [value]="extensionSearch()"
+                    (input)="extensionSearch.set($any($event.target).value)"
                     (click)="$event.stopPropagation()"
                     (keydown)="$event.stopPropagation()"
                   />
@@ -303,17 +304,17 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Login Code</mat-label>
-              <input matInput formControlName="loginCode" maxlength="32" />
+              <input matInput [formField]="form.loginCode" maxlength="32" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Display Name</mat-label>
-              <input matInput formControlName="displayName" maxlength="150" />
+              <input matInput [formField]="form.displayName" maxlength="150" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Runtime</mat-label>
-              <mat-select formControlName="runtimeStatus">
+              <mat-select [formField]="form.runtimeStatus">
                 <mat-option value="LOGGED_OUT">Logged out</mat-option>
                 <mat-option value="AVAILABLE">Available</mat-option>
                 <mat-option value="PAUSED">Paused</mat-option>
@@ -322,7 +323,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
+              <mat-select [formField]="form.enabled">
                 <mat-option [value]="true">Active</mat-option>
                 <mat-option [value]="false">Inactive</mat-option>
               </mat-select>
@@ -330,7 +331,7 @@
 
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Pause Reason</mat-label>
-              <input matInput formControlName="pauseReason" maxlength="120" />
+              <input matInput [formField]="form.pauseReason" maxlength="120" />
             </mat-form-field>
           </form>
         </mat-tab>
@@ -356,7 +357,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -368,7 +369,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMoreMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -382,7 +383,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

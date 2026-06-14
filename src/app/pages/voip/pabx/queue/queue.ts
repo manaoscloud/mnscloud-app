@@ -11,7 +11,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -47,14 +47,29 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
+type QueueFormModel = {
+  pabxUUID: string;
+  name: string;
+  strategy: string;
+  timeoutSeconds: number;
+  retrySeconds: number;
+  maxWaitSeconds: number;
+  mediaFileUUID: string;
+  enabled: boolean;
+};
+type QueueMemberFormModel = {
+  extensionUUID: string;
+  priority: number;
+  penalty: number;
+  enabled: boolean;
+};
 
 @Component({
   selector: 'app-voip-pabx-queue',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -83,7 +98,6 @@ export class VoipPabxQueuePage {
   private readonly extensionApi = inject(VoipPabxExtensionService);
   private readonly mediaFileApi = inject(VoipPabxMediaFilesService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -127,7 +141,7 @@ export class VoipPabxQueuePage {
   );
 
   readonly filteredMediaFileOptions = computed(() => {
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const pabxUUID = this.formModel().pabxUUID;
     return this.filterOptions(
       this.mediaFileOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
       this.mediaFileSearch(),
@@ -135,7 +149,7 @@ export class VoipPabxQueuePage {
   });
 
   readonly filteredMemberExtensionOptions = computed(() => {
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const pabxUUID = this.formModel().pabxUUID;
     const linked = new Set(
       this.memberRows()
         .map((row) => row.VoipPabxExtensionVpeUUID)
@@ -149,22 +163,27 @@ export class VoipPabxQueuePage {
     );
   });
 
-  readonly form = this.fb.nonNullable.group({
-    pabxUUID: ['', Validators.required],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    strategy: ['ring_all', Validators.required],
-    timeoutSeconds: [30, [Validators.required, Validators.min(1)]],
-    retrySeconds: [5, [Validators.required, Validators.min(0)]],
-    maxWaitSeconds: [300, [Validators.required, Validators.min(1)]],
-    mediaFileUUID: [''],
-    enabled: [true],
+  readonly formModel = signal<QueueFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.pabxUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.strategy);
+    required(schema.timeoutSeconds);
+    min(schema.timeoutSeconds, 1);
+    required(schema.retrySeconds);
+    min(schema.retrySeconds, 0);
+    required(schema.maxWaitSeconds);
+    min(schema.maxWaitSeconds, 1);
   });
 
-  readonly memberForm = this.fb.nonNullable.group({
-    extensionUUID: ['', Validators.required],
-    priority: [0, [Validators.required, Validators.min(0)]],
-    penalty: [0, [Validators.required, Validators.min(0)]],
-    enabled: [true],
+  readonly memberFormModel = signal<QueueMemberFormModel>(this.emptyMemberFormModel());
+  readonly memberForm = createForm(this.memberFormModel, (schema) => {
+    required(schema.extensionUUID);
+    required(schema.priority);
+    min(schema.priority, 0);
+    required(schema.penalty);
+    min(schema.penalty, 0);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -229,7 +248,7 @@ export class VoipPabxQueuePage {
 
   startEdit(item: VoipPabxQueueItem) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       pabxUUID: item.VoipPabxAccountVpaUUID ?? '',
       name: item.VpqName ?? '',
       strategy: item.VpqStrategy ?? 'ring_all',
@@ -246,10 +265,7 @@ export class VoipPabxQueuePage {
 
   async save(keepOpen = false) {
     if (this.saving()) return;
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (!this.form().valid()) return;
 
     this.saving.set(true);
     try {
@@ -397,19 +413,16 @@ export class VoipPabxQueuePage {
   }
 
   onPabxChange() {
-    this.form.controls.mediaFileUUID.setValue('');
+    this.formModel.update((value) => ({ ...value, mediaFileUUID: '' }));
     this.mediaFileSearch.set('');
-    this.memberForm.controls.extensionUUID.setValue('');
+    this.memberFormModel.update((value) => ({ ...value, extensionUUID: '' }));
     this.memberRows.set([]);
     this.memberExtensionSearch.set('');
   }
 
   async addMember() {
     if (this.memberSaving()) return;
-    if (this.memberForm.invalid) {
-      this.memberForm.markAllAsTouched();
-      return;
-    }
+    if (!this.memberForm().valid()) return;
 
     const payload = this.memberPayload();
     if (!this.editing()) {
@@ -527,7 +540,7 @@ export class VoipPabxQueuePage {
   }
 
   private payload() {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     return {
       pabxUUID: value.pabxUUID,
       name: value.name,
@@ -541,7 +554,7 @@ export class VoipPabxQueuePage {
   }
 
   private memberPayload() {
-    const value = this.memberForm.getRawValue();
+    const value = this.memberFormModel();
     return {
       extensionUUID: value.extensionUUID,
       priority: value.priority,
@@ -578,7 +591,17 @@ export class VoipPabxQueuePage {
     this.mediaFileSearch.set('');
     this.memberExtensionSearch.set('');
     this.memberRows.set([]);
-    this.form.reset({
+    this.formModel.set(this.emptyFormModel());
+    this.resetMemberForm();
+  }
+
+  private resetMemberForm() {
+    this.memberExtensionSearch.set('');
+    this.memberFormModel.set(this.emptyMemberFormModel());
+  }
+
+  private emptyFormModel(): QueueFormModel {
+    return {
       pabxUUID: '',
       name: '',
       strategy: 'ring_all',
@@ -587,18 +610,16 @@ export class VoipPabxQueuePage {
       maxWaitSeconds: 300,
       mediaFileUUID: '',
       enabled: true,
-    });
-    this.resetMemberForm();
+    };
   }
 
-  private resetMemberForm() {
-    this.memberExtensionSearch.set('');
-    this.memberForm.reset({
+  private emptyMemberFormModel(): QueueMemberFormModel {
+    return {
       extensionUUID: '',
       priority: 0,
       penalty: 0,
       enabled: true,
-    });
+    };
   }
 
   private openDialog() {
