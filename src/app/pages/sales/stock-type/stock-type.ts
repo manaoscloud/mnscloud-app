@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -49,7 +49,7 @@ type StockTypeFilters = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -69,7 +69,6 @@ type StockTypeFilters = {
 })
 export class SaleStockTypePage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -77,20 +76,20 @@ export class SaleStockTypePage {
   readonly error = signal<string | null>(null);
   readonly stockTypes = signal<SaleStockTypeItem[]>([]);
   readonly editing = signal<SaleStockTypeItem | null>(null);
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-  });
+  readonly filterFormModel = signal({ search: '' });
+  readonly filterForm = createForm(this.filterFormModel);
   private readonly stockTypesResource = resource({
     defaultValue: [] as SaleStockTypeItem[],
     params: (): StockTypeFilters => ({
-      search: this.filterForm.controls.search.value.trim(),
+      search: this.filterFormModel().search.trim(),
     }),
     loader: ({ params }) => this.fetchStockTypes(params),
   });
   readonly loading = this.stockTypesResource.isLoading;
 
-  readonly stockTypeForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
+  readonly stockTypeFormModel = signal({ name: '' });
+  readonly stockTypeForm = createForm(this.stockTypeFormModel, (path) => {
+    required(path.name);
   });
 
   readonly displayedColumns = ['name', 'actions'];
@@ -135,7 +134,7 @@ export class SaleStockTypePage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '' });
+    this.filterFormModel.set({ search: '' });
     this.stockTypesResource.reload();
   }
 
@@ -145,7 +144,7 @@ export class SaleStockTypePage {
 
   startEdit(stockType: SaleStockTypeItem) {
     this.editing.set(stockType);
-    this.stockTypeForm.reset({ name: stockType.SstName });
+    this.stockTypeFormModel.set({ name: stockType.SstName });
   }
 
   openCreateDialog() {
@@ -160,14 +159,14 @@ export class SaleStockTypePage {
 
   cancelEdit() {
     this.editing.set(null);
-    this.stockTypeForm.reset({ name: '' });
+    this.stockTypeFormModel.set({ name: '' });
     this.closeStockTypeDialog();
   }
 
   async saveStockType() {
-    if (this.stockTypeForm.invalid) return;
+    if (!this.stockTypeForm().valid()) return;
 
-    const payload = { name: this.stockTypeForm.getRawValue().name.trim() };
+    const payload = { name: this.stockTypeFormModel().name.trim() };
     if (!payload.name) return;
 
     this.saving.set(true);

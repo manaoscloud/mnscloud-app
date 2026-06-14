@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -51,7 +51,7 @@ type UnitFilters = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -71,7 +71,6 @@ type UnitFilters = {
 })
 export class SaleUnitPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -79,23 +78,22 @@ export class SaleUnitPage {
   readonly error = signal<string | null>(null);
   readonly units = signal<UnitItem[]>([]);
   readonly editing = signal<UnitItem | null>(null);
-  readonly filterForm = this.fb.nonNullable.group({
-    code: [''],
-    name: [''],
-  });
+  readonly filterFormModel = signal({ code: '', name: '' });
+  readonly filterForm = createForm(this.filterFormModel);
   private readonly unitsResource = resource({
     defaultValue: [] as UnitItem[],
     params: (): UnitFilters => ({
-      code: this.filterForm.controls.code.value.trim(),
-      name: this.filterForm.controls.name.value.trim(),
+      code: this.filterFormModel().code.trim(),
+      name: this.filterFormModel().name.trim(),
     }),
     loader: ({ params }) => this.fetchUnits(params),
   });
   readonly loading = this.unitsResource.isLoading;
 
-  readonly unitForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required]],
-    name: ['', [Validators.required]],
+  readonly unitFormModel = signal({ code: '', name: '' });
+  readonly unitForm = createForm(this.unitFormModel, (path) => {
+    required(path.code);
+    required(path.name);
   });
 
   readonly displayedColumns = ['code', 'name', 'actions'];
@@ -141,7 +139,7 @@ export class SaleUnitPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ code: '', name: '' });
+    this.filterFormModel.set({ code: '', name: '' });
     this.unitsResource.reload();
   }
 
@@ -151,7 +149,7 @@ export class SaleUnitPage {
 
   startEdit(unit: UnitItem) {
     this.editing.set(unit);
-    this.unitForm.reset({ code: unit.SunCode, name: unit.SunName });
+    this.unitFormModel.set({ code: unit.SunCode, name: unit.SunName });
   }
 
   openCreateDialog() {
@@ -166,16 +164,16 @@ export class SaleUnitPage {
 
   cancelEdit() {
     this.editing.set(null);
-    this.unitForm.reset({ code: '', name: '' });
+    this.unitFormModel.set({ code: '', name: '' });
     this.closeUnitDialog();
   }
 
   async saveUnit() {
-    if (this.unitForm.invalid) return;
+    if (!this.unitForm().valid()) return;
 
     const payload = {
-      code: this.unitForm.getRawValue().code.trim(),
-      name: this.unitForm.getRawValue().name.trim(),
+      code: this.unitFormModel().code.trim(),
+      name: this.unitFormModel().name.trim(),
     };
     if (!payload.code || !payload.name) return;
 

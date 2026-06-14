@@ -112,35 +112,35 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="popForm" (ngSubmit)="savePop()">
+            <form class="form-grid" (ngSubmit)="savePop()">
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. POP Downtown" formControlName="name" />
+                <input matInput placeholder="e.g. POP Downtown" [formField]="popForm.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>City</mat-label>
-                <input matInput placeholder="e.g. mnscloud" formControlName="city" />
+                <input matInput placeholder="e.g. mnscloud" [formField]="popForm.city" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>State</mat-label>
-                <input matInput placeholder="e.g. AM" formControlName="state" />
+                <input matInput placeholder="e.g. AM" [formField]="popForm.state" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Address</mat-label>
-                <input matInput placeholder="Street, number" formControlName="address" />
+                <input matInput placeholder="Street, number" [formField]="popForm.address" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Notes</mat-label>
-                <input matInput placeholder="Optional notes" formControlName="notes" />
+                <input matInput placeholder="Optional notes" [formField]="popForm.notes" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="popForm.status">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -157,7 +157,7 @@
         color="primary"
         type="button"
         (click)="savePop()"
-        [disabled]="popForm.invalid || saving()"
+        [disabled]="!popForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save

@@ -15,15 +15,15 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Unt. Code</mat-label>
-        <input matInput placeholder="Search by code" formControlName="code" />
+        <input matInput placeholder="Search by code" [formField]="filterForm.code" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Name</mat-label>
-        <input matInput placeholder="Search by name" formControlName="name" />
+        <input matInput placeholder="Search by name" [formField]="filterForm.name" />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -95,15 +95,15 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="unitForm" (ngSubmit)="saveUnit()">
+            <form class="form-grid" (ngSubmit)="saveUnit()">
               <mat-form-field appearance="outline">
                 <mat-label>Unt. Code</mat-label>
-                <input matInput placeholder="e.g. KG" formControlName="code" />
+                <input matInput placeholder="e.g. KG" [formField]="unitForm.code" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. Kilogram" formControlName="name" />
+                <input matInput placeholder="e.g. Kilogram" [formField]="unitForm.name" />
               </mat-form-field>
             </form>
           </div>
@@ -117,7 +117,7 @@
         color="primary"
         type="button"
         (click)="saveUnit()"
-        [disabled]="unitForm.invalid || saving()"
+        [disabled]="!unitForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save

@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -51,7 +51,7 @@ type IspPopItem = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -73,7 +73,6 @@ type IspPopItem = {
 })
 export class IspPopPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -91,13 +90,21 @@ export class IspPopPage {
   search = '';
   searchInput = '';
 
-  readonly popForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    city: ['', [Validators.required, Validators.minLength(2)]],
-    state: ['', [Validators.required, Validators.minLength(2)]],
-    address: [''],
-    notes: [''],
-    status: [1],
+  readonly popFormModel = signal({
+    name: '',
+    city: '',
+    state: '',
+    address: '',
+    notes: '',
+    status: 1,
+  });
+  readonly popForm = createForm(this.popFormModel, (path) => {
+    required(path.name);
+    minLength(path.name, 2);
+    required(path.city);
+    minLength(path.city, 2);
+    required(path.state);
+    minLength(path.state, 2);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -166,7 +173,7 @@ export class IspPopPage {
 
   startCreate() {
     this.editing.set(null);
-    this.popForm.reset({
+    this.popFormModel.set({
       name: '',
       city: '',
       state: '',
@@ -178,7 +185,7 @@ export class IspPopPage {
 
   startEdit(pop: IspPopItem) {
     this.editing.set(pop);
-    this.popForm.reset({
+    this.popFormModel.set({
       name: pop.IppName,
       city: pop.IppCity,
       state: pop.IppState,
@@ -190,9 +197,9 @@ export class IspPopPage {
   }
 
   async savePop() {
-    if (this.popForm.invalid) return;
+    if (!this.popForm().valid()) return;
 
-    const value = this.popForm.getRawValue();
+    const value = this.popFormModel();
     const payload = {
       name: value.name.trim(),
       city: value.city.trim(),

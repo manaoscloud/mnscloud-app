@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
@@ -53,7 +53,7 @@ type PoolIpv4NetworkItem = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -75,7 +75,6 @@ type PoolIpv4NetworkItem = {
 })
 export class IspPoolIpv4Page {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -110,16 +109,17 @@ export class IspPoolIpv4Page {
   search = '';
   searchInput = '';
 
-  readonly poolForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    description: [''],
-    status: [1, [Validators.required]],
+  readonly poolFormModel = signal({ name: '', description: '', status: 1 });
+  readonly poolForm = createForm(this.poolFormModel, (path) => {
+    required(path.name);
+    minLength(path.name, 2);
+    required(path.status);
   });
 
-  readonly networkForm = this.fb.nonNullable.group({
-    cidr: ['', [Validators.required]],
-    description: [''],
-    status: [1, [Validators.required]],
+  readonly networkFormModel = signal({ cidr: '', description: '', status: 1 });
+  readonly networkForm = createForm(this.networkFormModel, (path) => {
+    required(path.cidr);
+    required(path.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -206,12 +206,12 @@ export class IspPoolIpv4Page {
 
   startCreatePool() {
     this.editingPool.set(null);
-    this.poolForm.reset({ name: '', description: '', status: 1 });
+    this.poolFormModel.set({ name: '', description: '', status: 1 });
   }
 
   startEditPool(item: PoolIpv4Item) {
     this.editingPool.set(item);
-    this.poolForm.reset({
+    this.poolFormModel.set({
       name: item.Ip4Name,
       description: item.Ip4Description ?? '',
       status: item.Ip4Status ?? 1,
@@ -225,9 +225,9 @@ export class IspPoolIpv4Page {
   }
 
   async savePool(createAnother = false) {
-    if (this.poolForm.invalid) return;
+    if (!this.poolForm().valid()) return;
 
-    const value = this.poolForm.getRawValue();
+    const value = this.poolFormModel();
     const payload = {
       name: value.name.trim(),
       description: value.description?.trim() || null,
@@ -293,12 +293,12 @@ export class IspPoolIpv4Page {
 
   startCreateNetwork() {
     this.editingNetwork.set(null);
-    this.networkForm.reset({ cidr: '', description: '', status: 1 });
+    this.networkFormModel.set({ cidr: '', description: '', status: 1 });
   }
 
   startEditNetwork(item: PoolIpv4NetworkItem) {
     this.editingNetwork.set(item);
-    this.networkForm.reset({
+    this.networkFormModel.set({
       cidr: item.I4nCidr,
       description: item.I4nDescription ?? '',
       status: item.I4nStatus ?? 1,
@@ -317,9 +317,9 @@ export class IspPoolIpv4Page {
 
   async saveNetwork(createAnother = false) {
     const selected = this.selectedPool();
-    if (!selected || this.networkForm.invalid) return;
+    if (!selected || !this.networkForm().valid()) return;
 
-    const value = this.networkForm.getRawValue();
+    const value = this.networkFormModel();
     const payload = {
       cidr: value.cidr.trim(),
       description: value.description?.trim() || null,

@@ -11,22 +11,26 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput formControlName="search" placeholder="Message, action, resource, error" />
+        <input
+          matInput
+          [formField]="filterForm.search"
+          placeholder="Message, action, resource, error"
+        />
       </mat-form-field>
 
       @if (isMaster) {
         <mat-form-field appearance="outline">
           <mat-label>Environment UUID</mat-label>
-          <input matInput formControlName="environmentUUID" placeholder="UUID or global" />
+          <input matInput [formField]="filterForm.environmentUUID" placeholder="UUID or global" />
         </mat-form-field>
       }
 
       <mat-form-field appearance="outline">
         <mat-label>Level</mat-label>
-        <mat-select formControlName="level">
+        <mat-select [formField]="filterForm.level">
           @for (option of levelOptions; track option) {
             <mat-option [value]="option">{{ option || 'All' }}</mat-option>
           }
@@ -35,7 +39,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           @for (option of statusOptions; track option) {
             <mat-option [value]="option">{{ option || 'All' }}</mat-option>
           }
@@ -44,7 +48,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Category</mat-label>
-        <mat-select formControlName="category">
+        <mat-select [formField]="filterForm.category">
           @for (option of categoryOptions; track option) {
             <mat-option [value]="option">{{ option || 'All' }}</mat-option>
           }
@@ -53,7 +57,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Correlation ID</mat-label>
-        <input matInput formControlName="correlationID" />
+        <input matInput [formField]="filterForm.correlationID" />
       </mat-form-field>
 
       <div class="filter-actions">

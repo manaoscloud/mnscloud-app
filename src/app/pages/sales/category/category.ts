@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -49,7 +49,7 @@ type CategoryFilters = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -69,7 +69,6 @@ type CategoryFilters = {
 })
 export class SaleCategoryPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -77,20 +76,20 @@ export class SaleCategoryPage {
   readonly error = signal<string | null>(null);
   readonly categories = signal<CategoryItem[]>([]);
   readonly editing = signal<CategoryItem | null>(null);
-  readonly filterForm = this.fb.nonNullable.group({
-    name: [''],
-  });
+  readonly filterFormModel = signal({ name: '' });
+  readonly filterForm = createForm(this.filterFormModel);
   private readonly categoriesResource = resource({
     defaultValue: [] as CategoryItem[],
     params: (): CategoryFilters => ({
-      name: this.filterForm.controls.name.value.trim(),
+      name: this.filterFormModel().name.trim(),
     }),
     loader: ({ params }) => this.fetchCategories(params),
   });
   readonly loading = this.categoriesResource.isLoading;
 
-  readonly categoryForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
+  readonly categoryFormModel = signal({ name: '' });
+  readonly categoryForm = createForm(this.categoryFormModel, (path) => {
+    required(path.name);
   });
 
   readonly displayedColumns = ['name', 'actions'];
@@ -135,7 +134,7 @@ export class SaleCategoryPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ name: '' });
+    this.filterFormModel.set({ name: '' });
     this.categoriesResource.reload();
   }
 
@@ -145,7 +144,7 @@ export class SaleCategoryPage {
 
   startEdit(category: CategoryItem) {
     this.editing.set(category);
-    this.categoryForm.reset({ name: category.ScaName });
+    this.categoryFormModel.set({ name: category.ScaName });
   }
 
   openCreateDialog() {
@@ -160,14 +159,14 @@ export class SaleCategoryPage {
 
   cancelEdit() {
     this.editing.set(null);
-    this.categoryForm.reset({ name: '' });
+    this.categoryFormModel.set({ name: '' });
     this.closeCategoryDialog();
   }
 
   async saveCategory() {
-    if (this.categoryForm.invalid) return;
+    if (!this.categoryForm().valid()) return;
 
-    const payload = { name: this.categoryForm.getRawValue().name.trim() };
+    const payload = { name: this.categoryFormModel().name.trim() };
     if (!payload.name) return;
 
     this.saving.set(true);

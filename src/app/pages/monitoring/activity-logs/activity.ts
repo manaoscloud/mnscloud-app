@@ -9,7 +9,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormField, form as createForm } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -87,7 +87,7 @@ const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatDialogModule,
@@ -112,7 +112,6 @@ export class MonitoringActivityLogsPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
 
   readonly paginator = viewChild(MatPaginator);
@@ -162,14 +161,8 @@ export class MonitoringActivityLogsPage {
     'worker',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    environmentUUID: [''],
-    level: [''],
-    status: [''],
-    category: [''],
-    correlationID: [''],
-  });
+  readonly filterFormModel = signal<ActivityLogFilters>({ ...EMPTY_ACTIVITY_FILTERS });
+  readonly filterForm = createForm(this.filterFormModel);
 
   private readonly activityLogsResource = resource({
     params: () => ({
@@ -222,7 +215,7 @@ export class MonitoringActivityLogsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ ...EMPTY_ACTIVITY_FILTERS });
+    this.filterFormModel.set({ ...EMPTY_ACTIVITY_FILTERS });
     this.pageIndex.set(0);
     this.appliedFilters.set({ ...EMPTY_ACTIVITY_FILTERS });
   }
@@ -324,7 +317,7 @@ export class MonitoringActivityLogsPage {
   }
 
   private normalizedFilters(): ActivityLogFilters {
-    const value = this.filterForm.getRawValue();
+    const value = this.filterFormModel();
     return {
       search: value.search.trim(),
       environmentUUID: value.environmentUUID.trim(),

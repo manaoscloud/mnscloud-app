@@ -15,10 +15,10 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Name</mat-label>
-        <input matInput placeholder="Search by name" formControlName="search" />
+        <input matInput placeholder="Search by name" [formField]="filterForm.search" />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -90,10 +90,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="stockTypeForm" (ngSubmit)="saveStockType()">
+            <form class="form-grid" (ngSubmit)="saveStockType()">
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. Refrigerated" formControlName="name" />
+                <input matInput placeholder="e.g. Refrigerated" [formField]="stockTypeForm.name" />
               </mat-form-field>
             </form>
           </div>
@@ -107,7 +107,7 @@
         color="primary"
         type="button"
         (click)="saveStockType()"
-        [disabled]="stockTypeForm.invalid || saving()"
+        [disabled]="!stockTypeForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save
