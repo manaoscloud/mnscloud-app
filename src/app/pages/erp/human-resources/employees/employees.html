@@ -52,7 +52,8 @@
               <mat-label>Search company</mat-label>
               <input
                 matInput
-                [formControl]="filterCompanySearch"
+                [value]="filterCompanySearch()"
+                (input)="filterCompanySearch.set($any($event.target).value)"
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
               />
@@ -78,7 +79,8 @@
               <mat-label>Search department</mat-label>
               <input
                 matInput
-                [formControl]="filterDepartmentSearch"
+                [value]="filterDepartmentSearch()"
+                (input)="filterDepartmentSearch.set($any($event.target).value)"
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
               />
@@ -104,7 +106,8 @@
               <mat-label>Search position</mat-label>
               <input
                 matInput
-                [formControl]="filterPositionSearch"
+                [value]="filterPositionSearch()"
+                (input)="filterPositionSearch.set($any($event.target).value)"
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
               />
@@ -259,15 +262,15 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Name</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput [formField]="form.name" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="status">
+              <mat-select [formField]="form.status">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
@@ -275,23 +278,23 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Document</mat-label>
-              <input matInput formControlName="document" />
+              <input matInput [formField]="form.document" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Email</mat-label>
-              <input matInput formControlName="email" />
+              <input matInput [formField]="form.email" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Phone</mat-label>
-              <input matInput formControlName="phone" />
+              <input matInput [formField]="form.phone" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Company</mat-label>
               <mat-select
-                formControlName="companyUUID"
+                [formField]="form.companyUUID"
                 (openedChange)="onReferenceOpened($event, companySearch)"
               >
                 <mat-option class="select-search-option">
@@ -299,7 +302,8 @@
                     <mat-label>Search company</mat-label>
                     <input
                       matInput
-                      [formControl]="companySearch"
+                      [value]="companySearch()"
+                      (input)="companySearch.set($any($event.target).value)"
                       (click)="$event.stopPropagation()"
                       (keydown)="$event.stopPropagation()"
                     />
@@ -315,7 +319,7 @@
             <mat-form-field appearance="outline">
               <mat-label>Department</mat-label>
               <mat-select
-                formControlName="departmentUUID"
+                [formField]="form.departmentUUID"
                 (openedChange)="onReferenceOpened($event, departmentSearch)"
               >
                 <mat-option class="select-search-option">
@@ -323,7 +327,8 @@
                     <mat-label>Search department</mat-label>
                     <input
                       matInput
-                      [formControl]="departmentSearch"
+                      [value]="departmentSearch()"
+                      (input)="departmentSearch.set($any($event.target).value)"
                       (click)="$event.stopPropagation()"
                       (keydown)="$event.stopPropagation()"
                     />
@@ -339,7 +344,7 @@
             <mat-form-field appearance="outline">
               <mat-label>Position</mat-label>
               <mat-select
-                formControlName="positionUUID"
+                [formField]="form.positionUUID"
                 (openedChange)="onReferenceOpened($event, positionSearch)"
               >
                 <mat-option class="select-search-option">
@@ -347,7 +352,8 @@
                     <mat-label>Search position</mat-label>
                     <input
                       matInput
-                      [formControl]="positionSearch"
+                      [value]="positionSearch()"
+                      (input)="positionSearch.set($any($event.target).value)"
                       (click)="$event.stopPropagation()"
                       (keydown)="$event.stopPropagation()"
                     />
@@ -362,21 +368,21 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Hire date</mat-label>
-              <input matInput type="date" formControlName="hireDate" />
+              <input matInput type="date" [formField]="form.hireDate" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Termination date</mat-label>
-              <input matInput type="date" formControlName="terminationDate" />
+              <input matInput type="date" [formField]="form.terminationDate" />
             </mat-form-field>
           </form>
         </mat-tab>
 
         <mat-tab label="Notes">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="4" formControlName="notes"></textarea>
+              <textarea matInput rows="4" [formField]="form.notes"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -402,7 +408,7 @@
           color="primary"
           type="button"
           (click)="saveEmployee()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -414,7 +420,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMoreMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >

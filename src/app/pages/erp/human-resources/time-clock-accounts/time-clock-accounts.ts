@@ -10,7 +10,8 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -72,7 +73,7 @@ type TimeClockAccountListParams = {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
@@ -95,7 +96,6 @@ type TimeClockAccountListParams = {
 })
 export class ErpHumanResourcesTimeClockAccountsPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
@@ -128,10 +128,14 @@ export class ErpHumanResourcesTimeClockAccountsPage {
     'actions',
   ];
 
-  readonly form = this.fb.group({
-    employeeUUID: ['', Validators.required],
-    status: ['active', Validators.required],
-    notes: [''],
+  readonly formModel = signal({
+    employeeUUID: '',
+    status: 'active' as 'active' | 'inactive' | 'blocked',
+    notes: '',
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.employeeUUID);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -172,7 +176,6 @@ export class ErpHumanResourcesTimeClockAccountsPage {
       }
     };
     void this.loadEmployees();
-  
   });
 
   async loadEmployees() {
@@ -223,7 +226,7 @@ export class ErpHumanResourcesTimeClockAccountsPage {
 
   startCreate() {
     this.lastCredential.set(null);
-    this.form.reset({ employeeUUID: '', status: 'active', notes: '' });
+    this.formModel.set({ employeeUUID: '', status: 'active', notes: '' });
     this.dialog.open(this.accountDialog()!, {
       width: 'min(980px, 96vw)',
       maxHeight: '92vh',
@@ -234,16 +237,16 @@ export class ErpHumanResourcesTimeClockAccountsPage {
   }
 
   async saveAccount() {
-    if (this.form.invalid || this.saving()) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid() || this.saving()) {
       return;
     }
     this.saving.set(true);
+    const values = this.formModel();
     try {
       const response = await this.api.post<any>('erp/human-resources/time-clock/accounts', {
-        employeeUUID: this.form.value.employeeUUID,
-        status: this.form.value.status,
-        notes: this.form.value.notes || null,
+        employeeUUID: values.employeeUUID,
+        status: values.status,
+        notes: values.notes || null,
       });
       this.dialog.closeAll();
       this.lastCredential.set(response?.data ?? null);

@@ -153,10 +153,10 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group>
         <mat-tab [label]="'Record' | transloco">
-          <form class="form-grid" [formGroup]="form">
+          <form class="form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>{{ 'Employee' | transloco }}</mat-label>
-              <mat-select formControlName="employeeUUID">
+              <mat-select [formField]="form.employeeUUID">
                 @for (employee of employees(); track employee.EmployeeUUID) {
                   <mat-option [value]="employee.EmployeeUUID">
                     {{ employee.Name }}{{ employee.Email ? ' - ' + employee.Email : '' }}
@@ -166,7 +166,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Status' | transloco }}</mat-label>
-              <mat-select formControlName="status">
+              <mat-select [formField]="form.status">
                 <mat-option value="active">{{ 'Active' | transloco }}</mat-option>
                 <mat-option value="inactive">{{ 'Inactive' | transloco }}</mat-option>
                 <mat-option value="blocked">{{ 'Blocked' | transloco }}</mat-option>
@@ -174,7 +174,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>{{ 'Notes' | transloco }}</mat-label>
-              <textarea matInput rows="3" formControlName="notes"></textarea>
+              <textarea matInput rows="3" [formField]="form.notes"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -189,7 +189,7 @@
         color="primary"
         type="button"
         (click)="saveAccount()"
-        [disabled]="saving()"
+        [disabled]="!form().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         {{ 'Save' | transloco }}

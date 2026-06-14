@@ -11,13 +11,8 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import {
-  FormControl,
-  FormBuilder,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, email, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -78,13 +73,27 @@ type EmployeeListParams = {
   positionUUID: string;
 };
 
+type EmployeeFormModel = {
+  name: string;
+  email: string;
+  phone: string;
+  document: string;
+  companyUUID: string;
+  departmentUUID: string;
+  positionUUID: string;
+  hireDate: string;
+  terminationDate: string;
+  status: number;
+  notes: string;
+};
+
 @Component({
   selector: 'app-erp-hr-employees',
   standalone: true,
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -109,7 +118,6 @@ type EmployeeListParams = {
 })
 export class ErpHumanResourcesEmployeesPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
@@ -138,12 +146,12 @@ export class ErpHumanResourcesEmployeesPage {
   });
   readonly loading = computed(() => this.employeesResource.isLoading() || this.mutating());
 
-  readonly companySearch = new FormControl('');
-  readonly departmentSearch = new FormControl('');
-  readonly positionSearch = new FormControl('');
-  readonly filterCompanySearch = new FormControl('');
-  readonly filterDepartmentSearch = new FormControl('');
-  readonly filterPositionSearch = new FormControl('');
+  readonly companySearch = signal('');
+  readonly departmentSearch = signal('');
+  readonly positionSearch = signal('');
+  readonly filterCompanySearch = signal('');
+  readonly filterDepartmentSearch = signal('');
+  readonly filterPositionSearch = signal('');
 
   readonly companies = signal<OptionItem[]>([]);
   readonly departments = signal<OptionItem[]>([]);
@@ -162,18 +170,12 @@ export class ErpHumanResourcesEmployeesPage {
     'actions',
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    email: ['', [Validators.email]],
-    phone: [''],
-    document: [''],
-    companyUUID: [''],
-    departmentUUID: [''],
-    positionUUID: [''],
-    hireDate: [''],
-    terminationDate: [''],
-    status: [1],
-    notes: [''],
+  readonly formModel = signal<EmployeeFormModel>(this.emptyForm());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    email(schema.email);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -206,27 +208,27 @@ export class ErpHumanResourcesEmployeesPage {
   }
 
   get filteredCompanies() {
-    return this.filterOptions(this.companies(), this.companySearch.value ?? '');
+    return this.filterOptions(this.companies(), this.companySearch());
   }
 
   get filteredCompaniesForFilter() {
-    return this.filterOptions(this.companies(), this.filterCompanySearch.value ?? '');
+    return this.filterOptions(this.companies(), this.filterCompanySearch());
   }
 
   get filteredDepartments() {
-    return this.filterOptions(this.departments(), this.departmentSearch.value ?? '');
+    return this.filterOptions(this.departments(), this.departmentSearch());
   }
 
   get filteredDepartmentsForFilter() {
-    return this.filterOptions(this.departments(), this.filterDepartmentSearch.value ?? '');
+    return this.filterOptions(this.departments(), this.filterDepartmentSearch());
   }
 
   get filteredPositions() {
-    return this.filterOptions(this.positions(), this.positionSearch.value ?? '');
+    return this.filterOptions(this.positions(), this.positionSearch());
   }
 
   get filteredPositionsForFilter() {
-    return this.filterOptions(this.positions(), this.filterPositionSearch.value ?? '');
+    return this.filterOptions(this.positions(), this.filterPositionSearch());
   }
 
   private readonly afterViewReady = afterNextRender(() => {
@@ -253,12 +255,10 @@ export class ErpHumanResourcesEmployeesPage {
       }
     };
     void this.loadReferences();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeEmployeeDialog();
-  
   });
 
   applySearchFilters() {
@@ -336,25 +336,13 @@ export class ErpHumanResourcesEmployeesPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
-      name: '',
-      email: '',
-      phone: '',
-      document: '',
-      companyUUID: '',
-      departmentUUID: '',
-      positionUUID: '',
-      hireDate: '',
-      terminationDate: '',
-      status: 1,
-      notes: '',
-    });
+    this.formModel.set(this.emptyForm());
     this.openEmployeeDialog();
   }
 
   startEdit(employee: Employee) {
     this.editing.set(employee);
-    this.form.reset({
+    this.formModel.set({
       name: employee.Name ?? '',
       email: employee.Email ?? '',
       phone: employee.Phone ?? '',
@@ -371,8 +359,8 @@ export class ErpHumanResourcesEmployeesPage {
   }
 
   async saveEmployee(saveAndNew = false) {
-    if (this.form.invalid) return;
-    const value = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const value = this.formModel();
     const payload = {
       name: value.name.trim(),
       email: value.email.trim() || null,
@@ -486,8 +474,8 @@ export class ErpHumanResourcesEmployeesPage {
     }
   }
 
-  onReferenceOpened(opened: boolean, control: FormControl<string | null>) {
-    if (!opened) control.setValue('');
+  onReferenceOpened(opened: boolean, search: { set(value: string): void }) {
+    if (!opened) search.set('');
   }
 
   isActive(employee: Employee) {
@@ -590,5 +578,21 @@ export class ErpHumanResourcesEmployeesPage {
       });
       return next;
     });
+  }
+
+  private emptyForm(): EmployeeFormModel {
+    return {
+      name: '',
+      email: '',
+      phone: '',
+      document: '',
+      companyUUID: '',
+      departmentUUID: '',
+      positionUUID: '',
+      hireDate: '',
+      terminationDate: '',
+      status: 1,
+      notes: '',
+    };
   }
 }
