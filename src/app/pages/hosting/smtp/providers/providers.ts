@@ -10,7 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -76,7 +76,7 @@ type ProviderFormValue = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -101,7 +101,6 @@ type ProviderFormValue = {
 })
 export class HostingSmtpProvidersPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -139,11 +138,12 @@ export class HostingSmtpProvidersPage {
     { value: 'mailersend', label: 'MailerSend' },
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    provider: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
   private readonly providersResource = resource({
     params: () => ({ endpoint: this.endpoint() }),
@@ -169,24 +169,29 @@ export class HostingSmtpProvidersPage {
     this.snack.error(this.errorMessage(error, 'Failed to load SMTP providers.'));
   });
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['smtp' as SmtpProvider, [Validators.required]],
-    isActive: [1],
-    isDefault: [0],
-    host: [''],
-    port: [587],
-    secure: [false],
-    username: [''],
-    password: [''],
-    apiKey: [''],
-    region: [''],
-    accessKeyId: [''],
-    secretAccessKey: [''],
+  readonly formModel = signal<ProviderFormValue>({
+    name: '',
+    provider: 'smtp',
+    isActive: 1,
+    isDefault: 0,
+    host: '',
+    port: 587,
+    secure: false,
+    username: '',
+    password: '',
+    apiKey: '',
+    region: '',
+    accessKeyId: '',
+    secretAccessKey: '',
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
   });
 
   readonly filteredProviders = computed(() => {
-    const { search, provider, status } = this.filterForm.getRawValue();
+    const { search, provider, status } = this.filterFormModel();
     const term = search.trim().toLowerCase();
     const rows = this.providers().filter((item) => {
       const matchesTerm =
@@ -218,7 +223,7 @@ export class HostingSmtpProvidersPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', provider: '', status: '' });
+    this.filterFormModel.set({ search: '', provider: '', status: '' });
     this.pageIndex.set(0);
     this.reconcileSelection();
   }
@@ -236,7 +241,7 @@ export class HostingSmtpProvidersPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       name: '',
       provider: 'smtp',
       isActive: 1,
@@ -260,7 +265,7 @@ export class HostingSmtpProvidersPage {
     const config = this.normalizedConfig(item);
     this.editing.set(item);
     this.selectedProvider.set(item.HspProvider);
-    this.form.reset({
+    this.formModel.set({
       name: item.HspName,
       provider: item.HspProvider,
       isActive: item.HspIsActive ? 1 : 0,
@@ -304,12 +309,11 @@ export class HostingSmtpProvidersPage {
   }
 
   async save(keepOpen = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
 
-    const raw = this.form.getRawValue();
+    const raw = this.formModel();
     const provider = raw.provider;
     const missing = this.requiredProviderFields(raw);
     if (missing.length) {
@@ -431,9 +435,12 @@ export class HostingSmtpProvidersPage {
 
   onRegionInput() {
     if (this.selectedProvider() !== 'ses') return;
-    const region = this.form.controls.region.value.trim();
+    const region = this.formModel().region.trim();
     if (!region) return;
-    this.form.patchValue({ host: `email-smtp.${region}.amazonaws.com` });
+    this.formModel.update((current) => ({
+      ...current,
+      host: `email-smtp.${region}.amazonaws.com`,
+    }));
   }
 
   secretHint(label: string) {
@@ -441,7 +448,7 @@ export class HostingSmtpProvidersPage {
   }
 
   private applyProviderDefaults(provider: SmtpProvider, force: boolean) {
-    const current = this.form.getRawValue();
+    const current = this.formModel();
     const patch: Partial<typeof current> = {};
     if (provider === 'smtp') {
       if (force || !current.port) patch.port = 587;
@@ -462,7 +469,7 @@ export class HostingSmtpProvidersPage {
       patch.secure = true;
       if (force) patch.username = '';
     }
-    this.form.patchValue(patch);
+    this.formModel.update((value) => ({ ...value, ...patch }));
   }
 
   private defaultPort(provider: SmtpProvider) {
