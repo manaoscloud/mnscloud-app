@@ -18,7 +18,7 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [value]="searchInput"
+          [value]="searchInput()"
           placeholder="Search records"
           (input)="onSearchChange($any($event.target).value)"
         />
@@ -156,26 +156,26 @@
       }
     </div>
     <mat-dialog-content class="dialog-content">
-      <form id="PABXResourceForm" class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
+      <form id="PABXResourceForm" class="dialog-form" (ngSubmit)="submit()">
         <mat-tab-group class="form-tabs">
           @if (isTrunkResource()) {
             <mat-tab [label]="'Record' | transloco">
               <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Status</mat-label>
-                  <mat-select formControlName="status">
+                  <mat-select [formField]="form.status">
                     <mat-option [value]="true">Active</mat-option>
                     <mat-option [value]="false">Inactive</mat-option>
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Name</mat-label>
-                  <input matInput formControlName="name" />
+                  <input matInput [formField]="form.name" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>PABX</mat-label>
                   <mat-select
-                    formControlName="pabxUUID"
+                    [formField]="form.pabxUUID"
                     (selectionChange)="onPabxChange()"
                     (openedChange)="clearAccountSearch($event)"
                   >
@@ -184,7 +184,7 @@
                         matInput
                         class="select-search-field"
                         placeholder="Search PABX"
-                        [value]="accountSearch"
+                        [value]="accountSearch()"
                         (input)="setAccountSearch($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                       />
@@ -198,7 +198,7 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Direction</mat-label>
-                  <mat-select formControlName="secondary">
+                  <mat-select [formField]="form.secondary">
                     @for (option of directionOptions; track option) {
                       <mat-option [value]="option">
                         {{ option }}
@@ -208,7 +208,7 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Auth Mode</mat-label>
-                  <mat-select formControlName="authMode">
+                  <mat-select [formField]="form.authMode">
                     @for (option of authModeOptions; track option) {
                       <mat-option [value]="option">
                         {{ option }}
@@ -218,14 +218,14 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Register</mat-label>
-                  <mat-select formControlName="registerEnabled">
+                  <mat-select [formField]="form.registerEnabled">
                     <mat-option [value]="true">Yes</mat-option>
                     <mat-option [value]="false">No</mat-option>
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Priority</mat-label>
-                  <input matInput type="number" min="1" formControlName="priority" />
+                  <input matInput type="number" min="1" [formField]="form.priority" />
                 </mat-form-field>
               </div>
             </mat-tab>
@@ -233,14 +233,14 @@
               <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Username</mat-label>
-                  <input matInput formControlName="username" autocomplete="off" />
+                  <input matInput [formField]="form.username" autocomplete="off" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Password</mat-label>
                   <input
                     matInput
                     [type]="passwordVisible ? 'text' : 'password'"
-                    formControlName="password"
+                    [formField]="form.password"
                     autocomplete="new-password"
                   />
                   <button
@@ -256,15 +256,15 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Domain / Proxy</mat-label>
-                  <input matInput formControlName="primary" />
+                  <input matInput [formField]="form.primary" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Realm</mat-label>
-                  <input matInput formControlName="realm" />
+                  <input matInput [formField]="form.realm" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Transport</mat-label>
-                  <mat-select formControlName="transport">
+                  <mat-select [formField]="form.transport">
                     @for (option of transportOptions; track option) {
                       <mat-option [value]="option">
                         {{ option }}
@@ -274,19 +274,19 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Port</mat-label>
-                  <input matInput type="number" min="1" max="65535" formControlName="port" />
+                  <input matInput type="number" min="1" max="65535" [formField]="form.port" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>From Domain</mat-label>
-                  <input matInput formControlName="fromDomain" />
+                  <input matInput [formField]="form.fromDomain" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>From User</mat-label>
-                  <input matInput formControlName="fromUser" />
+                  <input matInput [formField]="form.fromUser" />
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-4">
                   <mat-label>Allowed CIDRs</mat-label>
-                  <input matInput formControlName="allowedCidrs" />
+                  <input matInput [formField]="form.allowedCidrs" />
                 </mat-form-field>
               </div>
             </mat-tab>
@@ -295,7 +295,7 @@
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Audio Codecs</mat-label>
                   <mat-select
-                    formControlName="audioCodecs"
+                    [formField]="form.audioCodecs"
                     multiple
                     (openedChange)="clearCodecSearch($event)"
                   >
@@ -304,7 +304,7 @@
                         matInput
                         class="select-search-field"
                         placeholder="Search audio codec"
-                        [value]="audioCodecSearch"
+                        [value]="audioCodecSearch()"
                         (input)="setAudioCodecSearch($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                       />
@@ -319,7 +319,7 @@
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Video Codecs</mat-label>
                   <mat-select
-                    formControlName="videoCodecs"
+                    [formField]="form.videoCodecs"
                     multiple
                     (openedChange)="clearCodecSearch($event)"
                   >
@@ -328,7 +328,7 @@
                         matInput
                         class="select-search-field"
                         placeholder="Search video codec"
-                        [value]="videoCodecSearch"
+                        [value]="videoCodecSearch()"
                         (input)="setVideoCodecSearch($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                       />
@@ -348,7 +348,7 @@
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>PABX</mat-label>
                   <mat-select
-                    formControlName="pabxUUID"
+                    [formField]="form.pabxUUID"
                     (selectionChange)="onPabxChange()"
                     (openedChange)="clearAccountSearch($event)"
                   >
@@ -357,7 +357,7 @@
                         matInput
                         class="select-search-field"
                         placeholder="Search PABX"
-                        [value]="accountSearch"
+                        [value]="accountSearch()"
                         (input)="setAccountSearch($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                       />
@@ -373,7 +373,7 @@
                   <mat-form-field appearance="outline" class="span-2">
                     <mat-label>Trunk{{ meta().trunkMode === 'required' ? ' *' : '' }}</mat-label>
                     <mat-select
-                      formControlName="trunkUUID"
+                      [formField]="form.trunkUUID"
                       (openedChange)="clearTrunkSearch($event)"
                     >
                       <mat-option class="select-search-option">
@@ -381,7 +381,7 @@
                           matInput
                           class="select-search-field"
                           placeholder="Search trunk"
-                          [value]="trunkSearch"
+                          [value]="trunkSearch()"
                           (input)="setTrunkSearch($any($event.target).value)"
                           (click)="$event.stopPropagation()"
                         />
@@ -398,13 +398,13 @@
                 }
                 <mat-form-field appearance="outline">
                   <mat-label>Name</mat-label>
-                  <input matInput formControlName="name" />
+                  <input matInput [formField]="form.name" />
                 </mat-form-field>
                 @if (isInboundRouteResource()) {
                   <mat-form-field appearance="outline" class="start-new-row">
                     <mat-label>Registered DID</mat-label>
                     <mat-select
-                      formControlName="didUUID"
+                      [formField]="form.didUUID"
                       (selectionChange)="onDidChange($event.value)"
                       (openedChange)="clearDidSearch($event)"
                     >
@@ -413,7 +413,7 @@
                           matInput
                           class="select-search-field"
                           placeholder="Search DID"
-                          [value]="didSearch"
+                          [value]="didSearch()"
                           (input)="setDidSearch($any($event.target).value)"
                           (click)="$event.stopPropagation()"
                         />
@@ -427,11 +427,11 @@
                   </mat-form-field>
                   <mat-form-field appearance="outline">
                     <mat-label>{{ meta().primary }}</mat-label>
-                    <input matInput formControlName="primary" />
+                    <input matInput [formField]="form.primary" />
                   </mat-form-field>
                   <mat-form-field appearance="outline">
                     <mat-label>Route Type</mat-label>
-                    <mat-select formControlName="secondary" (selectionChange)="onRouteTypeChange()">
+                    <mat-select [formField]="form.secondary" (selectionChange)="onRouteTypeChange()">
                       <mat-option value="extension">extension</mat-option>
                       <mat-option value="external">external</mat-option>
                       <mat-option value="group">group</mat-option>
@@ -442,7 +442,7 @@
                   <mat-form-field appearance="outline">
                     <mat-label>Destination</mat-label>
                     <mat-select
-                      formControlName="routeTargetUUID"
+                      [formField]="form.routeTargetUUID"
                       (openedChange)="clearTargetSearch($event)"
                     >
                       <mat-option class="select-search-option">
@@ -450,7 +450,7 @@
                           matInput
                           class="select-search-field"
                           placeholder="Search destination"
-                          [value]="targetSearch"
+                          [value]="targetSearch()"
                           (input)="setTargetSearch($any($event.target).value)"
                           (click)="$event.stopPropagation()"
                         />
@@ -464,7 +464,7 @@
                   </mat-form-field>
                 }
                 <div class="toggle-row">
-                  <mat-slide-toggle formControlName="status">Active</mat-slide-toggle>
+                  <mat-slide-toggle [formField]="form.status">Active</mat-slide-toggle>
                 </div>
               </div>
             </mat-tab>
@@ -480,7 +480,7 @@
           color="primary"
           type="submit"
           form="PABXResourceForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -492,7 +492,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="resourceSaveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -509,7 +509,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNew()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

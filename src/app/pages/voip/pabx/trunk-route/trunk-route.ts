@@ -12,7 +12,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, max, min, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -74,6 +74,30 @@ type ResourceMeta = {
   defaults: Record<string, unknown>;
   trunkMode?: 'optional' | 'required';
 };
+type TrunkRouteFormModel = {
+  pabxUUID: string;
+  trunkUUID: string;
+  didUUID: string;
+  routeTargetUUID: string;
+  name: string;
+  primary: string;
+  secondary: string;
+  authMode: string;
+  transport: string;
+  port: number;
+  username: string;
+  password: string;
+  realm: string;
+  fromDomain: string;
+  fromUser: string;
+  registerEnabled: boolean;
+  allowedCidrs: string;
+  priority: number;
+  stripDigits: number;
+  audioCodecs: string[];
+  videoCodecs: string[];
+  status: boolean;
+};
 
 type TrunkRouteFilters = {
   resource: ResourceKind;
@@ -119,7 +143,7 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatButtonModule,
@@ -148,7 +172,6 @@ export class VoipPabxTrunkRoutePage {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(VoipPabxTrunkRouteUiService);
   private readonly accountApi = inject(VoipPabxService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   readonly resource = signal<ResourceKind>(
@@ -189,38 +212,24 @@ export class VoipPabxTrunkRoutePage {
   readonly directionOptions = ['inbound', 'outbound', 'both'];
   readonly authModeOptions = ['ip_acl', 'digest', 'register', 'none'];
   readonly transportOptions = ['udp', 'tcp', 'tls'];
-  search = '';
-  searchInput = '';
-  accountSearch = '';
-  trunkSearch = '';
-  didSearch = '';
-  targetSearch = '';
-  audioCodecSearch = '';
-  videoCodecSearch = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly accountSearch = signal('');
+  readonly trunkSearch = signal('');
+  readonly didSearch = signal('');
+  readonly targetSearch = signal('');
+  readonly audioCodecSearch = signal('');
+  readonly videoCodecSearch = signal('');
   passwordVisible = false;
-  readonly form = this.fb.nonNullable.group({
-    pabxUUID: ['', [Validators.required]],
-    trunkUUID: [''],
-    didUUID: [''],
-    routeTargetUUID: [''],
-    name: ['', [Validators.required]],
-    primary: ['', [Validators.required]],
-    secondary: [''],
-    authMode: ['ip_acl'],
-    transport: ['udp'],
-    port: [5060, [Validators.min(1), Validators.max(65535)]],
-    username: [''],
-    password: [''],
-    realm: [''],
-    fromDomain: [''],
-    fromUser: [''],
-    registerEnabled: [false],
-    allowedCidrs: [''],
-    priority: [100, [Validators.min(1)]],
-    stripDigits: [0, [Validators.min(0)]],
-    audioCodecs: [[] as string[]],
-    videoCodecs: [[] as string[]],
-    status: [true],
+  readonly formModel = signal<TrunkRouteFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.pabxUUID);
+    required(schema.name);
+    required(schema.primary);
+    min(schema.port, 1);
+    max(schema.port, 65535);
+    min(schema.priority, 1);
+    min(schema.stripDigits, 0);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -260,11 +269,11 @@ export class VoipPabxTrunkRoutePage {
   
   });
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
   applySearchFilters() {
     const nextFilters = this.currentTrunkRouteFilters();
-    this.search = nextFilters.search;
+    this.search.set(nextFilters.search);
     if (this.sameTrunkRouteFilters(nextFilters, this.appliedFilters())) {
       this.itemsResource.reload();
     } else {
@@ -272,8 +281,8 @@ export class VoipPabxTrunkRoutePage {
     }
   }
   clearSearchFilters() {
-    this.search = '';
-    this.searchInput = '';
+    this.search.set('');
+    this.searchInput.set('');
     const nextFilters = { resource: this.resource(), search: '' };
     if (this.sameTrunkRouteFilters(nextFilters, this.appliedFilters())) {
       this.itemsResource.reload();
@@ -293,9 +302,11 @@ export class VoipPabxTrunkRoutePage {
   editItem(item: ResourceRow) {
     this.editing.set(item);
     this.passwordVisible = false;
-    this.form.patchValue({
+    this.formModel.set({
       pabxUUID: item.pabxUUID,
       trunkUUID: String(item['trunkUUID'] ?? ''),
+      didUUID: String(item['didUUID'] ?? ''),
+      routeTargetUUID: String(item['routeTargetUUID'] ?? ''),
       name: String(item.name ?? ''),
       primary: String(this.primaryValue(item) ?? ''),
       secondary: String(this.secondaryValue(item) ?? ''),
@@ -316,27 +327,21 @@ export class VoipPabxTrunkRoutePage {
       status: Number(item.enabled ?? 0) === 1,
     });
     if (this.isInboundRouteResource()) {
-      this.form.patchValue({
-        didUUID: String(item['didUUID'] ?? ''),
-        routeTargetUUID: String(item['routeTargetUUID'] ?? ''),
-      });
       void this.loadAvailableDids(String(item['didUUID'] ?? ''));
       void this.loadRouteTargets();
     }
     this.openDialog();
   }
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    if (this.meta().trunkMode === 'required' && !this.form.controls.trunkUUID.value) {
+    if (!this.form().valid()) return;
+    const value = this.formModel();
+    if (this.meta().trunkMode === 'required' && !value.trunkUUID) {
       this.snack.warning('Select a trunk before saving this route.');
       return;
     }
     if (
       this.isInboundRouteResource() &&
-      (!this.form.controls.didUUID.value || !this.form.controls.routeTargetUUID.value)
+      (!value.didUUID || !value.routeTargetUUID)
     ) {
       this.snack.warning('Select a DID and destination before saving this inbound route.');
       return;
@@ -436,7 +441,7 @@ export class VoipPabxTrunkRoutePage {
     }
   }
   filteredAccounts() {
-    const value = this.accountSearch.trim().toLowerCase();
+    const value = this.accountSearch().trim().toLowerCase();
     if (!value) return this.accountOptions();
     return this.accountOptions().filter((item) =>
       [item.VpaName, item.CustomerName, item.DomainName].some((field) =>
@@ -447,8 +452,8 @@ export class VoipPabxTrunkRoutePage {
     );
   }
   filteredTrunks() {
-    const value = this.trunkSearch.trim().toLowerCase();
-    const selectedPabxUUID = this.form.controls.pabxUUID.value;
+    const value = this.trunkSearch().trim().toLowerCase();
+    const selectedPabxUUID = this.formModel().pabxUUID;
     const rows = this.trunkOptions().filter((item) => {
       const direction = String(item['direction'] ?? '').toLowerCase();
       const belongsToSelectedPabx = !selectedPabxUUID || item.pabxUUID === selectedPabxUUID;
@@ -464,7 +469,7 @@ export class VoipPabxTrunkRoutePage {
     );
   }
   filteredDids() {
-    const value = this.didSearch.trim().toLowerCase();
+    const value = this.didSearch().trim().toLowerCase();
     if (!value) return this.didOptions();
     return this.didOptions().filter((item) =>
       [item.VddNumber, item.CustomerName, item.OperatorName].some((field) =>
@@ -475,7 +480,7 @@ export class VoipPabxTrunkRoutePage {
     );
   }
   filteredTargets() {
-    const value = this.targetSearch.trim().toLowerCase();
+    const value = this.targetSearch().trim().toLowerCase();
     if (!value) return this.targetOptions();
     return this.targetOptions().filter((item) =>
       [item.name, item['number'], item['username']].some((field) =>
@@ -486,48 +491,48 @@ export class VoipPabxTrunkRoutePage {
     );
   }
   setAccountSearch(value: string) {
-    this.accountSearch = value;
+    this.accountSearch.set(value);
   }
   clearAccountSearch(opened: boolean) {
-    if (!opened) this.accountSearch = '';
+    if (!opened) this.accountSearch.set('');
   }
   setTrunkSearch(value: string) {
-    this.trunkSearch = value;
+    this.trunkSearch.set(value);
   }
   clearTrunkSearch(opened: boolean) {
-    if (!opened) this.trunkSearch = '';
+    if (!opened) this.trunkSearch.set('');
   }
   setDidSearch(value: string) {
-    this.didSearch = value;
+    this.didSearch.set(value);
   }
   clearDidSearch(opened: boolean) {
-    if (!opened) this.didSearch = '';
+    if (!opened) this.didSearch.set('');
   }
   setTargetSearch(value: string) {
-    this.targetSearch = value;
+    this.targetSearch.set(value);
   }
   clearTargetSearch(opened: boolean) {
-    if (!opened) this.targetSearch = '';
+    if (!opened) this.targetSearch.set('');
   }
   setAudioCodecSearch(value: string) {
-    this.audioCodecSearch = value;
+    this.audioCodecSearch.set(value);
   }
   setVideoCodecSearch(value: string) {
-    this.videoCodecSearch = value;
+    this.videoCodecSearch.set(value);
   }
   clearCodecSearch(opened: boolean) {
     if (!opened) {
-      this.audioCodecSearch = '';
-      this.videoCodecSearch = '';
+      this.audioCodecSearch.set('');
+      this.videoCodecSearch.set('');
     }
   }
   filteredAudioCodecs() {
-    const value = this.audioCodecSearch.trim().toLowerCase();
+    const value = this.audioCodecSearch().trim().toLowerCase();
     if (!value) return this.audioCodecOptions;
     return this.audioCodecOptions.filter((codec) => codec.toLowerCase().includes(value));
   }
   filteredVideoCodecs() {
-    const value = this.videoCodecSearch.trim().toLowerCase();
+    const value = this.videoCodecSearch().trim().toLowerCase();
     if (!value) return this.videoCodecOptions;
     return this.videoCodecOptions.filter((codec) => codec.toLowerCase().includes(value));
   }
@@ -554,7 +559,7 @@ export class VoipPabxTrunkRoutePage {
   }
   onPabxChange() {
     if (!this.isInboundRouteResource()) return;
-    this.form.patchValue({ didUUID: '', routeTargetUUID: '' });
+    this.formModel.update((current) => ({ ...current, didUUID: '', routeTargetUUID: '' }));
     this.didOptions.set([]);
     this.targetOptions.set([]);
     void this.loadAvailableDids();
@@ -563,20 +568,21 @@ export class VoipPabxTrunkRoutePage {
   onDidChange(didUUID: string) {
     const did = this.didOptions().find((item) => item.VddUUID === didUUID);
     if (!did) return;
-    const currentName = this.form.controls.name.value.trim();
-    this.form.patchValue({
+    const currentName = this.formModel().name.trim();
+    this.formModel.update((current) => ({
+      ...current,
       name: currentName || `DID ${did.VddNumber}`,
       primary: did.SuggestedPattern || `^${did.VddNumber}$`,
-    });
+    }));
   }
   onRouteTypeChange() {
     if (!this.isInboundRouteResource()) return;
-    this.form.patchValue({ routeTargetUUID: '' });
+    this.formModel.update((current) => ({ ...current, routeTargetUUID: '' }));
     void this.loadRouteTargets();
   }
 
   private payloadFromForm() {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const meta = this.meta();
     const payload: Record<string, unknown> = {
       ...meta.defaults,
@@ -621,7 +627,7 @@ export class VoipPabxTrunkRoutePage {
   private resetForm() {
     const meta = this.meta();
     this.passwordVisible = false;
-    this.form.reset({
+    this.formModel.set({
       pabxUUID: this.accountOptions()[0]?.VpaUUID ?? '',
       trunkUUID: '',
       didUUID: '',
@@ -680,8 +686,11 @@ export class VoipPabxTrunkRoutePage {
     this.accountOptions.set(accounts?.data?.items ?? []);
     this.trunkOptions.set(trunks?.data?.items ?? []);
     if (this.isInboundRouteResource()) {
-      if (!this.form.controls.pabxUUID.value && this.accountOptions()[0]?.VpaUUID) {
-        this.form.controls.pabxUUID.setValue(this.accountOptions()[0].VpaUUID);
+      if (!this.formModel().pabxUUID && this.accountOptions()[0]?.VpaUUID) {
+        this.formModel.update((current) => ({
+          ...current,
+          pabxUUID: this.accountOptions()[0].VpaUUID,
+        }));
       }
       await this.refreshInboundLookupsForSelectedPabx();
     }
@@ -700,14 +709,14 @@ export class VoipPabxTrunkRoutePage {
   private currentTrunkRouteFilters(): TrunkRouteFilters {
     return {
       resource: this.resource(),
-      search: this.searchInput.trim(),
+      search: this.searchInput().trim(),
     };
   }
   private sameTrunkRouteFilters(left: TrunkRouteFilters, right: TrunkRouteFilters) {
     return left.resource === right.resource && left.search === right.search;
   }
   private async refreshInboundLookupsForSelectedPabx(includeDidUUID = '') {
-    if (!this.isInboundRouteResource() || !this.form.controls.pabxUUID.value) {
+    if (!this.isInboundRouteResource() || !this.formModel().pabxUUID) {
       this.didOptions.set([]);
       this.targetOptions.set([]);
       return;
@@ -715,7 +724,7 @@ export class VoipPabxTrunkRoutePage {
     await Promise.all([this.loadAvailableDids(includeDidUUID), this.loadRouteTargets()]);
   }
   private async loadAvailableDids(includeDidUUID = '') {
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const pabxUUID = this.formModel().pabxUUID;
     if (!pabxUUID || !this.isInboundRouteResource()) {
       this.didOptions.set([]);
       return;
@@ -728,7 +737,7 @@ export class VoipPabxTrunkRoutePage {
     this.didOptions.set(response?.data?.items ?? []);
   }
   private targetResource() {
-    const routeType = this.form.controls.secondary.value;
+    const routeType = this.formModel().secondary;
     if (routeType === 'extension') return 'extensions';
     if (routeType === 'external') return 'externals';
     if (routeType === 'group') return 'groups';
@@ -737,7 +746,7 @@ export class VoipPabxTrunkRoutePage {
     return '';
   }
   private async loadRouteTargets() {
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const pabxUUID = this.formModel().pabxUUID;
     const resource = this.targetResource();
     if (!pabxUUID || !resource || !this.isInboundRouteResource()) {
       this.targetOptions.set([]);
@@ -835,5 +844,33 @@ export class VoipPabxTrunkRoutePage {
       if (normalized) unique.add(normalized);
     });
     return Array.from(unique).join(',');
+  }
+
+  private emptyFormModel(): TrunkRouteFormModel {
+    const meta = this.meta();
+    return {
+      pabxUUID: this.accountOptions()[0]?.VpaUUID ?? '',
+      trunkUUID: '',
+      didUUID: '',
+      routeTargetUUID: '',
+      name: '',
+      primary: '',
+      secondary: String(meta.defaults[meta.secondaryKey] ?? ''),
+      authMode: String(meta.defaults['authMode'] ?? 'ip_acl'),
+      transport: String(meta.defaults['transport'] ?? 'udp'),
+      port: Number(meta.defaults['port'] ?? 5060),
+      username: '',
+      password: '',
+      realm: '',
+      fromDomain: '',
+      fromUser: '',
+      registerEnabled: Boolean(meta.defaults['registerEnabled'] ?? false),
+      allowedCidrs: '',
+      priority: Number(meta.defaults['priority'] ?? 100),
+      stripDigits: Number(meta.defaults['stripDigits'] ?? 0),
+      audioCodecs: [],
+      videoCodecs: [],
+      status: true,
+    };
   }
 }
