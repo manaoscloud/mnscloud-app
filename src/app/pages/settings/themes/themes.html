@@ -21,15 +21,15 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Domain or page title" formControlName="search" />
+        <input matInput placeholder="Domain or page title" [formField]="filterForm.search" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Job Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="idle">Idle</mat-option>
           <mat-option value="queued">Queued</mat-option>
@@ -217,26 +217,23 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="domainForm">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Domain</mat-label>
-              <input matInput placeholder="app.yourcompany.com" formControlName="domain" />
-              @if (domainForm.controls.domain.hasError('required')) {
+              <input matInput placeholder="app.yourcompany.com" [formField]="domainForm.domain" />
+              @if (domainForm.domain().errors().length) {
                 <mat-error> Please provide a domain. </mat-error>
               }
-              @if (domainForm.controls.domain.hasError('domain')) {
+              @if (domainInvalid()) {
                 <mat-error> Use only the hostname, without scheme, port, or path. </mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Page Title</mat-label>
-              <input matInput placeholder="Main portal" formControlName="pageTitle" />
-              @if (domainForm.controls.pageTitle.hasError('required')) {
+              <input matInput placeholder="Main portal" [formField]="domainForm.pageTitle" />
+              @if (domainForm.pageTitle().errors().length) {
                 <mat-error> Please provide a page title. </mat-error>
-              }
-              @if (domainForm.controls.pageTitle.hasError('minlength')) {
-                <mat-error> Page title too short. </mat-error>
               }
             </mat-form-field>
 
@@ -246,9 +243,9 @@
                 matInput
                 rows="3"
                 placeholder="Short description for browser previews"
-                formControlName="metaDescription"
+                [formField]="domainForm.metaDescription"
               ></textarea>
-              @if (domainForm.controls.metaDescription.hasError('maxlength')) {
+              @if (domainForm.metaDescription().errors().length) {
                 <mat-error> Use 255 characters or fewer. </mat-error>
               }
             </mat-form-field>
@@ -258,9 +255,9 @@
               <input
                 matInput
                 placeholder="https://cdn.example.com/logo.svg"
-                formControlName="logoUrl"
+                [formField]="domainForm.logoUrl"
               />
-              @if (domainForm.controls.logoUrl.hasError('url')) {
+              @if (logoUrlInvalid()) {
                 <mat-error> Use a valid http(s) URL. </mat-error>
               }
             </mat-form-field>
@@ -270,17 +267,17 @@
               <input
                 matInput
                 placeholder="https://cdn.example.com/favicon.ico"
-                formControlName="faviconUrl"
+                [formField]="domainForm.faviconUrl"
               />
-              @if (domainForm.controls.faviconUrl.hasError('url')) {
+              @if (faviconUrlInvalid()) {
                 <mat-error> Use a valid http(s) URL. </mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Primary Color</mat-label>
-              <input matInput placeholder="#2563eb" formControlName="primaryColor" />
-              @if (domainForm.controls.primaryColor.hasError('color')) {
+              <input matInput placeholder="#2563eb" [formField]="domainForm.primaryColor" />
+              @if (primaryColorInvalid()) {
                 <mat-error> Use #RRGGBB format. </mat-error>
               }
             </mat-form-field>
@@ -308,7 +305,7 @@
           color="primary"
           type="button"
           (click)="submit()"
-          [disabled]="domainForm.invalid || saving()"
+          [disabled]="!domainForm().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -320,7 +317,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="domainForm.invalid || saving()"
+            [disabled]="!domainForm().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >

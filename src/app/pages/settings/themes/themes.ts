@@ -14,12 +14,12 @@ import {
   viewChild,
 } from '@angular/core';
 import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+  FormField,
+  form as createForm,
+  maxLength,
+  minLength,
+  required,
+} from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -111,42 +111,35 @@ type ThemeSnapshot = {
   jobs: Record<string, { web?: ThemeJob; cert?: ThemeJob }>;
 };
 
+type ThemeFilterModel = {
+  search: string;
+  status: string;
+};
+
+type ThemeDomainFormModel = {
+  domain: string;
+  pageTitle: string;
+  metaDescription: string;
+  logoUrl: string;
+  faviconUrl: string;
+  primaryColor: string;
+};
+
 const DOMAIN_REGEX = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 
-function domainValidator(control: AbstractControl): ValidationErrors | null {
-  const value = (control.value ?? '').toString().trim().toLowerCase();
-  if (!value) return null;
-
-  if (
-    value.includes('://') ||
-    value.includes('/') ||
-    value.includes('?') ||
-    value.includes('#') ||
-    value.includes(':')
-  ) {
-    return { domain: true };
-  }
-
-  if (/\s/.test(value)) return { domain: true };
-  if (!DOMAIN_REGEX.test(value)) return { domain: true };
-  return null;
-}
-
-function optionalHttpUrlValidator(control: AbstractControl): ValidationErrors | null {
-  const value = (control.value ?? '').toString().trim();
+function isValidHttpUrl(value: string) {
   if (!value) return null;
   try {
     const url = new URL(value);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? null : { url: true };
+    return url.protocol === 'https:' || url.protocol === 'http:';
   } catch {
-    return { url: true };
+    return false;
   }
 }
 
-function optionalHexColorValidator(control: AbstractControl): ValidationErrors | null {
-  const value = (control.value ?? '').toString().trim();
+function isValidHexColor(value: string) {
   if (!value) return null;
-  return /^#[0-9a-fA-F]{6}$/.test(value) ? null : { color: true };
+  return /^#[0-9a-fA-F]{6}$/.test(value);
 }
 
 @Component({
@@ -154,7 +147,7 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -179,7 +172,6 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsThemesPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -208,17 +200,17 @@ export class SettingsThemesPage {
   readonly dataSource = new MatTableDataSource<ThemeDomain>([]);
 
   readonly displayedColumns = ['select', 'domain', 'title', 'web', 'certificate', 'actions'];
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    status: [''],
-  });
-  readonly domainForm = this.fb.nonNullable.group({
-    domain: ['', [Validators.required, domainValidator]],
-    pageTitle: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
-    metaDescription: ['', [Validators.maxLength(255)]],
-    logoUrl: ['', [optionalHttpUrlValidator, Validators.maxLength(500)]],
-    faviconUrl: ['', [optionalHttpUrlValidator, Validators.maxLength(500)]],
-    primaryColor: ['', [optionalHexColorValidator]],
+  readonly filterFormModel = signal<ThemeFilterModel>({ search: '', status: '' });
+  readonly filterForm = createForm(this.filterFormModel);
+  readonly domainFormModel = signal<ThemeDomainFormModel>(this.emptyDomainForm());
+  readonly domainForm = createForm(this.domainFormModel, (schema) => {
+    required(schema.domain);
+    required(schema.pageTitle);
+    minLength(schema.pageTitle, 2);
+    maxLength(schema.pageTitle, 120);
+    maxLength(schema.metaDescription, 255);
+    maxLength(schema.logoUrl, 500);
+    maxLength(schema.faviconUrl, 500);
   });
 
   private readonly themesEffect = effect(() => {
@@ -269,14 +261,14 @@ export class SettingsThemesPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.dataSource.filter = JSON.stringify(values);
     this.paginator()?.firstPage();
     this.reconcileThemeSelection();
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', status: '' });
+    this.filterFormModel.set({ search: '', status: '' });
     this.applyFilters();
   }
 
@@ -306,7 +298,7 @@ export class SettingsThemesPage {
 
   startEdit(item: ThemeDomain) {
     this.editing.set(item);
-    this.domainForm.reset({
+    this.domainFormModel.set({
       domain: item.Domain,
       pageTitle: item.PageTitle,
       metaDescription: item.MetaDescription ?? '',
@@ -324,15 +316,24 @@ export class SettingsThemesPage {
   }
 
   async submit(closeAfterSave = true) {
-    this.domainForm.markAllAsTouched();
-    if (this.domainForm.invalid) return;
+    if (!this.domainForm().valid()) return;
 
-    const values = this.domainForm.getRawValue();
+    const values = this.domainFormModel();
     const domain = this.normalizeDomain(values.domain);
     const pageTitle = values.pageTitle?.trim();
 
     if (!domain || !pageTitle) {
       this.snack.warning('Please provide a valid domain and page title.');
+      return;
+    }
+
+    if (!this.isUrlFieldValid(values.logoUrl) || !this.isUrlFieldValid(values.faviconUrl)) {
+      this.snack.warning('Please use valid http(s) URLs.');
+      return;
+    }
+
+    if (!this.isColorFieldValid(values.primaryColor)) {
+      this.snack.warning('Please use #RRGGBB format for the primary color.');
       return;
     }
 
@@ -598,14 +599,39 @@ export class SettingsThemesPage {
   }
 
   private resetForm() {
-    this.domainForm.reset({
+    this.domainFormModel.set(this.emptyDomainForm());
+  }
+
+  readonly domainInvalid = computed(() => {
+    const domain = this.domainFormModel().domain;
+    return !!domain && !this.normalizeDomain(domain);
+  });
+
+  readonly logoUrlInvalid = computed(() => !this.isUrlFieldValid(this.domainFormModel().logoUrl));
+  readonly faviconUrlInvalid = computed(
+    () => !this.isUrlFieldValid(this.domainFormModel().faviconUrl),
+  );
+  readonly primaryColorInvalid = computed(
+    () => !this.isColorFieldValid(this.domainFormModel().primaryColor),
+  );
+
+  private emptyDomainForm(): ThemeDomainFormModel {
+    return {
       domain: '',
       pageTitle: '',
       metaDescription: '',
       logoUrl: '',
       faviconUrl: '',
       primaryColor: '',
-    });
+    };
+  }
+
+  private isUrlFieldValid(value: string) {
+    return isValidHttpUrl(value.trim()) !== false;
+  }
+
+  private isColorFieldValid(value: string) {
+    return isValidHexColor(value.trim()) !== false;
   }
 
   private emptyToNull(value: string | null | undefined) {
