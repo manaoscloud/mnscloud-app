@@ -10,7 +10,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -47,7 +46,6 @@ type Entity = {
   selector: 'app-crud',
   standalone: true,
   imports: [
-    FormsModule,
     FormField,
     MatCardModule,
     MatDialogModule,
