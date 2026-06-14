@@ -111,25 +111,25 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="form" (ngSubmit)="save()">
+            <form class="form-grid" (ngSubmit)="save()">
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
+                <input matInput [formField]="form.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Description</mat-label>
-                <input matInput formControlName="description" />
+                <input matInput [formField]="form.description" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>IP/Mask</mat-label>
-                <input matInput formControlName="cidr" placeholder="203.0.113.10/32" />
+                <input matInput [formField]="form.cidr" placeholder="203.0.113.10/32" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="form.status">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -146,7 +146,7 @@
         color="primary"
         type="button"
         (click)="save()"
-        [disabled]="form.invalid || saving()"
+        [disabled]="!form().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save
@@ -157,7 +157,7 @@
           color="primary"
           type="button"
           (click)="saveAndNew()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           Save and new
         </button>

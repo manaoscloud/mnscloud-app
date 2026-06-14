@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -49,7 +49,7 @@ type BrandFilters = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -69,7 +69,6 @@ type BrandFilters = {
 })
 export class SaleBrandPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -77,20 +76,20 @@ export class SaleBrandPage {
   readonly error = signal<string | null>(null);
   readonly brands = signal<BrandItem[]>([]);
   readonly editing = signal<BrandItem | null>(null);
-  readonly filterForm = this.fb.nonNullable.group({
-    name: [''],
-  });
+  readonly filterFormModel = signal({ name: '' });
+  readonly filterForm = createForm(this.filterFormModel);
   private readonly brandsResource = resource({
     defaultValue: [] as BrandItem[],
     params: (): BrandFilters => ({
-      name: this.filterForm.controls.name.value.trim(),
+      name: this.filterFormModel().name.trim(),
     }),
     loader: ({ params }) => this.fetchBrands(params),
   });
   readonly loading = this.brandsResource.isLoading;
 
-  readonly brandForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
+  readonly brandFormModel = signal({ name: '' });
+  readonly brandForm = createForm(this.brandFormModel, (path) => {
+    required(path.name);
   });
 
   readonly displayedColumns = ['name', 'actions'];
@@ -135,7 +134,7 @@ export class SaleBrandPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ name: '' });
+    this.filterFormModel.set({ name: '' });
     this.brandsResource.reload();
   }
 
@@ -145,7 +144,7 @@ export class SaleBrandPage {
 
   startEdit(brand: BrandItem) {
     this.editing.set(brand);
-    this.brandForm.reset({ name: brand.SbrName });
+    this.brandFormModel.set({ name: brand.SbrName });
   }
 
   openCreateDialog() {
@@ -160,14 +159,14 @@ export class SaleBrandPage {
 
   cancelEdit() {
     this.editing.set(null);
-    this.brandForm.reset({ name: '' });
+    this.brandFormModel.set({ name: '' });
     this.closeBrandDialog();
   }
 
   async saveBrand() {
-    if (this.brandForm.invalid) return;
+    if (!this.brandForm().valid()) return;
 
-    const payload = { name: this.brandForm.getRawValue().name.trim() };
+    const payload = { name: this.brandFormModel().name.trim() };
     if (!payload.name) return;
 
     this.saving.set(true);

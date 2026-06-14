@@ -12,7 +12,14 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormField,
+  form as createForm,
+  minLength,
+  pattern,
+  required,
+} from '@angular/forms/signals';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -49,7 +56,7 @@ import {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -75,7 +82,6 @@ import {
 export class CyberSecurityServicesPage {
   private readonly api = inject(CyberSecurityServicesService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -107,14 +113,23 @@ export class CyberSecurityServicesPage {
     'actions',
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9][a-z0-9-]*$/)]],
-    description: [''],
-    defaultPorts: ['[]', [Validators.required]],
-    logPaths: ['[]', [Validators.required]],
-    crowdsecCollections: ['[]', [Validators.required]],
-    enabled: [1],
+  readonly formModel = signal({
+    name: '',
+    slug: '',
+    description: '',
+    defaultPorts: '[]',
+    logPaths: '[]',
+    crowdsecCollections: '[]',
+    enabled: 1,
+  });
+  readonly form = createForm(this.formModel, (path) => {
+    required(path.name);
+    minLength(path.name, 2);
+    required(path.slug);
+    pattern(path.slug, /^[a-z0-9][a-z0-9-]*$/);
+    required(path.defaultPorts);
+    required(path.logPaths);
+    required(path.crowdsecCollections);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -194,7 +209,7 @@ export class CyberSecurityServicesPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       name: '',
       slug: '',
       description: '',
@@ -208,7 +223,7 @@ export class CyberSecurityServicesPage {
 
   startEdit(service: CyberSecurityProtectedService) {
     this.editing.set(service);
-    this.form.reset({
+    this.formModel.set({
       name: service.name ?? '',
       slug: service.slug ?? '',
       description: service.description ?? '',
@@ -221,7 +236,7 @@ export class CyberSecurityServicesPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
     let payload: CyberSecurityProtectedServicePayload;
     try {
@@ -247,7 +262,7 @@ export class CyberSecurityServicesPage {
       this.servicesResource.reload();
 
       if (saveAndNew && createMode) {
-        this.form.reset({
+        this.formModel.set({
           name: '',
           slug: '',
           description: '',
@@ -275,7 +290,7 @@ export class CyberSecurityServicesPage {
 
   cancelForm() {
     this.closeServiceDialog();
-    this.form.reset({
+    this.formModel.set({
       name: '',
       slug: '',
       description: '',
@@ -436,7 +451,7 @@ export class CyberSecurityServicesPage {
   }
 
   private buildPayload(): CyberSecurityProtectedServicePayload {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     return {
       name: value.name.trim(),
       slug: value.slug.trim().toLowerCase(),

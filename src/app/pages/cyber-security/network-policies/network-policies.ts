@@ -12,7 +12,8 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -57,7 +58,7 @@ type CyberSecurityNetworkPoliciesSnapshot = {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -83,7 +84,6 @@ export class CyberSecurityNetworkPoliciesPage {
   private readonly policiesApi = inject(CyberSecurityNetworkPoliciesService);
   private readonly trustedNodesApi = inject(CyberSecurityTrustedNodesService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -128,21 +128,18 @@ export class CyberSecurityNetworkPoliciesPage {
     'actions',
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    endpointGroup: ['freeswitch_xml_curl', [Validators.required]],
-    action: ['custom_rate_limit', [Validators.required]],
-    scope: ['tenant', [Validators.required]],
-    mode: ['monitor', [Validators.required]],
-    priority: [100, [Validators.required]],
-    nodeType: ['freeswitch', [Validators.required]],
-    trustedNodeUUID: [''],
-    networks: ['[]', [Validators.required]],
-    methods: ['["GET","POST"]', [Validators.required]],
-    rateLimitPerMinute: [300],
-    burst: [120],
-    reason: [''],
-    enabled: [1],
+  readonly formModel = signal(this.defaultFormValue());
+  readonly form = createForm(this.formModel, (path) => {
+    required(path.name);
+    minLength(path.name, 2);
+    required(path.endpointGroup);
+    required(path.action);
+    required(path.scope);
+    required(path.mode);
+    required(path.priority);
+    required(path.nodeType);
+    required(path.networks);
+    required(path.methods);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -228,7 +225,7 @@ export class CyberSecurityNetworkPoliciesPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset(this.defaultFormValue());
+    this.formModel.set(this.defaultFormValue());
     this.openNetworkPolicyDialog();
   }
 
@@ -239,7 +236,7 @@ export class CyberSecurityNetworkPoliciesPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
     let payload: CyberSecurityNetworkPolicyPayload;
     try {
@@ -265,7 +262,7 @@ export class CyberSecurityNetworkPoliciesPage {
       this.networkPoliciesResource.reload();
 
       if (saveAndNew && createMode) {
-        this.form.reset(this.defaultFormValue());
+        this.formModel.set(this.defaultFormValue());
         this.editing.set(null);
         return;
       }
@@ -285,7 +282,7 @@ export class CyberSecurityNetworkPoliciesPage {
 
   cancelForm() {
     this.closeNetworkPolicyDialog();
-    this.form.reset(this.defaultFormValue());
+    this.formModel.set(this.defaultFormValue());
     this.editing.set(null);
   }
 
@@ -431,7 +428,7 @@ export class CyberSecurityNetworkPoliciesPage {
   }
 
   private fillForm(policy: CyberSecurityNetworkPolicy) {
-    this.form.reset({
+    this.formModel.set({
       name: policy.name ?? '',
       endpointGroup: policy.endpointGroup ?? 'freeswitch_xml_curl',
       action: policy.action ?? 'custom_rate_limit',
@@ -450,7 +447,7 @@ export class CyberSecurityNetworkPoliciesPage {
   }
 
   private buildPayload(): CyberSecurityNetworkPolicyPayload {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     return {
       trustedNodeUUID: value.trustedNodeUUID || null,
       name: value.name.trim(),

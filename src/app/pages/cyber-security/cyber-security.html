@@ -12,12 +12,12 @@
     </header>
 
     @if (activeSection() !== 'dashboard') {
-      <div class="filter-grid" [formGroup]="filterForm">
+      <div class="filter-grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Search' | transloco }}</mat-label>
           <input
             matInput
-            formControlName="search"
+            [formField]="filterForm.search"
             [placeholder]="'IP, agent, service, profile' | transloco"
           />
         </mat-form-field>
@@ -26,7 +26,7 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Server' | transloco }}</mat-label>
             <mat-select
-              formControlName="serverUUID"
+              [formField]="filterForm.serverUUID"
               (openedChange)="clearAlertServerSearch($event)"
             >
               <mat-option class="select-search-option" disabled>
@@ -51,7 +51,7 @@
 
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Status' | transloco }}</mat-label>
-            <mat-select formControlName="status">
+            <mat-select [formField]="filterForm.status">
               <mat-option value="">{{ 'All statuses' | transloco }}</mat-option>
               @if (activeSection() === 'alerts') {
                 <mat-option value="open">{{ 'Open' | transloco }}</mat-option>
@@ -71,7 +71,7 @@
           @if (activeSection() === 'alerts') {
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Level' | transloco }}</mat-label>
-              <mat-select formControlName="level">
+              <mat-select [formField]="filterForm.level">
                 <mat-option value="">{{ 'All levels' | transloco }}</mat-option>
                 <mat-option value="info">{{ 'Info' | transloco }}</mat-option>
                 <mat-option value="warning">{{ 'Warning' | transloco }}</mat-option>
@@ -82,7 +82,7 @@
           } @else {
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Action' | transloco }}</mat-label>
-              <mat-select formControlName="action">
+              <mat-select [formField]="filterForm.action">
                 <mat-option value="">{{ 'All actions' | transloco }}</mat-option>
                 <mat-option value="ban">{{ 'Ban' | transloco }}</mat-option>
                 <mat-option value="allow">{{ 'Allow' | transloco }}</mat-option>
@@ -95,7 +95,7 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Service' | transloco }}</mat-label>
             <mat-select
-              formControlName="serviceSlug"
+              [formField]="filterForm.serviceSlug"
               (openedChange)="clearAlertServiceSearch($event)"
             >
               <mat-option class="select-search-option" disabled>
@@ -118,13 +118,17 @@
 
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Origin' | transloco }}</mat-label>
-            <input matInput formControlName="sourceIP" [placeholder]="'Source IP' | transloco" />
+            <input
+              matInput
+              [formField]="filterForm.sourceIP"
+              [placeholder]="'Source IP' | transloco"
+            />
           </mat-form-field>
 
           @if (activeSection() === 'decisions') {
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Source' | transloco }}</mat-label>
-              <mat-select formControlName="origin">
+              <mat-select [formField]="filterForm.origin">
                 <mat-option value="">{{ 'All sources' | transloco }}</mat-option>
                 <mat-option value="crowdsec">CrowdSec</mat-option>
                 <mat-option value="manual">{{ 'Manual' | transloco }}</mat-option>
@@ -932,27 +936,27 @@
 <ng-template #listDialog>
   <div class="cyber-dialog">
     <h2>{{ editingListEntry() ? 'Edit list entry' : 'New list entry' }}</h2>
-    <mat-dialog-content class="dialog-grid" [formGroup]="listForm">
+    <mat-dialog-content class="dialog-grid">
       <mat-form-field appearance="outline"
         ><mat-label>Type</mat-label
-        ><mat-select formControlName="listType"
+        ><mat-select [formField]="listForm.listType"
           ><mat-option value="allowlist">Allowlist</mat-option
           ><mat-option value="blocklist">Blocklist</mat-option></mat-select
         ></mat-form-field
       >
       <mat-form-field appearance="outline"
         ><mat-label>Scope</mat-label
-        ><mat-select formControlName="scope"
+        ><mat-select [formField]="listForm.scope"
           ><mat-option value="ip">IP</mat-option><mat-option value="range">Range</mat-option
           ><mat-option value="country">Country</mat-option
           ><mat-option value="asn">ASN</mat-option></mat-select
         ></mat-form-field
       >
       <mat-form-field appearance="outline" class="full"
-        ><mat-label>Value</mat-label><input matInput formControlName="value"
+        ><mat-label>Value</mat-label><input matInput [formField]="listForm.value"
       /></mat-form-field>
       <mat-form-field appearance="outline" class="full"
-        ><mat-label>Reason</mat-label><input matInput formControlName="reason"
+        ><mat-label>Reason</mat-label><input matInput [formField]="listForm.reason"
       /></mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">

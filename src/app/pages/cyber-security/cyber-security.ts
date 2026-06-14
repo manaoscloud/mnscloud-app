@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -173,7 +173,7 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatDialogModule,
@@ -200,7 +200,6 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
 export class CyberSecurityPage {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
@@ -475,23 +474,29 @@ export class CyberSecurityPage {
     'reason',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    serverUUID: [''],
-    status: [''],
-    level: [''],
-    serviceSlug: [''],
-    sourceIP: [''],
-    action: [''],
-    origin: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    serverUUID: '',
+    status: '',
+    level: '',
+    serviceSlug: '',
+    sourceIP: '',
+    action: '',
+    origin: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly listForm = this.fb.nonNullable.group({
-    listType: ['allowlist', [Validators.required]],
-    value: ['', [Validators.required]],
-    scope: ['ip', [Validators.required]],
-    reason: [''],
-    enabled: [1],
+  readonly listFormModel = signal({
+    listType: 'allowlist',
+    value: '',
+    scope: 'ip',
+    reason: '',
+    enabled: 1,
+  });
+  readonly listForm = createForm(this.listFormModel, (path) => {
+    required(path.listType);
+    required(path.value);
+    required(path.scope);
   });
 
   constructor() {
@@ -587,7 +592,7 @@ export class CyberSecurityPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({
+    this.filterFormModel.set({
       search: '',
       serverUUID: '',
       status: '',
@@ -626,7 +631,7 @@ export class CyberSecurityPage {
 
   openListEntry(row?: CyberRecord, listType = 'allowlist') {
     this.editingListEntry.set(row ?? null);
-    this.listForm.reset({
+    this.listFormModel.set({
       listType: row?.listType ?? listType,
       value: row?.value ?? '',
       scope: row?.scope ?? 'ip',
@@ -637,11 +642,11 @@ export class CyberSecurityPage {
   }
 
   async saveListEntry() {
-    if (this.listForm.invalid) return;
+    if (!this.listForm().valid()) return;
     const row = this.editingListEntry();
     await this.save(
       row ? `cyber-security/lists/${row.uuid}` : 'cyber-security/lists',
-      this.listForm.getRawValue(),
+      this.listFormModel(),
       !!row,
     );
   }
@@ -906,7 +911,7 @@ export class CyberSecurityPage {
   }
 
   private currentFilters(): CyberFilters {
-    return this.filterForm.getRawValue();
+    return this.filterFormModel();
   }
 
   private errorMessage(error: any, fallback: string) {

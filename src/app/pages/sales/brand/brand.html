@@ -15,10 +15,10 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Name</mat-label>
-        <input matInput placeholder="Search by name" formControlName="name" />
+        <input matInput placeholder="Search by name" [formField]="filterForm.name" />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -85,10 +85,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="brandForm" (ngSubmit)="saveBrand()">
+            <form class="form-grid" (ngSubmit)="saveBrand()">
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. mnscloud" formControlName="name" />
+                <input matInput placeholder="e.g. mnscloud" [formField]="brandForm.name" />
               </mat-form-field>
             </form>
           </div>
@@ -102,7 +102,7 @@
         color="primary"
         type="button"
         (click)="saveBrand()"
-        [disabled]="brandForm.invalid || saving()"
+        [disabled]="!brandForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save

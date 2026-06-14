@@ -175,20 +175,20 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Name</mat-label>
-              <input matInput placeholder="FreeSWITCH" formControlName="name" />
+              <input matInput placeholder="FreeSWITCH" [formField]="form.name" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Slug</mat-label>
-              <input matInput placeholder="freeswitch" formControlName="slug" />
+              <input matInput placeholder="freeswitch" [formField]="form.slug" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
+              <mat-select [formField]="form.enabled">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
@@ -196,26 +196,26 @@
 
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Description</mat-label>
-              <input matInput formControlName="description" />
+              <input matInput [formField]="form.description" />
             </mat-form-field>
           </form>
         </mat-tab>
 
         <mat-tab label="Configuration">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Default ports JSON</mat-label>
-              <textarea matInput rows="8" formControlName="defaultPorts"></textarea>
+              <textarea matInput rows="8" [formField]="form.defaultPorts"></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Log paths JSON</mat-label>
-              <textarea matInput rows="8" formControlName="logPaths"></textarea>
+              <textarea matInput rows="8" [formField]="form.logPaths"></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>CrowdSec collections JSON</mat-label>
-              <textarea matInput rows="6" formControlName="crowdsecCollections"></textarea>
+              <textarea matInput rows="6" [formField]="form.crowdsecCollections"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -241,7 +241,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -253,7 +253,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMoreMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -267,7 +267,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

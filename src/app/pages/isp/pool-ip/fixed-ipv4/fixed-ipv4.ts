@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
@@ -46,7 +46,7 @@ type FixedIpv4Item = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -68,7 +68,6 @@ type FixedIpv4Item = {
 })
 export class IspFixedIpv4Page {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -88,11 +87,12 @@ export class IspFixedIpv4Page {
   search = '';
   searchInput = '';
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    description: [''],
-    cidr: ['', [Validators.required]],
-    status: [1, [Validators.required]],
+  readonly formModel = signal({ name: '', description: '', cidr: '', status: 1 });
+  readonly form = createForm(this.formModel, (path) => {
+    required(path.name);
+    minLength(path.name, 2);
+    required(path.cidr);
+    required(path.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -157,12 +157,12 @@ export class IspFixedIpv4Page {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({ name: '', description: '', cidr: '', status: 1 });
+    this.formModel.set({ name: '', description: '', cidr: '', status: 1 });
   }
 
   startEdit(item: FixedIpv4Item) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       name: item.If4Name,
       description: item.If4Description ?? '',
       cidr: item.If4Cidr,
@@ -177,9 +177,9 @@ export class IspFixedIpv4Page {
   }
 
   async save(createAnother = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload = {
       name: value.name.trim(),
       description: value.description?.trim() || null,

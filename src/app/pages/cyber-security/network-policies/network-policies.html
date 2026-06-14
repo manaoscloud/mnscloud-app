@@ -182,20 +182,24 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Name</mat-label>
-              <input matInput placeholder="FreeSWITCH XML curl rate limit" formControlName="name" />
+              <input
+                matInput
+                placeholder="FreeSWITCH XML curl rate limit"
+                [formField]="form.name"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Endpoint group</mat-label>
-              <input matInput formControlName="endpointGroup" />
+              <input matInput [formField]="form.endpointGroup" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Action</mat-label>
-              <mat-select formControlName="action">
+              <mat-select [formField]="form.action">
                 <mat-option value="allow">Allow</mat-option>
                 <mat-option value="deny">Deny</mat-option>
                 <mat-option value="custom_rate_limit">Custom rate limit</mat-option>
@@ -205,7 +209,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Scope</mat-label>
-              <mat-select formControlName="scope">
+              <mat-select [formField]="form.scope">
                 <mat-option value="tenant">Tenant</mat-option>
                 <mat-option value="environment">Environment</mat-option>
                 <mat-option value="node">Node</mat-option>
@@ -215,7 +219,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Mode</mat-label>
-              <mat-select formControlName="mode">
+              <mat-select [formField]="form.mode">
                 <mat-option value="monitor">Monitor only</mat-option>
                 <mat-option value="enforce">Enforce</mat-option>
               </mat-select>
@@ -223,7 +227,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
+              <mat-select [formField]="form.enabled">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
@@ -231,7 +235,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Node type</mat-label>
-              <mat-select formControlName="nodeType">
+              <mat-select [formField]="form.nodeType">
                 <mat-option value="any">Any</mat-option>
                 <mat-option value="freeswitch">FreeSWITCH</mat-option>
                 <mat-option value="asterisk">Asterisk</mat-option>
@@ -245,13 +249,13 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Priority</mat-label>
-              <input matInput type="number" formControlName="priority" />
+              <input matInput type="number" [formField]="form.priority" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Trusted node</mat-label>
               <mat-select
-                formControlName="trustedNodeUUID"
+                [formField]="form.trustedNodeUUID"
                 (openedChange)="clearTrustedNodeSearch($event)"
               >
                 <mat-option class="select-search-option" disabled>
@@ -276,31 +280,31 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Rate limit per minute</mat-label>
-              <input matInput type="number" formControlName="rateLimitPerMinute" />
+              <input matInput type="number" [formField]="form.rateLimitPerMinute" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Burst</mat-label>
-              <input matInput type="number" formControlName="burst" />
+              <input matInput type="number" [formField]="form.burst" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Reason</mat-label>
-              <input matInput formControlName="reason" />
+              <input matInput [formField]="form.reason" />
             </mat-form-field>
           </form>
         </mat-tab>
 
         <mat-tab label="Rules">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Networks JSON</mat-label>
-              <textarea matInput rows="8" formControlName="networks"></textarea>
+              <textarea matInput rows="8" [formField]="form.networks"></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Methods JSON</mat-label>
-              <textarea matInput rows="8" formControlName="methods"></textarea>
+              <textarea matInput rows="8" [formField]="form.methods"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -326,7 +330,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -338,7 +342,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMoreMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -352,7 +356,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

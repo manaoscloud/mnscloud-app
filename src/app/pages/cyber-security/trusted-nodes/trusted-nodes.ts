@@ -12,7 +12,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgClass, DatePipe } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -48,7 +49,7 @@ import {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -75,7 +76,6 @@ import {
 export class CyberSecurityTrustedNodesPage {
   private readonly trustedNodesApi = inject(CyberSecurityTrustedNodesService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -107,18 +107,29 @@ export class CyberSecurityTrustedNodesPage {
     'actions',
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    nodeUUID: ['', [Validators.required]],
-    nodeType: ['freeswitch', [Validators.required]],
-    hostname: [''],
-    allowedNetworks: ['[]', [Validators.required]],
-    endpointGroups: ['[]', [Validators.required]],
-    authMode: ['hmac', [Validators.required]],
-    secret: [''],
-    status: ['active', [Validators.required]],
-    mode: ['monitor', [Validators.required]],
-    notes: [''],
+  readonly formModel = signal({
+    name: '',
+    nodeUUID: '',
+    nodeType: 'freeswitch',
+    hostname: '',
+    allowedNetworks: '[]',
+    endpointGroups: '[]',
+    authMode: 'hmac',
+    secret: '',
+    status: 'active',
+    mode: 'monitor',
+    notes: '',
+  });
+  readonly form = createForm(this.formModel, (path) => {
+    required(path.name);
+    minLength(path.name, 2);
+    required(path.nodeUUID);
+    required(path.nodeType);
+    required(path.allowedNetworks);
+    required(path.endpointGroups);
+    required(path.authMode);
+    required(path.status);
+    required(path.mode);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -198,7 +209,7 @@ export class CyberSecurityTrustedNodesPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       name: '',
       nodeUUID: '',
       nodeType: 'freeswitch',
@@ -221,7 +232,7 @@ export class CyberSecurityTrustedNodesPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
     let payload: CyberSecurityTrustedNodePayload;
     try {
@@ -247,7 +258,7 @@ export class CyberSecurityTrustedNodesPage {
       this.trustedNodesResource.reload();
 
       if (saveAndNew && createMode) {
-        this.form.reset({
+        this.formModel.set({
           name: '',
           nodeUUID: '',
           nodeType: 'freeswitch',
@@ -279,7 +290,7 @@ export class CyberSecurityTrustedNodesPage {
 
   cancelForm() {
     this.closeTrustedNodeDialog();
-    this.form.reset({
+    this.formModel.set({
       name: '',
       nodeUUID: '',
       nodeType: 'freeswitch',
@@ -433,7 +444,7 @@ export class CyberSecurityTrustedNodesPage {
   }
 
   private fillForm(trustedNode: CyberSecurityTrustedNode) {
-    this.form.reset({
+    this.formModel.set({
       name: trustedNode.name ?? '',
       nodeUUID: trustedNode.nodeUUID ?? '',
       nodeType: trustedNode.nodeType ?? 'freeswitch',
@@ -449,7 +460,7 @@ export class CyberSecurityTrustedNodesPage {
   }
 
   private buildPayload(): CyberSecurityTrustedNodePayload {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload: CyberSecurityTrustedNodePayload = {
       name: value.name.trim(),
       nodeUUID: value.nodeUUID.trim(),

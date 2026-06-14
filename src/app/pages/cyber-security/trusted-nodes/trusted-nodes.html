@@ -180,20 +180,20 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Name</mat-label>
-              <input matInput placeholder="FreeSWITCH Edge 01" formControlName="name" />
+              <input matInput placeholder="FreeSWITCH Edge 01" [formField]="form.name" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Node UUID</mat-label>
-              <input matInput formControlName="nodeUUID" />
+              <input matInput [formField]="form.nodeUUID" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Type</mat-label>
-              <mat-select formControlName="nodeType">
+              <mat-select [formField]="form.nodeType">
                 <mat-option value="freeswitch">FreeSWITCH</mat-option>
                 <mat-option value="asterisk">Asterisk</mat-option>
                 <mat-option value="kamailio">Kamailio</mat-option>
@@ -208,7 +208,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="status">
+              <mat-select [formField]="form.status">
                 <mat-option value="active">Active</mat-option>
                 <mat-option value="suspended">Suspended</mat-option>
                 <mat-option value="revoked">Revoked</mat-option>
@@ -217,7 +217,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Auth mode</mat-label>
-              <mat-select formControlName="authMode">
+              <mat-select [formField]="form.authMode">
                 <mat-option value="hmac">HMAC</mat-option>
                 <mat-option value="api_key">API key</mat-option>
                 <mat-option value="mtls">mTLS</mat-option>
@@ -227,7 +227,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Mode</mat-label>
-              <mat-select formControlName="mode">
+              <mat-select [formField]="form.mode">
                 <mat-option value="monitor">Monitor only</mat-option>
                 <mat-option value="enforce">Enforce</mat-option>
               </mat-select>
@@ -235,7 +235,7 @@
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Hostname</mat-label>
-              <input matInput formControlName="hostname" />
+              <input matInput [formField]="form.hostname" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
@@ -243,28 +243,28 @@
               <input
                 matInput
                 type="password"
-                formControlName="secret"
+                [formField]="form.secret"
                 autocomplete="new-password"
               />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Notes</mat-label>
-              <input matInput formControlName="notes" />
+              <input matInput [formField]="form.notes" />
             </mat-form-field>
           </form>
         </mat-tab>
 
         <mat-tab label="Access">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Allowed networks JSON</mat-label>
-              <textarea matInput rows="8" formControlName="allowedNetworks"></textarea>
+              <textarea matInput rows="8" [formField]="form.allowedNetworks"></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Endpoint groups JSON</mat-label>
-              <textarea matInput rows="8" formControlName="endpointGroups"></textarea>
+              <textarea matInput rows="8" [formField]="form.endpointGroups"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -290,7 +290,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -302,7 +302,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMoreMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -316,7 +316,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

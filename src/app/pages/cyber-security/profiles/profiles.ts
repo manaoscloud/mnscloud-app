@@ -12,7 +12,8 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -57,7 +58,7 @@ type CyberSecurityProfilesSnapshot = {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -83,7 +84,6 @@ export class CyberSecurityProfilesPage {
   private readonly profilesApi = inject(CyberSecurityProfilesService);
   private readonly servicesApi = inject(CyberSecurityServicesService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -127,16 +127,25 @@ export class CyberSecurityProfilesPage {
     'actions',
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    mode: ['monitor', [Validators.required]],
-    level: ['balanced', [Validators.required]],
-    defaultDecisionDuration: ['4h', [Validators.required]],
-    serviceUUIDs: [[] as string[]],
-    description: [''],
-    trustedNetworks: ['[]', [Validators.required]],
-    rules: ['{}', [Validators.required]],
-    enabled: [1],
+  readonly formModel = signal({
+    name: '',
+    mode: 'monitor',
+    level: 'balanced',
+    defaultDecisionDuration: '4h',
+    serviceUUIDs: [] as string[],
+    description: '',
+    trustedNetworks: '[]',
+    rules: '{}',
+    enabled: 1,
+  });
+  readonly form = createForm(this.formModel, (path) => {
+    required(path.name);
+    minLength(path.name, 2);
+    required(path.mode);
+    required(path.level);
+    required(path.defaultDecisionDuration);
+    required(path.trustedNetworks);
+    required(path.rules);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -220,7 +229,7 @@ export class CyberSecurityProfilesPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       name: '',
       mode: 'monitor',
       level: 'balanced',
@@ -247,7 +256,7 @@ export class CyberSecurityProfilesPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
     let payload: CyberSecurityProfilePayload;
     try {
@@ -273,7 +282,7 @@ export class CyberSecurityProfilesPage {
       this.profilesResource.reload();
 
       if (saveAndNew && createMode) {
-        this.form.reset({
+        this.formModel.set({
           name: '',
           mode: 'monitor',
           level: 'balanced',
@@ -303,7 +312,7 @@ export class CyberSecurityProfilesPage {
 
   cancelForm() {
     this.closeProfileDialog();
-    this.form.reset({
+    this.formModel.set({
       name: '',
       mode: 'monitor',
       level: 'balanced',
@@ -453,7 +462,7 @@ export class CyberSecurityProfilesPage {
   }
 
   private fillForm(profile: CyberSecurityProfile, name: string) {
-    this.form.reset({
+    this.formModel.set({
       name,
       mode: profile.mode ?? 'monitor',
       level: profile.level ?? 'balanced',
@@ -467,7 +476,7 @@ export class CyberSecurityProfilesPage {
   }
 
   private buildPayload(): CyberSecurityProfilePayload {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     return {
       name: value.name.trim(),
       description: value.description.trim() || null,
