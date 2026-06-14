@@ -119,10 +119,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="vendorForm" (ngSubmit)="saveVendor()">
+            <form class="form-grid" (ngSubmit)="saveVendor()">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="vendorForm.status">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -130,13 +130,13 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. Huawei" formControlName="name" />
+                <input matInput placeholder="e.g. Huawei" [formField]="vendorForm.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Supplier</mat-label>
                 <mat-select
-                  formControlName="supplierUUID"
+                  [formField]="vendorForm.supplierUUID"
                   (openedChange)="onSupplierOpened($event)"
                 >
                   <mat-option
@@ -166,7 +166,11 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Website</mat-label>
-                <input matInput placeholder="e.g. https://vendor.com" formControlName="website" />
+                <input
+                  matInput
+                  placeholder="e.g. https://vendor.com"
+                  [formField]="vendorForm.website"
+                />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -176,7 +180,7 @@
                   type="email"
                   autocomplete="email"
                   placeholder="support@vendor.com"
-                  formControlName="supportEmail"
+                  [formField]="vendorForm.supportEmail"
                 />
                 <mat-icon matSuffix>mail</mat-icon>
                 @if (supportEmailError()) {
@@ -186,13 +190,16 @@
 
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Support Phone</mat-label>
-                <app-phone-input formControlName="supportPhone" placeholder="5511999999999" />
+                <app-phone-input
+                  [formField]="vendorForm.supportPhone"
+                  placeholder="5511999999999"
+                />
                 <mat-icon matSuffix>phone</mat-icon>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Notes</mat-label>
-                <input matInput placeholder="Optional notes" formControlName="notes" />
+                <input matInput placeholder="Optional notes" [formField]="vendorForm.notes" />
               </mat-form-field>
             </form>
           </div>
@@ -206,7 +213,7 @@
         color="primary"
         type="button"
         (click)="saveVendor()"
-        [disabled]="vendorForm.invalid || saving()"
+        [disabled]="!vendorForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save

@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -68,7 +68,7 @@ type IspNasItem = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -90,7 +90,6 @@ type IspNasItem = {
 })
 export class IspNasPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -114,14 +113,23 @@ export class IspNasPage {
   search = '';
   searchInput = '';
 
-  readonly nasForm = this.fb.nonNullable.group({
-    popUUID: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    ip: ['', [Validators.required]],
-    vendorUUID: ['', [Validators.required]],
-    vendorModelUUID: ['', [Validators.required]],
-    notes: [''],
-    status: [1],
+  readonly nasFormModel = signal({
+    popUUID: '',
+    name: '',
+    ip: '',
+    vendorUUID: '',
+    vendorModelUUID: '',
+    notes: '',
+    status: 1,
+  });
+  readonly nasForm = createForm(this.nasFormModel, (schema) => {
+    required(schema.popUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.ip);
+    required(schema.vendorUUID);
+    required(schema.vendorModelUUID);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -239,8 +247,8 @@ export class IspNasPage {
       this.popOptions.set(
         items.map((pop: any) => ({ IppUUID: pop.IppUUID, IppName: pop.IppName })),
       );
-      if (!this.nasForm.get('popUUID')?.value && items.length) {
-        this.nasForm.patchValue({ popUUID: items[0].IppUUID });
+      if (!this.nasFormModel().popUUID && items.length) {
+        this.nasFormModel.update((value) => ({ ...value, popUUID: items[0].IppUUID }));
       }
     } catch (err) {
       console.error('Failed to load POPs.', err);
@@ -257,8 +265,8 @@ export class IspNasPage {
           VendorName: vendor.VendorName,
         })),
       );
-      if (!this.nasForm.get('vendorUUID')?.value && items.length) {
-        this.nasForm.patchValue({ vendorUUID: items[0].VendorUUID });
+      if (!this.nasFormModel().vendorUUID && items.length) {
+        this.nasFormModel.update((value) => ({ ...value, vendorUUID: items[0].VendorUUID }));
       }
     } catch (err) {
       console.error('Failed to load vendors.', err);
@@ -277,8 +285,11 @@ export class IspNasPage {
           VendorName: model.VendorName ?? null,
         })),
       );
-      if (!this.nasForm.get('vendorModelUUID')?.value && items.length) {
-        this.nasForm.patchValue({ vendorModelUUID: items[0].VendorModelUUID });
+      if (!this.nasFormModel().vendorModelUUID && items.length) {
+        this.nasFormModel.update((value) => ({
+          ...value,
+          vendorModelUUID: items[0].VendorModelUUID,
+        }));
       }
     } catch (err) {
       console.error('Failed to load vendor models.', err);
@@ -293,7 +304,7 @@ export class IspNasPage {
 
   startCreate() {
     this.editing.set(null);
-    this.nasForm.reset({
+    this.nasFormModel.set({
       popUUID: this.popOptions()[0]?.IppUUID ?? '',
       name: '',
       ip: '',
@@ -306,7 +317,7 @@ export class IspNasPage {
 
   startEdit(item: IspNasItem) {
     this.editing.set(item);
-    this.nasForm.reset({
+    this.nasFormModel.set({
       popUUID: item.IspPopIppUUID,
       name: item.InsName,
       ip: item.InsIp,
@@ -319,9 +330,9 @@ export class IspNasPage {
   }
 
   async saveNas() {
-    if (this.nasForm.invalid) return;
+    if (!this.nasForm().valid()) return;
 
-    const value = this.nasForm.getRawValue();
+    const value = this.nasFormModel();
     const payload = {
       popUUID: value.popUUID,
       name: value.name.trim(),

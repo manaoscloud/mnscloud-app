@@ -122,10 +122,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="nasForm" (ngSubmit)="saveNas()">
+            <form class="form-grid" (ngSubmit)="saveNas()">
               <mat-form-field appearance="outline">
                 <mat-label>POP</mat-label>
-                <mat-select formControlName="popUUID" (openedChange)="onPopOpened($event)">
+                <mat-select [formField]="nasForm.popUUID" (openedChange)="onPopOpened($event)">
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -152,17 +152,20 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. NAS Core" formControlName="name" />
+                <input matInput placeholder="e.g. NAS Core" [formField]="nasForm.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>IP</mat-label>
-                <input matInput placeholder="e.g. 10.0.0.10" formControlName="ip" />
+                <input matInput placeholder="e.g. 10.0.0.10" [formField]="nasForm.ip" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Vendor</mat-label>
-                <mat-select formControlName="vendorUUID" (openedChange)="onVendorOpened($event)">
+                <mat-select
+                  [formField]="nasForm.vendorUUID"
+                  (openedChange)="onVendorOpened($event)"
+                >
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -190,7 +193,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Model</mat-label>
                 <mat-select
-                  formControlName="vendorModelUUID"
+                  [formField]="nasForm.vendorModelUUID"
                   (openedChange)="onVendorModelOpened($event)"
                 >
                   <mat-option
@@ -221,12 +224,12 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Notes</mat-label>
-                <input matInput placeholder="Optional notes" formControlName="notes" />
+                <input matInput placeholder="Optional notes" [formField]="nasForm.notes" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="nasForm.status">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -243,7 +246,7 @@
         color="primary"
         type="button"
         (click)="saveNas()"
-        [disabled]="nasForm.invalid || saving()"
+        [disabled]="!nasForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save

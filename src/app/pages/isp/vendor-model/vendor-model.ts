@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -42,7 +42,7 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -64,7 +64,6 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
 })
 export class IspVendorModelPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -93,12 +92,19 @@ export class IspVendorModelPage {
   search = '';
   searchInput = '';
 
-  readonly modelForm = this.fb.nonNullable.group({
-    vendorUUID: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    type: ['OLT', [Validators.required]],
-    notes: [''],
-    status: [1],
+  readonly modelFormModel = signal({
+    vendorUUID: '',
+    name: '',
+    type: 'OLT',
+    notes: '',
+    status: 1,
+  });
+  readonly modelForm = createForm(this.modelFormModel, (schema) => {
+    required(schema.vendorUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.type);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -185,8 +191,8 @@ export class IspVendorModelPage {
           VendorName: vendor.VendorName,
         })),
       );
-      if (!this.modelForm.get('vendorUUID')?.value && items.length) {
-        this.modelForm.patchValue({ vendorUUID: items[0].VendorUUID });
+      if (!this.modelFormModel().vendorUUID && items.length) {
+        this.modelFormModel.update((value) => ({ ...value, vendorUUID: items[0].VendorUUID }));
       }
     } catch (err) {
       console.error('Failed to load vendors.', err);
@@ -201,7 +207,7 @@ export class IspVendorModelPage {
 
   startCreate() {
     this.editing.set(null);
-    this.modelForm.reset({
+    this.modelFormModel.set({
       vendorUUID: this.vendorOptions()[0]?.VendorUUID ?? '',
       name: '',
       type: 'OLT',
@@ -212,7 +218,7 @@ export class IspVendorModelPage {
 
   startEdit(item: IspVendorModel) {
     this.editing.set(item);
-    this.modelForm.reset({
+    this.modelFormModel.set({
       vendorUUID: item.VendorUUID,
       name: item.VendorModelName,
       type: item.VendorModelType,
@@ -223,9 +229,9 @@ export class IspVendorModelPage {
   }
 
   async saveModel() {
-    if (this.modelForm.invalid) return;
+    if (!this.modelForm().valid()) return;
 
-    const value = this.modelForm.getRawValue();
+    const value = this.modelFormModel();
     const payload = {
       vendorUUID: value.vendorUUID,
       name: value.name.trim(),

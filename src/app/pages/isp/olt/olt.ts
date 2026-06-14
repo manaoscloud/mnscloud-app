@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -68,7 +68,7 @@ type IspOltItem = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -90,7 +90,6 @@ type IspOltItem = {
 })
 export class IspOltPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -114,14 +113,23 @@ export class IspOltPage {
   search = '';
   searchInput = '';
 
-  readonly oltForm = this.fb.nonNullable.group({
-    popUUID: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    ip: ['', [Validators.required]],
-    vendorUUID: ['', [Validators.required]],
-    vendorModelUUID: ['', [Validators.required]],
-    notes: [''],
-    status: [1],
+  readonly oltFormModel = signal({
+    popUUID: '',
+    name: '',
+    ip: '',
+    vendorUUID: '',
+    vendorModelUUID: '',
+    notes: '',
+    status: 1,
+  });
+  readonly oltForm = createForm(this.oltFormModel, (schema) => {
+    required(schema.popUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.ip);
+    required(schema.vendorUUID);
+    required(schema.vendorModelUUID);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -239,8 +247,8 @@ export class IspOltPage {
       this.popOptions.set(
         items.map((pop: any) => ({ IppUUID: pop.IppUUID, IppName: pop.IppName })),
       );
-      if (!this.oltForm.get('popUUID')?.value && items.length) {
-        this.oltForm.patchValue({ popUUID: items[0].IppUUID });
+      if (!this.oltFormModel().popUUID && items.length) {
+        this.oltFormModel.update((value) => ({ ...value, popUUID: items[0].IppUUID }));
       }
     } catch (err) {
       console.error('Failed to load POPs.', err);
@@ -257,8 +265,8 @@ export class IspOltPage {
           VendorName: vendor.VendorName,
         })),
       );
-      if (!this.oltForm.get('vendorUUID')?.value && items.length) {
-        this.oltForm.patchValue({ vendorUUID: items[0].VendorUUID });
+      if (!this.oltFormModel().vendorUUID && items.length) {
+        this.oltFormModel.update((value) => ({ ...value, vendorUUID: items[0].VendorUUID }));
       }
     } catch (err) {
       console.error('Failed to load vendors.', err);
@@ -277,8 +285,11 @@ export class IspOltPage {
           VendorName: model.VendorName ?? null,
         })),
       );
-      if (!this.oltForm.get('vendorModelUUID')?.value && items.length) {
-        this.oltForm.patchValue({ vendorModelUUID: items[0].VendorModelUUID });
+      if (!this.oltFormModel().vendorModelUUID && items.length) {
+        this.oltFormModel.update((value) => ({
+          ...value,
+          vendorModelUUID: items[0].VendorModelUUID,
+        }));
       }
     } catch (err) {
       console.error('Failed to load vendor models.', err);
@@ -293,7 +304,7 @@ export class IspOltPage {
 
   startCreate() {
     this.editing.set(null);
-    this.oltForm.reset({
+    this.oltFormModel.set({
       popUUID: this.popOptions()[0]?.IppUUID ?? '',
       name: '',
       ip: '',
@@ -306,7 +317,7 @@ export class IspOltPage {
 
   startEdit(item: IspOltItem) {
     this.editing.set(item);
-    this.oltForm.reset({
+    this.oltFormModel.set({
       popUUID: item.IspPopIppUUID,
       name: item.IolName,
       ip: item.IolIp,
@@ -319,9 +330,9 @@ export class IspOltPage {
   }
 
   async saveOlt() {
-    if (this.oltForm.invalid) return;
+    if (!this.oltForm().valid()) return;
 
-    const value = this.oltForm.getRawValue();
+    const value = this.oltFormModel();
     const payload = {
       popUUID: value.popUUID,
       name: value.name.trim(),

@@ -11,9 +11,15 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom, merge, takeUntil } from 'rxjs';
+import {
+  FormField,
+  email,
+  form as createForm,
+  minLength,
+  pattern,
+  required,
+} from '@angular/forms/signals';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -46,7 +52,7 @@ type SupplierOption = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -69,7 +75,6 @@ type SupplierOption = {
 })
 export class IspVendorPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -91,14 +96,20 @@ export class IspVendorPage {
   suppliers: SupplierOption[] = [];
   supplierMap = new Map<string, SupplierOption>();
 
-  readonly vendorForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    supplierUUID: [''],
-    website: [''],
-    supportEmail: ['', [Validators.email]],
-    supportPhone: ['', [Validators.pattern(/^\d{8,15}$/)]],
-    notes: [''],
-    status: [1],
+  readonly vendorFormModel = signal({
+    name: '',
+    supplierUUID: '',
+    website: '',
+    supportEmail: '',
+    supportPhone: '',
+    notes: '',
+    status: 1,
+  });
+  readonly vendorForm = createForm(this.vendorFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    email(schema.supportEmail);
+    pattern(schema.supportPhone, /^\d{8,15}$/);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -140,14 +151,6 @@ export class IspVendorPage {
   });
 
   constructor() {
-    merge(
-      this.vendorForm.controls.supportEmail.statusChanges,
-      this.vendorForm.controls.supportEmail.valueChanges,
-    )
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateSupportEmailError());
-    this.updateSupportEmailError();
-
     this.destroyRef.onDestroy(() => {
       this.stopDialogViewportObserver();
       this.closeVendorDialog();
@@ -198,7 +201,7 @@ export class IspVendorPage {
 
   startCreate() {
     this.editing.set(null);
-    this.vendorForm.reset({
+    this.vendorFormModel.set({
       name: '',
       supplierUUID: '',
       website: '',
@@ -212,7 +215,7 @@ export class IspVendorPage {
 
   startEdit(item: IspVendor) {
     this.editing.set(item);
-    this.vendorForm.reset({
+    this.vendorFormModel.set({
       name: item.VendorName,
       supplierUUID: item.SupplierUUID ?? '',
       website: item.VendorWebsite ?? '',
@@ -226,9 +229,10 @@ export class IspVendorPage {
   }
 
   async saveVendor() {
-    if (this.vendorForm.invalid) return;
+    this.updateSupportEmailError();
+    if (!this.vendorForm().valid()) return;
 
-    const value = this.vendorForm.getRawValue();
+    const value = this.vendorFormModel();
     const payload = {
       name: value.name.trim(),
       supplierUUID: value.supplierUUID || null,
@@ -425,7 +429,12 @@ export class IspVendorPage {
   }
 
   private updateSupportEmailError() {
-    if (this.vendorForm.controls.supportEmail.hasError('email')) {
+    if (
+      this.vendorForm
+        .supportEmail()
+        .errors()
+        .some((error) => error.kind === 'email')
+    ) {
       this.supportEmailError.set('Email is invalid.');
     } else {
       this.supportEmailError.set('');

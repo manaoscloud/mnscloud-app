@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -55,7 +55,7 @@ type IspRadiusServerItem = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -78,7 +78,6 @@ type IspRadiusServerItem = {
 })
 export class IspRadiusServerPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
@@ -113,15 +112,24 @@ export class IspRadiusServerPage {
   search = '';
   searchInput = '';
 
-  readonly serverForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    host: ['', [Validators.required, Validators.minLength(2)]],
-    authPort: [1812, [Validators.required]],
-    acctPort: [1813, [Validators.required]],
-    secret: [''],
-    notes: [''],
-    status: [1],
-    isDefault: [false],
+  readonly serverFormModel = signal({
+    name: '',
+    host: '',
+    authPort: 1812,
+    acctPort: 1813,
+    secret: '',
+    notes: '',
+    status: 1,
+    isDefault: false,
+  });
+  readonly serverForm = createForm(this.serverFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.host);
+    minLength(schema.host, 2);
+    required(schema.authPort);
+    required(schema.acctPort);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -190,7 +198,7 @@ export class IspRadiusServerPage {
 
   startCreate() {
     this.editing.set(null);
-    this.serverForm.reset({
+    this.serverFormModel.set({
       name: '',
       host: '',
       authPort: 1812,
@@ -204,7 +212,7 @@ export class IspRadiusServerPage {
 
   startEdit(server: IspRadiusServerItem) {
     this.editing.set(server);
-    this.serverForm.reset({
+    this.serverFormModel.set({
       name: server.IrsName,
       host: server.IrsHost,
       authPort: server.IrsAuthPort ?? 1812,
@@ -218,9 +226,9 @@ export class IspRadiusServerPage {
   }
 
   async saveServer() {
-    if (this.serverForm.invalid) return;
+    if (!this.serverForm().valid()) return;
 
-    const value = this.serverForm.getRawValue();
+    const value = this.serverFormModel();
     const secret = value.secret?.trim() || null;
 
     if (!this.editing() && !secret) {
