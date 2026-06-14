@@ -9,6 +9,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
@@ -815,8 +816,11 @@ export class MonitoringAgentsPage {
   }
 
   private reconcileSelection() {
-    const valid = new Set(this.agents().map((row) => row.uuid));
-    this.selectedIds.set(new Set([...this.selectedIds()].filter((id) => valid.has(id))));
+    const valid = new Set(this.dataSource.data.map((row) => row.uuid));
+    const current = untracked(() => this.selectedIds());
+    const next = new Set([...current].filter((id) => valid.has(id)));
+    if (next.size === current.size && [...next].every((id) => current.has(id))) return;
+    this.selectedIds.set(next);
   }
 
   private async confirm(title: string, message: string, confirmLabel = 'Confirm') {

@@ -5,6 +5,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -153,8 +154,9 @@ export class VoipDidPage {
   private availableDidDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly didsEffect = effect(() => {
-    this.dataSource.data = this.didsResource.value();
-    this.reconcileSelection();
+    const dids = this.didsResource.value();
+    this.dataSource.data = dids;
+    this.reconcileSelection(dids);
     this.dataSource.filter = '';
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   });
@@ -622,9 +624,11 @@ export class VoipDidPage {
     this.failedBulkItems.set([]);
   }
 
-  private reconcileSelection() {
-    const available = new Set(this.dataSource.data.map((item) => item.VddUUID));
-    const next = new Set([...this.selectedDidUUIDs()].filter((uuid) => available.has(uuid)));
+  private reconcileSelection(items = this.dataSource.data) {
+    const available = new Set(items.map((item) => item.VddUUID));
+    const current = untracked(() => this.selectedDidUUIDs());
+    const next = new Set([...current].filter((uuid) => available.has(uuid)));
+    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
     this.selectedDidUUIDs.set(next);
   }
 

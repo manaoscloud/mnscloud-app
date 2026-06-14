@@ -6,6 +6,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
   afterNextRender,
 } from '@angular/core';
@@ -410,7 +411,10 @@ export class VoipSoftswitchServerPage {
 
   private reconcileSelection() {
     const existing = new Set(this.dataSource.data.map((row) => row.VsrUUID));
-    this.selectedIds.set(new Set([...this.selectedIds()].filter((id) => existing.has(id))));
+    const current = untracked(() => this.selectedIds());
+    const next = new Set([...current].filter((id) => existing.has(id)));
+    if (next.size === current.size && [...next].every((id) => current.has(id))) return;
+    this.selectedIds.set(next);
   }
 
   private removeSelection(ids: string[]) {

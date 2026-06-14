@@ -5,6 +5,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -142,8 +143,9 @@ export class VoipDidOperatorPage {
   private operatorFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly operatorsEffect = effect(() => {
-    this.dataSource.data = this.operatorsResource.value();
-    this.reconcileSelection();
+    const operators = this.operatorsResource.value();
+    this.dataSource.data = operators;
+    this.reconcileSelection(operators);
     this.dataSource.filter = '';
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   });
@@ -441,9 +443,11 @@ export class VoipDidOperatorPage {
     this.editing.set(null);
   }
 
-  private reconcileSelection() {
-    const available = new Set(this.dataSource.data.map((item) => item.VdoUUID));
-    const next = new Set([...this.selectedOperatorUUIDs()].filter((uuid) => available.has(uuid)));
+  private reconcileSelection(items = this.dataSource.data) {
+    const available = new Set(items.map((item) => item.VdoUUID));
+    const current = untracked(() => this.selectedOperatorUUIDs());
+    const next = new Set([...current].filter((uuid) => available.has(uuid)));
+    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
     this.selectedOperatorUUIDs.set(next);
   }
 
