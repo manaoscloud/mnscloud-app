@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -56,7 +56,7 @@ type FixedIpv4Option = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -78,7 +78,6 @@ type FixedIpv4Option = {
 })
 export class PppoeClientPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -98,12 +97,19 @@ export class PppoeClientPage {
   search = '';
   searchInput = '';
 
-  readonly pppoeForm = this.fb.nonNullable.group({
-    username: ['', [Validators.required, Validators.minLength(2)]],
-    password: ['', [Validators.required, Validators.minLength(4)]],
-    planName: [''],
-    fixedIpv4UUID: [''],
-    status: [1],
+  readonly pppoeFormModel = signal({
+    username: '',
+    password: '',
+    planName: '',
+    fixedIpv4UUID: '',
+    status: 1,
+  });
+  readonly pppoeForm = createForm(this.pppoeFormModel, (schema) => {
+    required(schema.username);
+    minLength(schema.username, 2);
+    required(schema.password);
+    minLength(schema.password, 4);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -175,7 +181,7 @@ export class PppoeClientPage {
 
   startCreate() {
     this.editing.set(null);
-    this.pppoeForm.reset({
+    this.pppoeFormModel.set({
       username: '',
       password: '',
       planName: '',
@@ -186,7 +192,7 @@ export class PppoeClientPage {
 
   startEdit(client: PppoeClientItem) {
     this.editing.set(client);
-    this.pppoeForm.reset({
+    this.pppoeFormModel.set({
       username: client.PpcUsername,
       password: '',
       planName: client.PpcPlanName ?? '',
@@ -197,9 +203,9 @@ export class PppoeClientPage {
   }
 
   async saveClient(createAnother = false) {
-    if (this.pppoeForm.invalid) return;
+    if (!this.pppoeForm().valid()) return;
 
-    const value = this.pppoeForm.getRawValue();
+    const value = this.pppoeFormModel();
     const payload = {
       username: value.username.trim(),
       password: value.password.trim(),
