@@ -1,8 +1,7 @@
-import { DatePipe } from '@angular/common';
 import {
-  AfterViewInit,
+  DatePipe } from '@angular/common';
+import {
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -11,6 +10,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -94,7 +95,7 @@ const emptyQueueAgentFilters = (): QueueAgentFilters => ({
   styleUrls: ['./queue-agent.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
+export class VoipPabxQueueAgentPage {
   private readonly api = inject(VoipPabxQueueAgentService);
   private readonly extensionApi = inject(VoipPabxExtensionService);
   private readonly genericApi = inject(ApiService);
@@ -171,7 +172,7 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     this.snack.error(this.extractErrorMessage(error, 'Failed to load queue agents.'));
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -194,11 +195,13 @@ export class VoipPabxQueueAgentPage implements AfterViewInit, OnDestroy {
     };
 
     void this.bootstrap();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeQueueAgentDialog();
-  }
+  
+  });
 
   async bootstrap() {
     await this.loadLookups();

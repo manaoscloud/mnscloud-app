@@ -1,14 +1,13 @@
 import {
-  AfterViewInit,
   Component,
   effect,
-  OnDestroy,
-  OnInit,
   resource,
   TemplateRef,
   inject,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -115,7 +114,7 @@ type CustomerOption = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./contracts.scss'],
 })
-export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy {
+export class InvoicingContractsPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -204,20 +203,23 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
     installCountry: '',
   };
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     const currencyMeta = this.getCurrencyAffixes();
     this.amountPrefix = currencyMeta.prefix;
     this.startCreate();
     void this.loadComplexes();
     void this.loadCustomers();
-  }
+  
+    return true;
+  })();
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closeContractDialog();
-  }
+  
+  });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -246,7 +248,8 @@ export class InvoicingContractsPage implements OnInit, AfterViewInit, OnDestroy 
         .concat(this.customerLabel(data.CustomerUUID))
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

@@ -1,15 +1,15 @@
 import {
-  AfterViewInit,
   Component,
   computed,
   effect,
   inject,
-  OnDestroy,
   resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -128,7 +128,7 @@ const emptyPabxAccountFilters = (): PabxAccountFilters => ({
   styleUrls: ['./pabx.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxPage implements AfterViewInit, OnDestroy {
+export class VoipPabxPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipPabxService);
   private readonly serverApi = inject(VoipPabxServerService);
@@ -297,7 +297,7 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     this.reconcileSelection();
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
@@ -339,11 +339,13 @@ export class VoipPabxPage implements AfterViewInit, OnDestroy {
     };
 
     this.accountsResource.reload();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closePabxDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

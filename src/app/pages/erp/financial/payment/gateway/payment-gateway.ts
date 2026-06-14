@@ -1,8 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   computed,
   effect,
@@ -11,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -229,7 +228,7 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'app-fade-in-host' },
 })
-export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDestroy {
+export class FinancialPaymentGatewayPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
@@ -339,15 +338,18 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
   private gatewayFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.cancelEditGateway();
-  }
+  
+    return true;
+  })();
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeGatewayDialog();
-  }
+  
+  });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -381,7 +383,8 @@ export class FinancialPaymentGatewayPage implements OnInit, AfterViewInit, OnDes
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   effect,
   inject,
@@ -9,6 +7,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -89,7 +89,7 @@ type PortabilityFilters = {
   styleUrls: ['./portability.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
+export class VoipPortabilityPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipPortabilityService);
   private readonly operatorApi = inject(VoipDidOperatorService);
@@ -187,7 +187,7 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
     this.dataSource.data = [];
   });
 
-  async ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(async () => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -230,7 +230,8 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
     };
 
     void this.refresh();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;
@@ -510,9 +511,10 @@ export class VoipPortabilityPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closePortabilityDialog();
-  }
+  
+  });
 
   operatorLabel(uuid: string) {
     if (!uuid) return '';

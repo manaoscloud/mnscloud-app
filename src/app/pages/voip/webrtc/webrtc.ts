@@ -1,9 +1,6 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   computed,
   effect,
@@ -12,6 +9,7 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ClipboardModule } from '@angular/cdk/clipboard';
@@ -210,7 +208,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./webrtc.scss'],
 })
-export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
+export class VoipWebRtcPage {
   private readonly api = inject(VoipWebRtcService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -275,7 +273,7 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
     this.snack.error(this.errorMessage(error, 'Failed to load WebRTC records.'));
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
       this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
@@ -285,8 +283,10 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       this.selected.clear();
       if (this.viewReady) this.recordsResource.reload();
     });
-  }
-  ngAfterViewInit() {
+  
+    return true;
+  })();
+  private readonly afterViewReady = afterNextRender(() => {
     this.viewReady = true;
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
@@ -294,10 +294,12 @@ export class VoipWebRtcPage implements AfterViewInit, OnDestroy, OnInit {
       JSON.stringify(row).toLowerCase().includes(filter);
     this.dataSource.sortingDataAccessor = (row, column) =>
       String(this.cell(row, column) ?? '').toLowerCase();
-  }
-  ngOnDestroy() {
+  
+  });
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.binding?.stop();
-  }
+  
+  });
   uuid(row: WebRtcRecord) {
     return String(row[this.config().uuid] ?? '');
   }

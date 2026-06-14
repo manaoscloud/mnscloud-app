@@ -1,15 +1,14 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
   resource,
   signal,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
@@ -80,7 +79,7 @@ type DidOperatorFilters = {
   styleUrls: ['./operator.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
+export class VoipDidOperatorPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipDidOperatorService);
   private readonly route = inject(ActivatedRoute);
@@ -144,13 +143,15 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
     this.dataSource.data = [];
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
     void this.loadSuppliers();
     this.operatorsResource.reload();
-  }
+  
+    return true;
+  })();
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
@@ -176,11 +177,13 @@ export class VoipDidOperatorPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeOperatorDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

@@ -1,15 +1,15 @@
 import {
-  AfterViewInit,
   Component,
   computed,
   effect,
   inject,
-  OnDestroy,
   resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -74,7 +74,7 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
   styleUrls: ['./provider.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
+export class VoipSoftswitchProviderPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipSoftswitchProviderService);
   private readonly fb = inject(FormBuilder);
@@ -168,7 +168,7 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
     this.snack.error(this.messageFromError(error, 'Failed to load providers.'));
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -191,11 +191,13 @@ export class VoipSoftswitchProviderPage implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeProviderDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

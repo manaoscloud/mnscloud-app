@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -158,7 +158,7 @@ const RESOURCE_META: Record<
   styleUrls: ['./resource.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
+export class VoipSoftswitchResourcePage {
   private readonly listLimit = 5000;
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(VoipSoftswitchResourceUiService);
@@ -251,7 +251,7 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
@@ -261,11 +261,13 @@ export class VoipSoftswitchResourcePage implements AfterViewInit, OnDestroy {
       if (column === 'status') return this.statusLabel(data);
       return String((data as Record<string, unknown>)[column] ?? '');
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
   onSearchChange(value: string) {
     this.searchInput = value;
   }

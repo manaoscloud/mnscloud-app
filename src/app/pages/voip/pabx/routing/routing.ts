@@ -1,16 +1,15 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
   computed,
   effect,
   inject,
-  OnDestroy,
   resource,
   signal,
   TemplateRef,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -81,7 +80,7 @@ type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
   styleUrls: ['./routing.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
+export class VoipPabxRoutingPage {
   private readonly listLimit = 5000;
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(VoipPabxRoutingService);
@@ -214,7 +213,7 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
     return titles[this.resource()];
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
@@ -225,11 +224,13 @@ export class VoipPabxRoutingPage implements AfterViewInit, OnDestroy {
       this.resetForm();
       void this.bootstrap();
     });
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
 
   async refreshList() {
     await this.bootstrap();

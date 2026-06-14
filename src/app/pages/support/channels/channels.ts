@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   ChangeDetectionStrategy,
   computed,
@@ -10,6 +8,8 @@ import {
   resource,
   signal,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -89,7 +89,7 @@ type ChannelConfig = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./channels.scss'],
 })
-export class SupportChannelsPage implements AfterViewInit, OnDestroy {
+export class SupportChannelsPage {
   private api = inject(ApiService);
   private dialog = inject(MatDialog);
 
@@ -163,7 +163,7 @@ export class SupportChannelsPage implements AfterViewInit, OnDestroy {
   private channelFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
@@ -173,12 +173,14 @@ export class SupportChannelsPage implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.channelFormDialogRef?.close();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

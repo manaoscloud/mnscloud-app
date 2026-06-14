@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -117,7 +117,7 @@ const emptyQuotationFilters = (): QuotationFilters => ({
   styleUrls: ['./quotation.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SaleQuotationPage implements AfterViewInit, OnDestroy {
+export class SaleQuotationPage {
   private readonly api = inject(ApiService);
   private readonly parameters = inject(SystemParameterService);
   private readonly fb = inject(FormBuilder);
@@ -209,11 +209,13 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
     return { subtotal, discount, total };
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes(this.defaultCurrency()).prefix;
     void this.loadDefaultCurrency();
     this.loadLookups();
-  }
+  
+    return true;
+  })();
 
   private async loadDefaultCurrency() {
     const currency = await this.parameters.resolveDefaultCurrency('BRL');
@@ -227,9 +229,10 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
-  }
+  
+  });
 
   async loadLookups() {
     try {
@@ -554,9 +557,10 @@ export class SaleQuotationPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeQuotationDialog();
-  }
+  
+  });
 
   private openQuotationDialog() {
     const quotationFormDialog = this.quotationFormDialog();

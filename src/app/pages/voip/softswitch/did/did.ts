@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -75,7 +75,7 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
   styleUrls: ['./did.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
+export class VoipSoftswitchDidPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipSoftswitchDidService);
   private readonly accountApi = inject(VoipSoftswitchAccountService);
@@ -178,7 +178,7 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
@@ -199,11 +199,13 @@ export class VoipSoftswitchDidPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

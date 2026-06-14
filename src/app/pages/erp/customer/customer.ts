@@ -1,10 +1,7 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
   ElementRef,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
@@ -12,6 +9,7 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -207,7 +205,7 @@ class MapStyleControl {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./customer.scss'],
 })
-export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
+export class ErpCustomerPage {
   private readonly listLimit = 200;
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
@@ -333,14 +331,16 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
       .subscribe(() => this.updateEmailError());
   }
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.resetForm();
     void this.loadComplexes();
     void this.loadDueDays();
     void this.loadMapboxParameter();
-  }
+  
+    return true;
+  })();
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -371,15 +371,17 @@ export class ErpCustomerPage implements OnInit, AfterViewInit, OnDestroy {
         .concat([this.complexLabel(data.ComplexUUID), this.dueDayLabel(data.DueDayUUID)])
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeCustomerDialog();
     this.clearMapResizeTimers();
     if (this.map) {
       this.map.remove();
     }
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

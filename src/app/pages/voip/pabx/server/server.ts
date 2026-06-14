@@ -1,7 +1,7 @@
-import { DatePipe } from '@angular/common';
+import {
+  DatePipe } from '@angular/common';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
-  AfterViewInit,
   Component,
   TemplateRef,
   effect,
@@ -10,6 +10,7 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -90,7 +91,7 @@ type ServerPayload = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./server.scss'],
 })
-export class VoipPabxServerPage implements AfterViewInit {
+export class VoipPabxServerPage {
   private readonly api = inject(VoipPabxServerService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
@@ -199,12 +200,13 @@ export class VoipPabxServerPage implements AfterViewInit {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     const sort = this.sort();
     if (sort) this.dataSource.sort = sort;
     const paginator = this.paginator();
     if (paginator) this.dataSource.paginator = paginator;
-  }
+  
+  });
 
   get selectedCount() {
     return this.selectedIds().size;

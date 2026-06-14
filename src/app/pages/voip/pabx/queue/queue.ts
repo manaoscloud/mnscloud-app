@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -77,7 +77,7 @@ type Option = { value: string; label: string; pabxUUID?: string | null };
   styleUrls: ['./queue.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
+export class VoipPabxQueuePage {
   private readonly api = inject(VoipPabxQueueService);
   private readonly pabxApi = inject(VoipPabxService);
   private readonly extensionApi = inject(VoipPabxExtensionService);
@@ -185,16 +185,18 @@ export class VoipPabxQueuePage implements AfterViewInit, OnDestroy {
     this.reconcileSelection();
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.itemsResource.reload();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
 
   refreshList() {
     this.itemsResource.reload();

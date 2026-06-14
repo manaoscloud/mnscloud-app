@@ -1,14 +1,13 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
   resource,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -88,7 +87,7 @@ type CustomerOption = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./receivables.scss'],
 })
-export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestroy {
+export class FinancialReceivablesPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -167,17 +166,20 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
     }
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
     void this.loadCustomers();
-  }
+  
+    return true;
+  })();
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeReceivableDialog();
-  }
+  
+  });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -206,7 +208,8 @@ export class FinancialReceivablesPage implements OnInit, AfterViewInit, OnDestro
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

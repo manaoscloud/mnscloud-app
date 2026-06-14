@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -83,7 +83,7 @@ type CustomerOption = {
   styleUrls: ['./softswitch.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
+export class VoipSoftswitchPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipSoftswitchAccountService);
   private readonly rawApi = inject(ApiService);
@@ -197,7 +197,7 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
     this.snack.error(message);
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -240,11 +240,13 @@ export class VoipSoftswitchPage implements AfterViewInit, OnDestroy {
     };
 
     void this.loadLookups();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeAccountDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

@@ -1,14 +1,13 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
   resource,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -79,7 +78,7 @@ type ErpFinInvInvoice = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./invoices.scss'],
 })
-export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
+export class InvoicingInvoicesPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -143,17 +142,20 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
     }
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
-  }
+  
+    return true;
+  })();
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closeInvoiceDialog();
-  }
+  
+  });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -177,7 +179,8 @@ export class InvoicingInvoicesPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

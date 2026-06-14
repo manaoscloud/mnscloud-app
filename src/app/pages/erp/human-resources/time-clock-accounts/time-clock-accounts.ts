@@ -1,5 +1,4 @@
 import {
-  AfterViewInit,
   Component,
   TemplateRef,
   computed,
@@ -9,6 +8,7 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -93,7 +93,7 @@ type TimeClockAccountListParams = {
   styleUrls: ['../shared/human-resources-crud.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
+export class ErpHumanResourcesTimeClockAccountsPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
@@ -156,7 +156,7 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
     this.dataSource.data = [];
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -172,7 +172,8 @@ export class ErpHumanResourcesTimeClockAccountsPage implements AfterViewInit {
       }
     };
     void this.loadEmployees();
-  }
+  
+  });
 
   async loadEmployees() {
     try {

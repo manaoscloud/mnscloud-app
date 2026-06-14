@@ -3,10 +3,10 @@ import {
   Component,
   ElementRef,
   HostBinding,
-  OnDestroy,
   inject,
   input,
   signal,
+  DestroyRef,
 } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { MatFormFieldControl } from '@angular/material/form-field';
@@ -26,8 +26,7 @@ import { Subject } from 'rxjs';
   ],
 })
 export class PhoneInputComponent
-  implements ControlValueAccessor, MatFormFieldControl<string>, OnDestroy
-{
+  implements ControlValueAccessor, MatFormFieldControl<string> {
   ngControl = inject(NgControl, { optional: true, self: true });
 
   static nextId = 0;
@@ -94,9 +93,10 @@ export class PhoneInputComponent
     }
   }
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stateChanges.complete();
-  }
+  
+  });
 
   setDescribedByIds(ids: string[]) {
     this.userAriaDescribedBy = ids.join(' ');

@@ -1,14 +1,13 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
   resource,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -105,7 +104,7 @@ type SupplierOption = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./payables.scss'],
 })
-export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
+export class FinancialPayablesPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -205,18 +204,21 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
     }
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
     void this.loadSuppliers();
-  }
+  
+    return true;
+  })();
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closePayableDialog();
     this.closeSettleDialog();
-  }
+  
+  });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -245,7 +247,8 @@ export class FinancialPayablesPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

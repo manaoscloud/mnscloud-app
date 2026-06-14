@@ -1,14 +1,13 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
   resource,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -69,7 +68,7 @@ type PaymentMethod = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./payment-method.scss'],
 })
-export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDestroy {
+export class FinancialPaymentMethodPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -125,16 +124,19 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
     }
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.startCreate();
-  }
+  
+    return true;
+  })();
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closePaymentMethodDialog();
-  }
+  
+  });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -158,7 +160,8 @@ export class FinancialPaymentMethodPage implements OnInit, AfterViewInit, OnDest
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

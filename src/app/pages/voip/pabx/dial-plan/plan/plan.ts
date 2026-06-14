@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -69,7 +69,7 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
   styleUrls: ['./plan.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxDialPlanPlanPage implements AfterViewInit, OnDestroy {
+export class VoipPabxDialPlanPlanPage {
   private readonly api = inject(VoipPabxDialPlanUiService);
   private readonly snack = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
@@ -116,16 +116,18 @@ export class VoipPabxDialPlanPlanPage implements AfterViewInit, OnDestroy {
     this.reconcileSelection();
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.itemsResource.reload();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
 
   refreshList() {
     this.itemsResource.reload();

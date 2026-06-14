@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   effect,
   inject,
@@ -9,6 +7,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
@@ -83,7 +83,7 @@ type CreateMode = 'single' | 'range';
   styleUrls: ['./did.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipDidPage implements AfterViewInit, OnDestroy {
+export class VoipDidPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipDidService);
   private readonly operatorApi = inject(VoipDidOperatorService);
@@ -162,7 +162,7 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     return this.isMasterScope() ? this.masterDisplayedColumns : this.tenantDisplayedColumns;
   }
 
-  async ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(async () => {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
@@ -189,12 +189,14 @@ export class VoipDidPage implements AfterViewInit, OnDestroy {
     };
 
     void this.refreshList();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDidDialog();
     this.closeAvailableDidDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

@@ -1,14 +1,14 @@
 import {
-  AfterViewInit,
   Component,
   effect,
-  OnDestroy,
   TemplateRef,
   inject,
   resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -118,7 +118,7 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   styleUrls: ['./product.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SaleProductPage implements AfterViewInit, OnDestroy {
+export class SaleProductPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
@@ -212,11 +212,13 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     'actions',
   ];
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     const currencyMeta = this.getCurrencyAffixes();
     this.amountPrefix = currencyMeta.prefix;
     this.loadLookups();
-  }
+  
+    return true;
+  })();
 
   async loadLookups() {
     try {
@@ -249,7 +251,7 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (item, property) => {
@@ -274,7 +276,8 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-  }
+  
+  });
 
   private async fetchProducts(filters: ProductFilters): Promise<ProductItem[]> {
     const params = new URLSearchParams();
@@ -590,9 +593,10 @@ export class SaleProductPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeProductDialog();
-  }
+  
+  });
 
   private openProductDialog() {
     const productFormDialog = this.productFormDialog();

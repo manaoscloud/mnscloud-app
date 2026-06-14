@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -84,7 +84,7 @@ const emptyDialPlanRuleFilters = (): DialPlanRuleFilters => ({
   styleUrls: ['./rules.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
+export class VoipPabxDialPlanRulesPage {
   private readonly api = inject(VoipPabxDialPlanUiService);
   private readonly snack = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
@@ -179,16 +179,18 @@ export class VoipPabxDialPlanRulesPage implements AfterViewInit, OnDestroy {
     this.reconcileSelection();
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     void this.bootstrap();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
 
   async bootstrap() {
     await Promise.all([this.loadDialPlans(), this.loadTrunks()]);

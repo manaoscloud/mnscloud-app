@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -98,7 +98,7 @@ const emptyExtensionFilters = (): ExtensionFilters => ({
   styleUrls: ['./extension.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
+export class VoipPabxExtensionPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipPabxExtensionService);
   private readonly pabxApi = inject(VoipPabxService);
@@ -207,18 +207,20 @@ export class VoipPabxExtensionPage implements AfterViewInit, OnDestroy {
     this.reconcileSelection();
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) =>
       this.sortValue(data, sortHeaderId);
     this.dataSource.filterPredicate = (data) => this.matchesFilters(data);
     this.extensionsResource.reload();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeExtensionDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

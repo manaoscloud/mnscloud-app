@@ -1,9 +1,6 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   computed,
   effect,
@@ -12,6 +9,7 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -138,7 +136,7 @@ const emptyTicketFilters = (): TicketFilters => ({
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./tickets.scss'],
 })
-export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
+export class SupportTicketsPage {
   private api = inject(ApiService);
   private dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
@@ -272,13 +270,15 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
       .subscribe(() => this.updateEmailError());
   }
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.resetForm();
     void this.loadCustomers();
     void this.loadChannels();
-  }
+  
+    return true;
+  })();
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -331,12 +331,14 @@ export class SupportTicketsPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.ticketFormDialogRef?.close();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

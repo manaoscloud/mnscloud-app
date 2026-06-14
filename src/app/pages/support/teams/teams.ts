@@ -1,8 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   ChangeDetectionStrategy,
   computed,
@@ -11,6 +8,8 @@ import {
   resource,
   signal,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -98,7 +97,7 @@ type UserOption = { value: string; label: string; email?: string | null };
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./teams.scss'],
 })
-export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
+export class SupportTeamsPage {
   private api = inject(ApiService);
   private dialog = inject(MatDialog);
 
@@ -174,12 +173,14 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
   private teamFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.resetTeamForm();
     void this.loadUsers();
-  }
+  
+    return true;
+  })();
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -205,12 +206,14 @@ export class SupportTeamsPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.teamFormDialogRef?.close();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

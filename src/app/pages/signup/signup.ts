@@ -1,13 +1,12 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
   ElementRef,
-  OnInit,
   inject,
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -57,7 +56,7 @@ type SignupPolicy = {
   styleUrls: ['./signup.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Signup implements OnInit, AfterViewInit {
+export class Signup {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
@@ -99,13 +98,16 @@ export class Signup implements OnInit, AfterViewInit {
     });
   }
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     void this.loadSignupPolicy();
-  }
+  
+    return true;
+  })();
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     queueMicrotask(() => void this.renderCaptcha());
-  }
+  
+  });
 
   get canSubmit(): boolean {
     const policy = this.signupPolicy();

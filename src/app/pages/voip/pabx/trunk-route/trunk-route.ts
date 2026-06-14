@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -143,7 +143,7 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
   styleUrls: ['./trunk-route.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
+export class VoipPabxTrunkRoutePage {
   private readonly listLimit = 5000;
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(VoipPabxTrunkRouteUiService);
@@ -241,7 +241,7 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
     this.reconcileSelection();
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, column) => {
@@ -252,11 +252,13 @@ export class VoipPabxTrunkRoutePage implements AfterViewInit, OnDestroy {
       return String((data as Record<string, unknown>)[column] ?? '');
     };
     void this.bootstrap();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
   onSearchChange(value: string) {
     this.searchInput = value;
   }

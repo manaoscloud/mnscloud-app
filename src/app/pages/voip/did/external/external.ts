@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   effect,
   inject,
@@ -9,6 +7,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -60,7 +60,7 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
   styleUrls: ['./external.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
+export class VoipDidExternalPage {
   private readonly api = inject(VoipDidExternalService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
@@ -120,7 +120,7 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
-  async ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(async () => {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
@@ -140,11 +140,13 @@ export class VoipDidExternalPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  }
+  
+  });
 
   refreshList() {
     this.externalDidsResource.reload();

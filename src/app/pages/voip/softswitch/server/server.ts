@@ -1,6 +1,6 @@
-import { DatePipe } from '@angular/common';
 import {
-  AfterViewInit,
+  DatePipe } from '@angular/common';
+import {
   Component,
   TemplateRef,
   effect,
@@ -9,6 +9,7 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -80,7 +81,7 @@ type ServerPayload = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./server.scss'],
 })
-export class VoipSoftswitchServerPage implements AfterViewInit {
+export class VoipSoftswitchServerPage {
   private readonly api = inject(VoipSoftswitchServerService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
@@ -175,12 +176,13 @@ export class VoipSoftswitchServerPage implements AfterViewInit {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     const sort = this.sort();
     if (sort) this.dataSource.sort = sort;
     const paginator = this.paginator();
     if (paginator) this.dataSource.paginator = paginator;
-  }
+  
+  });
 
   get selectedCount() {
     return this.selectedIds().size;

@@ -1,14 +1,14 @@
 import {
-  AfterViewInit,
   Component,
   effect,
-  OnDestroy,
   TemplateRef,
   inject,
   resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -78,7 +78,7 @@ type StockFilters = {
   styleUrls: ['./stocks.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SalesStocksPage implements AfterViewInit, OnDestroy {
+export class SalesStocksPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
@@ -125,11 +125,13 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
   private stockFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.loadStockTypes();
-  }
+  
+    return true;
+  })();
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -142,7 +144,8 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-  }
+  
+  });
 
   async loadStockTypes() {
     try {
@@ -261,9 +264,10 @@ export class SalesStocksPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeStockDialog();
-  }
+  
+  });
 
   private openStockDialog() {
     const stockFormDialog = this.stockFormDialog();

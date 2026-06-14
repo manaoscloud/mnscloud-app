@@ -1,9 +1,6 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
@@ -12,6 +9,7 @@ import {
   ChangeDetectionStrategy,
   untracked,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -79,7 +77,7 @@ type DomainFilters = {
   styleUrls: ['./domain.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
+export class VoipDomainPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipDomainService);
   private readonly fb = inject(FormBuilder);
@@ -138,14 +136,16 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
     this.dataSource.data = [];
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
       this.domainsResource.reload();
     });
-  }
+  
+    return true;
+  })();
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -166,11 +166,13 @@ export class VoipDomainPage implements AfterViewInit, OnDestroy, OnInit {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDomainDialog();
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

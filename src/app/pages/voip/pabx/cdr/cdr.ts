@@ -1,4 +1,5 @@
-import { NgClass } from '@angular/common';
+import {
+  NgClass } from '@angular/common';
 import {
   Component,
   ChangeDetectionStrategy,
@@ -7,6 +8,7 @@ import {
   resource,
   signal,
   viewChild,
+  afterNextRender,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -121,12 +123,13 @@ export class VoipPabxCdrPage {
     this.snack.error(this.errorMessage(error, 'Failed to load PABX CDR.'));
   });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.refreshList();
-  }
+  
+  });
 
   onTabChange(index: number) {
     const kinds: PabxCdrKind[] = ['all', 'asterisk', 'freeswitch'];

@@ -1,14 +1,13 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   effect,
   inject,
   resource,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -75,7 +74,7 @@ type ErpFinInvDueDay = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./duedays.scss'],
 })
-export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
+export class InvoicingDueDaysPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -138,16 +137,19 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
     }
   });
 
-  ngOnInit() {
+  private readonly initializePage = (() => {
     this.startCreate();
-  }
+  
+    return true;
+  })();
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.closeDueDayDialog();
-  }
+  
+  });
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -180,7 +182,8 @@ export class InvoicingDueDaysPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

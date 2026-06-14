@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -10,6 +8,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   viewChild,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import {
   FormControl,
@@ -107,7 +107,7 @@ type EmployeeListParams = {
   styleUrls: ['../shared/human-resources-crud.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy {
+export class ErpHumanResourcesEmployeesPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
@@ -229,7 +229,7 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
     return this.filterOptions(this.positions(), this.filterPositionSearch.value ?? '');
   }
 
-  ngAfterViewInit() {
+  private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -253,11 +253,13 @@ export class ErpHumanResourcesEmployeesPage implements AfterViewInit, OnDestroy 
       }
     };
     void this.loadReferences();
-  }
+  
+  });
 
-  ngOnDestroy() {
+  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeEmployeeDialog();
-  }
+  
+  });
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
