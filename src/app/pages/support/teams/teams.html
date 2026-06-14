@@ -18,7 +18,7 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search teams</mat-label>
-        <input matInput [ngModel]="searchInput" (ngModelChange)="onSearchChange($event)" />
+        <input matInput [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
         @if (searchInput) {
           <button mat-icon-button matSuffix (click)="onSearchChange('')" type="button">
             <mat-icon>close</mat-icon>
@@ -150,7 +150,7 @@
             <div class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (item of statusOptions; track item.value) {
                     <mat-option [value]="item.value">{{ item.label }}</mat-option>
                   }
@@ -159,31 +159,31 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Code</mat-label>
-                <input matInput [(ngModel)]="form.code" />
+                <input matInput [value]="form.code" (input)="form.code = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="form.name" />
+                <input matInput [value]="form.name" (input)="form.name = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Description</mat-label>
-                <input matInput [(ngModel)]="form.description" />
+                <input matInput [value]="form.description" (input)="form.description = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Queue priority</mat-label>
-                <input matInput type="number" [(ngModel)]="form.queuePriority" />
+                <input matInput type="number" [value]="form.queuePriority" (input)="form.queuePriority = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Max concurrent tickets</mat-label>
-                <input matInput type="number" [(ngModel)]="form.maxConcurrentTickets" />
+                <input matInput type="number" [value]="form.maxConcurrentTickets" (input)="form.maxConcurrentTickets = $any($event.target).value" />
               </mat-form-field>
 
               <div class="checkbox-field span-2">
-                <mat-checkbox [(ngModel)]="form.isDefault">Default team</mat-checkbox>
+                <mat-checkbox [checked]="form.isDefault" (change)="form.isDefault = $event.checked">Default team</mat-checkbox>
               </div>
             </div>
           </div>
@@ -198,10 +198,8 @@
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>User</mat-label>
                   <mat-select
-                    [(ngModel)]="memberForm.memberUserUUID"
                     [disabled]="!!memberEditing"
-                    (openedChange)="onUserOpened($event)"
-                  >
+                    (openedChange)="onUserOpened($event)" [value]="memberForm.memberUserUUID" (selectionChange)="memberForm.memberUserUUID = $event.value">
                     <mat-option
                       class="select-search-option"
                       [value]="null"
@@ -211,12 +209,10 @@
                       <mat-form-field appearance="outline" class="select-search-field">
                         <input
                           matInput
-                          [(ngModel)]="userSearch"
                           (click)="$event.stopPropagation()"
                           (keydown)="$event.stopPropagation()"
                           placeholder="Search user"
-                          autocomplete="off"
-                        />
+                          autocomplete="off" [value]="userSearch" (input)="userSearch = $any($event.target).value" />
                       </mat-form-field>
                     </mat-option>
                     @for (item of filteredUsers; track item.value) {
@@ -227,7 +223,7 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Role</mat-label>
-                  <mat-select [(ngModel)]="memberForm.role">
+                  <mat-select [value]="memberForm.role" (selectionChange)="memberForm.role = $event.value">
                     @for (item of roleOptions; track item.value) {
                       <mat-option [value]="item.value">{{ item.label }}</mat-option>
                     }
@@ -236,7 +232,7 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Status</mat-label>
-                  <mat-select [(ngModel)]="memberForm.status">
+                  <mat-select [value]="memberForm.status" (selectionChange)="memberForm.status = $event.value">
                     @for (item of statusOptions; track item.value) {
                       <mat-option [value]="item.value">{{ item.label }}</mat-option>
                     }
@@ -244,13 +240,13 @@
                 </mat-form-field>
 
                 <div class="checkbox-field">
-                  <mat-checkbox [(ngModel)]="memberForm.isPrimary">Primary</mat-checkbox>
+                  <mat-checkbox [checked]="memberForm.isPrimary" (change)="memberForm.isPrimary = $event.checked">Primary</mat-checkbox>
                 </div>
                 <div class="checkbox-field">
-                  <mat-checkbox [(ngModel)]="memberForm.canAssign">Can assign</mat-checkbox>
+                  <mat-checkbox [checked]="memberForm.canAssign" (change)="memberForm.canAssign = $event.checked">Can assign</mat-checkbox>
                 </div>
                 <div class="checkbox-field">
-                  <mat-checkbox [(ngModel)]="memberForm.canClose">Can close</mat-checkbox>
+                  <mat-checkbox [checked]="memberForm.canClose" (change)="memberForm.canClose = $event.checked">Can close</mat-checkbox>
                 </div>
               </div>
 

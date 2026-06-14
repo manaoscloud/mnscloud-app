@@ -833,9 +833,7 @@
                 <mat-label>{{ 'Product code' | transloco }}</mat-label>
                 <input
                   matInput
-                  maxlength="120"
                   [formField]="productForm.code"
-                  [disabled]="!!editingProduct()"
                   [matAutocomplete]="productCodeAutocomplete"
                   (input)="productCodeFilter.set(productFormModel().code)"
                 />
@@ -858,7 +856,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Module' | transloco }}</mat-label>
-                <input matInput maxlength="80" [formField]="productForm.module" />
+                <input matInput [formField]="productForm.module" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Billing scope' | transloco }}</mat-label>
@@ -872,15 +870,13 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="productForm.name" />
+                <input matInput [formField]="productForm.name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Sort order' | transloco }}</mat-label>
                 <input
                   matInput
                   type="number"
-                  min="0"
-                  step="1"
                   [formField]="productForm.sortOrder"
                   [placeholder]="'Auto' | transloco"
                   [matTooltip]="
@@ -893,7 +889,6 @@
                 <textarea
                   matInput
                   rows="2"
-                  maxlength="500"
                   [formField]="productForm.description"
                 ></textarea>
               </mat-form-field>
@@ -905,15 +900,15 @@
             <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Entitlement pattern' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="productForm.entitlementPattern" />
+                <input matInput [formField]="productForm.entitlementPattern" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Requires entitlement code' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="productForm.requiresEntitlementCode" />
+                <input matInput [formField]="productForm.requiresEntitlementCode" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Resource type' | transloco }}</mat-label>
-                <input matInput maxlength="80" [formField]="productForm.resourceType" />
+                <input matInput [formField]="productForm.resourceType" />
               </mat-form-field>
             </form>
           </div>
@@ -933,8 +928,6 @@
                 <input
                   matInput
                   type="number"
-                  min="0"
-                  step="1"
                   [formField]="productForm.publicSortOrder"
                   [placeholder]="'Auto' | transloco"
                   [matTooltip]="
@@ -944,22 +937,21 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public slug' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="productForm.publicSlug" />
+                <input matInput [formField]="productForm.publicSlug" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public name' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="productForm.publicName" />
+                <input matInput [formField]="productForm.publicName" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public summary' | transloco }}</mat-label>
-                <input matInput maxlength="255" [formField]="productForm.publicSummary" />
+                <input matInput [formField]="productForm.publicSummary" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Public description' | transloco }}</mat-label>
                 <textarea
                   matInput
                   rows="2"
-                  maxlength="700"
                   [formField]="productForm.publicDescription"
                 ></textarea>
               </mat-form-field>
@@ -1083,7 +1075,7 @@
             <form class="form-grid price-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | transloco }}</mat-label>
-                <input matInput maxlength="3" [formField]="priceForm.currency" />
+                <input matInput [formField]="priceForm.currency" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Billing mode' | transloco }}</mat-label>
@@ -1139,7 +1131,6 @@
                 <input
                   matInput
                   type="number"
-                  step="0.000001"
                   [formField]="priceForm.includedQuantity"
                 />
               </mat-form-field>
@@ -1148,7 +1139,6 @@
                 <input
                   matInput
                   type="number"
-                  step="0.000001"
                   [formField]="priceForm.minimumCommitment"
                 />
               </mat-form-field>
@@ -1242,9 +1232,7 @@
                 <mat-label>{{ 'Package code' | transloco }}</mat-label>
                 <input
                   matInput
-                  maxlength="120"
                   [formField]="packageForm.code"
-                  [disabled]="!!editingPackage()"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
@@ -1259,8 +1247,6 @@
                 <input
                   matInput
                   type="number"
-                  min="0"
-                  step="1"
                   [formField]="packageForm.sortOrder"
                 />
               </mat-form-field>
@@ -1297,14 +1283,13 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="packageForm.name" />
+                <input matInput [formField]="packageForm.name" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Description' | transloco }}</mat-label>
                 <textarea
                   matInput
                   rows="2"
-                  maxlength="500"
                   [formField]="packageForm.description"
                 ></textarea>
               </mat-form-field>
@@ -1347,15 +1332,13 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Entitlement code' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="packageForm.itemEntitlementCode" />
+                <input matInput [formField]="packageForm.itemEntitlementCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Included quantity' | transloco }}</mat-label>
                 <input
                   matInput
                   type="number"
-                  min="0"
-                  step="0.000001"
                   [formField]="packageForm.itemIncludedQuantity"
                 />
               </mat-form-field>
@@ -1449,14 +1432,12 @@
                 <mat-label>{{ 'Promotion code' | transloco }}</mat-label>
                 <input
                   matInput
-                  maxlength="120"
                   [formField]="promotionForm.code"
-                  [disabled]="!!editingPromotion()"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | transloco }}</mat-label>
-                <input matInput maxlength="3" [formField]="promotionForm.currency" />
+                <input matInput [formField]="promotionForm.currency" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public' | transloco }}</mat-label>
@@ -1467,7 +1448,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput maxlength="160" [formField]="promotionForm.name" />
+                <input matInput [formField]="promotionForm.name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Requires coupon' | transloco }}</mat-label>
@@ -1489,7 +1470,6 @@
                 <textarea
                   matInput
                   rows="2"
-                  maxlength="500"
                   [formField]="promotionForm.description"
                 ></textarea>
               </mat-form-field>
@@ -1577,7 +1557,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Cycles' | transloco }}</mat-label>
-                <input matInput type="number" min="0" step="1" [formField]="promotionForm.cycles" />
+                <input matInput type="number" [formField]="promotionForm.cycles" />
               </mat-form-field>
             </form>
           </div>
@@ -1587,15 +1567,13 @@
             <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Coupon code' | transloco }}</mat-label>
-                <input matInput maxlength="80" [formField]="promotionForm.couponCode" />
+                <input matInput [formField]="promotionForm.couponCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Max uses' | transloco }}</mat-label>
                 <input
                   matInput
                   type="number"
-                  min="0"
-                  step="1"
                   [formField]="promotionForm.couponMaxUses"
                 />
               </mat-form-field>
@@ -1604,8 +1582,6 @@
                 <input
                   matInput
                   type="number"
-                  min="0"
-                  step="1"
                   [formField]="promotionForm.couponMaxUsesPerTenant"
                 />
               </mat-form-field>
@@ -1718,7 +1694,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | transloco }}</mat-label>
-                <input matInput maxlength="3" [formField]="creditForm.currency" />
+                <input matInput [formField]="creditForm.currency" />
               </mat-form-field>
               <input type="hidden" [formField]="creditForm.environmentUUID" />
               @if (tenantOptions().length > 0 && !selectedCreditTenant()) {

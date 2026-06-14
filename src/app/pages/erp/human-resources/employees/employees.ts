@@ -11,7 +11,6 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { FormField, email, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatButtonModule } from '@angular/material/button';
@@ -92,7 +91,6 @@ type EmployeeFormModel = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     FormField,
     MatButtonModule,
     MatCardModule,

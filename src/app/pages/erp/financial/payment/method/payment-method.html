@@ -20,10 +20,7 @@
         <mat-label>Search payment methods</mat-label>
         <input
           matInput
-          placeholder="Name, code, type..."
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
-        />
+          placeholder="Name, code, type..." [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
@@ -138,7 +135,7 @@
             <div class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Type</mat-label>
-                <mat-select [(ngModel)]="form.type">
+                <mat-select [value]="form.type" (selectionChange)="form.type = $event.value">
                   <mat-option value="card">Card</mat-option>
                   <mat-option value="bank_transfer">Bank transfer</mat-option>
                   <mat-option value="pix">PIX</mat-option>
@@ -149,7 +146,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -157,12 +154,12 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="form.name" />
+                <input matInput [value]="form.name" (input)="form.name = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Code</mat-label>
-                <input matInput [(ngModel)]="form.code" />
+                <input matInput [value]="form.code" (input)="form.code = $any($event.target).value" />
               </mat-form-field>
             </div>
           </div>
@@ -172,7 +169,7 @@
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+              <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>

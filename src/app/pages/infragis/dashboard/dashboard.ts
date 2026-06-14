@@ -9,7 +9,6 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -90,7 +89,6 @@ const EMPTY_INFRAGIS_DASHBOARD: InfraGisDashboardSnapshot = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     MatButtonModule,
     MatCardModule,
     MatDialogModule,

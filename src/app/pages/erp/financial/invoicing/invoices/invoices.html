@@ -19,10 +19,7 @@
         <mat-label>Search invoices</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Number, status, notes"
-        />
+          placeholder="Number, status, notes" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
@@ -118,12 +115,12 @@
             <div class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Number</mat-label>
-                <input matInput [(ngModel)]="form.number" />
+                <input matInput [value]="form.number" (input)="form.number = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
                     <mat-option [value]="status.value">{{ status.label }}</mat-option>
                   }
@@ -134,17 +131,15 @@
                 <mat-label>Issue date</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.issueDate"
                   [matDatepicker]="issueDatePicker"
-                  appDateMask
-                />
+                  appDateMask [value]="form.issueDate" (input)="form.issueDate = $any($event.target).value" />
                 <mat-datepicker-toggle matSuffix [for]="issueDatePicker" />
                 <mat-datepicker #issueDatePicker touchUi />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Amount</mat-label>
-                <input matInput [(ngModel)]="form.amount" type="text" appCurrencyMask />
+                <input matInput type="text" appCurrencyMask [value]="form.amount" (input)="form.amount = $any($event.target).value" />
                 @if (amountPrefix) {
                   <span matTextPrefix>{{ amountPrefix }}</span>
                 }
@@ -157,7 +152,7 @@
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+              <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>

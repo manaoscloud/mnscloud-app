@@ -19,14 +19,11 @@
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          [ngModel]="searchInput()"
-          (ngModelChange)="searchInput.set($event)"
-          [placeholder]="'Employee or login code' | transloco"
-        />
+          [placeholder]="'Employee or login code' | transloco" [value]="searchInput()" (input)="searchInput.set($any($event.target).value)" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           <mat-option [value]="null">{{ 'All' | transloco }}</mat-option>
           <mat-option value="active">{{ 'Active' | transloco }}</mat-option>
           <mat-option value="inactive">{{ 'Inactive' | transloco }}</mat-option>

@@ -429,15 +429,13 @@
                   <input
                     matInput
                     type="number"
-                    min="0.000001"
-                    step="0.000001"
                     [formField]="subscriptionForm.quantity"
                   />
                 </mat-form-field>
               }
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Promotion or coupon code' | transloco }}</mat-label>
-                <input matInput maxlength="120" [formField]="subscriptionForm.promotionCode" />
+                <input matInput [formField]="subscriptionForm.promotionCode" />
               </mat-form-field>
             </form>
           </div>

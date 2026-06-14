@@ -19,10 +19,7 @@
         <mat-label>Search contracts</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Title, status, notes"
-        />
+          placeholder="Title, status, notes" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
@@ -132,7 +129,7 @@
             <div class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Customer</mat-label>
-                <mat-select [(ngModel)]="form.customerUUID">
+                <mat-select [value]="form.customerUUID" (selectionChange)="form.customerUUID = $event.value">
                   <mat-option value="">None</mat-option>
                   @for (customer of customers; track customer.CustomerUUID) {
                     <mat-option [value]="customer.CustomerUUID">{{ customer.Name }}</mat-option>
@@ -142,12 +139,12 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Title</mat-label>
-                <input matInput [(ngModel)]="form.title" />
+                <input matInput [value]="form.title" (input)="form.title = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
                     <mat-option [value]="status.value">{{ status.label }}</mat-option>
                   }
@@ -158,11 +155,9 @@
                 <mat-label>Start date</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.startDate"
                   [matDatepicker]="startDatePicker"
                   [max]="form.endDate"
-                  appDateMask
-                />
+                  appDateMask [value]="form.startDate" (input)="form.startDate = $any($event.target).value" />
                 <mat-datepicker-toggle matSuffix [for]="startDatePicker" />
                 <mat-datepicker #startDatePicker touchUi />
               </mat-form-field>
@@ -171,11 +166,9 @@
                 <mat-label>End date</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.endDate"
                   [matDatepicker]="endDatePicker"
                   [min]="form.startDate"
-                  appDateMask
-                />
+                  appDateMask [value]="form.endDate" (input)="form.endDate = $any($event.target).value" />
                 <mat-datepicker-toggle matSuffix [for]="endDatePicker" />
                 <mat-datepicker #endDatePicker touchUi />
               </mat-form-field>
@@ -184,11 +177,9 @@
                 <mat-label>Amount</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.amount"
                   type="text"
                   class="amount-input"
-                  appCurrencyMask
-                />
+                  appCurrencyMask [value]="form.amount" (input)="form.amount = $any($event.target).value" />
                 @if (amountPrefix) {
                   <span matTextPrefix>{{ amountPrefix }}</span>
                 }
@@ -202,10 +193,7 @@
             <div class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Billing complex</mat-label>
-                <mat-select
-                  [(ngModel)]="form.billingComplexUUID"
-                  (ngModelChange)="onBillingComplexChange($event)"
-                >
+                <mat-select [value]="form.billingComplexUUID" (selectionChange)="onBillingComplexChange($event.value)">
                   <mat-option value="">None</mat-option>
                   @for (complex of complexes; track complex.ComplexUUID) {
                     <mat-option [value]="complex.ComplexUUID">{{ complex.Name }}</mat-option>
@@ -215,46 +203,43 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Zip</mat-label>
-                <input matInput [(ngModel)]="form.billingZip" />
+                <input matInput [value]="form.billingZip" (input)="form.billingZip = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Country</mat-label>
-                <input matInput [(ngModel)]="form.billingCountry" />
+                <input matInput [value]="form.billingCountry" (input)="form.billingCountry = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Street</mat-label>
-                <input matInput [(ngModel)]="form.billingStreet" />
+                <input matInput [value]="form.billingStreet" (input)="form.billingStreet = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Number</mat-label>
-                <input matInput [(ngModel)]="form.billingNumber" />
+                <input matInput [value]="form.billingNumber" (input)="form.billingNumber = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>District</mat-label>
-                <input matInput [(ngModel)]="form.billingDistrict" />
+                <input matInput [value]="form.billingDistrict" (input)="form.billingDistrict = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>City</mat-label>
-                <input matInput [(ngModel)]="form.billingCity" />
+                <input matInput [value]="form.billingCity" (input)="form.billingCity = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>State</mat-label>
-                <input matInput [(ngModel)]="form.billingState" />
+                <input matInput [value]="form.billingState" (input)="form.billingState = $any($event.target).value" />
               </mat-form-field>
             </div>
 
             <div class="form-subsection install-subsection">
               <h3>Installation address</h3>
-              <mat-checkbox
-                [(ngModel)]="form.installSameAsBilling"
-                (ngModelChange)="onInstallSameAsBillingChange($event)"
-              >
+              <mat-checkbox [checked]="form.installSameAsBilling" (change)="onInstallSameAsBillingChange($event.checked)">
                 Same as billing address
               </mat-checkbox>
             </div>
@@ -264,63 +249,49 @@
                 <mat-label>Zip</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.installZip"
-                  [disabled]="form.installSameAsBilling"
-                />
+                  [disabled]="form.installSameAsBilling" [value]="form.installZip" (input)="form.installZip = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Country</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.installCountry"
-                  [disabled]="form.installSameAsBilling"
-                />
+                  [disabled]="form.installSameAsBilling" [value]="form.installCountry" (input)="form.installCountry = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Street</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.installStreet"
-                  [disabled]="form.installSameAsBilling"
-                />
+                  [disabled]="form.installSameAsBilling" [value]="form.installStreet" (input)="form.installStreet = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Number</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.installNumber"
-                  [disabled]="form.installSameAsBilling"
-                />
+                  [disabled]="form.installSameAsBilling" [value]="form.installNumber" (input)="form.installNumber = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>District</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.installDistrict"
-                  [disabled]="form.installSameAsBilling"
-                />
+                  [disabled]="form.installSameAsBilling" [value]="form.installDistrict" (input)="form.installDistrict = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>City</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.installCity"
-                  [disabled]="form.installSameAsBilling"
-                />
+                  [disabled]="form.installSameAsBilling" [value]="form.installCity" (input)="form.installCity = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>State</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.installState"
-                  [disabled]="form.installSameAsBilling"
-                />
+                  [disabled]="form.installSameAsBilling" [value]="form.installState" (input)="form.installState = $any($event.target).value" />
               </mat-form-field>
             </div>
           </div>
@@ -330,7 +301,7 @@
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+              <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>

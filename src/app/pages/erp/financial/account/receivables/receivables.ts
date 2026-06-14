@@ -9,7 +9,6 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -63,7 +62,6 @@ type CustomerOption = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,

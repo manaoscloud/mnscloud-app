@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   HostBinding,
+  effect,
   inject,
   input,
+  output,
   signal,
-  DestroyRef,
 } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { MatFormFieldControl } from '@angular/material/form-field';
@@ -43,6 +45,8 @@ export class PhoneInputComponent
   readonly placeholderInput = input('', { alias: 'placeholder' });
   readonly requiredInput = input(false, { alias: 'required' });
   readonly disabledInput = input(false, { alias: 'disabled' });
+  readonly valueInput = input<string | null>(null, { alias: 'value' });
+  readonly valueChange = output<string>();
   private readonly disabledState = signal(false);
 
   get placeholder() {
@@ -91,6 +95,13 @@ export class PhoneInputComponent
     if (this.ngControl) {
       this.ngControl.valueAccessor = this;
     }
+
+    effect(() => {
+      const nextValue = this.normalize(this.valueInput() ?? '');
+      if (nextValue !== this.value) {
+        this.value = nextValue;
+      }
+    });
   }
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -132,6 +143,7 @@ export class PhoneInputComponent
     }
     this.value = normalized;
     this.onChange(normalized);
+    this.valueChange.emit(normalized);
   }
 
   onFocusIn() {

@@ -230,7 +230,7 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Port</mat-label>
-                  <input matInput type="number" min="1" [formField]="form.port" />
+                  <input matInput type="number" [formField]="form.port" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Security</mat-label>
@@ -268,11 +268,11 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>SMTP host</mat-label>
-                  <input matInput [formField]="form.host" readonly />
+                  <input matInput [formField]="form.host" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>SMTP username</mat-label>
-                  <input matInput [formField]="form.username" readonly />
+                  <input matInput [formField]="form.username" />
                 </mat-form-field>
               }
 
@@ -302,7 +302,7 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>SMTP endpoint</mat-label>
-                  <input matInput [formField]="form.host" readonly />
+                  <input matInput [formField]="form.host" />
                 </mat-form-field>
               }
 
@@ -319,11 +319,11 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>API host</mat-label>
-                  <input matInput [formField]="form.host" readonly />
+                  <input matInput [formField]="form.host" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>API port</mat-label>
-                  <input matInput type="number" [formField]="form.port" readonly />
+                  <input matInput type="number" [formField]="form.port" />
                 </mat-form-field>
               }
             </form>

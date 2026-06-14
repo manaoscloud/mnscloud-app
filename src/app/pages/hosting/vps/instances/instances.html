@@ -281,7 +281,6 @@
                 <mat-label>Plan</mat-label>
                 <mat-select
                   [formField]="instanceForm.planUUID"
-                  [disabled]="isProvisionedEdit()"
                   (openedChange)="onPlanOpened($event)"
                 >
                   <mat-option
@@ -345,7 +344,6 @@
                   <mat-label>Image</mat-label>
                   <mat-select
                     [formField]="instanceForm.image"
-                    [disabled]="isProvisionedEdit()"
                     (openedChange)="onImageOpened($event)"
                   >
                     <mat-select-trigger>{{ selectedImageLabel() }}</mat-select-trigger>
@@ -401,7 +399,6 @@
                   <input
                     matInput
                     [formField]="instanceForm.image"
-                    [readonly]="isProvisionedEdit()"
                     placeholder="ubuntu-22-04-x64"
                   />
                 </mat-form-field>
@@ -427,7 +424,6 @@
                 <input
                   matInput
                   [formField]="instanceForm.sshKey"
-                  [readonly]="isProvisionedEdit()"
                   placeholder="default-key"
                 />
               </mat-form-field>
@@ -437,7 +433,6 @@
                 <input
                   matInput
                   [formField]="instanceForm.status"
-                  [readonly]="isProvisionedEdit()"
                   placeholder="provisioning"
                 />
               </mat-form-field>

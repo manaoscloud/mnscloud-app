@@ -361,7 +361,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Timeout seconds</mat-label>
-                <input matInput type="number" min="3" max="120" [formField]="form.timeoutSeconds" />
+                <input matInput type="number" [formField]="form.timeoutSeconds" />
               </mat-form-field>
 
               @if (formModel().mode === 's3_compatible') {

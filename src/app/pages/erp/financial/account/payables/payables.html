@@ -20,10 +20,7 @@
         <mat-label>Search payables</mat-label>
         <input
           matInput
-          placeholder="Description, supplier, document..."
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
-        />
+          placeholder="Description, supplier, document..." [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
@@ -177,9 +174,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Supplier</mat-label>
                 <mat-select
-                  [(ngModel)]="form.supplierUUID"
-                  (openedChange)="onSupplierOpened($event)"
-                >
+                  (openedChange)="onSupplierOpened($event)" [value]="form.supplierUUID" (selectionChange)="form.supplierUUID = $event.value">
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -189,12 +184,10 @@
                     <mat-form-field appearance="outline" class="select-search-field">
                       <input
                         matInput
-                        [(ngModel)]="supplierSearch"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                         placeholder="Search supplier"
-                        autocomplete="off"
-                      />
+                        autocomplete="off" [value]="supplierSearch" (input)="supplierSearch = $any($event.target).value" />
                     </mat-form-field>
                   </mat-option>
                   @for (supplier of filteredSuppliers; track supplier.value) {
@@ -205,7 +198,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
                     <mat-option [value]="status.value">{{ status.label }}</mat-option>
                   }
@@ -214,29 +207,27 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Description</mat-label>
-                <input matInput [(ngModel)]="form.description" />
+                <input matInput [value]="form.description" (input)="form.description = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Document number</mat-label>
-                <input matInput [(ngModel)]="form.docNumber" />
+                <input matInput [value]="form.docNumber" (input)="form.docNumber = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Due date</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.dueDate"
                   [matDatepicker]="dueDatePicker"
-                  appDateMask
-                />
+                  appDateMask [value]="form.dueDate" (input)="form.dueDate = $any($event.target).value" />
                 <mat-datepicker-toggle matSuffix [for]="dueDatePicker" />
                 <mat-datepicker #dueDatePicker touchUi />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Amount</mat-label>
-                <input matInput [(ngModel)]="form.amount" type="text" appCurrencyMask />
+                <input matInput type="text" appCurrencyMask [value]="form.amount" (input)="form.amount = $any($event.target).value" />
                 @if (amountPrefix) {
                   <span matTextPrefix>{{ amountPrefix }}</span>
                 }
@@ -249,7 +240,7 @@
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+              <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>
@@ -296,17 +287,15 @@
             <mat-label>Payment date</mat-label>
             <input
               matInput
-              [(ngModel)]="settleForm.paymentDate"
               [matDatepicker]="paymentDatePicker"
-              appDateMask
-            />
+              appDateMask [value]="settleForm.paymentDate" (input)="settleForm.paymentDate = $any($event.target).value" />
             <mat-datepicker-toggle matSuffix [for]="paymentDatePicker" />
             <mat-datepicker #paymentDatePicker touchUi />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Paid amount</mat-label>
-            <input matInput [(ngModel)]="settleForm.paidAmount" type="text" appCurrencyMask />
+            <input matInput type="text" appCurrencyMask [value]="settleForm.paidAmount" (input)="settleForm.paidAmount = $any($event.target).value" />
             @if (amountPrefix) {
               <span matTextPrefix>{{ amountPrefix }}</span>
             }
@@ -314,7 +303,7 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Payment method</mat-label>
-            <mat-select [(ngModel)]="settleForm.paymentMethod">
+            <mat-select [value]="settleForm.paymentMethod" (selectionChange)="settleForm.paymentMethod = $event.value">
               @for (method of paymentMethodOptions; track method.value) {
                 <mat-option [value]="method.value">{{ method.label }}</mat-option>
               }
@@ -323,12 +312,12 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Reference</mat-label>
-            <input matInput [(ngModel)]="settleForm.paymentReference" />
+            <input matInput [value]="settleForm.paymentReference" (input)="settleForm.paymentReference = $any($event.target).value" />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-4">
             <mat-label>Payment notes</mat-label>
-            <input matInput [(ngModel)]="settleForm.paymentNotes" />
+            <input matInput [value]="settleForm.paymentNotes" (input)="settleForm.paymentNotes = $any($event.target).value" />
           </mat-form-field>
         </div>
 

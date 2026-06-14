@@ -257,7 +257,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Price</mat-label>
-                <input matInput type="number" min="0" step="0.01" [formField]="planForm.price" />
+                <input matInput type="number" [formField]="planForm.price" />
               </mat-form-field>
             </form>
           </div>
@@ -361,9 +361,7 @@
                 <input
                   matInput
                   type="number"
-                  min="0"
                   [formField]="planForm.cpu"
-                  [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
 
@@ -372,9 +370,7 @@
                 <input
                   matInput
                   type="number"
-                  min="0"
                   [formField]="planForm.memoryMb"
-                  [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
 
@@ -383,9 +379,7 @@
                 <input
                   matInput
                   type="number"
-                  min="0"
                   [formField]="planForm.diskGb"
-                  [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
 
@@ -394,9 +388,7 @@
                 <input
                   matInput
                   type="number"
-                  min="0"
                   [formField]="planForm.transferGb"
-                  [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
             </form>

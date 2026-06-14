@@ -19,10 +19,7 @@
         <mat-label>Search boletos</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Title, status, notes"
-        />
+          placeholder="Title, status, notes" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button (click)="applySearchFilters()" type="button">Apply</button>
@@ -120,12 +117,12 @@
             <div class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Title</mat-label>
-                <input matInput [(ngModel)]="form.title" />
+                <input matInput [value]="form.title" (input)="form.title = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
                     <mat-option [value]="status.value">{{ status.label }}</mat-option>
                   }
@@ -136,17 +133,15 @@
                 <mat-label>Due date</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.dueDate"
                   [matDatepicker]="dueDatePicker"
-                  appDateMask
-                />
+                  appDateMask [value]="form.dueDate" (input)="form.dueDate = $any($event.target).value" />
                 <mat-datepicker-toggle matSuffix [for]="dueDatePicker" />
                 <mat-datepicker #dueDatePicker touchUi />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Amount</mat-label>
-                <input matInput [(ngModel)]="form.amount" type="text" appCurrencyMask />
+                <input matInput type="text" appCurrencyMask [value]="form.amount" (input)="form.amount = $any($event.target).value" />
                 @if (amountPrefix) {
                   <span matTextPrefix>{{ amountPrefix }}</span>
                 }
@@ -154,7 +149,7 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Customer</mat-label>
-                <mat-select [(ngModel)]="form.customerUUID">
+                <mat-select [value]="form.customerUUID" (selectionChange)="form.customerUUID = $event.value">
                   <mat-option value="">No customer</mat-option>
                   @for (customer of customerOptions; track customer.CustomerUUID) {
                     <mat-option [value]="customer.CustomerUUID">
@@ -165,7 +160,7 @@
               </mat-form-field>
 
               <div class="gateway-toggle-field">
-                <mat-slide-toggle [(ngModel)]="form.issueAtGateway" [disabled]="!!editingBoleto">
+                <mat-slide-toggle [disabled]="!!editingBoleto" [checked]="form.issueAtGateway" (change)="form.issueAtGateway = $event.checked">
                   Issue at gateway
                 </mat-slide-toggle>
               </div>
@@ -173,7 +168,7 @@
               @if (form.issueAtGateway) {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Payment gateway</mat-label>
-                  <mat-select [(ngModel)]="form.gatewayAccountUUID">
+                  <mat-select [value]="form.gatewayAccountUUID" (selectionChange)="form.gatewayAccountUUID = $event.value">
                     <mat-option value=""
                       >Automatic (tenant default, fallback to master default)</mat-option
                     >
@@ -193,7 +188,7 @@
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+              <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>

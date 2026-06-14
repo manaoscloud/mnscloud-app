@@ -18,7 +18,7 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search connections</mat-label>
-        <input matInput [ngModel]="searchInput" (ngModelChange)="onSearchChange($event)" />
+        <input matInput [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
         @if (searchInput) {
           <button mat-icon-button matSuffix (click)="onSearchChange('')" type="button">
             <mat-icon>close</mat-icon>
@@ -143,7 +143,7 @@
             <div class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
-                <mat-select [(ngModel)]="form.provider" (selectionChange)="onProviderChange()">
+                <mat-select (selectionChange)="onProviderChange()" [value]="form.provider" (selectionChange)="form.provider = $event.value">
                   @for (item of providers; track item.id) {
                     <mat-option [value]="item.id">{{ item.label }}</mat-option>
                   }
@@ -152,7 +152,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (item of statusOptions; track item) {
                     <mat-option [value]="item">{{ item }}</mat-option>
                   }
@@ -161,7 +161,7 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Display name</mat-label>
-                <input matInput [(ngModel)]="form.displayName" />
+                <input matInput [value]="form.displayName" (input)="form.displayName = $any($event.target).value" />
               </mat-form-field>
             </div>
 
@@ -169,94 +169,94 @@
               @if (form.provider === 'whatsapp-cloud') {
                 <mat-form-field appearance="outline">
                   <mat-label>Phone number ID</mat-label>
-                  <input matInput [(ngModel)]="form.config['phone_number_id']" />
+                  <input matInput [value]="form.config['phone_number_id']" (input)="form.config['phone_number_id'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Business account ID</mat-label>
-                  <input matInput [(ngModel)]="form.config['business_account_id']" />
+                  <input matInput [value]="form.config['business_account_id']" (input)="form.config['business_account_id'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Access token</mat-label>
-                  <input matInput [(ngModel)]="form.config['access_token']" />
+                  <input matInput [value]="form.config['access_token']" (input)="form.config['access_token'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Verify token</mat-label>
-                  <input matInput [(ngModel)]="form.config['verify_token']" />
+                  <input matInput [value]="form.config['verify_token']" (input)="form.config['verify_token'] = $any($event.target).value" />
                 </mat-form-field>
               }
 
               @if (form.provider === 'whatsapp-twilio') {
                 <mat-form-field appearance="outline">
                   <mat-label>Account SID</mat-label>
-                  <input matInput [(ngModel)]="form.config['account_sid']" />
+                  <input matInput [value]="form.config['account_sid']" (input)="form.config['account_sid'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Auth token</mat-label>
-                  <input matInput [(ngModel)]="form.config['auth_token']" />
+                  <input matInput [value]="form.config['auth_token']" (input)="form.config['auth_token'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>WhatsApp number</mat-label>
-                  <input matInput [(ngModel)]="form.config['whatsapp_number']" />
+                  <input matInput [value]="form.config['whatsapp_number']" (input)="form.config['whatsapp_number'] = $any($event.target).value" />
                 </mat-form-field>
               }
 
               @if (form.provider === 'messenger') {
                 <mat-form-field appearance="outline">
                   <mat-label>App ID</mat-label>
-                  <input matInput [(ngModel)]="form.config['app_id']" />
+                  <input matInput [value]="form.config['app_id']" (input)="form.config['app_id'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>App secret</mat-label>
-                  <input matInput [(ngModel)]="form.config['app_secret']" />
+                  <input matInput [value]="form.config['app_secret']" (input)="form.config['app_secret'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Page ID</mat-label>
-                  <input matInput [(ngModel)]="form.config['page_id']" />
+                  <input matInput [value]="form.config['page_id']" (input)="form.config['page_id'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Access token</mat-label>
-                  <input matInput [(ngModel)]="form.config['access_token']" />
+                  <input matInput [value]="form.config['access_token']" (input)="form.config['access_token'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Verify token</mat-label>
-                  <input matInput [(ngModel)]="form.config['verify_token']" />
+                  <input matInput [value]="form.config['verify_token']" (input)="form.config['verify_token'] = $any($event.target).value" />
                 </mat-form-field>
               }
 
               @if (form.provider === 'instagram') {
                 <mat-form-field appearance="outline">
                   <mat-label>App ID</mat-label>
-                  <input matInput [(ngModel)]="form.config['app_id']" />
+                  <input matInput [value]="form.config['app_id']" (input)="form.config['app_id'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>App secret</mat-label>
-                  <input matInput [(ngModel)]="form.config['app_secret']" />
+                  <input matInput [value]="form.config['app_secret']" (input)="form.config['app_secret'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Instagram user ID</mat-label>
-                  <input matInput [(ngModel)]="form.config['ig_user_id']" />
+                  <input matInput [value]="form.config['ig_user_id']" (input)="form.config['ig_user_id'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Access token</mat-label>
-                  <input matInput [(ngModel)]="form.config['access_token']" />
+                  <input matInput [value]="form.config['access_token']" (input)="form.config['access_token'] = $any($event.target).value" />
                 </mat-form-field>
                 <mat-form-field appearance="outline">
                   <mat-label>Verify token</mat-label>
-                  <input matInput [(ngModel)]="form.config['verify_token']" />
+                  <input matInput [value]="form.config['verify_token']" (input)="form.config['verify_token'] = $any($event.target).value" />
                 </mat-form-field>
               }
 
               @if (form.provider === 'telegram') {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Bot token</mat-label>
-                  <input matInput [(ngModel)]="form.config['bot_token']" />
+                  <input matInput [value]="form.config['bot_token']" (input)="form.config['bot_token'] = $any($event.target).value" />
                 </mat-form-field>
               }
 
               @if (form.provider === 'webchat') {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Webchat URL</mat-label>
-                  <input matInput [(ngModel)]="form.config['webchat_url']" />
+                  <input matInput [value]="form.config['webchat_url']" (input)="form.config['webchat_url'] = $any($event.target).value" />
                 </mat-form-field>
               }
             </div>

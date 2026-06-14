@@ -10,7 +10,6 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -72,7 +71,6 @@ type TimeClockAccountListParams = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     FormField,
     MatButtonModule,
     MatCardModule,

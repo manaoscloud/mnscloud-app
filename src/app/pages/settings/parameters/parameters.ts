@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -124,7 +123,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,

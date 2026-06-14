@@ -62,11 +62,11 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" />
+        <input matInput [value]="search()" (input)="search.set($any($event.target).value)" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           <mat-option [value]="null">{{ 'All' | transloco }}</mat-option>
           <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
           <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
@@ -183,11 +183,7 @@
                   >
                     <mat-label>{{ field.label | transloco }}</mat-label>
                     @if (field.type === 'select') {
-                      <mat-select
-                        [ngModel]="formModel()[field.key]"
-                        (ngModelChange)="updateField(field.key, $event)"
-                        [ngModelOptions]="{ standalone: true }"
-                      >
+                      <mat-select [value]="formModel()[field.key]" (selectionChange)="updateField(field.key, $event.value)">
                         @for (option of field.options?.() ?? []; track option.value) {
                           <mat-option [value]="option.value">{{
                             option.label | transloco
@@ -197,11 +193,7 @@
                     } @else if (field.type === 'textarea') {
                       <textarea
                         matInput
-                        [rows]="field.rows ?? 3"
-                        [ngModel]="formModel()[field.key]"
-                        (ngModelChange)="updateField(field.key, $event)"
-                        [ngModelOptions]="{ standalone: true }"
-                      ></textarea>
+                        [rows]="field.rows ?? 3" [value]="formModel()[field.key]" (input)="updateField(field.key, $any($event.target).value)"></textarea>
                     } @else {
                       <input
                         matInput
@@ -211,11 +203,7 @@
                             : field.type === 'color'
                               ? 'color'
                               : 'text'
-                        "
-                        [ngModel]="formModel()[field.key]"
-                        (ngModelChange)="updateField(field.key, $event)"
-                        [ngModelOptions]="{ standalone: true }"
-                      />
+                        " [value]="formModel()[field.key]" (input)="updateField(field.key, $any($event.target).value)" />
                     }
                   </mat-form-field>
                 }

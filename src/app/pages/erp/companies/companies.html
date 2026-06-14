@@ -19,10 +19,7 @@
         <mat-label>Search companies</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Name, document, email"
-        />
+          placeholder="Name, document, email" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -170,7 +167,7 @@
             <div class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
                     <mat-option [value]="status.value">{{ status.label }}</mat-option>
                   }
@@ -179,27 +176,24 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="form.name" />
+                <input matInput [value]="form.name" (input)="form.name = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Document</mat-label>
-                <input matInput [(ngModel)]="form.document" />
+                <input matInput [value]="form.document" (input)="form.document = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Legal name</mat-label>
-                <input matInput [(ngModel)]="form.legalName" />
+                <input matInput [value]="form.legalName" (input)="form.legalName = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Email</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.email"
-                  placeholder="name@example.com"
-                  (ngModelChange)="updateEmailError()"
-                />
+                  placeholder="name@example.com" [value]="form.email" (input)="form.email = $any($event.target).value; updateEmailError()" />
                 <mat-icon matSuffix>mail</mat-icon>
                 @if (emailError()) {
                   <mat-error>{{ emailError() }}</mat-error>
@@ -208,7 +202,7 @@
 
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Phone</mat-label>
-                <app-phone-input [(ngModel)]="form.phone" placeholder="5511999999999" />
+                <app-phone-input placeholder="5511999999999" [value]="form.phone" (valueChange)="form.phone = $event" />
                 <mat-icon matSuffix>phone</mat-icon>
               </mat-form-field>
             </div>
@@ -220,37 +214,37 @@
             <div class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Zip</mat-label>
-                <input matInput [(ngModel)]="form.addressZip" />
+                <input matInput [value]="form.addressZip" (input)="form.addressZip = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Country</mat-label>
-                <input matInput [(ngModel)]="form.addressCountry" />
+                <input matInput [value]="form.addressCountry" (input)="form.addressCountry = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Street</mat-label>
-                <input matInput [(ngModel)]="form.addressStreet" />
+                <input matInput [value]="form.addressStreet" (input)="form.addressStreet = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Number</mat-label>
-                <input matInput [(ngModel)]="form.addressNumber" />
+                <input matInput [value]="form.addressNumber" (input)="form.addressNumber = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>District</mat-label>
-                <input matInput [(ngModel)]="form.addressDistrict" />
+                <input matInput [value]="form.addressDistrict" (input)="form.addressDistrict = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>City</mat-label>
-                <input matInput [(ngModel)]="form.addressCity" />
+                <input matInput [value]="form.addressCity" (input)="form.addressCity = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>State</mat-label>
-                <input matInput [(ngModel)]="form.addressState" />
+                <input matInput [value]="form.addressState" (input)="form.addressState = $any($event.target).value" />
               </mat-form-field>
             </div>
           </div>
@@ -260,7 +254,7 @@
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="12" [(ngModel)]="form.notes"></textarea>
+              <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>

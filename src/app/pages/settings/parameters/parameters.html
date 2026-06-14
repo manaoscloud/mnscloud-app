@@ -27,21 +27,13 @@
                 <input
                   matInput
                   maxlength="3"
-                  [ngModel]="item().defaultCurrency"
-                  (ngModelChange)="updateItem({ defaultCurrency: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                  placeholder="BRL"
-                />
+                  placeholder="BRL" [value]="item().defaultCurrency" (input)="updateItem({ defaultCurrency: $any($event.target).value })" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default Language</mat-label>
                 <mat-select
-                  [ngModel]="item().defaultLanguage"
-                  (ngModelChange)="updateItem({ defaultLanguage: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                  placeholder="pt-BR"
-                >
+                  placeholder="pt-BR" [value]="item().defaultLanguage" (selectionChange)="updateItem({ defaultLanguage: $event.value })">
                   @for (language of languageOptions; track language.code) {
                     <mat-option [value]="language.code">
                       {{ language.labelKey | transloco }}
@@ -54,35 +46,19 @@
                 <mat-label>Default Timezone</mat-label>
                 <input
                   matInput
-                  [ngModel]="item().defaultTimezone"
-                  (ngModelChange)="updateItem({ defaultTimezone: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                  [placeholder]="defaultTimezonePlaceholder()"
-                />
+                  [placeholder]="defaultTimezonePlaceholder()" [value]="item().defaultTimezone" (input)="updateItem({ defaultTimezone: $any($event.target).value })" />
               </mat-form-field>
 
               <div class="toggle-grid span-4">
-                <mat-slide-toggle
-                  [ngModel]="item().defaultCurrencyIsActive"
-                  (ngModelChange)="updateItem({ defaultCurrencyIsActive: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                >
+                <mat-slide-toggle [checked]="item().defaultCurrencyIsActive" (change)="updateItem({ defaultCurrencyIsActive: $event.checked })">
                   Default Currency Active
                 </mat-slide-toggle>
 
-                <mat-slide-toggle
-                  [ngModel]="item().defaultLanguageIsActive"
-                  (ngModelChange)="updateItem({ defaultLanguageIsActive: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                >
+                <mat-slide-toggle [checked]="item().defaultLanguageIsActive" (change)="updateItem({ defaultLanguageIsActive: $event.checked })">
                   Default Language Active
                 </mat-slide-toggle>
 
-                <mat-slide-toggle
-                  [ngModel]="item().defaultTimezoneIsActive"
-                  (ngModelChange)="updateItem({ defaultTimezoneIsActive: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                >
+                <mat-slide-toggle [checked]="item().defaultTimezoneIsActive" (change)="updateItem({ defaultTimezoneIsActive: $event.checked })">
                   Default Timezone Active
                 </mat-slide-toggle>
               </div>
@@ -96,11 +72,7 @@
                 <input
                   matInput
                   [type]="showGoogleMapsEmbedApiKey() ? 'text' : 'password'"
-                  [ngModel]="item().googleMapsEmbedApiKey"
-                  (ngModelChange)="updateItem({ googleMapsEmbedApiKey: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                  placeholder="Google Maps Street View embed API key"
-                />
+                  placeholder="Google Maps Street View embed API key" [value]="item().googleMapsEmbedApiKey" (input)="updateItem({ googleMapsEmbedApiKey: $any($event.target).value })" />
                 <button
                   mat-icon-button
                   matSuffix
@@ -121,11 +93,7 @@
                 <input
                   matInput
                   [type]="showMapboxToken() ? 'text' : 'password'"
-                  [ngModel]="item().mapboxToken"
-                  (ngModelChange)="updateItem({ mapboxToken: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                  placeholder="Mapbox public token"
-                />
+                  placeholder="Mapbox public token" [value]="item().mapboxToken" (input)="updateItem({ mapboxToken: $any($event.target).value })" />
                 <button
                   mat-icon-button
                   matSuffix
@@ -143,11 +111,7 @@
                   <input
                     matInput
                     [type]="showSignalWireRepoToken() ? 'text' : 'password'"
-                    [ngModel]="item().signalWireRepoToken"
-                    (ngModelChange)="updateItem({ signalWireRepoToken: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="SignalWire repository token for FreeSWITCH packages"
-                  />
+                    placeholder="SignalWire repository token for FreeSWITCH packages" [value]="item().signalWireRepoToken" (input)="updateItem({ signalWireRepoToken: $any($event.target).value })" />
                   <button
                     mat-icon-button
                     matSuffix
@@ -165,28 +129,16 @@
               }
 
               <div class="toggle-grid span-4">
-                <mat-slide-toggle
-                  [ngModel]="item().googleMapsEmbedApiKeyIsActive"
-                  (ngModelChange)="updateItem({ googleMapsEmbedApiKeyIsActive: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                >
+                <mat-slide-toggle [checked]="item().googleMapsEmbedApiKeyIsActive" (change)="updateItem({ googleMapsEmbedApiKeyIsActive: $event.checked })">
                   Google Maps Key Active
                 </mat-slide-toggle>
 
-                <mat-slide-toggle
-                  [ngModel]="item().mapboxTokenIsActive"
-                  (ngModelChange)="updateItem({ mapboxTokenIsActive: $event })"
-                  [ngModelOptions]="{ standalone: true }"
-                >
+                <mat-slide-toggle [checked]="item().mapboxTokenIsActive" (change)="updateItem({ mapboxTokenIsActive: $event.checked })">
                   Mapbox Token Active
                 </mat-slide-toggle>
 
                 @if (isMaster()) {
-                  <mat-slide-toggle
-                    [ngModel]="item().signalWireRepoTokenIsActive"
-                    (ngModelChange)="updateItem({ signalWireRepoTokenIsActive: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
+                  <mat-slide-toggle [checked]="item().signalWireRepoTokenIsActive" (change)="updateItem({ signalWireRepoTokenIsActive: $event.checked })">
                     SignalWire Repo Token Active
                   </mat-slide-toggle>
                 }
@@ -203,11 +155,7 @@
                     matInput
                     type="number"
                     min="0"
-                    step="0.01"
-                    [ngModel]="item().billingSignupTrialAmount"
-                    (ngModelChange)="updateItem({ billingSignupTrialAmount: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  />
+                    step="0.01" [value]="item().billingSignupTrialAmount" (input)="updateItem({ billingSignupTrialAmount: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -215,11 +163,7 @@
                   <input
                     matInput
                     maxlength="3"
-                    [ngModel]="item().billingSignupTrialCurrency"
-                    (ngModelChange)="updateItem({ billingSignupTrialCurrency: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="BRL"
-                  />
+                    placeholder="BRL" [value]="item().billingSignupTrialCurrency" (input)="updateItem({ billingSignupTrialCurrency: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -228,11 +172,7 @@
                     matInput
                     type="number"
                     min="1"
-                    max="365"
-                    [ngModel]="item().billingSignupTrialExpiresDays"
-                    (ngModelChange)="updateItem({ billingSignupTrialExpiresDays: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  />
+                    max="365" [value]="item().billingSignupTrialExpiresDays" (input)="updateItem({ billingSignupTrialExpiresDays: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -241,11 +181,7 @@
                     matInput
                     type="number"
                     min="1"
-                    max="100"
-                    [ngModel]="item().signupMaxAccountsPerIpDay"
-                    (ngModelChange)="updateItem({ signupMaxAccountsPerIpDay: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  />
+                    max="100" [value]="item().signupMaxAccountsPerIpDay" (input)="updateItem({ signupMaxAccountsPerIpDay: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -254,11 +190,7 @@
                     matInput
                     type="number"
                     min="1"
-                    max="168"
-                    [ngModel]="item().authSessionHours"
-                    (ngModelChange)="updateItem({ authSessionHours: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  />
+                    max="168" [value]="item().authSessionHours" (input)="updateItem({ authSessionHours: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -267,20 +199,12 @@
                     matInput
                     type="number"
                     min="1"
-                    max="2160"
-                    [ngModel]="item().authRememberMeHours"
-                    (ngModelChange)="updateItem({ authRememberMeHours: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  />
+                    max="2160" [value]="item().authRememberMeHours" (input)="updateItem({ authRememberMeHours: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Captcha Provider</mat-label>
-                  <mat-select
-                    [ngModel]="item().signupCaptchaProvider"
-                    (ngModelChange)="updateItem({ signupCaptchaProvider: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
+                  <mat-select [value]="item().signupCaptchaProvider" (selectionChange)="updateItem({ signupCaptchaProvider: $event.value })">
                     <mat-option value="">None</mat-option>
                     <mat-option value="turnstile">Cloudflare Turnstile</mat-option>
                     <mat-option value="hcaptcha">hCaptcha</mat-option>
@@ -291,11 +215,7 @@
                   <mat-label>Captcha Site Key</mat-label>
                   <input
                     matInput
-                    [ngModel]="item().signupCaptchaSiteKey"
-                    (ngModelChange)="updateItem({ signupCaptchaSiteKey: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Public site key"
-                  />
+                    placeholder="Public site key" [value]="item().signupCaptchaSiteKey" (input)="updateItem({ signupCaptchaSiteKey: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-4">
@@ -303,11 +223,7 @@
                   <input
                     matInput
                     [type]="showSignupCaptchaSecret() ? 'text' : 'password'"
-                    [ngModel]="item().signupCaptchaSecret"
-                    (ngModelChange)="updateItem({ signupCaptchaSecret: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Private validation secret"
-                  />
+                    placeholder="Private validation secret" [value]="item().signupCaptchaSecret" (input)="updateItem({ signupCaptchaSecret: $any($event.target).value })" />
                   <button
                     mat-icon-button
                     matSuffix
@@ -324,43 +240,23 @@
                 </mat-form-field>
 
                 <div class="toggle-grid span-4">
-                  <mat-slide-toggle
-                    [ngModel]="item().billingSignupTrialEnabled"
-                    (ngModelChange)="updateItem({ billingSignupTrialEnabled: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
+                  <mat-slide-toggle [checked]="item().billingSignupTrialEnabled" (change)="updateItem({ billingSignupTrialEnabled: $event.checked })">
                     Trial Credit Active
                   </mat-slide-toggle>
 
-                  <mat-slide-toggle
-                    [ngModel]="item().billingSignupTrialRequireEmailVerified"
-                    (ngModelChange)="updateItem({ billingSignupTrialRequireEmailVerified: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
+                  <mat-slide-toggle [checked]="item().billingSignupTrialRequireEmailVerified" (change)="updateItem({ billingSignupTrialRequireEmailVerified: $event.checked })">
                     Require Verified Email
                   </mat-slide-toggle>
 
-                  <mat-slide-toggle
-                    [ngModel]="item().signupCaptchaEnabled"
-                    (ngModelChange)="updateItem({ signupCaptchaEnabled: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
+                  <mat-slide-toggle [checked]="item().signupCaptchaEnabled" (change)="updateItem({ signupCaptchaEnabled: $event.checked })">
                     Signup Captcha Active
                   </mat-slide-toggle>
 
-                  <mat-slide-toggle
-                    [ngModel]="item().loginCaptchaEnabled"
-                    (ngModelChange)="updateItem({ loginCaptchaEnabled: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
+                  <mat-slide-toggle [checked]="item().loginCaptchaEnabled" (change)="updateItem({ loginCaptchaEnabled: $event.checked })">
                     Login Captcha Active
                   </mat-slide-toggle>
 
-                  <mat-slide-toggle
-                    [ngModel]="item().authRememberMeEnabled"
-                    (ngModelChange)="updateItem({ authRememberMeEnabled: $event })"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
+                  <mat-slide-toggle [checked]="item().authRememberMeEnabled" (change)="updateItem({ authRememberMeEnabled: $event.checked })">
                     Remember Me Active
                   </mat-slide-toggle>
                 </div>
@@ -381,11 +277,7 @@
                   <mat-form-field appearance="outline">
                     <mat-label>Storage - Recording</mat-label>
                     <mat-select
-                      [ngModel]="item().voipPabxRecordingStorageMode"
-                      (ngModelChange)="updateItem({ voipPabxRecordingStorageMode: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                      [placeholder]="voipPabxRecordingStoragePlaceholder()"
-                    >
+                      [placeholder]="voipPabxRecordingStoragePlaceholder()" [value]="item().voipPabxRecordingStorageMode" (selectionChange)="updateItem({ voipPabxRecordingStorageMode: $event.value })">
                       <mat-option value="">Default</mat-option>
                       <mat-option value="filesystem">Filesystem</mat-option>
                       <mat-option value="storage">Storage</mat-option>
@@ -395,11 +287,7 @@
                   <mat-form-field appearance="outline" class="span-2">
                     <mat-label>Recording storage account</mat-label>
                     <mat-select
-                      [ngModel]="item().voipPabxRecordingStorageAccountUUID"
-                      (ngModelChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                      [disabled]="item().voipPabxRecordingStorageMode !== 'storage'"
-                    >
+                      [disabled]="item().voipPabxRecordingStorageMode !== 'storage'" [value]="item().voipPabxRecordingStorageAccountUUID" (selectionChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })">
                       <mat-option value="">Default storage account</mat-option>
                       @for (account of storageAccounts(); track account.HsaUUID) {
                         <mat-option [value]="account.HsaUUID">
@@ -412,11 +300,7 @@
                   <mat-form-field appearance="outline">
                     <mat-label>Storage - Media File</mat-label>
                     <mat-select
-                      [ngModel]="item().voipPabxMediaStorageMode"
-                      (ngModelChange)="updateItem({ voipPabxMediaStorageMode: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                      [placeholder]="voipPabxMediaStoragePlaceholder()"
-                    >
+                      [placeholder]="voipPabxMediaStoragePlaceholder()" [value]="item().voipPabxMediaStorageMode" (selectionChange)="updateItem({ voipPabxMediaStorageMode: $event.value })">
                       <mat-option value="">Default</mat-option>
                       <mat-option value="filesystem">Filesystem</mat-option>
                       <mat-option value="storage">Storage</mat-option>
@@ -426,11 +310,7 @@
                   <mat-form-field appearance="outline" class="span-2">
                     <mat-label>Media file storage account</mat-label>
                     <mat-select
-                      [ngModel]="item().voipPabxMediaStorageAccountUUID"
-                      (ngModelChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                      [disabled]="item().voipPabxMediaStorageMode !== 'storage'"
-                    >
+                      [disabled]="item().voipPabxMediaStorageMode !== 'storage'" [value]="item().voipPabxMediaStorageAccountUUID" (selectionChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event.value })">
                       <mat-option value="">Default storage account</mat-option>
                       @for (account of storageAccounts(); track account.HsaUUID) {
                         <mat-option [value]="account.HsaUUID">
@@ -443,11 +323,7 @@
                   <mat-form-field appearance="outline">
                     <mat-label>Media File - Delivery Mode</mat-label>
                     <mat-select
-                      [ngModel]="item().voipPabxMediaDeliveryMode"
-                      (ngModelChange)="updateItem({ voipPabxMediaDeliveryMode: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                      [placeholder]="voipPabxMediaDeliveryPlaceholder()"
-                    >
+                      [placeholder]="voipPabxMediaDeliveryPlaceholder()" [value]="item().voipPabxMediaDeliveryMode" (selectionChange)="updateItem({ voipPabxMediaDeliveryMode: $event.value })">
                       <mat-option value="">Default</mat-option>
                       <mat-option value="online">Online</mat-option>
                       <mat-option value="offline">Offline</mat-option>
@@ -457,11 +333,7 @@
                   <mat-form-field appearance="outline">
                     <mat-label>Remote Command Executor</mat-label>
                     <mat-select
-                      [ngModel]="item().voipPabxRemoteCommandExecutor"
-                      (ngModelChange)="updateItem({ voipPabxRemoteCommandExecutor: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                      [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()"
-                    >
+                      [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()" [value]="item().voipPabxRemoteCommandExecutor" (selectionChange)="updateItem({ voipPabxRemoteCommandExecutor: $event.value })">
                       <mat-option value="">Default</mat-option>
                       <mat-option value="agent">Agent</mat-option>
                       <mat-option value="esl_ami">ESL/AMI</mat-option>
@@ -469,34 +341,16 @@
                   </mat-form-field>
 
                   <div class="toggle-grid span-4">
-                    <mat-slide-toggle
-                      [ngModel]="item().voipPabxRecordingStorageIsActive"
-                      (ngModelChange)="updateItem({ voipPabxRecordingStorageIsActive: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                    >
+                    <mat-slide-toggle [checked]="item().voipPabxRecordingStorageIsActive" (change)="updateItem({ voipPabxRecordingStorageIsActive: $event.checked })">
                       Recording Storage Active
                     </mat-slide-toggle>
-                    <mat-slide-toggle
-                      [ngModel]="item().voipPabxMediaStorageIsActive"
-                      (ngModelChange)="updateItem({ voipPabxMediaStorageIsActive: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                    >
+                    <mat-slide-toggle [checked]="item().voipPabxMediaStorageIsActive" (change)="updateItem({ voipPabxMediaStorageIsActive: $event.checked })">
                       Media Storage Active
                     </mat-slide-toggle>
-                    <mat-slide-toggle
-                      [ngModel]="item().voipPabxMediaDeliveryModeIsActive"
-                      (ngModelChange)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                    >
+                    <mat-slide-toggle [checked]="item().voipPabxMediaDeliveryModeIsActive" (change)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event.checked })">
                       Media Delivery Active
                     </mat-slide-toggle>
-                    <mat-slide-toggle
-                      [ngModel]="item().voipPabxRemoteCommandExecutorIsActive"
-                      (ngModelChange)="
-                        updateItem({ voipPabxRemoteCommandExecutorIsActive: $event })
-                      "
-                      [ngModelOptions]="{ standalone: true }"
-                    >
+                    <mat-slide-toggle [checked]="item().voipPabxRemoteCommandExecutorIsActive" (change)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event.checked })">
                       Remote Command Active
                     </mat-slide-toggle>
                   </div>
