@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -58,7 +58,7 @@ type WebhostPlanFilters = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -82,7 +82,6 @@ type WebhostPlanFilters = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingWebhostPlansPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly parameters = inject(SystemParameterService);
@@ -138,27 +137,35 @@ export class HostingWebhostPlansPage {
     'actions',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    provider: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly planForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    providerUUID: ['', [Validators.required]],
-    packageName: [''],
-    diskMb: [0, [Validators.min(0)]],
-    bandwidthMb: [0, [Validators.min(0)]],
-    domains: [0, [Validators.min(0)]],
-    subdomains: [0, [Validators.min(0)]],
-    emailAccounts: [0, [Validators.min(0)]],
-    databases: [0, [Validators.min(0)]],
-    ftpAccounts: [0, [Validators.min(0)]],
-    price: [0, [Validators.required, Validators.min(0)]],
-    setupFee: [0, [Validators.min(0)]],
-    notes: [''],
-    isActive: [1, [Validators.required]],
+  readonly planFormModel = signal({
+    name: '',
+    providerUUID: '',
+    packageName: '',
+    diskMb: 0,
+    bandwidthMb: 0,
+    domains: 0,
+    subdomains: 0,
+    emailAccounts: 0,
+    databases: 0,
+    ftpAccounts: 0,
+    price: 0,
+    setupFee: 0,
+    notes: '',
+    isActive: 1,
+  });
+  readonly planForm = createForm(this.planFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.providerUUID);
+    required(schema.price);
+    required(schema.isActive);
   });
 
   readonly rows = computed(() => {
@@ -233,7 +240,7 @@ export class HostingWebhostPlansPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedProvider.set(values.provider);
     this.appliedStatus.set(values.status);
@@ -242,7 +249,7 @@ export class HostingWebhostPlansPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', provider: '', status: '' });
+    this.filterFormModel.set({ search: '', provider: '', status: '' });
     this.applyFilters();
   }
 
@@ -344,7 +351,7 @@ export class HostingWebhostPlansPage {
 
     const config = plan.HwlConfig ?? {};
     this.editing.set(plan);
-    this.planForm.reset({
+    this.planFormModel.set({
       name: plan.HwlName,
       providerUUID: plan.HostingWebhostProviderHwpUUID,
       packageName: plan.HwlPackage ?? '',
@@ -370,13 +377,12 @@ export class HostingWebhostPlansPage {
   }
 
   async submit(closeAfterSave = true) {
-    if (this.planForm.invalid) {
-      this.planForm.markAllAsTouched();
+    if (!this.planForm().valid() || !this.planNumbersAreValid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const values = this.planForm.getRawValue();
+    const values = this.planFormModel();
     const provider = this.providers().find((item) => item.HwpUUID === values.providerUUID);
     if (!provider || provider.HwpIsActive !== 1) {
       this.snack.warning('Select an active Webhost provider account.');
@@ -524,7 +530,7 @@ export class HostingWebhostPlansPage {
   }
 
   private resetForm() {
-    this.planForm.reset({
+    this.planFormModel.set({
       name: '',
       providerUUID: '',
       packageName: '',
@@ -540,6 +546,21 @@ export class HostingWebhostPlansPage {
       notes: '',
       isActive: 1,
     });
+  }
+
+  private planNumbersAreValid() {
+    const values = this.planFormModel();
+    return [
+      values.diskMb,
+      values.bandwidthMb,
+      values.domains,
+      values.subdomains,
+      values.emailAccounts,
+      values.databases,
+      values.ftpAccounts,
+      values.price,
+      values.setupFee,
+    ].every((value) => Number.isFinite(Number(value)) && Number(value) >= 0);
   }
 
   private resetPagination() {
@@ -622,7 +643,7 @@ export class HostingWebhostPlansPage {
   }
 
   private buildConfigPayload(): WebhostPlanConfig {
-    return { notes: this.normalizeString(this.planForm.controls.notes.value) };
+    return { notes: this.normalizeString(this.planFormModel().notes) };
   }
 
   private formatMb(value: number) {

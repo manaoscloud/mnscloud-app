@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -51,7 +51,7 @@ import type {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -75,7 +75,6 @@ import type {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingWebhostProvidersPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
@@ -142,22 +141,34 @@ export class HostingWebhostProvidersPage {
     { value: 'directadmin', label: 'DirectAdmin' },
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly providerForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['cpanel_whm' as WebhostProviderType, [Validators.required]],
-    hostname: ['', [Validators.required]],
-    port: [2087, [Validators.required, Validators.min(1), Validators.max(65535)]],
-    username: ['', [Validators.required]],
-    apiToken: [''],
-    sslVerify: [1, [Validators.required]],
-    notes: [''],
-    isActive: [1, [Validators.required]],
-    isDefault: [0, [Validators.required]],
+  readonly providerFormModel = signal({
+    name: '',
+    provider: 'cpanel_whm' as WebhostProviderType,
+    hostname: '',
+    port: 2087,
+    username: '',
+    apiToken: '',
+    sslVerify: 1,
+    notes: '',
+    isActive: 1,
+    isDefault: 0,
+  });
+  readonly providerForm = createForm(this.providerFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
+    required(schema.hostname);
+    required(schema.port);
+    required(schema.username);
+    required(schema.sslVerify);
+    required(schema.isActive);
+    required(schema.isDefault);
   });
 
   private readonly providersResource = resource({
@@ -198,7 +209,6 @@ export class HostingWebhostProvidersPage {
       this.closeDialog();
       this.stopDialogViewportObserver();
     });
-    this.applyTokenValidators(false);
   }
 
   refreshList() {
@@ -206,14 +216,14 @@ export class HostingWebhostProvidersPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedStatus.set(values.status);
     this.resetPagination();
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', status: '' });
+    this.filterFormModel.set({ search: '', status: '' });
     this.applyFilters();
   }
 
@@ -283,7 +293,7 @@ export class HostingWebhostProvidersPage {
     const config = provider.HwpConfig ?? {};
     const credentials = provider.credentials ?? {};
     this.editing.set(provider);
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: provider.HwpName,
       provider: provider.HwpProvider,
       hostname: config.hostname ?? '',
@@ -295,7 +305,6 @@ export class HostingWebhostProvidersPage {
       isActive: provider.HwpIsActive === 1 ? 1 : 0,
       isDefault: provider.HwpIsDefault === 1 ? 1 : 0,
     });
-    this.applyTokenValidators(true);
     this.openDialog();
   }
 
@@ -306,13 +315,12 @@ export class HostingWebhostProvidersPage {
   }
 
   async submit(closeAfterSave = true) {
-    if (this.providerForm.invalid) {
-      this.providerForm.markAllAsTouched();
+    if (!this.providerForm().valid() || !this.isValidProviderPort()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const credentials = this.buildCredentialsPayload();
     if (!this.editing() && !credentials?.apiToken) {
       this.snack.warning('API token is required for new providers.');
@@ -496,15 +504,8 @@ export class HostingWebhostProvidersPage {
     }
   }
 
-  private applyTokenValidators(isEditing = false) {
-    const control = this.providerForm.controls.apiToken;
-    control.clearValidators();
-    if (!isEditing) control.setValidators([Validators.required]);
-    control.updateValueAndValidity({ emitEvent: false });
-  }
-
   private resetForm() {
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: '',
       provider: 'cpanel_whm',
       hostname: '',
@@ -516,7 +517,11 @@ export class HostingWebhostProvidersPage {
       isActive: 1,
       isDefault: 0,
     });
-    this.applyTokenValidators(false);
+  }
+
+  private isValidProviderPort() {
+    const port = Number(this.providerFormModel().port);
+    return Number.isInteger(port) && port >= 1 && port <= 65535;
   }
 
   private resetPagination() {
@@ -581,7 +586,7 @@ export class HostingWebhostProvidersPage {
   }
 
   private buildConfigPayload(): WebhostProviderConfig {
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     return {
       hostname: this.normalizeString(values.hostname),
       port: Number(values.port || 2087),
@@ -591,7 +596,7 @@ export class HostingWebhostProvidersPage {
   }
 
   private buildCredentialsPayload(): WebhostProviderCredentials | null {
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const credentials: WebhostProviderCredentials = {};
     const username = this.normalizeString(values.username);
     const apiToken = this.normalizeString(values.apiToken);

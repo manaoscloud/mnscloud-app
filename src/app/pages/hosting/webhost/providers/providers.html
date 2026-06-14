@@ -15,15 +15,15 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Name, provider or hostname" formControlName="search" />
+        <input matInput placeholder="Name, provider or hostname" [formField]="filterForm.search" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -195,10 +195,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="providerForm.isActive">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -206,7 +206,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Default</mat-label>
-                <mat-select formControlName="isDefault">
+                <mat-select [formField]="providerForm.isDefault">
                   <mat-option [value]="1">Yes</mat-option>
                   <mat-option [value]="0">No</mat-option>
                 </mat-select>
@@ -214,7 +214,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
-                <mat-select formControlName="provider">
+                <mat-select [formField]="providerForm.provider">
                   @for (opt of providerOptions; track opt.value) {
                     <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                   }
@@ -223,7 +223,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Primary provider" />
+                <input matInput [formField]="providerForm.name" placeholder="Primary provider" />
               </mat-form-field>
             </form>
           </div>
@@ -231,20 +231,24 @@
 
         <mat-tab label="Connection">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Hostname</mat-label>
-                <input matInput formControlName="hostname" placeholder="panel.example.com" />
+                <input
+                  matInput
+                  [formField]="providerForm.hostname"
+                  placeholder="panel.example.com"
+                />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Port</mat-label>
-                <input matInput type="number" formControlName="port" placeholder="2087" />
+                <input matInput type="number" [formField]="providerForm.port" placeholder="2087" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>SSL Verify</mat-label>
-                <mat-select formControlName="sslVerify">
+                <mat-select [formField]="providerForm.sslVerify">
                   <mat-option [value]="1">Yes</mat-option>
                   <mat-option [value]="0">No</mat-option>
                 </mat-select>
@@ -252,7 +256,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Username</mat-label>
-                <input matInput formControlName="username" placeholder="root" />
+                <input matInput [formField]="providerForm.username" placeholder="root" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
@@ -260,7 +264,7 @@
                 <input
                   matInput
                   [type]="hideApiToken() ? 'password' : 'text'"
-                  formControlName="apiToken"
+                  [formField]="providerForm.apiToken"
                   [placeholder]="apiTokenPlaceholder()"
                 />
                 <button
@@ -279,10 +283,10 @@
 
         <mat-tab label="Notes">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Notes</mat-label>
-                <textarea matInput rows="5" formControlName="notes"></textarea>
+                <textarea matInput rows="5" [formField]="providerForm.notes"></textarea>
               </mat-form-field>
             </form>
           </div>
