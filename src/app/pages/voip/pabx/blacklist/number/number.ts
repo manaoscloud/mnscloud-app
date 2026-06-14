@@ -11,7 +11,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -59,8 +59,7 @@ const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -86,7 +85,6 @@ const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
 export class VoipPabxBlacklistNumberPage {
   private readonly api = inject(VoipBlacklistUiService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -123,15 +121,22 @@ export class VoipPabxBlacklistNumberPage {
     return this.lists().filter((item) => item.VbkName.toLowerCase().includes(term));
   });
 
-  readonly form = this.fb.nonNullable.group({
-    blacklistUUID: ['', [Validators.required]],
-    number: ['', [Validators.required, Validators.minLength(2)]],
-    matchType: ['exact', [Validators.required]],
-    action: ['reject', [Validators.required]],
-    cause: ['CALL_REJECTED'],
-    reason: [''],
-    priority: [100],
-    enabled: [1],
+  readonly formModel = signal({
+    blacklistUUID: '',
+    number: '',
+    matchType: 'exact',
+    action: 'reject',
+    cause: 'CALL_REJECTED',
+    reason: '',
+    priority: 100,
+    enabled: 1,
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.blacklistUUID);
+    required(schema.number);
+    minLength(schema.number, 2);
+    required(schema.matchType);
+    required(schema.action);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -155,12 +160,10 @@ export class VoipPabxBlacklistNumberPage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     void this.bootstrap();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   async bootstrap() {
@@ -224,7 +227,7 @@ export class VoipPabxBlacklistNumberPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       blacklistUUID: this.blacklistFilter() || this.lists()[0]?.VbkUUID || '',
       number: '',
       matchType: 'exact',
@@ -239,7 +242,7 @@ export class VoipPabxBlacklistNumberPage {
 
   startEdit(item: VoipBlacklistNumberItem) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       blacklistUUID: item.VoipBlacklistVbkUUID,
       number: item.VbnNumber,
       matchType: item.VbnMatchType,
@@ -253,8 +256,8 @@ export class VoipPabxBlacklistNumberPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
-    const value = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const value = this.formModel();
     const payload = {
       blacklistUUID: value.blacklistUUID,
       number: value.number.trim(),

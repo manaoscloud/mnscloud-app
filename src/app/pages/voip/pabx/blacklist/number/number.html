@@ -17,7 +17,11 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-2">
         <mat-label>Search</mat-label>
-        <input matInput [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)" />
+        <input
+          matInput
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
       </mat-form-field>
       <mat-form-field appearance="outline" class="span-2">
         <mat-label>Blacklist</mat-label>
@@ -164,11 +168,11 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Blacklist</mat-label>
               <mat-select
-                formControlName="blacklistUUID"
+                [formField]="form.blacklistUUID"
                 (openedChange)="onBlacklistOpened($event)"
               >
                 <mat-option class="select-search-option" disabled>
@@ -187,11 +191,11 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Number or pattern</mat-label>
-              <input matInput formControlName="number" />
+              <input matInput [formField]="form.number" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Match</mat-label>
-              <mat-select formControlName="matchType">
+              <mat-select [formField]="form.matchType">
                 <mat-option value="exact">Exact</mat-option>
                 <mat-option value="prefix">Prefix</mat-option>
                 <mat-option value="regex">Regex</mat-option>
@@ -199,7 +203,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Action</mat-label>
-              <mat-select formControlName="action">
+              <mat-select [formField]="form.action">
                 <mat-option value="reject">Reject</mat-option>
                 <mat-option value="busy">Busy</mat-option>
                 <mat-option value="hangup">Hangup</mat-option>
@@ -207,11 +211,11 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Priority</mat-label>
-              <input matInput type="number" formControlName="priority" />
+              <input matInput type="number" [formField]="form.priority" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
+              <mat-select [formField]="form.enabled">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
@@ -219,14 +223,14 @@
           </form>
         </mat-tab>
         <mat-tab label="Notes">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Cause</mat-label>
-              <input matInput formControlName="cause" />
+              <input matInput [formField]="form.cause" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Reason</mat-label>
-              <input matInput formControlName="reason" />
+              <input matInput [formField]="form.reason" />
             </mat-form-field>
           </form>
         </mat-tab>
@@ -250,7 +254,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save

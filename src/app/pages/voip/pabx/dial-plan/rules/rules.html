@@ -17,7 +17,11 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-2">
         <mat-label>Search</mat-label>
-        <input matInput [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)" />
+        <input
+          matInput
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-2">
@@ -184,10 +188,10 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
+              <mat-select [formField]="form.enabled">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
@@ -195,7 +199,7 @@
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Dial Plan</mat-label>
               <mat-select
-                formControlName="dialPlanUUID"
+                [formField]="form.dialPlanUUID"
                 (openedChange)="onDialPlanSelectOpened($event)"
               >
                 <mat-option class="select-search-option" disabled>
@@ -214,15 +218,15 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Priority</mat-label>
-              <input matInput type="number" formControlName="priority" />
+              <input matInput type="number" [formField]="form.priority" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Name</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput [formField]="form.name" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Direction</mat-label>
-              <mat-select formControlName="direction">
+              <mat-select [formField]="form.direction">
                 <mat-option value="outbound">Outbound</mat-option>
                 <mat-option value="inbound">Inbound</mat-option>
                 <mat-option value="internal">Internal</mat-option>
@@ -230,7 +234,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Operator</mat-label>
-              <mat-select formControlName="operator">
+              <mat-select [formField]="form.operator">
                 <mat-option value="regex">Regex</mat-option>
                 <mat-option value="prefix">Prefix</mat-option>
                 <mat-option value="exact">Exact</mat-option>
@@ -238,15 +242,15 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Expression</mat-label>
-              <input matInput formControlName="pattern" />
+              <input matInput [formField]="form.pattern" />
             </mat-form-field>
           </form>
         </mat-tab>
         <mat-tab label="Transform">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Result</mat-label>
-              <mat-select formControlName="resultType">
+              <mat-select [formField]="form.resultType">
                 <mat-option value="outbound">Outbound</mat-option>
                 <mat-option value="extension">Extension</mat-option>
                 <mat-option value="blocked">Blocked</mat-option>
@@ -256,19 +260,19 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Strip digits</mat-label>
-              <input matInput type="number" formControlName="stripDigits" />
+              <input matInput type="number" [formField]="form.stripDigits" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Prepend</mat-label>
-              <input matInput formControlName="prepend" />
+              <input matInput [formField]="form.prepend" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Replacement</mat-label>
-              <input matInput formControlName="replacement" />
+              <input matInput [formField]="form.replacement" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Case sensitive</mat-label>
-              <mat-select formControlName="caseSensitive">
+              <mat-select [formField]="form.caseSensitive">
                 <mat-option [value]="1">Yes</mat-option>
                 <mat-option [value]="0">No</mat-option>
               </mat-select>
@@ -276,10 +280,10 @@
           </form>
         </mat-tab>
         <mat-tab label="Routing">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Trunk</mat-label>
-              <mat-select formControlName="trunkUUID" (openedChange)="onTrunkSelectOpened($event)">
+              <mat-select [formField]="form.trunkUUID" (openedChange)="onTrunkSelectOpened($event)">
                 <mat-option class="select-search-option" disabled>
                   <input
                     class="select-search-field"
@@ -299,7 +303,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Caller ID mode</mat-label>
-              <mat-select formControlName="callerIdMode">
+              <mat-select [formField]="form.callerIdMode">
                 <mat-option value="extension">Extension</mat-option>
                 <mat-option value="fixed">Fixed</mat-option>
                 <mat-option value="anonymous">Anonymous</mat-option>
@@ -308,23 +312,23 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Caller ID value</mat-label>
-              <input matInput formControlName="callerIdValue" />
+              <input matInput [formField]="form.callerIdValue" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Fallback trunks</mat-label>
-              <input matInput formControlName="fallbackTrunks" />
+              <input matInput [formField]="form.fallbackTrunks" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Engine config</mat-label>
-              <textarea matInput formControlName="engineConfig" rows="2"></textarea>
+              <textarea matInput [formField]="form.engineConfig" rows="2"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
         <mat-tab label="Notes">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Description</mat-label>
-              <textarea matInput formControlName="description" rows="2"></textarea>
+              <textarea matInput [formField]="form.description" rows="2"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -349,7 +353,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save

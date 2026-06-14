@@ -11,7 +11,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -60,8 +60,7 @@ const emptyDialPlanRuleFilters = (): DialPlanRuleFilters => ({
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -87,7 +86,6 @@ const emptyDialPlanRuleFilters = (): DialPlanRuleFilters => ({
 export class VoipPabxDialPlanRulesPage {
   private readonly api = inject(VoipPabxDialPlanUiService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -142,25 +140,34 @@ export class VoipPabxDialPlanRulesPage {
     'actions',
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    dialPlanUUID: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    direction: ['outbound', [Validators.required]],
-    operator: ['regex', [Validators.required]],
-    pattern: ['', [Validators.required]],
-    replacement: [''],
-    stripDigits: [0],
-    prepend: [''],
-    priority: [100],
-    caseSensitive: [0],
-    resultType: ['outbound', [Validators.required]],
-    trunkUUID: [''],
-    callerIdMode: ['extension'],
-    callerIdValue: [''],
-    fallbackTrunks: [''],
-    engineConfig: [''],
-    description: [''],
-    enabled: [1],
+  readonly formModel = signal({
+    dialPlanUUID: '',
+    name: '',
+    direction: 'outbound',
+    operator: 'regex',
+    pattern: '',
+    replacement: '',
+    stripDigits: 0,
+    prepend: '',
+    priority: 100,
+    caseSensitive: 0,
+    resultType: 'outbound',
+    trunkUUID: '',
+    callerIdMode: 'extension',
+    callerIdValue: '',
+    fallbackTrunks: '',
+    engineConfig: '',
+    description: '',
+    enabled: 1,
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.dialPlanUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.direction);
+    required(schema.operator);
+    required(schema.pattern);
+    required(schema.resultType);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -184,12 +191,10 @@ export class VoipPabxDialPlanRulesPage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     void this.bootstrap();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   async bootstrap() {
@@ -263,7 +268,7 @@ export class VoipPabxDialPlanRulesPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       dialPlanUUID: this.dialPlanFilter() || this.dialPlans()[0]?.uuid || '',
       name: '',
       direction: 'outbound',
@@ -288,7 +293,7 @@ export class VoipPabxDialPlanRulesPage {
 
   startEdit(item: VoipPabxDialPlanRuleItem) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       dialPlanUUID: item.dialPlanUUID,
       name: item.name,
       direction: item.direction || 'outbound',
@@ -312,8 +317,8 @@ export class VoipPabxDialPlanRulesPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
-    const value = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const value = this.formModel();
     const isOutbound = value.direction === 'outbound' && value.resultType === 'outbound';
     if (isOutbound && !value.trunkUUID) {
       this.snack.error('Outbound dial plan rule trunk is required.');
