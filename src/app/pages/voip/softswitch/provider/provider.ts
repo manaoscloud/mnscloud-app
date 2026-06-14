@@ -12,7 +12,12 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormField,
+  form as createForm,
+  minLength,
+  required,
+} from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -50,8 +55,7 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -77,7 +81,6 @@ type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
 export class VoipSoftswitchProviderPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipSoftswitchProviderService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -99,8 +102,8 @@ export class VoipSoftswitchProviderPage {
   readonly appliedSearch = signal('');
   readonly displayedColumns = ['select', 'name', 'engine', 'status', 'actions'];
   readonly selectedProviderUUIDs = new Set<string>();
-  search = '';
-  searchInput = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
 
   readonly statusOptions = [
     { value: 1, label: 'Active' },
@@ -125,14 +128,11 @@ export class VoipSoftswitchProviderPage {
   codecOptions: string[] = this.engineDefaultCodecs['kamailio'];
   readonly defaultCodecSearch = signal('');
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    engine: ['kamailio' as SoftswitchEngine, [Validators.required]],
-    baseUrl: [''],
-    defaultCodecs: [[] as string[]],
-    apiKey: [''],
-    apiSecret: [''],
-    status: [1],
+  readonly formModel = signal(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.engine);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -200,17 +200,18 @@ export class VoipSoftswitchProviderPage {
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.appliedSearch.set(this.search);
+    const search = this.searchInput().trim();
+    this.search.set(search);
+    this.appliedSearch.set(search);
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     this.appliedSearch.set('');
   }
 
@@ -220,7 +221,7 @@ export class VoipSoftswitchProviderPage {
 
   startCreate() {
     this.resetForm();
-    this.updateCodecOptions(this.form.controls.engine.value);
+    this.updateCodecOptions(this.formModel().engine);
     this.openProviderDialog();
   }
 
@@ -228,7 +229,7 @@ export class VoipSoftswitchProviderPage {
     const config = this.parseProviderConfig(item.VspConfig);
     const baseUrl = typeof config?.['baseUrl'] === 'string' ? (config['baseUrl'] as string) : '';
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       name: item.VspName,
       engine: this.normalizeEngine(item.VspEngine),
       baseUrl,
@@ -247,13 +248,12 @@ export class VoipSoftswitchProviderPage {
   }
 
   async saveProvider(createAnother = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
 
     const { name, engine, baseUrl, defaultCodecs, apiKey, apiSecret, status } =
-      this.form.getRawValue();
+      this.formModel();
     const payload = {
       name: name.trim(),
       engine: this.normalizeEngine(engine),
@@ -405,15 +405,7 @@ export class VoipSoftswitchProviderPage {
   }
 
   private resetForm() {
-    this.form.reset({
-      name: '',
-      engine: 'kamailio',
-      baseUrl: '',
-      defaultCodecs: [],
-      apiKey: '',
-      apiSecret: '',
-      status: 1,
-    });
+    this.formModel.set(this.emptyFormModel());
     this.codecOptions = this.engineDefaultCodecs['kamailio'];
     this.editing.set(null);
   }
@@ -467,7 +459,7 @@ export class VoipSoftswitchProviderPage {
   }
 
   private updateCodecOptions(engineInput: string) {
-    const selected = this.form.controls.defaultCodecs.value ?? [];
+    const selected = this.formModel().defaultCodecs ?? [];
     const engine = this.normalizeEngine(engineInput);
     const defaults = this.engineDefaultCodecs[engine];
     this.codecOptions = this.uniqueCodecs([...defaults, ...selected]);
@@ -535,5 +527,17 @@ export class VoipSoftswitchProviderPage {
 
   private messageFromError(err: any, fallback: string) {
     return err?.error?.message || err?.error?.error || err?.message || fallback;
+  }
+
+  private emptyFormModel() {
+    return {
+      name: '',
+      engine: 'kamailio' as SoftswitchEngine,
+      baseUrl: '',
+      defaultCodecs: [] as string[],
+      apiKey: '',
+      apiSecret: '',
+      status: 1,
+    };
   }
 }

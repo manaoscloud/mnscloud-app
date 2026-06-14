@@ -11,7 +11,7 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -56,8 +56,7 @@ type ServerPayload = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -84,7 +83,6 @@ type ServerPayload = {
 export class VoipSoftswitchServerPage {
   private readonly api = inject(VoipSoftswitchServerService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
 
   readonly dataSource = new MatTableDataSource<VoipSoftswitchServerItem>([]);
@@ -103,8 +101,8 @@ export class VoipSoftswitchServerPage {
   readonly saving = signal(false);
   readonly selectedIds = signal<Set<string>>(new Set());
 
-  search = '';
-  searchInput = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
   private dialogBinding: CrudDialogBinding | null = null;
   private dialogRef: MatDialogRef<unknown> | null = null;
   private lastLoadError = '';
@@ -117,16 +115,11 @@ export class VoipSoftswitchServerPage {
 
   readonly loading = this.serversResource.isLoading;
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', Validators.required],
-    nodeUUID: [''],
-    engine: ['kamailio', Validators.required],
-    hostname: [''],
-    publicIP: [''],
-    privateIP: [''],
-    baseUrl: [''],
-    notes: [''],
-    status: [1, Validators.required],
+  readonly formModel = signal<ServerPayload>(this.emptyFormValue());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    required(schema.engine);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -193,19 +186,20 @@ export class VoipSoftswitchServerPage {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
+    const search = this.searchInput().trim();
+    this.search.set(search);
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
-    if (this.appliedSearch() === this.search) {
+    if (this.appliedSearch() === search) {
       this.serversResource.reload();
     } else {
-      this.appliedSearch.set(this.search);
+      this.appliedSearch.set(search);
     }
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
     if (this.appliedSearch() === '') {
@@ -217,13 +211,13 @@ export class VoipSoftswitchServerPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset(this.emptyFormValue());
+    this.formModel.set(this.emptyFormValue());
     this.openDialog();
   }
 
   startEdit(row: VoipSoftswitchServerItem) {
     this.editing.set(row);
-    this.form.reset({
+    this.formModel.set({
       name: row.VsrName || '',
       nodeUUID: row.VsrNodeUUID || '',
       engine: row.VsrEngine || 'kamailio',
@@ -238,7 +232,7 @@ export class VoipSoftswitchServerPage {
   }
 
   async save(createAnother = false) {
-    if (this.form.invalid || this.saving()) return;
+    if (!this.form().valid() || this.saving()) return;
     this.saving.set(true);
     const payload = this.normalizedPayload();
     try {
@@ -253,7 +247,7 @@ export class VoipSoftswitchServerPage {
 
       this.serversResource.reload();
       if (createAnother && !editing) {
-        this.form.reset(this.emptyFormValue());
+        this.formModel.set(this.emptyFormValue());
         return;
       }
       this.closeDialog();
@@ -394,7 +388,7 @@ export class VoipSoftswitchServerPage {
   }
 
   private normalizedPayload(): ServerPayload {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     return {
       name: value.name.trim(),
       nodeUUID: value.nodeUUID.trim(),

@@ -19,7 +19,7 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [value]="searchInput"
+          [value]="searchInput()"
           placeholder="Search DIDs"
           (input)="onSearchChange($any($event.target).value)"
         />
@@ -163,11 +163,11 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="didForm" class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+            <form id="didForm" class="form-grid" (ngSubmit)="submit()">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Softswitch</mat-label>
                 <mat-select
-                  formControlName="accountUUID"
+                  [formField]="form.accountUUID"
                   (openedChange)="clearAccountSearch($event)"
                 >
                   <mat-option class="select-search-option">
@@ -175,7 +175,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search softswitch"
-                      [value]="accountSearch"
+                      [value]="accountSearch()"
                       (input)="setAccountSearch($any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -189,11 +189,11 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Number</mat-label>
-                <input matInput formControlName="number" />
+                <input matInput [formField]="form.number" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Direction</mat-label>
-                <mat-select formControlName="direction">
+                <mat-select [formField]="form.direction">
                   <mat-option value="both">Both</mat-option>
                   <mat-option value="inbound">Inbound</mat-option>
                   <mat-option value="outbound">Outbound</mat-option>
@@ -201,7 +201,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Route Type</mat-label>
-                <mat-select formControlName="routeType">
+                <mat-select [formField]="form.routeType">
                   <mat-option value="subscriber">Subscriber</mat-option>
                   <mat-option value="external">External</mat-option>
                   <mat-option value="trunk">Trunk</mat-option>
@@ -211,7 +211,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Subscriber</mat-label>
                 <mat-select
-                  formControlName="subscriberUUID"
+                  [formField]="form.subscriberUUID"
                   (openedChange)="clearSubscriberSearch($event)"
                 >
                   <mat-option value="">None</mat-option>
@@ -220,7 +220,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search subscribers"
-                      [value]="subscriberSearch"
+                      [value]="subscriberSearch()"
                       (input)="setSubscriberSearch($any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -234,14 +234,14 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Route Value</mat-label>
-                <input matInput formControlName="routeValue" />
+                <input matInput [formField]="form.routeValue" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Description</mat-label>
-                <input matInput formControlName="description" />
+                <input matInput [formField]="form.description" />
               </mat-form-field>
               <div class="toggle-row span-2">
-                <mat-slide-toggle formControlName="enabled">Active</mat-slide-toggle>
+                <mat-slide-toggle [formField]="form.enabled">Active</mat-slide-toggle>
               </div>
             </form>
           </div>
@@ -256,7 +256,7 @@
           color="primary"
           type="submit"
           form="didForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -268,7 +268,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="didSaveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -280,7 +280,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNew()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

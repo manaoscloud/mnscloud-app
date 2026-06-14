@@ -18,7 +18,7 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [value]="searchInput"
+          [value]="searchInput()"
           placeholder="Search records"
           (input)="onSearchChange($any($event.target).value)"
         />
@@ -160,13 +160,12 @@
             <form
               id="softswitchResourceForm"
               class="form-grid"
-              [formGroup]="form"
               (ngSubmit)="submit()"
             >
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Softswitch</mat-label>
                 <mat-select
-                  formControlName="accountUUID"
+                  [formField]="form.accountUUID"
                   (openedChange)="clearAccountSearch($event)"
                 >
                   <mat-option class="select-search-option">
@@ -174,7 +173,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search softswitch"
-                      [value]="accountSearch"
+                      [value]="accountSearch()"
                       (input)="setAccountSearch($any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -188,18 +187,18 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
+                <input matInput [formField]="form.name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ meta().primary }}</mat-label>
-                <input matInput formControlName="primary" />
+                <input matInput [formField]="form.primary" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ meta().secondary }}</mat-label>
-                <input matInput formControlName="secondary" />
+                <input matInput [formField]="form.secondary" />
               </mat-form-field>
               <div class="toggle-row">
-                <mat-slide-toggle formControlName="status">Active</mat-slide-toggle>
+                <mat-slide-toggle [formField]="form.status">Active</mat-slide-toggle>
               </div>
             </form>
           </div>
@@ -214,7 +213,7 @@
           color="primary"
           type="submit"
           form="softswitchResourceForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -226,7 +225,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="resourceSaveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -243,7 +242,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNew()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

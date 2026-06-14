@@ -12,7 +12,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -134,7 +134,7 @@ const RESOURCE_META: Record<
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatButtonModule,
@@ -163,7 +163,6 @@ export class VoipSoftswitchResourcePage {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(VoipSoftswitchResourceUiService);
   private readonly accountApi = inject(VoipSoftswitchAccountService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   readonly resource = signal<ResourceKind>(
@@ -185,9 +184,9 @@ export class VoipSoftswitchResourcePage {
     'actions',
   ];
   readonly dataSource = new MatTableDataSource<ResourceRow>([]);
-  search = '';
-  searchInput = '';
-  accountSearch = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly accountSearch = signal('');
 
   private readonly itemsResource = resource({
     params: () => ({
@@ -237,12 +236,11 @@ export class VoipSoftswitchResourcePage {
     this.snack.error(this.errorMessage(error, 'Failed to load Softswitch accounts.'));
   });
 
-  readonly form = this.fb.nonNullable.group({
-    accountUUID: ['', [Validators.required]],
-    name: ['', [Validators.required]],
-    primary: ['', [Validators.required]],
-    secondary: [''],
-    status: [true],
+  readonly formModel = signal(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.accountUUID);
+    required(schema.name);
+    required(schema.primary);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -269,15 +267,16 @@ export class VoipSoftswitchResourcePage {
   
   });
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.appliedSearch.set(this.search);
+    const search = this.searchInput().trim();
+    this.search.set(search);
+    this.appliedSearch.set(search);
   }
   clearSearchFilters() {
-    this.search = '';
-    this.searchInput = '';
+    this.search.set('');
+    this.searchInput.set('');
     this.appliedSearch.set('');
   }
   refreshList() {
@@ -291,7 +290,7 @@ export class VoipSoftswitchResourcePage {
   }
   editItem(item: ResourceRow) {
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       accountUUID: item.accountUUID,
       name: String(item.name ?? ''),
       primary: String(this.primaryValue(item) ?? ''),
@@ -301,8 +300,7 @@ export class VoipSoftswitchResourcePage {
     this.openDialog();
   }
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
     const payload = this.payloadFromForm();
@@ -389,7 +387,7 @@ export class VoipSoftswitchResourcePage {
     }
   }
   filteredAccounts() {
-    const value = this.accountSearch.trim().toLowerCase();
+    const value = this.accountSearch().trim().toLowerCase();
     if (!value) return this.accountOptions();
     return this.accountOptions().filter((item) =>
       [item.VssName, item.CustomerName, item.DomainName].some((field) =>
@@ -400,10 +398,10 @@ export class VoipSoftswitchResourcePage {
     );
   }
   setAccountSearch(value: string) {
-    this.accountSearch = value;
+    this.accountSearch.set(value);
   }
   clearAccountSearch(opened: boolean) {
-    if (!opened) this.accountSearch = '';
+    if (!opened) this.accountSearch.set('');
   }
   primaryValue(row: ResourceRow) {
     return String(row[this.meta().primaryKey] ?? row.name ?? '');
@@ -421,7 +419,7 @@ export class VoipSoftswitchResourcePage {
   }
 
   private payloadFromForm() {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const meta = this.meta();
     const payload: Record<string, unknown> = {
       ...meta.defaults,
@@ -439,7 +437,7 @@ export class VoipSoftswitchResourcePage {
   }
   private resetForm() {
     const meta = this.meta();
-    this.form.reset({
+    this.formModel.set({
       accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
       name: '',
       primary: '',
@@ -489,5 +487,16 @@ export class VoipSoftswitchResourcePage {
   private errorMessage(error: unknown, fallback: string) {
     const maybe = error as { error?: { error?: string }; message?: string };
     return maybe?.error?.error || maybe?.message || fallback;
+  }
+
+  private emptyFormModel() {
+    const meta = this.meta();
+    return {
+      accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
+      name: '',
+      primary: '',
+      secondary: String(meta.defaults[meta.secondaryKey] ?? ''),
+      status: true,
+    };
   }
 }

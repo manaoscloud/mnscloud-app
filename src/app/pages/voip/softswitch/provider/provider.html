@@ -20,8 +20,8 @@
         <mat-label>Search providers</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput()"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Name, engine, status"
         />
       </mat-form-field>
@@ -133,7 +133,7 @@
             {{
               loading()
                 ? 'Loading providers...'
-                : 'No providers found for "' + (search || 'all') + '"'
+                : 'No providers found for "' + (search() || 'all') + '"'
             }}
           </td>
         </tr>
@@ -171,11 +171,10 @@
               id="voipSoftswitchProviderForm"
               class="form-grid"
               (ngSubmit)="saveProvider()"
-              [formGroup]="form"
             >
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="form.status">
                   @for (option of statusOptions; track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
@@ -185,7 +184,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Engine</mat-label>
                 <mat-select
-                  formControlName="engine"
+                  [formField]="form.engine"
                   (selectionChange)="onEngineChange($event.value)"
                 >
                   @for (option of engineOptions; track option.value) {
@@ -196,13 +195,13 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Provider name" />
+                <input matInput [formField]="form.name" placeholder="Provider name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Default Codecs</mat-label>
                 <mat-select
-                  formControlName="defaultCodecs"
+                  [formField]="form.defaultCodecs"
                   multiple
                   (openedChange)="onDefaultCodecsOpened($event)"
                 >
@@ -232,17 +231,17 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Base URL</mat-label>
-                <input matInput formControlName="baseUrl" placeholder="https://api.provider.com" />
+                <input matInput [formField]="form.baseUrl" placeholder="https://api.provider.com" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>API Key</mat-label>
-                <input matInput formControlName="apiKey" />
+                <input matInput [formField]="form.apiKey" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>API Secret</mat-label>
-                <input matInput formControlName="apiSecret" />
+                <input matInput [formField]="form.apiSecret" />
               </mat-form-field>
             </form>
           </div>
@@ -258,7 +257,7 @@
           color="primary"
           type="submit"
           form="voipSoftswitchProviderForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -270,7 +269,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -288,7 +287,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewProvider()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

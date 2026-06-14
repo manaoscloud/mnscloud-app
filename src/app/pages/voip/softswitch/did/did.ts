@@ -12,7 +12,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -51,7 +51,7 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatButtonModule,
@@ -80,7 +80,6 @@ export class VoipSoftswitchDidPage {
   private readonly api = inject(VoipSoftswitchDidService);
   private readonly accountApi = inject(VoipSoftswitchAccountService);
   private readonly subscriberApi = inject(VoipSoftswitchSubscriberService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -101,10 +100,10 @@ export class VoipSoftswitchDidPage {
     'actions',
   ];
   readonly dataSource = new MatTableDataSource<VoipSoftswitchDidItem>([]);
-  search = '';
-  searchInput = '';
-  accountSearch = '';
-  subscriberSearch = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly accountSearch = signal('');
+  readonly subscriberSearch = signal('');
 
   private readonly didsResource = resource({
     params: () => ({ search: this.appliedSearch(), limit: this.listLimit }),
@@ -161,15 +160,12 @@ export class VoipSoftswitchDidPage {
     this.snack.error(this.errorMessage(error, 'Failed to load DID lookups.'));
   });
 
-  readonly form = this.fb.nonNullable.group({
-    accountUUID: ['', [Validators.required]],
-    subscriberUUID: [''],
-    number: ['', [Validators.required]],
-    direction: ['both', [Validators.required]],
-    routeType: ['subscriber', [Validators.required]],
-    routeValue: [''],
-    description: [''],
-    enabled: [true],
+  readonly formModel = signal(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.accountUUID);
+    required(schema.number);
+    required(schema.direction);
+    required(schema.routeType);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -208,17 +204,18 @@ export class VoipSoftswitchDidPage {
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.appliedSearch.set(this.search);
+    const search = this.searchInput().trim();
+    this.search.set(search);
+    this.appliedSearch.set(search);
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     this.appliedSearch.set('');
   }
 
@@ -236,7 +233,7 @@ export class VoipSoftswitchDidPage {
 
   editItem(item: VoipSoftswitchDidItem) {
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       accountUUID: item.VoipSoftswitchAccountVssUUID,
       subscriberUUID: item.VoipSoftswitchSubscriberVsuUUID ?? '',
       number: item.VsdNumber,
@@ -250,11 +247,10 @@ export class VoipSoftswitchDidPage {
   }
 
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload = {
       ...value,
       subscriberUUID: value.subscriberUUID || null,
@@ -373,7 +369,7 @@ export class VoipSoftswitchDidPage {
   }
 
   filteredAccounts() {
-    const value = this.accountSearch.trim().toLowerCase();
+    const value = this.accountSearch().trim().toLowerCase();
     if (!value) return this.accountOptions();
     return this.accountOptions().filter((item) =>
       [item.VssName, item.CustomerName, item.DomainName].some((field) =>
@@ -385,8 +381,8 @@ export class VoipSoftswitchDidPage {
   }
 
   filteredSubscribers() {
-    const value = this.subscriberSearch.trim().toLowerCase();
-    const accountUUID = this.form.controls.accountUUID.value;
+    const value = this.subscriberSearch().trim().toLowerCase();
+    const accountUUID = this.formModel().accountUUID;
     const items = this.subscriberOptions().filter(
       (item) => !accountUUID || item.VoipSoftswitchAccountVssUUID === accountUUID,
     );
@@ -401,29 +397,20 @@ export class VoipSoftswitchDidPage {
   }
 
   setAccountSearch(value: string) {
-    this.accountSearch = value;
+    this.accountSearch.set(value);
   }
   setSubscriberSearch(value: string) {
-    this.subscriberSearch = value;
+    this.subscriberSearch.set(value);
   }
   clearAccountSearch(opened: boolean) {
-    if (!opened) this.accountSearch = '';
+    if (!opened) this.accountSearch.set('');
   }
   clearSubscriberSearch(opened: boolean) {
-    if (!opened) this.subscriberSearch = '';
+    if (!opened) this.subscriberSearch.set('');
   }
 
   private resetForm() {
-    this.form.reset({
-      accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
-      subscriberUUID: '',
-      number: '',
-      direction: 'both',
-      routeType: 'subscriber',
-      routeValue: '',
-      description: '',
-      enabled: true,
-    });
+    this.formModel.set(this.emptyFormModel());
     this.editing.set(null);
   }
 
@@ -471,5 +458,18 @@ export class VoipSoftswitchDidPage {
   private errorMessage(error: unknown, fallback: string) {
     const maybe = error as { error?: { error?: string }; message?: string };
     return maybe?.error?.error || maybe?.message || fallback;
+  }
+
+  private emptyFormModel() {
+    return {
+      accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
+      subscriberUUID: '',
+      number: '',
+      direction: 'both',
+      routeType: 'subscriber',
+      routeValue: '',
+      description: '',
+      enabled: true,
+    };
   }
 }
