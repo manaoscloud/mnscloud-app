@@ -11,7 +11,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -49,14 +49,30 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type IvrRouteType = 'extension' | 'ivr' | 'queue' | 'group' | 'external';
+type IvrFormModel = {
+  pabxUUID: string;
+  name: string;
+  greetingText: string;
+  mediaFileUUID: string;
+  timeoutSeconds: number;
+  invalidRetries: number;
+  enabled: boolean;
+};
+type IvrOptionFormModel = {
+  digit: string;
+  routeType: IvrRouteType;
+  routeTargetUUID: string;
+  routeTargetValue: string;
+  description: string;
+  enabled: boolean;
+};
 
 @Component({
   selector: 'app-voip-pabx-ivr',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -86,7 +102,6 @@ export class VoipPabxIvrPage {
   private readonly extensionApi = inject(VoipPabxExtensionService);
   private readonly mediaFileApi = inject(VoipPabxMediaFilesService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -132,7 +147,7 @@ export class VoipPabxIvrPage {
     this.filterOptions(this.pabxOptions(), this.pabxSearch()),
   );
   readonly filteredMediaFileOptions = computed(() => {
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const pabxUUID = this.formModel().pabxUUID;
     return this.filterOptions(
       this.mediaFileOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
       this.mediaFileSearch(),
@@ -142,23 +157,21 @@ export class VoipPabxIvrPage {
     this.filterOptions(this.optionTargetOptions(), this.optionTargetSearch()),
   );
 
-  readonly form = this.fb.nonNullable.group({
-    pabxUUID: ['', Validators.required],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    greetingText: [''],
-    mediaFileUUID: [''],
-    timeoutSeconds: [10, [Validators.required, Validators.min(1)]],
-    invalidRetries: [3, [Validators.required, Validators.min(0)]],
-    enabled: [true],
+  readonly formModel = signal<IvrFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.pabxUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.timeoutSeconds);
+    min(schema.timeoutSeconds, 1);
+    required(schema.invalidRetries);
+    min(schema.invalidRetries, 0);
   });
 
-  readonly optionForm = this.fb.nonNullable.group({
-    digit: ['', Validators.required],
-    routeType: ['extension' as IvrRouteType, Validators.required],
-    routeTargetUUID: [''],
-    routeTargetValue: [''],
-    description: [''],
-    enabled: [true],
+  readonly optionFormModel = signal<IvrOptionFormModel>(this.emptyOptionFormModel());
+  readonly optionForm = createForm(this.optionFormModel, (schema) => {
+    required(schema.digit);
+    required(schema.routeType);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -224,7 +237,7 @@ export class VoipPabxIvrPage {
 
   startEdit(item: VoipPabxIvrItem) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       pabxUUID: item.VoipPabxAccountVpaUUID ?? '',
       name: item.VpiName ?? '',
       greetingText: item.VpiGreetingText ?? '',
@@ -241,10 +254,7 @@ export class VoipPabxIvrPage {
 
   async save(keepOpen = false) {
     if (this.saving()) return;
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (!this.form().valid()) return;
 
     this.saving.set(true);
     try {
@@ -392,26 +402,23 @@ export class VoipPabxIvrPage {
   }
 
   onPabxChange() {
-    this.form.controls.mediaFileUUID.setValue('');
+    this.formModel.update((value) => ({ ...value, mediaFileUUID: '' }));
     this.mediaFileSearch.set('');
-    this.optionForm.controls.routeTargetUUID.setValue('');
+    this.optionFormModel.update((value) => ({ ...value, routeTargetUUID: '' }));
     this.optionTargetSearch.set('');
     if (!this.editing()) this.optionRows.set([]);
     void this.loadOptionTargets();
   }
 
   onOptionRouteTypeChange() {
-    this.optionForm.controls.routeTargetUUID.setValue('');
+    this.optionFormModel.update((value) => ({ ...value, routeTargetUUID: '' }));
     this.optionTargetSearch.set('');
     void this.loadOptionTargets();
   }
 
   async addOption() {
     if (this.optionSaving()) return;
-    if (this.optionForm.invalid) {
-      this.optionForm.markAllAsTouched();
-      return;
-    }
+    if (!this.optionForm().valid()) return;
 
     const payload = this.optionPayload();
     if (!this.editing()) {
@@ -525,8 +532,8 @@ export class VoipPabxIvrPage {
   }
 
   private async loadOptionTargets() {
-    const routeType = this.optionForm.controls.routeType.value;
-    const pabxUUID = this.form.controls.pabxUUID.value;
+    const routeType = this.optionFormModel().routeType;
+    const pabxUUID = this.formModel().pabxUUID;
     if (routeType === 'extension') {
       this.optionTargetOptions.set(
         this.extensionOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
@@ -571,7 +578,7 @@ export class VoipPabxIvrPage {
   }
 
   private payload() {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     return {
       pabxUUID: value.pabxUUID,
       name: value.name,
@@ -584,7 +591,7 @@ export class VoipPabxIvrPage {
   }
 
   private optionPayload() {
-    const value = this.optionForm.getRawValue();
+    const value = this.optionFormModel();
     return {
       digit: value.digit,
       routeType: value.routeType,
@@ -624,7 +631,17 @@ export class VoipPabxIvrPage {
     this.mediaFileSearch.set('');
     this.optionTargetSearch.set('');
     this.optionRows.set([]);
-    this.form.reset({
+    this.formModel.set(this.emptyFormModel());
+    this.resetOptionForm();
+  }
+
+  private resetOptionForm() {
+    this.optionTargetSearch.set('');
+    this.optionFormModel.set(this.emptyOptionFormModel());
+  }
+
+  private emptyFormModel(): IvrFormModel {
+    return {
       pabxUUID: '',
       name: '',
       greetingText: '',
@@ -632,20 +649,18 @@ export class VoipPabxIvrPage {
       timeoutSeconds: 10,
       invalidRetries: 3,
       enabled: true,
-    });
-    this.resetOptionForm();
+    };
   }
 
-  private resetOptionForm() {
-    this.optionTargetSearch.set('');
-    this.optionForm.reset({
+  private emptyOptionFormModel(): IvrOptionFormModel {
+    return {
       digit: '',
       routeType: 'extension',
       routeTargetUUID: '',
       routeTargetValue: '',
       description: '',
       enabled: true,
-    });
+    };
   }
 
   private openDialog() {

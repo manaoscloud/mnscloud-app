@@ -17,7 +17,11 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-4">
         <mat-label>Search</mat-label>
-        <input matInput [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)" />
+        <input
+          matInput
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -167,14 +171,14 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <mat-tab-group class="form-tabs" [formGroup]="form">
+      <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="voipPabxIvrForm" class="form-grid" [formGroup]="form" (ngSubmit)="save()">
+            <form id="voipPabxIvrForm" class="form-grid" (ngSubmit)="save()">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>PABX</mat-label>
                 <mat-select
-                  formControlName="pabxUUID"
+                  [formField]="form.pabxUUID"
                   (openedChange)="onPabxOpened($event)"
                   (selectionChange)="onPabxChange()"
                 >
@@ -204,13 +208,13 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
+                <input matInput [formField]="form.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Greeting media file</mat-label>
                 <mat-select
-                  formControlName="mediaFileUUID"
+                  [formField]="form.mediaFileUUID"
                   (openedChange)="onMediaFileOpened($event)"
                 >
                   <mat-option [value]="''">None</mat-option>
@@ -240,22 +244,22 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Greeting text</mat-label>
-                <input matInput formControlName="greetingText" />
+                <input matInput [formField]="form.greetingText" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Timeout seconds</mat-label>
-                <input matInput type="number" formControlName="timeoutSeconds" />
+                <input matInput type="number" [formField]="form.timeoutSeconds" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Invalid retries</mat-label>
-                <input matInput type="number" formControlName="invalidRetries" />
+                <input matInput type="number" [formField]="form.invalidRetries" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="enabled">
+                <mat-select [formField]="form.enabled">
                   <mat-option [value]="true">Active</mat-option>
                   <mat-option [value]="false">Inactive</mat-option>
                 </mat-select>
@@ -266,16 +270,16 @@
 
         <mat-tab label="Options">
           <div class="tab-content members-tab">
-            <form class="ivr-option-form-grid" [formGroup]="optionForm" (ngSubmit)="addOption()">
+            <form class="ivr-option-form-grid" (ngSubmit)="addOption()">
               <mat-form-field appearance="outline">
                 <mat-label>Digit</mat-label>
-                <input matInput formControlName="digit" maxlength="8" />
+                <input matInput [formField]="optionForm.digit" maxlength="8" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Route type</mat-label>
                 <mat-select
-                  formControlName="routeType"
+                  [formField]="optionForm.routeType"
                   (selectionChange)="onOptionRouteTypeChange()"
                 >
                   <mat-option value="extension">Extension</mat-option>
@@ -289,7 +293,7 @@
               <mat-form-field appearance="outline" class="option-target-field">
                 <mat-label>Destination</mat-label>
                 <mat-select
-                  formControlName="routeTargetUUID"
+                  [formField]="optionForm.routeTargetUUID"
                   (openedChange)="onOptionTargetOpened($event)"
                 >
                   <mat-option
@@ -318,12 +322,12 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Target value</mat-label>
-                <input matInput formControlName="routeTargetValue" />
+                <input matInput [formField]="optionForm.routeTargetValue" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="enabled">
+                <mat-select [formField]="optionForm.enabled">
                   <mat-option [value]="true">Active</mat-option>
                   <mat-option [value]="false">Inactive</mat-option>
                 </mat-select>
@@ -331,7 +335,7 @@
 
               <mat-form-field appearance="outline" class="option-description-field">
                 <mat-label>Description</mat-label>
-                <input matInput formControlName="description" />
+                <input matInput [formField]="optionForm.description" />
               </mat-form-field>
 
               <div class="member-form-actions">
@@ -339,7 +343,7 @@
                   mat-stroked-button
                   color="primary"
                   type="submit"
-                  [disabled]="optionForm.invalid || optionSaving()"
+                  [disabled]="!optionForm().valid() || optionSaving()"
                 >
                   <mat-icon>add</mat-icon>
                   Add
@@ -438,7 +442,7 @@
           color="primary"
           type="button"
           (click)="save()"
-          [disabled]="saving() || form.invalid"
+          [disabled]="saving() || !form().valid()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -450,7 +454,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="saving() || form.invalid"
+            [disabled]="saving() || !form().valid()"
             aria-label="More save actions"
           >
             <mat-icon>expand_more</mat-icon>

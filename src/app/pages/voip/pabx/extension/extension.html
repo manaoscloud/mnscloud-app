@@ -20,15 +20,15 @@
         <mat-label>Search extensions</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput()"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Username, caller ID, PABX, domain..."
         />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>PABX</mat-label>
-        <mat-select [value]="pabxFilter" (selectionChange)="onPabxFilterChange($event.value)">
+        <mat-select [value]="pabxFilter()" (selectionChange)="onPabxFilterChange($event.value)">
           <mat-option value="">All</mat-option>
           @for (option of pabxOptions; track option.value) {
             <mat-option [value]="option.value">{{ option.label }}</mat-option>
@@ -38,7 +38,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select [value]="statusFilter" (selectionChange)="onStatusFilterChange($event.value)">
+        <mat-select [value]="statusFilter()" (selectionChange)="onStatusFilterChange($event.value)">
           <mat-option value="">All</mat-option>
           @for (option of statusOptions; track option.value) {
             <mat-option [value]="option.value">{{ option.label }}</mat-option>
@@ -250,14 +250,14 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <form id="voipPabxExtensionForm" (ngSubmit)="saveExtension()" [formGroup]="form">
+      <form id="voipPabxExtensionForm" (ngSubmit)="saveExtension()">
         <mat-tab-group class="form-tabs">
           <mat-tab [label]="'Record' | transloco">
             <div class="tab-content">
               <div class="form-grid">
                 <mat-form-field appearance="outline">
                   <mat-label>Status</mat-label>
-                  <mat-select formControlName="enabled">
+                  <mat-select [formField]="form.enabled">
                     @for (option of statusOptions; track option.value) {
                       <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
@@ -267,7 +267,7 @@
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>PABX</mat-label>
                   <mat-select
-                    formControlName="pabxUUID"
+                    [formField]="form.pabxUUID"
                     (selectionChange)="onFormPabxChange($event.value)"
                     (openedChange)="onFormPabxOpened($event)"
                   >
@@ -305,7 +305,7 @@
                   <mat-form-field appearance="outline">
                     <mat-label>Create Mode</mat-label>
                     <mat-select
-                      formControlName="createMode"
+                      [formField]="form.createMode"
                       (selectionChange)="onCreateModeChange($event.value)"
                     >
                       <mat-option value="single">Single</mat-option>
@@ -317,14 +317,14 @@
                 @if (isSingleMode()) {
                   <mat-form-field appearance="outline" class="start-new-row">
                     <mat-label>Username</mat-label>
-                    <input matInput formControlName="username" placeholder="1010" />
+                    <input matInput [formField]="form.username" placeholder="1010" />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
                     <mat-label>Password</mat-label>
                     <input
                       matInput
-                      formControlName="password"
+                      [formField]="form.password"
                       type="text"
                       placeholder="{{ editing() ? 'Current password' : 'Generated password' }}"
                     />
@@ -341,7 +341,7 @@
                 } @else {
                   <mat-form-field appearance="outline" class="span-2 start-new-row">
                     <mat-label>Extension Range</mat-label>
-                    <input matInput formControlName="extensionRange" placeholder="1000-1010" />
+                    <input matInput [formField]="form.extensionRange" placeholder="1000-1010" />
                     <mat-hint>Creates all extensions in range (max 100).</mat-hint>
                   </mat-form-field>
                 }
@@ -349,7 +349,7 @@
                 <mat-form-field appearance="outline">
                   <mat-label>Audio Codecs</mat-label>
                   <mat-select
-                    formControlName="audioCodecs"
+                    [formField]="form.audioCodecs"
                     multiple
                     (openedChange)="onCodecOpened($event)"
                   >
@@ -381,7 +381,7 @@
                 <mat-form-field appearance="outline">
                   <mat-label>Video Codecs</mat-label>
                   <mat-select
-                    formControlName="videoCodecs"
+                    [formField]="form.videoCodecs"
                     multiple
                     (openedChange)="onCodecOpened($event)"
                   >
@@ -412,7 +412,7 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Context</mat-label>
-                  <input matInput formControlName="context" placeholder="default" />
+                  <input matInput [formField]="form.context" placeholder="default" />
                 </mat-form-field>
               </div>
             </div>
@@ -423,22 +423,26 @@
               <div class="form-grid">
                 <mat-form-field appearance="outline">
                   <mat-label>Caller ID Name</mat-label>
-                  <input matInput formControlName="callerIdName" placeholder="Agent Name" />
+                  <input matInput [formField]="form.callerIdName" placeholder="Agent Name" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Caller ID Number</mat-label>
-                  <input matInput formControlName="callerIdNumber" placeholder="5511999999999" />
+                  <input
+                    matInput
+                    [formField]="form.callerIdNumber"
+                    placeholder="5511999999999"
+                  />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Outbound CID</mat-label>
-                  <input matInput formControlName="outboundCid" />
+                  <input matInput [formField]="form.outboundCid" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Call Recording</mat-label>
-                  <mat-select formControlName="recordCalls">
+                  <mat-select [formField]="form.recordCalls">
                     @for (option of recordingOptions; track option.value) {
                       <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
@@ -453,7 +457,7 @@
               <div class="form-grid">
                 <mat-form-field appearance="outline">
                   <mat-label>Voicemail</mat-label>
-                  <mat-select formControlName="vmEnabled">
+                  <mat-select [formField]="form.vmEnabled">
                     @for (option of vmOptions; track option.value) {
                       <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
@@ -464,7 +468,7 @@
                   <mat-label>Voicemail Password</mat-label>
                   <input
                     matInput
-                    formControlName="vmPassword"
+                    [formField]="form.vmPassword"
                     maxlength="6"
                     inputmode="numeric"
                     placeholder="6 digits"
@@ -494,7 +498,7 @@
                   <textarea
                     matInput
                     rows="4"
-                    formControlName="paramsJson"
+                    [formField]="form.paramsJson"
                     placeholder="{ }"
                   ></textarea>
                 </mat-form-field>
@@ -546,7 +550,7 @@
           color="primary"
           type="submit"
           form="voipPabxExtensionForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -558,7 +562,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -576,7 +580,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewExtension()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

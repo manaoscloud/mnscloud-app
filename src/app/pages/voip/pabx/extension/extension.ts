@@ -12,7 +12,13 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormField,
+  form as createForm,
+  minLength,
+  pattern,
+  required,
+} from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -56,6 +62,24 @@ type PabxOption = {
 
 type JsonRecord = Record<string, unknown>;
 type CreateMode = 'single' | 'range';
+type ExtensionFormModel = {
+  pabxUUID: string;
+  createMode: CreateMode;
+  extensionRange: string;
+  username: string;
+  password: string;
+  callerIdName: string;
+  callerIdNumber: string;
+  context: string;
+  vmEnabled: number;
+  vmPassword: string;
+  recordCalls: number;
+  outboundCid: string;
+  audioCodecs: string[];
+  videoCodecs: string[];
+  enabled: number;
+  paramsJson: string;
+};
 
 type ExtensionFilters = {
   search: string;
@@ -74,8 +98,7 @@ const emptyExtensionFilters = (): ExtensionFilters => ({
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatButtonModule,
@@ -102,7 +125,6 @@ export class VoipPabxExtensionPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipPabxExtensionService);
   private readonly pabxApi = inject(VoipPabxService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -137,9 +159,9 @@ export class VoipPabxExtensionPage {
   ];
   readonly selectedExtensionUUIDs = new Set<string>();
   search = '';
-  searchInput = '';
-  statusFilter: number | '' = '';
-  pabxFilter = '';
+  readonly searchInput = signal('');
+  readonly statusFilter = signal<number | ''>('');
+  readonly pabxFilter = signal('');
 
   pabxOptions: PabxOption[] = [];
   private readonly pabxMap = new Map<string, VoipPabxAccount>();
@@ -168,23 +190,18 @@ export class VoipPabxExtensionPage {
   videoCodecOptions: string[] = this.defaultVideoCodecs;
   codecDefaultHint = '';
 
-  readonly form = this.fb.nonNullable.group({
-    pabxUUID: ['', [Validators.required]],
-    createMode: ['single' as CreateMode],
-    extensionRange: [''],
-    username: ['', [Validators.required, Validators.minLength(1)]],
-    password: ['', [Validators.required]],
-    callerIdName: [''],
-    callerIdNumber: [''],
-    context: ['default', [Validators.required]],
-    vmEnabled: [0],
-    vmPassword: ['', [Validators.pattern(/^\d{6}$/)]],
-    recordCalls: [1],
-    outboundCid: [''],
-    audioCodecs: [[] as string[]],
-    videoCodecs: [[] as string[]],
-    enabled: [1],
-    paramsJson: [''],
+  readonly formModel = signal<ExtensionFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.pabxUUID);
+    required(schema.context);
+    required(schema.username, { when: () => this.editing() !== null || this.isSingleMode() });
+    minLength(schema.username, 1, { when: () => this.editing() !== null || this.isSingleMode() });
+    required(schema.password, { when: () => this.editing() === null && this.isSingleMode() });
+    required(schema.extensionRange, { when: () => this.isRangeMode() });
+    pattern(schema.extensionRange, /^\s*\d+\s*-\s*\d+\s*$/, { when: () => this.isRangeMode() });
+    pattern(schema.vmPassword, /^\d{6}$/, {
+      when: () => this.formModel().vmPassword.trim().length > 0,
+    });
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -223,11 +240,11 @@ export class VoipPabxExtensionPage {
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   onPabxFilterChange(value: string) {
-    this.pabxFilter = value ?? '';
+    this.pabxFilter.set(value ?? '');
   }
 
   onFormPabxOpened(opened: boolean) {
@@ -244,7 +261,7 @@ export class VoipPabxExtensionPage {
   }
 
   onStatusFilterChange(value: number | '') {
-    this.statusFilter = value === '' ? '' : (Number(value) as 0 | 1);
+    this.statusFilter.set(value === '' ? '' : (Number(value) as 0 | 1));
   }
 
   onFormPabxChange(value: string) {
@@ -280,10 +297,10 @@ export class VoipPabxExtensionPage {
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
+    this.searchInput.set('');
     this.search = '';
-    this.statusFilter = '';
-    this.pabxFilter = '';
+    this.statusFilter.set('');
+    this.pabxFilter.set('');
     const nextFilters = emptyExtensionFilters();
     if (this.sameExtensionFilters(nextFilters, this.appliedFilters())) {
       this.extensionsResource.reload();
@@ -299,15 +316,12 @@ export class VoipPabxExtensionPage {
   startCreate() {
     this.resetForm();
     this.error.set(null);
-    this.form.patchValue(
-      {
-        password: this.generateRandomPassword(16),
-        vmPassword: this.generateRandomVoicemailPassword(6),
-      },
-      { emitEvent: false },
-    );
-    this.syncCreateModeValidators();
-    this.updateCodecOptions(this.form.controls.pabxUUID.value);
+    this.formModel.update((value) => ({
+      ...value,
+      password: this.generateRandomPassword(16),
+      vmPassword: this.generateRandomVoicemailPassword(6),
+    }));
+    this.updateCodecOptions(this.formModel().pabxUUID);
     this.openExtensionDialog();
   }
 
@@ -315,14 +329,10 @@ export class VoipPabxExtensionPage {
     this.error.set(null);
     this.editing.set(item);
     this.generatedCredentials.set([]);
-    this.form.controls.createMode.setValue('single', { emitEvent: false });
-    this.form.controls.extensionRange.setValue('', { emitEvent: false });
-    this.form.controls.password.clearValidators();
-    this.form.controls.password.updateValueAndValidity({ emitEvent: false });
-    this.form.controls.extensionRange.clearValidators();
-    this.form.controls.extensionRange.updateValueAndValidity({ emitEvent: false });
-    this.form.patchValue({
+    this.formModel.set({
       pabxUUID: item.VoipPabxAccountVpaUUID,
+      createMode: 'single',
+      extensionRange: '',
       username: item.VpeUsername ?? '',
       password: item.VpePassword ?? '',
       callerIdName: item.VpeCallerIdName ?? '',
@@ -347,35 +357,37 @@ export class VoipPabxExtensionPage {
   }
 
   onCreateModeChange(value: CreateMode) {
-    this.form.controls.createMode.setValue(value, { emitEvent: false });
+    this.formModel.update((current) => ({ ...current, createMode: value }));
     this.generatedCredentials.set([]);
-    this.syncCreateModeValidators();
 
-    if (value === 'single' && !this.form.controls.password.value.trim().length) {
-      this.form.controls.password.setValue(this.generateRandomPassword(16));
+    if (value === 'single' && !this.formModel().password.trim().length) {
+      this.formModel.update((current) => ({ ...current, password: this.generateRandomPassword(16) }));
     }
 
     if (value === 'range') {
       // In range mode we let backend generate voicemail passwords per extension.
-      this.form.controls.vmPassword.setValue('', { emitEvent: false });
+      this.formModel.update((current) => ({ ...current, vmPassword: '' }));
     }
   }
 
   isRangeMode() {
-    return !this.editing() && this.form.controls.createMode.value === 'range';
+    return !this.editing() && this.formModel().createMode === 'range';
   }
 
   isSingleMode() {
-    return this.editing() || this.form.controls.createMode.value === 'single';
+    return !!this.editing() || this.formModel().createMode === 'single';
   }
 
   regeneratePassword() {
-    this.form.controls.password.setValue(this.generateRandomPassword(16));
+    this.formModel.update((current) => ({ ...current, password: this.generateRandomPassword(16) }));
   }
 
   regenerateVoicemailPassword() {
     if (this.editing()) return;
-    this.form.controls.vmPassword.setValue(this.generateRandomVoicemailPassword(6));
+    this.formModel.update((current) => ({
+      ...current,
+      vmPassword: this.generateRandomVoicemailPassword(6),
+    }));
   }
 
   async saveExtension(createAnother = false) {
@@ -383,12 +395,9 @@ export class VoipPabxExtensionPage {
       return;
     }
 
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (!this.form().valid()) return;
 
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const selectedPabx = this.pabxMap.get(value.pabxUUID);
     const pabxValidationMessage = this.validatePabxForExtension(selectedPabx);
     if (pabxValidationMessage) {
@@ -405,7 +414,7 @@ export class VoipPabxExtensionPage {
     const normalizedVmPassword = String(effectiveVmPassword ?? '').trim();
 
     if (effectiveVmPassword !== value.vmPassword) {
-      this.form.controls.vmPassword.setValue(effectiveVmPassword, { emitEvent: false });
+      this.formModel.update((current) => ({ ...current, vmPassword: effectiveVmPassword }));
     }
 
     const payload = {
@@ -460,8 +469,7 @@ export class VoipPabxExtensionPage {
           });
 
           this.generatedCredentials.set(response?.data?.credentials ?? []);
-          this.form.controls.extensionRange.setValue('', { emitEvent: false });
-          this.form.controls.extensionRange.updateValueAndValidity({ emitEvent: false });
+          this.formModel.update((current) => ({ ...current, extensionRange: '' }));
           this.extensionsResource.reload();
           const skipped = Array.isArray(response?.data?.skippedExisting)
             ? response.data.skippedExisting.length
@@ -634,7 +642,7 @@ export class VoipPabxExtensionPage {
   }
 
   private applyFilter() {
-    this.dataSource.filter = `${this.search}|${this.statusFilter}|${this.pabxFilter}|${Date.now()}`;
+    this.dataSource.filter = `${this.search}|${this.statusFilter()}|${this.pabxFilter()}|${Date.now()}`;
     this.paginator()?.firstPage();
   }
 
@@ -664,11 +672,11 @@ export class VoipPabxExtensionPage {
       }
     }
 
-    if (this.statusFilter !== '' && item.VpeEnabled !== this.statusFilter) {
+    if (this.statusFilter() !== '' && item.VpeEnabled !== this.statusFilter()) {
       return false;
     }
 
-    if (this.pabxFilter && item.VoipPabxAccountVpaUUID !== this.pabxFilter) {
+    if (this.pabxFilter() && item.VoipPabxAccountVpaUUID !== this.pabxFilter()) {
       return false;
     }
 
@@ -718,7 +726,7 @@ export class VoipPabxExtensionPage {
           disabledReason: validationMessage ?? undefined,
         };
       });
-    this.updateCodecOptions(this.form.controls.pabxUUID.value);
+    this.updateCodecOptions(this.formModel().pabxUUID);
   }
 
   private async fetchExtensions(filters: ExtensionFilters): Promise<VoipPabxExtensionItem[]> {
@@ -735,9 +743,9 @@ export class VoipPabxExtensionPage {
 
   private currentExtensionFilters(): ExtensionFilters {
     return {
-      search: this.searchInput.trim(),
-      status: this.statusFilter,
-      pabxUUID: this.pabxFilter,
+      search: this.searchInput().trim(),
+      status: this.statusFilter(),
+      pabxUUID: this.pabxFilter(),
     };
   }
 
@@ -792,8 +800,8 @@ export class VoipPabxExtensionPage {
 
   private updateCodecOptions(pabxUUID: string) {
     const currentSelected = [
-      ...(this.form.controls.audioCodecs.value ?? []),
-      ...(this.form.controls.videoCodecs.value ?? []),
+      ...(this.formModel().audioCodecs ?? []),
+      ...(this.formModel().videoCodecs ?? []),
     ];
     const pabx = this.pabxMap.get(pabxUUID);
     const engine = this.resolveEngine(pabx).toLowerCase();
@@ -915,7 +923,14 @@ export class VoipPabxExtensionPage {
     this.error.set(null);
     this.editing.set(null);
     this.generatedCredentials.set([]);
-    this.form.reset({
+    this.formModel.set(this.emptyFormModel());
+    this.audioCodecOptions = this.defaultAudioCodecs;
+    this.videoCodecOptions = this.defaultVideoCodecs;
+    this.codecDefaultHint = [...this.defaultAudioCodecs, ...this.defaultVideoCodecs].join(', ');
+  }
+
+  private emptyFormModel(): ExtensionFormModel {
+    return {
       pabxUUID: '',
       createMode: 'single',
       extensionRange: '',
@@ -932,40 +947,7 @@ export class VoipPabxExtensionPage {
       videoCodecs: [],
       enabled: 1,
       paramsJson: '',
-    });
-    this.audioCodecOptions = this.defaultAudioCodecs;
-    this.videoCodecOptions = this.defaultVideoCodecs;
-    this.codecDefaultHint = [...this.defaultAudioCodecs, ...this.defaultVideoCodecs].join(', ');
-    this.syncCreateModeValidators();
-  }
-
-  private syncCreateModeValidators() {
-    const isEditing = !!this.editing();
-    const createMode = this.form.controls.createMode.value;
-    const usernameControl = this.form.controls.username;
-    const passwordControl = this.form.controls.password;
-    const rangeControl = this.form.controls.extensionRange;
-
-    if (isEditing) {
-      usernameControl.setValidators([Validators.required, Validators.minLength(1)]);
-      passwordControl.clearValidators();
-      rangeControl.clearValidators();
-    } else if (createMode === 'range') {
-      usernameControl.clearValidators();
-      passwordControl.clearValidators();
-      rangeControl.setValidators([
-        Validators.required,
-        Validators.pattern(/^\s*\d+\s*-\s*\d+\s*$/),
-      ]);
-    } else {
-      usernameControl.setValidators([Validators.required, Validators.minLength(1)]);
-      passwordControl.setValidators([Validators.required]);
-      rangeControl.clearValidators();
-    }
-
-    usernameControl.updateValueAndValidity({ emitEvent: false });
-    passwordControl.updateValueAndValidity({ emitEvent: false });
-    rangeControl.updateValueAndValidity({ emitEvent: false });
+    };
   }
 
   private parseRange(rangeText: string): { start: number; end: number; total: number } | null {
