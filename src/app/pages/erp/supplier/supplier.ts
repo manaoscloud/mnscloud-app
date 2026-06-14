@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,8 +29,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge, takeUntil } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -70,7 +69,6 @@ type PostalCodeLookupItem = {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -119,7 +117,6 @@ export class ErpSupplierPage {
   searchInput = '';
   editingSupplier: Supplier | null = null;
   selectedSupplierUUIDs = new Set<string>();
-  readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
   readonly paginator = viewChild(MatPaginator);
@@ -146,6 +143,7 @@ export class ErpSupplierPage {
     type: 'company' as 'company' | 'person',
     name: '',
     document: '',
+    email: '',
     phone: '',
     street: '',
     number: '',
@@ -159,10 +157,6 @@ export class ErpSupplierPage {
   };
 
   constructor() {
-    merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
-
     this.resetForm();
     this.destroyRef.onDestroy(() => {
       this.stopDialogViewportObserver();
@@ -253,7 +247,7 @@ export class ErpSupplierPage {
     this.form.type = 'company';
     this.form.name = '';
     this.form.document = '';
-    this.emailControl.setValue('', { emitEvent: false });
+    this.form.email = '';
     this.updateEmailError();
     this.form.phone = '';
     this.form.street = '';
@@ -272,7 +266,7 @@ export class ErpSupplierPage {
     this.form.type = supplier.Type;
     this.form.name = supplier.Name ?? '';
     this.form.document = supplier.Document ?? '';
-    this.emailControl.setValue(supplier.Email ?? '', { emitEvent: false });
+    this.form.email = supplier.Email ?? '';
     this.updateEmailError();
     this.form.phone = supplier.Phone ?? '';
     this.form.street = supplier.Street ?? '';
@@ -293,7 +287,8 @@ export class ErpSupplierPage {
       return;
     }
 
-    if (this.emailControl.value && this.emailControl.invalid) {
+    this.updateEmailError();
+    if (this.emailError()) {
       this.showWarning('Email is invalid.');
       return;
     }
@@ -311,7 +306,7 @@ export class ErpSupplierPage {
         type: this.form.type,
         name: this.form.name.trim(),
         document: this.form.document?.trim() || null,
-        email: this.emailControl.value?.trim() || null,
+        email: this.form.email?.trim() || null,
         phone: this.form.phone?.trim() || null,
         street: this.form.street?.trim() || null,
         number: this.form.number?.trim() || null,
@@ -503,8 +498,9 @@ export class ErpSupplierPage {
     });
   }
 
-  private updateEmailError() {
-    if (this.emailControl.hasError('email')) {
+  updateEmailError() {
+    const value = this.form.email?.trim();
+    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       this.emailError.set('Not a valid email');
     } else {
       this.emailError.set('');

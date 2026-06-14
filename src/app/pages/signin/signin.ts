@@ -2,16 +2,17 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
 
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { merge } from 'rxjs';
+import { FormField, email, form, minLength, required } from '@angular/forms/signals';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -40,7 +41,7 @@ type SigninPolicy = {
   selector: 'app-signin',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     RouterModule,
     MatCardModule,
     MatFormFieldModule,
@@ -57,7 +58,6 @@ type SigninPolicy = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Signin {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -71,29 +71,43 @@ export class Signin {
   readonly currentLanguageOption = this.i18n.selectedLanguageOption;
   readonly languageOptions = this.i18n.languageOptions;
 
-  readonly form: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    rememberMe: [false],
+  readonly formModel = signal({
+    email: '',
+    password: '',
+    rememberMe: false,
+  });
+
+  readonly form = form(this.formModel, (field) => {
+    required(field.email);
+    email(field.email);
+    required(field.password);
+    minLength(field.password, 6);
   });
 
   readonly isLoading = signal(false);
   readonly showPassword = signal(false);
   readonly apiError = signal<string | null>(null);
-  readonly emailError = signal('');
-  readonly signinPolicy = signal<SigninPolicy>({
+  readonly emailError = computed(() => {
+    const value = this.formModel().email.trim();
+    if (!value) return this.i18n.t('signin.error.requiredEmail');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return this.i18n.t('signin.error.invalidEmail');
+    return '';
+  });
+  private readonly signinPolicyDefault: SigninPolicy = {
     captchaEnabled: false,
     captchaProvider: null,
     captchaSiteKey: null,
     rememberMeEnabled: true,
+  };
+  private readonly signinPolicyResource = resource({
+    defaultValue: this.signinPolicyDefault,
+    loader: () => this.fetchSigninPolicy(),
   });
+  readonly signinPolicy = computed(() => this.signinPolicyResource.value());
   readonly captchaToken = signal<string | null>(null);
   private readonly captchaPollTimers = new Set<ReturnType<typeof setInterval>>();
 
   constructor() {
-    merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
     this.destroyRef.onDestroy(() => this.clearCaptchaPollTimers());
   }
 
@@ -101,21 +115,21 @@ export class Signin {
   private readonly inviteTokenFromUrl: string | null =
     this.route.snapshot.queryParamMap.get('inviteToken');
 
-  private readonly initializePage = (() => {
-    void this.loadSigninPolicy();
-  
-    return true;
-  })();
+  private readonly applySigninPolicy = effect(() => {
+    if (!this.signinPolicy().rememberMeEnabled) {
+      this.formModel.update((value) => ({ ...value, rememberMe: false }));
+    }
+    queueMicrotask(() => void this.renderCaptcha());
+  });
 
   private readonly afterViewReady = afterNextRender(() => {
     queueMicrotask(() => void this.renderCaptcha());
-  
   });
 
   get canSubmit(): boolean {
     const policy = this.signinPolicy();
     const captchaReady = !policy.captchaEnabled || !!this.captchaToken();
-    return this.form.valid && captchaReady && !this.isLoading();
+    return this.form().valid() && captchaReady && !this.isLoading();
   }
 
   async onSubmit(event?: Event) {
@@ -127,7 +141,7 @@ export class Signin {
     this.apiError.set(null);
 
     try {
-      const { email, password, rememberMe } = this.form.getRawValue();
+      const { email, password, rememberMe } = this.formModel();
 
       const result = await this.api.post<any>('auth/signin', {
         email,
@@ -175,18 +189,6 @@ export class Signin {
     event?.stopPropagation();
   }
 
-  updateEmailError() {
-    const control = this.form.get('email');
-    if (!control) return;
-    if (control.hasError('required')) {
-      this.emailError.set(this.i18n.t('signin.error.requiredEmail'));
-    } else if (control.hasError('email')) {
-      this.emailError.set(this.i18n.t('signin.error.invalidEmail'));
-    } else {
-      this.emailError.set('');
-    }
-  }
-
   changeLanguage(language: LanguageOptionCode) {
     if (language === 'auto') {
       this.i18n.useSystemLanguage(true);
@@ -195,11 +197,11 @@ export class Signin {
     this.i18n.setLanguage(language as AppLanguage, true);
   }
 
-  private async loadSigninPolicy() {
+  private async fetchSigninPolicy(): Promise<SigninPolicy> {
     try {
       const result = await this.api.get<any>('auth/signin/policy');
       const data = result?.data ?? {};
-      this.signinPolicy.set({
+      return {
         captchaEnabled: data.captchaEnabled === true,
         captchaProvider:
           data.captchaProvider === 'turnstile' || data.captchaProvider === 'hcaptcha'
@@ -207,18 +209,9 @@ export class Signin {
             : null,
         captchaSiteKey: typeof data.captchaSiteKey === 'string' ? data.captchaSiteKey : null,
         rememberMeEnabled: data.rememberMeEnabled !== false,
-      });
-      if (data.rememberMeEnabled === false) {
-        this.form.patchValue({ rememberMe: false }, { emitEvent: false });
-      }
-      await this.renderCaptcha();
+      };
     } catch {
-      this.signinPolicy.set({
-        captchaEnabled: false,
-        captchaProvider: null,
-        captchaSiteKey: null,
-        rememberMeEnabled: true,
-      });
+      return this.signinPolicyDefault;
     }
   }
 

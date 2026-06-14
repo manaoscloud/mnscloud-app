@@ -10,7 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,8 +28,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge, takeUntil } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -64,7 +63,6 @@ type Company = {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -121,7 +119,6 @@ export class ErpCompaniesPage {
   searchInput = '';
   editingCompany: Company | null = null;
   selectedCompanyUUIDs = new Set<string>();
-  readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
   readonly paginator = viewChild(MatPaginator);
@@ -152,6 +149,7 @@ export class ErpCompaniesPage {
     name: '',
     legalName: '',
     document: '',
+    email: '',
     phone: '',
     addressStreet: '',
     addressNumber: '',
@@ -165,10 +163,6 @@ export class ErpCompaniesPage {
   };
 
   constructor() {
-    merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
-
     this.resetForm();
     this.destroyRef.onDestroy(() => {
       this.stopDialogViewportObserver();
@@ -259,7 +253,7 @@ export class ErpCompaniesPage {
     this.form.name = company.Name ?? '';
     this.form.legalName = company.LegalName ?? '';
     this.form.document = company.Document ?? '';
-    this.emailControl.setValue(company.Email ?? '', { emitEvent: false });
+    this.form.email = company.Email ?? '';
     this.updateEmailError();
     this.form.phone = company.Phone ?? '';
     this.form.addressStreet = company.AddressStreet ?? '';
@@ -280,7 +274,8 @@ export class ErpCompaniesPage {
       return;
     }
 
-    if (this.emailControl.value && this.emailControl.invalid) {
+    this.updateEmailError();
+    if (this.emailError()) {
       this.showWarning('Email is invalid.');
       return;
     }
@@ -299,7 +294,7 @@ export class ErpCompaniesPage {
         name: this.form.name.trim(),
         legalName: this.form.legalName?.trim() || null,
         document: this.form.document?.trim() || null,
-        email: this.emailControl.value?.trim() || null,
+        email: this.form.email?.trim() || null,
         phone: this.form.phone?.trim() || null,
         addressStreet: this.form.addressStreet?.trim() || null,
         addressNumber: this.form.addressNumber?.trim() || null,
@@ -460,12 +455,17 @@ export class ErpCompaniesPage {
     void this.saveCompany(true);
   }
 
-  private updateEmailError() {
-    if (this.emailControl.hasError('email')) {
+  updateEmailError() {
+    const value = this.form.email?.trim();
+    if (value && !this.isValidEmail(value)) {
       this.emailError.set('Not a valid email');
     } else {
       this.emailError.set('');
     }
+  }
+
+  private isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
   private showError(message: string) {
@@ -488,7 +488,7 @@ export class ErpCompaniesPage {
     this.form.name = '';
     this.form.legalName = '';
     this.form.document = '';
-    this.emailControl.setValue('', { emitEvent: false });
+    this.form.email = '';
     this.updateEmailError();
     this.form.phone = '';
     this.form.addressStreet = '';

@@ -11,7 +11,7 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,8 +29,7 @@ import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge, takeUntil } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -181,7 +180,6 @@ class MapStyleControl {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -247,7 +245,6 @@ export class ErpCustomerPage {
   mapVisible = false;
   private readonly customerFilters = signal<CustomerFilters>({ search: '' });
   private readonly mutating = signal(false);
-  readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
   complexSearch = '';
   dueDaySearch = '';
@@ -325,18 +322,12 @@ export class ErpCustomerPage {
     this.dataSource.data = [];
   });
 
-  constructor() {
-    merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
-  }
-
   private readonly initializePage = (() => {
     this.resetForm();
     void this.loadComplexes();
     void this.loadDueDays();
     void this.loadMapboxParameter();
-  
+
     return true;
   })();
 
@@ -371,7 +362,6 @@ export class ErpCustomerPage {
         .concat([this.complexLabel(data.ComplexUUID), this.dueDayLabel(data.DueDayUUID)])
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -380,7 +370,6 @@ export class ErpCustomerPage {
     if (this.map) {
       this.map.remove();
     }
-  
   });
 
   onSearchChange(value: string) {
@@ -458,7 +447,7 @@ export class ErpCustomerPage {
     this.form.type = 'company';
     this.form.name = '';
     this.form.document = '';
-    this.emailControl.setValue('', { emitEvent: false });
+    this.form.email = '';
     this.updateEmailError();
     this.form.phone = '';
     this.form.addressMainStreet = '';
@@ -500,7 +489,7 @@ export class ErpCustomerPage {
     this.form.type = customer.Type;
     this.form.name = customer.Name ?? '';
     this.form.document = customer.Document ?? '';
-    this.emailControl.setValue(customer.Email ?? '', { emitEvent: false });
+    this.form.email = customer.Email ?? '';
     this.updateEmailError();
     this.form.phone = customer.Phone ?? '';
     this.form.addressMainStreet = customer.AddressMainStreet ?? '';
@@ -544,7 +533,8 @@ export class ErpCustomerPage {
       return;
     }
 
-    if (this.emailControl.value && this.emailControl.invalid) {
+    this.updateEmailError();
+    if (this.emailError()) {
       this.showWarning('Email is invalid.');
       return;
     }
@@ -565,7 +555,7 @@ export class ErpCustomerPage {
         type: this.form.type,
         name: this.form.name.trim(),
         document: this.form.document?.trim() || null,
-        email: this.emailControl.value?.trim() || null,
+        email: this.form.email?.trim() || null,
         phone: this.form.phone?.trim() || null,
         addressMainStreet: this.form.addressMainStreet?.trim() || null,
         addressMainNumber: this.form.addressMainNumber?.trim() || null,
@@ -995,12 +985,17 @@ export class ErpCustomerPage {
     queueMicrotask(() => void this.initMap());
   }
 
-  private updateEmailError() {
-    if (this.emailControl.hasError('email')) {
+  updateEmailError() {
+    const value = this.form.email?.trim();
+    if (value && !this.isValidEmail(value)) {
       this.emailError.set('Not a valid email');
     } else {
       this.emailError.set('');
     }
+  }
+
+  private isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
   private showError(message: string) {

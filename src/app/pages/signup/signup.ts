@@ -2,16 +2,17 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  computed,
+  effect,
   inject,
+  resource,
   signal,
   ChangeDetectionStrategy,
   viewChild,
   afterNextRender,
 } from '@angular/core';
 
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { merge } from 'rxjs';
+import { FormField, email, form, minLength, pattern, required } from '@angular/forms/signals';
 import { Router, RouterModule } from '@angular/router';
 
 // Angular Material
@@ -39,7 +40,7 @@ type SignupPolicy = {
   selector: 'app-signup',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     RouterModule,
     MatCardModule,
     MatFormFieldModule,
@@ -57,7 +58,6 @@ type SignupPolicy = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Signup {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
@@ -65,54 +65,73 @@ export class Signup {
 
   readonly captchaContainer = viewChild<ElementRef<HTMLDivElement>>('captchaContainer');
 
-  readonly form: FormGroup = this.fb.group({
-    firstName: ['', [Validators.required, Validators.minLength(2)]],
-    lastName: ['', [Validators.required, Validators.minLength(2)]],
-    phone: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
-    email: ['', [Validators.required, Validators.email]],
-    dateBirth: [null, [Validators.required]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+  readonly formModel = signal({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    dateBirth: null as Date | null,
+    password: '',
+  });
+
+  readonly form = form(this.formModel, (field) => {
+    required(field.firstName);
+    minLength(field.firstName, 2);
+    required(field.lastName);
+    minLength(field.lastName, 2);
+    required(field.phone);
+    pattern(field.phone, /^\d{8,15}$/);
+    required(field.email);
+    email(field.email);
+    required(field.dateBirth);
+    required(field.password);
+    minLength(field.password, 6);
   });
 
   readonly showPassword = signal(false);
   readonly isLoading = signal(false);
   readonly apiError = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
-  readonly emailError = signal('');
-  readonly signupPolicy = signal<SignupPolicy>({
+  readonly emailError = computed(() => {
+    const value = this.formModel().email.trim();
+    if (!value) return 'You must enter a value';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Not a valid email';
+    return '';
+  });
+  private readonly signupPolicyDefault: SignupPolicy = {
     captchaEnabled: false,
     captchaProvider: null,
     captchaSiteKey: null,
+  };
+  private readonly signupPolicyResource = resource({
+    defaultValue: this.signupPolicyDefault,
+    loader: () => this.fetchSignupPolicy(),
   });
+  readonly signupPolicy = computed(() => this.signupPolicyResource.value());
   readonly captchaToken = signal<string | null>(null);
   private redirectTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly captchaPollTimers = new Set<ReturnType<typeof setInterval>>();
 
   constructor() {
-    merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
     this.destroyRef.onDestroy(() => {
       this.clearRedirectTimer();
       this.clearCaptchaPollTimers();
     });
   }
 
-  private readonly initializePage = (() => {
-    void this.loadSignupPolicy();
-  
-    return true;
-  })();
+  private readonly applySignupPolicy = effect(() => {
+    this.signupPolicy();
+    queueMicrotask(() => void this.renderCaptcha());
+  });
 
   private readonly afterViewReady = afterNextRender(() => {
     queueMicrotask(() => void this.renderCaptcha());
-  
   });
 
   get canSubmit(): boolean {
     const policy = this.signupPolicy();
     const captchaReady = !policy.captchaEnabled || !!this.captchaToken();
-    return this.form.valid && captchaReady && !this.isLoading();
+    return this.form().valid() && captchaReady && !this.isLoading();
   }
 
   async onSubmit(event?: Event) {
@@ -125,7 +144,7 @@ export class Signup {
     this.successMessage.set(null);
 
     try {
-      const value = this.form.getRawValue();
+      const value = this.formModel();
 
       const dateBirthStr =
         value.dateBirth instanceof Date
@@ -150,7 +169,14 @@ export class Signup {
         result?.message ?? 'Account created. Check your email to verify your account.';
       this.successMessage.set(message);
       this.snack.success(message);
-      this.form.reset();
+      this.formModel.set({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        email: '',
+        dateBirth: null,
+        password: '',
+      });
       this.captchaToken.set(null);
       await this.renderCaptcha(true);
       this.scheduleRedirect();
@@ -182,33 +208,20 @@ export class Signup {
     event?.stopPropagation();
   }
 
-  updateEmailError() {
-    const control = this.form.get('email');
-    if (!control) return;
-    if (control.hasError('required')) {
-      this.emailError.set('You must enter a value');
-    } else if (control.hasError('email')) {
-      this.emailError.set('Not a valid email');
-    } else {
-      this.emailError.set('');
-    }
-  }
-
-  private async loadSignupPolicy() {
+  private async fetchSignupPolicy(): Promise<SignupPolicy> {
     try {
       const result = await this.api.get<any>('auth/signup/policy');
       const data = result?.data ?? {};
-      this.signupPolicy.set({
+      return {
         captchaEnabled: data.captchaEnabled === true,
         captchaProvider:
           data.captchaProvider === 'turnstile' || data.captchaProvider === 'hcaptcha'
             ? data.captchaProvider
             : null,
         captchaSiteKey: typeof data.captchaSiteKey === 'string' ? data.captchaSiteKey : null,
-      });
-      await this.renderCaptcha();
+      };
     } catch {
-      this.signupPolicy.set({ captchaEnabled: false, captchaProvider: null, captchaSiteKey: null });
+      return this.signupPolicyDefault;
     }
   }
 

@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,9 +29,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge, takeUntil } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
+import { firstValueFrom, takeUntil } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -70,7 +68,6 @@ type PostalCodeLookupItem = {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -119,7 +116,6 @@ export class ErpResellerPage {
   searchInput = '';
   editingReseller: Reseller | null = null;
   selectedResellerUUIDs = new Set<string>();
-  readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
   readonly paginator = viewChild(MatPaginator);
@@ -146,6 +142,7 @@ export class ErpResellerPage {
     type: 'company' as 'company' | 'person',
     name: '',
     document: '',
+    email: '',
     phone: '',
     street: '',
     number: '',
@@ -159,10 +156,6 @@ export class ErpResellerPage {
   };
 
   constructor() {
-    merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
-
     this.resetForm();
     this.destroyRef.onDestroy(() => {
       this.stopDialogViewportObserver();
@@ -253,7 +246,7 @@ export class ErpResellerPage {
     this.form.type = 'company';
     this.form.name = '';
     this.form.document = '';
-    this.emailControl.setValue('', { emitEvent: false });
+    this.form.email = '';
     this.updateEmailError();
     this.form.phone = '';
     this.form.street = '';
@@ -272,7 +265,7 @@ export class ErpResellerPage {
     this.form.type = reseller.Type;
     this.form.name = reseller.Name ?? '';
     this.form.document = reseller.Document ?? '';
-    this.emailControl.setValue(reseller.Email ?? '', { emitEvent: false });
+    this.form.email = reseller.Email ?? '';
     this.updateEmailError();
     this.form.phone = reseller.Phone ?? '';
     this.form.street = reseller.Street ?? '';
@@ -293,7 +286,8 @@ export class ErpResellerPage {
       return;
     }
 
-    if (this.emailControl.value && this.emailControl.invalid) {
+    this.updateEmailError();
+    if (this.emailError()) {
       this.showWarning('Email is invalid.');
       return;
     }
@@ -311,7 +305,7 @@ export class ErpResellerPage {
         type: this.form.type,
         name: this.form.name.trim(),
         document: this.form.document?.trim() || null,
-        email: this.emailControl.value?.trim() || null,
+        email: this.form.email?.trim() || null,
         phone: this.form.phone?.trim() || null,
         street: this.form.street?.trim() || null,
         number: this.form.number?.trim() || null,
@@ -503,12 +497,17 @@ export class ErpResellerPage {
     });
   }
 
-  private updateEmailError() {
-    if (this.emailControl.hasError('email')) {
+  updateEmailError() {
+    const value = this.form.email?.trim();
+    if (value && !this.isValidEmail(value)) {
       this.emailError.set('Not a valid email');
     } else {
       this.emailError.set('');
     }
+  }
+
+  private isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
   private showError(message: string) {

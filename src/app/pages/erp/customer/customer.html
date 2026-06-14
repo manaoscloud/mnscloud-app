@@ -212,9 +212,14 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Email</mat-label>
-                <input matInput [formControl]="emailControl" placeholder="name@example.com" />
+                <input
+                  matInput
+                  [(ngModel)]="form.email"
+                  placeholder="name@example.com"
+                  (ngModelChange)="updateEmailError()"
+                />
                 <mat-icon matSuffix>mail</mat-icon>
-                @if (emailControl.invalid && (emailControl.dirty || emailControl.touched)) {
+                @if (emailError()) {
                   <mat-error>{{ emailError() }}</mat-error>
                 }
               </mat-form-field>

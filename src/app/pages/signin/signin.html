@@ -20,7 +20,7 @@
     <h1 class="mat-headline-small title">{{ 'signin.title' | transloco }} 👋</h1>
     <p class="subtitle mat-body-medium">{{ 'signin.subtitle' | transloco }}</p>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit($event)" autocomplete="off" novalidate>
+    <form (submit)="onSubmit($event)" autocomplete="off" novalidate>
       <!-- Email -->
       <mat-form-field appearance="outline">
         <mat-label>{{ 'signin.email' | transloco }}</mat-label>
@@ -28,11 +28,11 @@
           matInput
           type="email"
           autocomplete="email"
-          formControlName="email"
+          [formField]="form.email"
           placeholder="name@example.com"
         />
         <mat-icon matSuffix>mail</mat-icon>
-        @if (form.get('email')?.invalid) {
+        @if (emailError()) {
           <mat-error>{{ emailError() }}</mat-error>
         }
       </mat-form-field>
@@ -45,7 +45,7 @@
           matInput
           [type]="showPassword() ? 'text' : 'password'"
           autocomplete="current-password"
-          formControlName="password"
+          [formField]="form.password"
         />
 
         <button
@@ -69,7 +69,7 @@
 
       <div class="signin-options">
         @if (signinPolicy().rememberMeEnabled) {
-          <mat-checkbox formControlName="rememberMe">{{
+          <mat-checkbox [formField]="form.rememberMe">{{
             'signin.rememberMe' | transloco
           }}</mat-checkbox>
         }

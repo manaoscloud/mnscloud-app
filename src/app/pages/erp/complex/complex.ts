@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,8 +29,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, merge, takeUntil } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -74,7 +73,6 @@ type PostalCodeLookupItem = {
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -124,7 +122,6 @@ export class ErpComplexPage {
   searchInput = '';
   editingComplex: ErpComplex | null = null;
   selectedComplexUUIDs = new Set<string>();
-  readonly emailControl = new FormControl('', [Validators.email]);
   readonly emailError = signal('');
 
   readonly paginator = viewChild(MatPaginator);
@@ -156,6 +153,7 @@ export class ErpComplexPage {
     name: '',
     alias: '',
     document: '',
+    email: '',
     phone: '',
     street: '',
     number: '',
@@ -169,10 +167,6 @@ export class ErpComplexPage {
   };
 
   constructor() {
-    merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
-
     this.resetForm();
     this.destroyRef.onDestroy(() => {
       this.stopDialogViewportObserver();
@@ -261,7 +255,7 @@ export class ErpComplexPage {
     this.form.name = '';
     this.form.alias = '';
     this.form.document = '';
-    this.emailControl.setValue('', { emitEvent: false });
+    this.form.email = '';
     this.updateEmailError();
     this.form.phone = '';
     this.form.street = '';
@@ -280,7 +274,7 @@ export class ErpComplexPage {
     this.form.name = complex.Name ?? '';
     this.form.alias = complex.Alias ?? '';
     this.form.document = complex.Document ?? '';
-    this.emailControl.setValue(complex.Email ?? '', { emitEvent: false });
+    this.form.email = complex.Email ?? '';
     this.updateEmailError();
     this.form.phone = complex.Phone ?? '';
     const fallbackAddress = complex.Address ?? '';
@@ -302,7 +296,8 @@ export class ErpComplexPage {
       return;
     }
 
-    if (this.emailControl.value && this.emailControl.invalid) {
+    this.updateEmailError();
+    if (this.emailError()) {
       this.showWarning('Email is invalid.');
       return;
     }
@@ -320,7 +315,7 @@ export class ErpComplexPage {
         name: this.form.name.trim(),
         alias: this.form.alias?.trim() || null,
         document: this.form.document?.trim() || null,
-        email: this.emailControl.value?.trim() || null,
+        email: this.form.email?.trim() || null,
         phone: this.form.phone?.trim() || null,
         street: this.form.street?.trim() || null,
         number: this.form.number?.trim() || null,
@@ -525,12 +520,17 @@ export class ErpComplexPage {
     return street || number || null;
   }
 
-  private updateEmailError() {
-    if (this.emailControl.hasError('email')) {
+  updateEmailError() {
+    const value = this.form.email?.trim();
+    if (value && !this.isValidEmail(value)) {
       this.emailError.set('Not a valid email');
     } else {
       this.emailError.set('');
     }
+  }
+
+  private isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
   private showError(message: string) {

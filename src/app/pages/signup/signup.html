@@ -3,29 +3,29 @@
     <h1 class="mat-headline-small title">Create Account ✨</h1>
     <p class="subtitle mat-body-medium">Join mnscloud in seconds</p>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit($event)" autocomplete="off" novalidate>
+    <form (submit)="onSubmit($event)" autocomplete="off" novalidate>
       <div class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>First Name</mat-label>
-          <input matInput type="text" formControlName="firstName" />
+          <input matInput type="text" [formField]="form.firstName" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Last Name</mat-label>
-          <input matInput type="text" formControlName="lastName" />
+          <input matInput type="text" [formField]="form.lastName" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="span-2">
           <mat-label>Phone</mat-label>
-          <app-phone-input formControlName="phone" [required]="true" />
+          <app-phone-input [formField]="form.phone" [required]="true" />
           <mat-icon matSuffix>phone</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="span-2">
           <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" placeholder="name@example.com" />
+          <input matInput type="email" [formField]="form.email" placeholder="name@example.com" />
           <mat-icon matSuffix>mail</mat-icon>
-          @if (form.get('email')?.invalid) {
+          @if (emailError()) {
             <mat-error>{{ emailError() }}</mat-error>
           }
         </mat-form-field>
@@ -45,7 +45,7 @@
       <div class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>Date of birth</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="dateBirth" appDateMask />
+          <input matInput [matDatepicker]="picker" [formField]="form.dateBirth" appDateMask />
           <mat-datepicker-toggle matSuffix [for]="picker" />
           <mat-datepicker #picker touchUi />
         </mat-form-field>
@@ -57,7 +57,7 @@
           <input
             matInput
             [type]="showPassword() ? 'text' : 'password'"
-            formControlName="password"
+            [formField]="form.password"
           />
 
           <button
