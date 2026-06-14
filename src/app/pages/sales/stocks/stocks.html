@@ -15,10 +15,10 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Name</mat-label>
-        <input matInput placeholder="Search by name" formControlName="search" />
+        <input matInput placeholder="Search by name" [formField]="filterForm.search" />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -66,7 +66,7 @@
             {{
               loading()
                 ? 'Loading stocks...'
-                : 'No stocks found for "' + (filterForm.getRawValue().search || 'all') + '"'
+                : 'No stocks found for "' + (filterFormModel().search || 'all') + '"'
             }}
           </td>
         </tr>
@@ -94,16 +94,16 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="stockForm" (ngSubmit)="saveStock()">
+            <form class="form-grid" (ngSubmit)="saveStock()">
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. Main Warehouse" formControlName="name" />
+                <input matInput placeholder="e.g. Main Warehouse" [formField]="stockForm.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Stock type</mat-label>
                 <mat-select
-                  formControlName="saleStockTypeUUID"
+                  [formField]="stockForm.saleStockTypeUUID"
                   (openedChange)="onStockTypeOpened($event)"
                 >
                   <mat-option
@@ -115,8 +115,8 @@
                     <mat-form-field appearance="outline" class="select-search-field">
                       <input
                         matInput
-                        [value]="stockTypeSearch"
-                        (input)="stockTypeSearch = $any($event.target).value"
+                        [value]="stockTypeSearch()"
+                        (input)="stockTypeSearch.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                         placeholder="Search stock type"
@@ -141,7 +141,7 @@
         color="primary"
         type="button"
         (click)="saveStock()"
-        [disabled]="stockForm.invalid || saving()"
+        [disabled]="!stockForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save

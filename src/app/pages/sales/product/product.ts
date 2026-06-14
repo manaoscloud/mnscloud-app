@@ -11,7 +11,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -82,6 +82,19 @@ type ProductFilters = {
   barcode: string;
 };
 
+type ProductFormModel = {
+  name: string;
+  description: string;
+  type: string;
+  saleUnitUUID: string;
+  saleCategoryUUID: string;
+  saleBrandUUID: string;
+  tags: string;
+  price: number;
+  status: number;
+  barcode: string;
+};
+
 const PRODUCT_TYPES: ProductTypeOption[] = [
   { value: 'COMMERCE', label: 'Commerce' },
   { value: 'SERVICE', label: 'Service' },
@@ -96,7 +109,7 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -120,7 +133,6 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
 })
 export class SaleProductPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
   amountPrefix = '';
@@ -134,41 +146,52 @@ export class SaleProductPage {
   readonly categories = signal<OptionItem[]>([]);
   readonly brands = signal<OptionItem[]>([]);
   readonly productTypes = signal<ProductTypeOption[]>(PRODUCT_TYPES);
-  unitSearch = '';
-  categorySearch = '';
-  brandSearch = '';
-  filterUnitSearch = '';
-  filterCategorySearch = '';
-  filterBrandSearch = '';
+  readonly unitSearch = signal('');
+  readonly categorySearch = signal('');
+  readonly brandSearch = signal('');
+  readonly filterUnitSearch = signal('');
+  readonly filterCategorySearch = signal('');
+  readonly filterBrandSearch = signal('');
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    saleUnitUUID: [''],
-    saleCategoryUUID: [''],
-    saleBrandUUID: [''],
-    type: [''],
-    status: [''],
-    barcode: [''],
+  readonly filterFormModel = signal<ProductFilters>({
+    search: '',
+    saleUnitUUID: '',
+    saleCategoryUUID: '',
+    saleBrandUUID: '',
+    type: '',
+    status: '',
+    barcode: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly productForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    description: ['', [Validators.required]],
-    type: ['COMMERCE', [Validators.required]],
-    saleUnitUUID: ['', [Validators.required]],
-    saleCategoryUUID: ['', [Validators.required]],
-    saleBrandUUID: ['', [Validators.required]],
-    tags: [''],
-    price: [0, [Validators.required]],
-    status: [1, [Validators.required]],
-    barcode: [''],
+  readonly productFormModel = signal<ProductFormModel>({
+    name: '',
+    description: '',
+    type: 'COMMERCE',
+    saleUnitUUID: '',
+    saleCategoryUUID: '',
+    saleBrandUUID: '',
+    tags: '',
+    price: 0,
+    status: 1,
+    barcode: '',
+  });
+  readonly productForm = createForm(this.productFormModel, (schema) => {
+    required(schema.name);
+    required(schema.description);
+    required(schema.type);
+    required(schema.saleUnitUUID);
+    required(schema.saleCategoryUUID);
+    required(schema.saleBrandUUID);
+    required(schema.price);
+    required(schema.status);
   });
 
   dataSource = new MatTableDataSource<ProductItem>([]);
   private readonly productsResource = resource({
     defaultValue: [] as ProductItem[],
     params: (): ProductFilters => {
-      const values = this.filterForm.getRawValue();
+      const values = this.filterFormModel();
       return {
         search: values.search.trim(),
         saleUnitUUID: values.saleUnitUUID,
@@ -216,7 +239,7 @@ export class SaleProductPage {
     const currencyMeta = this.getCurrencyAffixes();
     this.amountPrefix = currencyMeta.prefix;
     this.loadLookups();
-  
+
     return true;
   })();
 
@@ -276,7 +299,6 @@ export class SaleProductPage {
           return '';
       }
     };
-  
   });
 
   private async fetchProducts(filters: ProductFilters): Promise<ProductItem[]> {
@@ -299,7 +321,7 @@ export class SaleProductPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({
+    this.filterFormModel.set({
       search: '',
       saleUnitUUID: '',
       saleCategoryUUID: '',
@@ -327,7 +349,7 @@ export class SaleProductPage {
 
   async startEdit(product: ProductItem) {
     this.editing.set(product);
-    this.productForm.reset({
+    this.productFormModel.set({
       name: product.SprName,
       description: product.SprDescription,
       type: product.SprType,
@@ -346,7 +368,7 @@ export class SaleProductPage {
   cancelEdit() {
     this.editing.set(null);
     this.images.set([]);
-    this.productForm.reset({
+    this.productFormModel.set({
       name: '',
       description: '',
       type: 'COMMERCE',
@@ -362,81 +384,81 @@ export class SaleProductPage {
   }
 
   get filteredUnits() {
-    const value = this.unitSearch.trim().toLowerCase();
+    const value = this.unitSearch().trim().toLowerCase();
     if (!value) return this.units();
     return this.units().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredCategories() {
-    const value = this.categorySearch.trim().toLowerCase();
+    const value = this.categorySearch().trim().toLowerCase();
     if (!value) return this.categories();
     return this.categories().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredBrands() {
-    const value = this.brandSearch.trim().toLowerCase();
+    const value = this.brandSearch().trim().toLowerCase();
     if (!value) return this.brands();
     return this.brands().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredFilterUnits() {
-    const value = this.filterUnitSearch.trim().toLowerCase();
+    const value = this.filterUnitSearch().trim().toLowerCase();
     if (!value) return this.units();
     return this.units().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredFilterCategories() {
-    const value = this.filterCategorySearch.trim().toLowerCase();
+    const value = this.filterCategorySearch().trim().toLowerCase();
     if (!value) return this.categories();
     return this.categories().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredFilterBrands() {
-    const value = this.filterBrandSearch.trim().toLowerCase();
+    const value = this.filterBrandSearch().trim().toLowerCase();
     if (!value) return this.brands();
     return this.brands().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   onUnitOpened(opened: boolean) {
     if (opened) {
-      this.unitSearch = '';
+      this.unitSearch.set('');
     }
   }
 
   onCategoryOpened(opened: boolean) {
     if (opened) {
-      this.categorySearch = '';
+      this.categorySearch.set('');
     }
   }
 
   onBrandOpened(opened: boolean) {
     if (opened) {
-      this.brandSearch = '';
+      this.brandSearch.set('');
     }
   }
 
   onFilterUnitOpened(opened: boolean) {
     if (opened) {
-      this.filterUnitSearch = '';
+      this.filterUnitSearch.set('');
     }
   }
 
   onFilterCategoryOpened(opened: boolean) {
     if (opened) {
-      this.filterCategorySearch = '';
+      this.filterCategorySearch.set('');
     }
   }
 
   onFilterBrandOpened(opened: boolean) {
     if (opened) {
-      this.filterBrandSearch = '';
+      this.filterBrandSearch.set('');
     }
   }
 
   async saveProduct(closeAfterSave = true) {
-    if (this.productForm.invalid) return;
+    if (!this.productForm().valid()) return;
 
-    const payload = this.productForm.getRawValue();
+    const payload = this.productFormModel();
     const data = {
       name: payload.name.trim(),
       description: payload.description.trim(),
@@ -595,7 +617,6 @@ export class SaleProductPage {
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeProductDialog();
-  
   });
 
   private openProductDialog() {
@@ -624,7 +645,7 @@ export class SaleProductPage {
 
   private resetCreateForm() {
     this.images.set([]);
-    this.productForm.reset({
+    this.productFormModel.set({
       name: '',
       description: '',
       type: 'COMMERCE',

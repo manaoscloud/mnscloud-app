@@ -11,7 +11,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -53,12 +53,17 @@ type StockFilters = {
   search: string;
 };
 
+type StockFormModel = {
+  name: string;
+  saleStockTypeUUID: string;
+};
+
 @Component({
   selector: 'app-sales-stocks',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -80,7 +85,6 @@ type StockFilters = {
 })
 export class SalesStocksPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
   readonly saving = signal(false);
@@ -88,15 +92,20 @@ export class SalesStocksPage {
   readonly stocks = signal<SaleStockItem[]>([]);
   readonly stockTypes = signal<SaleStockTypeItem[]>([]);
   readonly editing = signal<SaleStockItem | null>(null);
-  stockTypeSearch = '';
+  readonly stockTypeSearch = signal('');
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
+  readonly filterFormModel = signal<StockFilters>({
+    search: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly stockForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    saleStockTypeUUID: ['', [Validators.required]],
+  readonly stockFormModel = signal<StockFormModel>({
+    name: '',
+    saleStockTypeUUID: '',
+  });
+  readonly stockForm = createForm(this.stockFormModel, (schema) => {
+    required(schema.name);
+    required(schema.saleStockTypeUUID);
   });
 
   readonly displayedColumns = ['name', 'type', 'actions'];
@@ -104,7 +113,7 @@ export class SalesStocksPage {
   private readonly stocksResource = resource({
     defaultValue: [] as SaleStockItem[],
     params: (): StockFilters => ({
-      search: this.filterForm.controls.search.value.trim(),
+      search: this.filterFormModel().search.trim(),
     }),
     loader: ({ params }) => this.fetchStocks(params),
   });
@@ -127,7 +136,7 @@ export class SalesStocksPage {
 
   private readonly initializePage = (() => {
     this.loadStockTypes();
-  
+
     return true;
   })();
 
@@ -144,7 +153,6 @@ export class SalesStocksPage {
           return '';
       }
     };
-  
   });
 
   async loadStockTypes() {
@@ -170,7 +178,7 @@ export class SalesStocksPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '' });
+    this.filterFormModel.set({ search: '' });
     this.stocksResource.reload();
   }
 
@@ -180,7 +188,7 @@ export class SalesStocksPage {
 
   startEdit(stock: SaleStockItem) {
     this.editing.set(stock);
-    this.stockForm.reset({
+    this.stockFormModel.set({
       name: stock.SskName,
       saleStockTypeUUID: stock.SaleStockTypeSstUUID ?? '',
     });
@@ -198,28 +206,29 @@ export class SalesStocksPage {
 
   cancelEdit() {
     this.editing.set(null);
-    this.stockForm.reset({ name: '', saleStockTypeUUID: '' });
+    this.stockFormModel.set({ name: '', saleStockTypeUUID: '' });
     this.closeStockDialog();
   }
 
   get filteredStockTypes() {
-    const value = this.stockTypeSearch.trim().toLowerCase();
+    const value = this.stockTypeSearch().trim().toLowerCase();
     if (!value) return this.stockTypes();
     return this.stockTypes().filter((item) => (item.SstName ?? '').toLowerCase().includes(value));
   }
 
   onStockTypeOpened(opened: boolean) {
     if (opened) {
-      this.stockTypeSearch = '';
+      this.stockTypeSearch.set('');
     }
   }
 
   async saveStock() {
-    if (this.stockForm.invalid) return;
+    if (!this.stockForm().valid()) return;
 
+    const values = this.stockFormModel();
     const payload = {
-      name: this.stockForm.getRawValue().name.trim(),
-      saleStockTypeUUID: this.stockForm.getRawValue().saleStockTypeUUID,
+      name: values.name.trim(),
+      saleStockTypeUUID: values.saleStockTypeUUID,
     };
     if (!payload.name || !payload.saleStockTypeUUID) return;
 
@@ -266,7 +275,6 @@ export class SalesStocksPage {
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeStockDialog();
-  
   });
 
   private openStockDialog() {
