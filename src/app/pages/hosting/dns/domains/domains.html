@@ -15,15 +15,18 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Domain</mat-label>
-        <input matInput placeholder="Search by domain" formControlName="name" />
+        <input matInput placeholder="Search by domain" [formField]="filterForm.name" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Customer</mat-label>
-        <mat-select formControlName="customerUUID" (openedChange)="onCustomerFilterOpened($event)">
+        <mat-select
+          [formField]="filterForm.customerUUID"
+          (openedChange)="onCustomerFilterOpened($event)"
+        >
           <mat-option value="">All</mat-option>
           <mat-option
             class="select-search-option"
@@ -49,7 +52,10 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Provider</mat-label>
-        <mat-select formControlName="providerUUID" (openedChange)="onProviderFilterOpened($event)">
+        <mat-select
+          [formField]="filterForm.providerUUID"
+          (openedChange)="onProviderFilterOpened($event)"
+        >
           <mat-option value="">All</mat-option>
           <mat-option
             class="select-search-option"
@@ -75,7 +81,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -216,16 +222,16 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="domainForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Domain</mat-label>
-                <input matInput placeholder="example.com" formControlName="name" />
+                <input matInput placeholder="example.com" [formField]="domainForm.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Customer</mat-label>
                 <mat-select
-                  formControlName="customerUUID"
+                  [formField]="domainForm.customerUUID"
                   (openedChange)="onCustomerFormOpened($event)"
                 >
                   <mat-option
@@ -255,7 +261,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
                 <mat-select
-                  formControlName="providerUUID"
+                  [formField]="domainForm.providerUUID"
                   (openedChange)="onProviderFormOpened($event)"
                 >
                   <mat-option value="">No provider</mat-option>
@@ -283,7 +289,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="domainForm.status">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -294,14 +300,14 @@
 
         <mat-tab label="Notes">
           <div class="tab-content notes-tab-content">
-            <form [formGroup]="domainForm">
+            <form>
               <mat-form-field appearance="outline" class="notes-field">
                 <mat-label>Notes</mat-label>
                 <textarea
                   matInput
                   rows="12"
                   placeholder="Optional notes"
-                  formControlName="notes"
+                  [formField]="domainForm.notes"
                 ></textarea>
               </mat-form-field>
             </form>
@@ -322,7 +328,7 @@
           color="primary"
           type="button"
           (click)="saveDomain()"
-          [disabled]="saving()"
+          [disabled]="!domainForm().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -334,7 +340,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="saving()"
+            [disabled]="!domainForm().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -348,7 +354,12 @@
         xPosition="before"
         yPosition="below"
       >
-        <button mat-menu-item type="button" (click)="saveAndNewDomain()" [disabled]="saving()">
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNewDomain()"
+          [disabled]="!domainForm().valid() || saving()"
+        >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
         </button>

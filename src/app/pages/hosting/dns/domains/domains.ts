@@ -10,7 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -70,7 +70,7 @@ type CustomerOption = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -95,7 +95,6 @@ type CustomerOption = {
 })
 export class HostingDnsDomainsPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -157,19 +156,26 @@ export class HostingDnsDomainsPage {
 
   readonly displayedColumns = ['select', 'name', 'customer', 'provider', 'status', 'actions'];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    name: [''],
-    customerUUID: [''],
-    providerUUID: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    name: '',
+    customerUUID: '',
+    providerUUID: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly domainForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    customerUUID: ['', [Validators.required]],
-    providerUUID: [''],
-    status: [1 as DomainStatus, [Validators.required]],
-    notes: [''],
+  readonly domainFormModel = signal({
+    name: '',
+    customerUUID: '',
+    providerUUID: '',
+    status: 1 as DomainStatus,
+    notes: '',
+  });
+  readonly domainForm = createForm(this.domainFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.customerUUID);
+    required(schema.status);
   });
 
   readonly filteredProviderOptions = computed(() =>
@@ -234,7 +240,7 @@ export class HostingDnsDomainsPage {
   }
 
   applyFilters() {
-    const { name, customerUUID, providerUUID, status } = this.filterForm.getRawValue();
+    const { name, customerUUID, providerUUID, status } = this.filterFormModel();
     this.appliedName.set(name);
     this.appliedCustomerUUID.set(customerUUID);
     this.appliedProviderUUID.set(providerUUID);
@@ -243,7 +249,7 @@ export class HostingDnsDomainsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ name: '', customerUUID: '', providerUUID: '', status: '' });
+    this.filterFormModel.set({ name: '', customerUUID: '', providerUUID: '', status: '' });
     this.appliedName.set('');
     this.appliedCustomerUUID.set('');
     this.appliedProviderUUID.set('');
@@ -264,7 +270,13 @@ export class HostingDnsDomainsPage {
 
   startCreate() {
     this.editing.set(null);
-    this.domainForm.reset({ name: '', customerUUID: '', providerUUID: '', status: 1, notes: '' });
+    this.domainFormModel.set({
+      name: '',
+      customerUUID: '',
+      providerUUID: '',
+      status: 1,
+      notes: '',
+    });
     this.customerFormSearch.set('');
     this.providerFormSearch.set('');
     this.openDomainDialog();
@@ -272,7 +284,7 @@ export class HostingDnsDomainsPage {
 
   startEdit(domain: HostingDnsDomain) {
     this.editing.set(domain);
-    this.domainForm.reset({
+    this.domainFormModel.set({
       name: domain.HddName ?? '',
       customerUUID: domain.CustomerCusUUID ?? '',
       providerUUID: domain.HostingDnsProviderHdpUUID ?? '',
@@ -290,13 +302,12 @@ export class HostingDnsDomainsPage {
   }
 
   async saveDomain(closeAfterSave = true) {
-    if (this.domainForm.invalid) {
-      this.domainForm.markAllAsTouched();
+    if (!this.domainForm().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const values = this.domainForm.getRawValue();
+    const values = this.domainFormModel();
     const payload = {
       name: values.name.trim(),
       customerUUID: values.customerUUID.trim(),
@@ -327,7 +338,7 @@ export class HostingDnsDomainsPage {
         this.closeDomainDialog();
         this.resetForm();
       } else {
-        this.domainForm.reset({
+        this.domainFormModel.set({
           name: '',
           customerUUID: '',
           providerUUID: '',
@@ -509,7 +520,13 @@ export class HostingDnsDomainsPage {
 
   private resetForm() {
     this.editing.set(null);
-    this.domainForm.reset({ name: '', customerUUID: '', providerUUID: '', status: 1, notes: '' });
+    this.domainFormModel.set({
+      name: '',
+      customerUUID: '',
+      providerUUID: '',
+      status: 1,
+      notes: '',
+    });
   }
 
   private reconcileDomainSelection() {
