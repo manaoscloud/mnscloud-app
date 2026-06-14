@@ -12,7 +12,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -95,6 +95,25 @@ type PabxAccountFilters = {
   search: string;
 };
 
+type PabxAccountFormModel = {
+  name: string;
+  defaultAudioCodecs: string[];
+  defaultVideoCodecs: string[];
+  serverUUID: string;
+  domainUUID: string;
+  customerUUID: string;
+  dialPlanUUID: string;
+  blacklistUUID: string;
+  recordingStorageMode: 'default' | 'filesystem' | 'storage';
+  storageAccountUUID: string;
+  mediaStorageMode: 'default' | 'filesystem' | 'storage';
+  mediaStorageAccountUUID: string;
+  mediaDeliveryMode: 'default' | 'online' | 'offline';
+  timezone: string;
+  isActive: number;
+  isDefault: number;
+};
+
 const emptyPabxAccountFilters = (): PabxAccountFilters => ({
   search: '',
 });
@@ -104,8 +123,7 @@ const emptyPabxAccountFilters = (): PabxAccountFilters => ({
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatButtonModule,
@@ -135,7 +153,6 @@ export class VoipPabxPage {
   private readonly domainApi = inject(VoipDomainService);
   private readonly customerApi = inject(ApiService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
   readonly pageTitle = computed(() => 'PABX');
@@ -145,8 +162,8 @@ export class VoipPabxPage {
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipPabxAccount | null>(null);
-  search = '';
-  searchInput = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
 
   readonly dataSource = new MatTableDataSource<VoipPabxAccount>([]);
   private readonly appliedFilters = signal<PabxAccountFilters>(emptyPabxAccountFilters());
@@ -230,23 +247,14 @@ export class VoipPabxPage {
   readonly audioCodecOptions = ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'];
   readonly videoCodecOptions = ['H264'];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    defaultAudioCodecs: [['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'] as string[]],
-    defaultVideoCodecs: [['H264'] as string[]],
-    serverUUID: ['', [Validators.required]],
-    domainUUID: ['', [Validators.required]],
-    customerUUID: ['', [Validators.required]],
-    dialPlanUUID: ['', [Validators.required]],
-    blacklistUUID: [''],
-    recordingStorageMode: ['default' as 'default' | 'filesystem' | 'storage'],
-    storageAccountUUID: [''],
-    mediaStorageMode: ['default' as 'default' | 'filesystem' | 'storage'],
-    mediaStorageAccountUUID: [''],
-    mediaDeliveryMode: ['default' as 'default' | 'online' | 'offline'],
-    timezone: [''],
-    isActive: [1],
-    isDefault: [0],
+  readonly formModel = signal<PabxAccountFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.serverUUID);
+    required(schema.domainUUID);
+    required(schema.customerUUID);
+    required(schema.dialPlanUUID);
   });
 
   readonly recordingStorageMode = signal<'default' | 'filesystem' | 'storage'>('default');
@@ -254,7 +262,7 @@ export class VoipPabxPage {
   readonly selectedStorageAccountUUID = signal('');
   readonly selectedMediaStorageAccountUUID = signal('');
   readonly recordingPathPreview = computed(() => {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const editing = this.editing();
     const selectedServerUUID = this.selectedServerUUID() || value.serverUUID;
     const engine = (
@@ -339,21 +347,19 @@ export class VoipPabxPage {
     };
 
     this.accountsResource.reload();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closePabxDialog();
-  
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
     const nextFilters = this.currentPabxAccountFilters();
-    this.search = nextFilters.search;
+    this.search.set(nextFilters.search);
     if (this.samePabxAccountFilters(nextFilters, this.appliedFilters())) {
       this.accountsResource.reload();
     } else {
@@ -362,8 +368,8 @@ export class VoipPabxPage {
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     const nextFilters = emptyPabxAccountFilters();
     if (this.samePabxAccountFilters(nextFilters, this.appliedFilters())) {
       this.accountsResource.reload();
@@ -383,7 +389,7 @@ export class VoipPabxPage {
 
   startEdit(item: VoipPabxAccount) {
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       name: item.VpaName,
       defaultAudioCodecs: this.parseCodecs(item.VpaDefaultAudioCodecs, this.audioCodecOptions),
       defaultVideoCodecs: this.parseCodecs(item.VpaDefaultVideoCodecs, this.videoCodecOptions),
@@ -415,9 +421,9 @@ export class VoipPabxPage {
   }
 
   async saveAccount(createAnother = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload = {
       name: value.name,
       defaultAudioCodecs: this.formatCodecs(value.defaultAudioCodecs),
@@ -650,7 +656,7 @@ export class VoipPabxPage {
   onRecordingStorageModeChange(value: 'default' | 'filesystem' | 'storage') {
     this.recordingStorageMode.set(value);
     if (value !== 'storage') {
-      this.form.patchValue({ storageAccountUUID: '' });
+      this.formModel.update((current) => ({ ...current, storageAccountUUID: '' }));
       this.selectedStorageAccountUUID.set('');
     }
   }
@@ -658,7 +664,7 @@ export class VoipPabxPage {
   onMediaStorageModeChange(value: 'default' | 'filesystem' | 'storage') {
     this.mediaStorageMode.set(value);
     if (value !== 'storage') {
-      this.form.patchValue({ mediaStorageAccountUUID: '' });
+      this.formModel.update((current) => ({ ...current, mediaStorageAccountUUID: '' }));
       this.selectedMediaStorageAccountUUID.set('');
     }
   }
@@ -672,7 +678,7 @@ export class VoipPabxPage {
         ?.value ??
       this.dialPlanOptions[0]?.value ??
       '';
-    this.form.reset({
+    this.formModel.set({
       name: '',
       defaultAudioCodecs: ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'],
       defaultVideoCodecs: ['H264'],
@@ -699,7 +705,7 @@ export class VoipPabxPage {
   }
 
   private applyFilter() {
-    this.dataSource.filter = this.search.trim().toLowerCase();
+    this.dataSource.filter = this.search().trim().toLowerCase();
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
@@ -721,9 +727,12 @@ export class VoipPabxPage {
       label: Number(domain.VdmStatus ?? 0) === 1 ? domain.VdmName : `${domain.VdmName} (inactive)`,
     }));
 
-    const current = this.form.getRawValue().domainUUID;
+    const current = this.formModel().domainUUID;
     if (!current || !this.domainMap.has(current)) {
-      this.form.patchValue({ domainUUID: this.domainOptions[0]?.value ?? '' });
+      this.formModel.update((value) => ({
+        ...value,
+        domainUUID: this.domainOptions[0]?.value ?? '',
+      }));
     }
   }
 
@@ -735,9 +744,12 @@ export class VoipPabxPage {
       value: server.VpsUUID,
       label: Number(server.VpsStatus ?? 0) === 1 ? server.VpsName : `${server.VpsName} (inactive)`,
     }));
-    const current = this.form.getRawValue().serverUUID;
+    const current = this.formModel().serverUUID;
     if (!current || !this.serverMap.has(current)) {
-      this.form.patchValue({ serverUUID: this.serverOptions[0]?.value ?? '' });
+      this.formModel.update((value) => ({
+        ...value,
+        serverUUID: this.serverOptions[0]?.value ?? '',
+      }));
       this.selectedServerUUID.set(this.serverOptions[0]?.value ?? '');
     } else {
       this.selectedServerUUID.set(current);
@@ -753,9 +765,12 @@ export class VoipPabxPage {
       label: customer.Name,
     }));
 
-    const current = this.form.getRawValue().customerUUID;
+    const current = this.formModel().customerUUID;
     if (!current || !this.customerMap.has(current)) {
-      this.form.patchValue({ customerUUID: this.customerOptions[0]?.value ?? '' });
+      this.formModel.update((value) => ({
+        ...value,
+        customerUUID: this.customerOptions[0]?.value ?? '',
+      }));
     }
   }
 
@@ -770,9 +785,9 @@ export class VoipPabxPage {
       label: item.VbkName,
     }));
 
-    const current = this.form.getRawValue().blacklistUUID;
+    const current = this.formModel().blacklistUUID;
     if (current && !this.blacklistMap.has(current)) {
-      this.form.patchValue({ blacklistUUID: '' });
+      this.formModel.update((value) => ({ ...value, blacklistUUID: '' }));
     }
   }
 
@@ -787,9 +802,9 @@ export class VoipPabxPage {
         label: `${item.HsaName}${item.HsaIsDefault === 1 ? ' (default)' : ''}`,
       }));
 
-    const current = this.form.getRawValue().storageAccountUUID;
+    const current = this.formModel().storageAccountUUID;
     if (current && !this.storageAccountMap.has(current)) {
-      this.form.patchValue({ storageAccountUUID: '' });
+      this.formModel.update((value) => ({ ...value, storageAccountUUID: '' }));
       this.selectedStorageAccountUUID.set('');
     }
   }
@@ -805,12 +820,13 @@ export class VoipPabxPage {
       label: `${item.name}${item.isDefault === 1 ? ' (default)' : ''}`,
     }));
 
-    const current = this.form.getRawValue().dialPlanUUID;
+    const current = this.formModel().dialPlanUUID;
     if (!current || !this.dialPlanMap.has(current)) {
       const defaultPlan = dialPlans.find((item) => item.isDefault === 1);
-      this.form.patchValue({
+      this.formModel.update((value) => ({
+        ...value,
         dialPlanUUID: defaultPlan?.uuid ?? this.dialPlanOptions[0]?.value ?? '',
-      });
+      }));
     }
   }
 
@@ -830,7 +846,28 @@ export class VoipPabxPage {
 
   private currentPabxAccountFilters(): PabxAccountFilters {
     return {
-      search: this.searchInput.trim(),
+      search: this.searchInput().trim(),
+    };
+  }
+
+  private emptyFormModel(): PabxAccountFormModel {
+    return {
+      name: '',
+      defaultAudioCodecs: ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'],
+      defaultVideoCodecs: ['H264'],
+      serverUUID: '',
+      domainUUID: '',
+      customerUUID: '',
+      dialPlanUUID: '',
+      blacklistUUID: '',
+      recordingStorageMode: 'default',
+      storageAccountUUID: '',
+      mediaStorageMode: 'default',
+      mediaStorageAccountUUID: '',
+      mediaDeliveryMode: 'default',
+      timezone: '',
+      isActive: 1,
+      isDefault: 0,
     };
   }
 

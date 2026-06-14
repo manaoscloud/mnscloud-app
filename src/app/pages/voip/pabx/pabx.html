@@ -20,8 +20,8 @@
         <mat-label>Search accounts</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput()"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Name, server, domain, codecs, status..."
         />
       </mat-form-field>
@@ -211,13 +211,13 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <form id="voipPabxForm" class="dialog-form" (ngSubmit)="saveAccount()" [formGroup]="form">
+      <form id="voipPabxForm" class="dialog-form" (ngSubmit)="saveAccount()">
         <mat-tab-group class="form-tabs">
           <mat-tab [label]="'Record' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="form.isActive">
                   @for (option of statusOptions; track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
@@ -226,7 +226,7 @@
 
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Default</mat-label>
-                <mat-select formControlName="isDefault">
+                <mat-select [formField]="form.isDefault">
                   @for (option of defaultOptions; track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
@@ -235,13 +235,13 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Account name" />
+                <input matInput [formField]="form.name" placeholder="Account name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Server</mat-label>
                 <mat-select
-                  formControlName="serverUUID"
+                  [formField]="form.serverUUID"
                   (openedChange)="onServerOpened($event)"
                   (selectionChange)="selectedServerUUID.set($event.value || '')"
                 >
@@ -272,7 +272,7 @@
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Customer</mat-label>
                 <mat-select
-                  formControlName="customerUUID"
+                  [formField]="form.customerUUID"
                   (openedChange)="onCustomerOpened($event)"
                 >
                   <mat-option
@@ -301,7 +301,7 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Domain</mat-label>
-                <mat-select formControlName="domainUUID" (openedChange)="onDomainOpened($event)">
+                <mat-select [formField]="form.domainUUID" (openedChange)="onDomainOpened($event)">
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -329,7 +329,7 @@
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Dial Plan</mat-label>
                 <mat-select
-                  formControlName="dialPlanUUID"
+                  [formField]="form.dialPlanUUID"
                   (openedChange)="onDialPlanOpened($event)"
                 >
                   <mat-option
@@ -363,7 +363,7 @@
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Inbound blacklist</mat-label>
                 <mat-select
-                  formControlName="blacklistUUID"
+                  [formField]="form.blacklistUUID"
                   (openedChange)="onBlacklistOpened($event)"
                 >
                   <mat-option value="">None</mat-option>
@@ -395,7 +395,7 @@
                 <mat-label>Timezone</mat-label>
                 <input
                   matInput
-                  formControlName="timezone"
+                  [formField]="form.timezone"
                   placeholder="Tenant timezone"
                   autocomplete="off"
                 />
@@ -407,7 +407,7 @@
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default audio codecs</mat-label>
-                <mat-select formControlName="defaultAudioCodecs" multiple>
+                <mat-select [formField]="form.defaultAudioCodecs" multiple>
                   @for (codec of audioCodecOptions; track codec) {
                     <mat-option [value]="codec">{{ codec }}</mat-option>
                   }
@@ -416,7 +416,7 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default video codecs</mat-label>
-                <mat-select formControlName="defaultVideoCodecs" multiple>
+                <mat-select [formField]="form.defaultVideoCodecs" multiple>
                   @for (codec of videoCodecOptions; track codec) {
                     <mat-option [value]="codec">{{ codec }}</mat-option>
                   }
@@ -430,7 +430,7 @@
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Recording storage</mat-label>
                 <mat-select
-                  formControlName="recordingStorageMode"
+                  [formField]="form.recordingStorageMode"
                   (selectionChange)="onRecordingStorageModeChange($event.value)"
                 >
                   @for (option of recordingStorageModeOptions; track option.value) {
@@ -443,7 +443,7 @@
                 <mat-form-field appearance="outline" class="span-3">
                   <mat-label>Storage account</mat-label>
                   <mat-select
-                    formControlName="storageAccountUUID"
+                    [formField]="form.storageAccountUUID"
                     (openedChange)="onStorageAccountOpened($event)"
                     (selectionChange)="selectedStorageAccountUUID.set($event.value || '')"
                   >
@@ -485,7 +485,7 @@
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Media file storage</mat-label>
                 <mat-select
-                  formControlName="mediaStorageMode"
+                  [formField]="form.mediaStorageMode"
                   (selectionChange)="onMediaStorageModeChange($event.value)"
                 >
                   @for (option of recordingStorageModeOptions; track option.value) {
@@ -498,7 +498,7 @@
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Media storage account</mat-label>
                   <mat-select
-                    formControlName="mediaStorageAccountUUID"
+                    [formField]="form.mediaStorageAccountUUID"
                     (openedChange)="onStorageAccountOpened($event)"
                     (selectionChange)="selectedMediaStorageAccountUUID.set($event.value || '')"
                   >
@@ -530,7 +530,7 @@
 
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Media delivery</mat-label>
-                <mat-select formControlName="mediaDeliveryMode">
+                <mat-select [formField]="form.mediaDeliveryMode">
                   @for (option of mediaDeliveryModeOptions; track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
@@ -550,7 +550,7 @@
           color="primary"
           type="submit"
           form="voipPabxForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -562,7 +562,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -580,7 +580,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewAccount()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
