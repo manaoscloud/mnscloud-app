@@ -11,7 +11,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -45,8 +45,7 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -72,7 +71,6 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
 export class VoipPabxBlacklistListPage {
   private readonly api = inject(VoipBlacklistUiService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -92,10 +90,14 @@ export class VoipPabxBlacklistListPage {
   readonly dataSource = new MatTableDataSource<VoipBlacklistItem>([]);
   readonly displayedColumns = ['select', 'name', 'description', 'numbers', 'status', 'actions'];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    description: [''],
-    enabled: [1],
+  readonly formModel = signal({
+    name: '',
+    description: '',
+    enabled: 1,
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -119,12 +121,10 @@ export class VoipPabxBlacklistListPage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.itemsResource.reload();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   refreshList() {
@@ -158,13 +158,13 @@ export class VoipPabxBlacklistListPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({ name: '', description: '', enabled: 1 });
+    this.resetForm();
     this.openDialog();
   }
 
   startEdit(item: VoipBlacklistItem) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       name: item.VbkName,
       description: item.VbkDescription ?? '',
       enabled: item.VbkEnabled === 1 ? 1 : 0,
@@ -173,8 +173,8 @@ export class VoipPabxBlacklistListPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
-    const value = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const value = this.formModel();
     const payload = {
       name: value.name.trim(),
       description: value.description.trim() || '',
@@ -191,7 +191,7 @@ export class VoipPabxBlacklistListPage {
       );
       this.itemsResource.reload();
       if (saveAndNew && createMode) {
-        this.form.reset({ name: '', description: '', enabled: 1 });
+        this.resetForm();
         return;
       }
       this.cancelForm();
@@ -209,7 +209,11 @@ export class VoipPabxBlacklistListPage {
   cancelForm() {
     this.closeDialog();
     this.editing.set(null);
-    this.form.reset({ name: '', description: '', enabled: 1 });
+    this.resetForm();
+  }
+
+  private resetForm() {
+    this.formModel.set({ name: '', description: '', enabled: 1 });
   }
 
   async deleteItem(item: VoipBlacklistItem) {

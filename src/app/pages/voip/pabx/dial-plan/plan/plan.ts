@@ -11,7 +11,13 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormField,
+  form as createForm,
+  minLength,
+  pattern,
+  required,
+} from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -45,8 +51,7 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -72,7 +77,6 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
 export class VoipPabxDialPlanPlanPage {
   private readonly api = inject(VoipPabxDialPlanUiService);
   private readonly snack = inject(SnackbarService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly listLimit = 5000;
 
@@ -92,12 +96,18 @@ export class VoipPabxDialPlanPlanPage {
   readonly dataSource = new MatTableDataSource<VoipPabxDialPlanItem>([]);
   readonly displayedColumns = ['select', 'name', 'code', 'default', 'status', 'actions'];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9_-]{1,39}$/)]],
-    description: [''],
-    isDefault: [0],
-    enabled: [1],
+  readonly formModel = signal({
+    name: '',
+    code: '',
+    description: '',
+    isDefault: 0,
+    enabled: 1,
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.code);
+    pattern(schema.code, /^[A-Za-z0-9][A-Za-z0-9_-]{1,39}$/);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -121,12 +131,10 @@ export class VoipPabxDialPlanPlanPage {
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.itemsResource.reload();
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   refreshList() {
@@ -160,13 +168,13 @@ export class VoipPabxDialPlanPlanPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({ name: '', code: '', description: '', isDefault: 0, enabled: 1 });
+    this.resetForm();
     this.openDialog();
   }
 
   startEdit(item: VoipPabxDialPlanItem) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       name: item.name,
       code: item.code,
       description: item.description ?? '',
@@ -177,8 +185,8 @@ export class VoipPabxDialPlanPlanPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
-    const value = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const value = this.formModel();
     const payload = {
       name: value.name.trim(),
       code: value.code.trim().toUpperCase(),
@@ -197,7 +205,7 @@ export class VoipPabxDialPlanPlanPage {
       );
       this.itemsResource.reload();
       if (saveAndNew && createMode) {
-        this.form.reset({ name: '', code: '', description: '', isDefault: 0, enabled: 1 });
+        this.resetForm();
         return;
       }
       this.cancelForm();
@@ -215,7 +223,11 @@ export class VoipPabxDialPlanPlanPage {
   cancelForm() {
     this.closeDialog();
     this.editing.set(null);
-    this.form.reset({ name: '', code: '', description: '', isDefault: 0, enabled: 1 });
+    this.resetForm();
+  }
+
+  private resetForm() {
+    this.formModel.set({ name: '', code: '', description: '', isDefault: 0, enabled: 1 });
   }
 
   async deleteItem(item: VoipPabxDialPlanItem) {

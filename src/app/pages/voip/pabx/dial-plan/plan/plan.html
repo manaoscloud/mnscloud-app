@@ -17,7 +17,11 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-4">
         <mat-label>Search</mat-label>
-        <input matInput [ngModel]="searchInput()" (ngModelChange)="searchInput.set($event)" />
+        <input
+          matInput
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
       </mat-form-field>
 
       <div class="filter-actions">
@@ -150,36 +154,36 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="enabled">
+              <mat-select [formField]="form.enabled">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Default</mat-label>
-              <mat-select formControlName="isDefault">
+              <mat-select [formField]="form.isDefault">
                 <mat-option [value]="1">Yes</mat-option>
                 <mat-option [value]="0">No</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Code</mat-label>
-              <input matInput formControlName="code" />
+              <input matInput [formField]="form.code" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Name</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput [formField]="form.name" />
             </mat-form-field>
           </form>
         </mat-tab>
         <mat-tab label="Notes">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Description</mat-label>
-              <textarea matInput formControlName="description" rows="2"></textarea>
+              <textarea matInput [formField]="form.description" rows="2"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -204,7 +208,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
