@@ -235,7 +235,7 @@
           <div class="tab-content">
             @if (!advancedJsonMode()) {
               <form class="provider-fields-grid">
-                @for (field of configFieldsForSelectedProvider(); track field.controlName) {
+                @for (field of selectedProviderConfigFields(); track field.controlName) {
                   <mat-form-field appearance="outline" [class.span-4]="field.kind === 'textarea'">
                     <mat-label>{{ field.label }}</mat-label>
                     @if (field.kind === 'textarea') {
@@ -291,7 +291,7 @@
           <div class="tab-content">
             @if (!advancedJsonMode()) {
               <form class="provider-fields-grid">
-                @for (field of credentialFieldsForSelectedProvider(); track field.controlName) {
+                @for (field of selectedProviderCredentialFields(); track field.controlName) {
                   <mat-form-field appearance="outline" [class.span-4]="field.kind === 'textarea'">
                     <mat-label>{{ field.label }}</mat-label>
                     @if (field.kind === 'textarea') {

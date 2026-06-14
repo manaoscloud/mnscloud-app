@@ -6,6 +6,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
   afterNextRender,
   DestroyRef,
@@ -302,6 +303,16 @@ export class FinancialPaymentGatewayPage {
     { value: 'efi', label: 'Efi' },
     { value: 'inter_business', label: 'Inter Empresas' },
   ];
+  readonly selectedProviderConfigFields = computed(() =>
+    PROVIDER_FIELD_DEFINITIONS[this.selectedProvider()]
+      .filter((field) => field.section === 'config')
+      .map((field) => ({ ...field, controlName: toProviderControlName(field) })),
+  );
+  readonly selectedProviderCredentialFields = computed(() =>
+    PROVIDER_FIELD_DEFINITIONS[this.selectedProvider()]
+      .filter((field) => field.section === 'credentials')
+      .map((field) => ({ ...field, controlName: toProviderControlName(field) })),
+  );
 
   dataSource = new MatTableDataSource<PaymentGatewayAccount>([]);
   displayedColumns: string[] = [
@@ -320,7 +331,7 @@ export class FinancialPaymentGatewayPage {
     const normalized = this.paymentGatewaysResource.value();
     this.paymentGateways.set(normalized);
     this.dataSource.data = [...normalized];
-    this.reconcileSelection();
+    this.reconcileSelection(normalized);
     this.applyFilter();
   });
 
@@ -414,20 +425,6 @@ export class FinancialPaymentGatewayPage {
 
   selectedProvider(): PaymentGatewayProvider {
     return this.gatewayFormModel().provider;
-  }
-
-  configFieldsForSelectedProvider(): ProviderFieldView[] {
-    const provider = this.selectedProvider();
-    return PROVIDER_FIELD_DEFINITIONS[provider]
-      .filter((field) => field.section === 'config')
-      .map((field) => ({ ...field, controlName: toProviderControlName(field) }));
-  }
-
-  credentialFieldsForSelectedProvider(): ProviderFieldView[] {
-    const provider = this.selectedProvider();
-    return PROVIDER_FIELD_DEFINITIONS[provider]
-      .filter((field) => field.section === 'credentials')
-      .map((field) => ({ ...field, controlName: toProviderControlName(field) }));
   }
 
   toggleAdvancedJsonMode() {
@@ -623,9 +620,11 @@ export class FinancialPaymentGatewayPage {
     this.selectedGatewayUUIDs.set(next);
   }
 
-  private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.EfgUUID));
-    const next = new Set([...this.selectedGatewayUUIDs()].filter((uuid) => valid.has(uuid)));
+  private reconcileSelection(rows: PaymentGatewayAccount[]) {
+    const valid = new Set(rows.map((row) => row.EfgUUID));
+    const current = untracked(() => this.selectedGatewayUUIDs());
+    const next = new Set([...current].filter((uuid) => valid.has(uuid)));
+    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
     this.selectedGatewayUUIDs.set(next);
   }
 
