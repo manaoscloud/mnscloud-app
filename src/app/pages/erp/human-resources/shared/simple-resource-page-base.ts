@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
+  DestroyRef,
   Directive,
-  OnDestroy,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -82,11 +82,12 @@ type SimpleResourceConfig = {
 };
 
 @Directive()
-export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy {
+export abstract class SimpleResourcePageBase {
   protected readonly api = inject(ApiService);
   protected readonly fb = inject(FormBuilder);
   protected readonly dialog = inject(MatDialog);
   protected readonly snack = inject(SnackbarService);
+  protected readonly destroyRef = inject(DestroyRef);
   protected readonly listLimit = 200;
 
   readonly saving = signal(false);
@@ -119,6 +120,25 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
   private dialogBinding: CrudDialogBinding | null = null;
   private lastLoadError = '';
   protected abstract readonly config: SimpleResourceConfig;
+
+  private readonly closeDialogOnDestroy = this.destroyRef.onDestroy(() => this.closeDialog());
+
+  private readonly setupTable = afterNextRender(() => {
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
+    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
+      switch (sortHeaderId) {
+        case 'name':
+          return data.Name ?? '';
+        case 'description':
+          return data.Description ?? '';
+        case 'status':
+          return this.isActive(data) ? 'ACTIVE' : 'INACTIVE';
+        default:
+          return '';
+      }
+    };
+  });
 
   private readonly syncItems = effect(() => {
     this.dataSource.data = this.itemsResource.value();
@@ -157,27 +177,6 @@ export abstract class SimpleResourcePageBase implements AfterViewInit, OnDestroy
 
   get selectedCount() {
     return this.selectedUUIDs().size;
-  }
-
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'description':
-          return data.Description ?? '';
-        case 'status':
-          return this.isActive(data) ? 'ACTIVE' : 'INACTIVE';
-        default:
-          return '';
-      }
-    };
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
   }
 
   applySearchFilters() {

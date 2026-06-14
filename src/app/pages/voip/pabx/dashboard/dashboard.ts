@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   computed,
   effect,
@@ -103,7 +103,7 @@ const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipPabxDashboardPage implements AfterViewInit {
+export class VoipPabxDashboardPage {
   private readonly api = inject(VoipPabxDashboardService);
   private readonly pabxApi = inject(VoipPabxService);
   private readonly serverApi = inject(VoipPabxServerService);
@@ -233,9 +233,9 @@ export class VoipPabxDashboardPage implements AfterViewInit {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.bindTables();
-  }
+  });
 
   refreshList() {
     this.dashboardResource.reload();

@@ -1,6 +1,6 @@
 import { NgClass, DatePipe } from '@angular/common';
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   computed,
   effect,
@@ -116,7 +116,7 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MonitoringDashboardPage implements AfterViewInit {
+export class MonitoringDashboardPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
@@ -213,12 +213,12 @@ export class MonitoringDashboardPage implements AfterViewInit {
     ];
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.activityDataSource.sortingDataAccessor = (row, column) =>
       this.activitySortValue(row, column);
     this.activityDataSource.sort = this.activitySort() ?? null;
     this.activityDataSource.paginator = this.activityPaginator() ?? null;
-  }
+  });
 
   refreshList() {
     this.dashboardResource.reload();

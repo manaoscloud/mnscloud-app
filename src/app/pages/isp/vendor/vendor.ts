@@ -1,9 +1,8 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
-  OnDestroy,
   TemplateRef,
+  afterNextRender,
   effect,
   inject,
   resource,
@@ -68,7 +67,7 @@ type SupplierOption = {
   styleUrls: ['./vendor.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IspVendorPage implements AfterViewInit, OnDestroy {
+export class IspVendorPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
@@ -119,7 +118,7 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
@@ -138,12 +137,7 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
     };
 
     this.loadSuppliers();
-  }
-
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeVendorDialog();
-  }
+  });
 
   constructor() {
     merge(
@@ -153,6 +147,11 @@ export class IspVendorPage implements AfterViewInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateSupportEmailError());
     this.updateSupportEmailError();
+
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeVendorDialog();
+    });
   }
 
   onSearchChange(value: string) {

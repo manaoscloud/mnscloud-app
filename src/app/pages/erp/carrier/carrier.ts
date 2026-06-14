@@ -1,11 +1,9 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
+  afterNextRender,
   effect,
   ElementRef,
-  OnDestroy,
-  OnInit,
   resource,
   TemplateRef,
   inject,
@@ -96,7 +94,7 @@ type PostalCodeLookupItem = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./carrier.scss'],
 })
-export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
+export class ErpCarrierPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -164,18 +162,15 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
-  }
 
-  ngOnInit() {
     this.resetForm();
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeCarrierDialog();
+    });
   }
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeCarrierDialog();
-  }
-
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -201,7 +196,7 @@ export class ErpCarrierPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

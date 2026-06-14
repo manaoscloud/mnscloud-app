@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
+  DestroyRef,
+  afterNextRender,
   effect,
-  OnDestroy,
   resource,
   TemplateRef,
   inject,
@@ -67,10 +67,11 @@ type CategoryFilters = {
   styleUrls: ['./category.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SaleCategoryPage implements AfterViewInit, OnDestroy {
+export class SaleCategoryPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -111,8 +112,12 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
+  });
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.closeCategoryDialog());
   }
 
   private async fetchCategories(filters: CategoryFilters) {
@@ -204,10 +209,6 @@ export class SaleCategoryPage implements AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to delete category.'));
     }
-  }
-
-  ngOnDestroy() {
-    this.closeCategoryDialog();
   }
 
   private openCategoryDialog() {

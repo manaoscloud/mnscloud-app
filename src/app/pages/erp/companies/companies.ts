@@ -1,10 +1,8 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
+  afterNextRender,
   effect,
-  OnDestroy,
-  OnInit,
   resource,
   TemplateRef,
   inject,
@@ -90,7 +88,7 @@ type Company = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./companies.scss'],
 })
-export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
+export class ErpCompaniesPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -170,18 +168,15 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
-  }
 
-  ngOnInit() {
     this.resetForm();
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeCompanyDialog();
+    });
   }
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeCompanyDialog();
-  }
-
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -207,7 +202,7 @@ export class ErpCompaniesPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   computed,
   effect,
@@ -83,7 +83,7 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipWebRtcDashboardPage implements AfterViewInit {
+export class VoipWebRtcDashboardPage {
   private readonly api = inject(VoipWebRtcDashboardService);
   private readonly webrtcApi = inject(VoipWebRtcService);
   private readonly route = inject(ActivatedRoute);
@@ -207,10 +207,10 @@ export class VoipWebRtcDashboardPage implements AfterViewInit {
     this.snack.error(this.errorMessage(error, 'Failed to load WebRTC dashboard.'));
   });
 
-  async ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.bindTables();
-    await this.loadOptions();
-  }
+    void this.loadOptions();
+  });
 
   refreshList() {
     this.dashboardResource.reload();

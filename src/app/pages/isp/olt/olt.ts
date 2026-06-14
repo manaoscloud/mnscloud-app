@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   effect,
   inject,
   resource,
@@ -88,10 +88,11 @@ type IspOltItem = {
   styleUrls: ['./olt.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IspOltPage implements AfterViewInit, OnDestroy {
+export class IspOltPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -140,7 +141,7 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
@@ -160,11 +161,13 @@ export class IspOltPage implements AfterViewInit, OnDestroy {
     this.loadPops();
     this.loadVendors();
     this.loadVendorModels();
-  }
+  });
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeOltDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeOltDialog();
+    });
   }
 
   get filteredPopOptions() {

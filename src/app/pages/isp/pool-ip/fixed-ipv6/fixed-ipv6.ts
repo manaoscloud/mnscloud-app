@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   effect,
   inject,
   resource,
@@ -66,10 +66,11 @@ type FixedIpv6Item = {
   styleUrls: ['./fixed-ipv6.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {
+export class IspFixedIpv6Page {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly fixedIpv6Resource = resource({
     defaultValue: [] as FixedIpv6Item[],
@@ -112,7 +113,7 @@ export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {
     );
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
@@ -122,11 +123,13 @@ export class IspFixedIpv6Page implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  });
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeDialog();
+    });
   }
 
   onSearchChange(value: string) {

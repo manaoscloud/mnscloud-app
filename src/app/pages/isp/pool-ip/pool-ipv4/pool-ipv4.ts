@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -73,10 +73,11 @@ type PoolIpv4NetworkItem = {
   styleUrls: ['./pool-ipv4.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
+export class IspPoolIpv4Page {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly mutating = signal(false);
   private readonly poolsResource = resource({
@@ -154,7 +155,7 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.poolDataSource.paginator = this.paginator() ?? null;
     this.poolDataSource.sort = this.poolSort() ?? null;
     this.poolDataSource.filterPredicate = (data, filter) => {
@@ -164,12 +165,14 @@ export class IspPoolIpv4Page implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  });
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closePoolDialog();
-    this.closeNetworkDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closePoolDialog();
+      this.closeNetworkDialog();
+    });
   }
 
   onSearchChange(value: string) {

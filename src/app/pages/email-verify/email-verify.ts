@@ -1,7 +1,7 @@
 import {
+  afterNextRender,
   Component,
-  OnDestroy,
-  OnInit,
+  DestroyRef,
   inject,
   signal,
   ChangeDetectionStrategy,
@@ -25,10 +25,11 @@ type VerifyState = 'loading' | 'success' | 'error';
   imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmailVerifyPage implements OnInit, OnDestroy {
+export class EmailVerifyPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly state = signal<VerifyState>('loading');
   readonly message = signal('Validating your email address.');
@@ -36,12 +37,9 @@ export class EmailVerifyPage implements OnInit, OnDestroy {
 
   private redirectTimer: ReturnType<typeof setInterval> | null = null;
 
-  ngOnInit() {
-    void this.verify();
-  }
-
-  ngOnDestroy() {
-    this.clearRedirectTimer();
+  constructor() {
+    afterNextRender(() => void this.verify());
+    this.destroyRef.onDestroy(() => this.clearRedirectTimer());
   }
 
   async verify() {

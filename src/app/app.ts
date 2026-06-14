@@ -1,6 +1,6 @@
 import {
+  afterNextRender,
   Component,
-  AfterViewInit,
   ChangeDetectionStrategy,
   DestroyRef,
   inject,
@@ -43,7 +43,7 @@ import { RouteLoader } from './shared/route-loader/route-loader';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App implements AfterViewInit {
+export class App {
   private router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private hideLoaderTimer: ReturnType<typeof setTimeout> | null = null;
@@ -52,12 +52,9 @@ export class App implements AfterViewInit {
 
   constructor() {
     this.destroyRef.onDestroy(() => this.clearLoaderHideTimer());
-  }
 
-  ngAfterViewInit() {
-    this.router.events
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((event) => {
+    afterNextRender(() => {
+      this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
         if (event instanceof NavigationStart) {
           this.loader()?.show?.();
         }
@@ -70,6 +67,7 @@ export class App implements AfterViewInit {
           this.scheduleLoaderHide();
         }
       });
+    });
   }
 
   private scheduleLoaderHide() {

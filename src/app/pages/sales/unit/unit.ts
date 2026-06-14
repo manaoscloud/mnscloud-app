@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
+  DestroyRef,
+  afterNextRender,
   effect,
-  OnDestroy,
   resource,
   TemplateRef,
   inject,
@@ -69,10 +69,11 @@ type UnitFilters = {
   styleUrls: ['./unit.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SaleUnitPage implements AfterViewInit, OnDestroy {
+export class SaleUnitPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -116,8 +117,12 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
+  });
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.closeUnitDialog());
   }
 
   private async fetchUnits(filters: UnitFilters) {
@@ -213,10 +218,6 @@ export class SaleUnitPage implements AfterViewInit, OnDestroy {
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to delete unit.'));
     }
-  }
-
-  ngOnDestroy() {
-    this.closeUnitDialog();
   }
 
   private openUnitDialog() {

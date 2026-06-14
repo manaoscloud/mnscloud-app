@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   effect,
   inject,
   resource,
@@ -76,10 +76,11 @@ type FixedIpv4Option = {
   styleUrls: ['./pppoe-client.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PppoeClientPage implements AfterViewInit, OnDestroy {
+export class PppoeClientPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -122,7 +123,7 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
@@ -134,11 +135,13 @@ export class PppoeClientPage implements AfterViewInit, OnDestroy {
     };
 
     void this.loadFixedIpv4Options();
-  }
+  });
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closePppoeClientDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closePppoeClientDialog();
+    });
   }
 
   onSearchChange(value: string) {

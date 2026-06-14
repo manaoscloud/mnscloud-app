@@ -1,5 +1,5 @@
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   effect,
   resource,
@@ -50,7 +50,7 @@ type Lead = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./leads.scss'],
 })
-export class CrmLeadsPage implements AfterViewInit {
+export class CrmLeadsPage {
   leads: Lead[] = [
     { name: 'Acme Corp', owner: 'John Doe', stage: 'New', value: '$5,000' },
     { name: 'Globex Ltd', owner: 'Jane Smith', stage: 'Contacted', value: '$12,500' },
@@ -82,7 +82,7 @@ export class CrmLeadsPage implements AfterViewInit {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -106,7 +106,7 @@ export class CrmLeadsPage implements AfterViewInit {
         String(field).toLowerCase().includes(value),
       );
     };
-  }
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

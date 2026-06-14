@@ -1,7 +1,7 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  afterNextRender,
   effect,
   input,
   output,
@@ -34,7 +34,7 @@ import { AccountAction, GovernanceUser } from '../../user-governance.models';
   styleUrls: ['./user-governance-table.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserGovernanceTableComponent implements AfterViewInit {
+export class UserGovernanceTableComponent {
   readonly users = input<GovernanceUser[]>([]);
   readonly loading = input(false);
   readonly selectedUserUUID = input<string | null>(null);
@@ -62,11 +62,11 @@ export class UserGovernanceTableComponent implements AfterViewInit {
     this.source.data = this.users();
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.source.paginator = this.paginator() ?? null;
     this.source.sort = this.sort() ?? null;
     this.source.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-  }
+  });
 
   openAction(user: GovernanceUser, action: AccountAction) {
     this.governanceAction.emit({ user, action });

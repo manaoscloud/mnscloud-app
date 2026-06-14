@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { afterNextRender, Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TenantsService } from '../../tenants.service';
@@ -60,6 +60,10 @@ export class InviteAcceptPage {
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
+  constructor() {
+    afterNextRender(() => void this.initializeInvite());
+  }
+
   get canSubmit(): boolean {
     return this.form.valid && !this.submitting();
   }
@@ -68,7 +72,7 @@ export class InviteAcceptPage {
     this.showPassword.set(!this.showPassword());
   }
 
-  async ngOnInit() {
+  private async initializeInvite() {
     this.token = this.route.snapshot.queryParamMap.get('token');
 
     if (!this.token) {

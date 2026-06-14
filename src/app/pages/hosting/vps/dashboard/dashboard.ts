@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   computed,
   effect,
@@ -105,7 +105,7 @@ const EMPTY_VPS_DASHBOARD: VpsDashboardSnapshot = {
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingVpsDashboardPage implements AfterViewInit {
+export class HostingVpsDashboardPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
@@ -253,7 +253,7 @@ export class HostingVpsDashboardPage implements AfterViewInit {
     },
   ]);
 
-  ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.statusDataSource.sortingDataAccessor = (row, column) => this.statusSortValue(row, column);
     this.providerDataSource.sortingDataAccessor = (row, column) =>
       this.providerSortValue(row, column);
@@ -265,7 +265,7 @@ export class HostingVpsDashboardPage implements AfterViewInit {
     this.providerDataSource.paginator = this.providerPaginator() ?? null;
     this.planDataSource.sort = this.planSort() ?? null;
     this.planDataSource.paginator = this.planPaginator() ?? null;
-  }
+  });
 
   refreshList() {
     this.dashboardResource.reload();

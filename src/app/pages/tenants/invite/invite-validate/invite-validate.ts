@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { afterNextRender, Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TenantsService } from '../../tenants.service';
@@ -24,7 +24,11 @@ export class InviteValidatePage {
   error = signal<string | null>(null);
   invite = signal<InviteValidateData | null>(null);
 
-  async ngOnInit() {
+  constructor() {
+    afterNextRender(() => void this.validateInvite());
+  }
+
+  private async validateInvite() {
     const token = this.route.snapshot.queryParamMap.get('token');
 
     if (!token) {

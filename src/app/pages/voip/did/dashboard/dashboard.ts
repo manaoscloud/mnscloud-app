@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   computed,
   effect,
@@ -97,7 +97,7 @@ const EMPTY_DID_DASHBOARD: DidDashboardSnapshot = {
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VoipDidDashboardPage implements AfterViewInit {
+export class VoipDidDashboardPage {
   private readonly didApi = inject(VoipDidService);
   private readonly operatorApi = inject(VoipDidOperatorService);
   private readonly externalApi = inject(VoipDidExternalService);
@@ -251,7 +251,7 @@ export class VoipDidDashboardPage implements AfterViewInit {
     },
   ]);
 
-  ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.operatorDataSource.sortingDataAccessor = (row, column) =>
       this.operatorSortValue(row, column);
     this.statusDataSource.sortingDataAccessor = (row, column) => this.statusSortValue(row, column);
@@ -264,7 +264,7 @@ export class VoipDidDashboardPage implements AfterViewInit {
     this.statusDataSource.paginator = this.statusPaginator() ?? null;
     this.externalDataSource.sort = this.externalSort() ?? null;
     this.externalDataSource.paginator = this.externalPaginator() ?? null;
-  }
+  });
 
   refreshList() {
     this.dashboardResource.reload();

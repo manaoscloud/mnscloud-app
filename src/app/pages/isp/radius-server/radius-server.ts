@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -76,11 +76,12 @@ type IspRadiusServerItem = {
   styleUrls: ['./radius-server.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
+export class IspRadiusServerPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
@@ -140,7 +141,7 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
@@ -150,11 +151,13 @@ export class IspRadiusServerPage implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  });
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeRadiusServerDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeRadiusServerDialog();
+    });
   }
 
   onSearchChange(value: string) {

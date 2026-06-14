@@ -1,5 +1,5 @@
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   effect,
   resource,
@@ -49,7 +49,7 @@ type Opportunity = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./opportunities.scss'],
 })
-export class CrmOpportunitiesPage implements AfterViewInit {
+export class CrmOpportunitiesPage {
   dataSource = new MatTableDataSource<Opportunity>([]);
   private readonly opportunitiesResource = resource({
     defaultValue: [] as Opportunity[],
@@ -82,7 +82,7 @@ export class CrmOpportunitiesPage implements AfterViewInit {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -106,7 +106,7 @@ export class CrmOpportunitiesPage implements AfterViewInit {
         String(field).toLowerCase().includes(value),
       );
     };
-  }
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

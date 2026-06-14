@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
+  DestroyRef,
+  afterNextRender,
   effect,
-  OnDestroy,
   resource,
   TemplateRef,
   inject,
@@ -67,10 +67,11 @@ type BrandFilters = {
   styleUrls: ['./brand.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SaleBrandPage implements AfterViewInit, OnDestroy {
+export class SaleBrandPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -111,8 +112,12 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
+  });
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.closeBrandDialog());
   }
 
   private async fetchBrands(filters: BrandFilters) {
@@ -183,10 +188,6 @@ export class SaleBrandPage implements AfterViewInit, OnDestroy {
     } finally {
       this.saving.set(false);
     }
-  }
-
-  ngOnDestroy() {
-    this.closeBrandDialog();
   }
 
   private openBrandDialog() {

@@ -1,11 +1,9 @@
 import {
-  AfterViewInit,
   Component,
   DestroyRef,
+  afterNextRender,
   ElementRef,
   effect,
-  OnDestroy,
-  OnInit,
   resource,
   TemplateRef,
   inject,
@@ -100,7 +98,7 @@ type PostalCodeLookupItem = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./complex.scss'],
 })
-export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
+export class ErpComplexPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
@@ -174,18 +172,15 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
     merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateEmailError());
-  }
 
-  ngOnInit() {
     this.resetForm();
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeComplexDialog();
+    });
   }
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeComplexDialog();
-  }
-
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -209,7 +204,7 @@ export class ErpComplexPage implements OnInit, AfterViewInit, OnDestroy {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  }
+  });
 
   onSearchChange(value: string) {
     this.searchInput = value;

@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import {
-  AfterViewInit,
+  afterNextRender,
   Component,
   computed,
   effect,
@@ -129,7 +129,7 @@ const EMPTY_SMTP_DASHBOARD: SmtpDashboardSnapshot = {
   styleUrls: ['./dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingSmtpDashboardPage implements AfterViewInit {
+export class HostingSmtpDashboardPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
@@ -275,7 +275,7 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
     },
   ]);
 
-  ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.providerDataSource.sortingDataAccessor = (row, column) =>
       this.providerSortValue(row, column);
     this.accountDataSource.sortingDataAccessor = (row, column) =>
@@ -288,7 +288,7 @@ export class HostingSmtpDashboardPage implements AfterViewInit {
     this.accountDataSource.paginator = this.accountPaginator() ?? null;
     this.routeDataSource.sort = this.routeSort() ?? null;
     this.routeDataSource.paginator = this.routePaginator() ?? null;
-  }
+  });
 
   refreshList() {
     this.dashboardResource.reload();

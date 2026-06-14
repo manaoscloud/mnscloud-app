@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   effect,
   inject,
   resource,
@@ -62,10 +62,11 @@ type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
   styleUrls: ['./vendor-model.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IspVendorModelPage implements AfterViewInit, OnDestroy {
+export class IspVendorModelPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -117,7 +118,7 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (data, filter) => {
@@ -129,11 +130,13 @@ export class IspVendorModelPage implements AfterViewInit, OnDestroy {
     };
 
     this.loadVendors();
-  }
+  });
 
-  ngOnDestroy() {
-    this.stopDialogViewportObserver();
-    this.closeVendorModelDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopDialogViewportObserver();
+      this.closeVendorModelDialog();
+    });
   }
 
   get filteredVendorOptions() {
