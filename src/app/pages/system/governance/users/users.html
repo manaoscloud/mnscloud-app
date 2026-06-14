@@ -22,11 +22,11 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input matInput [(ngModel)]="searchInput" />
+        <input matInput [formField]="filterForm.search" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [(ngModel)]="statusFilter">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
           <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
@@ -69,21 +69,21 @@
     <h2 mat-dialog-title>{{ actionTitleKey() | transloco }}</h2>
     <mat-dialog-content class="dialog-content">
       <p>{{ actionHelpKey() | transloco }}</p>
-      <form [formGroup]="actionForm" class="dialog-form">
+      <form class="dialog-form">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Reason' | transloco }}</mat-label>
-          <textarea matInput rows="3" formControlName="reason"></textarea>
+          <textarea matInput rows="3" [formField]="actionForm.reason"></textarea>
         </mat-form-field>
         @if (dialogAction() !== 'release-hold') {
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Legal basis' | transloco }}</mat-label>
-            <input matInput formControlName="legalBasis" />
+            <input matInput [formField]="actionForm.legalBasis" />
           </mat-form-field>
         }
         @if (dialogAction() === 'legal-hold') {
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Reference' | transloco }}</mat-label>
-            <input matInput formControlName="reference" />
+            <input matInput [formField]="actionForm.reference" />
           </mat-form-field>
         }
       </form>

@@ -9,7 +9,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -35,13 +35,23 @@ import {
   LegalHold,
 } from './user-governance.models';
 
+type GovernanceFilterFormModel = {
+  search: string;
+  status: GovernanceUserStatusFilter;
+};
+
+type GovernanceActionFormModel = {
+  reason: string;
+  legalBasis: string;
+  reference: string;
+};
+
 @Component({
   selector: 'app-system-governance-users',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatDialogModule,
@@ -60,7 +70,6 @@ import {
 export class SystemGovernanceUsersPage {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
 
@@ -72,8 +81,16 @@ export class SystemGovernanceUsersPage {
   readonly legalHolds = signal<LegalHold[]>([]);
   readonly dialogAction = signal<AccountAction>('suspend');
 
-  searchInput = '';
-  statusFilter: GovernanceUserStatusFilter = '';
+  readonly filterFormModel = signal<GovernanceFilterFormModel>({
+    search: '',
+    status: '',
+  });
+
+  readonly actionFormModel = signal<GovernanceActionFormModel>({
+    reason: '',
+    legalBasis: '',
+    reference: '',
+  });
 
   private readonly appliedFilters = signal<GovernanceUserFilters>({
     ...EMPTY_GOVERNANCE_USER_FILTERS,
@@ -88,10 +105,11 @@ export class SystemGovernanceUsersPage {
   readonly loading = this.usersResource.isLoading;
   readonly users = computed(() => this.usersResource.value());
 
-  readonly actionForm = this.fb.nonNullable.group({
-    reason: ['', [Validators.required, Validators.minLength(4)]],
-    legalBasis: [''],
-    reference: [''],
+  readonly filterForm = createForm(this.filterFormModel);
+
+  readonly actionForm = createForm(this.actionFormModel, (schema) => {
+    required(schema.reason);
+    minLength(schema.reason, 4);
   });
 
   readonly actionDialog = viewChild<TemplateRef<unknown>>('actionDialog');
@@ -129,8 +147,7 @@ export class SystemGovernanceUsersPage {
   }
 
   clearFilters() {
-    this.searchInput = '';
-    this.statusFilter = '';
+    this.filterFormModel.set({ search: '', status: '' });
     const current = this.appliedFilters();
     if (!current.search && current.status === null) {
       this.usersResource.reload();
@@ -152,7 +169,7 @@ export class SystemGovernanceUsersPage {
     this.selectedUser.set(row);
     this.selectedHold.set(null);
     this.dialogAction.set(action);
-    this.actionForm.reset({
+    this.actionFormModel.set({
       reason: '',
       legalBasis: '',
       reference: '',
@@ -172,13 +189,10 @@ export class SystemGovernanceUsersPage {
   async submitAction() {
     const user = this.selectedUser();
     const action = this.dialogAction();
-    if (!user || this.actionForm.invalid || this.saving()) {
-      this.actionForm.markAllAsTouched();
-      return;
-    }
+    if (!user || !this.actionForm().valid() || this.saving()) return;
 
     this.saving.set(true);
-    const payload = this.actionForm.getRawValue();
+    const payload = this.actionFormModel();
     const hold = this.selectedHold();
     const endpoint =
       action === 'legal-hold'
@@ -255,9 +269,10 @@ export class SystemGovernanceUsersPage {
   }
 
   private normalizedFilters(): GovernanceUserFilters {
+    const { search, status } = this.filterFormModel();
     return {
-      search: this.searchInput.trim(),
-      status: this.statusFilter === '' ? null : this.statusFilter,
+      search: search.trim(),
+      status: status === '' ? null : status,
     };
   }
 
