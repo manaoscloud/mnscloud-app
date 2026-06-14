@@ -14,14 +14,17 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput formControlName="search" />
+        <input matInput [formField]="filterForm.search" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Provider</mat-label>
-        <mat-select formControlName="providerUuid" (openedChange)="resetProviderSearch($event)">
+        <mat-select
+          [formField]="filterForm.providerUuid"
+          (openedChange)="resetProviderSearch($event)"
+        >
           <mat-option value="">All</mat-option>
           <mat-option class="select-search-option" disabled>
             <input
@@ -40,7 +43,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -203,17 +206,17 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="isActive">
+              <mat-select [formField]="form.isActive">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Default account</mat-label>
-              <mat-select formControlName="isDefault">
+              <mat-select [formField]="form.isDefault">
                 <mat-option [value]="1">Yes</mat-option>
                 <mat-option [value]="0">No</mat-option>
               </mat-select>
@@ -221,7 +224,7 @@
             <mat-form-field appearance="outline">
               <mat-label>Provider</mat-label>
               <mat-select
-                formControlName="providerUuid"
+                [formField]="form.providerUuid"
                 (openedChange)="resetProviderSearch($event)"
               >
                 <mat-option class="select-search-option" disabled>
@@ -241,12 +244,12 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Name</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput [formField]="form.name" />
             </mat-form-field>
           </form>
         </mat-tab>
         <mat-tab label="Config">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             @if (
               selectedProvider() === 's3' ||
               selectedProvider() === 'spaces' ||
@@ -255,30 +258,30 @@
             ) {
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Bucket</mat-label>
-                <input matInput formControlName="bucket" />
+                <input matInput [formField]="form.bucket" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Public base URL</mat-label>
-                <input matInput formControlName="publicBaseUrl" />
+                <input matInput [formField]="form.publicBaseUrl" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Path prefix</mat-label>
-                <input matInput formControlName="pathPrefix" placeholder="uploads" />
+                <input matInput [formField]="form.pathPrefix" placeholder="uploads" />
               </mat-form-field>
             }
 
             @if (selectedProvider() === 'azure') {
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Container</mat-label>
-                <input matInput formControlName="container" />
+                <input matInput [formField]="form.container" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Public base URL</mat-label>
-                <input matInput formControlName="publicBaseUrl" />
+                <input matInput [formField]="form.publicBaseUrl" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Path prefix</mat-label>
-                <input matInput formControlName="pathPrefix" placeholder="uploads" />
+                <input matInput [formField]="form.pathPrefix" placeholder="uploads" />
               </mat-form-field>
             }
 
@@ -290,10 +293,10 @@
           </form>
         </mat-tab>
         <mat-tab label="JSON">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Additional config JSON</mat-label>
-              <textarea matInput rows="4" formControlName="configJson"></textarea>
+              <textarea matInput rows="4" [formField]="form.configJson"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -317,7 +320,7 @@
           color="primary"
           type="button"
           class="dialog-action-button save-main-button"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!accountFormIsValid() || saving()"
           (click)="save(false)"
         >
           <mat-icon>save</mat-icon>
@@ -330,7 +333,7 @@
             type="button"
             class="save-more-button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!accountFormIsValid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -344,7 +347,7 @@
           mat-menu-item
           type="button"
           (click)="save(true)"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!accountFormIsValid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

@@ -10,8 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -65,12 +64,24 @@ type ApiResponse<T> = {
   data: T;
 };
 
+type StorageAccountFormModel = {
+  name: string;
+  providerUuid: string;
+  isActive: number;
+  isDefault: number;
+  bucket: string;
+  container: string;
+  publicBaseUrl: string;
+  pathPrefix: string;
+  configJson: string;
+};
+
 @Component({
   selector: 'app-hosting-storage-accounts',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -94,7 +105,6 @@ type ApiResponse<T> = {
 })
 export class HostingStorageAccountsPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -137,22 +147,28 @@ export class HostingStorageAccountsPage {
     'actions',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    providerUuid: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    providerUuid: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    providerUuid: ['', [Validators.required]],
-    isActive: [1],
-    isDefault: [0],
-    bucket: [''],
-    container: [''],
-    publicBaseUrl: [''],
-    pathPrefix: [''],
-    configJson: [''],
+  readonly accountFormModel = signal<StorageAccountFormModel>({
+    name: '',
+    providerUuid: '',
+    isActive: 1,
+    isDefault: 0,
+    bucket: '',
+    container: '',
+    publicBaseUrl: '',
+    pathPrefix: '',
+    configJson: '',
+  });
+  readonly form = createForm(this.accountFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.providerUuid);
   });
 
   private readonly accountsResource = resource({
@@ -180,10 +196,15 @@ export class HostingStorageAccountsPage {
     const snapshot = this.accountsResource.value();
     this.providers.set(snapshot.providers);
     this.accounts.set(snapshot.accounts);
-    this.syncSelectedProvider(this.form.controls.providerUuid.value);
     this.dataSource.data = snapshot.accounts;
     this.pageIndex.set(0);
     this.reconcileSelection();
+  });
+  private readonly syncSelectedProvider = effect(() => {
+    const providerUuid = this.accountFormModel().providerUuid;
+    const provider =
+      this.providers().find((item) => item.HspUUID === providerUuid)?.HspProvider ?? null;
+    this.selectedProvider.set(provider);
   });
   private readonly reportLoadError = effect(() => {
     const error = this.accountsResource.error();
@@ -200,7 +221,7 @@ export class HostingStorageAccountsPage {
   });
 
   readonly filteredAccounts = computed(() => {
-    const { search, providerUuid, status } = this.filterForm.getRawValue();
+    const { search, providerUuid, status } = this.filterFormModel();
     const term = search.trim().toLowerCase();
     const rows = this.accounts().filter((item) => {
       const config = item.HsaConfig ?? {};
@@ -223,9 +244,6 @@ export class HostingStorageAccountsPage {
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.form.controls.providerUuid.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((providerUuid) => this.syncSelectedProvider(providerUuid));
     this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
@@ -239,7 +257,7 @@ export class HostingStorageAccountsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', providerUuid: '', status: '' });
+    this.filterFormModel.set({ search: '', providerUuid: '', status: '' });
     this.pageIndex.set(0);
     this.reconcileSelection();
   }
@@ -261,7 +279,7 @@ export class HostingStorageAccountsPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.accountFormModel.set({
       name: '',
       providerUuid: '',
       isActive: 1,
@@ -272,15 +290,13 @@ export class HostingStorageAccountsPage {
       pathPrefix: '',
       configJson: '',
     });
-    this.selectedProvider.set(null);
-    this.applyProviderValidators(null);
     this.openDialog();
   }
 
   startEdit(item: HostingStorageAccount) {
     this.editing.set(item);
     const config = this.asRecord(item.HsaConfig);
-    this.form.reset({
+    this.accountFormModel.set({
       name: item.HsaName,
       providerUuid: item.HostingStorageProviderHspUUID,
       isActive: item.HsaIsActive ? 1 : 0,
@@ -291,7 +307,6 @@ export class HostingStorageAccountsPage {
       pathPrefix: this.stringValue(config['pathPrefix']),
       configJson: this.extraJson(config, ['bucket', 'container', 'publicBaseUrl', 'pathPrefix']),
     });
-    this.syncSelectedProvider(item.HostingStorageProviderHspUUID);
     this.openDialog();
   }
 
@@ -323,12 +338,11 @@ export class HostingStorageAccountsPage {
   }
 
   async save(keepOpen = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.accountFormIsValid()) {
       return;
     }
 
-    const raw = this.form.getRawValue();
+    const raw = this.accountFormModel();
     let extraConfig: Record<string, unknown> = {};
     try {
       extraConfig = raw.configJson.trim() ? JSON.parse(raw.configJson) : {};
@@ -363,7 +377,7 @@ export class HostingStorageAccountsPage {
       this.accountsResource.reload();
       if (keepOpen && !editing) {
         this.editing.set(null);
-        this.form.reset({
+        this.accountFormModel.set({
           name: '',
           providerUuid: '',
           isActive: 1,
@@ -374,8 +388,6 @@ export class HostingStorageAccountsPage {
           pathPrefix: '',
           configJson: '',
         });
-        this.selectedProvider.set(null);
-        this.applyProviderValidators(null);
       } else {
         this.closeDialog();
       }
@@ -486,35 +498,21 @@ export class HostingStorageAccountsPage {
     );
   }
 
-  private syncSelectedProvider(providerUuid: string) {
-    const provider =
-      this.providers().find((item) => item.HspUUID === providerUuid)?.HspProvider ?? null;
-    this.selectedProvider.set(provider);
-    this.applyProviderValidators(provider);
-  }
-
-  private applyProviderValidators(provider: StorageProvider | null) {
+  accountFormIsValid() {
+    if (!this.form().valid()) return false;
+    const provider = this.selectedProvider();
+    const raw = this.accountFormModel();
     const bucketRequired =
       provider === 's3' ||
       provider === 'spaces' ||
       provider === 'gcs' ||
       provider === 'sangfor_scp';
-    const containerRequired = provider === 'azure';
-
-    this.form.controls.bucket.clearValidators();
-    this.form.controls.container.clearValidators();
-
-    if (bucketRequired) this.form.controls.bucket.setValidators([Validators.required]);
-    if (containerRequired) this.form.controls.container.setValidators([Validators.required]);
-
-    this.form.controls.bucket.updateValueAndValidity({ emitEvent: false });
-    this.form.controls.container.updateValueAndValidity({ emitEvent: false });
+    if (bucketRequired && !raw.bucket.trim()) return false;
+    if (provider === 'azure' && !raw.container.trim()) return false;
+    return true;
   }
 
-  private accountConfigFromForm(
-    provider: StorageProvider | null,
-    raw: ReturnType<typeof this.form.getRawValue>,
-  ) {
+  private accountConfigFromForm(provider: StorageProvider | null, raw: StorageAccountFormModel) {
     if (provider === 'azure') {
       return {
         container: raw.container,
