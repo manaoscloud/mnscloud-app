@@ -146,15 +146,15 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-3">
               <mat-label>Name</mat-label>
-              <input matInput placeholder="e.g. Sample" formControlName="name" />
+              <input matInput placeholder="e.g. Sample" [formField]="form.name" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="status">
+              <mat-select [formField]="form.status">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
@@ -163,10 +163,10 @@
         </mat-tab>
 
         <mat-tab label="Notes">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="4" formControlName="notes"></textarea>
+              <textarea matInput rows="4" [formField]="form.notes"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -192,7 +192,7 @@
           color="primary"
           type="button"
           (click)="saveItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -204,7 +204,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMoreMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -218,7 +218,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewItem()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

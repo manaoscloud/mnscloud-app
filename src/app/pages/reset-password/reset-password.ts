@@ -6,14 +6,7 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-} from '@angular/forms';
+import { FormField, form, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -31,7 +24,7 @@ import { ApiService } from '../../services/api.service';
   templateUrl: './reset-password.html',
   styleUrls: ['./reset-password.scss'],
   imports: [
-    ReactiveFormsModule,
+    FormField,
     RouterModule,
     MatCardModule,
     MatFormFieldModule,
@@ -43,7 +36,6 @@ import { ApiService } from '../../services/api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResetPasswordComponent {
-  private fb = inject(FormBuilder);
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -56,32 +48,33 @@ export class ResetPasswordComponent {
   readonly apiError = signal<string | null>(null);
   readonly success = signal(false);
   readonly showPassword = signal(false);
-
-  readonly formValid = signal(false);
   private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
-  readonly form = this.fb.group(
-    {
-      newPassword: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', [Validators.required]],
-    },
-    {
-      validators: (group: AbstractControl): ValidationErrors | null => {
-        const a = group.get('newPassword')?.value;
-        const b = group.get('confirmPassword')?.value;
-        return a && b && a !== b ? { passwordMismatch: true } : null;
-      },
-    },
-  );
+  readonly formModel = signal({
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  readonly form = form(this.formModel, (schema) => {
+    required(schema.newPassword);
+    minLength(schema.newPassword, 8);
+    required(schema.confirmPassword);
+  });
+
+  readonly passwordMismatch = computed(() => {
+    const value = this.formModel();
+    return (
+      !!value.newPassword && !!value.confirmPassword && value.newPassword !== value.confirmPassword
+    );
+  });
 
   constructor() {
-    this.form.statusChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.formValid.set(this.form.valid));
     this.destroyRef.onDestroy(() => this.clearRedirectTimer());
   }
 
-  readonly canSubmit = computed(() => this.formValid() && !this.isLoading());
+  readonly canSubmit = computed(
+    () => this.form().valid() && !this.passwordMismatch() && !this.isLoading(),
+  );
 
   togglePassword() {
     this.showPassword.update((v) => !v);
@@ -90,8 +83,7 @@ export class ResetPasswordComponent {
   async onSubmit(event: Event) {
     event.preventDefault();
 
-    if (!this.form.valid) {
-      this.form.markAllAsTouched();
+    if (!this.canSubmit()) {
       return;
     }
 
@@ -104,7 +96,7 @@ export class ResetPasswordComponent {
     this.apiError.set(null);
     this.isLoading.set(true);
 
-    const newPassword = this.form.get('newPassword')!.value;
+    const newPassword = this.formModel().newPassword;
 
     try {
       await this.api.post('auth/reset-password', {

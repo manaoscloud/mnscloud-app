@@ -1,6 +1,6 @@
 import { afterNextRender, Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form, minLength, required } from '@angular/forms/signals';
 import { TenantsService } from '../../tenants.service';
 import { StateMessageComponent } from '../../../../shared/state-message/state-message';
 import { InviteSessionService } from '../../../../services/invite-session.service';
@@ -20,7 +20,7 @@ import { MatNativeDateModule } from '@angular/material/core';
   standalone: true,
   imports: [
     RouterModule,
-    ReactiveFormsModule,
+    FormField,
     StateMessageComponent,
     MatFormFieldModule,
     MatInputModule,
@@ -40,7 +40,6 @@ export class InviteAcceptPage {
   private router = inject(Router);
   private accessService = inject(TenantsService);
   private inviteSession = inject(InviteSessionService);
-  private fb = inject(FormBuilder);
 
   token: string | null = null;
 
@@ -52,12 +51,24 @@ export class InviteAcceptPage {
   invite = signal<InviteValidateData | null>(null);
   showPassword = signal(false);
 
-  readonly form = this.fb.nonNullable.group({
-    firstName: ['', [Validators.required, Validators.minLength(2)]],
-    lastName: ['', [Validators.required, Validators.minLength(2)]],
-    phone: ['', [Validators.required, Validators.minLength(10)]],
-    dateBirth: [null as Date | null, [Validators.required]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+  readonly formModel = signal({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    dateBirth: null as Date | null,
+    password: '',
+  });
+
+  readonly form = form(this.formModel, (schema) => {
+    required(schema.firstName);
+    minLength(schema.firstName, 2);
+    required(schema.lastName);
+    minLength(schema.lastName, 2);
+    required(schema.phone);
+    minLength(schema.phone, 10);
+    required(schema.dateBirth);
+    required(schema.password);
+    minLength(schema.password, 6);
   });
 
   constructor() {
@@ -65,7 +76,7 @@ export class InviteAcceptPage {
   }
 
   get canSubmit(): boolean {
-    return this.form.valid && !this.submitting();
+    return this.form().valid() && !this.submitting();
   }
 
   togglePassword() {
@@ -148,7 +159,7 @@ export class InviteAcceptPage {
     this.submitting.set(true);
     this.error.set(null);
 
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const dateBirthStr =
       value.dateBirth instanceof Date
         ? value.dateBirth.toISOString().substring(0, 10)

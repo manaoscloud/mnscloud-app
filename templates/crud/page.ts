@@ -12,7 +12,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -48,7 +49,7 @@ type Entity = {
   standalone: true,
   imports: [
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -73,7 +74,6 @@ type Entity = {
 })
 export class CrudPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly snack = inject(SnackbarService);
@@ -95,10 +95,15 @@ export class CrudPage {
   readonly dataSource = new MatTableDataSource<Entity>([]);
   readonly displayedColumns = ['select', 'name', 'status', 'actions'];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    status: [1],
-    notes: [''],
+  readonly formModel = signal({
+    name: '',
+    status: 1,
+    notes: '',
+  });
+
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -180,7 +185,7 @@ export class CrudPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       name: '',
       status: 1,
       notes: '',
@@ -190,7 +195,7 @@ export class CrudPage {
 
   startEdit(item: Entity) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       name: item.Name,
       status: Number(item.Status) || 1,
       notes: '',
@@ -199,9 +204,9 @@ export class CrudPage {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
+    if (!this.form().valid()) return;
 
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload = {
       name: value.name.trim(),
       status: value.status,
@@ -224,13 +229,13 @@ export class CrudPage {
       this.reloadItems();
 
       if (saveAndNew && createMode) {
-        this.form.reset({ name: '', status: 1, notes: '' });
+        this.formModel.set({ name: '', status: 1, notes: '' });
         this.editing.set(null);
         return;
       }
 
       this.closeEntityDialog();
-      this.form.reset({ name: '', status: 1, notes: '' });
+      this.formModel.set({ name: '', status: 1, notes: '' });
       this.editing.set(null);
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to save item.'));
@@ -246,7 +251,7 @@ export class CrudPage {
 
   cancelForm() {
     this.closeEntityDialog();
-    this.form.reset({ name: '', status: 1 });
+    this.formModel.set({ name: '', status: 1, notes: '' });
     this.editing.set(null);
   }
 
@@ -416,5 +421,4 @@ export class CrudPage {
       return next;
     });
   }
-
 }

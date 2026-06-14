@@ -9,7 +9,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form, minLength, required } from '@angular/forms/signals';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -42,7 +42,7 @@ import { UserProfile } from '../../../models/user-profile.model';
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -61,7 +61,6 @@ import { UserProfile } from '../../../models/user-profile.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserProfileComponent {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
@@ -98,13 +97,20 @@ export class UserProfileComponent {
 
   readonly profile = signal<UserProfile | null>(null);
 
-  readonly profileForm: FormGroup = this.fb.group({
-    firstName: ['', [Validators.required, Validators.minLength(2)]],
-    lastName: ['', [Validators.required, Validators.minLength(2)]],
-    email: [{ value: '', disabled: true }],
-    phone: [''],
-    dateBirth: [null as Date | null],
-    newPassword: [''],
+  readonly formModel = signal({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateBirth: null as Date | null,
+    newPassword: '',
+  });
+
+  readonly profileForm = form(this.formModel, (schema) => {
+    required(schema.firstName);
+    minLength(schema.firstName, 2);
+    required(schema.lastName);
+    minLength(schema.lastName, 2);
   });
 
   readonly avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
@@ -128,8 +134,7 @@ export class UserProfileComponent {
   }
 
   get avatarLetter(): string {
-    const firstName: string = this.profileForm.get('firstName')?.value ?? '';
-    const email: string = this.profileForm.get('email')?.value ?? '';
+    const { firstName, email } = this.formModel();
 
     if (firstName) return firstName.charAt(0).toUpperCase();
     if (email) return email.charAt(0).toUpperCase();
@@ -227,12 +232,12 @@ export class UserProfileComponent {
   }
 
   async onSave() {
-    if (this.saving() || this.loading() || this.profileForm.invalid) return;
+    if (this.saving() || this.loading() || !this.profileForm().valid()) return;
 
     this.saving.set(true);
     this.apiError.set(null);
 
-    const value = this.profileForm.getRawValue();
+    const value = this.formModel();
 
     const dateBirthStr =
       value.dateBirth instanceof Date ? value.dateBirth.toISOString().substring(0, 10) : null;
@@ -261,7 +266,7 @@ export class UserProfileComponent {
 
       this.snack.success('Profile updated successfully.');
 
-      this.profileForm.patchValue({ newPassword: '' });
+      this.formModel.update((current) => ({ ...current, newPassword: '' }));
       this.refreshProfile();
     } catch (err) {
       console.error('❌ save profile error:', err);
@@ -277,7 +282,7 @@ export class UserProfileComponent {
 
     const date = p.dateBirth ? new Date(p.dateBirth + 'T00:00:00') : null;
 
-    this.profileForm.reset({
+    this.formModel.set({
       firstName: p.firstName,
       lastName: p.lastName,
       email: p.email,
@@ -316,7 +321,7 @@ export class UserProfileComponent {
 
     const date = profile.dateBirth ? new Date(profile.dateBirth + 'T00:00:00') : null;
 
-    this.profileForm.reset({
+    this.formModel.set({
       firstName: profile.firstName,
       lastName: profile.lastName,
       email: profile.email,

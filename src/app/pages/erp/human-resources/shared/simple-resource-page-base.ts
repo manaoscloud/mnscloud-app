@@ -8,9 +8,10 @@ import {
   inject,
   resource,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -42,7 +43,7 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 export const HUMAN_RESOURCES_CRUD_IMPORTS = [
   RefreshButtonComponent,
   FormsModule,
-  ReactiveFormsModule,
+  FormField,
   MatButtonModule,
   MatCardModule,
   MatCheckboxModule,
@@ -84,7 +85,6 @@ type SimpleResourceConfig = {
 @Directive()
 export abstract class SimpleResourcePageBase {
   protected readonly api = inject(ApiService);
-  protected readonly fb = inject(FormBuilder);
   protected readonly dialog = inject(MatDialog);
   protected readonly snack = inject(SnackbarService);
   protected readonly destroyRef = inject(DestroyRef);
@@ -106,11 +106,16 @@ export abstract class SimpleResourcePageBase {
 
   readonly dataSource = new MatTableDataSource<SimpleResource>([]);
   readonly displayedColumns = ['select', 'name', 'description', 'status', 'actions'];
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    description: [''],
-    status: [1],
-    notes: [''],
+  readonly formModel = signal({
+    name: '',
+    description: '',
+    status: 1,
+    notes: '',
+  });
+
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -203,13 +208,13 @@ export abstract class SimpleResourcePageBase {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({ name: '', description: '', status: 1, notes: '' });
+    this.formModel.set({ name: '', description: '', status: 1, notes: '' });
     this.openDialog();
   }
 
   startEdit(item: SimpleResource) {
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       name: item.Name ?? '',
       description: item.Description ?? '',
       status: Number(item.Status) || 1,
@@ -219,8 +224,8 @@ export abstract class SimpleResourcePageBase {
   }
 
   async saveItem(saveAndNew = false) {
-    if (this.form.invalid) return;
-    const value = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const value = this.formModel();
     const payload = {
       name: value.name.trim(),
       description: value.description.trim() || null,
@@ -240,12 +245,12 @@ export abstract class SimpleResourcePageBase {
       }
       this.itemsResource.reload();
       if (saveAndNew && createMode) {
-        this.form.reset({ name: '', description: '', status: 1, notes: '' });
+        this.formModel.set({ name: '', description: '', status: 1, notes: '' });
         this.editing.set(null);
         return;
       }
       this.closeDialog();
-      this.form.reset({ name: '', description: '', status: 1, notes: '' });
+      this.formModel.set({ name: '', description: '', status: 1, notes: '' });
       this.editing.set(null);
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to save record.'));
@@ -261,7 +266,7 @@ export abstract class SimpleResourcePageBase {
   cancelForm() {
     this.closeDialog();
     this.editing.set(null);
-    this.form.reset({ name: '', description: '', status: 1, notes: '' });
+    this.formModel.set({ name: '', description: '', status: 1, notes: '' });
   }
 
   async deleteItem(item: SimpleResource) {

@@ -33,8 +33,7 @@
       <form
         id="profileForm"
         class="profile-form"
-        [formGroup]="profileForm"
-        (ngSubmit)="onSave()"
+        (submit)="onSave(); $event.preventDefault()"
         autocomplete="off"
         novalidate
       >
@@ -43,27 +42,27 @@
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'First Name' | transloco }}</mat-label>
-                <input matInput formControlName="firstName" required autocomplete="given-name" />
+                <input matInput [formField]="profileForm.firstName" autocomplete="given-name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Last Name' | transloco }}</mat-label>
-                <input matInput formControlName="lastName" required autocomplete="family-name" />
+                <input matInput [formField]="profileForm.lastName" autocomplete="family-name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Email' | transloco }}</mat-label>
-                <input matInput formControlName="email" readonly autocomplete="email" />
+                <input matInput [value]="formModel().email" readonly autocomplete="email" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Phone' | transloco }}</mat-label>
-                <input matInput formControlName="phone" autocomplete="tel" />
+                <input matInput [formField]="profileForm.phone" autocomplete="tel" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Date of Birth' | transloco }}</mat-label>
-                <input matInput [matDatepicker]="picker" formControlName="dateBirth" />
+                <input matInput [matDatepicker]="picker" [formField]="profileForm.dateBirth" />
                 <mat-datepicker-toggle matSuffix [for]="picker" />
                 <mat-datepicker #picker />
               </mat-form-field>
@@ -73,7 +72,7 @@
                 <input
                   matInput
                   type="password"
-                  formControlName="newPassword"
+                  [formField]="profileForm.newPassword"
                   autocomplete="new-password"
                 />
                 <mat-hint>{{ 'Leave blank to keep current password.' | transloco }}</mat-hint>
@@ -194,7 +193,7 @@
             color="primary"
             type="submit"
             form="profileForm"
-            [disabled]="saving() || savingAvatar() || loading() || profileForm.invalid"
+            [disabled]="saving() || savingAvatar() || loading() || !profileForm().valid()"
           >
             @if (saving()) {
               <mat-progress-spinner diameter="20" mode="indeterminate" />

@@ -1,8 +1,5 @@
-import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { merge } from 'rxjs';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { FormField, email, form, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -20,7 +17,7 @@ import { ApiService } from '../../services/api.service';
   templateUrl: './forgot-password.html',
   styleUrls: ['./forgot-password.scss'],
   imports: [
-    ReactiveFormsModule,
+    FormField,
     RouterLink,
     MatCardModule,
     MatFormFieldModule,
@@ -32,27 +29,30 @@ import { ApiService } from '../../services/api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ForgotPasswordComponent {
-  private fb = inject(FormBuilder);
   private api = inject(ApiService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+  readonly formModel = signal({
+    email: '',
+  });
+
+  readonly form = form(this.formModel, (schema) => {
+    required(schema.email);
+    email(schema.email);
   });
 
   readonly isLoading = signal(false);
   readonly infoMessage = signal<string | null>(null);
   readonly hasSubmitted = signal(false);
-  readonly emailError = signal('');
-
-  constructor() {
-    merge(this.form.get('email')!.statusChanges, this.form.get('email')!.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
-  }
+  readonly emailError = computed(() => {
+    const emailField = this.form.email();
+    const errors = emailField.errors();
+    if (errors.some((error) => error.kind === 'required')) return 'You must enter a value';
+    if (errors.some((error) => error.kind === 'email')) return 'Not a valid email';
+    return '';
+  });
 
   get canSubmit(): boolean {
-    return this.form.valid && !this.isLoading() && !this.hasSubmitted();
+    return this.form().valid() && !this.isLoading() && !this.hasSubmitted();
   }
 
   async onSubmit(event: Event): Promise<void> {
@@ -63,7 +63,7 @@ export class ForgotPasswordComponent {
     this.isLoading.set(true);
     this.infoMessage.set(null);
 
-    const email = this.form.value.email!;
+    const email = this.formModel().email.trim();
 
     try {
       await this.api.post('auth/forgot-password', { email });
@@ -72,28 +72,14 @@ export class ForgotPasswordComponent {
         'If your email exists in our system, you will receive reset instructions shortly.',
       );
 
-      this.form.disable();
       this.hasSubmitted.set(true);
     } catch {
       this.infoMessage.set(
         'If your email exists in our system, you will receive reset instructions shortly.',
       );
-      this.form.disable();
       this.hasSubmitted.set(true);
     } finally {
       this.isLoading.set(false);
-    }
-  }
-
-  updateEmailError() {
-    const control = this.form.get('email');
-    if (!control) return;
-    if (control.hasError('required')) {
-      this.emailError.set('You must enter a value');
-    } else if (control.hasError('email')) {
-      this.emailError.set('Not a valid email');
-    } else {
-      this.emailError.set('');
     }
   }
 }

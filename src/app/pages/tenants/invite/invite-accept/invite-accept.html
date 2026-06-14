@@ -18,20 +18,20 @@
           Invite sent to {{ invite()?.InviteEmail || 'your email' }}
         </p>
 
-        <form [formGroup]="form" (ngSubmit)="submitProfile($event)" autocomplete="off" novalidate>
+        <form (submit)="submitProfile($event)" autocomplete="off" novalidate>
           <mat-form-field appearance="outline">
             <mat-label>First Name</mat-label>
-            <input matInput type="text" formControlName="firstName" />
+            <input matInput type="text" [formField]="form.firstName" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Last Name</mat-label>
-            <input matInput type="text" formControlName="lastName" />
+            <input matInput type="text" [formField]="form.lastName" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Phone</mat-label>
-            <input matInput type="text" formControlName="phone" />
+            <input matInput type="text" [formField]="form.phone" />
           </mat-form-field>
 
           @if (error()) {
@@ -40,7 +40,7 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Date of birth</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="dateBirth" />
+            <input matInput [matDatepicker]="picker" [formField]="form.dateBirth" />
             <mat-datepicker-toggle matSuffix [for]="picker" />
             <mat-datepicker #picker />
           </mat-form-field>
@@ -50,7 +50,7 @@
             <input
               matInput
               [type]="showPassword() ? 'text' : 'password'"
-              formControlName="password"
+              [formField]="form.password"
             />
             <button type="button" matSuffix class="field-icon-btn" (click)="togglePassword()">
               <mat-icon class="field-icon">
