@@ -14,14 +14,17 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput formControlName="search" />
+        <input matInput [formField]="filterForm.search" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Provider</mat-label>
-        <mat-select formControlName="providerUuid" (openedChange)="resetProviderSearch($event)">
+        <mat-select
+          [formField]="filterForm.providerUuid"
+          (openedChange)="resetProviderSearch($event)"
+        >
           <mat-option value="">All</mat-option>
           <mat-option class="select-search-option" disabled>
             <input
@@ -40,7 +43,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -200,15 +203,15 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="form">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
+                <input matInput [formField]="form.name" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Provider</mat-label>
                 <mat-select
-                  formControlName="providerUuid"
+                  [formField]="form.providerUuid"
                   (openedChange)="resetProviderSearch($event)"
                 >
                   <mat-option class="select-search-option" disabled>
@@ -228,27 +231,27 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="form.isActive">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
               </mat-form-field>
               <div class="checkbox-wrap">
-                <mat-checkbox formControlName="isDefault">Default account</mat-checkbox>
+                <mat-checkbox [formField]="form.isDefault">Default account</mat-checkbox>
               </div>
             </form>
           </div>
         </mat-tab>
         <mat-tab label="Sender">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="form">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default From Name</mat-label>
-                <input matInput formControlName="defaultFromName" />
+                <input matInput [formField]="form.defaultFromName" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Default From Address</mat-label>
-                <input matInput type="email" formControlName="defaultFromEmail" />
+                <input matInput type="email" [formField]="form.defaultFromEmail" />
               </mat-form-field>
             </form>
           </div>
@@ -266,7 +269,7 @@
           color="primary"
           type="button"
           class="save-main-button"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
           (click)="save(false)"
         >
           <mat-icon>save</mat-icon>
@@ -279,7 +282,7 @@
             type="button"
             class="save-more-button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -293,7 +296,7 @@
           mat-menu-item
           type="button"
           (click)="save(true)"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

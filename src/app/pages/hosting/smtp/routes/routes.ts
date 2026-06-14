@@ -10,7 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, email, form as createForm, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -75,7 +75,7 @@ type SmtpEventTypeResponse = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -100,7 +100,6 @@ type SmtpEventTypeResponse = {
 })
 export class HostingSmtpRoutesPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -138,24 +137,34 @@ export class HostingSmtpRoutesPage {
 
   readonly displayedColumns = ['select', 'event', 'account', 'from', 'status', 'actions'];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    accountUuid: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    accountUuid: '',
+    status: '',
+  });
+  readonly filterForm = createForm(this.filterFormModel);
+
+  readonly routeFormModel = signal({
+    eventType: 'general',
+    accountUuid: '',
+    fromName: '',
+    fromEmail: '',
+    isActive: 1,
+  });
+  readonly form = createForm(this.routeFormModel, (schema) => {
+    required(schema.eventType);
+    required(schema.accountUuid);
+    email(schema.fromEmail);
   });
 
-  readonly form = this.fb.nonNullable.group({
-    eventType: ['general', [Validators.required]],
-    accountUuid: ['', [Validators.required]],
-    fromName: [''],
-    fromEmail: ['', [Validators.email]],
-    isActive: [1],
+  readonly testFormModel = signal({
+    to: '',
+    subject: 'MNSCloud SMTP route test',
+    html: '<p>This is a test email sent from an MNSCloud SMTP route.</p>',
   });
-
-  readonly testForm = this.fb.nonNullable.group({
-    to: ['', [Validators.required, Validators.email]],
-    subject: ['MNSCloud SMTP route test'],
-    html: ['<p>This is a test email sent from an MNSCloud SMTP route.</p>'],
+  readonly testForm = createForm(this.testFormModel, (schema) => {
+    required(schema.to);
+    email(schema.to);
   });
 
   private readonly routesResource = resource({
@@ -209,7 +218,7 @@ export class HostingSmtpRoutesPage {
   });
 
   readonly filteredRoutes = computed(() => {
-    const { search, accountUuid, status } = this.filterForm.getRawValue();
+    const { search, accountUuid, status } = this.filterFormModel();
     const term = search.trim().toLowerCase();
     const rows = this.routes().filter((route) => {
       const matchesTerm =
@@ -247,7 +256,7 @@ export class HostingSmtpRoutesPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', accountUuid: '', status: '' });
+    this.filterFormModel.set({ search: '', accountUuid: '', status: '' });
     this.applyFilters();
   }
 
@@ -268,7 +277,7 @@ export class HostingSmtpRoutesPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.routeFormModel.set({
       eventType: 'general',
       accountUuid: '',
       fromName: '',
@@ -280,7 +289,7 @@ export class HostingSmtpRoutesPage {
 
   startEdit(route: SmtpRoute) {
     this.editing.set(route);
-    this.form.reset({
+    this.routeFormModel.set({
       eventType: route.HsrEventType,
       accountUuid: route.HostingSmtpAccountHsaUUID,
       fromName: route.HsrFromName ?? '',
@@ -316,7 +325,7 @@ export class HostingSmtpRoutesPage {
 
   startTest(route: SmtpRoute) {
     this.testingRoute.set(route);
-    this.testForm.reset({
+    this.testFormModel.set({
       to: '',
       subject: `MNSCloud SMTP route test: ${route.HsrEventType}`,
       html: `<p>This is a test email sent from the ${route.HsrEventType} SMTP route.</p>`,
@@ -345,13 +354,12 @@ export class HostingSmtpRoutesPage {
   }
 
   async sendTestEmail() {
-    if (this.testForm.invalid) {
-      this.testForm.markAllAsTouched();
+    if (!this.testForm().valid()) {
       return;
     }
     const route = this.testingRoute();
     if (!route) return;
-    const raw = this.testForm.getRawValue();
+    const raw = this.testFormModel();
     this.testing.set(true);
     try {
       await this.api.post(`${this.endpoint()}/${route.HsrUUID}/test`, {
@@ -369,12 +377,11 @@ export class HostingSmtpRoutesPage {
   }
 
   async save(keepOpen = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
 
-    const raw = this.form.getRawValue();
+    const raw = this.routeFormModel();
     const payload = {
       eventType: raw.eventType,
       accountUuid: raw.accountUuid,

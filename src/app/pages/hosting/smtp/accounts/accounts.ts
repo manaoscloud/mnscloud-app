@@ -10,7 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, email, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -64,7 +64,7 @@ type HostingSmtpAccount = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -89,7 +89,6 @@ type HostingSmtpAccount = {
 })
 export class HostingSmtpAccountsPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -131,19 +130,26 @@ export class HostingSmtpAccountsPage {
     'actions',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    providerUuid: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    providerUuid: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    providerUuid: ['', [Validators.required]],
-    isActive: [1],
-    isDefault: [0],
-    defaultFromName: [''],
-    defaultFromEmail: ['', [Validators.email]],
+  readonly accountFormModel = signal({
+    name: '',
+    providerUuid: '',
+    isActive: 1,
+    isDefault: false,
+    defaultFromName: '',
+    defaultFromEmail: '',
+  });
+  readonly form = createForm(this.accountFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.providerUuid);
+    email(schema.defaultFromEmail);
   });
 
   private readonly accountsResource = resource({
@@ -190,7 +196,7 @@ export class HostingSmtpAccountsPage {
   });
 
   readonly filteredAccounts = computed(() => {
-    const { search, providerUuid, status } = this.filterForm.getRawValue();
+    const { search, providerUuid, status } = this.filterFormModel();
     const term = search.trim().toLowerCase();
     const rows = this.accounts().filter((item) => {
       const matchesTerm =
@@ -225,7 +231,7 @@ export class HostingSmtpAccountsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', providerUuid: '', status: '' });
+    this.filterFormModel.set({ search: '', providerUuid: '', status: '' });
     this.pageIndex.set(0);
     this.reconcileSelection();
   }
@@ -247,11 +253,11 @@ export class HostingSmtpAccountsPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.accountFormModel.set({
       name: '',
       providerUuid: '',
       isActive: 1,
-      isDefault: 0,
+      isDefault: false,
       defaultFromName: '',
       defaultFromEmail: '',
     });
@@ -260,11 +266,11 @@ export class HostingSmtpAccountsPage {
 
   startEdit(item: HostingSmtpAccount) {
     this.editing.set(item);
-    this.form.reset({
+    this.accountFormModel.set({
       name: item.HsaName,
       providerUuid: item.HostingSmtpProviderHspUUID,
       isActive: item.HsaIsActive ? 1 : 0,
-      isDefault: item.HsaIsDefault ? 1 : 0,
+      isDefault: item.HsaIsDefault === 1,
       defaultFromName: item.HsaDefaultFromName ?? '',
       defaultFromEmail: item.HsaDefaultFromEmail ?? '',
     });
@@ -296,19 +302,18 @@ export class HostingSmtpAccountsPage {
   }
 
   async save(keepOpen = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
 
-    const raw = this.form.getRawValue();
+    const raw = this.accountFormModel();
     const payload = {
       name: raw.name,
       providerUuid: raw.providerUuid,
       defaultFromName: raw.defaultFromName,
       defaultFromEmail: raw.defaultFromEmail,
       isActive: raw.isActive === 1,
-      isDefault: Boolean(raw.isDefault),
+      isDefault: raw.isDefault,
     };
 
     this.saving.set(true);

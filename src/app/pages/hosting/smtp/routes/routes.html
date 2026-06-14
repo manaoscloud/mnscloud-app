@@ -14,15 +14,18 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput formControlName="search" />
+        <input matInput [formField]="filterForm.search" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Account</mat-label>
-        <mat-select formControlName="accountUuid" (openedChange)="resetAccountSearch($event)">
+        <mat-select
+          [formField]="filterForm.accountUuid"
+          (openedChange)="resetAccountSearch($event)"
+        >
           <mat-option value="">All</mat-option>
           <mat-option class="select-search-option" disabled>
             <input
@@ -42,7 +45,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -188,10 +191,10 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Event Type</mat-label>
-              <mat-select formControlName="eventType">
+              <mat-select [formField]="form.eventType">
                 @for (event of eventTypes(); track event.code) {
                   <mat-option [value]="event.code">{{ event.label }} · {{ event.code }}</mat-option>
                 }
@@ -200,7 +203,10 @@
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Account</mat-label>
-              <mat-select formControlName="accountUuid" (openedChange)="resetAccountSearch($event)">
+              <mat-select
+                [formField]="form.accountUuid"
+                (openedChange)="resetAccountSearch($event)"
+              >
                 <mat-option class="select-search-option" disabled>
                   <input
                     matInput
@@ -219,17 +225,17 @@
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>From Name</mat-label>
-              <input matInput formControlName="fromName" />
+              <input matInput [formField]="form.fromName" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>From Address</mat-label>
-              <input matInput type="email" formControlName="fromEmail" />
+              <input matInput type="email" [formField]="form.fromEmail" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="isActive">
+              <mat-select [formField]="form.isActive">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
@@ -250,7 +256,7 @@
           color="primary"
           type="button"
           class="save-main-button"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
           (click)="save(false)"
         >
           <mat-icon>save</mat-icon>
@@ -263,7 +269,7 @@
             type="button"
             class="save-more-button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -277,7 +283,7 @@
           mat-menu-item
           type="button"
           (click)="save(true)"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
@@ -297,20 +303,20 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <form class="tab-content form-grid" [formGroup]="testForm">
+      <form class="tab-content form-grid">
         <mat-form-field appearance="outline" class="span-2">
           <mat-label>Recipient</mat-label>
-          <input matInput type="email" formControlName="to" />
+          <input matInput type="email" [formField]="testForm.to" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="span-2">
           <mat-label>Subject</mat-label>
-          <input matInput formControlName="subject" />
+          <input matInput [formField]="testForm.subject" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="span-4">
           <mat-label>HTML</mat-label>
-          <textarea matInput rows="6" formControlName="html"></textarea>
+          <textarea matInput rows="6" [formField]="testForm.html"></textarea>
         </mat-form-field>
       </form>
     </mat-dialog-content>
@@ -326,7 +332,7 @@
           color="primary"
           type="button"
           class="save-main-button"
-          [disabled]="testForm.invalid || testing()"
+          [disabled]="!testForm().valid() || testing()"
           (click)="sendTestEmail()"
         >
           <mat-icon>send</mat-icon>
