@@ -1,6 +1,6 @@
 import {
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -98,12 +98,13 @@ type SmtpEventTypeResponse = {
   styleUrls: ['./routes.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingSmtpRoutesPage implements OnDestroy {
+export class HostingSmtpRoutesPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly routeDialog = viewChild<TemplateRef<unknown>>('routeDialog');
   readonly testDialog = viewChild<TemplateRef<unknown>>('testDialog');
@@ -228,13 +229,12 @@ export class HostingSmtpRoutesPage implements OnDestroy {
     return this.filteredRoutes().slice(start, start + this.pageSize());
   });
 
-  ngOnInit() {
+  constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
-    this.closeTestDialog();
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.closeTestDialog();
+    });
   }
 
   refreshList() {

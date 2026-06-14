@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -83,11 +83,12 @@ type WebhostEmailFilters = {
   styleUrls: ['./emails.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingWebhostEmailsPage implements OnDestroy {
+export class HostingWebhostEmailsPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly emailFormDialog = viewChild<TemplateRef<unknown>>('emailFormDialog');
   readonly passwordDialog = viewChild<TemplateRef<unknown>>('passwordDialog');
@@ -256,13 +257,12 @@ export class HostingWebhostEmailsPage implements OnDestroy {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.passwordDialogRef?.close();
+      this.stopDialogViewportObserver();
+    });
     void this.loadHosts();
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
-    this.passwordDialogRef?.close();
-    this.stopDialogViewportObserver();
   }
 
   refreshList() {

@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -79,13 +79,14 @@ type CyberSecurityNetworkPoliciesSnapshot = {
   styleUrls: ['./network-policies.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestroy {
+export class CyberSecurityNetworkPoliciesPage {
   private readonly policiesApi = inject(CyberSecurityNetworkPoliciesService);
   private readonly trustedNodesApi = inject(CyberSecurityTrustedNodesService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 1000;
 
   readonly saving = signal(false);
@@ -170,7 +171,7 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -193,10 +194,10 @@ export class CyberSecurityNetworkPoliciesPage implements AfterViewInit, OnDestro
           return '';
       }
     };
-  }
+  });
 
-  ngOnDestroy() {
-    this.closeNetworkPolicyDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => this.closeNetworkPolicyDialog());
   }
 
   applySearchFilters() {

@@ -1,6 +1,6 @@
 import {
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -87,12 +87,13 @@ type HostingSmtpAccount = {
   styleUrls: ['./accounts.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingSmtpAccountsPage implements OnDestroy {
+export class HostingSmtpAccountsPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly accountDialog = viewChild<TemplateRef<unknown>>('accountDialog');
   readonly paginator = viewChild(MatPaginator);
@@ -209,12 +210,9 @@ export class HostingSmtpAccountsPage implements OnDestroy {
     return this.filteredAccounts().slice(start, start + this.pageSize());
   });
 
-  ngOnInit() {
+  constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
+    this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
   refreshList() {

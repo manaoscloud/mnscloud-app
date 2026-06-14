@@ -5,7 +5,6 @@ import {
   computed,
   effect,
   inject,
-  OnDestroy,
   resource,
   signal,
   TemplateRef,
@@ -91,7 +90,7 @@ type VpsInstanceFilters = {
   styleUrls: ['./instances.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingVpsInstancesPage implements OnDestroy {
+export class HostingVpsInstancesPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
@@ -277,6 +276,11 @@ export class HostingVpsInstancesPage implements OnDestroy {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.closeChangePlanDialog();
+      this.stopDialogViewportObserver();
+    });
     this.instanceForm.controls.planUUID.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => this.applySelectedPlan(value));
@@ -286,12 +290,6 @@ export class HostingVpsInstancesPage implements OnDestroy {
     void this.loadProviders();
     void this.loadCustomers();
     void this.loadPlans();
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
-    this.closeChangePlanDialog();
-    this.stopDialogViewportObserver();
   }
 
   refreshList() {

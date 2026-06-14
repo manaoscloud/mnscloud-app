@@ -1,10 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -88,12 +88,13 @@ export const BILLING_WALLET_IMPORTS = [
   styleUrls: ['./wallet.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BillingWalletPage implements AfterViewInit, OnDestroy {
+export class BillingWalletPage {
   private readonly billing = inject(BillingService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
   private readonly i18n = inject(AppI18nService);
+  private readonly destroyRef = inject(DestroyRef);
 
   section: BillingTenantSection = 'dashboard';
 
@@ -181,7 +182,7 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     );
   });
 
-  ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.catalogSource.paginator = this.catalogPaginator() ?? null;
     this.subscriptionSource.paginator = this.subscriptionPaginator() ?? null;
     this.ledgerSource.paginator = this.ledgerPaginator() ?? null;
@@ -192,10 +193,10 @@ export class BillingWalletPage implements AfterViewInit, OnDestroy {
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.ledgerSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.refresh();
-  }
+  });
 
-  ngOnDestroy() {
-    this.closeSubscriptionDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => this.closeSubscriptionDialog());
   }
 
   refresh() {

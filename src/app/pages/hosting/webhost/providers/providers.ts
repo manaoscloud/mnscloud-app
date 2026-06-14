@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -74,11 +74,12 @@ import type {
   styleUrls: ['./providers.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingWebhostProvidersPage implements OnDestroy {
+export class HostingWebhostProvidersPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
 
@@ -193,12 +194,11 @@ export class HostingWebhostProvidersPage implements OnDestroy {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.stopDialogViewportObserver();
+    });
     this.applyTokenValidators(false);
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
-    this.stopDialogViewportObserver();
   }
 
   refreshList() {

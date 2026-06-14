@@ -1,10 +1,10 @@
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   effect,
   inject,
   resource,
@@ -178,12 +178,13 @@ function optionalHexColorValidator(control: AbstractControl): ValidationErrors |
   styleUrls: ['./themes.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsThemesPage implements AfterViewInit, OnDestroy {
+export class SettingsThemesPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
@@ -238,6 +239,12 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
     this.applyFilters();
   });
 
+  private readonly setupTable = afterNextRender(() => {
+    this.dataSource.paginator = this.paginator() ?? null;
+    this.dataSource.sort = this.sort() ?? null;
+    this.refreshList();
+  });
+
   constructor() {
     this.dataSource.filterPredicate = (data, filter) => {
       const parsed = this.parseFilter(filter);
@@ -254,16 +261,7 @@ export class SettingsThemesPage implements AfterViewInit, OnDestroy {
       return matchesSearch && matchesStatus;
     };
     this.dataSource.sortingDataAccessor = (item, column) => this.sortValue(item, column);
-  }
-
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.refreshList();
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
+    this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
   refreshList() {

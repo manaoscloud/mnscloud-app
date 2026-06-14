@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -72,12 +72,13 @@ import {
   styleUrls: ['./services.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
+export class CyberSecurityServicesPage {
   private readonly api = inject(CyberSecurityServicesService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(AppI18nService);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 1000;
 
   readonly saving = signal(false);
@@ -142,7 +143,7 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
     }
   });
 
-  ngAfterViewInit() {
+  private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
@@ -163,10 +164,10 @@ export class CyberSecurityServicesPage implements AfterViewInit, OnDestroy {
           return '';
       }
     };
-  }
+  });
 
-  ngOnDestroy() {
-    this.closeServiceDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => this.closeServiceDialog());
   }
 
   applySearchFilters() {

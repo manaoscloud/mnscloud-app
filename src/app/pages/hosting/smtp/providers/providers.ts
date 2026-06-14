@@ -1,6 +1,6 @@
 import {
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -99,12 +99,13 @@ type ProviderFormValue = {
   styleUrls: ['./providers.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingSmtpProvidersPage implements OnDestroy {
+export class HostingSmtpProvidersPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly providerDialog = viewChild<TemplateRef<unknown>>('providerDialog');
   readonly paginator = viewChild(MatPaginator);
@@ -202,12 +203,9 @@ export class HostingSmtpProvidersPage implements OnDestroy {
     return this.filteredProviders().slice(start, start + this.pageSize());
   });
 
-  ngOnInit() {
+  constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
+    this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
   refreshList() {

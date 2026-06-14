@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -158,12 +158,13 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   styleUrls: ['./tools.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingWebhostToolsPage implements OnDestroy {
+export class HostingWebhostToolsPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   readonly passwordDialog = viewChild<TemplateRef<unknown>>('passwordDialog');
@@ -344,13 +345,12 @@ export class HostingWebhostToolsPage implements OnDestroy {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.passwordDialogRef?.close();
+      this.stopDialogViewportObserver();
+    });
     void this.loadHosts();
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
-    this.passwordDialogRef?.close();
-    this.stopDialogViewportObserver();
   }
 
   refreshList() {

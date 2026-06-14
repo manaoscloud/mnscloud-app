@@ -2,8 +2,7 @@ import { NgClass, DatePipe } from '@angular/common';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
   Component,
-  OnDestroy,
-  OnInit,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -156,12 +155,13 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   styleUrls: ['./agents.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MonitoringAgentsPage implements OnInit, OnDestroy {
+export class MonitoringAgentsPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly agentDialog = viewChild<TemplateRef<unknown>>('agentDialog');
   readonly tokenDialog = viewChild<TemplateRef<unknown>>('tokenDialog');
@@ -271,12 +271,9 @@ export class MonitoringAgentsPage implements OnInit, OnDestroy {
     }
   });
 
-  ngOnInit() {
+  constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
+    this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
   refreshList() {

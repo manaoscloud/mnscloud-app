@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   DestroyRef,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -95,7 +94,7 @@ type WebhostHostFilters = {
   styleUrls: ['./hosts.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingWebhostHostsPage implements OnDestroy {
+export class HostingWebhostHostsPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
@@ -305,6 +304,10 @@ export class HostingWebhostHostsPage implements OnDestroy {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.stopDialogViewportObserver();
+    });
     this.filterForm.controls.customerUUID.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((customerUUID) => {
@@ -324,11 +327,6 @@ export class HostingWebhostHostsPage implements OnDestroy {
     void this.loadPlans();
     void this.loadCustomers();
     void this.loadDomains();
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
-    this.stopDialogViewportObserver();
   }
 
   refreshList() {

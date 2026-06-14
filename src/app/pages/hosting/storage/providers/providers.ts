@@ -1,7 +1,6 @@
 import {
   Component,
   DestroyRef,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -83,7 +82,7 @@ type ApiResponse<T> = {
   styleUrls: ['./providers.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingStorageProvidersPage implements OnDestroy {
+export class HostingStorageProvidersPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -204,7 +203,7 @@ export class HostingStorageProvidersPage implements OnDestroy {
     return this.filteredProviders().slice(start, start + this.pageSize());
   });
 
-  ngOnInit() {
+  constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.form.controls.provider.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -213,10 +212,7 @@ export class HostingStorageProvidersPage implements OnDestroy {
         this.applyProviderValidators(provider);
       });
     this.applyProviderValidators(this.form.controls.provider.value);
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
+    this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
   refreshList() {

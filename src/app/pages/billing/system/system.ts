@@ -1,8 +1,8 @@
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -125,13 +125,14 @@ export const BILLING_SYSTEM_IMPORTS = [
   styleUrls: ['./system.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BillingSystemPage implements AfterViewInit, OnDestroy {
+export class BillingSystemPage {
   private readonly billing = inject(BillingService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly i18n = inject(AppI18nService);
   private readonly parameters = inject(SystemParameterService);
+  private readonly destroyRef = inject(DestroyRef);
 
   section: BillingSystemSection = 'dashboard';
 
@@ -382,7 +383,7 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.error.set(error instanceof Error ? error.message : 'Failed to load billing data.');
   });
 
-  ngAfterViewInit() {
+  private readonly setupTables = afterNextRender(() => {
     this.productSource.paginator = this.productPaginator() ?? null;
     this.priceSource.paginator = this.pricePaginator() ?? null;
     this.subscriptionSource.paginator = this.subscriptionPaginator() ?? null;
@@ -394,10 +395,10 @@ export class BillingSystemPage implements AfterViewInit, OnDestroy {
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     void this.loadDefaultCurrency();
     this.refresh();
-  }
+  });
 
-  ngOnDestroy() {
-    this.closeActiveDialog();
+  constructor() {
+    this.destroyRef.onDestroy(() => this.closeActiveDialog());
   }
 
   refresh() {

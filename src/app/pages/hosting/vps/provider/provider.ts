@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   DestroyRef,
-  OnDestroy,
   TemplateRef,
   computed,
   effect,
@@ -74,7 +73,7 @@ import type {
   styleUrls: ['./provider.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingVpsProviderPage implements OnDestroy {
+export class HostingVpsProviderPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
@@ -240,6 +239,10 @@ export class HostingVpsProviderPage implements OnDestroy {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.stopDialogViewportObserver();
+    });
     this.applyProviderValidators(this.providerSelection(), false);
     this.providerForm.controls.provider.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -248,11 +251,6 @@ export class HostingVpsProviderPage implements OnDestroy {
         this.providerSelection.set(value);
         this.applyProviderValidators(value, !!this.editing());
       });
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
-    this.stopDialogViewportObserver();
   }
 
   refreshList() {

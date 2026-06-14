@@ -1,6 +1,6 @@
 import {
   Component,
-  OnDestroy,
+  DestroyRef,
   TemplateRef,
   computed,
   effect,
@@ -83,11 +83,12 @@ type HostingDnsProvider = {
   styleUrls: ['./providers.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingDnsProvidersPage implements OnDestroy {
+export class HostingDnsProvidersPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
 
@@ -167,13 +168,12 @@ export class HostingDnsProvidersPage implements OnDestroy {
     }
   });
 
-  ngOnInit() {
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeProviderDialog();
+      this.stopDialogViewportObserver();
+    });
     void this.loadCatalog();
-  }
-
-  ngOnDestroy() {
-    this.closeProviderDialog();
-    this.stopDialogViewportObserver();
   }
 
   refreshList() {

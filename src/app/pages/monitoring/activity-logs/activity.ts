@@ -1,7 +1,6 @@
 import { NgClass, DatePipe } from '@angular/common';
 import {
   Component,
-  OnInit,
   computed,
   effect,
   inject,
@@ -109,7 +108,7 @@ const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
   styleUrls: ['./activity.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MonitoringActivityLogsPage implements OnInit {
+export class MonitoringActivityLogsPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -197,7 +196,7 @@ export class MonitoringActivityLogsPage implements OnInit {
     }
   });
 
-  ngOnInit() {
+  constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
   }
 

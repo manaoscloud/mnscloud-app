@@ -5,7 +5,6 @@ import {
   computed,
   effect,
   inject,
-  OnInit,
   resource,
   signal,
   TemplateRef,
@@ -198,7 +197,7 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
   styleUrls: ['./cyber-security.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CyberSecurityPage implements OnInit {
+export class CyberSecurityPage {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
@@ -495,7 +494,7 @@ export class CyberSecurityPage implements OnInit {
     enabled: [1],
   });
 
-  ngOnInit() {
+  constructor() {
     this.decisionDataSource.sortingDataAccessor = (row, column) => {
       switch (column) {
         case 'server':

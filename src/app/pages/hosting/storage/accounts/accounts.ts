@@ -1,8 +1,6 @@
 import {
   Component,
   DestroyRef,
-  OnDestroy,
-  OnInit,
   TemplateRef,
   computed,
   effect,
@@ -94,7 +92,7 @@ type ApiResponse<T> = {
   styleUrls: ['./accounts.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HostingStorageAccountsPage implements OnInit, OnDestroy {
+export class HostingStorageAccountsPage {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -223,15 +221,12 @@ export class HostingStorageAccountsPage implements OnInit, OnDestroy {
     return this.filteredAccounts().slice(start, start + this.pageSize());
   });
 
-  ngOnInit() {
+  constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.form.controls.providerUuid.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((providerUuid) => this.syncSelectedProvider(providerUuid));
-  }
-
-  ngOnDestroy() {
-    this.closeDialog();
+    this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
   refreshList() {

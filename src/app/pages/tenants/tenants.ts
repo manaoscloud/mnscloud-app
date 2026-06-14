@@ -1,10 +1,9 @@
 import { DatePipe } from '@angular/common';
 import {
-  AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
+  DestroyRef,
   TemplateRef,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -88,11 +87,12 @@ type TenantsSnapshot = {
   styleUrl: './tenants.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
+export class SettingsTenantsPage {
   private readonly service = inject(TenantsService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly inviteDialog = viewChild<TemplateRef<unknown>>('inviteDialog');
   readonly myTenantsPaginator = viewChild<MatPaginator>('myTenantsPaginator');
@@ -150,7 +150,18 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
     role: ['USER', [Validators.required]],
   });
 
+  private readonly setupTables = afterNextRender(() => {
+    this.myTenantsSource.paginator = this.myTenantsPaginator() ?? null;
+    this.membersSource.paginator = this.membersPaginator() ?? null;
+    this.invitesSource.paginator = this.invitesPaginator() ?? null;
+    this.myTenantsSource.sort = this.myTenantsSort() ?? null;
+    this.membersSource.sort = this.membersSort() ?? null;
+    this.invitesSource.sort = this.invitesSort() ?? null;
+  });
+
   constructor() {
+    this.configureTables();
+    this.destroyRef.onDestroy(() => this.closeInviteDialog());
     effect(() => {
       const snapshot = this.tenantsResource.value();
       if (!snapshot) return;
@@ -162,23 +173,6 @@ export class SettingsTenantsPage implements OnInit, AfterViewInit, OnDestroy {
       this.invitesError.set(snapshot.invitesError);
       this.applyDataSources();
     });
-  }
-
-  ngOnInit() {
-    this.configureTables();
-  }
-
-  ngAfterViewInit() {
-    this.myTenantsSource.paginator = this.myTenantsPaginator() ?? null;
-    this.membersSource.paginator = this.membersPaginator() ?? null;
-    this.invitesSource.paginator = this.invitesPaginator() ?? null;
-    this.myTenantsSource.sort = this.myTenantsSort() ?? null;
-    this.membersSource.sort = this.membersSort() ?? null;
-    this.invitesSource.sort = this.invitesSort() ?? null;
-  }
-
-  ngOnDestroy() {
-    this.closeInviteDialog();
   }
 
   refreshList() {
