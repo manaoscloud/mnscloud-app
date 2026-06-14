@@ -11,8 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -62,12 +61,23 @@ type VpsInstanceFilters = {
   status: string;
 };
 
+type VpsInstanceFormModel = {
+  name: string;
+  customerUUID: string;
+  planUUID: string;
+  image: string;
+  sshKey: string;
+  notes: string;
+  status: string;
+  isActive: number;
+};
+
 @Component({
   selector: 'app-hosting-vps-instances',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -91,7 +101,6 @@ type VpsInstanceFilters = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingVpsInstancesPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
@@ -195,6 +204,7 @@ export class HostingVpsInstancesPage {
   readonly currentImage = signal('');
   readonly selectedInstanceUUIDs = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedInstanceUUIDs().size);
+  readonly isProvisionedEdit = signal(false);
 
   readonly displayedColumns = [
     'select',
@@ -210,21 +220,29 @@ export class HostingVpsInstancesPage {
     'actions',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    customerUUID: [''],
-    status: [''],
+  readonly filterFormModel = signal<VpsInstanceFilters>({
+    search: '',
+    customerUUID: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly instanceForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    customerUUID: ['', [Validators.required]],
-    planUUID: ['', [Validators.required]],
-    image: [''],
-    sshKey: [''],
-    notes: [''],
-    status: [''],
-    isActive: [1, [Validators.required]],
+  readonly instanceFormModel = signal<VpsInstanceFormModel>({
+    name: '',
+    customerUUID: '',
+    planUUID: '',
+    image: '',
+    sshKey: '',
+    notes: '',
+    status: '',
+    isActive: 1,
+  });
+  readonly instanceForm = createForm(this.instanceFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.customerUUID);
+    required(schema.planUUID);
+    required(schema.isActive);
   });
 
   readonly availableRegions = computed(() => this.catalog()?.regions ?? []);
@@ -281,16 +299,17 @@ export class HostingVpsInstancesPage {
       this.closeChangePlanDialog();
       this.stopDialogViewportObserver();
     });
-    this.instanceForm.controls.planUUID.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => this.applySelectedPlan(value));
-    this.instanceForm.controls.image.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => this.currentImage.set(value ?? ''));
     void this.loadProviders();
     void this.loadCustomers();
     void this.loadPlans();
   }
+
+  private readonly syncSelectedPlan = effect(() => {
+    this.applySelectedPlan(this.instanceFormModel().planUUID);
+  });
+  private readonly syncCurrentImage = effect(() => {
+    this.currentImage.set(this.instanceFormModel().image ?? '');
+  });
 
   refreshList() {
     void this.loadProviders();
@@ -300,7 +319,7 @@ export class HostingVpsInstancesPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedCustomerUUID.set(values.customerUUID);
     this.appliedStatus.set(values.status);
@@ -309,7 +328,7 @@ export class HostingVpsInstancesPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', customerUUID: '', status: '' });
+    this.filterFormModel.set({ search: '', customerUUID: '', status: '' });
     this.applyFilters();
   }
 
@@ -340,7 +359,7 @@ export class HostingVpsInstancesPage {
   }
 
   selectedPlan() {
-    const uuid = this.normalizeString(this.instanceForm.controls.planUUID.value);
+    const uuid = this.normalizeString(this.instanceFormModel().planUUID);
     if (!uuid) return null;
     return this.plans().find((plan) => plan.HvpUUID === uuid) ?? null;
   }
@@ -361,13 +380,13 @@ export class HostingVpsInstancesPage {
   }
 
   selectedCatalogLabel(controlName: 'image', options: VpsCatalogOption[]) {
-    const value = this.normalizeString(this.instanceForm.controls[controlName].value);
+    const value = this.normalizeString(this.instanceFormModel()[controlName]);
     if (!value) return '';
     return options.find((option) => option.id === value)?.label ?? value;
   }
 
   selectedImageLabel() {
-    const value = this.normalizeString(this.instanceForm.controls.image.value);
+    const value = this.normalizeString(this.instanceFormModel().image);
     if (!value) return '';
     const option = this.imageOptions().find((item) => item.id === value);
     if (!option) return value;
@@ -500,7 +519,7 @@ export class HostingVpsInstancesPage {
           HvrConfig: this.parseConfig<VpsProviderConfig>(item.HvrConfig),
         })),
       );
-      this.applySelectedPlan(this.instanceForm.controls.planUUID.value);
+      this.applySelectedPlan(this.instanceFormModel().planUUID);
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to load VPS providers.'));
     }
@@ -534,7 +553,7 @@ export class HostingVpsInstancesPage {
           HvpConfig: this.parseConfig<HostingVpsPlanConfig>(item.HvpConfig),
         })),
       );
-      this.applySelectedPlan(this.instanceForm.controls.planUUID.value);
+      this.applySelectedPlan(this.instanceFormModel().planUUID);
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to load VPS plans.'));
     }
@@ -596,7 +615,7 @@ export class HostingVpsInstancesPage {
     const image = config.providerImageId ?? legacyPlanImage;
     this.editing.set(item);
     this.activePlanUUID = item.HostingVpsPlanHvpUUID ?? '';
-    this.instanceForm.reset({
+    this.instanceFormModel.set({
       name: item.HviName,
       customerUUID: item.CustomerCusUUID ?? '',
       planUUID: item.HostingVpsPlanHvpUUID ?? '',
@@ -621,14 +640,13 @@ export class HostingVpsInstancesPage {
   }
 
   async submit(closeAfterSave = true) {
-    if (this.instanceForm.invalid) {
-      this.instanceForm.markAllAsTouched();
+    if (!this.instanceForm().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
     this.saving.set(true);
-    const values = this.instanceForm.getRawValue();
+    const values = this.instanceFormModel();
     const plan = this.plans().find((item) => item.HvpUUID === values.planUUID);
     if (!plan) {
       this.saving.set(false);
@@ -922,7 +940,7 @@ export class HostingVpsInstancesPage {
     const normalized = this.normalizeString(uuid);
     if (!normalized) {
       this.activePlanUUID = '';
-      this.instanceForm.controls.image.setValue('', { emitEvent: false });
+      this.instanceFormModel.update((current) => ({ ...current, image: '' }));
       this.currentImage.set('');
       this.catalog.set(null);
       this.catalogProviderUUID.set(null);
@@ -934,15 +952,15 @@ export class HostingVpsInstancesPage {
     this.activePlanUUID = normalized;
     this.currentRegion.set(plan.HvpRegion ?? '');
     this.currentSize.set(plan.HvpSize ?? '');
-    let selectedImage = this.normalizeString(this.instanceForm.controls.image.value);
+    let selectedImage = this.normalizeString(this.instanceFormModel().image);
     if (planChanged) {
       selectedImage = null;
-      this.instanceForm.controls.image.setValue('', { emitEvent: false });
+      this.instanceFormModel.update((current) => ({ ...current, image: '' }));
     }
     if (selectedImage) {
       this.currentImage.set(selectedImage);
     } else if (plan.HvpImage) {
-      this.instanceForm.controls.image.setValue(plan.HvpImage, { emitEvent: false });
+      this.instanceFormModel.update((current) => ({ ...current, image: plan.HvpImage ?? '' }));
       this.currentImage.set(plan.HvpImage);
     } else {
       this.currentImage.set('');
@@ -951,7 +969,7 @@ export class HostingVpsInstancesPage {
   }
 
   private buildConfigPayload(): HostingVpsInstanceConfig {
-    const values = this.instanceForm.getRawValue();
+    const values = this.instanceFormModel();
     const config: HostingVpsInstanceConfig = {};
     const sshKey = this.normalizeString(values.sshKey);
     const providerImageId = this.normalizeString(values.image);
@@ -1051,7 +1069,7 @@ export class HostingVpsInstancesPage {
   private resetForm() {
     this.activePlanUUID = '';
     this.setProvisionedEditControls(false);
-    this.instanceForm.reset({
+    this.instanceFormModel.set({
       name: '',
       customerUUID: '',
       planUUID: '',
@@ -1070,19 +1088,7 @@ export class HostingVpsInstancesPage {
   }
 
   private setProvisionedEditControls(isProvisioned: boolean) {
-    const controls = [
-      this.instanceForm.controls.planUUID,
-      this.instanceForm.controls.image,
-      this.instanceForm.controls.sshKey,
-      this.instanceForm.controls.status,
-    ];
-    for (const control of controls) {
-      if (isProvisioned) {
-        control.disable({ emitEvent: false });
-      } else {
-        control.enable({ emitEvent: false });
-      }
-    }
+    this.isProvisionedEdit.set(isProvisioned);
   }
 
   private resetPagination() {

@@ -15,19 +15,19 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
         <input
           matInput
           placeholder="Name, plan, provider, region, image or status"
-          formControlName="search"
+          [formField]="filterForm.search"
         />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Customer</mat-label>
-        <mat-select formControlName="customerUUID" (openedChange)="onCustomerOpened($event)">
+        <mat-select [formField]="filterForm.customerUUID" (openedChange)="onCustomerOpened($event)">
           <mat-option value="">All</mat-option>
           <mat-option
             class="select-search-option"
@@ -55,7 +55,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -268,10 +268,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="instanceForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="instanceForm.isActive">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -279,7 +279,11 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Plan</mat-label>
-                <mat-select formControlName="planUUID" (openedChange)="onPlanOpened($event)">
+                <mat-select
+                  [formField]="instanceForm.planUUID"
+                  [disabled]="isProvisionedEdit()"
+                  (openedChange)="onPlanOpened($event)"
+                >
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -307,7 +311,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Customer</mat-label>
                 <mat-select
-                  formControlName="customerUUID"
+                  [formField]="instanceForm.customerUUID"
                   (openedChange)="onCustomerOpened($event)"
                 >
                   <mat-option
@@ -339,7 +343,11 @@
               @if (imageOptions().length) {
                 <mat-form-field appearance="outline">
                   <mat-label>Image</mat-label>
-                  <mat-select formControlName="image" (openedChange)="onImageOpened($event)">
+                  <mat-select
+                    [formField]="instanceForm.image"
+                    [disabled]="isProvisionedEdit()"
+                    (openedChange)="onImageOpened($event)"
+                  >
                     <mat-select-trigger>{{ selectedImageLabel() }}</mat-select-trigger>
                     <mat-option
                       class="select-search-option"
@@ -390,7 +398,12 @@
               } @else {
                 <mat-form-field appearance="outline">
                   <mat-label>Image</mat-label>
-                  <input matInput formControlName="image" placeholder="ubuntu-22-04-x64" />
+                  <input
+                    matInput
+                    [formField]="instanceForm.image"
+                    [readonly]="isProvisionedEdit()"
+                    placeholder="ubuntu-22-04-x64"
+                  />
                 </mat-form-field>
               }
 
@@ -406,17 +419,27 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="web-app-01" />
+                <input matInput [formField]="instanceForm.name" placeholder="web-app-01" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>SSH Key</mat-label>
-                <input matInput formControlName="sshKey" placeholder="default-key" />
+                <input
+                  matInput
+                  [formField]="instanceForm.sshKey"
+                  [readonly]="isProvisionedEdit()"
+                  placeholder="default-key"
+                />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Runtime Status</mat-label>
-                <input matInput formControlName="status" placeholder="provisioning" />
+                <input
+                  matInput
+                  [formField]="instanceForm.status"
+                  [readonly]="isProvisionedEdit()"
+                  placeholder="provisioning"
+                />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -428,13 +451,13 @@
         </mat-tab>
         <mat-tab label="Notes">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="instanceForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Notes</mat-label>
                 <textarea
                   matInput
                   rows="6"
-                  formControlName="notes"
+                  [formField]="instanceForm.notes"
                   placeholder="Provisioned for marketing site"
                 ></textarea>
               </mat-form-field>
@@ -463,7 +486,7 @@
           color="primary"
           type="button"
           (click)="submit()"
-          [disabled]="saving()"
+          [disabled]="!instanceForm().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -475,7 +498,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="saving()"
+            [disabled]="!instanceForm().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
