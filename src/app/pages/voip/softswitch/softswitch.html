@@ -20,7 +20,7 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [value]="searchInput"
+          [value]="searchInput()"
           placeholder="Search Softswitch accounts"
           (input)="onSearchChange($any($event.target).value)"
         />
@@ -190,16 +190,16 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="softswitchForm" class="form-grid" (ngSubmit)="submit()" [formGroup]="form">
+            <form id="softswitchForm" class="form-grid" (ngSubmit)="submit()">
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Account name" />
+                <input matInput [formField]="form.name" placeholder="Account name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
                 <mat-select
-                  formControlName="providerUUID"
+                  [formField]="form.providerUUID"
                   (openedChange)="clearSelectSearch('provider', $event)"
                 >
                   <mat-option class="select-search-option">
@@ -207,7 +207,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search providers"
-                      [value]="providerSearch"
+                      [value]="providerSearch()"
                       (input)="setSelectSearch('provider', $any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -223,7 +223,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Server</mat-label>
                 <mat-select
-                  formControlName="serverUUID"
+                  [formField]="form.serverUUID"
                   (openedChange)="clearSelectSearch('server', $event)"
                 >
                   <mat-option class="select-search-option">
@@ -231,7 +231,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search servers"
-                      [value]="serverSearch"
+                      [value]="serverSearch()"
                       (input)="setSelectSearch('server', $any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -247,7 +247,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Customer</mat-label>
                 <mat-select
-                  formControlName="customerUUID"
+                  [formField]="form.customerUUID"
                   (openedChange)="clearSelectSearch('customer', $event)"
                 >
                   <mat-option class="select-search-option">
@@ -255,7 +255,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search customers"
-                      [value]="customerSearch"
+                      [value]="customerSearch()"
                       (input)="setSelectSearch('customer', $any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -271,7 +271,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Domain</mat-label>
                 <mat-select
-                  formControlName="domainUUID"
+                  [formField]="form.domainUUID"
                   (openedChange)="clearSelectSearch('domain', $event)"
                 >
                   <mat-option class="select-search-option">
@@ -279,7 +279,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search domains"
-                      [value]="domainSearch"
+                      [value]="domainSearch()"
                       (input)="setSelectSearch('domain', $any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -294,22 +294,22 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Base URL</mat-label>
-                <input matInput formControlName="baseUrl" placeholder="https://api.provider.com" />
+                <input matInput [formField]="form.baseUrl" placeholder="https://api.provider.com" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>API Key</mat-label>
-                <input matInput formControlName="apiKey" />
+                <input matInput [formField]="form.apiKey" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>API Secret</mat-label>
-                <input matInput formControlName="apiSecret" />
+                <input matInput [formField]="form.apiSecret" />
               </mat-form-field>
 
               <div class="toggle-row">
-                <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
-                <mat-slide-toggle formControlName="isDefault">Default</mat-slide-toggle>
+                <mat-slide-toggle [formField]="form.isActive">Active</mat-slide-toggle>
+                <mat-slide-toggle [formField]="form.isDefault">Default</mat-slide-toggle>
               </div>
             </form>
           </div>
@@ -325,7 +325,7 @@
           color="primary"
           type="submit"
           form="softswitchForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -337,7 +337,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="softswitchSaveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -355,7 +355,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewAccount()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

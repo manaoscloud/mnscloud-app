@@ -19,7 +19,7 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [value]="searchInput"
+          [value]="searchInput()"
           placeholder="Search subscribers"
           (input)="onSearchChange($any($event.target).value)"
         />
@@ -178,11 +178,11 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="subscriberForm" class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+            <form id="subscriberForm" class="form-grid" (ngSubmit)="submit()">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Softswitch</mat-label>
                 <mat-select
-                  formControlName="accountUUID"
+                  [formField]="form.accountUUID"
                   (openedChange)="clearAccountSearch($event)"
                 >
                   <mat-option class="select-search-option">
@@ -190,7 +190,7 @@
                       matInput
                       class="select-search-field"
                       placeholder="Search softswitch"
-                      [value]="accountSearch"
+                      [value]="accountSearch()"
                       (input)="setAccountSearch($any($event.target).value)"
                       (click)="$event.stopPropagation()"
                     />
@@ -204,44 +204,44 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Username</mat-label>
-                <input matInput formControlName="username" />
+                <input matInput [formField]="form.username" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Password</mat-label>
-                <input matInput formControlName="password" />
+                <input matInput [formField]="form.password" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Caller ID Name</mat-label>
-                <input matInput formControlName="callerIdName" />
+                <input matInput [formField]="form.callerIdName" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Caller ID Number</mat-label>
-                <input matInput formControlName="callerIdNumber" />
+                <input matInput [formField]="form.callerIdNumber" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Context</mat-label>
-                <input matInput formControlName="context" />
+                <input matInput [formField]="form.context" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Max Contacts</mat-label>
-                <input matInput type="number" formControlName="maxContacts" />
+                <input matInput type="number" [formField]="form.maxContacts" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Max Calls</mat-label>
-                <input matInput type="number" formControlName="maxConcurrentCalls" />
+                <input matInput type="number" [formField]="form.maxConcurrentCalls" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Outbound CID</mat-label>
-                <input matInput formControlName="outboundCid" />
+                <input matInput [formField]="form.outboundCid" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Codecs</mat-label>
-                <input matInput formControlName="codecs" />
+                <input matInput [formField]="form.codecs" />
               </mat-form-field>
               <div class="toggle-row span-2">
-                <mat-slide-toggle formControlName="registerEnabled">Register</mat-slide-toggle>
-                <mat-slide-toggle formControlName="recordCalls">Record</mat-slide-toggle>
-                <mat-slide-toggle formControlName="enabled">Active</mat-slide-toggle>
+                <mat-slide-toggle [formField]="form.registerEnabled">Register</mat-slide-toggle>
+                <mat-slide-toggle [formField]="form.recordCalls">Record</mat-slide-toggle>
+                <mat-slide-toggle [formField]="form.enabled">Active</mat-slide-toggle>
               </div>
             </form>
           </div>
@@ -256,7 +256,7 @@
           color="primary"
           type="submit"
           form="subscriberForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -268,7 +268,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="subscriberSaveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -285,7 +285,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNew()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

@@ -11,7 +11,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, min, required } from '@angular/forms/signals';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -49,7 +49,7 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatButtonModule,
@@ -77,7 +77,6 @@ export class VoipSoftswitchSubscriberPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipSoftswitchSubscriberService);
   private readonly accountApi = inject(VoipSoftswitchAccountService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -99,24 +98,19 @@ export class VoipSoftswitchSubscriberPage {
   ];
   readonly dataSource = new MatTableDataSource<VoipSoftswitchSubscriberItem>([]);
   readonly appliedSearch = signal('');
-  search = '';
-  searchInput = '';
-  accountSearch = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly accountSearch = signal('');
 
-  readonly form = this.fb.nonNullable.group({
-    accountUUID: ['', [Validators.required]],
-    username: ['', [Validators.required]],
-    password: ['', [Validators.required]],
-    callerIdName: [''],
-    callerIdNumber: [''],
-    context: ['default'],
-    maxContacts: [1, [Validators.required, Validators.min(1)]],
-    maxConcurrentCalls: [1, [Validators.required, Validators.min(1)]],
-    outboundCid: [''],
-    codecs: [''],
-    registerEnabled: [true],
-    recordCalls: [true],
-    enabled: [true],
+  readonly formModel = signal(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.accountUUID);
+    required(schema.username);
+    required(schema.password);
+    required(schema.maxContacts);
+    min(schema.maxContacts, 1);
+    required(schema.maxConcurrentCalls);
+    min(schema.maxConcurrentCalls, 1);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -177,17 +171,18 @@ export class VoipSoftswitchSubscriberPage {
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.appliedSearch.set(this.search);
+    const search = this.searchInput().trim();
+    this.search.set(search);
+    this.appliedSearch.set(search);
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     this.appliedSearch.set('');
   }
 
@@ -202,7 +197,7 @@ export class VoipSoftswitchSubscriberPage {
 
   editItem(item: VoipSoftswitchSubscriberItem) {
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       accountUUID: item.VoipSoftswitchAccountVssUUID,
       username: item.VsuUsername,
       password: item.VsuPassword,
@@ -221,11 +216,10 @@ export class VoipSoftswitchSubscriberPage {
   }
 
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload = { ...value };
     this.saving.set(true);
     this.error.set(null);
@@ -341,7 +335,7 @@ export class VoipSoftswitchSubscriberPage {
   }
 
   filteredAccounts() {
-    const value = this.accountSearch.trim().toLowerCase();
+    const value = this.accountSearch().trim().toLowerCase();
     if (!value) return this.accountOptions();
     return this.accountOptions().filter((item) =>
       [item.VssName, item.CustomerName, item.DomainName].some((field) =>
@@ -353,29 +347,15 @@ export class VoipSoftswitchSubscriberPage {
   }
 
   setAccountSearch(value: string) {
-    this.accountSearch = value;
+    this.accountSearch.set(value);
   }
 
   clearAccountSearch(opened: boolean) {
-    if (!opened) this.accountSearch = '';
+    if (!opened) this.accountSearch.set('');
   }
 
   private resetForm() {
-    this.form.reset({
-      accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
-      username: '',
-      password: '',
-      callerIdName: '',
-      callerIdNumber: '',
-      context: 'default',
-      maxContacts: 1,
-      maxConcurrentCalls: 1,
-      outboundCid: '',
-      codecs: '',
-      registerEnabled: true,
-      recordCalls: true,
-      enabled: true,
-    });
+    this.formModel.set(this.emptyFormModel());
     this.editing.set(null);
   }
 
@@ -432,5 +412,23 @@ export class VoipSoftswitchSubscriberPage {
       disableClose: true,
     });
     return Boolean(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private emptyFormModel() {
+    return {
+      accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
+      username: '',
+      password: '',
+      callerIdName: '',
+      callerIdNumber: '',
+      context: 'default',
+      maxContacts: 1,
+      maxConcurrentCalls: 1,
+      outboundCid: '',
+      codecs: '',
+      registerEnabled: true,
+      recordCalls: true,
+      enabled: true,
+    };
   }
 }

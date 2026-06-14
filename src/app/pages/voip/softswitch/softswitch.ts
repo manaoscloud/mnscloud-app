@@ -12,7 +12,12 @@ import {
   DestroyRef,
 } from '@angular/core';
 
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormField,
+  form as createForm,
+  minLength,
+  required,
+} from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -59,7 +64,7 @@ type CustomerOption = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatButtonModule,
@@ -90,7 +95,6 @@ export class VoipSoftswitchPage {
   private readonly providerApi = inject(VoipSoftswitchProviderService);
   private readonly serverApi = inject(VoipSoftswitchServerService);
   private readonly domainApi = inject(VoipDomainService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -109,8 +113,8 @@ export class VoipSoftswitchPage {
   readonly error = signal<string | null>(null);
   readonly editing = signal<VoipSoftswitchAccount | null>(null);
 
-  search = '';
-  searchInput = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
   readonly appliedSearch = signal('');
   readonly selectedAccountUUIDs = new Set<string>();
   readonly displayedColumns = [
@@ -129,37 +133,34 @@ export class VoipSoftswitchPage {
   readonly serverOptions = signal<VoipSoftswitchServerItem[]>([]);
   readonly domainOptions = signal<VoipDomainItem[]>([]);
   readonly customerOptions = signal<CustomerOption[]>([]);
-  providerSearch = '';
-  serverSearch = '';
-  domainSearch = '';
-  customerSearch = '';
+  readonly providerSearch = signal('');
+  readonly serverSearch = signal('');
+  readonly domainSearch = signal('');
+  readonly customerSearch = signal('');
   filteredProviders() {
-    return this.filterBy(this.providerOptions(), this.providerSearch, 'VspName');
+    return this.filterBy(this.providerOptions(), this.providerSearch(), 'VspName');
   }
 
   filteredServers() {
-    return this.filterBy(this.serverOptions(), this.serverSearch, 'VsrName');
+    return this.filterBy(this.serverOptions(), this.serverSearch(), 'VsrName');
   }
 
   filteredDomains() {
-    return this.filterBy(this.domainOptions(), this.domainSearch, 'VdmName');
+    return this.filterBy(this.domainOptions(), this.domainSearch(), 'VdmName');
   }
 
   filteredCustomers() {
-    return this.filterBy(this.customerOptions(), this.customerSearch, 'Name');
+    return this.filterBy(this.customerOptions(), this.customerSearch(), 'Name');
   }
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    providerUUID: ['', [Validators.required]],
-    serverUUID: ['', [Validators.required]],
-    customerUUID: ['', [Validators.required]],
-    domainUUID: ['', [Validators.required]],
-    baseUrl: [''],
-    apiKey: [''],
-    apiSecret: [''],
-    isActive: [true],
-    isDefault: [false],
+  readonly formModel = signal(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.providerUUID);
+    required(schema.serverUUID);
+    required(schema.customerUUID);
+    required(schema.domainUUID);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -249,17 +250,18 @@ export class VoipSoftswitchPage {
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.appliedSearch.set(this.search);
+    const search = this.searchInput().trim();
+    this.search.set(search);
+    this.appliedSearch.set(search);
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     this.appliedSearch.set('');
   }
 
@@ -273,12 +275,11 @@ export class VoipSoftswitchPage {
   }
 
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
 
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload = {
       name: value.name,
       providerUUID: value.providerUUID,
@@ -325,7 +326,7 @@ export class VoipSoftswitchPage {
   editAccount(item: VoipSoftswitchAccount) {
     const config = item.VssConfig as { baseUrl?: string } | null;
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       name: item.VssName,
       providerUUID: item.VoipSoftswitchProviderVspUUID,
       serverUUID: item.VoipSoftswitchServerVsrUUID ?? '',
@@ -463,26 +464,15 @@ export class VoipSoftswitchPage {
   }
 
   setSelectSearch(kind: 'provider' | 'server' | 'domain' | 'customer', value: string) {
-    this[`${kind}Search`] = value;
+    this.selectSearchSignal(kind).set(value);
   }
 
   clearSelectSearch(kind: 'provider' | 'server' | 'domain' | 'customer', opened: boolean) {
-    if (!opened) this[`${kind}Search`] = '';
+    if (!opened) this.selectSearchSignal(kind).set('');
   }
 
   private resetForm() {
-    this.form.reset({
-      name: '',
-      providerUUID: this.providerOptions()[0]?.VspUUID ?? '',
-      serverUUID: this.serverOptions()[0]?.VsrUUID ?? '',
-      customerUUID: this.customerOptions()[0]?.CustomerUUID ?? '',
-      domainUUID: this.domainOptions()[0]?.VdmUUID ?? '',
-      baseUrl: '',
-      apiKey: '',
-      apiSecret: '',
-      isActive: true,
-      isDefault: false,
-    });
+    this.formModel.set(this.emptyFormModel());
     this.editing.set(null);
   }
 
@@ -548,5 +538,33 @@ export class VoipSoftswitchPage {
   private messageFromError(error: unknown, fallback: string) {
     const err = error as { error?: { message?: string; error?: string }; message?: string };
     return err?.error?.message || err?.error?.error || err?.message || fallback;
+  }
+
+  private emptyFormModel() {
+    return {
+      name: '',
+      providerUUID: this.providerOptions()[0]?.VspUUID ?? '',
+      serverUUID: this.serverOptions()[0]?.VsrUUID ?? '',
+      customerUUID: this.customerOptions()[0]?.CustomerUUID ?? '',
+      domainUUID: this.domainOptions()[0]?.VdmUUID ?? '',
+      baseUrl: '',
+      apiKey: '',
+      apiSecret: '',
+      isActive: true,
+      isDefault: false,
+    };
+  }
+
+  private selectSearchSignal(kind: 'provider' | 'server' | 'domain' | 'customer') {
+    switch (kind) {
+      case 'provider':
+        return this.providerSearch;
+      case 'server':
+        return this.serverSearch;
+      case 'domain':
+        return this.domainSearch;
+      case 'customer':
+        return this.customerSearch;
+    }
   }
 }
