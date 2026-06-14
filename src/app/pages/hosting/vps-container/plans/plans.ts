@@ -11,8 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -57,12 +56,28 @@ type VpsContainerPlanFilters = {
   status: string;
 };
 
+type VpsContainerPlanFormModel = {
+  name: string;
+  provider: VpsContainerProvider;
+  providerUUID: string;
+  region: string;
+  size: string;
+  price: number;
+  setupFee: number;
+  cpu: number;
+  memoryMb: number;
+  diskGb: number;
+  transferGb: number;
+  notes: string;
+  isActive: number;
+};
+
 @Component({
   selector: 'app-hosting-vps-container-plans',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -86,7 +101,6 @@ type VpsContainerPlanFilters = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingVpsContainerPlansPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly parameters = inject(SystemParameterService);
@@ -161,26 +175,41 @@ export class HostingVpsContainerPlansPage {
     { value: 'incus', label: 'Incus' },
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    provider: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly planForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['incus' as VpsContainerProvider, [Validators.required]],
-    providerUUID: ['', [Validators.required]],
-    region: [''],
-    size: [''],
-    price: [0, [Validators.required, Validators.min(0)]],
-    setupFee: [0, [Validators.min(0)]],
-    cpu: [0, [Validators.min(0)]],
-    memoryMb: [0, [Validators.min(0)]],
-    diskGb: [0, [Validators.min(0)]],
-    transferGb: [0, [Validators.min(0)]],
-    notes: [''],
-    isActive: [1, [Validators.required]],
+  readonly planFormModel = signal<VpsContainerPlanFormModel>({
+    name: '',
+    provider: 'incus',
+    providerUUID: '',
+    region: '',
+    size: '',
+    price: 0,
+    setupFee: 0,
+    cpu: 0,
+    memoryMb: 0,
+    diskGb: 0,
+    transferGb: 0,
+    notes: '',
+    isActive: 1,
+  });
+  readonly planForm = createForm(this.planFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
+    required(schema.providerUUID);
+    required(schema.price);
+    min(schema.price, 0);
+    min(schema.setupFee, 0);
+    min(schema.cpu, 0);
+    min(schema.memoryMb, 0);
+    min(schema.diskGb, 0);
+    min(schema.transferGb, 0);
+    required(schema.isActive);
   });
 
   readonly availableRegions = computed(() => this.catalog()?.regions ?? []);
@@ -223,6 +252,19 @@ export class HostingVpsContainerPlansPage {
       this.snack.error(this.friendlyError(error, 'Failed to load VPS Container plans.'));
     }
   });
+  private readonly syncProviderSelection = effect(() => {
+    const uuid = this.planFormModel().providerUUID;
+    this.syncProviderFromProvider(uuid);
+    void this.loadProviderCatalog();
+  });
+  private readonly syncCurrentRegion = effect(() => {
+    this.currentRegion.set(this.planFormModel().region ?? '');
+  });
+  private readonly syncCurrentSize = effect(() => {
+    const size = this.planFormModel().size ?? '';
+    this.currentSize.set(size);
+    this.applySelectedSizeSpecs(size);
+  });
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -230,21 +272,6 @@ export class HostingVpsContainerPlansPage {
       this.stopDialogViewportObserver();
     });
     void this.loadDefaultCurrency();
-    this.planForm.controls.providerUUID.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((uuid) => {
-        this.syncProviderFromProvider(uuid);
-        void this.loadProviderCatalog();
-      });
-    this.planForm.controls.region.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => this.currentRegion.set(value ?? ''));
-    this.planForm.controls.size.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        this.currentSize.set(value ?? '');
-        this.applySelectedSizeSpecs(value);
-      });
     void this.loadProviders();
   }
 
@@ -280,13 +307,13 @@ export class HostingVpsContainerPlansPage {
   }
 
   selectedCatalogLabel(controlName: 'region' | 'size', options: VpsContainerCatalogOption[]) {
-    const value = this.normalizeString(this.planForm.controls[controlName].value);
+    const value = this.normalizeString(this.planFormModel()[controlName]);
     if (!value) return '';
     return options.find((option) => option.id === value)?.label ?? value;
   }
 
   selectedSizeLabel() {
-    const value = this.normalizeString(this.planForm.controls.size.value);
+    const value = this.normalizeString(this.planFormModel().size);
     if (!value) return '';
     const option = this.sizeOptions().find((item) => item.id === value);
     if (!option) return value;
@@ -397,7 +424,7 @@ export class HostingVpsContainerPlansPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedStatus.set(values.status);
     this.resetPagination();
@@ -406,7 +433,7 @@ export class HostingVpsContainerPlansPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', provider: '', status: '' });
+    this.filterFormModel.set({ search: '', provider: '', status: '' });
     this.appliedSearch.set('');
     this.appliedStatus.set('');
     this.providerFilter.set('');
@@ -433,7 +460,7 @@ export class HostingVpsContainerPlansPage {
         `${this.providerEndpoint()}/${uuid}/catalog`,
       );
       this.catalog.set(result?.data?.catalog ?? null);
-      this.applySelectedSizeSpecs(this.planForm.controls.size.value);
+      this.applySelectedSizeSpecs(this.planFormModel().size);
     } catch (error) {
       this.catalog.set(null);
       this.snack.error(this.friendlyError(error, 'Failed to load provider catalog.'));
@@ -455,7 +482,7 @@ export class HostingVpsContainerPlansPage {
     const providerUUID =
       this.providerById(item.HostingVpsContainerProviderHcpUUID)?.HcpUUID ??
       this.resolveProviderUUIDForProvider(item.HcnProvider);
-    this.planForm.reset({
+    this.planFormModel.set({
       name: item.HcnName,
       provider: item.HcnProvider,
       providerUUID,
@@ -483,14 +510,13 @@ export class HostingVpsContainerPlansPage {
   }
 
   async submit(closeAfterSave = true) {
-    if (this.planForm.invalid) {
-      this.planForm.markAllAsTouched();
+    if (!this.planForm().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
     this.saving.set(true);
-    const values = this.planForm.getRawValue();
+    const values = this.planFormModel();
     const providerRecord = this.providerById(values.providerUUID);
     if (!providerRecord) {
       this.saving.set(false);
@@ -642,7 +668,7 @@ export class HostingVpsContainerPlansPage {
   }
 
   private buildConfigPayload(): HostingVpsContainerPlanConfig {
-    const values = this.planForm.getRawValue();
+    const values = this.planFormModel();
     return {
       cpu: Number(values.cpu ?? 0) || null,
       memoryMb: Number(values.memoryMb ?? 0) || null,
@@ -670,7 +696,7 @@ export class HostingVpsContainerPlansPage {
   }
 
   private selectedSizeOption() {
-    const selected = this.normalizeString(this.planForm.controls.size.value);
+    const selected = this.normalizeString(this.planFormModel().size);
     if (!selected) return null;
     return this.sizeOptions().find((option) => option.id === selected) ?? null;
   }
@@ -693,7 +719,7 @@ export class HostingVpsContainerPlansPage {
     if (specs.diskGb !== null) patch.diskGb = specs.diskGb;
     if (!Object.keys(patch).length) return;
 
-    this.planForm.patchValue(patch, { emitEvent: false });
+    this.planFormModel.update((current) => ({ ...current, ...patch }));
   }
 
   private catalogNumber(value: unknown): number | null {
@@ -781,7 +807,7 @@ export class HostingVpsContainerPlansPage {
   }
 
   private resolveCatalogProviderUUID(): string | null {
-    const selected = this.normalizeString(this.planForm.controls.providerUUID.value);
+    const selected = this.normalizeString(this.planFormModel().providerUUID);
     if (selected) return selected;
     return null;
   }
@@ -795,7 +821,11 @@ export class HostingVpsContainerPlansPage {
   private syncProviderFromProvider(uuid: string | null | undefined) {
     const providerRecord = this.providerById(uuid);
     if (!providerRecord) return;
-    this.planForm.controls.provider.setValue(providerRecord.HcpProvider, { emitEvent: false });
+    if (this.planFormModel().provider === providerRecord.HcpProvider) return;
+    this.planFormModel.update((current) => ({
+      ...current,
+      provider: providerRecord.HcpProvider,
+    }));
   }
 
   private resolveProviderUUIDForProvider(provider: VpsContainerProvider): string {
@@ -810,7 +840,7 @@ export class HostingVpsContainerPlansPage {
   }
 
   private resetForm() {
-    this.planForm.reset({
+    this.planFormModel.set({
       name: '',
       provider: 'incus',
       providerUUID: '',

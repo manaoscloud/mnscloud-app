@@ -15,15 +15,22 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Name, provider, region or size" formControlName="search" />
+        <input
+          matInput
+          placeholder="Name, provider, region or size"
+          [formField]="filterForm.search"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Provider</mat-label>
-        <mat-select formControlName="provider" (openedChange)="onProviderFilterOpened($event)">
+        <mat-select
+          [formField]="filterForm.provider"
+          (openedChange)="onProviderFilterOpened($event)"
+        >
           <mat-option value="">All</mat-option>
           <mat-option
             class="select-search-option"
@@ -51,7 +58,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -202,10 +209,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="planForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="planForm.isActive">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -214,7 +221,7 @@
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
                 <mat-select
-                  formControlName="providerUUID"
+                  [formField]="planForm.providerUUID"
                   (openedChange)="onProviderOpened($event)"
                 >
                   <mat-option
@@ -245,12 +252,12 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="DO Basic 1GB" />
+                <input matInput [formField]="planForm.name" placeholder="DO Basic 1GB" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Price</mat-label>
-                <input matInput type="number" min="0" step="0.01" formControlName="price" />
+                <input matInput type="number" min="0" step="0.01" [formField]="planForm.price" />
               </mat-form-field>
             </form>
           </div>
@@ -258,11 +265,11 @@
 
         <mat-tab label="Config">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="planForm">
+            <form class="form-grid">
               @if (regionOptions().length) {
                 <mat-form-field appearance="outline">
                   <mat-label>Region</mat-label>
-                  <mat-select formControlName="region" (openedChange)="onRegionOpened($event)">
+                  <mat-select [formField]="planForm.region" (openedChange)="onRegionOpened($event)">
                     <mat-option
                       class="select-search-option"
                       [value]="null"
@@ -289,14 +296,14 @@
               } @else {
                 <mat-form-field appearance="outline">
                   <mat-label>Region</mat-label>
-                  <input matInput formControlName="region" placeholder="nyc3" />
+                  <input matInput [formField]="planForm.region" placeholder="nyc3" />
                 </mat-form-field>
               }
 
               @if (sizeOptions().length) {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Size / Bundle</mat-label>
-                  <mat-select formControlName="size" (openedChange)="onSizeOpened($event)">
+                  <mat-select [formField]="planForm.size" (openedChange)="onSizeOpened($event)">
                     <mat-select-trigger>{{ selectedSizeLabel() }}</mat-select-trigger>
                     <mat-option
                       class="select-search-option"
@@ -345,7 +352,7 @@
               } @else {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Size / Bundle</mat-label>
-                  <input matInput formControlName="size" placeholder="s-1vcpu-1gb" />
+                  <input matInput [formField]="planForm.size" placeholder="s-1vcpu-1gb" />
                 </mat-form-field>
               }
 
@@ -355,7 +362,7 @@
                   matInput
                   type="number"
                   min="0"
-                  formControlName="cpu"
+                  [formField]="planForm.cpu"
                   [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
@@ -366,7 +373,7 @@
                   matInput
                   type="number"
                   min="0"
-                  formControlName="memoryMb"
+                  [formField]="planForm.memoryMb"
                   [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
@@ -377,7 +384,7 @@
                   matInput
                   type="number"
                   min="0"
-                  formControlName="diskGb"
+                  [formField]="planForm.diskGb"
                   [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
@@ -388,7 +395,7 @@
                   matInput
                   type="number"
                   min="0"
-                  formControlName="transferGb"
+                  [formField]="planForm.transferGb"
                   [readonly]="selectedSizeHasCatalogSpecs()"
                 />
               </mat-form-field>
@@ -397,13 +404,13 @@
         </mat-tab>
         <mat-tab label="Notes">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="planForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Notes</mat-label>
                 <textarea
                   matInput
                   rows="6"
-                  formControlName="notes"
+                  [formField]="planForm.notes"
                   placeholder="Internal plan notes"
                 ></textarea>
               </mat-form-field>
@@ -432,7 +439,7 @@
           color="primary"
           type="button"
           (click)="submit()"
-          [disabled]="saving()"
+          [disabled]="!planForm().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -444,7 +451,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="saving()"
+            [disabled]="!planForm().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -458,7 +465,12 @@
         xPosition="before"
         yPosition="below"
       >
-        <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNew()"
+          [disabled]="!planForm().valid() || saving()"
+        >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
         </button>
