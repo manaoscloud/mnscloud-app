@@ -12,7 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -107,6 +107,16 @@ type AgentFilters = {
   status: string;
 };
 
+type AgentFormModel = {
+  agentUUID: string;
+  name: string;
+  hostname: string;
+  status: number;
+  capabilitiesText: string;
+  resourceType: string;
+  resourceUUID: string;
+};
+
 type MonitoringAgentsSnapshot = {
   agents: MonitoringAgent[];
   runtimeProducts: RuntimeProductFleet[];
@@ -131,7 +141,7 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   imports: [
     RefreshButtonComponent,
     ClipboardModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -158,7 +168,6 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
 export class MonitoringAgentsPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -227,20 +236,21 @@ export class MonitoringAgentsPage {
     'docker.manage',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    type: [''],
-    status: [''],
+  readonly filterFormModel = signal<AgentFilters>({ ...EMPTY_AGENT_FILTERS });
+  readonly agentFormModel = signal<AgentFormModel>({
+    agentUUID: '',
+    name: '',
+    hostname: '',
+    status: 1,
+    capabilitiesText: 'linux.status',
+    resourceType: '',
+    resourceUUID: '',
   });
 
-  readonly form = this.fb.nonNullable.group({
-    agentUUID: [''],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    hostname: [''],
-    status: [1],
-    capabilitiesText: ['linux.status'],
-    resourceType: [''],
-    resourceUUID: [''],
+  readonly filterForm = createForm(this.filterFormModel);
+  readonly form = createForm(this.agentFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
   });
 
   readonly filteredAgents = computed(() => this.sortRows(this.agents()));
@@ -323,7 +333,7 @@ export class MonitoringAgentsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ ...EMPTY_AGENT_FILTERS });
+    this.filterFormModel.set({ ...EMPTY_AGENT_FILTERS });
     this.pageIndex.set(0);
     this.appliedFilters.set({ ...EMPTY_AGENT_FILTERS });
   }
@@ -341,7 +351,7 @@ export class MonitoringAgentsPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.agentFormModel.set({
       agentUUID: '',
       name: '',
       hostname: '',
@@ -350,13 +360,12 @@ export class MonitoringAgentsPage {
       resourceType: '',
       resourceUUID: '',
     });
-    this.form.controls.agentUUID.enable();
     this.openDialog();
   }
 
   startEdit(row: MonitoringAgent) {
     this.editing.set(row);
-    this.form.reset({
+    this.agentFormModel.set({
       agentUUID: row.uuid,
       name: row.name ?? '',
       hostname: row.hostname ?? '',
@@ -365,7 +374,6 @@ export class MonitoringAgentsPage {
       resourceType: row.resourceType ?? '',
       resourceUUID: row.resourceUUID ?? '',
     });
-    this.form.controls.agentUUID.disable();
     this.openDialog();
   }
 
@@ -391,11 +399,8 @@ export class MonitoringAgentsPage {
   }
 
   async save(keepOpen = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const raw = this.form.getRawValue();
+    if (!this.form().valid()) return;
+    const raw = this.agentFormModel();
     const payload = {
       agentUUID: raw.agentUUID,
       name: raw.name.trim(),
@@ -749,7 +754,7 @@ export class MonitoringAgentsPage {
   }
 
   private normalizedFilters(): AgentFilters {
-    const value = this.filterForm.getRawValue();
+    const value = this.filterFormModel();
     return {
       search: value.search.trim(),
       type: value.type,

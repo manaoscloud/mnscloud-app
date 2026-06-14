@@ -15,15 +15,15 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput formControlName="search" placeholder="Name, UUID, host, resource" />
+        <input matInput [formField]="filterForm.search" placeholder="Name, UUID, host, resource" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Type</mat-label>
-        <mat-select formControlName="type">
+        <mat-select [formField]="filterForm.type">
           @for (option of typeOptions; track option) {
             <mat-option [value]="option">{{ option || 'All' }}</mat-option>
           }
@@ -32,7 +32,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           @for (option of statusOptions; track option) {
             <mat-option [value]="option">{{ option || 'All' }}</mat-option>
           }
@@ -286,10 +286,10 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Status' | transloco }}</mat-label>
-              <mat-select formControlName="status">
+              <mat-select [formField]="form.status">
                 <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
                 <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
               </mat-select>
@@ -299,19 +299,24 @@
               <mat-label>{{ 'Name' | transloco }}</mat-label>
               <input
                 matInput
-                formControlName="name"
+                [formField]="form.name"
                 [placeholder]="'e.g. Linux Agent 01' | transloco"
               />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Hostname' | transloco }}</mat-label>
-              <input matInput formControlName="hostname" autocomplete="off" />
+              <input matInput [formField]="form.hostname" autocomplete="off" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Agent UUID' | transloco }}</mat-label>
-              <input matInput formControlName="agentUUID" autocomplete="off" />
+              <input
+                matInput
+                [formField]="form.agentUUID"
+                [disabled]="!!editing()"
+                autocomplete="off"
+              />
               <mat-hint>{{
                 'Optional for new enrollments; the installer creates the UUID.' | transloco
               }}</mat-hint>
@@ -320,26 +325,26 @@
         </mat-tab>
 
         <mat-tab [label]="'Assignment' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Resource Type' | transloco }}</mat-label>
               <input
                 matInput
-                formControlName="resourceType"
+                [formField]="form.resourceType"
                 [placeholder]="'e.g. voip_pabx_server' | transloco"
               />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Resource UUID' | transloco }}</mat-label>
-              <input matInput formControlName="resourceUUID" autocomplete="off" />
+              <input matInput [formField]="form.resourceUUID" autocomplete="off" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>{{ 'Capabilities' | transloco }}</mat-label>
               <textarea
                 matInput
-                formControlName="capabilitiesText"
+                [formField]="form.capabilitiesText"
                 rows="4"
                 placeholder="linux.status&#10;security.nftables.manage&#10;security.crowdsec.manage"
               ></textarea>
@@ -367,7 +372,7 @@
           mat-flat-button
           color="primary"
           type="button"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
           (click)="save(false)"
         >
           <mat-icon>save</mat-icon>
@@ -380,7 +385,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -394,7 +399,7 @@
           mat-menu-item
           type="button"
           (click)="save(true)"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
