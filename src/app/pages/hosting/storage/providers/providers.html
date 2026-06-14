@@ -14,14 +14,14 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput formControlName="search" />
+        <input matInput [formField]="filterForm.search" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Provider</mat-label>
-        <mat-select formControlName="provider">
+        <mat-select [formField]="filterForm.provider">
           <mat-option value="">All</mat-option>
           @for (provider of providerOptions; track provider.value) {
             <mat-option [value]="provider.value">{{ provider.label }}</mat-option>
@@ -30,7 +30,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -194,24 +194,27 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="isActive">
+              <mat-select [formField]="form.isActive">
                 <mat-option [value]="1">Active</mat-option>
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Default provider</mat-label>
-              <mat-select formControlName="isDefault">
+              <mat-select [formField]="form.isDefault">
                 <mat-option [value]="1">Yes</mat-option>
                 <mat-option [value]="0">No</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Provider</mat-label>
-              <mat-select formControlName="provider">
+              <mat-select
+                [formField]="form.provider"
+                (selectionChange)="onProviderChange($event.value)"
+              >
                 @for (provider of providerOptions; track provider.value) {
                   <mat-option [value]="provider.value">{{ provider.label }}</mat-option>
                 }
@@ -219,27 +222,27 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Name</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput [formField]="form.name" />
             </mat-form-field>
           </form>
         </mat-tab>
         <mat-tab label="API">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             @if (selectedProvider() === 's3' || selectedProvider() === 'spaces') {
               <mat-form-field appearance="outline">
                 <mat-label>Region</mat-label>
-                <input matInput formControlName="region" placeholder="us-east-1" />
+                <input matInput [formField]="form.region" placeholder="us-east-1" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Access key</mat-label>
-                <input matInput formControlName="accessKeyId" autocomplete="off" />
+                <input matInput [formField]="form.accessKeyId" autocomplete="off" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Secret access</mat-label>
                 <input
                   matInput
                   type="password"
-                  formControlName="secretAccessKey"
+                  [formField]="form.secretAccessKey"
                   autocomplete="new-password"
                 />
               </mat-form-field>
@@ -247,7 +250,7 @@
                 <mat-label>Endpoint</mat-label>
                 <input
                   matInput
-                  formControlName="endpoint"
+                  [formField]="form.endpoint"
                   [placeholder]="
                     selectedProvider() === 'spaces'
                       ? 'https://nyc3.digitaloceanspaces.com'
@@ -257,7 +260,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Force path style</mat-label>
-                <mat-select formControlName="forcePathStyle">
+                <mat-select [formField]="form.forcePathStyle">
                   <mat-option [value]="true">Yes</mat-option>
                   <mat-option [value]="false">No</mat-option>
                 </mat-select>
@@ -267,18 +270,18 @@
             @if (selectedProvider() === 'gcs') {
               <mat-form-field appearance="outline">
                 <mat-label>Project ID</mat-label>
-                <input matInput formControlName="projectId" />
+                <input matInput [formField]="form.projectId" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Client email</mat-label>
-                <input matInput formControlName="clientEmail" autocomplete="off" />
+                <input matInput [formField]="form.clientEmail" autocomplete="off" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Private key</mat-label>
                 <textarea
                   matInput
                   rows="2"
-                  formControlName="privateKey"
+                  [formField]="form.privateKey"
                   autocomplete="new-password"
                 ></textarea>
               </mat-form-field>
@@ -287,14 +290,14 @@
             @if (selectedProvider() === 'azure') {
               <mat-form-field appearance="outline">
                 <mat-label>Account name</mat-label>
-                <input matInput formControlName="accountName" />
+                <input matInput [formField]="form.accountName" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Account key</mat-label>
                 <input
                   matInput
                   type="password"
-                  formControlName="accountKey"
+                  [formField]="form.accountKey"
                   autocomplete="new-password"
                 />
               </mat-form-field>
@@ -303,7 +306,7 @@
             @if (selectedProvider() === 'sangfor_scp') {
               <mat-form-field appearance="outline">
                 <mat-label>Mode</mat-label>
-                <mat-select formControlName="mode">
+                <mat-select [formField]="form.mode">
                   <mat-option value="scp_storage">SCP/HCI API</mat-option>
                   <mat-option value="s3_compatible">S3 compatible</mat-option>
                 </mat-select>
@@ -311,46 +314,46 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>API URL</mat-label>
-                <input matInput formControlName="apiUrl" placeholder="https://scp.example.com" />
+                <input matInput [formField]="form.apiUrl" placeholder="https://scp.example.com" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>API version</mat-label>
-                <input matInput formControlName="apiVersion" placeholder="v1" />
+                <input matInput [formField]="form.apiVersion" placeholder="v1" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Auth path</mat-label>
-                <input matInput formControlName="authPath" placeholder="/api/v1/auth/login" />
+                <input matInput [formField]="form.authPath" placeholder="/api/v1/auth/login" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Validate path</mat-label>
                 <input
                   matInput
-                  formControlName="validatePath"
+                  [formField]="form.validatePath"
                   placeholder="/api/v1/system/version"
                 />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Resource pool ID</mat-label>
-                <input matInput formControlName="resourcePoolId" />
+                <input matInput [formField]="form.resourcePoolId" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Storage pool ID</mat-label>
-                <input matInput formControlName="storagePoolId" />
+                <input matInput [formField]="form.storagePoolId" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Datastore ID</mat-label>
-                <input matInput formControlName="datastoreId" />
+                <input matInput [formField]="form.datastoreId" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Verify TLS</mat-label>
-                <mat-select formControlName="verifyTls">
+                <mat-select [formField]="form.verifyTls">
                   <mat-option [value]="true">Yes</mat-option>
                   <mat-option [value]="false">No</mat-option>
                 </mat-select>
@@ -358,18 +361,18 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Timeout seconds</mat-label>
-                <input matInput type="number" min="3" max="120" formControlName="timeoutSeconds" />
+                <input matInput type="number" min="3" max="120" [formField]="form.timeoutSeconds" />
               </mat-form-field>
 
-              @if (form.controls.mode.value === 's3_compatible') {
+              @if (formModel().mode === 's3_compatible') {
                 <mat-form-field appearance="outline">
                   <mat-label>Region</mat-label>
-                  <input matInput formControlName="region" placeholder="us-east-1" />
+                  <input matInput [formField]="form.region" placeholder="us-east-1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Access key</mat-label>
-                  <input matInput formControlName="accessKeyId" autocomplete="off" />
+                  <input matInput [formField]="form.accessKeyId" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -377,19 +380,23 @@
                   <input
                     matInput
                     type="password"
-                    formControlName="secretAccessKey"
+                    [formField]="form.secretAccessKey"
                     autocomplete="new-password"
                   />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Endpoint</mat-label>
-                  <input matInput formControlName="endpoint" placeholder="https://s3.example.com" />
+                  <input
+                    matInput
+                    [formField]="form.endpoint"
+                    placeholder="https://s3.example.com"
+                  />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Force path style</mat-label>
-                  <mat-select formControlName="forcePathStyle">
+                  <mat-select [formField]="form.forcePathStyle">
                     <mat-option [value]="true">Yes</mat-option>
                     <mat-option [value]="false">No</mat-option>
                   </mat-select>
@@ -401,15 +408,15 @@
                 <input
                   matInput
                   type="password"
-                  formControlName="apiToken"
+                  [formField]="form.apiToken"
                   autocomplete="new-password"
                 />
               </mat-form-field>
 
-              @if (form.controls.mode.value === 'scp_storage') {
+              @if (formModel().mode === 'scp_storage') {
                 <mat-form-field appearance="outline">
                   <mat-label>Access Key</mat-label>
-                  <input matInput formControlName="accessKeyId" autocomplete="off" />
+                  <input matInput [formField]="form.accessKeyId" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -417,7 +424,7 @@
                   <input
                     matInput
                     type="password"
-                    formControlName="secretAccessKey"
+                    [formField]="form.secretAccessKey"
                     autocomplete="new-password"
                   />
                 </mat-form-field>
@@ -425,7 +432,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Username</mat-label>
-                <input matInput formControlName="username" autocomplete="off" />
+                <input matInput [formField]="form.username" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -433,7 +440,7 @@
                 <input
                   matInput
                   type="password"
-                  formControlName="password"
+                  [formField]="form.password"
                   autocomplete="new-password"
                 />
               </mat-form-field>
@@ -441,14 +448,14 @@
           </form>
         </mat-tab>
         <mat-tab label="JSON">
-          <form class="tab-content form-grid" [formGroup]="form">
+          <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Additional config JSON</mat-label>
-              <textarea matInput rows="4" formControlName="configJson"></textarea>
+              <textarea matInput rows="4" [formField]="form.configJson"></textarea>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Additional credentials JSON</mat-label>
-              <textarea matInput rows="4" formControlName="credentialsJson"></textarea>
+              <textarea matInput rows="4" [formField]="form.credentialsJson"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
@@ -472,7 +479,7 @@
           color="primary"
           type="button"
           class="dialog-action-button save-main-button"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
           (click)="save(false)"
         >
           <mat-icon>save</mat-icon>
@@ -485,7 +492,7 @@
             type="button"
             class="save-more-button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
             matTooltip="More save actions"
           >
@@ -499,7 +506,7 @@
           mat-menu-item
           type="button"
           (click)="save(true)"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

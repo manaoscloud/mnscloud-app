@@ -10,8 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -55,12 +54,44 @@ type ApiResponse<T> = {
   data: T;
 };
 
+type StorageProviderFormValue = {
+  name: string;
+  provider: StorageProvider;
+  isActive: number;
+  isDefault: number;
+  region: string;
+  endpoint: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  projectId: string;
+  clientEmail: string;
+  privateKey: string;
+  accountName: string;
+  accountKey: string;
+  forcePathStyle: boolean;
+  mode: string;
+  apiUrl: string;
+  apiVersion: string;
+  authPath: string;
+  validatePath: string;
+  resourcePoolId: string;
+  storagePoolId: string;
+  datastoreId: string;
+  verifyTls: boolean;
+  timeoutSeconds: string;
+  username: string;
+  password: string;
+  apiToken: string;
+  configJson: string;
+  credentialsJson: string;
+};
+
 @Component({
   selector: 'app-hosting-storage-providers',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -84,7 +115,6 @@ type ApiResponse<T> = {
 })
 export class HostingStorageProvidersPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -123,11 +153,12 @@ export class HostingStorageProvidersPage {
     { value: 'sangfor_scp', label: 'Sangfor Technologies SCP/HCI' },
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    provider: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
   private readonly providersResource = resource({
     params: () => ({ endpoint: this.endpoint() }),
@@ -153,40 +184,45 @@ export class HostingStorageProvidersPage {
     this.snack.error(this.errorMessage(error, 'Failed to load storage providers.'));
   });
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['s3' as StorageProvider, [Validators.required]],
-    isActive: [1],
-    isDefault: [0],
-    region: [''],
-    endpoint: [''],
-    accessKeyId: [''],
-    secretAccessKey: [''],
-    projectId: [''],
-    clientEmail: [''],
-    privateKey: [''],
-    accountName: [''],
-    accountKey: [''],
-    forcePathStyle: [false],
-    mode: ['scp_storage'],
-    apiUrl: [''],
-    apiVersion: [''],
-    authPath: [''],
-    validatePath: [''],
-    resourcePoolId: [''],
-    storagePoolId: [''],
-    datastoreId: [''],
-    verifyTls: [true],
-    timeoutSeconds: [''],
-    username: [''],
-    password: [''],
-    apiToken: [''],
-    configJson: [''],
-    credentialsJson: [''],
+  readonly formModel = signal<StorageProviderFormValue>({
+    name: '',
+    provider: 's3',
+    isActive: 1,
+    isDefault: 0,
+    region: '',
+    endpoint: '',
+    accessKeyId: '',
+    secretAccessKey: '',
+    projectId: '',
+    clientEmail: '',
+    privateKey: '',
+    accountName: '',
+    accountKey: '',
+    forcePathStyle: false,
+    mode: 'scp_storage',
+    apiUrl: '',
+    apiVersion: '',
+    authPath: '',
+    validatePath: '',
+    resourcePoolId: '',
+    storagePoolId: '',
+    datastoreId: '',
+    verifyTls: true,
+    timeoutSeconds: '',
+    username: '',
+    password: '',
+    apiToken: '',
+    configJson: '',
+    credentialsJson: '',
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
   });
 
   readonly filteredProviders = computed(() => {
-    const { search, provider, status } = this.filterForm.getRawValue();
+    const { search, provider, status } = this.filterFormModel();
     const term = search.trim().toLowerCase();
     const rows = this.providers().filter((item) => {
       const matchesTerm =
@@ -205,13 +241,6 @@ export class HostingStorageProvidersPage {
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.form.controls.provider.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((provider) => {
-        this.selectedProvider.set(provider);
-        this.applyProviderValidators(provider);
-      });
-    this.applyProviderValidators(this.form.controls.provider.value);
     this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
@@ -225,7 +254,7 @@ export class HostingStorageProvidersPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', provider: '', status: '' });
+    this.filterFormModel.set({ search: '', provider: '', status: '' });
     this.pageIndex.set(0);
     this.reconcileSelection();
   }
@@ -243,7 +272,7 @@ export class HostingStorageProvidersPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       name: '',
       provider: 's3',
       isActive: 1,
@@ -275,14 +304,13 @@ export class HostingStorageProvidersPage {
       credentialsJson: '',
     });
     this.selectedProvider.set('s3');
-    this.applyProviderValidators('s3');
     this.openDialog();
   }
 
   startEdit(item: HostingStorageProvider) {
     this.editing.set(item);
     const config = this.asRecord(item.HspConfig);
-    this.form.reset({
+    this.formModel.set({
       name: item.HspName,
       provider: item.HspProvider,
       isActive: item.HspIsActive ? 1 : 0,
@@ -332,7 +360,6 @@ export class HostingStorageProvidersPage {
       credentialsJson: '',
     });
     this.selectedProvider.set(item.HspProvider);
-    this.applyProviderValidators(item.HspProvider);
     this.openDialog();
   }
 
@@ -364,12 +391,11 @@ export class HostingStorageProvidersPage {
   }
 
   async save(keepOpen = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
 
-    const raw = this.form.getRawValue();
+    const raw = this.formModel();
     let extraConfig: Record<string, unknown> = {};
     let extraCredentials: Record<string, unknown> = {};
     try {
@@ -425,7 +451,7 @@ export class HostingStorageProvidersPage {
       this.providersResource.reload();
       if (keepOpen && !editing) {
         this.editing.set(null);
-        this.form.reset({
+        this.formModel.set({
           name: '',
           provider: 's3',
           isActive: 1,
@@ -457,7 +483,6 @@ export class HostingStorageProvidersPage {
           credentialsJson: '',
         });
         this.selectedProvider.set('s3');
-        this.applyProviderValidators('s3');
       } else {
         this.closeDialog();
       }
@@ -551,44 +576,12 @@ export class HostingStorageProvidersPage {
     return value === 1 ? 'Active' : 'Inactive';
   }
 
-  private applyProviderValidators(provider: StorageProvider) {
-    const requiredByProvider: Record<StorageProvider, string[]> = {
-      s3: ['region', 'accessKeyId', 'secretAccessKey'],
-      spaces: ['region', 'accessKeyId', 'secretAccessKey'],
-      gcs: ['projectId', 'clientEmail', 'privateKey'],
-      azure: ['accountName', 'accountKey'],
-      sangfor_scp: ['apiUrl'],
-    };
-    const optionalFields = [
-      'region',
-      'endpoint',
-      'accessKeyId',
-      'secretAccessKey',
-      'projectId',
-      'clientEmail',
-      'privateKey',
-      'accountName',
-      'accountKey',
-      'apiUrl',
-      'apiToken',
-      'username',
-      'password',
-    ] as const;
-
-    for (const field of optionalFields) {
-      const control = this.form.controls[field];
-      control.clearValidators();
-      if (!this.editing() && requiredByProvider[provider].includes(field)) {
-        control.setValidators([Validators.required]);
-      }
-      control.updateValueAndValidity({ emitEvent: false });
-    }
+  onProviderChange(provider: StorageProvider) {
+    this.selectedProvider.set(provider);
+    this.formModel.update((current) => ({ ...current, provider }));
   }
 
-  private providerConfigFromForm(
-    provider: StorageProvider,
-    raw: ReturnType<typeof this.form.getRawValue>,
-  ) {
+  private providerConfigFromForm(provider: StorageProvider, raw: StorageProviderFormValue) {
     if (provider === 's3' || provider === 'spaces') {
       return {
         region: raw.region,
@@ -630,10 +623,7 @@ export class HostingStorageProvidersPage {
     };
   }
 
-  private providerCredentialsFromForm(
-    provider: StorageProvider,
-    raw: ReturnType<typeof this.form.getRawValue>,
-  ) {
+  private providerCredentialsFromForm(provider: StorageProvider, raw: StorageProviderFormValue) {
     if (provider === 's3' || provider === 'spaces') {
       return { secretAccessKey: raw.secretAccessKey };
     }
