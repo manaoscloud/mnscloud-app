@@ -19,7 +19,7 @@
     <div class="filter-grid dashboard-filters">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Period' | transloco }}</mat-label>
-        <mat-select [ngModel]="period()" (ngModelChange)="period.set($event)">
+        <mat-select [value]="period()" (selectionChange)="period.set($event.value)">
           @for (option of periodOptions; track option.value) {
             <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
           }
@@ -29,8 +29,8 @@
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Server' | transloco }}</mat-label>
         <mat-select
-          [ngModel]="serverUUID()"
-          (ngModelChange)="serverUUID.set($event)"
+          [value]="serverUUID()"
+          (selectionChange)="serverUUID.set($event.value)"
           (openedChange)="onServerSelectOpened($event)"
         >
           <mat-option value="">{{ 'All' | transloco }}</mat-option>
@@ -39,9 +39,8 @@
               class="select-search-field"
               matInput
               [placeholder]="'Search WebRTC server' | transloco"
-              [ngModel]="serverSearch()"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="serverSearch.set($event)"
+              [value]="serverSearch()"
+              (input)="serverSearch.set($any($event.target).value)"
               (click)="$event.stopPropagation()"
               (keydown)="$event.stopPropagation()"
             />
@@ -55,8 +54,8 @@
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Domain' | transloco }}</mat-label>
         <mat-select
-          [ngModel]="domainUUID()"
-          (ngModelChange)="domainUUID.set($event)"
+          [value]="domainUUID()"
+          (selectionChange)="domainUUID.set($event.value)"
           (openedChange)="onDomainSelectOpened($event)"
         >
           <mat-option value="">{{ 'All' | transloco }}</mat-option>
@@ -65,9 +64,8 @@
               class="select-search-field"
               matInput
               [placeholder]="'Search WebRTC domain' | transloco"
-              [ngModel]="domainSearch()"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="domainSearch.set($event)"
+              [value]="domainSearch()"
+              (input)="domainSearch.set($any($event.target).value)"
               (click)="$event.stopPropagation()"
               (keydown)="$event.stopPropagation()"
             />

@@ -13,7 +13,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -208,8 +207,6 @@ const CONFIGS: Record<SbcResource, Config> = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -234,7 +231,6 @@ const CONFIGS: Record<SbcResource, Config> = {
 })
 export class VoipSbcPage {
   private readonly api = inject(VoipSbcService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -249,13 +245,17 @@ export class VoipSbcPage {
   readonly editing = signal<SbcRecord | null>(null);
   readonly selected = new Set<string>();
   private readonly appliedSearch = signal('');
-  searchInput = '';
-  search = '';
+  readonly searchInput = signal('');
+  readonly search = signal('');
   readonly dataSource = new MatTableDataSource<SbcRecord>([]);
   readonly displayedColumns = computed(() => ['select', ...this.config().columns, 'actions']);
   readonly lookups: Record<LookupKey, LookupOption[]> = { providers: [], servers: [], trunks: [] };
-  readonly lookupSearch: Record<LookupKey, string> = { providers: '', servers: '', trunks: '' };
-  form = this.fb.group({});
+  readonly lookupSearch = signal<Record<LookupKey, string>>({
+    providers: '',
+    servers: '',
+    trunks: '',
+  });
+  readonly formModel = signal<Record<string, any>>({});
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
@@ -296,8 +296,8 @@ export class VoipSbcPage {
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       this.currentResource.set((data['resource'] ?? 'providers') as SbcResource);
       this.currentScopeMaster.set(data['scope'] === 'master');
-      this.searchInput = '';
-      this.search = '';
+      this.searchInput.set('');
+      this.search.set('');
       this.dataSource.filter = '';
       this.selected.clear();
       if (this.viewReady) this.recordsResource.reload();
@@ -354,14 +354,15 @@ export class VoipSbcPage {
     this.recordsResource.reload();
   }
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.dataSource.filter = this.search.toLowerCase();
+    const nextSearch = this.searchInput().trim();
+    this.search.set(nextSearch);
+    this.dataSource.filter = nextSearch.toLowerCase();
     this.paginator()?.firstPage();
-    this.appliedSearch.set(this.search);
+    this.appliedSearch.set(nextSearch);
   }
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     this.dataSource.filter = '';
     this.paginator()?.firstPage();
     this.appliedSearch.set('');
@@ -392,14 +393,16 @@ export class VoipSbcPage {
     );
   }
   filteredLookup(key: LookupKey) {
-    const term = this.lookupSearch[key].trim().toLowerCase();
+    const term = this.lookupSearch()[key].trim().toLowerCase();
     if (!term) return this.lookups[key];
     return this.lookups[key].filter((option) =>
       `${option.label} ${option.value}`.toLowerCase().includes(term),
     );
   }
   clearLookupSearch(opened: boolean, key: LookupKey) {
-    if (!opened) this.lookupSearch[key] = '';
+    if (!opened) {
+      this.lookupSearch.update((value) => ({ ...value, [key]: '' }));
+    }
   }
   hasTextareaFields() {
     return this.config().fields.some((field) => field.type === 'textarea');
@@ -410,10 +413,11 @@ export class VoipSbcPage {
       : 'Config';
   }
   buildForm(row?: SbcRecord | null) {
-    const group: Record<string, any> = {};
-    for (const f of this.config().fields)
-      group[f.key] = [this.valueForField(f.key, row), f.required ? [Validators.required] : []];
-    this.form = this.fb.group(group);
+    const nextValue: Record<string, any> = {};
+    for (const field of this.config().fields) {
+      nextValue[field.key] = this.valueForField(field.key, row);
+    }
+    this.formModel.set(nextValue);
   }
   valueForField(key: string, row?: SbcRecord | null) {
     if (!row) return key === 'status' ? 'active' : '';
@@ -479,7 +483,7 @@ export class VoipSbcPage {
     this.saving.set(false);
   }
   payload() {
-    const raw = this.form.getRawValue() as Record<string, any>;
+    const raw = this.formModel();
     const p: Record<string, any> = { ...raw, status: raw['status'] === 'inactive' ? 0 : 1 };
     if (raw['configJson']) {
       try {
@@ -492,10 +496,7 @@ export class VoipSbcPage {
     return p;
   }
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (!this.isFormValid()) return;
     this.saving.set(true);
     try {
       const row = this.editing();
@@ -518,6 +519,27 @@ export class VoipSbcPage {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  fieldValue(key: string) {
+    return this.formModel()[key] ?? '';
+  }
+
+  setFieldValue(key: string, value: any) {
+    this.formModel.update((current) => ({ ...current, [key]: value }));
+  }
+
+  setLookupSearch(key: LookupKey, value: string) {
+    this.lookupSearch.update((current) => ({ ...current, [key]: value }));
+  }
+
+  isFormValid() {
+    const model = this.formModel();
+    return this.config().fields.every((field) => {
+      if (!field.required) return true;
+      const value = model[field.key];
+      return value !== undefined && value !== null && String(value).trim() !== '';
+    });
   }
   async remove(row: SbcRecord) {
     const ok = await firstValueFrom(
