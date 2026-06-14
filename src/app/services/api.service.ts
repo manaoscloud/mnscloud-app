@@ -120,7 +120,7 @@ export class ApiService {
       .post<T>(this.url(endpoint), body, {
         headers: this.getHeaders(endpoint, true),
         observe: 'events',
-        reportProgress: true,
+        reportUploadProgress: true,
       })
       .pipe(
         map((event): FileUploadProgress<T> => {
