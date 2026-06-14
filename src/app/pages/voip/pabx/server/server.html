@@ -21,7 +21,8 @@
         <input
           matInput
           placeholder="Name, hostname, IP"
-          [(ngModel)]="searchInput"
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
           (keydown.enter)="applySearchFilters()"
         />
       </mat-form-field>
@@ -234,13 +235,13 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <form id="voipPabxServerForm" [formGroup]="form" (ngSubmit)="save()">
+      <form id="voipPabxServerForm" (ngSubmit)="save()">
         <mat-tab-group class="form-tabs" animationDuration="150ms">
           <mat-tab [label]="'Record' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="form.status">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -248,7 +249,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Engine</mat-label>
-                <mat-select formControlName="engine">
+                <mat-select [formField]="form.engine">
                   <mat-option value="freeswitch">FreeSWITCH</mat-option>
                   <mat-option value="asterisk">Asterisk</mat-option>
                 </mat-select>
@@ -256,7 +257,7 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" autocomplete="off" />
+                <input matInput [formField]="form.name" autocomplete="off" />
               </mat-form-field>
             </div>
           </mat-tab>
@@ -265,32 +266,32 @@
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Hostname</mat-label>
-                <input matInput formControlName="hostname" autocomplete="off" />
+                <input matInput [formField]="form.hostname" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Public IPv4</mat-label>
-                <input matInput formControlName="publicIPv4" autocomplete="off" />
+                <input matInput [formField]="form.publicIPv4" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Public IPv6</mat-label>
-                <input matInput formControlName="publicIPv6" autocomplete="off" />
+                <input matInput [formField]="form.publicIPv6" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Private IPv4</mat-label>
-                <input matInput formControlName="privateIPv4" autocomplete="off" />
+                <input matInput [formField]="form.privateIPv4" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Private IPv6</mat-label>
-                <input matInput formControlName="privateIPv6" autocomplete="off" />
+                <input matInput [formField]="form.privateIPv6" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Base URL</mat-label>
-                <input matInput formControlName="baseUrl" autocomplete="off" />
+                <input matInput [formField]="form.baseUrl" autocomplete="off" />
               </mat-form-field>
             </div>
           </mat-tab>
@@ -299,7 +300,7 @@
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Node UUID</mat-label>
-                <input matInput formControlName="nodeUUID" autocomplete="off" />
+                <input matInput [formField]="form.nodeUUID" autocomplete="off" />
                 <mat-hint>Used by Agent provisioning to bind this PABX server.</mat-hint>
               </mat-form-field>
             </div>
@@ -309,7 +310,7 @@
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Remote command executor</mat-label>
-                <mat-select formControlName="remoteCommandExecutor">
+                <mat-select [formField]="form.remoteCommandExecutor">
                   <mat-option value="">Tenant default</mat-option>
                   <mat-option value="agent">Agent</mat-option>
                   <mat-option value="esl_ami">ESL/AMI</mat-option>
@@ -319,17 +320,17 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Control Host</mat-label>
-                <input matInput formControlName="controlHost" autocomplete="off" />
+                <input matInput [formField]="form.controlHost" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Control Port</mat-label>
-                <input matInput type="number" formControlName="controlPort" autocomplete="off" />
+                <input matInput type="number" [formField]="form.controlPort" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Control Username</mat-label>
-                <input matInput formControlName="controlUsername" autocomplete="off" />
+                <input matInput [formField]="form.controlUsername" autocomplete="off" />
                 <mat-hint>Asterisk AMI usa usuario. FreeSWITCH ESL pode ficar vazio.</mat-hint>
               </mat-form-field>
 
@@ -338,7 +339,7 @@
                 <input
                   matInput
                   type="password"
-                  formControlName="controlSecret"
+                  [formField]="form.controlSecret"
                   autocomplete="new-password"
                 />
                 <mat-hint>
@@ -352,7 +353,7 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Allowed IPs</mat-label>
-                <input matInput formControlName="controlAllowedIps" autocomplete="off" />
+                <input matInput [formField]="form.controlAllowedIps" autocomplete="off" />
                 <mat-hint>Lista separada por virgula. Ex.: 168.0.230.247/32</mat-hint>
               </mat-form-field>
             </div>
@@ -362,7 +363,7 @@
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Notes</mat-label>
-                <textarea matInput rows="6" formControlName="notes"></textarea>
+                <textarea matInput rows="6" [formField]="form.notes"></textarea>
               </mat-form-field>
             </div>
           </mat-tab>
@@ -378,7 +379,7 @@
           color="primary"
           type="submit"
           form="voipPabxServerForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -390,7 +391,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             aria-label="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -403,7 +404,7 @@
           mat-menu-item
           type="button"
           (click)="save(true)"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

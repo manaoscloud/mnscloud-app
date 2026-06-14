@@ -1,5 +1,4 @@
-import {
-  DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
   Component,
@@ -12,7 +11,7 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -66,8 +65,7 @@ type ServerPayload = {
   imports: [
     RefreshButtonComponent,
     ClipboardModule,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -94,7 +92,6 @@ type ServerPayload = {
 export class VoipPabxServerPage {
   private readonly api = inject(VoipPabxServerService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
 
   readonly dataSource = new MatTableDataSource<VoipPabxServerItem>([]);
@@ -116,8 +113,8 @@ export class VoipPabxServerPage {
   readonly validatingIds = signal<Set<string>>(new Set());
   readonly generatedInstall = signal<Record<string, unknown> | null>(null);
 
-  search = '';
-  searchInput = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
   private dialogBinding: CrudDialogBinding | null = null;
   private dialogRef: MatDialogRef<unknown> | null = null;
   private lastLoadError = '';
@@ -130,24 +127,11 @@ export class VoipPabxServerPage {
 
   readonly loading = this.serversResource.isLoading;
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', Validators.required],
-    nodeUUID: [''],
-    engine: ['freeswitch', Validators.required],
-    hostname: [''],
-    publicIPv4: [''],
-    publicIPv6: [''],
-    privateIPv4: [''],
-    privateIPv6: [''],
-    baseUrl: [''],
-    controlHost: [''],
-    controlPort: [null as number | null],
-    controlUsername: [''],
-    controlSecret: [''],
-    controlAllowedIps: [''],
-    remoteCommandExecutor: [''],
-    notes: [''],
-    status: [1, Validators.required],
+  readonly formModel = signal<ServerPayload>(this.emptyFormValue());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    required(schema.engine);
+    required(schema.status);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -205,7 +189,6 @@ export class VoipPabxServerPage {
     if (sort) this.dataSource.sort = sort;
     const paginator = this.paginator();
     if (paginator) this.dataSource.paginator = paginator;
-  
   });
 
   get selectedCount() {
@@ -217,19 +200,19 @@ export class VoipPabxServerPage {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
+    this.search.set(this.searchInput().trim());
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
-    if (this.appliedSearch() === this.search) {
+    if (this.appliedSearch() === this.search()) {
       this.serversResource.reload();
     } else {
-      this.appliedSearch.set(this.search);
+      this.appliedSearch.set(this.search());
     }
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     const paginator = this.paginator();
     if (paginator) paginator.firstPage();
     if (this.appliedSearch() === '') {
@@ -241,13 +224,13 @@ export class VoipPabxServerPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset(this.emptyFormValue());
+    this.formModel.set(this.emptyFormValue());
     this.openDialog();
   }
 
   startEdit(row: VoipPabxServerItem) {
     this.editing.set(row);
-    this.form.reset({
+    this.formModel.set({
       name: row.VpsName || '',
       nodeUUID: row.VpsNodeUUID || '',
       engine: row.VpsEngine || 'freeswitch',
@@ -270,7 +253,7 @@ export class VoipPabxServerPage {
   }
 
   async save(createAnother = false) {
-    if (this.form.invalid || this.saving()) return;
+    if (!this.form().valid() || this.saving()) return;
     this.saving.set(true);
     const payload = this.normalizedPayload();
     try {
@@ -289,7 +272,7 @@ export class VoipPabxServerPage {
 
       this.serversResource.reload();
       if (createAnother && !editing) {
-        this.form.reset(this.emptyFormValue());
+        this.formModel.set(this.emptyFormValue());
         return;
       }
       this.closeDialog();
@@ -548,7 +531,7 @@ export class VoipPabxServerPage {
   }
 
   private normalizedPayload(): ServerPayload {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     return {
       name: value.name.trim(),
       nodeUUID: value.nodeUUID.trim(),
