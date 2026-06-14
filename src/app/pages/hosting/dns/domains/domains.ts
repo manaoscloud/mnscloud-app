@@ -209,15 +209,15 @@ export class HostingDnsDomainsPage {
       this.closeDomainDialog();
       this.stopDialogViewportObserver();
     });
-    void this.loadCustomers();
-    void this.loadDomainProviders();
+    void this.fetchCustomers();
+    void this.fetchDomainProviders();
   }
 
   refreshList() {
     this.domainsResource.reload();
   }
 
-  async loadDomainProviders() {
+  async fetchDomainProviders() {
     try {
       const response = await this.api.get<{ data?: { items?: DomainProviderOption[] } }>(
         'hosting/dns/providers?status=1&limit=500&offset=0',
@@ -228,7 +228,7 @@ export class HostingDnsDomainsPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     try {
       const response = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
         'erp/customers?status=1&limit=500&offset=0',

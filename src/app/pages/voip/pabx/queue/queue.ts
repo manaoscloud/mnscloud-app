@@ -259,7 +259,7 @@ export class VoipPabxQueuePage {
       enabled: item.VpqEnabled === 1,
     });
     this.resetMemberForm();
-    void this.loadMembers();
+    void this.fetchMembers();
     this.openDialog();
   }
 
@@ -284,7 +284,7 @@ export class VoipPabxQueuePage {
 
       if (keepOpen && !editing) {
         this.resetForm();
-        await this.loadLookups();
+        await this.fetchLookups();
       } else {
         this.closeDialog();
       }
@@ -462,7 +462,7 @@ export class VoipPabxQueuePage {
 
     try {
       await this.api.removeMember(this.editing()!.VpqUUID, this.memberUuidOf(row));
-      await this.loadMembers();
+      await this.fetchMembers();
       this.snack.success('Member removed successfully.');
     } catch (err) {
       this.snack.error(this.messageFromError(err, 'Failed to remove member.'));
@@ -479,7 +479,7 @@ export class VoipPabxQueuePage {
     this.dialogBinding = null;
   }
 
-  private async loadLookups() {
+  private async fetchLookups() {
     const [pabxResponse, extensionResponse, mediaFileResponse] = await Promise.all([
       this.pabxApi.list({ limit: this.listLimit }),
       this.extensionApi.list(new URLSearchParams({ limit: String(this.listLimit) })),
@@ -508,14 +508,14 @@ export class VoipPabxQueuePage {
   }
 
   private async fetchItems(search: string): Promise<VoipPabxQueueItem[]> {
-    await this.loadLookups();
+    await this.fetchLookups();
     const params = new URLSearchParams({ limit: String(this.listLimit) });
     if (search) params.set('search', search);
     const response = await this.api.list(params);
     return (response?.data?.items ?? []) as VoipPabxQueueItem[];
   }
 
-  private async loadMembers() {
+  private async fetchMembers() {
     const editing = this.editing();
     if (!editing) {
       this.memberRows.set([]);

@@ -351,15 +351,15 @@ export class HostingWebhostHostsPage {
       this.closeDialog();
       this.stopDialogViewportObserver();
     });
-    void this.loadPlans();
-    void this.loadCustomers();
-    void this.loadDomains();
+    void this.fetchPlans();
+    void this.fetchCustomers();
+    void this.fetchDomains();
   }
 
   refreshList() {
-    void this.loadPlans();
-    void this.loadCustomers();
-    void this.loadDomains();
+    void this.fetchPlans();
+    void this.fetchCustomers();
+    void this.fetchDomains();
     this.hostsResource.reload();
   }
 
@@ -455,7 +455,7 @@ export class HostingWebhostHostsPage {
     this.resetPagination();
   }
 
-  async loadPlans() {
+  async fetchPlans() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingWebhostPlan[] } }>(
         `${this.planEndpoint}?limit=500&offset=0&status=1`,
@@ -466,7 +466,7 @@ export class HostingWebhostHostsPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     try {
       const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
         `${this.customerEndpoint}?status=1&limit=500&offset=0`,
@@ -477,7 +477,7 @@ export class HostingWebhostHostsPage {
     }
   }
 
-  async loadDomains() {
+  async fetchDomains() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingDnsDomainOption[] } }>(
         `${this.domainEndpoint}?limit=500&offset=0&status=1`,

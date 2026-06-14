@@ -252,7 +252,7 @@ export class ErpHumanResourcesEmployeesPage {
           return '';
       }
     };
-    void this.loadReferences();
+    void this.fetchReferences();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -290,7 +290,7 @@ export class ErpHumanResourcesEmployeesPage {
     this.employeesResource.reload();
   }
 
-  async loadReferences() {
+  async fetchReferences() {
     try {
       const [companies, departments, positions] = await Promise.all([
         this.api.get<any>('erp/companies?limit=200'),

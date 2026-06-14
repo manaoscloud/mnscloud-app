@@ -173,10 +173,10 @@ export class ErpHumanResourcesTimeClockAccountsPage {
           return String((row as any)[column] ?? '');
       }
     };
-    void this.loadEmployees();
+    void this.fetchEmployees();
   });
 
-  async loadEmployees() {
+  async fetchEmployees() {
     try {
       const response = await this.api.get<any>(
         `erp/human-resources/employees?status=1&limit=${this.listLimit}`,

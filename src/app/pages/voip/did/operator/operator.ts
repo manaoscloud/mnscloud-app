@@ -157,7 +157,7 @@ export class VoipDidOperatorPage {
 
   private readonly initializePage = (() => {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
-    void this.loadSuppliers();
+    void this.fetchSuppliers();
     this.operatorsResource.reload();
 
     return true;
@@ -287,11 +287,11 @@ export class VoipDidOperatorPage {
   }
 
   async refreshList() {
-    await this.loadSuppliers();
+    await this.fetchSuppliers();
     this.operatorsResource.reload();
   }
 
-  async loadSuppliers() {
+  async fetchSuppliers() {
     try {
       this.suppliersReady.set(false);
       const res = await this.coreApi.get<any>('erp/suppliers');

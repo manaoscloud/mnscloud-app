@@ -282,7 +282,7 @@ export class VoipDidPage {
     this.selectedDidUUIDs.set(next);
   }
 
-  async loadOperators() {
+  async fetchOperators() {
     try {
       const response = await this.operatorApi.list({ limit: this.listLimit }, this.isMasterScope());
       const items: VoipDidOperatorItem[] = response?.data?.items ?? [];
@@ -315,7 +315,7 @@ export class VoipDidPage {
   }
 
   async refreshList() {
-    await this.loadOperators();
+    await this.fetchOperators();
     this.didsResource.reload();
   }
 
@@ -337,7 +337,7 @@ export class VoipDidPage {
       this.availableDids.set([]);
       this.claimingUUID.set(null);
     });
-    await this.loadAvailableDids();
+    await this.fetchAvailableDids();
   }
 
   closeAvailableDidDialog() {
@@ -351,16 +351,16 @@ export class VoipDidPage {
 
   applyAvailableSearchFilters() {
     this.availableSearch.set(this.availableSearchInput().trim());
-    void this.loadAvailableDids();
+    void this.fetchAvailableDids();
   }
 
   clearAvailableSearchFilters() {
     this.availableSearchInput.set('');
     this.availableSearch.set('');
-    void this.loadAvailableDids();
+    void this.fetchAvailableDids();
   }
 
-  async loadAvailableDids() {
+  async fetchAvailableDids() {
     if (this.isMasterScope()) return;
     this.availableLoading.set(true);
     try {
@@ -387,7 +387,7 @@ export class VoipDidPage {
       this.didsResource.reload();
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to contract DID.'));
-      await this.loadAvailableDids();
+      await this.fetchAvailableDids();
     } finally {
       this.claimingUUID.set(null);
     }

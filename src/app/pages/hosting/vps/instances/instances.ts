@@ -299,9 +299,9 @@ export class HostingVpsInstancesPage {
       this.closeChangePlanDialog();
       this.stopDialogViewportObserver();
     });
-    void this.loadProviders();
-    void this.loadCustomers();
-    void this.loadPlans();
+    void this.fetchProviders();
+    void this.fetchCustomers();
+    void this.fetchPlans();
   }
 
   private readonly syncSelectedPlan = effect(() => {
@@ -312,9 +312,9 @@ export class HostingVpsInstancesPage {
   });
 
   refreshList() {
-    void this.loadProviders();
-    void this.loadCustomers();
-    void this.loadPlans();
+    void this.fetchProviders();
+    void this.fetchCustomers();
+    void this.fetchPlans();
     this.instancesResource.reload();
   }
 
@@ -507,7 +507,7 @@ export class HostingVpsInstancesPage {
       .join(' / ');
   }
 
-  async loadProviders() {
+  async fetchProviders() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
         this.providerEndpoint(),
@@ -525,7 +525,7 @@ export class HostingVpsInstancesPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     if (this.isMaster()) {
       this.customers.set([]);
       return;
@@ -540,7 +540,7 @@ export class HostingVpsInstancesPage {
     }
   }
 
-  async loadPlans() {
+  async fetchPlans() {
     try {
       const params = new URLSearchParams({ limit: '500', offset: '0' });
       const result = await this.api.get<{ data?: { items?: HostingVpsPlan[] } }>(
@@ -575,7 +575,7 @@ export class HostingVpsInstancesPage {
     }));
   }
 
-  async loadProviderCatalog() {
+  async fetchProviderCatalog() {
     const uuid = this.resolveCatalogProviderUUID();
     if (!uuid) {
       this.catalog.set(null);
@@ -605,7 +605,7 @@ export class HostingVpsInstancesPage {
     this.editing.set(null);
     this.setProvisionedEditControls(false);
     this.resetForm();
-    void this.loadProviderCatalog();
+    void this.fetchProviderCatalog();
     this.openDialog();
   }
 
@@ -965,7 +965,7 @@ export class HostingVpsInstancesPage {
     } else {
       this.currentImage.set('');
     }
-    void this.loadProviderCatalog();
+    void this.fetchProviderCatalog();
   }
 
   private buildConfigPayload(): HostingVpsInstanceConfig {

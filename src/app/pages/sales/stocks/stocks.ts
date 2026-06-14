@@ -135,7 +135,7 @@ export class SalesStocksPage {
   private dialogBinding: CrudDialogBinding | null = null;
 
   private readonly initializePage = (() => {
-    this.loadStockTypes();
+    this.fetchStockTypes();
 
     return true;
   })();
@@ -155,7 +155,7 @@ export class SalesStocksPage {
     };
   });
 
-  async loadStockTypes() {
+  async fetchStockTypes() {
     try {
       const response = await this.api.get<any>('sale/stock-types?limit=200');
       this.stockTypes.set(response?.data?.items ?? []);

@@ -395,15 +395,15 @@ export class HostingWebhostToolsPage {
       this.passwordDialogRef?.close();
       this.stopDialogViewportObserver();
     });
-    void this.loadHosts();
+    void this.fetchHosts();
   }
 
   refreshList() {
-    void this.loadHosts();
+    void this.fetchHosts();
     this.itemsResource.reload();
   }
 
-  async loadHosts() {
+  async fetchHosts() {
     try {
       const response = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
         `${this.hostEndpoint}?limit=500&offset=0&isActive=1`,

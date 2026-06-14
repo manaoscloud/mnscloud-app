@@ -461,7 +461,7 @@ export class BillingSystemPage {
     this.productSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.priceSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.subscriptionSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.loadDefaultCurrency();
+    void this.fetchDefaultCurrency();
     this.refresh();
   });
 
@@ -1407,7 +1407,7 @@ export class BillingSystemPage {
     );
   }
 
-  private async loadDefaultCurrency() {
+  private async fetchDefaultCurrency() {
     try {
       this.defaultCurrency.set(await this.parameters.resolveDefaultCurrency());
       if (!this.editingPrice() && !this.priceFormModel().currency) {

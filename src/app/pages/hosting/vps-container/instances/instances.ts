@@ -306,9 +306,9 @@ export class HostingVpsContainerInstancesPage {
       this.closeChangePlanDialog();
       this.stopDialogViewportObserver();
     });
-    void this.loadProviders();
-    void this.loadCustomers();
-    void this.loadPlans();
+    void this.fetchProviders();
+    void this.fetchCustomers();
+    void this.fetchPlans();
   }
 
   private readonly syncSelectedPlan = effect(() => {
@@ -319,9 +319,9 @@ export class HostingVpsContainerInstancesPage {
   });
 
   refreshList() {
-    void this.loadProviders();
-    void this.loadCustomers();
-    void this.loadPlans();
+    void this.fetchProviders();
+    void this.fetchCustomers();
+    void this.fetchPlans();
     this.instancesResource.reload();
   }
 
@@ -512,7 +512,7 @@ export class HostingVpsContainerInstancesPage {
       .join(' / ');
   }
 
-  async loadProviders() {
+  async fetchProviders() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingVpsContainerProvider[] } }>(
         this.providerEndpoint(),
@@ -530,7 +530,7 @@ export class HostingVpsContainerInstancesPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     if (this.isMaster()) {
       this.customers.set([]);
       return;
@@ -545,7 +545,7 @@ export class HostingVpsContainerInstancesPage {
     }
   }
 
-  async loadPlans() {
+  async fetchPlans() {
     try {
       const params = new URLSearchParams({ limit: '500', offset: '0' });
       const result = await this.api.get<{ data?: { items?: HostingVpsContainerPlan[] } }>(
@@ -582,7 +582,7 @@ export class HostingVpsContainerInstancesPage {
     }));
   }
 
-  async loadProviderCatalog() {
+  async fetchProviderCatalog() {
     const uuid = this.resolveCatalogProviderUUID();
     if (!uuid) {
       this.catalog.set(null);
@@ -612,7 +612,7 @@ export class HostingVpsContainerInstancesPage {
     this.editing.set(null);
     this.setProvisionedEditControls(false);
     this.resetForm();
-    void this.loadProviderCatalog();
+    void this.fetchProviderCatalog();
     this.openDialog();
   }
 
@@ -974,7 +974,7 @@ export class HostingVpsContainerInstancesPage {
     } else {
       this.currentImage.set('');
     }
-    void this.loadProviderCatalog();
+    void this.fetchProviderCatalog();
   }
 
   private buildConfigPayload(): HostingVpsContainerInstanceConfig {

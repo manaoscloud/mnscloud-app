@@ -161,7 +161,7 @@ export class VoipSoftswitchSubscriberPage {
           return '';
       }
     };
-    void this.loadLookups();
+    void this.fetchLookups();
   
   });
 
@@ -384,7 +384,7 @@ export class VoipSoftswitchSubscriberPage {
     this.dialogRef = null;
   }
 
-  private async loadLookups() {
+  private async fetchLookups() {
     try {
       const accounts = await this.accountApi.list(false, { limit: this.listLimit });
       this.accountOptions.set(accounts?.data?.items ?? []);

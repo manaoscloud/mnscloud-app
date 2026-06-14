@@ -212,7 +212,7 @@ export class VoipPabxQueueAgentPage {
   });
 
   async bootstrap() {
-    await this.loadLookups();
+    await this.fetchLookups();
     this.itemsResource.reload();
   }
 
@@ -271,7 +271,7 @@ export class VoipPabxQueueAgentPage {
     );
   }
 
-  async loadLookups() {
+  async fetchLookups() {
     try {
       const [employeesResponse, extensionsResponse] = await Promise.all([
         this.genericApi.get<any>('erp/human-resources/employees?limit=5000'),

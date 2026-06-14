@@ -198,7 +198,7 @@ export class VoipPabxDialPlanRulesPage {
   });
 
   async bootstrap() {
-    await Promise.all([this.loadDialPlans(), this.loadTrunks()]);
+    await Promise.all([this.fetchDialPlans(), this.fetchTrunks()]);
     this.itemsResource.reload();
   }
 
@@ -236,12 +236,12 @@ export class VoipPabxDialPlanRulesPage {
     if (!opened) this.trunkSearch.set('');
   }
 
-  async loadDialPlans() {
+  async fetchDialPlans() {
     const response = await this.api.listPlans({ limit: this.listLimit });
     this.dialPlans.set((response?.data?.items ?? []) as VoipPabxDialPlanItem[]);
   }
 
-  async loadTrunks() {
+  async fetchTrunks() {
     const response = await this.api.listTrunks({ limit: this.listLimit, status: 1 });
     this.trunks.set((response?.data?.items ?? []) as VoipPabxTrunkOption[]);
   }

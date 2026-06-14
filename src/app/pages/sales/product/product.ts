@@ -238,12 +238,12 @@ export class SaleProductPage {
   private readonly initializePage = (() => {
     const currencyMeta = this.getCurrencyAffixes();
     this.amountPrefix = currencyMeta.prefix;
-    this.loadLookups();
+    this.fetchLookups();
 
     return true;
   })();
 
-  async loadLookups() {
+  async fetchLookups() {
     try {
       const [unitsRes, categoriesRes, brandsRes] = await Promise.all([
         this.api.get<any>('sale/units?limit=200'),
@@ -362,7 +362,7 @@ export class SaleProductPage {
       barcode: product.SprBarcode ?? '',
     });
 
-    await this.loadImages(product.SprUUID);
+    await this.fetchImages(product.SprUUID);
   }
 
   cancelEdit() {
@@ -538,7 +538,7 @@ export class SaleProductPage {
     }
   }
 
-  async loadImages(productUUID: string) {
+  async fetchImages(productUUID: string) {
     try {
       const response = await this.api.get<any>(`sale/products/${productUUID}/images`);
       this.images.set(response?.data?.items ?? []);

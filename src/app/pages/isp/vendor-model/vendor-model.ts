@@ -135,7 +135,7 @@ export class IspVendorModelPage {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    this.loadVendors();
+    this.fetchVendors();
   });
 
   constructor() {
@@ -181,7 +181,7 @@ export class IspVendorModelPage {
     this.modelsResource.reload();
   }
 
-  async loadVendors() {
+  async fetchVendors() {
     try {
       const response = await this.api.get<any>('isp/vendors');
       const items = response?.data?.items ?? [];

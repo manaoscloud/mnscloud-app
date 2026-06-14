@@ -167,7 +167,7 @@ export class VoipPabxBlacklistNumberPage {
   });
 
   async bootstrap() {
-    await this.loadLists();
+    await this.fetchLists();
     this.itemsResource.reload();
   }
 
@@ -201,7 +201,7 @@ export class VoipPabxBlacklistNumberPage {
     if (!opened) this.blacklistSearch.set('');
   }
 
-  async loadLists() {
+  async fetchLists() {
     const response = await this.api.list({ limit: this.listLimit });
     this.lists.set((response?.data?.items ?? []) as VoipBlacklistItem[]);
   }

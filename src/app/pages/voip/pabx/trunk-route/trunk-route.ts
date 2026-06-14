@@ -327,8 +327,8 @@ export class VoipPabxTrunkRoutePage {
       status: Number(item.enabled ?? 0) === 1,
     });
     if (this.isInboundRouteResource()) {
-      void this.loadAvailableDids(String(item['didUUID'] ?? ''));
-      void this.loadRouteTargets();
+      void this.fetchAvailableDids(String(item['didUUID'] ?? ''));
+      void this.fetchRouteTargets();
     }
     this.openDialog();
   }
@@ -562,8 +562,8 @@ export class VoipPabxTrunkRoutePage {
     this.formModel.update((current) => ({ ...current, didUUID: '', routeTargetUUID: '' }));
     this.didOptions.set([]);
     this.targetOptions.set([]);
-    void this.loadAvailableDids();
-    void this.loadRouteTargets();
+    void this.fetchAvailableDids();
+    void this.fetchRouteTargets();
   }
   onDidChange(didUUID: string) {
     const did = this.didOptions().find((item) => item.VddUUID === didUUID);
@@ -578,7 +578,7 @@ export class VoipPabxTrunkRoutePage {
   onRouteTypeChange() {
     if (!this.isInboundRouteResource()) return;
     this.formModel.update((current) => ({ ...current, routeTargetUUID: '' }));
-    void this.loadRouteTargets();
+    void this.fetchRouteTargets();
   }
 
   private payloadFromForm() {
@@ -678,7 +678,7 @@ export class VoipPabxTrunkRoutePage {
     this.dialogRef?.close();
     this.dialogRef = null;
   }
-  private async loadLookups() {
+  private async fetchLookups() {
     const [accounts, trunks] = await Promise.all([
       this.accountApi.list({ limit: this.listLimit }),
       this.api.list('trunks', { limit: this.listLimit }),
@@ -696,7 +696,7 @@ export class VoipPabxTrunkRoutePage {
     }
   }
   private async bootstrap() {
-    await this.loadLookups();
+    await this.fetchLookups();
     this.itemsResource.reload();
   }
   private async fetchItems(filters: TrunkRouteFilters): Promise<ResourceRow[]> {
@@ -721,9 +721,9 @@ export class VoipPabxTrunkRoutePage {
       this.targetOptions.set([]);
       return;
     }
-    await Promise.all([this.loadAvailableDids(includeDidUUID), this.loadRouteTargets()]);
+    await Promise.all([this.fetchAvailableDids(includeDidUUID), this.fetchRouteTargets()]);
   }
-  private async loadAvailableDids(includeDidUUID = '') {
+  private async fetchAvailableDids(includeDidUUID = '') {
     const pabxUUID = this.formModel().pabxUUID;
     if (!pabxUUID || !this.isInboundRouteResource()) {
       this.didOptions.set([]);
@@ -745,7 +745,7 @@ export class VoipPabxTrunkRoutePage {
     if (routeType === 'ivr') return 'ivrs';
     return '';
   }
-  private async loadRouteTargets() {
+  private async fetchRouteTargets() {
     const pabxUUID = this.formModel().pabxUUID;
     const resource = this.targetResource();
     if (!pabxUUID || !resource || !this.isInboundRouteResource()) {

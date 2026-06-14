@@ -140,7 +140,7 @@ export class PppoeClientPage {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    void this.loadFixedIpv4Options();
+    void this.fetchFixedIpv4Options();
   });
 
   constructor() {
@@ -170,7 +170,7 @@ export class PppoeClientPage {
 
   refreshList() {
     this.clientsResource.reload();
-    void this.loadFixedIpv4Options();
+    void this.fetchFixedIpv4Options();
   }
 
   private async fetchClients() {
@@ -390,7 +390,7 @@ export class PppoeClientPage {
     return err?.error?.error || err?.error?.message || err?.message || fallback;
   }
 
-  private async loadFixedIpv4Options() {
+  private async fetchFixedIpv4Options() {
     try {
       const response = await this.api.get<any>(
         'isp/fixed-ipv4-addresses?status=1&limit=1000&offset=0',

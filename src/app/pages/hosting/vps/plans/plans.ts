@@ -255,7 +255,7 @@ export class HostingVpsPlansPage {
   private readonly syncProviderSelection = effect(() => {
     const uuid = this.planFormModel().providerUUID;
     this.syncProviderFromProvider(uuid);
-    void this.loadProviderCatalog();
+    void this.fetchProviderCatalog();
   });
   private readonly syncCurrentRegion = effect(() => {
     this.currentRegion.set(this.planFormModel().region ?? '');
@@ -271,12 +271,12 @@ export class HostingVpsPlansPage {
       this.closeDialog();
       this.stopDialogViewportObserver();
     });
-    void this.loadDefaultCurrency();
-    void this.loadProviders();
+    void this.fetchDefaultCurrency();
+    void this.fetchProviders();
   }
 
   refreshList() {
-    void this.loadProviders();
+    void this.fetchProviders();
     this.plansResource.reload();
   }
 
@@ -385,12 +385,12 @@ export class HostingVpsPlansPage {
     return `${currency} ${Number(item.HvpPrice ?? 0).toFixed(2)}`;
   }
 
-  private async loadDefaultCurrency() {
+  private async fetchDefaultCurrency() {
     const currency = await this.parameters.resolveDefaultCurrency('BRL');
     this.defaultCurrency.set(currency);
   }
 
-  async loadProviders() {
+  async fetchProviders() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
         this.providerEndpoint(),
@@ -402,7 +402,7 @@ export class HostingVpsPlansPage {
           HvrConfig: this.parseConfig<VpsProviderConfig>(item.HvrConfig),
         })),
       );
-      void this.loadProviderCatalog();
+      void this.fetchProviderCatalog();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to load VPS providers.'));
     }
@@ -442,7 +442,7 @@ export class HostingVpsPlansPage {
     this.plansResource.reload();
   }
 
-  async loadProviderCatalog() {
+  async fetchProviderCatalog() {
     const uuid = this.resolveCatalogProviderUUID();
     if (!uuid) {
       this.catalog.set(null);
@@ -472,7 +472,7 @@ export class HostingVpsPlansPage {
   startCreate() {
     this.editing.set(null);
     this.resetForm();
-    void this.loadProviderCatalog();
+    void this.fetchProviderCatalog();
     this.openDialog();
   }
 
@@ -499,7 +499,7 @@ export class HostingVpsPlansPage {
     });
     this.currentRegion.set(item.HvpRegion ?? '');
     this.currentSize.set(item.HvpSize ?? '');
-    void this.loadProviderCatalog();
+    void this.fetchProviderCatalog();
     this.openDialog();
   }
 

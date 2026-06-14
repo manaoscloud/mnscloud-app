@@ -205,8 +205,8 @@ export class InvoicingContractsPage {
     const currencyMeta = this.getCurrencyAffixes();
     this.amountPrefix = currencyMeta.prefix;
     this.startCreate();
-    void this.loadComplexes();
-    void this.loadCustomers();
+    void this.fetchComplexes();
+    void this.fetchCustomers();
   
     return true;
   })();
@@ -276,7 +276,7 @@ export class InvoicingContractsPage {
     }
   }
 
-  async loadComplexes() {
+  async fetchComplexes() {
     try {
       const res = await this.api.get<any>('erp/complexes');
       const items = res?.data?.items ?? [];
@@ -295,7 +295,7 @@ export class InvoicingContractsPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     try {
       const res = await this.api.get<any>('erp/customers');
       const items = res?.data?.items ?? [];

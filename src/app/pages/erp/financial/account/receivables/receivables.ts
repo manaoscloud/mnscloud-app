@@ -167,7 +167,7 @@ export class FinancialReceivablesPage {
   private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
-    void this.loadCustomers();
+    void this.fetchCustomers();
   
     return true;
   })();
@@ -236,7 +236,7 @@ export class FinancialReceivablesPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     try {
       const res = await this.api.get<any>('erp/customers');
       const items = res?.data?.items ?? [];

@@ -718,7 +718,7 @@ export class VoipPabxPage {
     });
   }
 
-  private async loadDomains() {
+  private async fetchDomains() {
     const response = await this.domainApi.list({ limit: this.listLimit });
     const domains = (response?.data?.items ?? []) as VoipDomainItem[];
     this.domainMap = new Map(domains.map((domain) => [domain.VdmUUID, domain]));
@@ -736,7 +736,7 @@ export class VoipPabxPage {
     }
   }
 
-  private async loadServers() {
+  private async fetchServers() {
     const response = await this.serverApi.list(false, { limit: this.listLimit });
     const servers = (response?.data?.items ?? []) as VoipPabxServerItem[];
     this.serverMap = new Map(servers.map((server) => [server.VpsUUID, server]));
@@ -756,7 +756,7 @@ export class VoipPabxPage {
     }
   }
 
-  private async loadCustomers() {
+  private async fetchCustomers() {
     const response = await this.customerApi.get<any>('erp/customers');
     const customers = (response?.data?.items ?? []) as CustomerItem[];
     this.customerMap = new Map(customers.map((customer) => [customer.CustomerUUID, customer]));
@@ -774,7 +774,7 @@ export class VoipPabxPage {
     }
   }
 
-  private async loadBlacklists() {
+  private async fetchBlacklists() {
     const response = await this.customerApi.get<any>(
       `voip/pabx/blacklists?limit=${this.listLimit}`,
     );
@@ -791,7 +791,7 @@ export class VoipPabxPage {
     }
   }
 
-  private async loadStorageAccounts() {
+  private async fetchStorageAccounts() {
     const response = await this.customerApi.get<any>('hosting/storage/accounts');
     const accounts = (Array.isArray(response?.data) ? response.data : []) as StorageAccountItem[];
     this.storageAccountMap = new Map(accounts.map((item) => [item.HsaUUID, item]));
@@ -809,7 +809,7 @@ export class VoipPabxPage {
     }
   }
 
-  private async loadDialPlans() {
+  private async fetchDialPlans() {
     const response = await this.customerApi.get<any>(
       `voip/pabx/dial-plans?limit=${this.listLimit}`,
     );
@@ -831,12 +831,12 @@ export class VoipPabxPage {
   }
 
   private async fetchAccounts(filters: PabxAccountFilters): Promise<VoipPabxAccount[]> {
-    await this.loadServers();
-    await this.loadDomains();
-    await this.loadCustomers();
-    await this.loadDialPlans();
-    await this.loadBlacklists();
-    await this.loadStorageAccounts();
+    await this.fetchServers();
+    await this.fetchDomains();
+    await this.fetchCustomers();
+    await this.fetchDialPlans();
+    await this.fetchBlacklists();
+    await this.fetchStorageAccounts();
     const res = await this.api.list({
       search: filters.search,
       limit: this.listLimit,

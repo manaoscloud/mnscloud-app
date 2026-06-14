@@ -179,14 +179,14 @@ export class HostingDnsProvidersPage {
       this.closeProviderDialog();
       this.stopDialogViewportObserver();
     });
-    void this.loadCatalog();
+    void this.fetchCatalog();
   }
 
   refreshList() {
     this.providersResource.reload();
   }
 
-  async loadCatalog() {
+  async fetchCatalog() {
     try {
       const response = await this.api.get<{ data?: { items?: DomainProviderCatalogItem[] } }>(
         'hosting/dns/providers/catalog',

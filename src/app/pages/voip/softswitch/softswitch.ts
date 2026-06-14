@@ -240,7 +240,7 @@ export class VoipSoftswitchPage {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    void this.loadLookups();
+    void this.fetchLookups();
   
   });
 
@@ -508,7 +508,7 @@ export class VoipSoftswitchPage {
     });
   }
 
-  private async loadLookups() {
+  private async fetchLookups() {
     try {
       const [providers, servers, domains, customers] = await Promise.all([
         this.providerApi.list(this.isMaster(), { limit: this.listLimit }),

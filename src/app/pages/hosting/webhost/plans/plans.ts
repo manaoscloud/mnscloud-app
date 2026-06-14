@@ -230,12 +230,12 @@ export class HostingWebhostPlansPage {
       this.closeDialog();
       this.stopDialogViewportObserver();
     });
-    void this.loadDefaultCurrency();
-    void this.loadProviders();
+    void this.fetchDefaultCurrency();
+    void this.fetchProviders();
   }
 
   refreshList() {
-    void this.loadProviders();
+    void this.fetchProviders();
     this.plansResource.reload();
   }
 
@@ -281,7 +281,7 @@ export class HostingWebhostPlansPage {
     return `${currency} ${Number(item.HwlPrice ?? 0).toFixed(2)}`;
   }
 
-  private async loadDefaultCurrency() {
+  private async fetchDefaultCurrency() {
     const currency = await this.parameters.resolveDefaultCurrency('BRL');
     this.defaultCurrency.set(currency);
   }
@@ -301,7 +301,7 @@ export class HostingWebhostPlansPage {
     this.resetPagination();
   }
 
-  async loadProviders() {
+  async fetchProviders() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingWebhostProvider[] } }>(
         `${this.providerEndpoint}?limit=500&offset=0&status=1`,

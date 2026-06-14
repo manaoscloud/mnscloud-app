@@ -241,13 +241,13 @@ export class SaleQuotationPage {
 
   private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes(this.defaultCurrency()).prefix;
-    void this.loadDefaultCurrency();
-    this.loadLookups();
+    void this.fetchDefaultCurrency();
+    this.fetchLookups();
 
     return true;
   })();
 
-  private async loadDefaultCurrency() {
+  private async fetchDefaultCurrency() {
     const currency = await this.parameters.resolveDefaultCurrency('BRL');
     this.defaultCurrency.set(currency);
     this.amountPrefix = this.getCurrencyAffixes(currency).prefix;
@@ -263,7 +263,7 @@ export class SaleQuotationPage {
     this.dataSource.paginator = this.paginator() ?? null;
   });
 
-  async loadLookups() {
+  async fetchLookups() {
     try {
       const [customersRes, productsRes] = await Promise.all([
         this.api.get<any>('erp/customers'),
@@ -347,7 +347,7 @@ export class SaleQuotationPage {
     });
     this.items.set([]);
     this.editingItem.set(null);
-    await this.loadQuotationItems(quotation.SqtUUID);
+    await this.fetchQuotationItems(quotation.SqtUUID);
   }
 
   cancelEdit() {
@@ -471,7 +471,7 @@ export class SaleQuotationPage {
     }
   }
 
-  async loadQuotationItems(quotationUUID: string) {
+  async fetchQuotationItems(quotationUUID: string) {
     try {
       const response = await this.api.get<any>(`sale/quotations/${quotationUUID}/items`);
       this.items.set(response?.data?.items ?? []);
@@ -537,7 +537,7 @@ export class SaleQuotationPage {
       }
 
       this.cancelItemEdit();
-      await this.loadQuotationItems(quotation.SqtUUID);
+      await this.fetchQuotationItems(quotation.SqtUUID);
       this.quotationsResource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to save quotation item.'));
@@ -564,7 +564,7 @@ export class SaleQuotationPage {
 
     try {
       await this.api.delete(`sale/quotations/${quotation.SqtUUID}/items/${item.SqiUUID}`);
-      await this.loadQuotationItems(quotation.SqtUUID);
+      await this.fetchQuotationItems(quotation.SqtUUID);
       this.quotationsResource.reload();
     } catch (err: any) {
       this.error.set(this.extractErrorMessage(err, 'Failed to delete item.'));

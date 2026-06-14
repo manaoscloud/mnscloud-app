@@ -173,7 +173,7 @@ export class SupportTeamsPage {
 
   private readonly initializePage = (() => {
     this.resetTeamForm();
-    void this.loadUsers();
+    void this.fetchUsers();
   
     return true;
   })();
@@ -260,7 +260,7 @@ export class SupportTeamsPage {
     return res?.data?.items ?? [];
   }
 
-  async loadUsers() {
+  async fetchUsers() {
     try {
       const res = await this.api.get<any>('user/access/members');
       const access = res?.data?.members ?? [];
@@ -280,7 +280,7 @@ export class SupportTeamsPage {
     }
   }
 
-  async loadMembers(teamUUID: string) {
+  async fetchMembers(teamUUID: string) {
     this.loadingMembers = true;
     this.memberError = '';
     try {
@@ -427,7 +427,7 @@ export class SupportTeamsPage {
         ? String(item.MaxConcurrentTickets)
         : '';
     this.startCreateMember();
-    void this.loadMembers(item.SupportTeamUUID);
+    void this.fetchMembers(item.SupportTeamUUID);
     this.openFormDialog();
   }
 
@@ -560,7 +560,7 @@ export class SupportTeamsPage {
         await this.api.post(`support/teams/${this.editing.SupportTeamUUID}/members`, payload);
       }
 
-      await this.loadMembers(this.editing.SupportTeamUUID);
+      await this.fetchMembers(this.editing.SupportTeamUUID);
       this.startCreateMember();
     } catch (err: any) {
       this.memberError = this.resolveApiError(err, 'Failed to save member.');
@@ -591,7 +591,7 @@ export class SupportTeamsPage {
       await this.api.delete(
         `support/teams/${this.editing.SupportTeamUUID}/members/${member.SupportTeamMemberUUID}`,
       );
-      await this.loadMembers(this.editing.SupportTeamUUID);
+      await this.fetchMembers(this.editing.SupportTeamUUID);
       if (this.memberEditing?.SupportTeamMemberUUID === member.SupportTeamMemberUUID) {
         this.startCreateMember();
       }

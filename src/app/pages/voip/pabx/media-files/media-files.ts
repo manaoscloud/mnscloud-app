@@ -196,7 +196,7 @@ export class VoipPabxMediaFilesPage {
   });
 
   async bootstrap() {
-    await this.loadLookups();
+    await this.fetchLookups();
     this.itemsResource.reload();
   }
 
@@ -509,7 +509,7 @@ export class VoipPabxMediaFilesPage {
     }
   }
 
-  private async loadLookups() {
+  private async fetchLookups() {
     const [storageResponse, pabxResponse] = await Promise.all([
       this.genericApi.get<any>('hosting/storage/accounts'),
       this.pabxApi.list({ limit: this.listLimit }),

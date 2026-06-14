@@ -322,9 +322,9 @@ export class ErpCustomerPage {
 
   private readonly initializePage = (() => {
     this.resetForm();
-    void this.loadComplexes();
-    void this.loadDueDays();
-    void this.loadMapboxParameter();
+    void this.fetchComplexes();
+    void this.fetchDueDays();
+    void this.fetchMapboxParameter();
 
     return true;
   })();
@@ -409,7 +409,7 @@ export class ErpCustomerPage {
     return res?.data?.items ?? [];
   }
 
-  async loadComplexes() {
+  async fetchComplexes() {
     try {
       const res = await this.api.get<any>('erp/complexes');
       const items = res?.data?.items ?? [];
@@ -420,7 +420,7 @@ export class ErpCustomerPage {
     }
   }
 
-  async loadDueDays() {
+  async fetchDueDays() {
     try {
       const res = await this.api.get<any>('erp/financial/invoicing/duedays');
       const items = (res?.data?.items ?? []).filter(
@@ -1006,7 +1006,7 @@ export class ErpCustomerPage {
     this.snack.warning(message);
   }
 
-  private async loadMapboxParameter() {
+  private async fetchMapboxParameter() {
     const endpoints = [
       'settings/parameters/resolve/MAPBOX_TOKEN',
       'system/parameters/resolve/MAPBOX_TOKEN',
@@ -1036,7 +1036,7 @@ export class ErpCustomerPage {
     if (this.mapboxToken && this.mapboxToken.trim()) {
       return this.mapboxToken.trim();
     }
-    await this.loadMapboxParameter();
+    await this.fetchMapboxParameter();
     return this.mapboxToken && this.mapboxToken.trim() ? this.mapboxToken.trim() : null;
   }
 

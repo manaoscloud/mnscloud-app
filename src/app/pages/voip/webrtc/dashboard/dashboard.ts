@@ -105,7 +105,7 @@ export class VoipWebRtcDashboardPage {
   private readonly dashboardResource = resource({
     params: () => this.appliedFilters(),
     defaultValue: EMPTY_WEBRTC_DASHBOARD,
-    loader: ({ params }) => this.loadDashboardSnapshot(params),
+    loader: ({ params }) => this.fetchDashboardSnapshot(params),
   });
 
   readonly loading = this.dashboardResource.isLoading;
@@ -207,7 +207,7 @@ export class VoipWebRtcDashboardPage {
 
   private readonly setupTables = afterNextRender(() => {
     this.bindTables();
-    void this.loadOptions();
+    void this.fetchOptions();
   });
 
   refreshList() {
@@ -263,7 +263,7 @@ export class VoipWebRtcDashboardPage {
     if (!open) this.domainSearch.set('');
   }
 
-  private async loadDashboardSnapshot(
+  private async fetchDashboardSnapshot(
     params: WebRtcDashboardRequest,
   ): Promise<WebRtcDashboardData> {
     const response = await this.api.get(
@@ -277,7 +277,7 @@ export class VoipWebRtcDashboardPage {
     return response?.data ?? EMPTY_WEBRTC_DASHBOARD;
   }
 
-  private async loadOptions() {
+  private async fetchOptions() {
     try {
       const [serverResponse, domainResponse] = await Promise.allSettled([
         this.isMaster()

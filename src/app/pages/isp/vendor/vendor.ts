@@ -147,7 +147,7 @@ export class IspVendorPage {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    this.loadSuppliers();
+    this.fetchSuppliers();
   });
 
   constructor() {
@@ -185,7 +185,7 @@ export class IspVendorPage {
     return response?.data?.items ?? [];
   }
 
-  async loadSuppliers() {
+  async fetchSuppliers() {
     try {
       const response = await this.api.get<any>('erp/suppliers');
       const items = response?.data?.items ?? [];

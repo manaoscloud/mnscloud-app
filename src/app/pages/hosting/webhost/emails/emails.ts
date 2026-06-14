@@ -295,11 +295,11 @@ export class HostingWebhostEmailsPage {
       this.passwordDialogRef?.close();
       this.stopDialogViewportObserver();
     });
-    void this.loadHosts();
+    void this.fetchHosts();
   }
 
   refreshList() {
-    void this.loadHosts();
+    void this.fetchHosts();
     this.emailsResource.reload();
   }
 
@@ -364,7 +364,7 @@ export class HostingWebhostEmailsPage {
     this.resetPagination();
   }
 
-  async loadHosts() {
+  async fetchHosts() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
         `${this.hostEndpoint}?limit=500&offset=0&isActive=1`,

@@ -710,7 +710,7 @@ export class VoipPabxExtensionPage {
       .toLowerCase();
   }
 
-  private async loadPabxOptions() {
+  private async fetchPabxOptions() {
     const response = await this.pabxApi.list({ limit: this.listLimit });
     const accounts: VoipPabxAccount[] = response?.data?.items ?? [];
     this.pabxMap.clear();
@@ -731,7 +731,7 @@ export class VoipPabxExtensionPage {
 
   private async fetchExtensions(filters: ExtensionFilters): Promise<VoipPabxExtensionItem[]> {
     this.error.set(null);
-    await this.loadPabxOptions();
+    await this.fetchPabxOptions();
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
     if (filters.search) params.set('search', filters.search);

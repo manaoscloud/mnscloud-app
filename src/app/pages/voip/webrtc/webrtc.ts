@@ -361,7 +361,7 @@ export class VoipWebRtcPage {
     this.paginator()?.firstPage();
     this.appliedSearch.set('');
   }
-  async loadLookups() {
+  async fetchLookups() {
     const needs = new Set(
       this.config()
         .fields.map((field) => field.lookup)
@@ -450,13 +450,13 @@ export class VoipWebRtcPage {
   }
   async startCreate() {
     this.editing.set(null);
-    await this.loadLookups();
+    await this.fetchLookups();
     this.buildForm(null);
     this.openDialog();
   }
   async startEdit(row: WebRtcRecord) {
     this.editing.set(row);
-    await this.loadLookups();
+    await this.fetchLookups();
     this.buildForm(row);
     this.openDialog();
   }

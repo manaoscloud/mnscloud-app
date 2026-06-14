@@ -262,7 +262,7 @@ export class VoipPortabilityPage {
     }
   }
 
-  async loadOperators() {
+  async fetchOperators() {
     try {
       const response = await this.operatorApi.list({ limit: this.listLimit });
       const rawItems = (response?.data?.items ?? []) as VoipDidOperatorItem[];
@@ -279,7 +279,7 @@ export class VoipPortabilityPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     try {
       const response = await this.customerApi.get<any>('erp/customers');
       const items: CustomerItem[] = response?.data?.items ?? [];
@@ -305,8 +305,8 @@ export class VoipPortabilityPage {
   }
 
   async refreshList() {
-    await this.loadOperators();
-    await this.loadCustomers();
+    await this.fetchOperators();
+    await this.fetchCustomers();
     this.portabilityResource.reload();
   }
 

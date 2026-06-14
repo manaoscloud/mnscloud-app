@@ -231,7 +231,7 @@ export class VoipPabxIvrPage {
 
   startCreate() {
     this.resetForm();
-    void this.loadOptionTargets();
+    void this.fetchOptionTargets();
     this.openDialog();
   }
 
@@ -247,8 +247,8 @@ export class VoipPabxIvrPage {
       enabled: item.VpiEnabled === 1,
     });
     this.resetOptionForm();
-    void this.loadOptions();
-    void this.loadOptionTargets();
+    void this.fetchOptions();
+    void this.fetchOptionTargets();
     this.openDialog();
   }
 
@@ -273,7 +273,7 @@ export class VoipPabxIvrPage {
 
       if (keepOpen && !editing) {
         this.resetForm();
-        await this.loadLookups();
+        await this.fetchLookups();
       } else {
         this.closeDialog();
       }
@@ -407,13 +407,13 @@ export class VoipPabxIvrPage {
     this.optionFormModel.update((value) => ({ ...value, routeTargetUUID: '' }));
     this.optionTargetSearch.set('');
     if (!this.editing()) this.optionRows.set([]);
-    void this.loadOptionTargets();
+    void this.fetchOptionTargets();
   }
 
   onOptionRouteTypeChange() {
     this.optionFormModel.update((value) => ({ ...value, routeTargetUUID: '' }));
     this.optionTargetSearch.set('');
-    void this.loadOptionTargets();
+    void this.fetchOptionTargets();
   }
 
   async addOption() {
@@ -424,7 +424,7 @@ export class VoipPabxIvrPage {
     if (!this.editing()) {
       this.optionRows.update((rows) => [...rows, this.pendingOptionRow(payload)]);
       this.resetOptionForm();
-      void this.loadOptionTargets();
+      void this.fetchOptionTargets();
       return;
     }
 
@@ -433,7 +433,7 @@ export class VoipPabxIvrPage {
       const response = await this.api.createOption(this.editing()!.VpiUUID, payload);
       this.optionRows.set((response?.data?.items ?? []) as VoipPabxIvrOptionItem[]);
       this.resetOptionForm();
-      await this.loadOptionTargets();
+      await this.fetchOptionTargets();
       this.snack.success('Option added successfully.');
     } catch (err) {
       this.snack.error(this.messageFromError(err, 'Failed to add option.'));
@@ -456,7 +456,7 @@ export class VoipPabxIvrPage {
 
     try {
       await this.api.removeOption(this.editing()!.VpiUUID, this.optionUuidOf(row));
-      await this.loadOptions();
+      await this.fetchOptions();
       this.snack.success('Option removed successfully.');
     } catch (err) {
       this.snack.error(this.messageFromError(err, 'Failed to remove option.'));
@@ -478,7 +478,7 @@ export class VoipPabxIvrPage {
     this.dialogBinding = null;
   }
 
-  private async loadLookups() {
+  private async fetchLookups() {
     const [pabxResponse, extensionResponse, mediaFileResponse] = await Promise.all([
       this.pabxApi.list({ limit: this.listLimit }),
       this.extensionApi.list(new URLSearchParams({ limit: String(this.listLimit) })),
@@ -507,14 +507,14 @@ export class VoipPabxIvrPage {
   }
 
   private async fetchItems(search: string): Promise<VoipPabxIvrItem[]> {
-    await this.loadLookups();
+    await this.fetchLookups();
     const params = new URLSearchParams({ limit: String(this.listLimit) });
     if (search) params.set('search', search);
     const response = await this.api.list(params);
     return (response?.data?.items ?? []) as VoipPabxIvrItem[];
   }
 
-  private async loadOptions() {
+  private async fetchOptions() {
     const editing = this.editing();
     if (!editing) {
       this.optionRows.set([]);
@@ -531,7 +531,7 @@ export class VoipPabxIvrPage {
     }
   }
 
-  private async loadOptionTargets() {
+  private async fetchOptionTargets() {
     const routeType = this.optionFormModel().routeType;
     const pabxUUID = this.formModel().pabxUUID;
     if (routeType === 'extension') {

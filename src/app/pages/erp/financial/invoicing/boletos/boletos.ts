@@ -157,8 +157,8 @@ export class InvoicingBoletosPage {
   private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
-    void this.loadGatewayOptions();
-    void this.loadCustomerOptions();
+    void this.fetchGatewayOptions();
+    void this.fetchCustomerOptions();
   
     return true;
   })();
@@ -190,7 +190,7 @@ export class InvoicingBoletosPage {
     return `${item.EfgName} (${this.providerLabel(item.EfgProvider)})`;
   }
 
-  async loadGatewayOptions() {
+  async fetchGatewayOptions() {
     try {
       const rows = await this.api.get<PaymentGatewayAccount[]>('erp/financial/payment/gateways');
       this.gatewayOptions = Array.isArray(rows) ? rows : [];
@@ -199,7 +199,7 @@ export class InvoicingBoletosPage {
     }
   }
 
-  async loadCustomerOptions() {
+  async fetchCustomerOptions() {
     try {
       const res = await this.api.get<any>('erp/customers?status=1&limit=200');
       const items = Array.isArray(res?.data?.items) ? res.data.items : [];

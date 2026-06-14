@@ -205,7 +205,7 @@ export class FinancialPayablesPage {
   private readonly initializePage = (() => {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
-    void this.loadSuppliers();
+    void this.fetchSuppliers();
   
     return true;
   })();
@@ -275,7 +275,7 @@ export class FinancialPayablesPage {
     }
   }
 
-  async loadSuppliers() {
+  async fetchSuppliers() {
     try {
       const res = await this.api.get<any>('erp/suppliers');
       const items = res?.data?.items ?? [];
@@ -423,7 +423,7 @@ export class FinancialPayablesPage {
     this.settleForm.paymentNotes = payable.PaymentNotes ?? '';
     this.settleFiles = [];
     this.error = '';
-    void this.loadSettleAttachments();
+    void this.fetchSettleAttachments();
     this.openSettleDialogInternal();
   }
 
@@ -486,7 +486,7 @@ export class FinancialPayablesPage {
 
       this.settleFiles = [];
       this.snack.success('Payable settled successfully.');
-      await this.loadSettleAttachments();
+      await this.fetchSettleAttachments();
       this.payablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to settle payable.');
@@ -528,13 +528,13 @@ export class FinancialPayablesPage {
         `erp/financial/accounts/payables/${this.selectedSettlePayable.ErpFinAccPayableUUID}/attachments/${attachment.ErpFinAccPayableAttachmentUUID}`,
       );
       this.snack.success('Attachment deleted successfully.');
-      await this.loadSettleAttachments();
+      await this.fetchSettleAttachments();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete attachment.');
     }
   }
 
-  async loadSettleAttachments() {
+  async fetchSettleAttachments() {
     if (!this.selectedSettlePayable) {
       this.settleAttachments = [];
       return;

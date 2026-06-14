@@ -166,9 +166,9 @@ export class IspOltPage {
         .some((field) => String(field).toLowerCase().includes(value));
     };
 
-    this.loadPops();
-    this.loadVendors();
-    this.loadVendorModels();
+    this.fetchPops();
+    this.fetchVendors();
+    this.fetchVendorModels();
   });
 
   constructor() {
@@ -240,7 +240,7 @@ export class IspOltPage {
     this.oltsResource.reload();
   }
 
-  async loadPops() {
+  async fetchPops() {
     try {
       const response = await this.api.get<any>('isp/pops');
       const items = response?.data?.items ?? [];
@@ -255,7 +255,7 @@ export class IspOltPage {
     }
   }
 
-  async loadVendors() {
+  async fetchVendors() {
     try {
       const response = await this.api.get<any>('isp/vendors');
       const items = response?.data?.items ?? [];
@@ -273,7 +273,7 @@ export class IspOltPage {
     }
   }
 
-  async loadVendorModels() {
+  async fetchVendorModels() {
     try {
       const response = await this.api.get<any>('isp/vendor-models');
       const items = response?.data?.items ?? [];

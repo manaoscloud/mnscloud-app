@@ -261,8 +261,8 @@ export class SupportTicketsPage {
 
   private readonly initializePage = (() => {
     this.resetForm();
-    void this.loadCustomers();
-    void this.loadChannels();
+    void this.fetchCustomers();
+    void this.fetchChannels();
 
     return true;
   })();
@@ -446,7 +446,7 @@ export class SupportTicketsPage {
     }
   }
 
-  async loadCustomers() {
+  async fetchCustomers() {
     try {
       const res = await this.api.get<any>('erp/customers');
       const items = res?.data?.items ?? [];
@@ -461,7 +461,7 @@ export class SupportTicketsPage {
     }
   }
 
-  async loadChannels() {
+  async fetchChannels() {
     try {
       const res = await this.api.get<any>('support/ticket-channels');
       const items = res?.data?.items ?? [];
@@ -667,11 +667,11 @@ export class SupportTicketsPage {
     this.form.slaResolutionDeadline = this.parseDateInput(item.SlaResolutionDeadline);
     this.form.slaBreached = Number(item.SlaBreached ?? 0) === 1;
     this.form.assignedToUserUUID = item.AssignedToUserUUID ?? '';
-    void this.loadEvents(item.SupportTicketUUID);
+    void this.fetchEvents(item.SupportTicketUUID);
     this.openFormDialog();
   }
 
-  async loadEvents(ticketUUID: string) {
+  async fetchEvents(ticketUUID: string) {
     this.loadingEvents = true;
     this.eventError = '';
     let items: TicketEvent[] = [];
@@ -812,7 +812,7 @@ export class SupportTicketsPage {
         isInternal: this.eventForm.isInternal ? 1 : 0,
       });
       this.eventForm.message = '';
-      await this.loadEvents(this.editing.SupportTicketUUID);
+      await this.fetchEvents(this.editing.SupportTicketUUID);
     } catch (err: any) {
       this.eventError = err?.message ?? 'Failed to add event.';
     } finally {

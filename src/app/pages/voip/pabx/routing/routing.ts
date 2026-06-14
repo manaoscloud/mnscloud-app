@@ -299,12 +299,12 @@ export class VoipPabxRoutingPage {
     });
     if (this.isMemberResource()) {
       this.resetMemberForm();
-      void this.loadMembers();
+      void this.fetchMembers();
     }
     if (resource === 'ivr') {
       this.resetOptionForm();
-      void this.loadIvrOptions();
-      void this.loadOptionTargets();
+      void this.fetchIvrOptions();
+      void this.fetchOptionTargets();
     }
     this.openDialog();
   }
@@ -326,7 +326,7 @@ export class VoipPabxRoutingPage {
       }
       if (keepOpen && !editing) {
         this.resetForm();
-        await this.loadLookups();
+        await this.fetchLookups();
       } else {
         this.closeDialog();
       }
@@ -454,7 +454,7 @@ export class VoipPabxRoutingPage {
   async onRouteTypeChange() {
     this.formModel.update((current) => ({ ...current, routeTargetUUID: '' }));
     this.targetSearch.set('');
-    await this.loadTargets();
+    await this.fetchTargets();
   }
 
   async onPabxChange() {
@@ -466,8 +466,8 @@ export class VoipPabxRoutingPage {
     this.optionTargetSearch.set('');
     if (this.isMemberResource() && !this.editing()) this.memberRows.set([]);
     if (this.resource() === 'ivr' && !this.editing()) this.ivrOptionRows.set([]);
-    await this.loadTargets();
-    await this.loadOptionTargets();
+    await this.fetchTargets();
+    await this.fetchOptionTargets();
   }
 
   onPabxOpened(opened: boolean) {
@@ -493,7 +493,7 @@ export class VoipPabxRoutingPage {
   async onOptionRouteTypeChange() {
     this.optionFormModel.update((current) => ({ ...current, routeTargetUUID: '' }));
     this.optionTargetSearch.set('');
-    await this.loadOptionTargets();
+    await this.fetchOptionTargets();
   }
 
   filteredMemberExtensionOptions() {
@@ -581,7 +581,7 @@ export class VoipPabxRoutingPage {
     }
   }
 
-  private async loadLookups() {
+  private async fetchLookups() {
     const [pabxResponse, extResponse, mediaFileResponse] = await Promise.all([
       this.pabxApi.list({ limit: this.listLimit }),
       this.extensionApi.list(new URLSearchParams({ limit: String(this.listLimit) })),
@@ -607,12 +607,12 @@ export class VoipPabxRoutingPage {
         pabxUUID: item.pabxUUID,
       })),
     );
-    await this.loadTargets();
-    if (this.resource() === 'ivr') await this.loadOptionTargets();
+    await this.fetchTargets();
+    if (this.resource() === 'ivr') await this.fetchOptionTargets();
   }
 
   private async bootstrap() {
-    await this.loadLookups();
+    await this.fetchLookups();
     this.itemsResource.reload();
   }
 
@@ -624,7 +624,7 @@ export class VoipPabxRoutingPage {
     return response?.data?.items ?? [];
   }
 
-  private async loadTargets() {
+  private async fetchTargets() {
     const routeType = this.formModel().routeType;
     const pabxUUID = this.formModel().pabxUUID;
     if (routeType === 'extension') {
@@ -666,7 +666,7 @@ export class VoipPabxRoutingPage {
     return allOptions.find((option) => option.value === targetUUID)?.label ?? targetUUID;
   }
 
-  private async loadOptionTargets() {
+  private async fetchOptionTargets() {
     if (this.resource() !== 'ivr') {
       this.optionTargetOptions.set([]);
       return;
@@ -706,7 +706,7 @@ export class VoipPabxRoutingPage {
     );
   }
 
-  private async loadMembers() {
+  private async fetchMembers() {
     if (!this.isMemberResource() || !this.editing()) {
       this.memberRows.set([]);
       return;
@@ -778,7 +778,7 @@ export class VoipPabxRoutingPage {
         this.uuidOf(this.editing()),
         this.memberUuidOf(row),
       );
-      await this.loadMembers();
+      await this.fetchMembers();
       this.snack.success('Member removed successfully.');
     } catch (err: any) {
       this.snack.error(this.messageFromError(err));
@@ -804,7 +804,7 @@ export class VoipPabxRoutingPage {
     }
   }
 
-  private async loadIvrOptions() {
+  private async fetchIvrOptions() {
     if (this.resource() !== 'ivr' || !this.editing()) {
       this.ivrOptionRows.set([]);
       return;
@@ -835,7 +835,7 @@ export class VoipPabxRoutingPage {
     if (!this.editing()) {
       this.ivrOptionRows.update((rows) => [...rows, this.pendingIvrOptionRow(payload)]);
       this.resetOptionForm();
-      await this.loadOptionTargets();
+      await this.fetchOptionTargets();
       return;
     }
 
@@ -844,7 +844,7 @@ export class VoipPabxRoutingPage {
       const response = await this.api.createIvrOption(this.uuidOf(this.editing()), payload);
       this.ivrOptionRows.set(response?.data?.items ?? []);
       this.resetOptionForm();
-      await this.loadOptionTargets();
+      await this.fetchOptionTargets();
       this.snack.success('IVR option added successfully.');
     } catch (err: any) {
       this.snack.error(this.messageFromError(err));
@@ -877,7 +877,7 @@ export class VoipPabxRoutingPage {
 
     try {
       await this.api.removeIvrOption(this.uuidOf(this.editing()), this.ivrOptionUuidOf(row));
-      await this.loadIvrOptions();
+      await this.fetchIvrOptions();
       this.snack.success('IVR option removed successfully.');
     } catch (err: any) {
       this.snack.error(this.messageFromError(err));
