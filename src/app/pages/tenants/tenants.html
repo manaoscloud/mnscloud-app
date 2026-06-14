@@ -21,19 +21,19 @@
       </div>
     </header>
 
-    <form class="filter-grid" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+    <form class="filter-grid" (ngSubmit)="applyFilters()">
       <mat-form-field appearance="outline" class="span-2">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          formControlName="search"
+          [formField]="filterForm.search"
           [placeholder]="'Tenant, email or access level' | transloco"
         />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           @for (status of statusOptions; track status) {
             <mat-option [value]="status">
               {{ (status ? status : 'All') | transloco }}
@@ -329,15 +329,15 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <form class="tab-content form-grid" [formGroup]="inviteForm" id="inviteForm">
+          <form class="tab-content form-grid" id="inviteForm">
             <mat-form-field appearance="outline" class="span-3">
               <mat-label>{{ 'Email' | transloco }}</mat-label>
-              <input matInput type="email" formControlName="email" autocomplete="email" />
+              <input matInput type="email" [formField]="inviteForm.email" autocomplete="email" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>{{ 'Access level' | transloco }}</mat-label>
-              <mat-select formControlName="role">
+              <mat-select [formField]="inviteForm.role">
                 @for (role of roles; track role) {
                   <mat-option [value]="role">{{ role }}</mat-option>
                 }
@@ -361,7 +361,7 @@
           color="primary"
           class="save-main-button"
           type="button"
-          [disabled]="inviteForm.invalid || saving()"
+          [disabled]="!inviteForm().valid() || saving()"
           (click)="sendInvite(false)"
         >
           @if (saving()) {
@@ -376,7 +376,7 @@
           color="primary"
           class="save-more-button"
           type="button"
-          [disabled]="inviteForm.invalid || saving()"
+          [disabled]="!inviteForm().valid() || saving()"
           (click)="sendInvite(true)"
         >
           <mat-icon>add</mat-icon>

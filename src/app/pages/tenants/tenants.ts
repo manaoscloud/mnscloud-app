@@ -12,7 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, email, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -62,12 +62,22 @@ type TenantsSnapshot = {
   invitesError: string | null;
 };
 
+type TenantFilterFormModel = {
+  search: string;
+  status: string;
+};
+
+type TenantInviteFormModel = {
+  email: string;
+  role: string;
+};
+
 @Component({
   selector: 'settings-tenants',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatDialogModule,
@@ -89,7 +99,6 @@ type TenantsSnapshot = {
 })
 export class SettingsTenantsPage {
   private readonly service = inject(TenantsService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -140,14 +149,22 @@ export class SettingsTenantsPage {
   readonly membersSource = new MatTableDataSource<TenantAccess>([]);
   readonly invitesSource = new MatTableDataSource<TenantInvite>([]);
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    status: [''],
+  readonly filterFormModel = signal<TenantFilterFormModel>({
+    search: '',
+    status: '',
   });
 
-  readonly inviteForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    role: ['USER', [Validators.required]],
+  readonly inviteFormModel = signal<TenantInviteFormModel>({
+    email: '',
+    role: 'USER',
+  });
+
+  readonly filterForm = createForm(this.filterFormModel);
+
+  readonly inviteForm = createForm(this.inviteFormModel, (schema) => {
+    required(schema.email);
+    email(schema.email);
+    required(schema.role);
   });
 
   private readonly setupTables = afterNextRender(() => {
@@ -187,7 +204,7 @@ export class SettingsTenantsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', status: '' });
+    this.filterFormModel.set({ search: '', status: '' });
     this.applyFilters();
   }
 
@@ -196,7 +213,7 @@ export class SettingsTenantsPage {
       this.snack.warning('Only tenant owners and administrators can invite members.');
       return;
     }
-    this.inviteForm.reset({ email: '', role: 'USER' });
+    this.inviteFormModel.set({ email: '', role: 'USER' });
     this.openInviteDialog();
   }
 
@@ -208,10 +225,10 @@ export class SettingsTenantsPage {
   }
 
   async sendInvite(keepOpen = false) {
-    if (this.inviteForm.invalid || this.saving()) return;
+    if (!this.inviteForm().valid() || this.saving()) return;
 
     this.saving.set(true);
-    const { email, role } = this.inviteForm.getRawValue();
+    const { email, role } = this.inviteFormModel();
 
     try {
       await this.service.inviteUser({ email: email.trim().toLowerCase(), role });
@@ -219,7 +236,7 @@ export class SettingsTenantsPage {
       this.tenantsResource.reload();
 
       if (keepOpen) {
-        this.inviteForm.reset({ email: '', role: 'USER' });
+        this.inviteFormModel.set({ email: '', role: 'USER' });
       } else {
         this.closeInviteDialog();
       }
@@ -402,8 +419,8 @@ export class SettingsTenantsPage {
   }
 
   private applyDataSources() {
-    const search = this.filterForm.controls.search.value.trim().toLowerCase();
-    const status = this.filterForm.controls.status.value;
+    const { search: rawSearch, status } = this.filterFormModel();
+    const search = rawSearch.trim().toLowerCase();
 
     this.myTenantsSource.data = this.rawMyTenants.filter((item) =>
       this.matchesAccessFilter(item, search, status),
