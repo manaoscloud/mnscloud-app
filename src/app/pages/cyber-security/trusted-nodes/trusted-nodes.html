@@ -20,8 +20,8 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [ngModel]="searchInput()"
-          (ngModelChange)="searchInput.set($event)"
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
           placeholder="Name, hostname or node UUID"
         />
       </mat-form-field>

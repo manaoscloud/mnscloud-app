@@ -19,7 +19,6 @@ import {
   pattern,
   required,
 } from '@angular/forms/signals';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -55,7 +54,6 @@ import {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     FormField,
     MatButtonModule,
     MatCardModule,

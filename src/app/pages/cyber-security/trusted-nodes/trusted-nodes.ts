@@ -12,7 +12,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgClass, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -48,7 +47,6 @@ import {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     FormField,
     MatButtonModule,
     MatCardModule,

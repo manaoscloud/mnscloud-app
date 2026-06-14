@@ -10,7 +10,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -42,7 +41,6 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 
 export const HUMAN_RESOURCES_CRUD_IMPORTS = [
   RefreshButtonComponent,
-  FormsModule,
   FormField,
   MatButtonModule,
   MatCardModule,

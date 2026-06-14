@@ -7,7 +7,6 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -50,7 +49,6 @@ const EMPTY_VOIP_DASHBOARD: VoipDashboardSnapshot = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     RouterModule,
     MatButtonModule,
     MatCardModule,

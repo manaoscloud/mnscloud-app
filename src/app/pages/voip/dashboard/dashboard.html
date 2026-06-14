@@ -19,7 +19,7 @@
     <div class="filter-grid dashboard-filters">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'Period' | transloco }}</mat-label>
-        <mat-select [ngModel]="period()" (ngModelChange)="period.set($event)">
+        <mat-select [value]="period()" (selectionChange)="period.set($event.value)">
           @for (option of periodOptions; track option.value) {
             <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
           }

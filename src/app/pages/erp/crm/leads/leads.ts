@@ -7,7 +7,6 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormsModule } from '@angular/forms';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -34,7 +33,6 @@ type Lead = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,

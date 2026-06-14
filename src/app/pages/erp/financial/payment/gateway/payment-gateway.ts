@@ -12,7 +12,6 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -204,7 +203,6 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     FormField,
     MatCardModule,
     MatIconModule,

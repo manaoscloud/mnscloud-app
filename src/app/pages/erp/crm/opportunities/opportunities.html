@@ -19,8 +19,8 @@
         <mat-label>Search opportunities</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Name, account, stage"
         />
       </mat-form-field>
