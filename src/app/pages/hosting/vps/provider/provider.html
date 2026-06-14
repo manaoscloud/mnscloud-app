@@ -15,15 +15,15 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Name, provider or region" formControlName="search" />
+        <input matInput placeholder="Name, provider or region" [formField]="filterForm.search" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -192,10 +192,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="providerForm.isActive">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -203,7 +203,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Default</mat-label>
-                <mat-select formControlName="isDefault">
+                <mat-select [formField]="providerForm.isDefault">
                   <mat-option [value]="1">Yes</mat-option>
                   <mat-option [value]="0">No</mat-option>
                 </mat-select>
@@ -211,7 +211,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
-                <mat-select formControlName="provider">
+                <mat-select
+                  [formField]="providerForm.provider"
+                  (selectionChange)="providerSelection.set($event.value)"
+                >
                   @for (opt of providerOptions; track opt.value) {
                     <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                   }
@@ -220,7 +223,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Primary provider" />
+                <input matInput [formField]="providerForm.name" placeholder="Primary provider" />
               </mat-form-field>
             </form>
           </div>
@@ -228,11 +231,11 @@
 
         <mat-tab label="API">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               @if (providerSelection() === 'digitalocean') {
                 <mat-form-field appearance="outline">
                   <mat-label>Project ID</mat-label>
-                  <input matInput formControlName="projectId" placeholder="project-id" />
+                  <input matInput [formField]="providerForm.projectId" placeholder="project-id" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-2">
@@ -240,7 +243,7 @@
                   <input
                     matInput
                     [type]="hideApiToken() ? 'password' : 'text'"
-                    formControlName="apiToken"
+                    [formField]="providerForm.apiToken"
                     placeholder="do_api_token"
                   />
                   <button
@@ -258,12 +261,12 @@
               @if (providerSelection() === 'lightsail') {
                 <mat-form-field appearance="outline">
                   <mat-label>Region</mat-label>
-                  <input matInput formControlName="region" placeholder="us-east-1" />
+                  <input matInput [formField]="providerForm.region" placeholder="us-east-1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Access Key ID</mat-label>
-                  <input matInput formControlName="accessKeyId" placeholder="AKIA..." />
+                  <input matInput [formField]="providerForm.accessKeyId" placeholder="AKIA..." />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -271,7 +274,7 @@
                   <input
                     matInput
                     [type]="hideSecretAccessKey() ? 'password' : 'text'"
-                    formControlName="secretAccessKey"
+                    [formField]="providerForm.secretAccessKey"
                     placeholder="********"
                   />
                   <button
@@ -295,36 +298,36 @@
                   <mat-label>API URL</mat-label>
                   <input
                     matInput
-                    formControlName="apiUrl"
+                    [formField]="providerForm.apiUrl"
                     placeholder="https://proxmox.example.com:8006"
                   />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Node</mat-label>
-                  <input matInput formControlName="node" placeholder="pve1" />
+                  <input matInput [formField]="providerForm.node" placeholder="pve1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Storage</mat-label>
-                  <input matInput formControlName="storage" placeholder="local-lvm" />
+                  <input matInput [formField]="providerForm.storage" placeholder="local-lvm" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Bridge</mat-label>
-                  <input matInput formControlName="bridge" placeholder="vmbr0" />
+                  <input matInput [formField]="providerForm.bridge" placeholder="vmbr0" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Template VMID</mat-label>
-                  <input matInput formControlName="templateVmid" placeholder="9000" />
+                  <input matInput [formField]="providerForm.templateVmid" placeholder="9000" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Token ID</mat-label>
                   <input
                     matInput
-                    formControlName="tokenId"
+                    [formField]="providerForm.tokenId"
                     placeholder="mnscloud@pve!provisioner"
                   />
                 </mat-form-field>
@@ -334,7 +337,7 @@
                   <input
                     matInput
                     [type]="hideTokenSecret() ? 'password' : 'text'"
-                    formControlName="tokenSecret"
+                    [formField]="providerForm.tokenSecret"
                     placeholder="********"
                   />
                   <button
@@ -356,46 +359,46 @@
                   <mat-label>vCenter URL</mat-label>
                   <input
                     matInput
-                    formControlName="vcenterUrl"
+                    [formField]="providerForm.vcenterUrl"
                     placeholder="https://vcenter.example.com"
                   />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Datacenter</mat-label>
-                  <input matInput formControlName="datacenter" placeholder="DC1" />
+                  <input matInput [formField]="providerForm.datacenter" placeholder="DC1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Cluster</mat-label>
-                  <input matInput formControlName="cluster" placeholder="Cluster01" />
+                  <input matInput [formField]="providerForm.cluster" placeholder="Cluster01" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Resource pool</mat-label>
-                  <input matInput formControlName="resourcePool" placeholder="Resources" />
+                  <input matInput [formField]="providerForm.resourcePool" placeholder="Resources" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Datastore</mat-label>
-                  <input matInput formControlName="datastore" placeholder="datastore1" />
+                  <input matInput [formField]="providerForm.datastore" placeholder="datastore1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Network</mat-label>
-                  <input matInput formControlName="network" placeholder="VM Network" />
+                  <input matInput [formField]="providerForm.network" placeholder="VM Network" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Template VM ID</mat-label>
-                  <input matInput formControlName="templateVmId" placeholder="vm-123" />
+                  <input matInput [formField]="providerForm.templateVmId" placeholder="vm-123" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Customization spec</mat-label>
                   <input
                     matInput
-                    formControlName="customizationSpec"
+                    [formField]="providerForm.customizationSpec"
                     placeholder="linux-cloud-init"
                   />
                 </mat-form-field>
@@ -404,7 +407,7 @@
                   <mat-label>Username</mat-label>
                   <input
                     matInput
-                    formControlName="username"
+                    [formField]="providerForm.username"
                     placeholder="mnscloud-provisioner@vsphere.local"
                   />
                 </mat-form-field>
@@ -414,7 +417,7 @@
                   <input
                     matInput
                     [type]="hidePassword() ? 'password' : 'text'"
-                    formControlName="password"
+                    [formField]="providerForm.password"
                     placeholder="********"
                   />
                   <button
@@ -432,61 +435,69 @@
               @if (providerSelection() === 'sangfor_scp') {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>API URL</mat-label>
-                  <input matInput formControlName="apiUrl" placeholder="https://scp.example.com" />
+                  <input
+                    matInput
+                    [formField]="providerForm.apiUrl"
+                    placeholder="https://scp.example.com"
+                  />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>API version</mat-label>
-                  <input matInput formControlName="apiVersion" placeholder="v1" />
+                  <input matInput [formField]="providerForm.apiVersion" placeholder="v1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Auth path</mat-label>
-                  <input matInput formControlName="authPath" placeholder="/api/v1/auth/login" />
+                  <input
+                    matInput
+                    [formField]="providerForm.authPath"
+                    placeholder="/api/v1/auth/login"
+                  />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Validate path</mat-label>
                   <input
                     matInput
-                    formControlName="validatePath"
+                    [formField]="providerForm.validatePath"
                     placeholder="/api/v1/system/version"
                   />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Region</mat-label>
-                  <input matInput formControlName="region" placeholder="default" />
+                  <input matInput [formField]="providerForm.region" placeholder="default" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Resource pool ID</mat-label>
-                  <input matInput formControlName="resourcePoolId" />
+                  <input matInput [formField]="providerForm.resourcePoolId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Cluster ID</mat-label>
-                  <input matInput formControlName="clusterId" />
+                  <input matInput [formField]="providerForm.clusterId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Network ID</mat-label>
-                  <input matInput formControlName="networkId" />
+                  <input matInput [formField]="providerForm.networkId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Datastore ID</mat-label>
-                  <input matInput formControlName="datastoreId" />
+                  <input matInput [formField]="providerForm.datastoreId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Storage pool ID</mat-label>
-                  <input matInput formControlName="storagePoolId" />
+                  <input matInput [formField]="providerForm.storagePoolId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Image ID</mat-label>
-                  <input matInput formControlName="imageId" />
+                  <input matInput [formField]="providerForm.imageId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -496,7 +507,7 @@
                     type="number"
                     min="3"
                     max="120"
-                    formControlName="timeoutSeconds"
+                    [formField]="providerForm.timeoutSeconds"
                   />
                 </mat-form-field>
 
@@ -504,7 +515,7 @@
                   <mat-label>Catalog regions path</mat-label>
                   <input
                     matInput
-                    formControlName="catalogRegionsPath"
+                    [formField]="providerForm.catalogRegionsPath"
                     placeholder="/api/v1/regions"
                   />
                 </mat-form-field>
@@ -513,7 +524,7 @@
                   <mat-label>Catalog sizes path</mat-label>
                   <input
                     matInput
-                    formControlName="catalogSizesPath"
+                    [formField]="providerForm.catalogSizesPath"
                     placeholder="/api/v1/flavors"
                   />
                 </mat-form-field>
@@ -522,7 +533,7 @@
                   <mat-label>Catalog images path</mat-label>
                   <input
                     matInput
-                    formControlName="catalogImagesPath"
+                    [formField]="providerForm.catalogImagesPath"
                     placeholder="/api/v1/images"
                   />
                 </mat-form-field>
@@ -532,7 +543,7 @@
                   <input
                     matInput
                     [type]="hideApiToken() ? 'password' : 'text'"
-                    formControlName="apiToken"
+                    [formField]="providerForm.apiToken"
                     placeholder="Bearer token"
                   />
                   <button
@@ -548,7 +559,7 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Access Key</mat-label>
-                  <input matInput formControlName="accessKeyId" autocomplete="off" />
+                  <input matInput [formField]="providerForm.accessKeyId" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -556,7 +567,7 @@
                   <input
                     matInput
                     [type]="hideSecretAccessKey() ? 'password' : 'text'"
-                    formControlName="secretAccessKey"
+                    [formField]="providerForm.secretAccessKey"
                     autocomplete="new-password"
                   />
                   <button
@@ -576,7 +587,7 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Username</mat-label>
-                  <input matInput formControlName="username" autocomplete="off" />
+                  <input matInput [formField]="providerForm.username" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -584,7 +595,7 @@
                   <input
                     matInput
                     [type]="hidePassword() ? 'password' : 'text'"
-                    formControlName="password"
+                    [formField]="providerForm.password"
                     autocomplete="new-password"
                   />
                   <button

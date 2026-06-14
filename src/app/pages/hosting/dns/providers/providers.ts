@@ -10,7 +10,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -60,7 +60,7 @@ type HostingDnsProvider = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -85,7 +85,6 @@ type HostingDnsProvider = {
 })
 export class HostingDnsProvidersPage {
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
@@ -139,20 +138,27 @@ export class HostingDnsProvidersPage {
 
   readonly displayedColumns = ['select', 'name', 'provider', 'default', 'status', 'actions'];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    provider: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly providerForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['manual', [Validators.required]],
-    isDefault: [0],
-    status: [1 as ProviderStatus, [Validators.required]],
-    configJson: [''],
-    credentialsJson: [''],
-    notes: [''],
+  readonly providerFormModel = signal({
+    name: '',
+    provider: 'manual',
+    isDefault: false,
+    status: 1 as ProviderStatus,
+    configJson: '',
+    credentialsJson: '',
+    notes: '',
+  });
+  readonly providerForm = createForm(this.providerFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
+    required(schema.status);
   });
 
   private readonly syncProviders = effect(() => {
@@ -192,7 +198,7 @@ export class HostingDnsProvidersPage {
   }
 
   applyFilters() {
-    const { search, provider, status } = this.filterForm.getRawValue();
+    const { search, provider, status } = this.filterFormModel();
     this.appliedSearch.set(search);
     this.appliedProvider.set(provider);
     this.appliedStatus.set(status);
@@ -200,7 +206,7 @@ export class HostingDnsProvidersPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', provider: '', status: '' });
+    this.filterFormModel.set({ search: '', provider: '', status: '' });
     this.appliedSearch.set('');
     this.appliedProvider.set('');
     this.appliedStatus.set('');
@@ -220,10 +226,10 @@ export class HostingDnsProvidersPage {
 
   startCreate() {
     this.editing.set(null);
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: '',
       provider: 'manual',
-      isDefault: 0,
+      isDefault: false,
       status: 1,
       configJson: '',
       credentialsJson: '',
@@ -234,10 +240,10 @@ export class HostingDnsProvidersPage {
 
   startEdit(provider: HostingDnsProvider) {
     this.editing.set(provider);
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: provider.HdpName ?? '',
       provider: provider.HdpProvider ?? 'manual',
-      isDefault: provider.HdpIsDefault ? 1 : 0,
+      isDefault: Boolean(provider.HdpIsDefault),
       status: (provider.HdpStatus ?? 1) as ProviderStatus,
       configJson: provider.HdpConfig ? JSON.stringify(provider.HdpConfig, null, 2) : '',
       credentialsJson: '',
@@ -252,13 +258,12 @@ export class HostingDnsProvidersPage {
   }
 
   async saveProvider(closeAfterSave = true) {
-    if (this.providerForm.invalid) {
-      this.providerForm.markAllAsTouched();
+    if (!this.providerForm().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const name = values.name.trim();
     if (!name) {
       this.snack.warning('Domain provider name is required.');
@@ -281,7 +286,7 @@ export class HostingDnsProvidersPage {
       provider: values.provider,
       config,
       credentials,
-      isDefault: Boolean(values.isDefault),
+      isDefault: values.isDefault,
       status: values.status,
       notes: values.notes.trim() || null,
     };
@@ -301,10 +306,10 @@ export class HostingDnsProvidersPage {
         this.closeProviderDialog();
         this.resetForm();
       } else {
-        this.providerForm.reset({
+        this.providerFormModel.set({
           name: '',
           provider: 'manual',
-          isDefault: 0,
+          isDefault: false,
           status: 1,
           configJson: '',
           credentialsJson: '',
@@ -443,10 +448,10 @@ export class HostingDnsProvidersPage {
 
   private resetForm() {
     this.editing.set(null);
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: '',
       provider: 'manual',
-      isDefault: 0,
+      isDefault: false,
       status: 1,
       configJson: '',
       credentialsJson: '',

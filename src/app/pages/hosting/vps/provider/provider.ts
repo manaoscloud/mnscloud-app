@@ -11,8 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -50,7 +49,7 @@ import type {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -74,7 +73,6 @@ import type {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingVpsProviderPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
@@ -156,53 +154,61 @@ export class HostingVpsProviderPage {
     { value: 'sangfor_scp', label: 'Sangfor Technologies SCP/HCI' },
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly providerForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['digitalocean' as VpsProvider, [Validators.required]],
-    region: [''],
-    projectId: [''],
-    accessKeyId: [''],
-    apiUrl: [''],
-    node: [''],
-    storage: [''],
-    bridge: [''],
-    templateVmid: [''],
-    vcenterUrl: [''],
-    datacenter: [''],
-    cluster: [''],
-    resourcePool: [''],
-    folder: [''],
-    datastore: [''],
-    network: [''],
-    templateVm: [''],
-    templateVmId: [''],
-    customizationSpec: [''],
-    apiVersion: [''],
-    authPath: [''],
-    validatePath: [''],
-    resourcePoolId: [''],
-    clusterId: [''],
-    networkId: [''],
-    datastoreId: [''],
-    storagePoolId: [''],
-    imageId: [''],
-    timeoutSeconds: [''],
-    catalogRegionsPath: [''],
-    catalogSizesPath: [''],
-    catalogImagesPath: [''],
-    apiToken: [''],
-    secretAccessKey: [''],
-    tokenId: [''],
-    tokenSecret: [''],
-    username: [''],
-    password: [''],
-    isActive: [1, [Validators.required]],
-    isDefault: [0, [Validators.required]],
+  readonly providerFormModel = signal({
+    name: '',
+    provider: 'digitalocean' as VpsProvider,
+    region: '',
+    projectId: '',
+    accessKeyId: '',
+    apiUrl: '',
+    node: '',
+    storage: '',
+    bridge: '',
+    templateVmid: '',
+    vcenterUrl: '',
+    datacenter: '',
+    cluster: '',
+    resourcePool: '',
+    folder: '',
+    datastore: '',
+    network: '',
+    templateVm: '',
+    templateVmId: '',
+    customizationSpec: '',
+    apiVersion: '',
+    authPath: '',
+    validatePath: '',
+    resourcePoolId: '',
+    clusterId: '',
+    networkId: '',
+    datastoreId: '',
+    storagePoolId: '',
+    imageId: '',
+    timeoutSeconds: '',
+    catalogRegionsPath: '',
+    catalogSizesPath: '',
+    catalogImagesPath: '',
+    apiToken: '',
+    secretAccessKey: '',
+    tokenId: '',
+    tokenSecret: '',
+    username: '',
+    password: '',
+    isActive: 1,
+    isDefault: 0,
+  });
+  readonly providerForm = createForm(this.providerFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
+    required(schema.isActive);
+    required(schema.isDefault);
   });
 
   private readonly providersResource = resource({
@@ -243,14 +249,6 @@ export class HostingVpsProviderPage {
       this.closeDialog();
       this.stopDialogViewportObserver();
     });
-    this.applyProviderValidators(this.providerSelection(), false);
-    this.providerForm.controls.provider.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        if (!value) return;
-        this.providerSelection.set(value);
-        this.applyProviderValidators(value, !!this.editing());
-      });
   }
 
   refreshList() {
@@ -258,14 +256,14 @@ export class HostingVpsProviderPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedStatus.set(values.status);
     this.resetPagination();
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', status: '' });
+    this.filterFormModel.set({ search: '', status: '' });
     this.applyFilters();
   }
 
@@ -323,7 +321,7 @@ export class HostingVpsProviderPage {
     const config = providerRecord.HvrConfig ?? {};
     const credentials = providerRecord.credentials ?? {};
     this.editing.set(providerRecord);
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: providerRecord.HvrName,
       provider: providerRecord.HvrProvider,
       region: config.region ?? '',
@@ -367,7 +365,6 @@ export class HostingVpsProviderPage {
       isDefault: providerRecord.HvrIsDefault === 1 ? 1 : 0,
     });
     this.providerSelection.set(providerRecord.HvrProvider);
-    this.applyProviderValidators(providerRecord.HvrProvider, true);
     this.openDialog();
   }
 
@@ -378,13 +375,12 @@ export class HostingVpsProviderPage {
   }
 
   async submit(closeAfterSave = true) {
-    if (this.providerForm.invalid) {
-      this.providerForm.markAllAsTouched();
+    if (!this.providerFormIsValid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const credentials = this.buildCredentialsPayload();
     if (!this.editing() && !credentials) {
       this.snack.warning('Credentials are required for new providers.');
@@ -597,53 +593,42 @@ export class HostingVpsProviderPage {
     }
   }
 
-  private applyProviderValidators(provider: VpsProvider, isEditing = false) {
-    const controls = this.providerForm.controls;
-    controls.region.clearValidators();
-    controls.projectId.clearValidators();
-    controls.accessKeyId.clearValidators();
-    controls.apiUrl.clearValidators();
-    controls.vcenterUrl.clearValidators();
-    controls.resourcePoolId.clearValidators();
-    controls.apiToken.clearValidators();
-    controls.secretAccessKey.clearValidators();
-    controls.tokenId.clearValidators();
-    controls.tokenSecret.clearValidators();
-    controls.username.clearValidators();
-    controls.password.clearValidators();
-
-    if (provider === 'digitalocean' && !isEditing) {
-      controls.apiToken.setValidators([Validators.required]);
+  private providerFormIsValid() {
+    if (!this.providerForm().valid()) return false;
+    const values = this.providerFormModel();
+    const isEditing = !!this.editing();
+    if (values.provider === 'digitalocean') {
+      return isEditing || !!this.normalizeString(values.apiToken);
     }
-    if (provider === 'lightsail') {
-      controls.region.setValidators([Validators.required]);
-      controls.accessKeyId.setValidators([Validators.required]);
-      if (!isEditing) controls.secretAccessKey.setValidators([Validators.required]);
+    if (values.provider === 'lightsail') {
+      return (
+        !!this.normalizeString(values.region) &&
+        !!this.normalizeString(values.accessKeyId) &&
+        (isEditing || !!this.normalizeString(values.secretAccessKey))
+      );
     }
-    if (provider === 'proxmox') {
-      controls.apiUrl.setValidators([Validators.required]);
-      if (!isEditing) {
-        controls.tokenId.setValidators([Validators.required]);
-        controls.tokenSecret.setValidators([Validators.required]);
-      }
+    if (values.provider === 'proxmox') {
+      return (
+        !!this.normalizeString(values.apiUrl) &&
+        (isEditing ||
+          (!!this.normalizeString(values.tokenId) && !!this.normalizeString(values.tokenSecret)))
+      );
     }
-    if (provider === 'vmware_vcenter') {
-      controls.vcenterUrl.setValidators([Validators.required]);
-      if (!isEditing) {
-        controls.username.setValidators([Validators.required]);
-        controls.password.setValidators([Validators.required]);
-      }
+    if (values.provider === 'vmware_vcenter') {
+      return (
+        !!this.normalizeString(values.vcenterUrl) &&
+        (isEditing ||
+          (!!this.normalizeString(values.username) && !!this.normalizeString(values.password)))
+      );
     }
-    if (provider === 'sangfor_scp') {
-      controls.apiUrl.setValidators([Validators.required]);
+    if (values.provider === 'sangfor_scp') {
+      return !!this.normalizeString(values.apiUrl);
     }
-    for (const control of Object.values(controls)) {
-      control.updateValueAndValidity({ emitEvent: false });
-    }
+    return true;
   }
 
   private resetForm() {
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: '',
       provider: 'digitalocean',
       region: '',
@@ -687,7 +672,6 @@ export class HostingVpsProviderPage {
       isDefault: 0,
     });
     this.providerSelection.set('digitalocean');
-    this.applyProviderValidators('digitalocean', false);
   }
 
   private resetPagination() {
@@ -757,7 +741,7 @@ export class HostingVpsProviderPage {
   }
 
   private buildConfigPayload(): VpsProviderConfig {
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const config: VpsProviderConfig = {};
     const region = this.normalizeString(values.region);
     const projectId = this.normalizeString(values.projectId);
@@ -828,7 +812,7 @@ export class HostingVpsProviderPage {
   }
 
   private buildCredentialsPayload(): VpsProviderCredentials | null {
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const credentials: VpsProviderCredentials = {};
     const apiToken = this.normalizeString(values.apiToken);
     const secretAccessKey = this.normalizeString(values.secretAccessKey);

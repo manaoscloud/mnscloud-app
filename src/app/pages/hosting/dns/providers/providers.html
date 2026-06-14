@@ -15,15 +15,15 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Name or platform" formControlName="search" />
+        <input matInput placeholder="Name or platform" [formField]="filterForm.search" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Platform</mat-label>
-        <mat-select formControlName="provider">
+        <mat-select [formField]="filterForm.provider">
           <mat-option value="">All</mat-option>
           @for (item of catalog(); track item.value) {
             <mat-option [value]="item.value">{{ item.label }}</mat-option>
@@ -33,7 +33,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -180,15 +180,15 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput placeholder="REGISTRO.BR MAIN" formControlName="name" />
+                <input matInput placeholder="REGISTRO.BR MAIN" [formField]="providerForm.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Platform</mat-label>
-                <mat-select formControlName="provider">
+                <mat-select [formField]="providerForm.provider">
                   @for (item of catalog(); track item.value) {
                     <mat-option [value]="item.value">{{ item.label }}</mat-option>
                   }
@@ -197,14 +197,14 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="providerForm.status">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <div class="checkbox-wrap">
-                <mat-checkbox formControlName="isDefault">Default provider</mat-checkbox>
+                <mat-checkbox [formField]="providerForm.isDefault">Default provider</mat-checkbox>
               </div>
             </form>
           </div>
@@ -212,15 +212,15 @@
 
         <mat-tab label="API">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Config JSON</mat-label>
-                <textarea matInput rows="8" formControlName="configJson"></textarea>
+                <textarea matInput rows="8" [formField]="providerForm.configJson"></textarea>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Credentials JSON</mat-label>
-                <textarea matInput rows="8" formControlName="credentialsJson"></textarea>
+                <textarea matInput rows="8" [formField]="providerForm.credentialsJson"></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -228,10 +228,10 @@
 
         <mat-tab label="Notes">
           <div class="tab-content notes-tab-content">
-            <form [formGroup]="providerForm">
+            <form>
               <mat-form-field appearance="outline" class="notes-field">
                 <mat-label>Notes</mat-label>
-                <textarea matInput rows="12" formControlName="notes"></textarea>
+                <textarea matInput rows="12" [formField]="providerForm.notes"></textarea>
               </mat-form-field>
             </form>
           </div>
