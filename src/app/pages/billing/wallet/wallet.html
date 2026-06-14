@@ -397,7 +397,7 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="subscriptionForm" (ngSubmit)="saveSubscription()">
+            <form class="form-grid" (ngSubmit)="saveSubscription()">
               @if (isModuleCatalogItem()) {
                 <section class="metric-card span-2">
                   <span>{{ 'Module subscription' | transloco }}</span>
@@ -424,13 +424,13 @@
                     type="number"
                     min="0.000001"
                     step="0.000001"
-                    formControlName="quantity"
+                    [formField]="subscriptionForm.quantity"
                   />
                 </mat-form-field>
               }
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Promotion or coupon code' | transloco }}</mat-label>
-                <input matInput maxlength="120" formControlName="promotionCode" />
+                <input matInput maxlength="120" [formField]="subscriptionForm.promotionCode" />
               </mat-form-field>
             </form>
           </div>
@@ -510,43 +510,43 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid topup-form-grid" [formGroup]="topupForm">
+            <form class="form-grid topup-form-grid">
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Amount' | transloco }}</mat-label>
                 <input
                   matInput
                   type="text"
-                  formControlName="amount"
+                  [formField]="topupForm.amount"
                   appCurrencyMask
                   [appCurrencyMaskCurrency]="topupCurrency()"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Payer type' | transloco }}</mat-label>
-                <mat-select formControlName="payerType">
+                <mat-select [formField]="topupForm.payerType">
                   <mat-option value="FISICA">{{ 'Individual' | transloco }}</mat-option>
                   <mat-option value="JURIDICA">{{ 'Company' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Payer name' | transloco }}</mat-label>
-                <input matInput formControlName="payerName" />
+                <input matInput [formField]="topupForm.payerName" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Payer email' | transloco }}</mat-label>
-                <input matInput type="email" formControlName="payerEmail" />
+                <input matInput type="email" [formField]="topupForm.payerEmail" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Payer document' | transloco }}</mat-label>
-                <input matInput formControlName="payerDocument" />
+                <input matInput [formField]="topupForm.payerDocument" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Due date' | transloco }}</mat-label>
-                <input matInput type="date" formControlName="dueDate" />
+                <input matInput type="date" [formField]="topupForm.dueDate" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Reference' | transloco }}</mat-label>
-                <input matInput formControlName="reference" />
+                <input matInput [formField]="topupForm.reference" />
               </mat-form-field>
             </form>
           </div>

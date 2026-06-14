@@ -13,7 +13,8 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, email, form as createForm, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -59,7 +60,7 @@ type BillingWalletSnapshot = {
 export const BILLING_WALLET_IMPORTS = [
   DatePipe,
   FormsModule,
-  ReactiveFormsModule,
+  FormField,
   MatButtonModule,
   MatCardModule,
   MatCheckboxModule,
@@ -91,7 +92,6 @@ export const BILLING_WALLET_IMPORTS = [
 export class BillingWalletPage {
   private readonly billing = inject(BillingService);
   private readonly dialog = inject(MatDialog);
-  private readonly fb = inject(FormBuilder);
   private readonly snack = inject(SnackbarService);
   private readonly i18n = inject(AppI18nService);
   private readonly destroyRef = inject(DestroyRef);
@@ -138,21 +138,34 @@ export class BillingWalletPage {
   statusFilter = '';
   readonly selectedSubscriptionUUIDs = new Set<string>();
 
-  readonly subscriptionForm = this.fb.nonNullable.group({
-    priceUUID: ['', Validators.required],
-    quantity: [1, [Validators.required, Validators.min(0.000001)]],
-    promotionCode: [''],
+  readonly subscriptionFormModel = signal({
+    priceUUID: '',
+    quantity: 1,
+    promotionCode: '',
+  });
+  readonly subscriptionForm = createForm(this.subscriptionFormModel, (schema) => {
+    required(schema.priceUUID);
+    required(schema.quantity);
+    min(schema.quantity, 0.000001);
   });
 
-  readonly topupForm = this.fb.nonNullable.group({
-    amount: [0, [Validators.required, Validators.min(0.000001)]],
-    reference: [''],
-    payerName: ['', Validators.required],
-    payerDocument: ['', Validators.required],
-    payerEmail: ['', [Validators.required, Validators.email]],
-    payerType: ['FISICA'],
-    dueDate: [''],
-    idempotencyKey: [''],
+  readonly topupFormModel = signal({
+    amount: 0,
+    reference: '',
+    payerName: '',
+    payerDocument: '',
+    payerEmail: '',
+    payerType: 'FISICA',
+    dueDate: '',
+    idempotencyKey: '',
+  });
+  readonly topupForm = createForm(this.topupFormModel, (schema) => {
+    required(schema.amount);
+    min(schema.amount, 0.000001);
+    required(schema.payerName);
+    required(schema.payerDocument);
+    required(schema.payerEmail);
+    email(schema.payerEmail);
   });
 
   readonly subscriptionDialog = viewChild<TemplateRef<unknown>>('subscriptionDialog');
@@ -236,7 +249,7 @@ export class BillingWalletPage {
   }
 
   openTopupDialog() {
-    this.topupForm.reset({
+    this.topupFormModel.set({
       amount: 0,
       reference: '',
       payerName: '',
@@ -266,9 +279,9 @@ export class BillingWalletPage {
   }
 
   async saveTopupIntent() {
-    if (this.topupForm.invalid || this.saving()) return;
+    if (!this.topupForm().valid() || this.saving()) return;
     this.saving.set(true);
-    const value = this.topupForm.getRawValue();
+    const value = this.topupFormModel();
     try {
       await this.billing.createTopup({
         amount: Number(value.amount),
@@ -299,7 +312,7 @@ export class BillingWalletPage {
 
   openSubscribeDialog(row: BillingCatalogItem) {
     this.selectedCatalogItem.set(row);
-    this.subscriptionForm.reset({
+    this.subscriptionFormModel.set({
       priceUUID: row.BpcUUID,
       quantity: 1,
       promotionCode: row.PromotionCode ?? '',
@@ -324,12 +337,13 @@ export class BillingWalletPage {
   }
 
   async saveSubscription(keepOpen = false) {
-    if (this.subscriptionForm.invalid || this.saving()) return;
+    if (!this.subscriptionForm().valid() || this.saving()) return;
     const showQuantity = this.shouldShowSubscriptionQuantity();
+    const values = this.subscriptionFormModel();
     const payload: Record<string, unknown> = {
-      priceUUID: this.subscriptionForm.value.priceUUID,
-      quantity: showQuantity ? this.subscriptionForm.value.quantity : 1,
-      promotionCode: this.emptyToNull(this.subscriptionForm.value.promotionCode),
+      priceUUID: values.priceUUID,
+      quantity: showQuantity ? values.quantity : 1,
+      promotionCode: this.emptyToNull(values.promotionCode),
     };
     this.saving.set(true);
     try {
@@ -587,7 +601,7 @@ export class BillingWalletPage {
 
   private resetSubscriptionForm() {
     const item = this.selectedCatalogItem();
-    this.subscriptionForm.reset({
+    this.subscriptionFormModel.set({
       priceUUID: item?.BpcUUID ?? '',
       quantity: 1,
       promotionCode: item?.PromotionCode ?? '',
