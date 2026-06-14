@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -55,12 +55,32 @@ type WebhostEmailFilters = {
   provisionStatus: string;
 };
 
+type WebhostEmailFilterFormModel = WebhostEmailFilters & {
+  provider: string;
+};
+
+type WebhostEmailFormModel = {
+  hostUUID: string;
+  localPart: string;
+  password: string;
+  quotaMb: number;
+  status: WebhostEmailStatus;
+  provisionStatus: WebhostEmailProvisionStatus;
+  autoProvision: number;
+  notes: string;
+  isActive: number;
+};
+
+type WebhostEmailPasswordFormModel = {
+  password: string;
+};
+
 @Component({
   selector: 'app-hosting-webhost-emails',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -84,7 +104,6 @@ type WebhostEmailFilters = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingWebhostEmailsPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
@@ -130,7 +149,7 @@ export class HostingWebhostEmailsPage {
   readonly selectedEmailUUIDs = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedEmailUUIDs().size);
   readonly selectedHost = computed(() => {
-    const hostUUID = this.emailForm.controls.hostUUID.value;
+    const hostUUID = this.emailFormModel().hostUUID;
     return this.hosts().find((host) => host.HwhUUID === hostUUID) ?? null;
   });
 
@@ -165,28 +184,42 @@ export class HostingWebhostEmailsPage {
     'actions',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    hostUUID: [''],
-    status: [''],
-    provisionStatus: [''],
+  readonly filterFormModel = signal<WebhostEmailFilterFormModel>({
+    search: '',
+    provider: '',
+    hostUUID: '',
+    status: '',
+    provisionStatus: '',
+  });
+  readonly filterForm = createForm(this.filterFormModel);
+
+  readonly emailFormModel = signal<WebhostEmailFormModel>({
+    hostUUID: '',
+    localPart: '',
+    password: '',
+    quotaMb: 0,
+    status: 'pending',
+    provisionStatus: 'manual',
+    autoProvision: 0,
+    notes: '',
+    isActive: 1,
+  });
+  readonly emailForm = createForm(this.emailFormModel, (schema) => {
+    required(schema.hostUUID);
+    required(schema.localPart);
+    minLength(schema.localPart, 1);
+    min(schema.quotaMb, 0);
+    required(schema.status);
+    required(schema.provisionStatus);
+    required(schema.isActive);
   });
 
-  readonly emailForm = this.fb.nonNullable.group({
-    hostUUID: ['', [Validators.required]],
-    localPart: ['', [Validators.required, Validators.minLength(1)]],
-    password: [''],
-    quotaMb: [0, [Validators.min(0)]],
-    status: ['pending' as WebhostEmailStatus, [Validators.required]],
-    provisionStatus: ['manual' as WebhostEmailProvisionStatus, [Validators.required]],
-    autoProvision: [0],
-    notes: [''],
-    isActive: [1, [Validators.required]],
+  readonly passwordFormModel = signal<WebhostEmailPasswordFormModel>({
+    password: '',
   });
-
-  readonly passwordForm = this.fb.nonNullable.group({
-    password: ['', [Validators.required, Validators.minLength(8)]],
+  readonly passwordForm = createForm(this.passwordFormModel, (schema) => {
+    required(schema.password);
+    minLength(schema.password, 8);
   });
 
   readonly rows = computed(() => {
@@ -271,7 +304,7 @@ export class HostingWebhostEmailsPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedProvider.set(values.provider);
     this.appliedHostUUID.set(values.hostUUID);
@@ -282,7 +315,7 @@ export class HostingWebhostEmailsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({
+    this.filterFormModel.set({
       search: '',
       provider: '',
       hostUUID: '',
@@ -377,7 +410,7 @@ export class HostingWebhostEmailsPage {
 
     const config = email.HweConfig ?? {};
     this.editing.set(email);
-    this.emailForm.reset({
+    this.emailFormModel.set({
       hostUUID: email.HostingWebhostHostHwhUUID,
       localPart: email.HweLocalPart,
       password: '',
@@ -398,12 +431,11 @@ export class HostingWebhostEmailsPage {
   }
 
   async submit(closeAfterSave = true) {
-    const values = this.emailForm.getRawValue();
+    const values = this.emailFormModel();
     if (
-      this.emailForm.invalid ||
+      !this.emailForm().valid() ||
       (!this.editing() && values.autoProvision === 1 && !values.password.trim())
     ) {
-      this.emailForm.markAllAsTouched();
       this.snack.warning('Please fill all required fields.');
       return;
     }
@@ -452,7 +484,7 @@ export class HostingWebhostEmailsPage {
     if (!passwordDialog) return;
     this.passwordTarget.set(item);
     this.passwordAction.set(action);
-    this.passwordForm.reset({ password: '' });
+    this.passwordFormModel.set({ password: '' });
     this.passwordDialogRef = this.dialog.open(passwordDialog, {
       width: 'min(520px, calc(100vw - 24px))',
       maxWidth: 'calc(100vw - 24px)',
@@ -467,12 +499,11 @@ export class HostingWebhostEmailsPage {
     this.passwordDialogRef?.close();
     this.passwordDialogRef = null;
     this.passwordTarget.set(null);
-    this.passwordForm.reset({ password: '' });
+    this.passwordFormModel.set({ password: '' });
   }
 
   async submitPasswordAction() {
-    if (this.passwordForm.invalid || !this.passwordTarget()) {
-      this.passwordForm.markAllAsTouched();
+    if (!this.passwordForm().valid() || !this.passwordTarget()) {
       return;
     }
     const target = this.passwordTarget();
@@ -481,7 +512,7 @@ export class HostingWebhostEmailsPage {
     this.actionEmailUUID.set(target.HweUUID);
     try {
       await this.api.post(`${this.emailEndpoint}/${target.HweUUID}/${action}`, {
-        password: this.passwordForm.controls.password.value,
+        password: this.passwordFormModel().password,
       });
       this.snack.success(
         action === 'provision' ? 'Webhost email provisioning queued.' : 'Password reset queued.',
@@ -624,7 +655,7 @@ export class HostingWebhostEmailsPage {
   }
 
   private resetForm() {
-    this.emailForm.reset({
+    this.emailFormModel.set({
       hostUUID: '',
       localPart: '',
       password: '',
@@ -719,7 +750,7 @@ export class HostingWebhostEmailsPage {
   }
 
   private buildConfigPayload(): WebhostEmailConfig {
-    const values = this.emailForm.getRawValue();
+    const values = this.emailFormModel();
     return {
       autoProvision: values.autoProvision === 1,
       notes: this.normalizeString(values.notes),

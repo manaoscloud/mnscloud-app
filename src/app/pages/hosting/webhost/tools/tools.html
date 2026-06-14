@@ -15,15 +15,19 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Name, host, domain or provider" formControlName="search" />
+        <input
+          matInput
+          placeholder="Name, host, domain or provider"
+          [formField]="filterForm.search"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Provider</mat-label>
-        <mat-select formControlName="provider">
+        <mat-select [formField]="filterForm.provider">
           <mat-option value="">All</mat-option>
           @for (provider of providerFilterOptions(); track provider.uuid) {
             <mat-option [value]="provider.uuid">
@@ -35,7 +39,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Host</mat-label>
-        <mat-select formControlName="hostUUID" (openedChange)="onHostOpened($event)">
+        <mat-select [formField]="filterForm.hostUUID" (openedChange)="onHostOpened($event)">
           <mat-option value="">All</mat-option>
           <mat-option
             class="select-search-option"
@@ -67,7 +71,7 @@
       @if (config.zone) {
         <mat-form-field appearance="outline">
           <mat-label>Type</mat-label>
-          <mat-select formControlName="type">
+          <mat-select [formField]="filterForm.type">
             <mat-option value="">All</mat-option>
             @for (type of zoneTypes; track type) {
               <mat-option [value]="type">{{ type }}</mat-option>
@@ -78,7 +82,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           @for (opt of statusOptions; track opt.value) {
             <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
@@ -88,7 +92,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Provision</mat-label>
-        <mat-select formControlName="provisionStatus">
+        <mat-select [formField]="filterForm.provisionStatus">
           <mat-option value="">All</mat-option>
           @for (opt of provisionOptions; track opt.value) {
             <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
@@ -292,10 +296,10 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <div class="tab-content form-grid" [formGroup]="form">
+          <div class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Host</mat-label>
-              <mat-select formControlName="hostUUID" (openedChange)="onHostOpened($event)">
+              <mat-select [formField]="form.hostUUID" (openedChange)="onHostOpened($event)">
                 <mat-option
                   class="select-search-option"
                   [value]="null"
@@ -325,28 +329,28 @@
 
             <mat-form-field appearance="outline">
               <mat-label>{{ config.zone ? 'Name' : config.primaryLabel }}</mat-label>
-              <input matInput formControlName="name" />
+              <input matInput [formField]="form.name" />
             </mat-form-field>
 
             @if (config.kind === 'databases') {
               <mat-form-field appearance="outline">
                 <mat-label>User</mat-label>
-                <input matInput formControlName="username" />
+                <input matInput [formField]="form.username" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Privileges</mat-label>
-                <input matInput formControlName="privileges" />
+                <input matInput [formField]="form.privileges" />
               </mat-form-field>
             }
 
             @if (config.kind === 'mailing-lists') {
               <mat-form-field appearance="outline">
                 <mat-label>Admin Email</mat-label>
-                <input matInput formControlName="adminEmail" />
+                <input matInput [formField]="form.adminEmail" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Access</mat-label>
-                <mat-select formControlName="accessType">
+                <mat-select [formField]="form.accessType">
                   <mat-option value="private">Private</mat-option>
                   <mat-option value="public">Public</mat-option>
                 </mat-select>
@@ -356,7 +360,7 @@
             @if (config.zone) {
               <mat-form-field appearance="outline">
                 <mat-label>Type</mat-label>
-                <mat-select formControlName="type">
+                <mat-select [formField]="form.type">
                   @for (type of zoneTypes; track type) {
                     <mat-option [value]="type">{{ type }}</mat-option>
                   }
@@ -364,33 +368,33 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Value</mat-label>
-                <input matInput formControlName="value" />
+                <input matInput [formField]="form.value" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>TTL</mat-label>
-                <input matInput type="number" formControlName="ttl" />
+                <input matInput type="number" [formField]="form.ttl" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Priority</mat-label>
-                <input matInput type="number" formControlName="priority" />
+                <input matInput type="number" [formField]="form.priority" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Weight</mat-label>
-                <input matInput type="number" formControlName="weight" />
+                <input matInput type="number" [formField]="form.weight" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Port</mat-label>
-                <input matInput type="number" formControlName="port" />
+                <input matInput type="number" [formField]="form.port" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Line</mat-label>
-                <input matInput type="number" formControlName="line" />
+                <input matInput type="number" [formField]="form.line" />
               </mat-form-field>
             }
 
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
-              <mat-select formControlName="status">
+              <mat-select [formField]="form.status">
                 @for (opt of statusOptions; track opt.value) {
                   <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                 }
@@ -399,7 +403,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Provision</mat-label>
-              <mat-select formControlName="provisionStatus">
+              <mat-select [formField]="form.provisionStatus">
                 @for (opt of provisionOptions; track opt.value) {
                   <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                 }
@@ -409,10 +413,10 @@
         </mat-tab>
 
         <mat-tab label="Notes">
-          <div class="tab-content form-grid" [formGroup]="form">
+          <div class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>Notes</mat-label>
-              <textarea matInput rows="3" formControlName="notes"></textarea>
+              <textarea matInput rows="3" [formField]="form.notes"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>
@@ -429,7 +433,7 @@
           mat-flat-button
           color="primary"
           type="button"
-          [disabled]="saving()"
+          [disabled]="saving() || !form().valid()"
           (click)="save(true)"
         >
           <mat-icon>save</mat-icon>
@@ -442,7 +446,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveMenu"
-            [disabled]="saving()"
+            [disabled]="saving() || !form().valid()"
             aria-label="More save options"
           >
             <mat-icon>expand_more</mat-icon>
@@ -454,22 +458,38 @@
 </ng-template>
 
 <mat-menu #saveMenu="matMenu">
-  <button mat-menu-item type="button" (click)="save(false)">
+  <button
+    mat-menu-item
+    type="button"
+    (click)="save(false)"
+    [disabled]="saving() || !form().valid()"
+  >
     <mat-icon>add</mat-icon>
     <span>Save/New</span>
   </button>
 </mat-menu>
 
 <ng-template #passwordDialog>
-  <div class="password-dialog" [formGroup]="passwordForm">
+  <div class="password-dialog">
     <h2>Provision {{ config.primaryLabel }}</h2>
     <mat-form-field appearance="outline">
       <mat-label>Password</mat-label>
-      <input matInput type="password" formControlName="password" autocomplete="new-password" />
+      <input
+        matInput
+        type="password"
+        [formField]="passwordForm.password"
+        autocomplete="new-password"
+      />
     </mat-form-field>
     <div class="password-actions">
       <button mat-stroked-button type="button" (click)="passwordDialogRef?.close()">Cancel</button>
-      <button mat-flat-button color="primary" type="button" (click)="submitPasswordAction()">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="submitPasswordAction()"
+        [disabled]="!passwordForm().valid()"
+      >
         Provision
       </button>
     </div>

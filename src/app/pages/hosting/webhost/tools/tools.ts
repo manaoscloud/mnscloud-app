@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -94,6 +94,40 @@ type WebhostToolRow = Record<string, any> & {
   HwzIsActive?: number;
 };
 
+type WebhostToolFilterFormModel = {
+  search: string;
+  provider: string;
+  hostUUID: string;
+  type: string;
+  status: string;
+  provisionStatus: string;
+};
+
+type WebhostToolFormModel = {
+  hostUUID: string;
+  name: string;
+  username: string;
+  privileges: string;
+  adminEmail: string;
+  accessType: string;
+  advertised: number;
+  type: string;
+  value: string;
+  priority: number;
+  weight: number;
+  port: number;
+  ttl: number;
+  line: number;
+  status: string;
+  provisionStatus: string;
+  notes: string;
+  isActive: number;
+};
+
+type WebhostToolPasswordFormModel = {
+  password: string;
+};
+
 const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   databases: {
     kind: 'databases',
@@ -135,7 +169,7 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -159,7 +193,6 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingWebhostToolsPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
@@ -262,38 +295,50 @@ export class HostingWebhostToolsPage {
   ];
   readonly zoneTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA'];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    hostUUID: [''],
-    type: [''],
-    status: [''],
-    provisionStatus: [''],
+  readonly filterFormModel = signal<WebhostToolFilterFormModel>({
+    search: '',
+    provider: '',
+    hostUUID: '',
+    type: '',
+    status: '',
+    provisionStatus: '',
+  });
+  readonly filterForm = createForm(this.filterFormModel);
+
+  readonly formModel = signal<WebhostToolFormModel>({
+    hostUUID: '',
+    name: '',
+    username: '',
+    privileges: 'ALL PRIVILEGES',
+    adminEmail: '',
+    accessType: 'private',
+    advertised: 0,
+    type: 'A',
+    value: '',
+    priority: 0,
+    weight: 0,
+    port: 0,
+    ttl: 14400,
+    line: 0,
+    status: 'pending',
+    provisionStatus: 'manual',
+    notes: '',
+    isActive: 1,
+  });
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.hostUUID);
+    required(schema.name);
+    required(schema.status);
+    required(schema.provisionStatus);
+    required(schema.isActive);
   });
 
-  readonly form = this.fb.nonNullable.group({
-    hostUUID: ['', [Validators.required]],
-    name: ['', [Validators.required]],
-    username: [''],
-    privileges: ['ALL PRIVILEGES'],
-    adminEmail: [''],
-    accessType: ['private'],
-    advertised: [0],
-    type: ['A'],
-    value: [''],
-    priority: [0],
-    weight: [0],
-    port: [0],
-    ttl: [14400],
-    line: [0],
-    status: ['pending', [Validators.required]],
-    provisionStatus: ['manual', [Validators.required]],
-    notes: [''],
-    isActive: [1, [Validators.required]],
+  readonly passwordFormModel = signal<WebhostToolPasswordFormModel>({
+    password: '',
   });
-
-  readonly passwordForm = this.fb.nonNullable.group({
-    password: ['', [Validators.required, Validators.minLength(8)]],
+  readonly passwordForm = createForm(this.passwordFormModel, (schema) => {
+    required(schema.password);
+    minLength(schema.password, 8);
   });
 
   readonly filteredHosts = computed(() => {
@@ -370,7 +415,7 @@ export class HostingWebhostToolsPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedProvider.set(values.provider);
     this.appliedHostUUID.set(values.hostUUID);
@@ -381,7 +426,7 @@ export class HostingWebhostToolsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({
+    this.filterFormModel.set({
       search: '',
       provider: '',
       hostUUID: '',
@@ -400,7 +445,7 @@ export class HostingWebhostToolsPage {
 
   startCreate() {
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       hostUUID: '',
       name: '',
       username: '',
@@ -425,7 +470,7 @@ export class HostingWebhostToolsPage {
 
   startEdit(row: WebhostToolRow) {
     this.editing.set(row);
-    this.form.reset({
+    this.formModel.set({
       hostUUID: row.HostingWebhostHostHwhUUID ?? '',
       name: row.HwdName ?? row.HwmName ?? row.HwzName ?? '',
       username: row.HwdUsername ?? '',
@@ -450,8 +495,7 @@ export class HostingWebhostToolsPage {
   }
 
   async save(closeAfterSave = true) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       return;
     }
     const payload = this.buildPayload();
@@ -481,7 +525,7 @@ export class HostingWebhostToolsPage {
       return;
     }
     this.passwordTarget.set(row);
-    this.passwordForm.reset({ password: '' });
+    this.passwordFormModel.set({ password: '' });
     this.passwordDialogRef = this.dialog.open(this.passwordDialog()!, {
       width: '420px',
       maxWidth: 'calc(100vw - 24px)',
@@ -493,14 +537,13 @@ export class HostingWebhostToolsPage {
   }
 
   async submitPasswordAction() {
-    if (this.passwordForm.invalid) {
-      this.passwordForm.markAllAsTouched();
+    if (!this.passwordForm().valid()) {
       return;
     }
     const target = this.passwordTarget();
     if (!target) return;
     await this.runAction(target, 'provision', {
-      password: this.passwordForm.controls.password.value,
+      password: this.passwordFormModel().password,
     });
     this.passwordDialogRef?.close();
     this.passwordTarget.set(null);
@@ -639,7 +682,7 @@ export class HostingWebhostToolsPage {
   }
 
   private buildPayload() {
-    const value = this.form.getRawValue();
+    const value = this.formModel();
     const payload: any = {
       hostUUID: value.hostUUID,
       name: value.name,

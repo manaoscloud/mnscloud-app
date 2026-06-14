@@ -15,15 +15,19 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Email, host, domain or provider" formControlName="search" />
+        <input
+          matInput
+          placeholder="Email, host, domain or provider"
+          [formField]="filterForm.search"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Provider</mat-label>
-        <mat-select formControlName="provider">
+        <mat-select [formField]="filterForm.provider">
           <mat-option value="">All</mat-option>
           @for (provider of providerFilterOptions(); track provider.uuid) {
             <mat-option [value]="provider.uuid">
@@ -35,7 +39,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Host</mat-label>
-        <mat-select formControlName="hostUUID" (openedChange)="onHostOpened($event)">
+        <mat-select [formField]="filterForm.hostUUID" (openedChange)="onHostOpened($event)">
           <mat-option value="">All</mat-option>
           <mat-option
             class="select-search-option"
@@ -66,7 +70,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           @for (opt of statusOptions; track opt.value) {
             <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
@@ -76,7 +80,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Provision</mat-label>
-        <mat-select formControlName="provisionStatus">
+        <mat-select [formField]="filterForm.provisionStatus">
           <mat-option value="">All</mat-option>
           @for (opt of provisionOptions; track opt.value) {
             <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
@@ -279,10 +283,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="emailForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="emailForm.status">
                   @for (opt of statusOptions; track opt.value) {
                     <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                   }
@@ -291,7 +295,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Provision</mat-label>
-                <mat-select formControlName="provisionStatus">
+                <mat-select [formField]="emailForm.provisionStatus">
                   @for (opt of provisionOptions; track opt.value) {
                     <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                   }
@@ -300,7 +304,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Active</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="emailForm.isActive">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -308,7 +312,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Host</mat-label>
-                <mat-select formControlName="hostUUID" (openedChange)="onHostOpened($event)">
+                <mat-select [formField]="emailForm.hostUUID" (openedChange)="onHostOpened($event)">
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -337,7 +341,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Local Part</mat-label>
-                <input matInput formControlName="localPart" placeholder="admin" />
+                <input matInput [formField]="emailForm.localPart" placeholder="admin" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -347,7 +351,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Quota MB</mat-label>
-                <input matInput type="number" min="0" formControlName="quotaMb" />
+                <input matInput type="number" min="0" [formField]="emailForm.quotaMb" />
               </mat-form-field>
             </form>
           </div>
@@ -355,10 +359,10 @@
 
         <mat-tab label="Provision">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="emailForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Auto Provision</mat-label>
-                <mat-select formControlName="autoProvision">
+                <mat-select [formField]="emailForm.autoProvision">
                   <mat-option [value]="1">Yes</mat-option>
                   <mat-option [value]="0">No</mat-option>
                 </mat-select>
@@ -370,7 +374,7 @@
                   <input
                     matInput
                     type="password"
-                    formControlName="password"
+                    [formField]="emailForm.password"
                     autocomplete="new-password"
                   />
                 </mat-form-field>
@@ -381,10 +385,10 @@
 
         <mat-tab label="Notes">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="emailForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>Notes</mat-label>
-                <textarea matInput rows="4" formControlName="notes"></textarea>
+                <textarea matInput rows="4" [formField]="emailForm.notes"></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -411,7 +415,7 @@
           color="primary"
           type="button"
           (click)="submit()"
-          [disabled]="saving()"
+          [disabled]="saving() || !emailForm().valid()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -423,7 +427,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="saving()"
+            [disabled]="saving() || !emailForm().valid()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -437,7 +441,12 @@
         xPosition="before"
         yPosition="below"
       >
-        <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
+        <button
+          mat-menu-item
+          type="button"
+          (click)="saveAndNew()"
+          [disabled]="saving() || !emailForm().valid()"
+        >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
         </button>
@@ -456,10 +465,15 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <form class="form-grid" [formGroup]="passwordForm">
+      <form class="form-grid">
         <mat-form-field appearance="outline" class="span-4">
           <mat-label>Password</mat-label>
-          <input matInput type="password" formControlName="password" autocomplete="new-password" />
+          <input
+            matInput
+            type="password"
+            [formField]="passwordForm.password"
+            autocomplete="new-password"
+          />
         </mat-form-field>
       </form>
     </mat-dialog-content>
@@ -482,7 +496,7 @@
           color="primary"
           type="button"
           (click)="submitPasswordAction()"
-          [disabled]="actionEmailUUID() === passwordTarget()?.HweUUID"
+          [disabled]="actionEmailUUID() === passwordTarget()?.HweUUID || !passwordForm().valid()"
         >
           <mat-icon>key</mat-icon>
           Apply

@@ -11,8 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, email, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -66,12 +65,31 @@ type WebhostHostFilters = {
   provisionStatus: string;
 };
 
+type WebhostHostFilterFormModel = WebhostHostFilters & {
+  provider: string;
+};
+
+type WebhostHostFormModel = {
+  name: string;
+  customerUUID: string;
+  planUUID: string;
+  hostingDnsDomainUUID: string;
+  username: string;
+  status: WebhostHostStatus;
+  provisionStatus: WebhostHostProvisionStatus;
+  contactEmail: string;
+  documentRoot: string;
+  autoProvision: number;
+  notes: string;
+  isActive: number;
+};
+
 @Component({
   selector: 'app-hosting-webhost-hosts',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -95,7 +113,6 @@ type WebhostHostFilters = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingWebhostHostsPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
@@ -181,29 +198,43 @@ export class HostingWebhostHostsPage {
     'actions',
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    provider: [''],
-    customerUUID: [''],
-    planUUID: [''],
-    hostingDnsDomainUUID: [''],
-    status: [''],
-    provisionStatus: [''],
+  readonly filterFormModel = signal<WebhostHostFilterFormModel>({
+    search: '',
+    provider: '',
+    customerUUID: '',
+    planUUID: '',
+    hostingDnsDomainUUID: '',
+    status: '',
+    provisionStatus: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly hostForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    customerUUID: ['', [Validators.required]],
-    planUUID: ['', [Validators.required]],
-    hostingDnsDomainUUID: ['', [Validators.required]],
-    username: ['', [Validators.required, Validators.minLength(2)]],
-    status: ['pending' as WebhostHostStatus, [Validators.required]],
-    provisionStatus: ['manual' as WebhostHostProvisionStatus, [Validators.required]],
-    contactEmail: ['', [Validators.email]],
-    documentRoot: [''],
-    autoProvision: [0],
-    notes: [''],
-    isActive: [1, [Validators.required]],
+  readonly hostFormModel = signal<WebhostHostFormModel>({
+    name: '',
+    customerUUID: '',
+    planUUID: '',
+    hostingDnsDomainUUID: '',
+    username: '',
+    status: 'pending',
+    provisionStatus: 'manual',
+    contactEmail: '',
+    documentRoot: '',
+    autoProvision: 0,
+    notes: '',
+    isActive: 1,
+  });
+  readonly hostForm = createForm(this.hostFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.customerUUID);
+    required(schema.planUUID);
+    required(schema.hostingDnsDomainUUID);
+    required(schema.username);
+    minLength(schema.username, 2);
+    required(schema.status);
+    required(schema.provisionStatus);
+    email(schema.contactEmail);
+    required(schema.isActive);
   });
 
   readonly rows = computed(() => {
@@ -303,27 +334,23 @@ export class HostingWebhostHostsPage {
     }
   });
 
+  private readonly syncFilterCustomer = effect(() => {
+    const customerUUID = this.filterFormModel().customerUUID;
+    this.selectedFilterCustomerUUID.set(customerUUID);
+    this.clearFilterDomainIfNeeded(customerUUID);
+  });
+
+  private readonly syncFormCustomer = effect(() => {
+    const customerUUID = this.hostFormModel().customerUUID;
+    this.selectedFormCustomerUUID.set(customerUUID);
+    this.clearFormDomainIfNeeded(customerUUID);
+  });
+
   constructor() {
     this.destroyRef.onDestroy(() => {
       this.closeDialog();
       this.stopDialogViewportObserver();
     });
-    this.filterForm.controls.customerUUID.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((customerUUID) => {
-        const normalizedCustomerUUID = customerUUID ?? '';
-        this.selectedFilterCustomerUUID.set(normalizedCustomerUUID);
-        this.clearFilterDomainIfNeeded(normalizedCustomerUUID);
-      });
-
-    this.hostForm.controls.customerUUID.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((customerUUID) => {
-        const normalizedCustomerUUID = customerUUID ?? '';
-        this.selectedFormCustomerUUID.set(normalizedCustomerUUID);
-        this.clearFormDomainIfNeeded(normalizedCustomerUUID);
-      });
-
     void this.loadPlans();
     void this.loadCustomers();
     void this.loadDomains();
@@ -337,7 +364,7 @@ export class HostingWebhostHostsPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedProvider.set(values.provider);
     this.appliedCustomerUUID.set(values.customerUUID);
@@ -350,7 +377,7 @@ export class HostingWebhostHostsPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({
+    this.filterFormModel.set({
       search: '',
       provider: '',
       customerUUID: '',
@@ -501,7 +528,7 @@ export class HostingWebhostHostsPage {
 
     const config = host.HwhConfig ?? {};
     this.editing.set(host);
-    this.hostForm.reset({
+    this.hostFormModel.set({
       name: host.HwhName,
       customerUUID: host.CustomerCusUUID ?? '',
       planUUID: host.HostingWebhostPlanHwlUUID,
@@ -525,16 +552,13 @@ export class HostingWebhostHostsPage {
   }
 
   async submit(closeAfterSave = true) {
-    if (this.hostForm.invalid) {
-      this.hostForm.markAllAsTouched();
+    if (!this.hostForm().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const values = this.hostForm.getRawValue();
+    const values = this.hostFormModel();
     if (!this.domainBelongsToCustomer(values.hostingDnsDomainUUID, values.customerUUID)) {
-      this.hostForm.controls.hostingDnsDomainUUID.setErrors({ customerMismatch: true });
-      this.hostForm.controls.hostingDnsDomainUUID.markAsTouched();
       this.snack.warning('Select a domain linked to the selected customer.');
       return;
     }
@@ -691,7 +715,7 @@ export class HostingWebhostHostsPage {
   }
 
   private resetForm() {
-    this.hostForm.reset({
+    this.hostFormModel.set({
       name: '',
       customerUUID: '',
       planUUID: '',
@@ -743,17 +767,16 @@ export class HostingWebhostHostsPage {
   }
 
   private clearFilterDomainIfNeeded(customerUUID: string) {
-    const domainUUID = this.filterForm.controls.hostingDnsDomainUUID.value;
+    const domainUUID = this.filterFormModel().hostingDnsDomainUUID;
     if (this.isKnownDomainLinkedToAnotherCustomer(domainUUID, customerUUID)) {
-      this.filterForm.controls.hostingDnsDomainUUID.setValue('', { emitEvent: false });
+      this.filterFormModel.update((current) => ({ ...current, hostingDnsDomainUUID: '' }));
     }
   }
 
   private clearFormDomainIfNeeded(customerUUID: string) {
-    const domainUUID = this.hostForm.controls.hostingDnsDomainUUID.value;
+    const domainUUID = this.hostFormModel().hostingDnsDomainUUID;
     if (this.isKnownDomainLinkedToAnotherCustomer(domainUUID, customerUUID)) {
-      this.hostForm.controls.hostingDnsDomainUUID.setValue('', { emitEvent: false });
-      this.hostForm.controls.hostingDnsDomainUUID.updateValueAndValidity({ emitEvent: false });
+      this.hostFormModel.update((current) => ({ ...current, hostingDnsDomainUUID: '' }));
     }
   }
 
@@ -837,7 +860,7 @@ export class HostingWebhostHostsPage {
   }
 
   private buildConfigPayload(): WebhostHostConfig {
-    const values = this.hostForm.getRawValue();
+    const values = this.hostFormModel();
     return {
       contactEmail: this.normalizeString(values.contactEmail),
       documentRoot: this.normalizeString(values.documentRoot),
