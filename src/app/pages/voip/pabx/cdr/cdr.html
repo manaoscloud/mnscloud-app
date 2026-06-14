@@ -13,11 +13,16 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-2">
         <mat-label>Search</mat-label>
-        <input matInput [(ngModel)]="search" placeholder="Call ID, caller, destination..." />
+        <input
+          matInput
+          [value]="search"
+          (input)="search = $any($event.target).value"
+          placeholder="Call ID, caller, destination..."
+        />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select [(ngModel)]="status">
+        <mat-select [value]="status" (selectionChange)="status = $event.value">
           <mat-option value="">All</mat-option>
           <mat-option value="answered">Answered</mat-option>
           <mat-option value="missed">Missed</mat-option>
@@ -27,7 +32,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Direction</mat-label>
-        <mat-select [(ngModel)]="direction">
+        <mat-select [value]="direction" (selectionChange)="direction = $event.value">
           <mat-option value="">All</mat-option>
           <mat-option value="inbound">Inbound</mat-option>
           <mat-option value="outbound">Outbound</mat-option>
@@ -36,11 +41,11 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>From</mat-label>
-        <input matInput type="datetime-local" [(ngModel)]="dateFrom" />
+        <input matInput type="datetime-local" [value]="dateFrom" (input)="dateFrom = $any($event.target).value" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>To</mat-label>
-        <input matInput type="datetime-local" [(ngModel)]="dateTo" />
+        <input matInput type="datetime-local" [value]="dateTo" (input)="dateTo = $any($event.target).value" />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applySearchFilters()">

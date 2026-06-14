@@ -13,7 +13,11 @@
     <div class="support-toolbar">
       <mat-form-field appearance="outline" class="toolbar-field">
         <mat-label>Search conversations</mat-label>
-        <input matInput [ngModel]="filters.search" (ngModelChange)="onSearchChange($event)" />
+        <input
+          matInput
+          [value]="filters.search"
+          (input)="onSearchChange($any($event.target).value)"
+        />
         @if (filters.search) {
           <button mat-icon-button matSuffix (click)="onSearchChange('')" type="button">
             <mat-icon>close</mat-icon>
@@ -24,7 +28,10 @@
       <div class="toolbar-grid">
         <mat-form-field appearance="outline">
           <mat-label>Channel</mat-label>
-          <mat-select [(ngModel)]="filters.channel" (selectionChange)="onFilterChange()">
+          <mat-select
+            [value]="filters.channel"
+            (selectionChange)="filters.channel = $event.value; onFilterChange()"
+          >
             <mat-option value="">All channels</mat-option>
             @for (option of channelOptions; track option) {
               <mat-option [value]="option">{{ option }}</mat-option>
@@ -34,7 +41,10 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Sector</mat-label>
-          <mat-select [(ngModel)]="filters.sector" (selectionChange)="onFilterChange()">
+          <mat-select
+            [value]="filters.sector"
+            (selectionChange)="filters.sector = $event.value; onFilterChange()"
+          >
             <mat-option value="">All sectors</mat-option>
             @for (option of sectorOptions; track option) {
               <mat-option [value]="option">{{ option }}</mat-option>
@@ -44,7 +54,10 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Agent</mat-label>
-          <mat-select [(ngModel)]="filters.agent" (selectionChange)="onFilterChange()">
+          <mat-select
+            [value]="filters.agent"
+            (selectionChange)="filters.agent = $event.value; onFilterChange()"
+          >
             <mat-option value="">All agents</mat-option>
             @for (option of agentOptions; track option) {
               <mat-option [value]="option">{{ option }}</mat-option>

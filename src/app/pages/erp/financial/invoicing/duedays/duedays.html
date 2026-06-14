@@ -19,8 +19,8 @@
         <mat-label>Search rules</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Name, due day, billing day, status"
         />
       </mat-form-field>
@@ -131,7 +131,8 @@
                 <mat-label>Name</mat-label>
                 <input
                   matInput
-                  [(ngModel)]="form.name"
+                  [value]="form.name"
+                  (input)="form.name = $any($event.target).value"
                   maxlength="120"
                   placeholder="e.g. Monthly default"
                 />
@@ -139,7 +140,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Due day</mat-label>
-                <mat-select [(ngModel)]="form.dueDay">
+                <mat-select [value]="form.dueDay" (selectionChange)="form.dueDay = $event.value">
                   @for (day of daysOfMonth; track day) {
                     <mat-option [value]="day">{{ day }}</mat-option>
                   }
@@ -148,7 +149,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Billing day</mat-label>
-                <mat-select [(ngModel)]="form.billingDay">
+                <mat-select
+                  [value]="form.billingDay"
+                  (selectionChange)="form.billingDay = $event.value"
+                >
                   @for (day of daysOfMonth; track day) {
                     <mat-option [value]="day">{{ day }}</mat-option>
                   }
@@ -157,7 +161,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
                     <mat-option [value]="status.value">{{ status.label }}</mat-option>
                   }
@@ -165,7 +169,11 @@
               </mat-form-field>
 
               <div class="checkbox-wrap">
-                <mat-checkbox [(ngModel)]="form.closedMonth">Closed month</mat-checkbox>
+                <mat-checkbox
+                  [checked]="form.closedMonth"
+                  (change)="form.closedMonth = $event.checked"
+                  >Closed month</mat-checkbox
+                >
               </div>
             </div>
           </div>

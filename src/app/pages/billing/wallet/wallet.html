@@ -70,7 +70,12 @@
       <div class="filter-grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Catalog' | transloco }}</mat-label>
-          <input matInput [(ngModel)]="searchInput" [placeholder]="'Search products' | transloco" />
+          <input
+            matInput
+            [value]="searchInput"
+            (input)="searchInput = $any($event.target).value"
+            [placeholder]="'Search products' | transloco"
+          />
         </mat-form-field>
         <div class="filter-actions">
           <button mat-stroked-button type="button" (click)="applyFilters()">
@@ -163,13 +168,14 @@
           <mat-label>{{ 'Subscriptions' | transloco }}</mat-label>
           <input
             matInput
-            [(ngModel)]="searchInput"
+            [value]="searchInput"
+            (input)="searchInput = $any($event.target).value"
             [placeholder]="'Search products or resources' | transloco"
           />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Status' | transloco }}</mat-label>
-          <mat-select [(ngModel)]="statusFilter">
+          <mat-select [value]="statusFilter" (selectionChange)="statusFilter = $event.value">
             <mat-option value="">{{ 'All' | transloco }}</mat-option>
             <mat-option value="ACTIVE">{{ 'Active' | transloco }}</mat-option>
             <mat-option value="SUSPENDED">{{ 'Suspended' | transloco }}</mat-option>
@@ -315,7 +321,8 @@
           <mat-label>{{ 'Ledger' | transloco }}</mat-label>
           <input
             matInput
-            [(ngModel)]="ledgerSearchInput"
+            [value]="ledgerSearchInput"
+            (input)="ledgerSearchInput = $any($event.target).value"
             [placeholder]="'Search ledger' | transloco"
           />
         </mat-form-field>

@@ -18,7 +18,7 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search channels</mat-label>
-        <input matInput [ngModel]="searchInput" (ngModelChange)="onSearchChange($event)" />
+        <input matInput [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
         @if (searchInput) {
           <button mat-icon-button matSuffix (click)="onSearchChange('')" type="button">
             <mat-icon>close</mat-icon>
@@ -136,7 +136,7 @@
             <div class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select [(ngModel)]="form.status">
+                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (item of statusOptions; track item.value) {
                     <mat-option [value]="item.value">{{ item.label }}</mat-option>
                   }
@@ -145,17 +145,21 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Code</mat-label>
-                <input matInput [(ngModel)]="form.code" />
+                <input matInput [value]="form.code" (input)="form.code = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
-                <input matInput [(ngModel)]="form.name" />
+                <input matInput [value]="form.name" (input)="form.name = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Description</mat-label>
-                <input matInput [(ngModel)]="form.description" />
+                <input
+                  matInput
+                  [value]="form.description"
+                  (input)="form.description = $any($event.target).value"
+                />
               </mat-form-field>
             </div>
           </div>

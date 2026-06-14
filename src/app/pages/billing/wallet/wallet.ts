@@ -13,7 +13,6 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { FormField, email, form as createForm, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -59,7 +58,6 @@ type BillingWalletSnapshot = {
 
 export const BILLING_WALLET_IMPORTS = [
   DatePipe,
-  FormsModule,
   FormField,
   MatButtonModule,
   MatCardModule,

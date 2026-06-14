@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, resource } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -45,7 +44,6 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
