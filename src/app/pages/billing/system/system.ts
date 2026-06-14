@@ -12,7 +12,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -84,6 +84,91 @@ type BillingSystemSnapshot = {
   subscriptions: BillingSubscription[];
 };
 
+type ProductFormModel = {
+  code: string;
+  name: string;
+  module: string;
+  billingScope: 'MODULE' | 'RESOURCE' | 'USAGE';
+  description: string;
+  entitlementPattern: string;
+  requiresEntitlementCode: string;
+  resourceType: string;
+  isPublic: number;
+  publicSlug: string;
+  publicName: string;
+  publicSummary: string;
+  publicDescription: string;
+  publicFeaturesJson: string;
+  publicSortOrder: number | null;
+  sortOrder: number | null;
+  status: number;
+};
+
+type PriceFormModel = {
+  productUUID: string;
+  name: string;
+  currency: string;
+  billingMode: string;
+  unitCode: string;
+  unitPrice: number;
+  setupAmount: number;
+  includedQuantity: number;
+  minimumCommitment: number;
+  configJson: string;
+  status: number;
+};
+
+type PackageFormModel = {
+  code: string;
+  name: string;
+  description: string;
+  productUUID: string;
+  isPublic: number;
+  sortOrder: number;
+  status: number;
+  itemProductUUID: string;
+  itemEntitlementCode: string;
+  itemIncludedQuantity: number;
+  itemRequired: number;
+  itemConfigJson: string;
+};
+
+type PromotionFormModel = {
+  code: string;
+  name: string;
+  description: string;
+  currency: string;
+  requiresCoupon: number;
+  maxRedemptions: number | null;
+  maxRedemptionsPerTenant: number | null;
+  stackingPolicy: string;
+  eligibilityJson: string;
+  isPublic: number;
+  startsAt: string;
+  endsAt: string;
+  status: number;
+  ruleProductUUID: string;
+  rulePriceUUID: string;
+  discountType: string;
+  appliesTo: string;
+  discountValue: number;
+  cycles: number | null;
+  couponCode: string;
+  couponMaxUses: number | null;
+  couponMaxUsesPerTenant: number | null;
+  couponExpiresAt: string;
+};
+
+type CreditFormModel = {
+  tenantSearch: string;
+  environmentUUID: string;
+  amount: number;
+  currency: string;
+  reason: string;
+  reference: string;
+  idempotencyKey: string;
+};
+
 const EMPTY_BILLING_SYSTEM_SNAPSHOT: BillingSystemSnapshot = {
   definitions: [],
   products: [],
@@ -95,8 +180,7 @@ const EMPTY_BILLING_SYSTEM_SNAPSHOT: BillingSystemSnapshot = {
 
 export const BILLING_SYSTEM_IMPORTS = [
   RefreshButtonComponent,
-  FormsModule,
-  ReactiveFormsModule,
+  FormField,
   MatAutocompleteModule,
   MatButtonModule,
   MatCardModule,
@@ -127,7 +211,6 @@ export const BILLING_SYSTEM_IMPORTS = [
 })
 export class BillingSystemPage {
   private readonly billing = inject(BillingService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly i18n = inject(AppI18nService);
@@ -166,7 +249,7 @@ export class BillingSystemPage {
   readonly priceFormProductSearchInput = signal('');
   readonly packageFormProductSearchInput = signal('');
   readonly promotionRuleProductSearchInput = signal('');
-  productCodeFilter = '';
+  readonly productCodeFilter = signal('');
   readonly priceProductOptions = computed(() =>
     this.filterProducts(this.priceProductSearchInput()),
   );
@@ -257,99 +340,84 @@ export class BillingSystemPage {
     { value: 'USAGE', labelKey: 'Usage' },
   ];
 
-  searchInput = '';
-  priceProductFilter = '';
-  statusFilter: '' | 0 | 1 = '';
-  subscriptionStatusFilter = '';
+  readonly searchInput = signal('');
+  readonly priceProductFilter = signal('');
+  readonly statusFilter = signal<'' | 0 | 1>('');
+  readonly subscriptionStatusFilter = signal('');
+
+  readonly productFormModel = signal<ProductFormModel>(this.emptyProductForm());
+  readonly productForm = createForm(this.productFormModel, (schema) => {
+    required(schema.code);
+    minLength(schema.code, 2);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.module);
+    minLength(schema.module, 2);
+    required(schema.billingScope);
+    min(schema.publicSortOrder, 0);
+    min(schema.sortOrder, 0);
+  });
+
+  readonly priceFormModel = signal<PriceFormModel>(this.emptyPriceForm());
+  readonly priceForm = createForm(this.priceFormModel, (schema) => {
+    required(schema.productUUID);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.billingMode);
+    required(schema.unitCode);
+    required(schema.unitPrice);
+    min(schema.unitPrice, 0);
+    required(schema.setupAmount);
+    min(schema.setupAmount, 0);
+    required(schema.includedQuantity);
+    min(schema.includedQuantity, 0);
+    required(schema.minimumCommitment);
+    min(schema.minimumCommitment, 0);
+  });
+
+  readonly packageFormModel = signal<PackageFormModel>(this.emptyPackageForm());
+  readonly packageForm = createForm(this.packageFormModel, (schema) => {
+    required(schema.code);
+    minLength(schema.code, 9);
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.productUUID);
+    min(schema.sortOrder, 0);
+    required(schema.itemProductUUID);
+    required(schema.itemEntitlementCode);
+    minLength(schema.itemEntitlementCode, 4);
+    required(schema.itemIncludedQuantity);
+    min(schema.itemIncludedQuantity, 0);
+  });
+
+  readonly promotionFormModel = signal<PromotionFormModel>(this.emptyPromotionForm());
+  readonly promotionForm = createForm(this.promotionFormModel, (schema) => {
+    required(schema.code);
+    minLength(schema.code, 7);
+    required(schema.name);
+    minLength(schema.name, 2);
+    min(schema.maxRedemptions, 0);
+    min(schema.maxRedemptionsPerTenant, 0);
+    required(schema.stackingPolicy);
+    min(schema.discountValue, 0);
+    min(schema.cycles, 0);
+    min(schema.couponMaxUses, 0);
+    min(schema.couponMaxUsesPerTenant, 0);
+  });
+
+  readonly creditFormModel = signal<CreditFormModel>(this.emptyCreditForm());
+  readonly creditForm = createForm(this.creditFormModel, (schema) => {
+    required(schema.tenantSearch);
+    required(schema.environmentUUID);
+    required(schema.amount);
+    min(schema.amount, 0.000001);
+    required(schema.reason);
+    minLength(schema.reason, 4);
+  });
 
   readonly selectedProductUUIDs = new Set<string>();
   readonly selectedPriceUUIDs = new Set<string>();
   readonly selectedSubscriptionUUIDs = new Set<string>();
-
-  readonly productForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.minLength(2)]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    module: ['', [Validators.required, Validators.minLength(2)]],
-    billingScope: ['RESOURCE', [Validators.required]],
-    description: [''],
-    entitlementPattern: [''],
-    requiresEntitlementCode: [''],
-    resourceType: [''],
-    isPublic: [0],
-    publicSlug: [''],
-    publicName: [''],
-    publicSummary: [''],
-    publicDescription: [''],
-    publicFeaturesJson: [''],
-    publicSortOrder: [null as number | null, [Validators.min(0)]],
-    sortOrder: [null as number | null, [Validators.min(0)]],
-    status: [1],
-  });
-
-  readonly priceForm = this.fb.nonNullable.group({
-    productUUID: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    currency: [''],
-    billingMode: ['MONTHLY', [Validators.required]],
-    unitCode: ['UNIT', [Validators.required]],
-    unitPrice: [0, [Validators.required, Validators.min(0)]],
-    setupAmount: [0, [Validators.required, Validators.min(0)]],
-    includedQuantity: [0, [Validators.required, Validators.min(0)]],
-    minimumCommitment: [0, [Validators.required, Validators.min(0)]],
-    configJson: [''],
-    status: [1],
-  });
-
-  readonly packageForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.minLength(9)]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    description: [''],
-    productUUID: ['', [Validators.required]],
-    isPublic: [0],
-    sortOrder: [1000, [Validators.min(0)]],
-    status: [1],
-    itemProductUUID: ['', [Validators.required]],
-    itemEntitlementCode: ['', [Validators.required, Validators.minLength(4)]],
-    itemIncludedQuantity: [1, [Validators.required, Validators.min(0)]],
-    itemRequired: [1],
-    itemConfigJson: [''],
-  });
-
-  readonly promotionForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.minLength(7)]],
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    description: [''],
-    currency: [''],
-    requiresCoupon: [0],
-    maxRedemptions: [null as number | null, [Validators.min(0)]],
-    maxRedemptionsPerTenant: [null as number | null, [Validators.min(0)]],
-    stackingPolicy: ['EXCLUSIVE', [Validators.required]],
-    eligibilityJson: [''],
-    isPublic: [0],
-    startsAt: [''],
-    endsAt: [''],
-    status: [1],
-    ruleProductUUID: [''],
-    rulePriceUUID: [''],
-    discountType: ['PERCENT'],
-    appliesTo: ['ALL'],
-    discountValue: [0, [Validators.min(0)]],
-    cycles: [null as number | null, [Validators.min(0)]],
-    couponCode: [''],
-    couponMaxUses: [null as number | null, [Validators.min(0)]],
-    couponMaxUsesPerTenant: [null as number | null, [Validators.min(0)]],
-    couponExpiresAt: [''],
-  });
-
-  readonly creditForm = this.fb.nonNullable.group({
-    tenantSearch: ['', [Validators.required]],
-    environmentUUID: ['', [Validators.required]],
-    amount: [0, [Validators.required, Validators.min(0.000001)]],
-    currency: [''],
-    reason: ['', [Validators.required, Validators.minLength(4)]],
-    reference: [''],
-    idempotencyKey: [''],
-  });
 
   readonly productDialog = viewChild<TemplateRef<unknown>>('productDialog');
   readonly priceDialog = viewChild<TemplateRef<unknown>>('priceDialog');
@@ -426,10 +494,10 @@ export class BillingSystemPage {
   }
 
   clearFilters() {
-    this.searchInput = '';
-    this.priceProductFilter = '';
-    this.statusFilter = '';
-    this.subscriptionStatusFilter = '';
+    this.searchInput.set('');
+    this.priceProductFilter.set('');
+    this.statusFilter.set('');
+    this.subscriptionStatusFilter.set('');
     this.applyFilters();
   }
 
@@ -465,14 +533,13 @@ export class BillingSystemPage {
   openProductCreate() {
     this.editingProduct.set(null);
     this.resetProductForm();
-    this.productForm.controls.code.enable({ emitEvent: false });
-    this.productCodeFilter = '';
+    this.productCodeFilter.set('');
     this.openDialog(this.productDialog(), '980px');
   }
 
   openProductEdit(row: BillingProduct) {
     this.editingProduct.set(row);
-    this.productForm.reset({
+    this.productFormModel.set({
       code: row.BprCode,
       name: row.BprName,
       module: row.BprModule,
@@ -491,15 +558,14 @@ export class BillingSystemPage {
       sortOrder: Number(row.BpdSortOrder ?? 1000),
       status: row.BprStatus,
     });
-    this.productForm.controls.code.disable({ emitEvent: false });
-    this.productCodeFilter = row.BprCode;
+    this.productCodeFilter.set(row.BprCode);
     this.openDialog(this.productDialog(), '980px');
   }
 
   async saveProduct(keepOpen = false) {
-    if (this.productForm.invalid || this.saving()) return;
+    if (!this.productForm().valid() || this.saving()) return;
     this.saving.set(true);
-    const value = this.productForm.getRawValue();
+    const value = this.productFormModel();
     const publicFeatures = this.parseJson(value.publicFeaturesJson);
     if (publicFeatures === false) {
       this.saving.set(false);
@@ -551,7 +617,7 @@ export class BillingSystemPage {
   }
 
   productDefinitionOptions() {
-    const term = String(this.productCodeFilter || this.productForm.controls.code.value || '')
+    const term = String(this.productCodeFilter() || this.productFormModel().code || '')
       .trim()
       .toLowerCase();
     const definitions = this.productDefinitions();
@@ -576,9 +642,9 @@ export class BillingSystemPage {
   selectProductDefinitionCode(code: string) {
     const definition = this.productDefinitions().find((item) => item.BpdCode === code);
     if (!definition || this.editingProduct()) return;
-    const current = this.productForm.getRawValue();
-    this.productCodeFilter = definition.BpdCode;
-    this.productForm.patchValue({
+    const current = this.productFormModel();
+    this.productCodeFilter.set(definition.BpdCode);
+    this.productFormModel.set({
       code: definition.BpdCode,
       name: current.name || definition.BpdName,
       module: current.module || definition.BpdModule,
@@ -634,7 +700,7 @@ export class BillingSystemPage {
 
   openPriceEdit(row: BillingPrice) {
     this.editingPrice.set(row);
-    this.priceForm.reset({
+    this.priceFormModel.set({
       productUUID: row.BillingProductBprUUID,
       name: row.BpcName,
       currency: row.BpcCurrency || this.defaultCurrency(),
@@ -651,9 +717,9 @@ export class BillingSystemPage {
   }
 
   async savePrice(keepOpen = false) {
-    if (this.priceForm.invalid || this.saving()) return;
+    if (!this.priceForm().valid() || this.saving()) return;
     this.saving.set(true);
-    const value = this.priceForm.getRawValue();
+    const value = this.priceFormModel();
     const config = this.parseJson(value.configJson);
     if (config === false) {
       this.saving.set(false);
@@ -695,13 +761,12 @@ export class BillingSystemPage {
   openPackageCreate() {
     this.editingPackage.set(null);
     this.resetPackageForm();
-    this.packageForm.controls.code.enable({ emitEvent: false });
     this.openDialog(this.packageDialog(), '860px');
   }
 
   openPackageEdit(row: BillingPackage) {
     this.editingPackage.set(row);
-    this.packageForm.reset({
+    this.packageFormModel.set({
       code: row.BpaCode,
       name: row.BpaName,
       description: row.BpaDescription ?? '',
@@ -715,14 +780,13 @@ export class BillingSystemPage {
       itemRequired: 1,
       itemConfigJson: '',
     });
-    this.packageForm.controls.code.disable({ emitEvent: false });
     this.openDialog(this.packageDialog(), '860px');
   }
 
   async savePackage(keepOpen = false) {
-    if (this.packageForm.invalid || this.saving()) return;
+    if (!this.packageForm().valid() || this.saving()) return;
     this.saving.set(true);
-    const value = this.packageForm.getRawValue();
+    const value = this.packageFormModel();
     const itemConfig = this.parseJson(value.itemConfigJson);
     if (itemConfig === false) {
       this.saving.set(false);
@@ -794,13 +858,12 @@ export class BillingSystemPage {
   openPromotionCreate() {
     this.editingPromotion.set(null);
     this.resetPromotionForm();
-    this.promotionForm.controls.code.enable({ emitEvent: false });
     this.openDialog(this.promotionDialog(), '980px');
   }
 
   openPromotionEdit(row: BillingPromotion) {
     this.editingPromotion.set(row);
-    this.promotionForm.reset({
+    this.promotionFormModel.set({
       code: row.BpmCode,
       name: row.BpmName,
       description: row.BpmDescription ?? '',
@@ -825,14 +888,13 @@ export class BillingSystemPage {
       couponMaxUsesPerTenant: null,
       couponExpiresAt: '',
     });
-    this.promotionForm.controls.code.disable({ emitEvent: false });
     this.openDialog(this.promotionDialog(), '980px');
   }
 
   async savePromotion(keepOpen = false) {
-    if (this.promotionForm.invalid || this.saving()) return;
+    if (!this.promotionForm().valid() || this.saving()) return;
     this.saving.set(true);
-    const value = this.promotionForm.getRawValue();
+    const value = this.promotionFormModel();
     const eligibility = this.parseJson(value.eligibilityJson);
     if (eligibility === false) {
       this.saving.set(false);
@@ -935,7 +997,7 @@ export class BillingSystemPage {
   }
 
   openCreditDialog() {
-    this.creditForm.reset({
+    this.creditFormModel.set({
       tenantSearch: '',
       environmentUUID: '',
       amount: 0,
@@ -952,11 +1014,11 @@ export class BillingSystemPage {
 
   clearCreditTenantSelection() {
     this.selectedCreditTenant.set(null);
-    this.creditForm.controls.environmentUUID.setValue('');
+    this.creditFormModel.update((value) => ({ ...value, environmentUUID: '' }));
   }
 
   async searchCreditTenants() {
-    const term = this.creditForm.controls.tenantSearch.value.trim();
+    const term = this.creditFormModel().tenantSearch.trim();
 
     if (term.length < 3) {
       this.tenantOptions.set([]);
@@ -982,11 +1044,12 @@ export class BillingSystemPage {
 
   selectCreditTenant(tenant: BillingTenantLookupItem) {
     this.selectedCreditTenant.set(tenant);
-    this.creditForm.patchValue({
+    this.creditFormModel.update((value) => ({
+      ...value,
       tenantSearch: this.tenantLabel(tenant),
       environmentUUID: tenant.EnvironmentUUID,
-      currency: tenant.DefaultCurrency ?? this.creditForm.controls.currency.value,
-    });
+      currency: tenant.DefaultCurrency ?? value.currency,
+    }));
   }
 
   tenantLabel(tenant: BillingTenantLookupItem) {
@@ -995,9 +1058,9 @@ export class BillingSystemPage {
   }
 
   async saveManualCredit() {
-    if (this.creditForm.invalid || this.saving()) return;
+    if (!this.creditForm().valid() || this.saving()) return;
     this.saving.set(true);
-    const value = this.creditForm.getRawValue();
+    const value = this.creditFormModel();
     try {
       await this.billing.manualCredit({
         environmentUUID: value.environmentUUID,
@@ -1265,15 +1328,11 @@ export class BillingSystemPage {
   }
 
   resolvedPriceCurrency() {
-    return (
-      this.normalizeCurrencyInput(this.priceForm.controls.currency.value) ?? this.defaultCurrency()
-    );
+    return this.normalizeCurrencyInput(this.priceFormModel().currency) ?? this.defaultCurrency();
   }
 
   resolvedCreditCurrency() {
-    return (
-      this.normalizeCurrencyInput(this.creditForm.controls.currency.value) ?? this.defaultCurrency()
-    );
+    return this.normalizeCurrencyInput(this.creditFormModel().currency) ?? this.defaultCurrency();
   }
 
   private openDialog(template: TemplateRef<unknown> | undefined, width: string) {
@@ -1313,93 +1372,23 @@ export class BillingSystemPage {
 
   private resetPriceForm() {
     this.editingPrice.set(null);
-    this.priceForm.reset({
-      productUUID: this.defaultPriceProductUUID(),
-      name: '',
-      currency: this.defaultCurrency(),
-      billingMode: 'MONTHLY',
-      unitCode: 'UNIT',
-      unitPrice: 0,
-      setupAmount: 0,
-      includedQuantity: 0,
-      minimumCommitment: 0,
-      configJson: '',
-      status: 1,
-    });
+    this.priceFormModel.set(this.emptyPriceForm());
   }
 
   private resetPackageForm() {
     this.editingPackage.set(null);
-    this.packageForm.controls.code.enable({ emitEvent: false });
-    this.packageForm.reset({
-      code: 'package.',
-      name: '',
-      description: '',
-      productUUID: this.defaultPriceProductUUID(),
-      isPublic: 0,
-      sortOrder: 1000,
-      status: 1,
-      itemProductUUID: this.defaultPriceProductUUID(),
-      itemEntitlementCode: '',
-      itemIncludedQuantity: 1,
-      itemRequired: 1,
-      itemConfigJson: '',
-    });
+    this.packageFormModel.set(this.emptyPackageForm());
   }
 
   private resetPromotionForm() {
     this.editingPromotion.set(null);
-    this.promotionForm.controls.code.enable({ emitEvent: false });
-    this.promotionForm.reset({
-      code: 'promo.',
-      name: '',
-      description: '',
-      currency: this.defaultCurrency(),
-      requiresCoupon: 0,
-      maxRedemptions: null,
-      maxRedemptionsPerTenant: null,
-      stackingPolicy: 'EXCLUSIVE',
-      eligibilityJson: '',
-      isPublic: 0,
-      startsAt: '',
-      endsAt: '',
-      status: 1,
-      ruleProductUUID: this.defaultPriceProductUUID(),
-      rulePriceUUID: '',
-      discountType: 'PERCENT',
-      appliesTo: 'ALL',
-      discountValue: 0,
-      cycles: null,
-      couponCode: '',
-      couponMaxUses: null,
-      couponMaxUsesPerTenant: null,
-      couponExpiresAt: '',
-    });
+    this.promotionFormModel.set(this.emptyPromotionForm());
   }
 
   private resetProductForm() {
     this.editingProduct.set(null);
-    this.productForm.controls.code.enable({ emitEvent: false });
-    this.productCodeFilter = '';
-    this.productForm.reset({
-      code: '',
-      name: '',
-      module: '',
-      billingScope: 'RESOURCE',
-      description: '',
-      entitlementPattern: '',
-      requiresEntitlementCode: '',
-      resourceType: '',
-      isPublic: 0,
-      publicSlug: '',
-      publicName: '',
-      publicSummary: '',
-      publicDescription: '',
-      publicFeaturesJson: '',
-      publicSortOrder: null,
-      sortOrder: null,
-      status: 1,
-    });
+    this.productCodeFilter.set('');
+    this.productFormModel.set(this.emptyProductForm());
   }
 
   private optionalNumber(value: unknown): number | null {
@@ -1421,8 +1410,8 @@ export class BillingSystemPage {
   private async loadDefaultCurrency() {
     try {
       this.defaultCurrency.set(await this.parameters.resolveDefaultCurrency());
-      if (!this.editingPrice() && !this.priceForm.controls.currency.value) {
-        this.priceForm.controls.currency.setValue(this.defaultCurrency(), { emitEvent: false });
+      if (!this.editingPrice() && !this.priceFormModel().currency) {
+        this.priceFormModel.update((value) => ({ ...value, currency: this.defaultCurrency() }));
       }
     } catch {
       // Keep the field empty when the API cannot resolve the platform default.
@@ -1500,10 +1489,107 @@ export class BillingSystemPage {
 
   private currentFilters(): BillingSystemFilters {
     return {
-      search: this.searchInput,
-      priceProductUUID: this.priceProductFilter,
-      status: this.statusFilter,
-      subscriptionStatus: this.subscriptionStatusFilter,
+      search: this.searchInput(),
+      priceProductUUID: this.priceProductFilter(),
+      status: this.statusFilter(),
+      subscriptionStatus: this.subscriptionStatusFilter(),
+    };
+  }
+
+  private emptyProductForm(): ProductFormModel {
+    return {
+      code: '',
+      name: '',
+      module: '',
+      billingScope: 'RESOURCE',
+      description: '',
+      entitlementPattern: '',
+      requiresEntitlementCode: '',
+      resourceType: '',
+      isPublic: 0,
+      publicSlug: '',
+      publicName: '',
+      publicSummary: '',
+      publicDescription: '',
+      publicFeaturesJson: '',
+      publicSortOrder: null,
+      sortOrder: null,
+      status: 1,
+    };
+  }
+
+  private emptyPriceForm(): PriceFormModel {
+    return {
+      productUUID: this.defaultPriceProductUUID?.() ?? '',
+      name: '',
+      currency: this.defaultCurrency?.() ?? '',
+      billingMode: 'MONTHLY',
+      unitCode: 'UNIT',
+      unitPrice: 0,
+      setupAmount: 0,
+      includedQuantity: 0,
+      minimumCommitment: 0,
+      configJson: '',
+      status: 1,
+    };
+  }
+
+  private emptyPackageForm(): PackageFormModel {
+    const productUUID = this.defaultPriceProductUUID?.() ?? '';
+    return {
+      code: 'package.',
+      name: '',
+      description: '',
+      productUUID,
+      isPublic: 0,
+      sortOrder: 1000,
+      status: 1,
+      itemProductUUID: productUUID,
+      itemEntitlementCode: '',
+      itemIncludedQuantity: 1,
+      itemRequired: 1,
+      itemConfigJson: '',
+    };
+  }
+
+  private emptyPromotionForm(): PromotionFormModel {
+    return {
+      code: 'promo.',
+      name: '',
+      description: '',
+      currency: this.defaultCurrency?.() ?? '',
+      requiresCoupon: 0,
+      maxRedemptions: null,
+      maxRedemptionsPerTenant: null,
+      stackingPolicy: 'EXCLUSIVE',
+      eligibilityJson: '',
+      isPublic: 0,
+      startsAt: '',
+      endsAt: '',
+      status: 1,
+      ruleProductUUID: this.defaultPriceProductUUID?.() ?? '',
+      rulePriceUUID: '',
+      discountType: 'PERCENT',
+      appliesTo: 'ALL',
+      discountValue: 0,
+      cycles: null,
+      couponCode: '',
+      couponMaxUses: null,
+      couponMaxUsesPerTenant: null,
+      couponExpiresAt: '',
+    };
+  }
+
+  private emptyCreditForm(): CreditFormModel {
+    return {
+      tenantSearch: '',
+      environmentUUID: '',
+      amount: 0,
+      currency: this.defaultCurrency?.() ?? '',
+      reason: '',
+      reference: '',
+      idempotencyKey:
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : '',
     };
   }
 

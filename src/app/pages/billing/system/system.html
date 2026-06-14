@@ -85,11 +85,15 @@
       <div class="filter-grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Search products' | transloco }}</mat-label>
-          <input matInput [(ngModel)]="searchInput" />
+          <input
+            matInput
+            [value]="searchInput()"
+            (input)="searchInput.set($any($event.target).value)"
+          />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Status' | transloco }}</mat-label>
-          <mat-select [(ngModel)]="statusFilter">
+          <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
             <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
             <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
             <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
@@ -233,16 +237,21 @@
       <div class="filter-grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Search prices' | transloco }}</mat-label>
-          <input matInput [(ngModel)]="searchInput" />
+          <input
+            matInput
+            [value]="searchInput()"
+            (input)="searchInput.set($any($event.target).value)"
+          />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Product' | transloco }}</mat-label>
           <mat-select
-            [(ngModel)]="priceProductFilter"
+            [value]="priceProductFilter()"
+            (selectionChange)="priceProductFilter.set($event.value)"
             (openedChange)="!$event && clearProductSelectSearch()"
           >
             <mat-select-trigger>
-              {{ priceProductFilter ? productName(priceProductFilter) : ('All' | transloco) }}
+              {{ priceProductFilter() ? productName(priceProductFilter()) : ('All' | transloco) }}
             </mat-select-trigger>
             <mat-option class="select-search-option">
               <mat-form-field
@@ -254,8 +263,8 @@
                 <input
                   matInput
                   [placeholder]="'Search products' | transloco"
-                  [ngModel]="priceProductSearchInput()"
-                  (ngModelChange)="priceProductSearchInput.set($event)"
+                  [value]="priceProductSearchInput()"
+                  (input)="priceProductSearchInput.set($any($event.target).value)"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                 />
@@ -269,7 +278,7 @@
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Status' | transloco }}</mat-label>
-          <mat-select [(ngModel)]="statusFilter">
+          <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
             <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
             <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
             <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
@@ -414,11 +423,15 @@
       <div class="filter-grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Search packages' | transloco }}</mat-label>
-          <input matInput [(ngModel)]="searchInput" />
+          <input
+            matInput
+            [value]="searchInput()"
+            (input)="searchInput.set($any($event.target).value)"
+          />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Status' | transloco }}</mat-label>
-          <mat-select [(ngModel)]="statusFilter">
+          <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
             <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
             <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
             <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
@@ -510,11 +523,15 @@
       <div class="filter-grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Search promotions' | transloco }}</mat-label>
-          <input matInput [(ngModel)]="searchInput" />
+          <input
+            matInput
+            [value]="searchInput()"
+            (input)="searchInput.set($any($event.target).value)"
+          />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Status' | transloco }}</mat-label>
-          <mat-select [(ngModel)]="statusFilter">
+          <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
             <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
             <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
             <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
@@ -612,15 +629,22 @@
       <div class="filter-grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Search subscriptions' | transloco }}</mat-label>
-          <input matInput [(ngModel)]="searchInput" />
+          <input
+            matInput
+            [value]="searchInput()"
+            (input)="searchInput.set($any($event.target).value)"
+          />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'Subscription status' | transloco }}</mat-label>
-          <mat-select [(ngModel)]="subscriptionStatusFilter">
+          <mat-select
+            [value]="subscriptionStatusFilter()"
+            (selectionChange)="subscriptionStatusFilter.set($event.value)"
+          >
             <mat-select-trigger>
               {{
-                subscriptionStatusFilter
-                  ? subscriptionStatusLabel(subscriptionStatusFilter)
+                subscriptionStatusFilter()
+                  ? subscriptionStatusLabel(subscriptionStatusFilter())
                   : ('All' | transloco)
               }}
             </mat-select-trigger>
@@ -797,10 +821,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid product-form-grid" [formGroup]="productForm">
+            <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Status' | transloco }}</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="productForm.status">
                   <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
@@ -810,9 +834,10 @@
                 <input
                   matInput
                   maxlength="120"
-                  formControlName="code"
+                  [formField]="productForm.code"
+                  [disabled]="!!editingProduct()"
                   [matAutocomplete]="productCodeAutocomplete"
-                  (input)="productCodeFilter = productForm.controls.code.value"
+                  (input)="productCodeFilter.set(productFormModel().code)"
                 />
                 <mat-autocomplete
                   #productCodeAutocomplete="matAutocomplete"
@@ -833,11 +858,11 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Module' | transloco }}</mat-label>
-                <input matInput maxlength="80" formControlName="module" />
+                <input matInput maxlength="80" [formField]="productForm.module" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Billing scope' | transloco }}</mat-label>
-                <mat-select formControlName="billingScope">
+                <mat-select [formField]="productForm.billingScope">
                   @for (option of billingScopeOptions; track option.value) {
                     <mat-option [value]="option.value">{{
                       option.labelKey | transloco
@@ -847,7 +872,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="name" />
+                <input matInput maxlength="160" [formField]="productForm.name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Sort order' | transloco }}</mat-label>
@@ -856,7 +881,7 @@
                   type="number"
                   min="0"
                   step="1"
-                  formControlName="sortOrder"
+                  [formField]="productForm.sortOrder"
                   [placeholder]="'Auto' | transloco"
                   [matTooltip]="
                     'Leave blank to assign the next order within this module.' | transloco
@@ -869,7 +894,7 @@
                   matInput
                   rows="2"
                   maxlength="500"
-                  formControlName="description"
+                  [formField]="productForm.description"
                 ></textarea>
               </mat-form-field>
             </form>
@@ -877,28 +902,28 @@
         </mat-tab>
         <mat-tab [label]="'Entitlements' | transloco">
           <div class="tab-content">
-            <form class="form-grid product-form-grid" [formGroup]="productForm">
+            <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Entitlement pattern' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="entitlementPattern" />
+                <input matInput maxlength="160" [formField]="productForm.entitlementPattern" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Requires entitlement code' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="requiresEntitlementCode" />
+                <input matInput maxlength="160" [formField]="productForm.requiresEntitlementCode" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Resource type' | transloco }}</mat-label>
-                <input matInput maxlength="80" formControlName="resourceType" />
+                <input matInput maxlength="80" [formField]="productForm.resourceType" />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
         <mat-tab [label]="'Public Catalog' | transloco">
           <div class="tab-content">
-            <form class="form-grid product-form-grid" [formGroup]="productForm">
+            <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public' | transloco }}</mat-label>
-                <mat-select formControlName="isPublic">
+                <mat-select [formField]="productForm.isPublic">
                   <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
@@ -910,7 +935,7 @@
                   type="number"
                   min="0"
                   step="1"
-                  formControlName="publicSortOrder"
+                  [formField]="productForm.publicSortOrder"
                   [placeholder]="'Auto' | transloco"
                   [matTooltip]="
                     'Leave blank to reuse the product order in the public catalog.' | transloco
@@ -919,15 +944,15 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public slug' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="publicSlug" />
+                <input matInput maxlength="160" [formField]="productForm.publicSlug" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public name' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="publicName" />
+                <input matInput maxlength="160" [formField]="productForm.publicName" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public summary' | transloco }}</mat-label>
-                <input matInput maxlength="255" formControlName="publicSummary" />
+                <input matInput maxlength="255" [formField]="productForm.publicSummary" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Public description' | transloco }}</mat-label>
@@ -935,12 +960,12 @@
                   matInput
                   rows="2"
                   maxlength="700"
-                  formControlName="publicDescription"
+                  [formField]="productForm.publicDescription"
                 ></textarea>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Public features JSON' | transloco }}</mat-label>
-                <textarea matInput rows="2" formControlName="publicFeaturesJson"></textarea>
+                <textarea matInput rows="2" [formField]="productForm.publicFeaturesJson"></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -1010,10 +1035,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid price-form-grid" [formGroup]="priceForm">
+            <form class="form-grid price-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Status' | transloco }}</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="priceForm.status">
                   <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
@@ -1021,7 +1046,7 @@
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Product' | transloco }}</mat-label>
                 <mat-select
-                  formControlName="productUUID"
+                  [formField]="priceForm.productUUID"
                   (openedChange)="!$event && clearProductSelectSearch()"
                 >
                   <mat-option class="select-search-option">
@@ -1034,9 +1059,8 @@
                       <input
                         matInput
                         [placeholder]="'Search products' | transloco"
-                        [ngModel]="priceFormProductSearchInput()"
-                        (ngModelChange)="priceFormProductSearchInput.set($event)"
-                        [ngModelOptions]="{ standalone: true }"
+                        [value]="priceFormProductSearchInput()"
+                        (input)="priceFormProductSearchInput.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                       />
@@ -1049,23 +1073,23 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput formControlName="name" />
+                <input matInput [formField]="priceForm.name" />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
         <mat-tab [label]="'Pricing' | transloco">
           <div class="tab-content">
-            <form class="form-grid price-form-grid" [formGroup]="priceForm">
+            <form class="form-grid price-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | transloco }}</mat-label>
-                <input matInput maxlength="3" formControlName="currency" />
+                <input matInput maxlength="3" [formField]="priceForm.currency" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Billing mode' | transloco }}</mat-label>
-                <mat-select formControlName="billingMode">
+                <mat-select [formField]="priceForm.billingMode">
                   <mat-select-trigger>
-                    {{ billingModeLabel(priceForm.controls.billingMode.value) }}
+                    {{ billingModeLabel(priceFormModel().billingMode) }}
                   </mat-select-trigger>
                   @for (option of billingModeOptions; track option.value) {
                     <mat-option [value]="option.value">{{
@@ -1084,7 +1108,7 @@
                   type="text"
                   appCurrencyMask
                   [appCurrencyMaskCurrency]="resolvedPriceCurrency()"
-                  formControlName="unitPrice"
+                  [formField]="priceForm.unitPrice"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
@@ -1097,7 +1121,7 @@
                   type="text"
                   appCurrencyMask
                   [appCurrencyMaskCurrency]="resolvedPriceCurrency()"
-                  formControlName="setupAmount"
+                  [formField]="priceForm.setupAmount"
                 />
               </mat-form-field>
             </form>
@@ -1105,28 +1129,38 @@
         </mat-tab>
         <mat-tab [label]="'Usage' | transloco">
           <div class="tab-content">
-            <form class="form-grid price-form-grid" [formGroup]="priceForm">
+            <form class="form-grid price-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Unit code' | transloco }}</mat-label>
-                <input matInput formControlName="unitCode" />
+                <input matInput [formField]="priceForm.unitCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Included quantity' | transloco }}</mat-label>
-                <input matInput type="number" step="0.000001" formControlName="includedQuantity" />
+                <input
+                  matInput
+                  type="number"
+                  step="0.000001"
+                  [formField]="priceForm.includedQuantity"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Minimum commitment' | transloco }}</mat-label>
-                <input matInput type="number" step="0.000001" formControlName="minimumCommitment" />
+                <input
+                  matInput
+                  type="number"
+                  step="0.000001"
+                  [formField]="priceForm.minimumCommitment"
+                />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
         <mat-tab [label]="'Advanced' | transloco">
           <div class="tab-content">
-            <form class="form-grid price-form-grid" [formGroup]="priceForm">
+            <form class="form-grid price-form-grid">
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Config JSON' | transloco }}</mat-label>
-                <textarea matInput rows="4" formControlName="configJson"></textarea>
+                <textarea matInput rows="4" [formField]="priceForm.configJson"></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -1196,37 +1230,48 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid price-form-grid" [formGroup]="packageForm">
+            <form class="form-grid price-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Status' | transloco }}</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="packageForm.status">
                   <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Package code' | transloco }}</mat-label>
-                <input matInput maxlength="120" formControlName="code" />
+                <input
+                  matInput
+                  maxlength="120"
+                  [formField]="packageForm.code"
+                  [disabled]="!!editingPackage()"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public' | transloco }}</mat-label>
-                <mat-select formControlName="isPublic">
+                <mat-select [formField]="packageForm.isPublic">
                   <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Sort order' | transloco }}</mat-label>
-                <input matInput type="number" min="0" step="1" formControlName="sortOrder" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  [formField]="packageForm.sortOrder"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Product' | transloco }}</mat-label>
                 <mat-select
-                  formControlName="productUUID"
+                  [formField]="packageForm.productUUID"
                   (openedChange)="!$event && clearProductSelectSearch()"
                 >
                   <mat-select-trigger>
-                    {{ productName(packageForm.controls.productUUID.value) }}
+                    {{ productName(packageFormModel().productUUID) }}
                   </mat-select-trigger>
                   <mat-option class="select-search-option">
                     <mat-form-field
@@ -1238,9 +1283,8 @@
                       <input
                         matInput
                         [placeholder]="'Search products' | transloco"
-                        [ngModel]="packageFormProductSearchInput()"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="packageFormProductSearchInput.set($event)"
+                        [value]="packageFormProductSearchInput()"
+                        (input)="packageFormProductSearchInput.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                       />
@@ -1253,7 +1297,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="name" />
+                <input matInput maxlength="160" [formField]="packageForm.name" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Description' | transloco }}</mat-label>
@@ -1261,7 +1305,7 @@
                   matInput
                   rows="2"
                   maxlength="500"
-                  formControlName="description"
+                  [formField]="packageForm.description"
                 ></textarea>
               </mat-form-field>
             </form>
@@ -1269,15 +1313,15 @@
         </mat-tab>
         <mat-tab [label]="'Package item' | transloco" [disabled]="!!editingPackage()">
           <div class="tab-content">
-            <form class="form-grid price-form-grid" [formGroup]="packageForm">
+            <form class="form-grid price-form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Included product' | transloco }}</mat-label>
                 <mat-select
-                  formControlName="itemProductUUID"
+                  [formField]="packageForm.itemProductUUID"
                   (openedChange)="!$event && clearProductSelectSearch()"
                 >
                   <mat-select-trigger>
-                    {{ productName(packageForm.controls.itemProductUUID.value) }}
+                    {{ productName(packageFormModel().itemProductUUID) }}
                   </mat-select-trigger>
                   <mat-option class="select-search-option">
                     <mat-form-field
@@ -1289,9 +1333,8 @@
                       <input
                         matInput
                         [placeholder]="'Search products' | transloco"
-                        [ngModel]="packageFormProductSearchInput()"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="packageFormProductSearchInput.set($event)"
+                        [value]="packageFormProductSearchInput()"
+                        (input)="packageFormProductSearchInput.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                       />
@@ -1304,7 +1347,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Entitlement code' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="itemEntitlementCode" />
+                <input matInput maxlength="160" [formField]="packageForm.itemEntitlementCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Included quantity' | transloco }}</mat-label>
@@ -1313,19 +1356,19 @@
                   type="number"
                   min="0"
                   step="0.000001"
-                  formControlName="itemIncludedQuantity"
+                  [formField]="packageForm.itemIncludedQuantity"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Required' | transloco }}</mat-label>
-                <mat-select formControlName="itemRequired">
+                <mat-select [formField]="packageForm.itemRequired">
                   <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Item config JSON' | transloco }}</mat-label>
-                <textarea matInput rows="3" formControlName="itemConfigJson"></textarea>
+                <textarea matInput rows="3" [formField]="packageForm.itemConfigJson"></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -1394,47 +1437,52 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid product-form-grid" [formGroup]="promotionForm">
+            <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Status' | transloco }}</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="promotionForm.status">
                   <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Promotion code' | transloco }}</mat-label>
-                <input matInput maxlength="120" formControlName="code" />
+                <input
+                  matInput
+                  maxlength="120"
+                  [formField]="promotionForm.code"
+                  [disabled]="!!editingPromotion()"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | transloco }}</mat-label>
-                <input matInput maxlength="3" formControlName="currency" />
+                <input matInput maxlength="3" [formField]="promotionForm.currency" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public' | transloco }}</mat-label>
-                <mat-select formControlName="isPublic">
+                <mat-select [formField]="promotionForm.isPublic">
                   <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput maxlength="160" formControlName="name" />
+                <input matInput maxlength="160" [formField]="promotionForm.name" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Requires coupon' | transloco }}</mat-label>
-                <mat-select formControlName="requiresCoupon">
+                <mat-select [formField]="promotionForm.requiresCoupon">
                   <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
                   <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Starts at' | transloco }}</mat-label>
-                <input matInput type="datetime-local" formControlName="startsAt" />
+                <input matInput type="datetime-local" [formField]="promotionForm.startsAt" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Ends at' | transloco }}</mat-label>
-                <input matInput type="datetime-local" formControlName="endsAt" />
+                <input matInput type="datetime-local" [formField]="promotionForm.endsAt" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Description' | transloco }}</mat-label>
@@ -1442,7 +1490,7 @@
                   matInput
                   rows="2"
                   maxlength="500"
-                  formControlName="description"
+                  [formField]="promotionForm.description"
                 ></textarea>
               </mat-form-field>
             </form>
@@ -1450,17 +1498,17 @@
         </mat-tab>
         <mat-tab [label]="'Discount rule' | transloco" [disabled]="!!editingPromotion()">
           <div class="tab-content">
-            <form class="form-grid product-form-grid" [formGroup]="promotionForm">
+            <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Product' | transloco }}</mat-label>
                 <mat-select
-                  formControlName="ruleProductUUID"
+                  [formField]="promotionForm.ruleProductUUID"
                   (openedChange)="!$event && clearProductSelectSearch()"
                 >
                   <mat-select-trigger>
                     {{
-                      promotionForm.controls.ruleProductUUID.value
-                        ? productName(promotionForm.controls.ruleProductUUID.value)
+                      promotionFormModel().ruleProductUUID
+                        ? productName(promotionFormModel().ruleProductUUID)
                         : ('All' | transloco)
                     }}
                   </mat-select-trigger>
@@ -1474,9 +1522,8 @@
                       <input
                         matInput
                         [placeholder]="'Search products' | transloco"
-                        [ngModel]="promotionRuleProductSearchInput()"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="promotionRuleProductSearchInput.set($event)"
+                        [value]="promotionRuleProductSearchInput()"
+                        (input)="promotionRuleProductSearchInput.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                       />
@@ -1490,7 +1537,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Price' | transloco }}</mat-label>
-                <mat-select formControlName="rulePriceUUID">
+                <mat-select [formField]="promotionForm.rulePriceUUID">
                   <mat-option [value]="''">{{ 'All' | transloco }}</mat-option>
                   @for (price of priceSource.data; track price.BpcUUID) {
                     <mat-option [value]="price.BpcUUID">{{ price.BpcName }}</mat-option>
@@ -1499,7 +1546,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Discount type' | transloco }}</mat-label>
-                <mat-select formControlName="discountType">
+                <mat-select [formField]="promotionForm.discountType">
                   <mat-option value="PERCENT">{{ 'Percent' | transloco }}</mat-option>
                   <mat-option value="FIXED_AMOUNT">{{ 'Fixed amount' | transloco }}</mat-option>
                   <mat-option value="PRICE_OVERRIDE">{{ 'Price override' | transloco }}</mat-option>
@@ -1508,7 +1555,7 @@
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Applies to' | transloco }}</mat-label>
-                <mat-select formControlName="appliesTo">
+                <mat-select [formField]="promotionForm.appliesTo">
                   <mat-option value="ALL">{{ 'All' | transloco }}</mat-option>
                   <mat-option value="RECURRING">{{ 'Recurring' | transloco }}</mat-option>
                   <mat-option value="SETUP">{{ 'Setup' | transloco }}</mat-option>
@@ -1521,30 +1568,36 @@
                   type="text"
                   appCurrencyMask
                   [appCurrencyMaskCurrency]="
-                    promotionForm.controls.discountType.value === 'PERCENT'
+                    promotionFormModel().discountType === 'PERCENT'
                       ? ''
-                      : promotionForm.controls.currency.value
+                      : promotionFormModel().currency
                   "
-                  formControlName="discountValue"
+                  [formField]="promotionForm.discountValue"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Cycles' | transloco }}</mat-label>
-                <input matInput type="number" min="0" step="1" formControlName="cycles" />
+                <input matInput type="number" min="0" step="1" [formField]="promotionForm.cycles" />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
         <mat-tab [label]="'Coupon' | transloco" [disabled]="!!editingPromotion()">
           <div class="tab-content">
-            <form class="form-grid product-form-grid" [formGroup]="promotionForm">
+            <form class="form-grid product-form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Coupon code' | transloco }}</mat-label>
-                <input matInput maxlength="80" formControlName="couponCode" />
+                <input matInput maxlength="80" [formField]="promotionForm.couponCode" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Max uses' | transloco }}</mat-label>
-                <input matInput type="number" min="0" step="1" formControlName="couponMaxUses" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  [formField]="promotionForm.couponMaxUses"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Max uses per tenant' | transloco }}</mat-label>
@@ -1553,16 +1606,16 @@
                   type="number"
                   min="0"
                   step="1"
-                  formControlName="couponMaxUsesPerTenant"
+                  [formField]="promotionForm.couponMaxUsesPerTenant"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Expires at' | transloco }}</mat-label>
-                <input matInput type="datetime-local" formControlName="couponExpiresAt" />
+                <input matInput type="datetime-local" [formField]="promotionForm.couponExpiresAt" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Eligibility JSON' | transloco }}</mat-label>
-                <textarea matInput rows="3" formControlName="eligibilityJson"></textarea>
+                <textarea matInput rows="3" [formField]="promotionForm.eligibilityJson"></textarea>
               </mat-form-field>
             </form>
           </div>
@@ -1628,12 +1681,12 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid credit-form-grid" [formGroup]="creditForm">
+            <form class="form-grid credit-form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Tenant email, name or UUID' | transloco }}</mat-label>
                 <input
                   matInput
-                  formControlName="tenantSearch"
+                  [formField]="creditForm.tenantSearch"
                   (input)="clearCreditTenantSelection()"
                   (keydown.enter)="searchCreditTenants(); $event.preventDefault()"
                 />
@@ -1660,14 +1713,14 @@
                   type="text"
                   appCurrencyMask
                   [appCurrencyMaskCurrency]="resolvedCreditCurrency()"
-                  formControlName="amount"
+                  [formField]="creditForm.amount"
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Currency' | transloco }}</mat-label>
-                <input matInput maxlength="3" formControlName="currency" />
+                <input matInput maxlength="3" [formField]="creditForm.currency" />
               </mat-form-field>
-              <input type="hidden" formControlName="environmentUUID" />
+              <input type="hidden" [formField]="creditForm.environmentUUID" />
               @if (tenantOptions().length > 0 && !selectedCreditTenant()) {
                 <div class="tenant-result-list span-4">
                   @for (tenant of tenantOptions(); track tenant.EnvironmentUUID) {
@@ -1698,15 +1751,15 @@
               }
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Reason' | transloco }}</mat-label>
-                <input matInput formControlName="reason" />
+                <input matInput [formField]="creditForm.reason" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Reference' | transloco }}</mat-label>
-                <input matInput formControlName="reference" />
+                <input matInput [formField]="creditForm.reference" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Idempotency key' | transloco }}</mat-label>
-                <input matInput formControlName="idempotencyKey" />
+                <input matInput [formField]="creditForm.idempotencyKey" />
               </mat-form-field>
             </form>
           </div>
