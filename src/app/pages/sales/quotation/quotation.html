@@ -15,15 +15,15 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Number or title" formControlName="search" />
+        <input matInput placeholder="Number or title" [formField]="filterForm.search" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="draft">Draft</mat-option>
           <mat-option value="sent">Sent</mat-option>
@@ -35,7 +35,10 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Customer</mat-label>
-        <mat-select formControlName="customerUUID" (openedChange)="onFilterCustomerOpened($event)">
+        <mat-select
+          [formField]="filterForm.customerUUID"
+          (openedChange)="onFilterCustomerOpened($event)"
+        >
           <mat-option
             class="select-search-option"
             [value]="null"
@@ -45,8 +48,8 @@
             <mat-form-field appearance="outline" class="select-search-field">
               <input
                 matInput
-                [value]="filterCustomerSearch"
-                (input)="filterCustomerSearch = $any($event.target).value"
+                [value]="filterCustomerSearch()"
+                (input)="filterCustomerSearch.set($any($event.target).value)"
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
                 placeholder="Search customer"
@@ -160,11 +163,11 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <div class="form-section">
-              <form class="form-grid" [formGroup]="quotationForm" (ngSubmit)="saveQuotation()">
+              <form class="form-grid" (ngSubmit)="saveQuotation()">
                 <mat-form-field appearance="outline">
                   <mat-label>Customer</mat-label>
                   <mat-select
-                    formControlName="customerUUID"
+                    [formField]="quotationForm.customerUUID"
                     (openedChange)="onCustomerOpened($event)"
                   >
                     <mat-option
@@ -176,8 +179,8 @@
                       <mat-form-field appearance="outline" class="select-search-field">
                         <input
                           matInput
-                          [value]="customerSearch"
-                          (input)="customerSearch = $any($event.target).value"
+                          [value]="customerSearch()"
+                          (input)="customerSearch.set($any($event.target).value)"
                           (click)="$event.stopPropagation()"
                           (keydown)="$event.stopPropagation()"
                           placeholder="Search customer"
@@ -193,12 +196,16 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Number</mat-label>
-                  <input matInput placeholder="Optional identifier" formControlName="number" />
+                  <input
+                    matInput
+                    placeholder="Optional identifier"
+                    [formField]="quotationForm.number"
+                  />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Title</mat-label>
-                  <input matInput placeholder="Quotation title" formControlName="title" />
+                  <input matInput placeholder="Quotation title" [formField]="quotationForm.title" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-2">
@@ -207,18 +214,18 @@
                     matInput
                     rows="3"
                     placeholder="Optional description"
-                    formControlName="description"
+                    [formField]="quotationForm.description"
                   ></textarea>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Currency</mat-label>
-                  <input matInput placeholder="USD" formControlName="currency" />
+                  <input matInput placeholder="USD" [formField]="quotationForm.currency" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Status</mat-label>
-                  <mat-select formControlName="status">
+                  <mat-select [formField]="quotationForm.status">
                     <mat-option value="draft">Draft</mat-option>
                     <mat-option value="sent">Sent</mat-option>
                     <mat-option value="approved">Approved</mat-option>
@@ -232,7 +239,7 @@
                   <input
                     matInput
                     [matDatepicker]="validUntilPicker"
-                    formControlName="validUntil"
+                    [formField]="quotationForm.validUntil"
                     appDateMask
                   />
                   <mat-datepicker-toggle matSuffix [for]="validUntilPicker" />
@@ -245,7 +252,7 @@
                     matInput
                     rows="3"
                     placeholder="Internal notes"
-                    formControlName="notes"
+                    [formField]="quotationForm.notes"
                   ></textarea>
                 </mat-form-field>
               </form>
@@ -273,11 +280,11 @@
                     </div>
                   </div>
 
-                  <form class="items-grid" [formGroup]="itemForm" (ngSubmit)="saveItem()">
+                  <form class="items-grid" (ngSubmit)="saveItem()">
                     <mat-form-field appearance="outline">
                       <mat-label>Product</mat-label>
                       <mat-select
-                        formControlName="productUUID"
+                        [formField]="itemForm.productUUID"
                         (selectionChange)="syncUnitPrice($event.value)"
                         (openedChange)="onProductOpened($event)"
                       >
@@ -290,8 +297,8 @@
                           <mat-form-field appearance="outline" class="select-search-field">
                             <input
                               matInput
-                              [value]="productSearch"
-                              (input)="productSearch = $any($event.target).value"
+                              [value]="productSearch()"
+                              (input)="productSearch.set($any($event.target).value)"
                               (click)="$event.stopPropagation()"
                               (keydown)="$event.stopPropagation()"
                               placeholder="Search product"
@@ -310,18 +317,23 @@
                       <input
                         matInput
                         placeholder="Optional details"
-                        formControlName="description"
+                        [formField]="itemForm.description"
                       />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
                       <mat-label>Quantity</mat-label>
-                      <input matInput type="number" step="0.01" formControlName="quantity" />
+                      <input matInput type="number" step="0.01" [formField]="itemForm.quantity" />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
                       <mat-label>Unit Price</mat-label>
-                      <input matInput type="text" appCurrencyMask formControlName="unitPrice" />
+                      <input
+                        matInput
+                        type="text"
+                        appCurrencyMask
+                        [formField]="itemForm.unitPrice"
+                      />
                       @if (amountPrefix) {
                         <span matTextPrefix>{{ amountPrefix }}</span>
                       }
@@ -329,7 +341,7 @@
 
                     <mat-form-field appearance="outline">
                       <mat-label>Discount</mat-label>
-                      <input matInput type="text" appCurrencyMask formControlName="discount" />
+                      <input matInput type="text" appCurrencyMask [formField]="itemForm.discount" />
                       @if (amountPrefix) {
                         <span matTextPrefix>{{ amountPrefix }}</span>
                       }
@@ -342,7 +354,7 @@
                       color="primary"
                       type="button"
                       (click)="saveItem()"
-                      [disabled]="itemForm.invalid || itemSaving()"
+                      [disabled]="!itemForm().valid() || itemSaving()"
                     >
                       <mat-icon>{{ editingItem() ? 'save' : 'add' }}</mat-icon>
                       {{ editingItem() ? 'Save item' : 'Add item' }}
@@ -436,7 +448,7 @@
         color="primary"
         type="button"
         (click)="saveQuotation()"
-        [disabled]="quotationForm.invalid || saving()"
+        [disabled]="!quotationForm().valid() || saving()"
       >
         <mat-icon>save</mat-icon>
         Save

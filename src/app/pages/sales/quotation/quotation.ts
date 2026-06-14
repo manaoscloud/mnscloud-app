@@ -12,7 +12,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -82,10 +82,48 @@ type QuotationFilters = {
   customerUUID: string;
 };
 
+type QuotationFormModel = {
+  customerUUID: string;
+  number: string;
+  title: string;
+  description: string;
+  currency: string;
+  status: string;
+  validUntil: Date | null;
+  notes: string;
+};
+
+type QuotationItemFormModel = {
+  productUUID: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+};
+
 const emptyQuotationFilters = (): QuotationFilters => ({
   search: '',
   status: '',
   customerUUID: '',
+});
+
+const emptyQuotationForm = (currency = 'BRL'): QuotationFormModel => ({
+  customerUUID: '',
+  number: '',
+  title: '',
+  description: '',
+  currency,
+  status: 'draft',
+  validUntil: null,
+  notes: '',
+});
+
+const emptyQuotationItemForm = (): QuotationItemFormModel => ({
+  productUUID: '',
+  description: '',
+  quantity: 1,
+  unitPrice: 0,
+  discount: 0,
 });
 
 @Component({
@@ -93,7 +131,7 @@ const emptyQuotationFilters = (): QuotationFilters => ({
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -120,7 +158,6 @@ const emptyQuotationFilters = (): QuotationFilters => ({
 export class SaleQuotationPage {
   private readonly api = inject(ApiService);
   private readonly parameters = inject(SystemParameterService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
   amountPrefix = '';
@@ -135,34 +172,27 @@ export class SaleQuotationPage {
 
   readonly customers = signal<OptionItem[]>([]);
   readonly products = signal<OptionItem[]>([]);
-  customerSearch = '';
-  filterCustomerSearch = '';
-  productSearch = '';
-  filterProductSearch = '';
+  readonly customerSearch = signal('');
+  readonly filterCustomerSearch = signal('');
+  readonly productSearch = signal('');
+  readonly filterProductSearch = signal('');
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    status: [''],
-    customerUUID: [''],
+  readonly filterFormModel = signal<QuotationFilters>(emptyQuotationFilters());
+  readonly filterForm = createForm(this.filterFormModel);
+
+  readonly quotationFormModel = signal<QuotationFormModel>(emptyQuotationForm());
+  readonly quotationForm = createForm(this.quotationFormModel, (schema) => {
+    required(schema.customerUUID);
+    required(schema.title);
+    required(schema.currency);
+    required(schema.status);
   });
 
-  readonly quotationForm = this.fb.group({
-    customerUUID: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
-    number: this.fb.control('', { nonNullable: true }),
-    title: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
-    description: this.fb.control('', { nonNullable: true }),
-    currency: this.fb.control('BRL', { nonNullable: true, validators: [Validators.required] }),
-    status: this.fb.control('draft', { nonNullable: true, validators: [Validators.required] }),
-    validUntil: this.fb.control<Date | null>(null),
-    notes: this.fb.control('', { nonNullable: true }),
-  });
-
-  readonly itemForm = this.fb.nonNullable.group({
-    productUUID: ['', [Validators.required]],
-    description: [''],
-    quantity: [1, [Validators.required]],
-    unitPrice: [0, [Validators.required]],
-    discount: [0],
+  readonly itemFormModel = signal<QuotationItemFormModel>(emptyQuotationItemForm());
+  readonly itemForm = createForm(this.itemFormModel, (schema) => {
+    required(schema.productUUID);
+    required(schema.quantity);
+    required(schema.unitPrice);
   });
 
   readonly displayedColumns = [
@@ -213,7 +243,7 @@ export class SaleQuotationPage {
     this.amountPrefix = this.getCurrencyAffixes(this.defaultCurrency()).prefix;
     void this.loadDefaultCurrency();
     this.loadLookups();
-  
+
     return true;
   })();
 
@@ -222,16 +252,15 @@ export class SaleQuotationPage {
     this.defaultCurrency.set(currency);
     this.amountPrefix = this.getCurrencyAffixes(currency).prefix;
     if (!this.editing()) {
-      const current = this.quotationForm.controls.currency.value;
+      const current = this.quotationFormModel().currency;
       if (!current || current === 'BRL' || current === 'USD') {
-        this.quotationForm.controls.currency.setValue(currency);
+        this.quotationFormModel.update((value) => ({ ...value, currency }));
       }
     }
   }
 
   private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
-  
   });
 
   async loadLookups() {
@@ -281,7 +310,7 @@ export class SaleQuotationPage {
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', status: '', customerUUID: '' });
+    this.filterFormModel.set(emptyQuotationFilters());
     const nextFilters = emptyQuotationFilters();
     if (this.sameQuotationFilters(nextFilters, this.appliedFilters())) {
       this.quotationsResource.reload();
@@ -306,7 +335,7 @@ export class SaleQuotationPage {
 
   async startEdit(quotation: SaleQuotation) {
     this.editing.set(quotation);
-    this.quotationForm.reset({
+    this.quotationFormModel.set({
       customerUUID: quotation.CustomerCusUUID,
       number: quotation.SqtNumber ?? '',
       title: quotation.SqtTitle ?? '',
@@ -325,71 +354,62 @@ export class SaleQuotationPage {
     this.editing.set(null);
     this.items.set([]);
     this.editingItem.set(null);
-    this.quotationForm.reset({
-      customerUUID: '',
-      number: '',
-      title: '',
-      description: '',
-      currency: this.defaultCurrency(),
-      status: 'draft',
-      validUntil: null,
-      notes: '',
-    });
+    this.quotationFormModel.set(emptyQuotationForm(this.defaultCurrency()));
     this.closeQuotationDialog();
   }
 
   get filteredCustomers() {
-    const value = this.customerSearch.trim().toLowerCase();
+    const value = this.customerSearch().trim().toLowerCase();
     if (!value) return this.customers();
     return this.customers().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredFilterCustomers() {
-    const value = this.filterCustomerSearch.trim().toLowerCase();
+    const value = this.filterCustomerSearch().trim().toLowerCase();
     if (!value) return this.customers();
     return this.customers().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredProducts() {
-    const value = this.productSearch.trim().toLowerCase();
+    const value = this.productSearch().trim().toLowerCase();
     if (!value) return this.products();
     return this.products().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   get filteredFilterProducts() {
-    const value = this.filterProductSearch.trim().toLowerCase();
+    const value = this.filterProductSearch().trim().toLowerCase();
     if (!value) return this.products();
     return this.products().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   onCustomerOpened(opened: boolean) {
     if (opened) {
-      this.customerSearch = '';
+      this.customerSearch.set('');
     }
   }
 
   onFilterCustomerOpened(opened: boolean) {
     if (opened) {
-      this.filterCustomerSearch = '';
+      this.filterCustomerSearch.set('');
     }
   }
 
   onProductOpened(opened: boolean) {
     if (opened) {
-      this.productSearch = '';
+      this.productSearch.set('');
     }
   }
 
   onFilterProductOpened(opened: boolean) {
     if (opened) {
-      this.filterProductSearch = '';
+      this.filterProductSearch.set('');
     }
   }
 
   async saveQuotation() {
-    if (this.quotationForm.invalid) return;
+    if (!this.quotationForm().valid()) return;
 
-    const payload = this.quotationForm.getRawValue();
+    const payload = this.quotationFormModel();
     const totals = this.itemTotals();
     const data = {
       customerUUID: payload.customerUUID,
@@ -462,7 +482,7 @@ export class SaleQuotationPage {
 
   startItemEdit(item: SaleQuotationItem) {
     this.editingItem.set(item);
-    this.itemForm.reset({
+    this.itemFormModel.set({
       productUUID: item.SaleProductSprUUID,
       description: item.SqiDescription ?? '',
       quantity: item.SqiQuantity ?? 1,
@@ -473,31 +493,25 @@ export class SaleQuotationPage {
 
   cancelItemEdit() {
     this.editingItem.set(null);
-    this.itemForm.reset({
-      productUUID: '',
-      description: '',
-      quantity: 1,
-      unitPrice: 0,
-      discount: 0,
-    });
+    this.itemFormModel.set(emptyQuotationItemForm());
   }
 
   syncUnitPrice(productUUID: string) {
     if (!productUUID) return;
     const product = this.products().find((item) => item.uuid === productUUID);
     if (!product) return;
-    const current = Number(this.itemForm.getRawValue().unitPrice ?? 0);
+    const current = Number(this.itemFormModel().unitPrice ?? 0);
     if (!current || current <= 0) {
-      this.itemForm.patchValue({ unitPrice: product.price ?? 0 });
+      this.itemFormModel.update((value) => ({ ...value, unitPrice: product.price ?? 0 }));
     }
   }
 
   async saveItem() {
-    if (this.itemForm.invalid) return;
+    if (!this.itemForm().valid()) return;
     const quotation = this.editing();
     if (!quotation) return;
 
-    const payload = this.itemForm.getRawValue();
+    const payload = this.itemFormModel();
     const data = {
       productUUID: payload.productUUID,
       description: payload.description?.trim() || null,
@@ -559,7 +573,6 @@ export class SaleQuotationPage {
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeQuotationDialog();
-  
   });
 
   private openQuotationDialog() {
@@ -635,7 +648,7 @@ export class SaleQuotationPage {
   }
 
   private currentQuotationFilters(): QuotationFilters {
-    const { search, status, customerUUID } = this.filterForm.getRawValue();
+    const { search, status, customerUUID } = this.filterFormModel();
     return {
       search: search?.trim() ?? '',
       status: status ?? '',
