@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -50,13 +50,19 @@ type DidOperatorFilters = {
   isMasterScope: boolean;
 };
 
+type DidOperatorFormModel = {
+  name: string;
+  nick: string;
+  supplierUUID: string;
+  status: number;
+};
+
 @Component({
   selector: 'app-voip-did-operator',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -84,7 +90,6 @@ export class VoipDidOperatorPage {
   private readonly api = inject(VoipDidOperatorService);
   private readonly route = inject(ActivatedRoute);
   private readonly coreApi = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -96,7 +101,7 @@ export class VoipDidOperatorPage {
   readonly dataSource = new MatTableDataSource<VoipDidOperatorItem>([]);
   readonly displayedColumns = ['select', 'name', 'nick', 'supplier', 'status', 'actions'];
   search = '';
-  searchInput = '';
+  readonly searchInput = signal('');
   private readonly appliedSearch = signal('');
   private readonly operatorsResource = resource({
     params: (): DidOperatorFilters => ({
@@ -118,11 +123,18 @@ export class VoipDidOperatorPage {
     { value: 0, label: 'Inactive' },
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    nick: ['', [Validators.required, Validators.minLength(2)]],
-    supplierUUID: [''],
-    status: [1],
+  readonly formModel = signal<DidOperatorFormModel>({
+    name: '',
+    nick: '',
+    supplierUUID: '',
+    status: 1,
+  });
+
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.nick);
+    minLength(schema.nick, 2);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -147,7 +159,7 @@ export class VoipDidOperatorPage {
     this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
     void this.loadSuppliers();
     this.operatorsResource.reload();
-  
+
     return true;
   })();
 
@@ -177,20 +189,18 @@ export class VoipDidOperatorPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeOperatorDialog();
-  
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
+    const nextSearch = this.searchInput().trim();
     this.search = nextSearch;
     if (nextSearch === this.appliedSearch()) {
       this.operatorsResource.reload();
@@ -200,7 +210,7 @@ export class VoipDidOperatorPage {
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
+    this.searchInput.set('');
     this.search = '';
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
@@ -299,13 +309,12 @@ export class VoipDidOperatorPage {
   }
 
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const { name, nick, status, supplierUUID } = this.form.getRawValue();
+    const { name, nick, status, supplierUUID } = this.formModel();
     const payload = { name, nick, supplierUUID: supplierUUID || null, status };
 
     this.saving.set(true);
@@ -339,7 +348,7 @@ export class VoipDidOperatorPage {
 
   editOperator(item: VoipDidOperatorItem) {
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       name: item.VdoName,
       nick: item.VdoNick,
       supplierUUID: item.ErpSupplierSupUUID ?? '',
@@ -429,7 +438,7 @@ export class VoipDidOperatorPage {
   }
 
   private resetForm() {
-    this.form.reset({ name: '', nick: '', supplierUUID: '', status: 1 });
+    this.formModel.set({ name: '', nick: '', supplierUUID: '', status: 1 });
     this.editing.set(null);
   }
 

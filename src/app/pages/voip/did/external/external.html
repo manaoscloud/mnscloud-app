@@ -25,7 +25,12 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput [(ngModel)]="searchInput" placeholder="Number, provider or tenant" />
+        <input
+          matInput
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+          placeholder="Number, provider or tenant"
+        />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applySearchFilters()">Apply</button>
@@ -153,41 +158,46 @@
       </div>
     </div>
     <mat-dialog-content class="dialog-content">
-      <form id="externalDidForm" class="form-grid" [formGroup]="form" (ngSubmit)="save()">
+      <form id="externalDidForm" class="form-grid" (ngSubmit)="save()">
         <mat-form-field appearance="outline">
           <mat-label>Number</mat-label>
-          <input matInput formControlName="number" placeholder="5592999999999" />
+          <input
+            matInput
+            [formField]="form.number"
+            [disabled]="!!editing()"
+            placeholder="5592999999999"
+          />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Provider</mat-label>
-          <input matInput formControlName="providerName" />
+          <input matInput [formField]="form.providerName" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Provider account</mat-label>
-          <input matInput formControlName="providerAccount" />
+          <input matInput [formField]="form.providerAccount" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Allowed sources</mat-label>
-          <textarea matInput rows="2" formControlName="allowedSources"></textarea>
+          <textarea matInput rows="2" [formField]="form.allowedSources"></textarea>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Billing amount</mat-label>
-          <input matInput type="number" formControlName="billingAmount" />
+          <input matInput type="number" [formField]="form.billingAmount" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Currency</mat-label>
-          <input matInput formControlName="billingCurrency" />
+          <input matInput [formField]="form.billingCurrency" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Billing interval</mat-label>
-          <mat-select formControlName="billingInterval">
+          <mat-select [formField]="form.billingInterval">
             <mat-option value="MONTHLY">Monthly</mat-option>
             <mat-option value="USAGE">Usage</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" class="span-2">
           <mat-label>Routing notes</mat-label>
-          <textarea matInput rows="3" formControlName="notes"></textarea>
+          <textarea matInput rows="3" [formField]="form.notes"></textarea>
         </mat-form-field>
       </form>
     </mat-dialog-content>
@@ -198,7 +208,7 @@
         color="primary"
         type="submit"
         form="externalDidForm"
-        [disabled]="saving()"
+        [disabled]="!form().valid() || saving()"
       >
         Save
       </button>

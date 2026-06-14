@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { FormField, form as createForm, pattern, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -34,13 +34,23 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipDidExternalItem, VoipDidExternalService } from './external.service';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 
+type ExternalDidFormModel = {
+  number: string;
+  providerName: string;
+  providerAccount: string;
+  allowedSources: string;
+  billingAmount: number;
+  billingCurrency: string;
+  billingInterval: string;
+  notes: string;
+};
+
 @Component({
   selector: 'app-voip-did-external',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
@@ -63,7 +73,6 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 export class VoipDidExternalPage {
   private readonly api = inject(VoipDidExternalService);
   private readonly route = inject(ActivatedRoute);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -73,7 +82,7 @@ export class VoipDidExternalPage {
   readonly dataSource = new MatTableDataSource<VoipDidExternalItem>([]);
   readonly displayedColumns = ['number', 'provider', 'validation', 'billing', 'tenant', 'actions'];
   private readonly appliedSearch = signal('');
-  searchInput = '';
+  readonly searchInput = signal('');
   search = '';
 
   private readonly externalDidsResource = resource({
@@ -103,15 +112,21 @@ export class VoipDidExternalPage {
     this.snack.error(this.errorMessage(error, 'Failed to load external DIDs.'));
   });
 
-  readonly form = this.fb.nonNullable.group({
-    number: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
-    providerName: ['', [Validators.required]],
-    providerAccount: [''],
-    allowedSources: [''],
-    billingAmount: [0],
-    billingCurrency: ['BRL'],
-    billingInterval: ['MONTHLY'],
-    notes: [''],
+  readonly formModel = signal<ExternalDidFormModel>({
+    number: '',
+    providerName: '',
+    providerAccount: '',
+    allowedSources: '',
+    billingAmount: 0,
+    billingCurrency: 'BRL',
+    billingInterval: 'MONTHLY',
+    notes: '',
+  });
+
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.number);
+    pattern(schema.number, /^\d{8,15}$/);
+    required(schema.providerName);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -140,12 +155,10 @@ export class VoipDidExternalPage {
           return '';
       }
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
-  
   });
 
   refreshList() {
@@ -153,12 +166,12 @@ export class VoipDidExternalPage {
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
+    this.search = this.searchInput().trim();
     this.appliedSearch.set(this.search);
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
+    this.searchInput.set('');
     this.search = '';
     this.appliedSearch.set('');
   }
@@ -166,7 +179,7 @@ export class VoipDidExternalPage {
   startCreate() {
     if (this.isMasterScope()) return;
     this.editing.set(null);
-    this.form.reset({
+    this.formModel.set({
       number: '',
       providerName: '',
       providerAccount: '',
@@ -182,7 +195,7 @@ export class VoipDidExternalPage {
   startEdit(item: VoipDidExternalItem) {
     if (this.isMasterScope()) return;
     this.editing.set(item);
-    this.form.reset({
+    this.formModel.set({
       number: item.VddNumber,
       providerName: item.VddExternalProviderName ?? '',
       providerAccount: item.VddExternalProviderAccount ?? '',
@@ -192,17 +205,13 @@ export class VoipDidExternalPage {
       billingInterval: item.VddBillingInterval ?? 'MONTHLY',
       notes: item.VddExternalRoutingInstructions ?? '',
     });
-    this.form.controls.number.disable();
     this.openDialog();
   }
 
   async save(closeAfterSave = true) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (!this.form().valid()) return;
     this.saving.set(true);
-    const raw = this.form.getRawValue();
+    const raw = this.formModel();
     const payload = {
       number: raw.number,
       providerName: raw.providerName,
@@ -268,8 +277,6 @@ export class VoipDidExternalPage {
   }
 
   private openDialog() {
-    this.form.controls.number.enable();
-    if (this.editing()) this.form.controls.number.disable();
     const externalFormDialog = this.externalFormDialog();
     if (!externalFormDialog || this.dialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(

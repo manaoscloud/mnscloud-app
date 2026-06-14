@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, pattern, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -48,13 +48,17 @@ type DomainFilters = {
   scope: VoipDomainScope;
 };
 
+type DomainFormModel = {
+  name: string;
+  status: number;
+};
+
 @Component({
   selector: 'app-voip-domain',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -80,7 +84,6 @@ type DomainFilters = {
 export class VoipDomainPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipDomainService);
-  private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -95,7 +98,7 @@ export class VoipDomainPage {
   readonly dataSource = new MatTableDataSource<VoipDomainItem>([]);
   readonly displayedColumns = ['select', 'name', 'status', 'actions'];
   search = '';
-  searchInput = '';
+  readonly searchInput = signal('');
   private readonly appliedSearch = signal('');
   private readonly domainsResource = resource({
     params: (): DomainFilters => ({
@@ -112,9 +115,14 @@ export class VoipDomainPage {
     { value: 0, label: 'Inactive' },
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.pattern(DOMAIN_REGEX)]],
-    status: [1],
+  readonly formModel = signal<DomainFormModel>({
+    name: '',
+    status: 1,
+  });
+
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    pattern(schema.name, DOMAIN_REGEX);
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -141,7 +149,7 @@ export class VoipDomainPage {
       this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
       this.domainsResource.reload();
     });
-  
+
     return true;
   })();
 
@@ -166,20 +174,18 @@ export class VoipDomainPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDomainDialog();
-  
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
+    const nextSearch = this.searchInput().trim();
     this.search = nextSearch;
     if (nextSearch === this.appliedSearch()) {
       this.domainsResource.reload();
@@ -189,7 +195,7 @@ export class VoipDomainPage {
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
+    this.searchInput.set('');
     this.search = '';
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
@@ -272,7 +278,7 @@ export class VoipDomainPage {
 
   startEdit(item: VoipDomainItem) {
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       name: item.VdmName,
       status: item.VdmStatus,
     });
@@ -285,13 +291,12 @@ export class VoipDomainPage {
   }
 
   async saveDomain(createAnother = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.form().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const { name, status } = this.form.getRawValue();
+    const { name, status } = this.formModel();
     const payload = { name: name.trim(), status };
     if (!payload.name) return;
 
@@ -404,7 +409,7 @@ export class VoipDomainPage {
   }
 
   private resetForm() {
-    this.form.reset({ name: '', status: 1 });
+    this.formModel.set({ name: '', status: 1 });
     this.editing.set(null);
   }
 

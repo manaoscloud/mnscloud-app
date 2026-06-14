@@ -20,8 +20,8 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput()"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Search operators"
         />
       </mat-form-field>
@@ -162,10 +162,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="operatorForm" class="form-grid" (ngSubmit)="submit()" [formGroup]="form">
+            <form id="operatorForm" class="form-grid" (ngSubmit)="submit()">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="form.status">
                   @for (option of statusOptions; track option) {
                     <mat-option [value]="option.value">
                       {{ option.label }}
@@ -176,19 +176,19 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Operator name" />
+                <input matInput [formField]="form.name" placeholder="Operator name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Nick</mat-label>
-                <input matInput formControlName="nick" placeholder="Short label" />
+                <input matInput [formField]="form.nick" placeholder="Short label" />
               </mat-form-field>
 
               @if (suppliersReady()) {
                 <mat-form-field appearance="outline">
                   <mat-label>Supplier</mat-label>
                   <mat-select
-                    formControlName="supplierUUID"
+                    [formField]="form.supplierUUID"
                     (openedChange)="onSupplierOpened($event)"
                   >
                     <mat-option
@@ -235,7 +235,7 @@
           color="primary"
           type="submit"
           form="operatorForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -247,7 +247,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -265,7 +265,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewOperator()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>

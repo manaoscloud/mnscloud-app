@@ -20,8 +20,8 @@
         <mat-label>Search domains</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput()"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Domain or status"
         />
       </mat-form-field>
@@ -156,15 +156,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form
-              id="voipDomainForm"
-              class="form-grid"
-              (ngSubmit)="saveDomain()"
-              [formGroup]="form"
-            >
+            <form id="voipDomainForm" class="form-grid" (ngSubmit)="saveDomain()">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="form.status">
                   @for (option of statusOptions; track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                   }
@@ -173,13 +168,7 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Domain</mat-label>
-                <input matInput formControlName="name" placeholder="pbx.example.com" />
-                @if (form.controls.name.hasError('required')) {
-                  <mat-error>Domain is required.</mat-error>
-                }
-                @if (form.controls.name.hasError('pattern')) {
-                  <mat-error>Enter a valid domain.</mat-error>
-                }
+                <input matInput [formField]="form.name" placeholder="pbx.example.com" />
               </mat-form-field>
             </form>
           </div>
@@ -195,7 +184,7 @@
           color="primary"
           type="submit"
           form="voipDomainForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -207,7 +196,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -225,7 +214,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewDomain()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
