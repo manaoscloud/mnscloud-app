@@ -36,6 +36,7 @@ import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-b
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import {
   BillingCatalogItem,
   BillingLedgerEntry,
@@ -266,7 +267,7 @@ export class BillingWalletPage {
     );
     this.subscriptionDialogRef = this.subscriptionDialogBinding.ref;
     if (window.innerWidth > 900) this.subscriptionDialogRef.updateSize('640px', 'min(92vh, 620px)');
-    this.subscriptionDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.subscriptionDialogRef, () => {
       this.subscriptionDialogBinding?.stop();
       this.subscriptionDialogBinding = null;
       this.subscriptionDialogRef = null;
@@ -324,7 +325,7 @@ export class BillingWalletPage {
     );
     this.subscriptionDialogRef = this.subscriptionDialogBinding.ref;
     if (window.innerWidth > 900) this.subscriptionDialogRef.updateSize('720px', 'min(92vh, 760px)');
-    this.subscriptionDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.subscriptionDialogRef, () => {
       this.subscriptionDialogBinding?.stop();
       this.subscriptionDialogBinding = null;
       this.subscriptionDialogRef = null;

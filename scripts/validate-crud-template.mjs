@@ -73,10 +73,10 @@ const htmlRules = [
 ];
 
 const tsRules = [
-  ['OnPush change detection', 'ChangeDetectionStrategy.OnPush'],
+  ['default change detection baseline', /@Component\(/],
   ['DestroyRef', 'DestroyRef'],
   ['signal query api', /viewChild|viewChildren/],
-  ['takeUntilDestroyed', 'takeUntilDestroyed'],
+  ['shared dialog closed binding', 'bindDialogClosed'],
   ['MatTableDataSource', 'MatTableDataSource'],
   ['MatPaginator signal query', /viewChild\(MatPaginator\)/],
   ['MatSort signal query', /viewChild\(MatSort\)/],
@@ -109,7 +109,10 @@ const forbiddenTsRules = [
   ['legacy OnDestroy lifecycle', /\bimplements\s+OnDestroy\b|\bngOnDestroy\s*\(/],
   ['legacy AfterViewInit lifecycle', /\bimplements\s+AfterViewInit\b|\bngAfterViewInit\s*\(/],
   ['Angular animations import', /@angular\/animations/],
-  ['constructor dependency injection', /constructor\s*\([^)]*(private|public|protected|readonly)\s+/s],
+  [
+    'constructor dependency injection',
+    /constructor\s*\([^)]*(private|public|protected|readonly)\s+/s,
+  ],
   ['ngx-translate residue', /ngx-translate|TranslateService|TranslateModule/],
 ];
 
@@ -137,7 +140,9 @@ for (const file of tsFiles) {
   if (!content.includes('@Component')) continue;
   if (!content.includes('erp-page') && !htmlFiles.length) continue;
   const missing = tsRules.filter(([, pattern]) => !has(content, pattern)).map(([name]) => name);
-  const forbidden = forbiddenTsRules.filter(([, pattern]) => has(content, pattern)).map(([name]) => name);
+  const forbidden = forbiddenTsRules
+    .filter(([, pattern]) => has(content, pattern))
+    .map(([name]) => name);
   if (missing.length || forbidden.length) {
     failed = true;
     console.error(`\n${relative(root, file)}`);

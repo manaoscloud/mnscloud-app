@@ -41,6 +41,7 @@ import {
 import { VoipDidOperatorService, VoipDidOperatorItem } from './operator.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type SupplierOption = { value: string; label: string };
 
@@ -474,12 +475,9 @@ export class VoipDidOperatorPage {
       'voip-did-operator-form-dialog',
     );
     this.operatorFormDialogRef = this.dialogBinding.ref;
-    this.operatorFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.operatorFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.operatorFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeOperatorDialog() {

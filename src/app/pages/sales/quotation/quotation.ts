@@ -38,6 +38,7 @@ import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type SaleQuotation = {
   SqtUUID: string;
@@ -582,12 +583,9 @@ export class SaleQuotationPage {
       'sale-quotation-form-dialog',
     );
     this.quotationFormDialogRef = this.dialogBinding.ref;
-    this.quotationFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.quotationFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.quotationFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeQuotationDialog() {

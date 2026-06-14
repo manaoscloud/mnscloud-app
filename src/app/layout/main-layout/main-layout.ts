@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 // Shared
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
@@ -123,6 +123,7 @@ export class MainLayout {
   private readonly parameters = inject(SystemParameterService);
   private readonly billing = inject(BillingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
 
   // =======================================================
   // Signals — Core UI State
@@ -228,8 +229,9 @@ export class MainLayout {
     }
 
     // Auto expand menus
-    this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((e) => {
-      if (e instanceof NavigationEnd) this.scheduleAutoExpandSections();
+    effect(() => {
+      const event = this.navigationEvent();
+      if (event instanceof NavigationEnd) this.scheduleAutoExpandSections();
     });
 
     this.destroyRef.onDestroy(() => this.clearCompactCloseTimer());

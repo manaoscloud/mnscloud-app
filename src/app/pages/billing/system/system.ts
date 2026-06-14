@@ -37,6 +37,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import {
   BillingPrice,
   BillingPackage,
@@ -1342,7 +1343,7 @@ export class BillingSystemPage {
     this.activeDialogRef = this.activeDialogBinding.ref;
     if (width && window.innerWidth > 900)
       this.activeDialogRef.updateSize(width, 'min(92vh, 980px)');
-    this.activeDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.activeDialogRef, () => {
       this.activeDialogBinding?.stop();
       this.activeDialogBinding = null;
       this.activeDialogRef = null;

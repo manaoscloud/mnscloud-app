@@ -31,6 +31,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { ApiService } from '../../../services/api.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type IspPopItem = {
   IppUUID: string;
@@ -275,16 +276,11 @@ export class IspPopPage {
       restoreFocus: true,
       panelClass: 'isp-pop-form-dialog',
     });
-    this.popFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.popFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closePopDialog();
-        }
-      });
+    bindDialogEscape(this.popFormDialogRef, () => {
+      this.closePopDialog();
+    });
     this.startDialogViewportObserver();
-    this.popFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.popFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.popFormDialogRef = null;
     });

@@ -34,6 +34,10 @@ import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.dir
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import {
+  bindDialogClosed,
+  bindDialogEscape,
+} from '../../../../../shared/dialog/dialog-events.util';
 
 type InvoiceStatus = 'draft' | 'issued' | 'paid' | 'canceled';
 
@@ -413,16 +417,11 @@ export class InvoicingInvoicesPage {
       restoreFocus: true,
       panelClass: 'erp-invoice-form-dialog',
     });
-    this.invoiceFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.invoiceFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.cancelInvoiceForm();
-        }
-      });
+    bindDialogEscape(this.invoiceFormDialogRef, () => {
+      this.cancelInvoiceForm();
+    });
     this.startDialogViewportObserver();
-    this.invoiceFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.invoiceFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.invoiceFormDialogRef = null;
     });

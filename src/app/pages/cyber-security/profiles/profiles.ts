@@ -35,6 +35,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import {
   CyberSecurityProtectedService,
   CyberSecurityServicesService,
@@ -553,7 +554,7 @@ export class CyberSecurityProfilesPage {
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );
-    this.profileDialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.profileDialogBinding.ref, () => {
       this.profileDialogBinding?.stop();
       this.profileDialogBinding = null;
     });

@@ -41,6 +41,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
 
 type PaymentGatewayProvider = 'pagarme' | 'asaas' | 'stripe' | 'efi' | 'inter_business';
 
@@ -889,7 +890,7 @@ export class FinancialPaymentGatewayPage {
       },
     );
     this.gatewayFormDialogRef = this.dialogBinding.ref;
-    this.gatewayFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.gatewayFormDialogRef, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
       this.gatewayFormDialogRef = null;

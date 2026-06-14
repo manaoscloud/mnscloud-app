@@ -34,6 +34,10 @@ import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/curre
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
+  bindDialogClosed,
+  bindDialogEscape,
+} from '../../../../../shared/dialog/dialog-events.util';
+import {
   CrudDialogBinding,
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
@@ -673,15 +677,10 @@ export class FinancialPayablesPage {
       'erp-payable-form-dialog',
     );
     this.payableFormDialogRef = this.dialogBinding.ref;
-    this.payableFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.payableFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.cancelPayableForm();
-        }
-      });
-    this.payableFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogEscape(this.payableFormDialogRef, () => {
+      this.cancelPayableForm();
+    });
+    bindDialogClosed(this.payableFormDialogRef, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
       this.payableFormDialogRef = null;
@@ -705,15 +704,10 @@ export class FinancialPayablesPage {
       'erp-payable-form-dialog',
     );
     this.payableSettleDialogRef = this.settleDialogBinding.ref;
-    this.payableSettleDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.payableSettleDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeSettleDialog();
-        }
-      });
-    this.payableSettleDialogRef.afterClosed().subscribe(() => {
+    bindDialogEscape(this.payableSettleDialogRef, () => {
+      this.closeSettleDialog();
+    });
+    bindDialogClosed(this.payableSettleDialogRef, () => {
       this.settleDialogBinding?.stop();
       this.settleDialogBinding = null;
       this.payableSettleDialogRef = null;

@@ -46,6 +46,7 @@ import {
 } from './provider/provider.service';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server/server.service';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -477,12 +478,9 @@ export class VoipSoftswitchPage {
       { onEscape: () => this.cancelEdit() },
     );
     this.softswitchFormDialogRef = this.dialogBinding.ref;
-    this.softswitchFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.softswitchFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.softswitchFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeAccountDialog() {

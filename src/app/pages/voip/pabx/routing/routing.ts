@@ -9,8 +9,9 @@ import {
   TemplateRef,
   viewChild,
   afterNextRender,
+  untracked,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute } from '@angular/router';
 import { FormField, form as createForm, required } from '@angular/forms/signals';
@@ -46,6 +47,7 @@ import { PabxRoutingResource, VoipPabxRoutingService } from './routing.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
@@ -199,6 +201,8 @@ export class VoipPabxRoutingPage {
   readonly routingFormDialog = viewChild<TemplateRef<unknown>>('routingFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private viewReady = false;
+  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
   private readonly itemsEffect = effect(() => {
     this.dataSource.data = this.itemsResource.value();
     this.reconcileSelection();
@@ -212,6 +216,11 @@ export class VoipPabxRoutingPage {
     this.dataSource.data = [];
     this.reconcileSelection();
   });
+  private readonly routeDataEffect = effect(() => {
+    const data = this.routeData();
+    if (!this.viewReady) return;
+    untracked(() => this.applyRouteData(data));
+  });
 
   readonly pageTitle = computed(() => {
     const titles: Record<PabxRoutingResource, string> = {
@@ -224,16 +233,13 @@ export class VoipPabxRoutingPage {
   });
 
   private readonly afterViewReady = afterNextRender(() => {
+    this.viewReady = true;
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.dataSource.filterPredicate = (row, filter) =>
       JSON.stringify(row).toLowerCase().includes(filter.trim().toLowerCase());
-    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
-      this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
-      this.resetForm();
-      void this.bootstrap();
-    });
+    this.applyRouteData(this.routeData());
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -242,6 +248,12 @@ export class VoipPabxRoutingPage {
 
   async refreshList() {
     await this.bootstrap();
+  }
+
+  private applyRouteData(data: Record<string, unknown>) {
+    this.resource.set((data['resource'] as PabxRoutingResource) ?? 'external');
+    this.resetForm();
+    void this.bootstrap();
   }
 
   applySearchFilters() {
@@ -1012,12 +1024,9 @@ export class VoipPabxRoutingPage {
       'voip-pabx-routing-dialog',
     );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.dialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.closeDialog();
-      });
+    bindDialogEscape(this.dialogRef, () => {
+      this.closeDialog();
+    });
   }
 
   closeDialog() {

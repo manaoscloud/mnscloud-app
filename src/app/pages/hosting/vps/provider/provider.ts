@@ -36,6 +36,7 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { getVpsDialogViewportConfig, updateVpsDialogViewport } from '../vps-dialog-viewport';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 import type {
   HostingVpsProvider,
   VpsProvider,
@@ -848,14 +849,11 @@ export class HostingVpsProviderPage {
       restoreFocus: true,
       panelClass: 'hosting-vps-provider-dialog',
     });
-    this.dialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.dialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelForm();
-      });
+    bindDialogEscape(this.dialogRef, () => {
+      this.cancelForm();
+    });
     this.startDialogViewportObserver();
-    this.dialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogRef, () => {
       this.stopDialogViewportObserver();
       this.dialogRef = null;
     });

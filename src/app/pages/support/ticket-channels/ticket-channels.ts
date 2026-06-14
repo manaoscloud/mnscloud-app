@@ -31,6 +31,7 @@ import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type SupportTicketChannel = {
   SupportTicketChannelUUID: string;
@@ -194,14 +195,11 @@ export class SupportTicketChannelsPage {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.ticketChannelFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.ticketChannelFormDialogRef.afterClosed()))
-      .subscribe((event) => {
-        if (event.key === 'Escape') this.ticketChannelFormDialogRef?.close();
-      });
+    bindDialogEscape(this.ticketChannelFormDialogRef, () => {
+      this.ticketChannelFormDialogRef?.close();
+    });
     this.startDialogViewportObserver();
-    this.ticketChannelFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.ticketChannelFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.ticketChannelFormDialogRef = null;
     });

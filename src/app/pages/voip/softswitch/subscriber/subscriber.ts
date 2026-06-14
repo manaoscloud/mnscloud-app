@@ -42,6 +42,7 @@ import {
 } from './subscriber.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 @Component({
   selector: 'app-voip-softswitch-subscriber',
@@ -365,12 +366,9 @@ export class VoipSoftswitchSubscriberPage {
       { onEscape: () => this.cancelEdit() },
     );
     this.dialogRef = this.dialogBinding.ref;
-    this.dialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.dialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.dialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeDialog() {

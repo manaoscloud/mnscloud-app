@@ -9,8 +9,9 @@ import {
   signal,
   viewChild,
   afterNextRender,
+  untracked,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 
 import { ActivatedRoute } from '@angular/router';
@@ -233,6 +234,7 @@ export class VoipWebRtcPage {
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
   private viewReady = false;
+  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
 
   private readonly recordsResource = resource({
     params: () => ({
@@ -267,8 +269,9 @@ export class VoipWebRtcPage {
     this.snack.error(this.errorMessage(error, 'Failed to load WebRTC records.'));
   });
 
-  private readonly initializePage = (() => {
-    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+  private readonly initializePage = effect(() => {
+    const data = this.routeData() as Record<string, unknown>;
+    untracked(() => {
       this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
       this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
       this.searchInput.set('');
@@ -277,9 +280,7 @@ export class VoipWebRtcPage {
       this.selected.clear();
       if (this.viewReady) this.recordsResource.reload();
     });
-
-    return true;
-  })();
+  });
   private readonly afterViewReady = afterNextRender(() => {
     this.viewReady = true;
     this.dataSource.paginator = this.paginator() ?? null;

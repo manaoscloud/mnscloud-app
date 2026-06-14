@@ -32,6 +32,7 @@ import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type PoolIpv4Item = {
   Ip4UUID: string;
@@ -408,14 +409,11 @@ export class IspPoolIpv4Page {
       restoreFocus: true,
       panelClass: 'isp-pool-ipv4-form-dialog',
     });
-    this.poolDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.poolDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.closePoolDialog();
-      });
+    bindDialogEscape(this.poolDialogRef, () => {
+      this.closePoolDialog();
+    });
     this.startDialogViewportObserver();
-    this.poolDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.poolDialogRef, () => {
       this.stopDialogViewportObserver();
       this.poolDialogRef = null;
     });
@@ -439,14 +437,11 @@ export class IspPoolIpv4Page {
       restoreFocus: true,
       panelClass: 'isp-pool-ipv4-network-form-dialog',
     });
-    this.networkDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.networkDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.closeNetworkDialog();
-      });
+    bindDialogEscape(this.networkDialogRef, () => {
+      this.closeNetworkDialog();
+    });
     this.startDialogViewportObserver();
-    this.networkDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.networkDialogRef, () => {
       this.stopDialogViewportObserver();
       this.networkDialogRef = null;
     });

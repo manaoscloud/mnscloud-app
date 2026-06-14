@@ -48,8 +48,9 @@
   `*ngSwitch`.
 - Components, directives, pipes, and services must use `inject()` for dependency injection. Do not
   add constructor-based dependency injection in new code.
-- Standalone components must use `ChangeDetectionStrategy.OnPush`. Do not add
-  `ChangeDetectionStrategy.Eager` or omit `changeDetection` in new components/refactors.
+- Standalone components must use the Angular default change detection strategy. Do not add
+  explicit `ChangeDetectionStrategy.OnPush`, custom eager strategies, or component-local
+  change-detection overrides in new components/refactors.
 - Component/directive inputs must use signal inputs (`input()`) when they are externally bound
   values. If an Angular or Material interface requires a plain property, keep the external input as
   an aliased signal input and expose a compatible getter/property for the interface.
@@ -75,6 +76,10 @@
 - Use `resource.reload()` for explicit refresh actions. Do not duplicate resource state into manual
   mutable signals unless a UI integration requires an adapter such as `MatTableDataSource`; in that
   case, synchronize the adapter from the resource snapshot with a small explicit `effect()`.
+- Do not scatter long-lived `.subscribe()` calls inside pages/components. Router events, route data,
+  and read models must be adapted with `toSignal()`, `resource()`, and `effect()`. Keep direct
+  subscriptions only in shared boundary helpers that intentionally adapt callback/event APIs, or in
+  cancellable upload-progress flows where the active subscription is part of the cancel contract.
 - Keep mutations (`POST`, `PUT`, `DELETE`, uploads, queue actions, provisioning actions) explicit
   through service methods. Do not hide business workflow side effects inside `resource()` loaders.
 - `httpResource` can be introduced for simple same-service GET resources after the endpoint typing is

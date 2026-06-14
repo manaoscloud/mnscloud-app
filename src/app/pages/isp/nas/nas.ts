@@ -33,6 +33,7 @@ import { IspVendor } from '../../../models/isp-vendor.model';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type IspPopOption = {
   IppUUID: string;
@@ -433,16 +434,11 @@ export class IspNasPage {
       restoreFocus: true,
       panelClass: 'isp-nas-form-dialog',
     });
-    this.nasFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.nasFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeNasDialog();
-        }
-      });
+    bindDialogEscape(this.nasFormDialogRef, () => {
+      this.closeNasDialog();
+    });
     this.startDialogViewportObserver();
-    this.nasFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.nasFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.nasFormDialogRef = null;
     });

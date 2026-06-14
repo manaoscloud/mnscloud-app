@@ -10,7 +10,7 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { FormField, form as createForm, pattern, required } from '@angular/forms/signals';
 
@@ -39,6 +39,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { VoipDomainService, VoipDomainItem, VoipDomainScope } from './domain.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 const DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
@@ -128,6 +129,7 @@ export class VoipDomainPage {
   readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
   private domainFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
+  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
   private readonly domainsEffect = effect(() => {
     this.dataSource.data = this.domainsResource.value();
     this.reconcileSelection();
@@ -142,14 +144,13 @@ export class VoipDomainPage {
     this.dataSource.data = [];
   });
 
-  private readonly initializePage = (() => {
-    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+  private readonly initializePage = effect(() => {
+    const data = this.routeData() as Record<string, unknown>;
+    untracked(() => {
       this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
       this.domainsResource.reload();
     });
-
-    return true;
-  })();
+  });
 
   private readonly afterViewReady = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
@@ -428,12 +429,9 @@ export class VoipDomainPage {
       'voip-domain-form-dialog',
     );
     this.domainFormDialogRef = this.dialogBinding.ref;
-    this.domainFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.domainFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.domainFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeDomainDialog() {

@@ -15,8 +15,8 @@ How to use:
 
 1. Copy these files into your page folder.
 2. Replace `Entity` types and API endpoints.
-3. Keep the Angular 22 runtime baseline intact: `ChangeDetectionStrategy.OnPush`, `inject()`,
-   signal query APIs (`viewChild`/`viewChildren`), `DestroyRef`, `takeUntilDestroyed`, native
+3. Keep the Angular 22 runtime baseline intact: default change detection, `inject()`,
+   signal query APIs (`viewChild`/`viewChildren`), `DestroyRef`, shared dialog event helpers, native
    `animate.enter`/`animate.leave`, and the Transloco pipe. Do not add constructor injection,
    decorator queries (`@ViewChild`/`@ViewChildren`), component-local translation maps, or
    `@angular/animations` triggers. Do not inject `ChangeDetectorRef` or call `detectChanges()`;
@@ -25,6 +25,8 @@ How to use:
    `resource.reload()`, and a small `effect()` to synchronize `MatTableDataSource`; do not replace
    it with ad hoc `loadItems()`, parallel `loading/error/items` signals, or constructor lifecycle
    work.
+   Router events, route data, and read-model events must use `toSignal()`/`resource()`/`effect()`,
+   not scattered long-lived `.subscribe()` calls.
 5. Keep mutations explicit in event handlers/service calls (`POST`, `PUT`, `DELETE`, uploads,
    queue/provision actions). Mutations may call `resource.reload()` after success, but must not be
    hidden inside a resource loader.

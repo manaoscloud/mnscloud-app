@@ -41,6 +41,7 @@ import { VoipSoftswitchProviderItem, VoipSoftswitchProviderService } from './pro
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type SoftswitchEngine = 'kamailio' | 'opensips' | 'sippulse' | 'vsc' | 'custom';
 
@@ -500,12 +501,9 @@ export class VoipSoftswitchProviderPage {
       'voip-softswitch-provider-form-dialog',
     );
     this.providerFormDialogRef = this.dialogBinding.ref;
-    this.providerFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.providerFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.providerFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeProviderDialog() {

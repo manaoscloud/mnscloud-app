@@ -40,7 +40,18 @@ const hardChecks = [
     /constructor\s*\([^)]*(private|public|protected|readonly)\s+/s,
   ],
   ['RouterTestingModule residue', ['.ts'], /RouterTestingModule/],
+  ['direct observable subscription', ['.ts'], /\.subscribe\s*\(/],
 ];
+
+const hardCheckAllowedFiles = new Map([
+  [
+    'direct observable subscription',
+    new Set([
+      'src/app/shared/dialog/dialog-events.util.ts',
+      'src/app/pages/voip/pabx/media-files/media-files.ts',
+    ]),
+  ],
+]);
 
 const migrationChecks = [
   [
@@ -67,6 +78,8 @@ function scan(files, checks) {
     for (const [name, extensions, pattern] of checks) {
       if (!applies(file, extensions)) continue;
       if (name === 'manual change detection' && file.endsWith('.spec.ts')) continue;
+      const allowedFiles = hardCheckAllowedFiles.get(name);
+      if (allowedFiles?.has(relative(root, file))) continue;
       const firstAngularDecorator = ['@Component', '@Directive', '@Pipe', '@Injectable']
         .map((marker) => content.indexOf(marker))
         .filter((index) => index >= 0)

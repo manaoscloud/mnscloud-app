@@ -34,6 +34,10 @@ import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/curre
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
+  bindDialogClosed,
+  bindDialogEscape,
+} from '../../../../../shared/dialog/dialog-events.util';
+import {
   CrudDialogBinding,
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
@@ -527,15 +531,10 @@ export class FinancialReceivablesPage {
       'erp-receivable-form-dialog',
     );
     this.receivableFormDialogRef = this.dialogBinding.ref;
-    this.receivableFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.receivableFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.cancelReceivableForm();
-        }
-      });
-    this.receivableFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogEscape(this.receivableFormDialogRef, () => {
+      this.cancelReceivableForm();
+    });
+    bindDialogClosed(this.receivableFormDialogRef, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
       this.receivableFormDialogRef = null;

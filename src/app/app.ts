@@ -1,5 +1,5 @@
-import { afterNextRender, Component, DestroyRef, inject, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, effect, inject, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   Router,
   RouterOutlet,
@@ -38,6 +38,7 @@ import { RouteLoader } from './shared/route-loader/route-loader';
 export class App {
   private router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   private hideLoaderTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly loader = viewChild.required(RouteLoader);
@@ -45,20 +46,19 @@ export class App {
   constructor() {
     this.destroyRef.onDestroy(() => this.clearLoaderHideTimer());
 
-    afterNextRender(() => {
-      this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
-        if (event instanceof NavigationStart) {
-          this.loader()?.show?.();
-        }
+    effect(() => {
+      const event = this.navigationEvent();
+      if (event instanceof NavigationStart) {
+        this.loader()?.show?.();
+      }
 
-        if (
-          event instanceof NavigationEnd ||
-          event instanceof NavigationCancel ||
-          event instanceof NavigationError
-        ) {
-          this.scheduleLoaderHide();
-        }
-      });
+      if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.scheduleLoaderHide();
+      }
     });
   }
 

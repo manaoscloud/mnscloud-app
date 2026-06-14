@@ -35,6 +35,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 import {
   getVpsDialogViewportConfig,
   updateVpsDialogViewport,
@@ -784,7 +785,7 @@ export class HostingVpsContainerInstancesPage {
       restoreFocus: true,
       panelClass: 'hosting-vps-container-change-plan-dialog',
     });
-    this.changePlanDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.changePlanDialogRef, () => {
       this.changePlanDialogRef = null;
       this.changePlanInstance.set(null);
       this.targetPlanUUID.set('');
@@ -1182,14 +1183,11 @@ export class HostingVpsContainerInstancesPage {
       restoreFocus: true,
       panelClass: 'hosting-vps-container-instance-dialog',
     });
-    this.dialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.dialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelForm();
-      });
+    bindDialogEscape(this.dialogRef, () => {
+      this.cancelForm();
+    });
     this.startDialogViewportObserver();
-    this.dialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogRef, () => {
       this.stopDialogViewportObserver();
       this.dialogRef = null;
     });

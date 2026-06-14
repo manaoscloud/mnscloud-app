@@ -33,6 +33,7 @@ import { IspVendor } from '../../../models/isp-vendor.model';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
 
@@ -314,16 +315,11 @@ export class IspVendorModelPage {
       restoreFocus: true,
       panelClass: 'isp-vendor-model-form-dialog',
     });
-    this.vendorModelFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.vendorModelFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeVendorModelDialog();
-        }
-      });
+    bindDialogEscape(this.vendorModelFormDialogRef, () => {
+      this.closeVendorModelDialog();
+    });
     this.startDialogViewportObserver();
-    this.vendorModelFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.vendorModelFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.vendorModelFormDialogRef = null;
     });

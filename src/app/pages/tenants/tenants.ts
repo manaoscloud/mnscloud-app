@@ -32,6 +32,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TenantsService } from './tenants.service';
 import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../shared/dialog/dialog-events.util';
 
 type TenantAccess = {
   UscUUID?: string | null;
@@ -485,7 +486,7 @@ export class SettingsTenantsPage {
       'crud-dialog-panel tenant-invite-dialog-panel',
       { onEscape: () => this.closeInviteDialog() },
     );
-    this.inviteDialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.inviteDialogBinding.ref, () => {
       this.inviteDialogBinding?.stop();
       this.inviteDialogBinding = null;
     });

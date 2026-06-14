@@ -35,6 +35,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type ComplexStatus = 'active' | 'inactive';
 
@@ -562,16 +563,11 @@ export class ErpComplexPage {
       restoreFocus: true,
       panelClass: 'erp-complex-form-dialog',
     });
-    this.complexFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.complexFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeComplexDialog();
-        }
-      });
+    bindDialogEscape(this.complexFormDialogRef, () => {
+      this.closeComplexDialog();
+    });
     this.startDialogViewportObserver();
-    this.complexFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.complexFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.complexFormDialogRef = null;
     });

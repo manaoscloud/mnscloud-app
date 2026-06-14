@@ -40,6 +40,7 @@ import {
 import type { HostingWebhostHost, WebhostProviderType } from '../webhost.types';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type ToolKind = 'databases' | 'mailing-lists' | 'zone-records';
 
@@ -721,14 +722,11 @@ export class HostingWebhostToolsPage {
       restoreFocus: true,
       panelClass: 'webhost-tool-dialog',
     });
-    this.dialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.dialogRef.afterClosed()))
-      .subscribe((event) => {
-        if (event.key === 'Escape') this.closeDialog();
-      });
+    bindDialogEscape(this.dialogRef, () => {
+      this.closeDialog();
+    });
     this.startDialogViewportObserver();
-    this.dialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogRef, () => {
       this.stopDialogViewportObserver();
       this.dialogRef = null;
     });

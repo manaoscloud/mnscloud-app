@@ -33,6 +33,7 @@ import { IspVendor } from '../../../models/isp-vendor.model';
 import { IspVendorModel } from '../../../models/isp-vendor-model.model';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type IspPopOption = {
   IppUUID: string;
@@ -433,16 +434,11 @@ export class IspOltPage {
       restoreFocus: true,
       panelClass: 'isp-olt-form-dialog',
     });
-    this.oltFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.oltFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeOltDialog();
-        }
-      });
+    bindDialogEscape(this.oltFormDialogRef, () => {
+      this.closeOltDialog();
+    });
     this.startDialogViewportObserver();
-    this.oltFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.oltFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.oltFormDialogRef = null;
     });

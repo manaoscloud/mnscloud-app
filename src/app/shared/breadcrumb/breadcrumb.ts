@@ -1,9 +1,8 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon'; // ✅ IMPORT NECESSÁRIO
-import { filter } from 'rxjs/operators';
 
 interface Crumb {
   label: string;
@@ -19,19 +18,17 @@ interface Crumb {
 })
 export class BreadcrumbComponent {
   private router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
 
   readonly crumbs = signal<Crumb[]>([]);
 
   constructor() {
-    this.router.events
-      .pipe(
-        filter((event) => event instanceof NavigationEnd),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(() => this.buildBreadcrumbs());
-
-    this.buildBreadcrumbs();
+    effect(() => {
+      const event = this.navigationEvent();
+      if (event === null || event instanceof NavigationEnd) {
+        this.buildBreadcrumbs();
+      }
+    });
   }
 
   private buildBreadcrumbs() {

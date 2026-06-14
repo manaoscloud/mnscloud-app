@@ -33,6 +33,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type ProviderStatus = 0 | 1;
 
@@ -520,14 +521,11 @@ export class HostingDnsProvidersPage {
       restoreFocus: true,
       panelClass: 'hosting-dns-provider-form-dialog',
     });
-    this.providerDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.providerDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelForm();
-      });
+    bindDialogEscape(this.providerDialogRef, () => {
+      this.cancelForm();
+    });
     this.startDialogViewportObserver();
-    this.providerDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.providerDialogRef, () => {
       this.stopDialogViewportObserver();
       this.providerDialogRef = null;
     });

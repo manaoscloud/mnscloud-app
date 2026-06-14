@@ -32,6 +32,7 @@ import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type SupportChannel = {
   SupportChannelUUID: string;
@@ -290,14 +291,11 @@ export class SupportChannelsPage {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.channelFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.channelFormDialogRef.afterClosed()))
-      .subscribe((event) => {
-        if (event.key === 'Escape') this.channelFormDialogRef?.close();
-      });
+    bindDialogEscape(this.channelFormDialogRef, () => {
+      this.channelFormDialogRef?.close();
+    });
     this.startDialogViewportObserver();
-    this.channelFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.channelFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.channelFormDialogRef = null;
     });

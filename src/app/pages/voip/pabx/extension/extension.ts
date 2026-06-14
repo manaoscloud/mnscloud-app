@@ -46,6 +46,7 @@ import { VoipPabxService, VoipPabxAccount } from '../voip-pabx.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 import {
   VoipPabxExtensionGeneratedCredential,
   VoipPabxExtensionItem,
@@ -1032,13 +1033,10 @@ export class VoipPabxExtensionPage {
       'voip-pabx-extension-form-dialog',
     );
     this.extensionFormDialogRef = this.dialogBinding.ref;
-    this.extensionFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.extensionFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
-    this.extensionFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogEscape(this.extensionFormDialogRef, () => {
+      this.cancelEdit();
+    });
+    bindDialogClosed(this.extensionFormDialogRef, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
       this.extensionFormDialogRef = null;

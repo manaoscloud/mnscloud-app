@@ -30,6 +30,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type UnitItem = {
   SunUUID: string;
@@ -225,12 +226,9 @@ export class SaleUnitPage {
       'sale-unit-form-dialog',
     );
     this.unitFormDialogRef = this.dialogBinding.ref;
-    this.unitFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.unitFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.unitFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeUnitDialog() {

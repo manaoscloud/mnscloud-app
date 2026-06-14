@@ -30,6 +30,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type CategoryItem = {
   ScaUUID: string;
@@ -217,12 +218,9 @@ export class SaleCategoryPage {
       'sale-category-form-dialog',
     );
     this.categoryFormDialogRef = this.dialogBinding.ref;
-    this.categoryFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.categoryFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.categoryFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeCategoryDialog() {

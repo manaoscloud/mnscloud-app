@@ -10,7 +10,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatCardModule } from '@angular/material/card';
@@ -34,6 +33,7 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
@@ -382,13 +382,14 @@ export class CrudPage {
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );
-    this.entityDialogBinding.ref
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
+    bindDialogClosed(
+      this.entityDialogBinding.ref,
+      () => {
         this.entityDialogBinding?.stop();
         this.entityDialogBinding = null;
-      });
+      },
+      this.destroyRef,
+    );
   }
 
   private closeEntityDialog() {

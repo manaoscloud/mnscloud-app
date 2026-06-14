@@ -9,8 +9,9 @@ import {
   signal,
   viewChild,
   afterNextRender,
+  untracked,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -260,6 +261,7 @@ export class VoipSbcPage {
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
   private viewReady = false;
+  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
 
   private readonly recordsResource = resource({
     params: () => ({
@@ -290,8 +292,9 @@ export class VoipSbcPage {
     this.snack.error(this.errorMessage(error, 'Failed to load SBC records.'));
   });
 
-  private readonly initializePage = (() => {
-    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+  private readonly initializePage = effect(() => {
+    const data = this.routeData() as Record<string, unknown>;
+    untracked(() => {
       this.currentResource.set((data['resource'] ?? 'providers') as SbcResource);
       this.currentScopeMaster.set(data['scope'] === 'master');
       this.searchInput.set('');
@@ -300,9 +303,7 @@ export class VoipSbcPage {
       this.selected.clear();
       if (this.viewReady) this.recordsResource.reload();
     });
-
-    return true;
-  })();
+  });
   private readonly afterViewReady = afterNextRender(() => {
     this.viewReady = true;
     this.dataSource.paginator = this.paginator() ?? null;

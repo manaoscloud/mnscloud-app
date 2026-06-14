@@ -1,7 +1,6 @@
 import { NgClass, JsonPipe, DatePipe } from '@angular/common';
 import {
   Component,
-  DestroyRef,
   computed,
   effect,
   inject,
@@ -10,7 +9,7 @@ import {
   TemplateRef,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -201,7 +200,7 @@ export class CyberSecurityPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly routeParams = toSignal(this.route.paramMap, { initialValue: null });
 
   readonly listDialog = viewChild<TemplateRef<unknown>>('listDialog');
   readonly jobDialog = viewChild<TemplateRef<unknown>>('jobDialog');
@@ -528,8 +527,9 @@ export class CyberSecurityPage {
           return row[column] ?? '';
       }
     };
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      this.activeSection.set(this.normalizeSection(params.get('section')));
+    effect(() => {
+      const params = this.routeParams();
+      this.activeSection.set(this.normalizeSection(params?.get('section') ?? null));
     });
     this.refreshList();
   }

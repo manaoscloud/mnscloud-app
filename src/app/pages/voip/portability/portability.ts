@@ -42,6 +42,7 @@ import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type OperatorOption = { value: string; label: string };
 type CustomerOption = { value: string; label: string };
@@ -554,12 +555,9 @@ export class VoipPortabilityPage {
       'voip-portability-form-dialog',
     );
     this.portabilityFormDialogRef = this.dialogBinding.ref;
-    this.portabilityFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.portabilityFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.portabilityFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closePortabilityDialog() {

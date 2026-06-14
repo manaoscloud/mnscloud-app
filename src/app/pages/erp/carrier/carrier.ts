@@ -34,6 +34,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type Carrier = {
   CarrierUUID: string;
@@ -534,16 +535,11 @@ export class ErpCarrierPage {
       restoreFocus: true,
       panelClass: 'erp-carrier-form-dialog',
     });
-    this.carrierFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.carrierFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeCarrierDialog();
-        }
-      });
+    bindDialogEscape(this.carrierFormDialogRef, () => {
+      this.closeCarrierDialog();
+    });
     this.startDialogViewportObserver();
-    this.carrierFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.carrierFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.carrierFormDialogRef = null;
     });

@@ -38,6 +38,7 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 export const HUMAN_RESOURCES_CRUD_IMPORTS = [
   RefreshButtonComponent,
@@ -411,7 +412,7 @@ export abstract class SimpleResourcePageBase {
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );
-    this.dialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogBinding.ref, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
     });

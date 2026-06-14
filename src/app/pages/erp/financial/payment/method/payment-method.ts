@@ -30,6 +30,10 @@ import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import {
+  bindDialogClosed,
+  bindDialogEscape,
+} from '../../../../../shared/dialog/dialog-events.util';
 
 type PaymentMethod = {
   ErpFinPayMethodUUID: string;
@@ -298,16 +302,11 @@ export class FinancialPaymentMethodPage {
       restoreFocus: true,
       panelClass: 'erp-payment-method-form-dialog',
     });
-    this.paymentMethodFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.paymentMethodFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.cancelPaymentMethodForm();
-        }
-      });
+    bindDialogEscape(this.paymentMethodFormDialogRef, () => {
+      this.cancelPaymentMethodForm();
+    });
     this.startDialogViewportObserver();
-    this.paymentMethodFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.paymentMethodFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.paymentMethodFormDialogRef = null;
     });

@@ -44,6 +44,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type ThemeDomain = {
   ThemeUUID: string;
@@ -725,13 +726,10 @@ export class SettingsThemesPage {
       domainFormDialog,
       'settings-theme-domain-dialog',
     );
-    this.dialogBinding.ref
-      .keydownEvents()
-      .pipe(takeUntil(this.dialogBinding.ref.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelForm();
-      });
-    this.dialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogEscape(this.dialogBinding.ref, () => {
+      this.cancelForm();
+    });
+    bindDialogClosed(this.dialogBinding.ref, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
     });

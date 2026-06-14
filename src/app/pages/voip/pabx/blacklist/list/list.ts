@@ -38,6 +38,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import { VoipBlacklistItem, VoipBlacklistUiService } from '../blacklist.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
 
 @Component({
   selector: 'app-voip-pabx-blacklist-list',
@@ -310,7 +311,7 @@ export class VoipPabxBlacklistListPage {
     this.dialogBinding = openCrudTemplateDialog(this.dialog, formDialog, 'crud-form-dialog', {
       onEscape: () => this.cancelForm(),
     });
-    this.dialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogBinding.ref, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
     });

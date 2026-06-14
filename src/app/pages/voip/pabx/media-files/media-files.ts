@@ -49,6 +49,7 @@ import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxMediaFileItem, VoipPabxMediaFilesService } from './media-files.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 type StorageAccountOption = { value: string; label: string };
 type PabxOption = { value: string; label: string };
@@ -534,7 +535,7 @@ export class VoipPabxMediaFilesPage {
       onEscape: () => this.cancelForm(),
     });
     this.dialogBinding = binding;
-    binding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(binding.ref, () => {
       binding.stop();
       if (this.dialogBinding === binding) {
         this.dialogBinding = null;

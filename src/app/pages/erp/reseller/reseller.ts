@@ -34,6 +34,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type Reseller = {
   ResellerUUID: string;
@@ -534,16 +535,11 @@ export class ErpResellerPage {
       restoreFocus: true,
       panelClass: 'erp-reseller-form-dialog',
     });
-    this.resellerFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.resellerFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeResellerDialog();
-        }
-      });
+    bindDialogEscape(this.resellerFormDialogRef, () => {
+      this.closeResellerDialog();
+    });
     this.startDialogViewportObserver();
-    this.resellerFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.resellerFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.resellerFormDialogRef = null;
     });

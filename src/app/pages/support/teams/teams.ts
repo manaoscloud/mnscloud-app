@@ -32,6 +32,7 @@ import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type SupportTeam = {
   SupportTeamUUID: string;
@@ -313,14 +314,11 @@ export class SupportTeamsPage {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.teamFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.teamFormDialogRef.afterClosed()))
-      .subscribe((event) => {
-        if (event.key === 'Escape') this.teamFormDialogRef?.close();
-      });
+    bindDialogEscape(this.teamFormDialogRef, () => {
+      this.teamFormDialogRef?.close();
+    });
     this.startDialogViewportObserver();
-    this.teamFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.teamFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.teamFormDialogRef = null;
     });

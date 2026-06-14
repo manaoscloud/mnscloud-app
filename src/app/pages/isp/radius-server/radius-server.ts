@@ -34,6 +34,7 @@ import { ApiService } from '../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type IspRadiusServerItem = {
   IrsUUID: string;
@@ -323,16 +324,11 @@ export class IspRadiusServerPage {
       restoreFocus: true,
       panelClass: 'isp-radius-server-form-dialog',
     });
-    this.radiusServerFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.radiusServerFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeRadiusServerDialog();
-        }
-      });
+    bindDialogEscape(this.radiusServerFormDialogRef, () => {
+      this.closeRadiusServerDialog();
+    });
     this.startDialogViewportObserver();
-    this.radiusServerFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.radiusServerFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.radiusServerFormDialogRef = null;
     });

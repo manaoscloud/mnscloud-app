@@ -34,6 +34,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type CompanyStatus = 'active' | 'inactive';
 
@@ -516,16 +517,11 @@ export class ErpCompaniesPage {
       restoreFocus: true,
       panelClass: 'erp-company-form-dialog',
     });
-    this.companyFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.companyFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeCompanyDialog();
-        }
-      });
+    bindDialogEscape(this.companyFormDialogRef, () => {
+      this.closeCompanyDialog();
+    });
     this.startDialogViewportObserver();
-    this.companyFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.companyFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.companyFormDialogRef = null;
     });

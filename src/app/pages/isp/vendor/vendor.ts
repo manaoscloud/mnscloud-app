@@ -40,6 +40,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type SupplierOption = {
   value: string;
@@ -335,16 +336,11 @@ export class IspVendorPage {
       restoreFocus: true,
       panelClass: 'isp-vendor-form-dialog',
     });
-    this.vendorFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.vendorFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeVendorDialog();
-        }
-      });
+    bindDialogEscape(this.vendorFormDialogRef, () => {
+      this.closeVendorDialog();
+    });
     this.startDialogViewportObserver();
-    this.vendorFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.vendorFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.vendorFormDialogRef = null;
     });

@@ -32,6 +32,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type SaleStockItem = {
   SskUUID: string;
@@ -284,12 +285,9 @@ export class SalesStocksPage {
       'sale-stocks-form-dialog',
     );
     this.stockFormDialogRef = this.dialogBinding.ref;
-    this.stockFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.stockFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.stockFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeStockDialog() {

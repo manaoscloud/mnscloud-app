@@ -31,6 +31,10 @@ import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import {
+  bindDialogClosed,
+  bindDialogEscape,
+} from '../../../../../shared/dialog/dialog-events.util';
 
 type DueDayStatus = 'active' | 'inactive';
 
@@ -334,16 +338,11 @@ export class InvoicingDueDaysPage {
       restoreFocus: true,
       panelClass: 'erp-due-day-form-dialog',
     });
-    this.dueDayFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.dueDayFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.cancelDueDayForm();
-        }
-      });
+    bindDialogEscape(this.dueDayFormDialogRef, () => {
+      this.cancelDueDayForm();
+    });
     this.startDialogViewportObserver();
-    this.dueDayFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dueDayFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.dueDayFormDialogRef = null;
     });

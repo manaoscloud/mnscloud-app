@@ -39,6 +39,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 type Employee = {
   EmployeeUUID: string;
@@ -544,7 +545,7 @@ export class ErpHumanResourcesEmployeesPage {
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );
-    this.dialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogBinding.ref, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
     });

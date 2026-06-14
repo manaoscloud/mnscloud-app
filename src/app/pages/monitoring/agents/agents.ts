@@ -36,6 +36,7 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 
 type MonitoringAgent = {
   uuid: string;
@@ -382,7 +383,7 @@ export class MonitoringAgentsPage {
       onEscape: () => this.closeDialog(),
     });
     this.dialogBinding = binding;
-    binding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(binding.ref, () => {
       binding.stop();
       if (this.dialogBinding === binding) this.dialogBinding = null;
     });

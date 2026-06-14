@@ -31,6 +31,7 @@ import { ApiService } from '../../../../services/api.service';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type PppoeClientItem = {
   PpcUUID: string;
@@ -293,16 +294,11 @@ export class PppoeClientPage {
       restoreFocus: true,
       panelClass: 'isp-pppoe-client-form-dialog',
     });
-    this.pppoeClientFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.pppoeClientFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closePppoeClientDialog();
-        }
-      });
+    bindDialogEscape(this.pppoeClientFormDialogRef, () => {
+      this.closePppoeClientDialog();
+    });
     this.startDialogViewportObserver();
-    this.pppoeClientFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.pppoeClientFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.pppoeClientFormDialogRef = null;
     });

@@ -38,6 +38,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 type SmtpAccount = {
   HsaUUID: string;
@@ -303,7 +304,7 @@ export class HostingSmtpRoutesPage {
     this.dialogBinding = openCrudTemplateDialog(this.dialog, routeDialog, 'crud-form-dialog', {
       onEscape: () => this.closeDialog(),
     });
-    this.dialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogBinding.ref, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
     });
@@ -337,7 +338,7 @@ export class HostingSmtpRoutesPage {
     this.testDialogBinding = openCrudTemplateDialog(this.dialog, testDialog, 'crud-form-dialog', {
       onEscape: () => this.closeTestDialog(),
     });
-    this.testDialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.testDialogBinding.ref, () => {
       this.testDialogBinding?.stop();
       this.testDialogBinding = null;
     });

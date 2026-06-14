@@ -40,6 +40,7 @@ import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type ServerOption = {
   value: string;
@@ -942,12 +943,9 @@ export class VoipPabxPage {
       'voip-pabx-form-dialog',
     );
     this.pabxFormDialogRef = this.dialogBinding.ref;
-    this.pabxFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.pabxFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.pabxFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closePabxDialog() {

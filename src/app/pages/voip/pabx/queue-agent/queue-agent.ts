@@ -41,6 +41,7 @@ import { VoipPabxExtensionItem, VoipPabxExtensionService } from '../extension/ex
 import { VoipPabxQueueAgentItem, VoipPabxQueueAgentService } from './queue-agent.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 type RuntimeStatus = VoipPabxQueueAgentItem['VqaRuntimeStatus'];
 type RuntimeAction = 'login' | 'logout' | 'pause' | 'unpause';
@@ -576,7 +577,7 @@ export class VoipPabxQueueAgentPage {
       'crud-form-dialog',
       { onEscape: () => this.cancelForm() },
     );
-    this.queueAgentDialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.queueAgentDialogBinding.ref, () => {
       this.queueAgentDialogBinding?.stop();
       this.queueAgentDialogBinding = null;
     });

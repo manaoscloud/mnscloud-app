@@ -35,6 +35,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type Customer = {
   CustomerUUID: string;
@@ -640,16 +641,11 @@ export class ErpCustomerPage {
       restoreFocus: true,
       panelClass: 'erp-customer-form-dialog',
     });
-    this.customerFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.customerFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.closeCustomerDialog();
-        }
-      });
+    bindDialogEscape(this.customerFormDialogRef, () => {
+      this.closeCustomerDialog();
+    });
     this.startDialogViewportObserver();
-    this.customerFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.customerFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.customerFormDialogRef = null;
       this.mapVisible = false;

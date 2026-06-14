@@ -37,6 +37,7 @@ import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type Ticket = {
   SupportTicketUUID: string;
@@ -547,14 +548,11 @@ export class SupportTicketsPage {
       autoFocus: false,
       restoreFocus: true,
     });
-    this.ticketFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.ticketFormDialogRef.afterClosed()))
-      .subscribe((event) => {
-        if (event.key === 'Escape') this.ticketFormDialogRef?.close();
-      });
+    bindDialogEscape(this.ticketFormDialogRef, () => {
+      this.ticketFormDialogRef?.close();
+    });
     this.startDialogViewportObserver();
-    this.ticketFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.ticketFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.ticketFormDialogRef = null;
     });

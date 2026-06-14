@@ -35,6 +35,10 @@ import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.dir
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import {
+  bindDialogClosed,
+  bindDialogEscape,
+} from '../../../../../shared/dialog/dialog-events.util';
 
 type BoletoStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 
@@ -529,16 +533,11 @@ export class InvoicingBoletosPage {
       restoreFocus: true,
       panelClass: 'erp-boleto-form-dialog',
     });
-    this.boletoFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.boletoFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          this.cancelBoletoForm();
-        }
-      });
+    bindDialogEscape(this.boletoFormDialogRef, () => {
+      this.cancelBoletoForm();
+    });
     this.startDialogViewportObserver();
-    this.boletoFormDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.boletoFormDialogRef, () => {
       this.stopDialogViewportObserver();
       this.boletoFormDialogRef = null;
     });

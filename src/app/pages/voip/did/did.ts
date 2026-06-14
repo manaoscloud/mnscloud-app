@@ -39,6 +39,7 @@ import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.com
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
 type OperatorOption = {
   value: string;
@@ -326,7 +327,7 @@ export class VoipDidPage {
       autoFocus: false,
       restoreFocus: false,
     });
-    this.availableDidDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.availableDidDialogRef, () => {
       this.availableDidDialogRef = null;
       this.availableSearchInput.set('');
       this.availableSearch.set('');
@@ -632,12 +633,9 @@ export class VoipDidPage {
     if (!didFormDialog || this.didFormDialogRef) return;
     this.dialogBinding = openCrudTemplateDialog(this.dialog, didFormDialog, 'voip-did-form-dialog');
     this.didFormDialogRef = this.dialogBinding.ref;
-    this.didFormDialogRef
-      .keydownEvents()
-      .pipe(takeUntil(this.didFormDialogRef.afterClosed()))
-      .subscribe((event: KeyboardEvent) => {
-        if (event.key === 'Escape') this.cancelEdit();
-      });
+    bindDialogEscape(this.didFormDialogRef, () => {
+      this.cancelEdit();
+    });
   }
 
   private closeDidDialog() {

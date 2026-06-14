@@ -38,6 +38,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 type SmtpProvider = 'smtp' | 'sendgrid' | 'ses' | 'mailersend';
 
@@ -288,7 +289,7 @@ export class HostingSmtpProvidersPage {
     this.dialogBinding = openCrudTemplateDialog(this.dialog, providerDialog, 'crud-form-dialog', {
       onEscape: () => this.closeDialog(),
     });
-    this.dialogBinding.ref.afterClosed().subscribe(() => {
+    bindDialogClosed(this.dialogBinding.ref, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
     });
