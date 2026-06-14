@@ -12,7 +12,9 @@ import {
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -84,7 +86,9 @@ const EMPTY_DID_DASHBOARD: DidDashboardSnapshot = {
     RouterModule,
     MatButtonModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSortModule,
@@ -122,6 +126,8 @@ export class VoipDidDashboardPage {
   readonly operators = signal<VoipDidOperatorItem[]>([]);
   readonly dids = signal<VoipDidItem[]>([]);
   readonly externalDids = signal<VoipDidExternalItem[]>([]);
+  readonly dashboardSearchInput = signal('');
+  private readonly dashboardSearch = signal('');
 
   readonly operatorDataSource = new MatTableDataSource<OperatorRow>([]);
   readonly statusDataSource = new MatTableDataSource<NumberStatusRow>([]);
@@ -255,6 +261,24 @@ export class VoipDidDashboardPage {
     this.statusDataSource.sortingDataAccessor = (row, column) => this.statusSortValue(row, column);
     this.externalDataSource.sortingDataAccessor = (row, column) =>
       this.externalSortValue(row, column);
+    this.operatorDataSource.filterPredicate = (row, filter) =>
+      this.matchesFilter(
+        [row.name, row.nick, row.active ? 'Active' : 'Inactive', row.numbers, row.issues],
+        filter,
+      );
+    this.statusDataSource.filterPredicate = (row, filter) =>
+      this.matchesFilter([row.status, row.total, row.available, row.assigned, row.issues], filter);
+    this.externalDataSource.filterPredicate = (row, filter) =>
+      this.matchesFilter(
+        [
+          row.number,
+          row.provider,
+          row.validation,
+          row.billing,
+          row.active ? 'Active' : 'Inactive',
+        ],
+        filter,
+      );
 
     this.operatorDataSource.sort = this.operatorSort() ?? null;
     this.operatorDataSource.paginator = this.operatorPaginator() ?? null;
@@ -262,10 +286,26 @@ export class VoipDidDashboardPage {
     this.statusDataSource.paginator = this.statusPaginator() ?? null;
     this.externalDataSource.sort = this.externalSort() ?? null;
     this.externalDataSource.paginator = this.externalPaginator() ?? null;
+    this.applyTableFilters();
   });
 
   refreshList() {
     this.dashboardResource.reload();
+  }
+
+  onDashboardSearchChange(value: string) {
+    this.dashboardSearchInput.set(value);
+  }
+
+  applyDashboardFilters() {
+    this.dashboardSearch.set(this.dashboardSearchInput().trim());
+    this.applyTableFilters();
+  }
+
+  clearDashboardFilters() {
+    this.dashboardSearchInput.set('');
+    this.dashboardSearch.set('');
+    this.applyTableFilters();
   }
 
   routeTo(section: 'operator' | 'number' | 'external') {
@@ -297,6 +337,25 @@ export class VoipDidDashboardPage {
     this.operatorDataSource.data = this.operatorRows();
     this.statusDataSource.data = this.statusRows();
     this.externalDataSource.data = this.externalRows();
+    this.applyTableFilters();
+  }
+
+  private applyTableFilters() {
+    const filter = this.dashboardSearch().trim().toLowerCase();
+    this.operatorDataSource.filter = filter;
+    this.statusDataSource.filter = filter;
+    this.externalDataSource.filter = filter;
+    this.operatorDataSource.paginator?.firstPage();
+    this.statusDataSource.paginator?.firstPage();
+    this.externalDataSource.paginator?.firstPage();
+  }
+
+  private matchesFilter(values: unknown[], filter: string) {
+    const term = filter.trim().toLowerCase();
+    if (!term) return true;
+    return values
+      .filter((value) => value !== null && value !== undefined)
+      .some((value) => String(value).toLowerCase().includes(term));
   }
 
   private async fetchDashboard(isMaster: boolean): Promise<DidDashboardSnapshot> {

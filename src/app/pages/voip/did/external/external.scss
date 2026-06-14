@@ -2,46 +2,14 @@
   display: block;
 }
 
-.erp-page {
-  padding: 24px;
-}
-
-.erp-card {
-  padding: 0;
-}
-
-.erp-header,
-.filter-grid {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px;
-}
-
-.erp-header h1 {
-  margin: 0;
-}
-
-.erp-header p {
-  margin: 4px 0 0;
-}
-
-.header-actions,
-.filter-actions,
 .actions-col {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.filter-grid mat-form-field {
-  flex: 1;
-}
-
 .table-wrapper {
   position: relative;
-  margin: 0 24px 16px;
   overflow: auto;
 }
 
@@ -95,16 +63,6 @@ td small {
 }
 
 @media (max-width: 760px) {
-  .erp-page {
-    padding: 12px;
-  }
-
-  .erp-header,
-  .filter-grid {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
   }

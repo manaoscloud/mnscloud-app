@@ -25,6 +25,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -63,6 +64,7 @@ type ExternalDidFormModel = {
     MatTableModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    TranslocoPipe,
     NgClass,
   ],
   templateUrl: './external.html',
