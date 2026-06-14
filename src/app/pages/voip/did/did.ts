@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, pattern, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -52,14 +52,20 @@ type DidFilters = {
 };
 
 type CreateMode = 'single' | 'range';
+type DidFormModel = {
+  createMode: CreateMode;
+  number: string;
+  didRange: string;
+  operatorUUID: string;
+  status: number;
+};
 
 @Component({
   selector: 'app-voip-did',
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -88,7 +94,6 @@ export class VoipDidPage {
   private readonly api = inject(VoipDidService);
   private readonly operatorApi = inject(VoipDidOperatorService);
   private readonly route = inject(ActivatedRoute);
-  private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
@@ -105,13 +110,13 @@ export class VoipDidPage {
 
   readonly operators = signal<OperatorOption[]>([]);
   readonly operatorMap = signal<Map<string, VoipDidOperatorItem>>(new Map());
-  operatorSearch = '';
+  readonly operatorSearch = signal('');
 
   readonly dataSource = new MatTableDataSource<VoipDidItem>([]);
   private readonly masterDisplayedColumns = ['select', 'number', 'operator', 'status', 'actions'];
   private readonly tenantDisplayedColumns = ['number', 'operator', 'status', 'actions'];
-  search = '';
-  searchInput = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
   private readonly appliedSearch = signal('');
   private readonly didsResource = resource({
     params: (): DidFilters => ({
@@ -122,20 +127,23 @@ export class VoipDidPage {
     loader: ({ params }) => this.fetchDids(params),
   });
   readonly loading = this.didsResource.isLoading;
-  availableSearch = '';
-  availableSearchInput = '';
+  readonly availableSearch = signal('');
+  readonly availableSearchInput = signal('');
 
   readonly statusOptions = [
     { value: 1, label: 'Active' },
     { value: 0, label: 'Inactive' },
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    createMode: ['single' as CreateMode],
-    number: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
-    didRange: [''],
-    operatorUUID: ['', [Validators.required]],
-    status: [1],
+  readonly formModel = signal<DidFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.operatorUUID);
+    required(schema.number, { when: () => this.isSingleMode() });
+    pattern(schema.number, /^\d{8,15}$/, { when: () => this.isSingleMode() });
+    required(schema.didRange, { when: () => this.isRangeMode() });
+    pattern(schema.didRange, /^\s*\d{8,15}\s*-\s*\d{8,15}\s*$/, {
+      when: () => this.isRangeMode(),
+    });
   });
 
   readonly paginator = viewChild(MatPaginator);
@@ -199,12 +207,12 @@ export class VoipDidPage {
   });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
-    this.search = nextSearch;
+    const nextSearch = this.searchInput().trim();
+    this.search.set(nextSearch);
     if (nextSearch === this.appliedSearch()) {
       this.didsResource.reload();
     } else {
@@ -213,8 +221,8 @@ export class VoipDidPage {
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
+    this.searchInput.set('');
+    this.search.set('');
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
     } else {
@@ -324,8 +332,8 @@ export class VoipDidPage {
     });
     this.availableDidDialogRef.afterClosed().subscribe(() => {
       this.availableDidDialogRef = null;
-      this.availableSearchInput = '';
-      this.availableSearch = '';
+      this.availableSearchInput.set('');
+      this.availableSearch.set('');
       this.availableDids.set([]);
       this.claimingUUID.set(null);
     });
@@ -338,17 +346,17 @@ export class VoipDidPage {
   }
 
   onAvailableSearchChange(value: string) {
-    this.availableSearchInput = value;
+    this.availableSearchInput.set(value);
   }
 
   applyAvailableSearchFilters() {
-    this.availableSearch = this.availableSearchInput.trim();
+    this.availableSearch.set(this.availableSearchInput().trim());
     void this.loadAvailableDids();
   }
 
   clearAvailableSearchFilters() {
-    this.availableSearchInput = '';
-    this.availableSearch = '';
+    this.availableSearchInput.set('');
+    this.availableSearch.set('');
     void this.loadAvailableDids();
   }
 
@@ -357,7 +365,7 @@ export class VoipDidPage {
     this.availableLoading.set(true);
     try {
       const response = await this.api.available({
-        search: this.availableSearch || undefined,
+        search: this.availableSearch() || undefined,
         limit: this.listLimit,
       });
       this.availableDids.set(response?.data?.items ?? []);
@@ -388,32 +396,27 @@ export class VoipDidPage {
   startCreate() {
     if (!this.isMasterScope()) return;
     this.resetForm();
-    this.syncCreateModeValidators();
     this.openDidDialog();
   }
 
   onCreateModeChange(value: CreateMode) {
-    this.form.controls.createMode.setValue(value, { emitEvent: false });
+    this.formModel.update((current) => ({ ...current, createMode: value }));
     this.skippedExisting.set([]);
     this.failedBulkItems.set([]);
-    this.syncCreateModeValidators();
   }
 
   isRangeMode() {
-    return !this.editing() && this.form.controls.createMode.value === 'range';
+    return !this.editing() && this.formModel().createMode === 'range';
   }
 
   isSingleMode() {
-    return this.editing() || this.form.controls.createMode.value === 'single';
+    return !!this.editing() || this.formModel().createMode === 'single';
   }
 
   async submit(saveAndNew = false) {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (!this.form().valid()) return;
 
-    const { number, didRange, operatorUUID, status, createMode } = this.form.getRawValue();
+    const { number, didRange, operatorUUID, status, createMode } = this.formModel();
     const payload = { number, operatorUUID, status };
 
     this.saving.set(true);
@@ -485,14 +488,13 @@ export class VoipDidPage {
     this.skippedExisting.set([]);
     this.failedBulkItems.set([]);
     this.editing.set(item);
-    this.form.patchValue({
+    this.formModel.set({
       createMode: 'single',
       number: item.VddNumber,
       didRange: '',
       operatorUUID: item.VoipDidOperatorVdoUUID,
       status: item.VddStatus,
     });
-    this.syncCreateModeValidators();
     this.openDidDialog();
   }
 
@@ -605,29 +607,22 @@ export class VoipDidPage {
   }
 
   get filteredOperators() {
-    const value = this.operatorSearch.trim().toLowerCase();
+    const value = this.operatorSearch().trim().toLowerCase();
     if (!value) return this.operators();
     return this.operators().filter((item) => (item.label ?? '').toLowerCase().includes(value));
   }
 
   onOperatorOpened(opened: boolean) {
     if (!opened) {
-      this.operatorSearch = '';
+      this.operatorSearch.set('');
     }
   }
 
   private resetForm() {
-    this.form.reset({
-      createMode: 'single',
-      number: '',
-      didRange: '',
-      operatorUUID: '',
-      status: 1,
-    });
+    this.formModel.set(this.emptyFormModel());
     this.editing.set(null);
     this.skippedExisting.set([]);
     this.failedBulkItems.set([]);
-    this.syncCreateModeValidators();
   }
 
   private reconcileSelection() {
@@ -660,26 +655,6 @@ export class VoipDidPage {
     return err?.error?.error || err?.error?.message || err?.message || fallback;
   }
 
-  private syncCreateModeValidators() {
-    const numberControl = this.form.controls.number;
-    const rangeControl = this.form.controls.didRange;
-    const createMode = this.form.controls.createMode.value;
-
-    if (this.editing() || createMode === 'single') {
-      numberControl.setValidators([Validators.required, Validators.pattern(/^\d{8,15}$/)]);
-      rangeControl.clearValidators();
-    } else {
-      numberControl.clearValidators();
-      rangeControl.setValidators([
-        Validators.required,
-        Validators.pattern(/^\s*\d{8,15}\s*-\s*\d{8,15}\s*$/),
-      ]);
-    }
-
-    numberControl.updateValueAndValidity({ emitEvent: false });
-    rangeControl.updateValueAndValidity({ emitEvent: false });
-  }
-
   private parseRange(rangeText: string): { start: string; end: string; total: number } | null {
     const match = rangeText.trim().match(/^(\d{8,15})\s*-\s*(\d{8,15})$/);
     if (!match) return null;
@@ -696,6 +671,16 @@ export class VoipDidPage {
       start,
       end,
       total: Number(endValue - startValue + 1n),
+    };
+  }
+
+  private emptyFormModel(): DidFormModel {
+    return {
+      createMode: 'single',
+      number: '',
+      didRange: '',
+      operatorUUID: '',
+      status: 1,
     };
   }
 }

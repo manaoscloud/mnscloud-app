@@ -29,8 +29,8 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          [ngModel]="searchInput"
-          (ngModelChange)="onSearchChange($event)"
+          [value]="searchInput()"
+          (input)="onSearchChange($any($event.target).value)"
           placeholder="Search DIDs"
         />
       </mat-form-field>
@@ -174,10 +174,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="didForm" class="form-grid" (ngSubmit)="submit()" [formGroup]="form">
+            <form id="didForm" class="form-grid" (ngSubmit)="submit()">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
+                <mat-select [formField]="form.status">
                   @for (option of statusOptions; track option) {
                     <mat-option [value]="option.value">
                       {{ option.label }}
@@ -190,7 +190,7 @@
                 <mat-form-field appearance="outline">
                   <mat-label>Create mode</mat-label>
                   <mat-select
-                    formControlName="createMode"
+                    [formField]="form.createMode"
                     (selectionChange)="onCreateModeChange($event.value)"
                   >
                     <mat-option value="single">Single</mat-option>
@@ -202,11 +202,8 @@
               @if (isSingleMode()) {
                 <mat-form-field appearance="outline" floatLabel="always">
                   <mat-label>Number</mat-label>
-                  <app-phone-input formControlName="number" placeholder="5511999999999" />
+                  <app-phone-input [formField]="form.number" placeholder="5511999999999" />
                   <mat-icon matSuffix>phone</mat-icon>
-                  @if (form.controls.number.hasError('pattern')) {
-                    <mat-error> Invalid format. Use digits only. </mat-error>
-                  }
                 </mat-form-field>
               }
 
@@ -215,21 +212,18 @@
                   <mat-label>DID range</mat-label>
                   <input
                     matInput
-                    formControlName="didRange"
+                    [formField]="form.didRange"
                     placeholder="551140000000-551140000099"
                   />
                   <mat-icon matSuffix>linear_scale</mat-icon>
                   <mat-hint>Creates all DIDs in range. Max 100.</mat-hint>
-                  @if (form.controls.didRange.hasError('pattern')) {
-                    <mat-error> Use start-end with 8 to 15 digits. </mat-error>
-                  }
                 </mat-form-field>
               }
 
               <mat-form-field appearance="outline">
                 <mat-label>Operator</mat-label>
                 <mat-select
-                  formControlName="operatorUUID"
+                  [formField]="form.operatorUUID"
                   (openedChange)="onOperatorOpened($event)"
                 >
                   <mat-option
@@ -241,8 +235,8 @@
                     <mat-form-field appearance="outline" class="select-search-field">
                       <input
                         matInput
-                        [value]="operatorSearch"
-                        (input)="operatorSearch = $any($event.target).value"
+                        [value]="operatorSearch()"
+                        (input)="operatorSearch.set($any($event.target).value)"
                         (click)="$event.stopPropagation()"
                         (keydown)="$event.stopPropagation()"
                         placeholder="Search operator"
@@ -298,7 +292,7 @@
           color="primary"
           type="submit"
           form="didForm"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -310,7 +304,7 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
-            [disabled]="form.invalid || saving()"
+            [disabled]="!form().valid() || saving()"
             matTooltip="More save actions"
           >
             <mat-icon>expand_more</mat-icon>
@@ -328,7 +322,7 @@
           mat-menu-item
           type="button"
           (click)="saveAndNewDid()"
-          [disabled]="form.invalid || saving()"
+          [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
           <span>Save/New</span>
@@ -364,8 +358,8 @@
           <mat-label>Search</mat-label>
           <input
             matInput
-            [ngModel]="availableSearchInput"
-            (ngModelChange)="onAvailableSearchChange($event)"
+            [value]="availableSearchInput()"
+            (input)="onAvailableSearchChange($any($event.target).value)"
             placeholder="Search available DIDs"
           />
         </mat-form-field>
