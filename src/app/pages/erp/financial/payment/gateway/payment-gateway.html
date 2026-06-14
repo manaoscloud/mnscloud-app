@@ -197,10 +197,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="gatewayForm" (ngSubmit)="submitGateway()">
+            <form class="form-grid" (ngSubmit)="submitGateway()">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="gatewayForm.isActive">
                   <mat-option [value]="true">Active</mat-option>
                   <mat-option [value]="false">Inactive</mat-option>
                 </mat-select>
@@ -208,7 +208,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Default</mat-label>
-                <mat-select formControlName="isDefault">
+                <mat-select [formField]="gatewayForm.isDefault">
                   <mat-option [value]="true">Yes</mat-option>
                   <mat-option [value]="false">No</mat-option>
                 </mat-select>
@@ -216,7 +216,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
-                <mat-select formControlName="provider">
+                <mat-select [formField]="gatewayForm.provider">
                   @for (provider of providerOptions; track provider.value) {
                     <mat-option [value]="provider.value">{{ provider.label }}</mat-option>
                   }
@@ -225,7 +225,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Default Gateway" />
+                <input matInput [formField]="gatewayForm.name" placeholder="Default Gateway" />
               </mat-form-field>
             </form>
           </div>
@@ -234,7 +234,7 @@
         <mat-tab label="Config">
           <div class="tab-content">
             @if (!advancedJsonMode()) {
-              <form class="provider-fields-grid" [formGroup]="providerFieldsForm">
+              <form class="provider-fields-grid">
                 @for (field of configFieldsForSelectedProvider(); track field.controlName) {
                   <mat-form-field appearance="outline" [class.span-4]="field.kind === 'textarea'">
                     <mat-label>{{ field.label }}</mat-label>
@@ -242,11 +242,17 @@
                       <textarea
                         matInput
                         rows="3"
-                        [formControlName]="field.controlName"
+                        [value]="providerFieldValue(field.controlName)"
+                        (input)="
+                          setProviderFieldValue(field.controlName, $any($event.target).value)
+                        "
                         [placeholder]="field.placeholder ?? ''"
                       ></textarea>
                     } @else if (field.kind === 'select') {
-                      <mat-select [formControlName]="field.controlName">
+                      <mat-select
+                        [value]="providerFieldValue(field.controlName)"
+                        (selectionChange)="setProviderFieldValue(field.controlName, $event.value)"
+                      >
                         @for (option of field.options ?? []; track option.value) {
                           <mat-option [value]="option.value">{{ option.label }}</mat-option>
                         }
@@ -255,7 +261,10 @@
                       <input
                         matInput
                         [type]="field.kind === 'password' ? 'password' : 'text'"
-                        [formControlName]="field.controlName"
+                        [value]="providerFieldValue(field.controlName)"
+                        (input)="
+                          setProviderFieldValue(field.controlName, $any($event.target).value)
+                        "
                         [placeholder]="field.placeholder ?? ''"
                       />
                     }
@@ -263,13 +272,13 @@
                 }
               </form>
             } @else {
-              <form class="form-grid" [formGroup]="gatewayForm">
+              <form class="form-grid">
                 <mat-form-field appearance="outline" class="span-4">
                   <mat-label>Config (JSON)</mat-label>
                   <textarea
                     matInput
                     rows="8"
-                    formControlName="configJson"
+                    [formField]="gatewayForm.configJson"
                     placeholder='{"key":"value"}'
                   ></textarea>
                 </mat-form-field>
@@ -281,7 +290,7 @@
         <mat-tab label="Credentials">
           <div class="tab-content">
             @if (!advancedJsonMode()) {
-              <form class="provider-fields-grid" [formGroup]="providerFieldsForm">
+              <form class="provider-fields-grid">
                 @for (field of credentialFieldsForSelectedProvider(); track field.controlName) {
                   <mat-form-field appearance="outline" [class.span-4]="field.kind === 'textarea'">
                     <mat-label>{{ field.label }}</mat-label>
@@ -289,14 +298,20 @@
                       <textarea
                         matInput
                         rows="2"
-                        [formControlName]="field.controlName"
+                        [value]="providerFieldValue(field.controlName)"
+                        (input)="
+                          setProviderFieldValue(field.controlName, $any($event.target).value)
+                        "
                         [placeholder]="field.placeholder ?? ''"
                       ></textarea>
                     } @else {
                       <input
                         matInput
                         [type]="field.kind === 'password' ? 'password' : 'text'"
-                        [formControlName]="field.controlName"
+                        [value]="providerFieldValue(field.controlName)"
+                        (input)="
+                          setProviderFieldValue(field.controlName, $any($event.target).value)
+                        "
                         [placeholder]="field.placeholder ?? ''"
                       />
                     }
@@ -304,13 +319,13 @@
                 }
               </form>
             } @else {
-              <form class="form-grid" [formGroup]="gatewayForm">
+              <form class="form-grid">
                 <mat-form-field appearance="outline" class="span-4">
                   <mat-label>Credentials (JSON)</mat-label>
                   <textarea
                     matInput
                     rows="8"
-                    formControlName="credentialsJson"
+                    [formField]="gatewayForm.credentialsJson"
                     placeholder='{"apiKey":"..."}'
                   ></textarea>
                 </mat-form-field>

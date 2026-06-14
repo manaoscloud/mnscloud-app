@@ -12,7 +12,7 @@ import {
   afterNextRender,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -31,8 +31,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, merge, takeUntil } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom, takeUntil } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
@@ -109,7 +108,6 @@ const emptyTicketFilters = (): TicketFilters => ({
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -139,7 +137,6 @@ const emptyTicketFilters = (): TicketFilters => ({
 export class SupportTicketsPage {
   private api = inject(ApiService);
   private dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
 
   tickets: Ticket[] = [];
   dataSource = new MatTableDataSource<Ticket>([]);
@@ -190,7 +187,7 @@ export class SupportTicketsPage {
   channelSearch = '';
   filterCustomerSearch = '';
   filterChannelSearch = '';
-  readonly emailControl = new FormControl('', [Validators.email]);
+  readonly contactEmail = signal('');
   readonly emailError = signal('');
 
   statusOptions: Option[] = [
@@ -264,17 +261,11 @@ export class SupportTicketsPage {
   private ticketFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogViewportObserver: ResizeObserver | null = null;
 
-  constructor() {
-    merge(this.emailControl.statusChanges, this.emailControl.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateEmailError());
-  }
-
   private readonly initializePage = (() => {
     this.resetForm();
     void this.loadCustomers();
     void this.loadChannels();
-  
+
     return true;
   })();
 
@@ -331,13 +322,11 @@ export class SupportTicketsPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.stopDialogViewportObserver();
     this.ticketFormDialogRef?.close();
-  
   });
 
   onSearchChange(value: string) {
@@ -524,7 +513,7 @@ export class SupportTicketsPage {
     this.events = [];
     this.eventForm.message = '';
     this.eventForm.isInternal = true;
-    this.emailControl.setValue('', { emitEvent: false });
+    this.contactEmail.set('');
     this.updateEmailError();
     this.form = {
       customerUUID: '',
@@ -668,7 +657,7 @@ export class SupportTicketsPage {
     this.form.tags = item.Tags ?? '';
     this.form.internalNotes = item.InternalNotes ?? '';
     this.form.contactName = item.ContactName ?? '';
-    this.emailControl.setValue(item.ContactEmail ?? '', { emitEvent: false });
+    this.contactEmail.set(item.ContactEmail ?? '');
     this.updateEmailError();
     this.form.contactPhone = item.ContactPhone ?? '';
     this.form.openedAt = this.parseDateInput(item.OpenedAt);
@@ -722,7 +711,8 @@ export class SupportTicketsPage {
       return;
     }
 
-    if (this.emailControl.value && this.emailControl.invalid) {
+    this.updateEmailError();
+    if (this.emailError()) {
       this.error = 'Email is invalid.';
       return;
     }
@@ -748,7 +738,7 @@ export class SupportTicketsPage {
         tags: this.form.tags?.trim() || null,
         internalNotes: this.form.internalNotes?.trim() || null,
         contactName: this.form.contactName?.trim() || null,
-        contactEmail: this.emailControl.value?.trim() || null,
+        contactEmail: this.contactEmail().trim() || null,
         contactPhone: this.form.contactPhone?.trim() || null,
         openedAt: this.formatDateInput(this.form.openedAt),
         firstResponseAt: this.formatDateInput(this.form.firstResponseAt),
@@ -850,8 +840,9 @@ export class SupportTicketsPage {
     return `${year}-${month}-${day}`;
   }
 
-  private updateEmailError() {
-    if (this.emailControl.hasError('email')) {
+  updateEmailError() {
+    const value = this.contactEmail().trim();
+    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       this.emailError.set('Email is invalid.');
     } else {
       this.emailError.set('');

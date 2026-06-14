@@ -12,7 +12,8 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 
@@ -204,7 +205,7 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   imports: [
     RefreshButtonComponent,
     FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatIconModule,
     MatFormFieldModule,
@@ -229,7 +230,6 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   host: { class: 'app-fade-in-host' },
 })
 export class FinancialPaymentGatewayPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
@@ -278,17 +278,22 @@ export class FinancialPaymentGatewayPage {
 
   readonly editingGateway = signal<PaymentGatewayAccount | null>(null);
 
-  readonly gatewayForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['pagarme' as PaymentGatewayProvider, [Validators.required]],
-    configJson: [''],
-    credentialsJson: [''],
-    isActive: [true],
-    isDefault: [false],
+  readonly gatewayFormModel = signal({
+    name: '',
+    provider: 'pagarme' as PaymentGatewayProvider,
+    configJson: '',
+    credentialsJson: '',
+    isActive: true,
+    isDefault: false,
   });
-  readonly providerFieldsForm = this.fb.group(
-    ALL_PROVIDER_FIELDS.reduce<Record<string, unknown>>((acc, field) => {
-      acc[field.controlName] = [''];
+  readonly gatewayForm = createForm(this.gatewayFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
+  });
+  readonly providerFieldsModel = signal(
+    ALL_PROVIDER_FIELDS.reduce<Record<string, string>>((acc, field) => {
+      acc[field.controlName] = '';
       return acc;
     }, {}),
   );
@@ -340,13 +345,12 @@ export class FinancialPaymentGatewayPage {
 
   private readonly initializePage = (() => {
     this.cancelEditGateway();
-  
+
     return true;
   })();
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeGatewayDialog();
-  
   });
 
   private readonly afterViewReady = afterNextRender(() => {
@@ -383,7 +387,6 @@ export class FinancialPaymentGatewayPage {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(value));
     };
-  
   });
 
   onSearchChange(value: string) {
@@ -413,7 +416,7 @@ export class FinancialPaymentGatewayPage {
   }
 
   selectedProvider(): PaymentGatewayProvider {
-    return this.gatewayForm.controls.provider.value as PaymentGatewayProvider;
+    return this.gatewayFormModel().provider;
   }
 
   configFieldsForSelectedProvider(): ProviderFieldView[] {
@@ -437,10 +440,11 @@ export class FinancialPaymentGatewayPage {
         this.selectedProvider(),
         false,
       );
-      this.gatewayForm.patchValue({
+      this.gatewayFormModel.update((value) => ({
+        ...value,
         configJson: this.stringifyJson(mapped.config),
         credentialsJson: this.stringifyJson(mapped.credentials),
-      });
+      }));
     }
     this.advancedJsonMode.set(next);
   }
@@ -502,17 +506,13 @@ export class FinancialPaymentGatewayPage {
     }
   }
 
-  private providerFieldValue(controlName: string): string {
-    const control = this.providerFieldsForm.get(controlName);
-    const raw = control?.value;
-    return typeof raw === 'string' ? raw : '';
+  providerFieldValue(controlName: string): string {
+    return this.providerFieldsModel()[controlName] ?? '';
   }
 
-  private setProviderFieldValue(controlName: string, value: unknown) {
-    const control = this.providerFieldsForm.get(controlName);
-    if (!control) return;
+  setProviderFieldValue(controlName: string, value: unknown) {
     const text = value === undefined || value === null ? '' : String(value);
-    control.setValue(text);
+    this.providerFieldsModel.update((fields) => ({ ...fields, [controlName]: text }));
   }
 
   private resetProviderFields() {
@@ -635,7 +635,7 @@ export class FinancialPaymentGatewayPage {
   startEditGateway(item: PaymentGatewayAccount) {
     this.editingGateway.set(item);
     this.advancedJsonMode.set(false);
-    this.gatewayForm.patchValue({
+    this.gatewayFormModel.set({
       name: item.EfgName,
       provider: item.EfgProvider,
       configJson: this.stringifyJson(item.EfgConfig),
@@ -644,9 +644,6 @@ export class FinancialPaymentGatewayPage {
       isDefault: item.EfgIsDefault === 1,
     });
     this.hydrateProviderFields(item.EfgProvider, item.EfgConfig ?? null, null);
-
-    this.gatewayForm.controls.credentialsJson.clearValidators();
-    this.gatewayForm.controls.credentialsJson.updateValueAndValidity({ emitEvent: false });
   }
 
   openCreateDialog() {
@@ -662,7 +659,7 @@ export class FinancialPaymentGatewayPage {
   cancelEditGateway() {
     this.editingGateway.set(null);
     this.advancedJsonMode.set(false);
-    this.gatewayForm.reset({
+    this.gatewayFormModel.set({
       name: '',
       provider: 'pagarme',
       configJson: '',
@@ -671,9 +668,6 @@ export class FinancialPaymentGatewayPage {
       isDefault: false,
     });
     this.resetProviderFields();
-
-    this.gatewayForm.controls.credentialsJson.setValidators([Validators.required]);
-    this.gatewayForm.controls.credentialsJson.updateValueAndValidity({ emitEvent: false });
   }
 
   cancelGatewayForm() {
@@ -682,14 +676,14 @@ export class FinancialPaymentGatewayPage {
   }
 
   async submitGateway(keepOpenForNew = false) {
-    if (this.gatewayForm.invalid) {
+    if (!this.gatewayForm().valid()) {
       this.showGatewayWarning('Please fill all required fields.');
       return;
     }
 
     this.savingGateway.set(true);
 
-    const values = this.gatewayForm.getRawValue();
+    const values = this.gatewayFormModel();
 
     let config: Record<string, unknown> | null = null;
     let credentials: Record<string, unknown> | null = null;
