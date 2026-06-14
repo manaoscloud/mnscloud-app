@@ -12,7 +12,9 @@ import {
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -92,7 +94,9 @@ const EMPTY_VPS_DASHBOARD: VpsDashboardSnapshot = {
     RouterModule,
     MatButtonModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSortModule,
@@ -129,6 +133,9 @@ export class HostingVpsDashboardPage {
   readonly providers = computed(() => this.dashboard().providers);
   readonly plans = computed(() => this.dashboard().plans);
   readonly instances = computed(() => this.dashboard().instances);
+  readonly dashboardSearchInput = signal('');
+  private readonly dashboardSearch = signal('');
+
 
   readonly statusDataSource = new MatTableDataSource<StatusRow>([]);
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
@@ -256,6 +263,12 @@ export class HostingVpsDashboardPage {
     this.providerDataSource.sortingDataAccessor = (row, column) =>
       this.providerSortValue(row, column);
     this.planDataSource.sortingDataAccessor = (row, column) => this.planSortValue(row, column);
+    this.statusDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.providerDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.planDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
 
     this.statusDataSource.sort = this.statusSort() ?? null;
     this.statusDataSource.paginator = this.statusPaginator() ?? null;
@@ -263,10 +276,26 @@ export class HostingVpsDashboardPage {
     this.providerDataSource.paginator = this.providerPaginator() ?? null;
     this.planDataSource.sort = this.planSort() ?? null;
     this.planDataSource.paginator = this.planPaginator() ?? null;
+    this.applyTableFilters();
   });
 
   refreshList() {
     this.dashboardResource.reload();
+  }
+
+  onDashboardSearchChange(value: string) {
+    this.dashboardSearchInput.set(value);
+  }
+
+  applyDashboardFilters() {
+    this.dashboardSearch.set(this.dashboardSearchInput().trim());
+    this.applyTableFilters();
+  }
+
+  clearDashboardFilters() {
+    this.dashboardSearchInput.set('');
+    this.dashboardSearch.set('');
+    this.applyTableFilters();
   }
 
   async loadDashboardSnapshot(): Promise<VpsDashboardSnapshot> {
@@ -361,6 +390,24 @@ export class HostingVpsDashboardPage {
   private instanceEndpoint() {
     return this.isMaster() ? 'system/hosting/vps/instances' : 'hosting/vps/instances';
   }
+  private applyTableFilters() {
+    const filter = this.dashboardSearch().trim().toLowerCase();
+    this.statusDataSource.filter = filter;
+    this.providerDataSource.filter = filter;
+    this.planDataSource.filter = filter;
+    this.statusDataSource.paginator?.firstPage();
+    this.providerDataSource.paginator?.firstPage();
+    this.planDataSource.paginator?.firstPage();
+  }
+
+  private matchesDashboardFilter(row: object, filter: string) {
+    const term = filter.trim().toLowerCase();
+    if (!term) return true;
+    return Object.values(row).some((value) =>
+      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
+    );
+  }
+
 
   private statusRows(): StatusRow[] {
     const map = new Map<string, HostingVpsInstance[]>();

@@ -80,6 +80,9 @@ const requiredHtmlRules = [
   ['card root', /<mat-card[^>]*class="[^"]*\berp-card\b[^"]*"/],
   ['header', classRule('erp-header')],
   ['header actions', classRule('header-actions')],
+];
+
+const requiredFilterRules = [
   ['filter grid', classRule('filter-grid')],
   ['filter actions row', classRule('filter-actions')],
 ];
@@ -95,12 +98,13 @@ const forbiddenLocalScssRules = [
 
 function filterGridBlocks(content) {
   const blocks = [];
-  const openTag = /<div[^>]*class="[^"]*\bfilter-grid\b[^"]*"[^>]*>/g;
+  const openTag = /<([a-zA-Z][\w:-]*)[^>]*class="[^"]*\bfilter-grid\b[^"]*"[^>]*>/g;
   let match;
   while ((match = openTag.exec(content))) {
+    const gridTagName = match[1];
     let cursor = openTag.lastIndex;
     let depth = 1;
-    const tag = /<\/?div\b[^>]*>/g;
+    const tag = new RegExp(`<\\/?${gridTagName}\\b[^>]*>`, 'g');
     tag.lastIndex = cursor;
     let tagMatch;
     while ((tagMatch = tag.exec(content))) {
@@ -128,6 +132,16 @@ function validateTarget(target) {
     const content = read(htmlFile);
     for (const [name, pattern] of requiredHtmlRules) {
       if (!pattern.test(content)) errors.push(`${relative(root, htmlFile)} missing: ${name}`);
+    }
+
+    const requiresFilters =
+      content.includes('filter-grid') ||
+      content.includes('mat-table') ||
+      content.includes('mat-paginator');
+    if (requiresFilters) {
+      for (const [name, pattern] of requiredFilterRules) {
+        if (!pattern.test(content)) errors.push(`${relative(root, htmlFile)} missing: ${name}`);
+      }
     }
 
     if (content.includes('filter-grid')) {

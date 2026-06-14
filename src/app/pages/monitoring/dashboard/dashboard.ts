@@ -12,7 +12,9 @@ import {
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -102,7 +104,9 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
     RouterModule,
     MatButtonModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSortModule,
@@ -135,6 +139,9 @@ export class MonitoringDashboardPage {
   readonly failedTotal = computed(() => this.dashboard().failedTotal);
   readonly errorTotal = computed(() => this.dashboard().errorTotal);
   readonly generatedAt = computed(() => this.dashboard().generatedAt);
+  readonly dashboardSearchInput = signal('');
+  private readonly dashboardSearch = signal('');
+
 
   readonly activityDataSource = new MatTableDataSource<ActivityLog>([]);
   readonly activityColumns = ['created', 'level', 'status', 'action', 'resource', 'message'];
@@ -214,12 +221,30 @@ export class MonitoringDashboardPage {
   private readonly setupTable = afterNextRender(() => {
     this.activityDataSource.sortingDataAccessor = (row, column) =>
       this.activitySortValue(row, column);
+    this.activityDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
     this.activityDataSource.sort = this.activitySort() ?? null;
     this.activityDataSource.paginator = this.activityPaginator() ?? null;
+    this.applyTableFilters();
   });
 
   refreshList() {
     this.dashboardResource.reload();
+  }
+
+  onDashboardSearchChange(value: string) {
+    this.dashboardSearchInput.set(value);
+  }
+
+  applyDashboardFilters() {
+    this.dashboardSearch.set(this.dashboardSearchInput().trim());
+    this.applyTableFilters();
+  }
+
+  clearDashboardFilters() {
+    this.dashboardSearchInput.set('');
+    this.dashboardSearch.set('');
+    this.applyTableFilters();
   }
 
   monitoringRoute(path: 'agents' | 'activity-logs') {
@@ -274,6 +299,20 @@ export class MonitoringDashboardPage {
   private ratio(value: number, total: number) {
     return `${Number(value || 0)} / ${Number(total || 0)}`;
   }
+  private applyTableFilters() {
+    const filter = this.dashboardSearch().trim().toLowerCase();
+    this.activityDataSource.filter = filter;
+    this.activityDataSource.paginator?.firstPage();
+  }
+
+  private matchesDashboardFilter(row: object, filter: string) {
+    const term = filter.trim().toLowerCase();
+    if (!term) return true;
+    return Object.values(row).some((value) =>
+      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
+    );
+  }
+
 
   private activitySortValue(row: ActivityLog, column: string) {
     if (column === 'created') return row.dateCreated ?? '';

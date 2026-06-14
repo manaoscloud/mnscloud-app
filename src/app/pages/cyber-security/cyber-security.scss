@@ -78,27 +78,6 @@
 }
 
 .section-toolbar,
-.filter-actions,
-.header-actions,
-.button-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 12px;
-  align-items: start;
-  margin-bottom: 14px;
-}
-
-.filter-actions {
-  grid-column: 1 / -1;
-  justify-content: flex-end;
-}
-
 .activity-panel {
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 8px;
@@ -543,19 +522,12 @@ textarea {
 }
 
 @media (max-width: 1400px) {
-  .filter-grid {
-    grid-template-columns: repeat(3, minmax(180px, 1fr));
-  }
 }
 
 @media (max-width: 1200px) {
   .kpi-grid,
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .filter-grid {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 
   .alerts-panel .table-wrapper {
@@ -568,22 +540,4 @@ textarea {
 }
 
 @media (max-width: 900px) {
-  .filter-actions,
-  .header-actions,
-  .section-toolbar,
-  .button-group {
-    align-items: flex-end;
-    flex-direction: column;
-  }
-
-  .filter-grid,
-  .dashboard-grid,
-  .kpi-grid,
-  .dialog-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .alert-message-cell {
-    max-width: 420px;
-  }
 }

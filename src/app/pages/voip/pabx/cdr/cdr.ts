@@ -26,6 +26,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { PabxCdrKind, VoipPabxCdrService } from './cdr.service';
 import { VoipPabxCdrRecordingDialogComponent } from './recording-dialog/recording-dialog';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type CdrFilters = {
   search: string;
@@ -43,6 +44,7 @@ type CdrRequest = CdrFilters & {
   selector: 'app-voip-pabx-cdr',
   standalone: true,
   imports: [
+    TranslocoPipe,
     RefreshButtonComponent,
     MatButtonModule,
     MatCardModule,

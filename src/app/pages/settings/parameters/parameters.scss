@@ -1,44 +1,3 @@
-.erp-page {
-  padding: 1.75rem;
-}
-
-.erp-card {
-  padding: 1.5rem 1.75rem;
-  background: var(--mat-sys-color-surface-container-high);
-  border-radius: 1rem;
-  border: 1px solid var(--mat-sys-color-outline-variant);
-}
-
-.erp-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-
-  h1 {
-    margin: 0;
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: 0;
-  }
-
-  p {
-    margin: 0.25rem 0 0;
-    font-size: 0.95rem;
-    color: var(--mat-sys-color-on-surface-variant);
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.5rem;
-
-  button mat-icon {
-    margin-right: 0.25rem;
-  }
-}
-
 .parameters-form {
   position: relative;
   width: 100%;
@@ -200,23 +159,6 @@ app-settings-parameters .parameters-form .mat-mdc-tab-body-content {
 }
 
 @media (max-width: 900px) {
-  .erp-page {
-    padding: 1.25rem 1rem;
-  }
-
-  .erp-card {
-    padding: 1rem 1rem 0.25rem;
-  }
-
-  .erp-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    justify-content: flex-end;
-  }
-
   .parameters-form {
     min-height: 0;
   }

@@ -6,12 +6,15 @@ import {
   effect,
   inject,
   resource,
+  signal,
   viewChild,
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -127,7 +130,9 @@ const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
     RouterModule,
     MatButtonModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSortModule,
@@ -160,6 +165,9 @@ export class HostingDashboardPage {
   readonly dashboard = computed(() => this.dashboardResource.value());
   readonly data = computed(() => this.dashboard().data);
   readonly generatedAt = computed(() => this.dashboard().generatedAt);
+  readonly dashboardSearchInput = signal('');
+  private readonly dashboardSearch = signal('');
+
 
   readonly workloadDataSource = new MatTableDataSource<WorkloadRow>([]);
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
@@ -266,6 +274,12 @@ export class HostingDashboardPage {
     this.providerDataSource.sortingDataAccessor = (row, column) =>
       this.providerSortValue(row, column);
     this.issueDataSource.sortingDataAccessor = (row, column) => this.issueSortValue(row, column);
+    this.workloadDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.providerDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.issueDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
 
     this.workloadDataSource.sort = this.workloadSort() ?? null;
     this.workloadDataSource.paginator = this.workloadPaginator() ?? null;
@@ -273,10 +287,26 @@ export class HostingDashboardPage {
     this.providerDataSource.paginator = this.providerPaginator() ?? null;
     this.issueDataSource.sort = this.issueSort() ?? null;
     this.issueDataSource.paginator = this.issuePaginator() ?? null;
+    this.applyTableFilters();
   });
 
   refreshList() {
     this.dashboardResource.reload();
+  }
+
+  onDashboardSearchChange(value: string) {
+    this.dashboardSearchInput.set(value);
+  }
+
+  applyDashboardFilters() {
+    this.dashboardSearch.set(this.dashboardSearchInput().trim());
+    this.applyTableFilters();
+  }
+
+  clearDashboardFilters() {
+    this.dashboardSearchInput.set('');
+    this.dashboardSearch.set('');
+    this.applyTableFilters();
   }
 
   async loadDashboardSnapshot(): Promise<HostingDashboardSnapshot> {
@@ -612,6 +642,24 @@ export class HostingDashboardPage {
       route,
     };
   }
+  private applyTableFilters() {
+    const filter = this.dashboardSearch().trim().toLowerCase();
+    this.workloadDataSource.filter = filter;
+    this.providerDataSource.filter = filter;
+    this.issueDataSource.filter = filter;
+    this.workloadDataSource.paginator?.firstPage();
+    this.providerDataSource.paginator?.firstPage();
+    this.issueDataSource.paginator?.firstPage();
+  }
+
+  private matchesDashboardFilter(row: object, filter: string) {
+    const term = filter.trim().toLowerCase();
+    if (!term) return true;
+    return Object.values(row).some((value) =>
+      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
+    );
+  }
+
 
   private issueRows(
     type: string,

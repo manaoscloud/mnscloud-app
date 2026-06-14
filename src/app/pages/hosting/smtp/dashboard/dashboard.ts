@@ -12,7 +12,9 @@ import {
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -116,7 +118,9 @@ const EMPTY_SMTP_DASHBOARD: SmtpDashboardSnapshot = {
     RouterModule,
     MatButtonModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSortModule,
@@ -153,6 +157,9 @@ export class HostingSmtpDashboardPage {
   readonly providers = computed(() => this.dashboard().providers);
   readonly accounts = computed(() => this.dashboard().accounts);
   readonly routes = computed(() => this.dashboard().routes);
+  readonly dashboardSearchInput = signal('');
+  private readonly dashboardSearch = signal('');
+
 
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
   readonly accountDataSource = new MatTableDataSource<AccountRow>([]);
@@ -279,6 +286,12 @@ export class HostingSmtpDashboardPage {
     this.accountDataSource.sortingDataAccessor = (row, column) =>
       this.accountSortValue(row, column);
     this.routeDataSource.sortingDataAccessor = (row, column) => this.routeSortValue(row, column);
+    this.providerDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.accountDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.routeDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
 
     this.providerDataSource.sort = this.providerSort() ?? null;
     this.providerDataSource.paginator = this.providerPaginator() ?? null;
@@ -286,10 +299,26 @@ export class HostingSmtpDashboardPage {
     this.accountDataSource.paginator = this.accountPaginator() ?? null;
     this.routeDataSource.sort = this.routeSort() ?? null;
     this.routeDataSource.paginator = this.routePaginator() ?? null;
+    this.applyTableFilters();
   });
 
   refreshList() {
     this.dashboardResource.reload();
+  }
+
+  onDashboardSearchChange(value: string) {
+    this.dashboardSearchInput.set(value);
+  }
+
+  applyDashboardFilters() {
+    this.dashboardSearch.set(this.dashboardSearchInput().trim());
+    this.applyTableFilters();
+  }
+
+  clearDashboardFilters() {
+    this.dashboardSearchInput.set('');
+    this.dashboardSearch.set('');
+    this.applyTableFilters();
   }
 
   async loadDashboardSnapshot(): Promise<SmtpDashboardSnapshot> {
@@ -341,6 +370,24 @@ export class HostingSmtpDashboardPage {
   private routeEndpoint() {
     return this.isMaster() ? 'system/hosting/smtp/routes' : 'hosting/smtp/routes';
   }
+  private applyTableFilters() {
+    const filter = this.dashboardSearch().trim().toLowerCase();
+    this.providerDataSource.filter = filter;
+    this.accountDataSource.filter = filter;
+    this.routeDataSource.filter = filter;
+    this.providerDataSource.paginator?.firstPage();
+    this.accountDataSource.paginator?.firstPage();
+    this.routeDataSource.paginator?.firstPage();
+  }
+
+  private matchesDashboardFilter(row: object, filter: string) {
+    const term = filter.trim().toLowerCase();
+    if (!term) return true;
+    return Object.values(row).some((value) =>
+      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
+    );
+  }
+
 
   private providerRows(): ProviderRow[] {
     return this.providers().map((provider) => {

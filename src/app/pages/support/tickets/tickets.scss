@@ -1,68 +1,9 @@
 @use 'sass:map';
 
-.erp-page {
-    padding: 1.75rem;
-}
-
-.erp-card {
-    padding: 1.5rem 1.75rem;
-    background: var(--mat-sys-color-surface-container-high);
-    border-radius: 1rem;
-    border: 1px solid var(--mat-sys-color-outline-variant);
-}
-
-.erp-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-
-    h1 {
-        margin: 0;
-        font-size: 1.6rem;
-        font-weight: 700;
-    }
-
-    p {
-        margin: 0.25rem 0 0;
-        font-size: 0.95rem;
-        color: var(--mat-sys-color-on-surface-variant);
-    }
-}
-
-.header-actions {
-    display: flex;
-    gap: 0.5rem;
-
-    button mat-icon {
-        margin-right: 0.25rem;
-    }
-}
-
-.filter-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-
-    .span-2 {
-        grid-column: span 2;
-    }
-}
-
 .filters-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.75rem;
-}
-
-.filter-actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: flex-end;
-    grid-column: 1 / -1;
 }
 
 .table-wrapper {
@@ -304,55 +245,18 @@
 
 /* RESPONSIVE */
 @media (max-width: 1400px) {
-    .filter-grid,
-    .form-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-
-        .span-2 {
-            grid-column: span 2;
-        }
-    }
-
     .filters-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 1200px) {
-    .filter-grid,
-    .form-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-
-        .span-2 {
-            grid-column: span 2;
-        }
-    }
-
     .filters-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 900px) {
-    .erp-page {
-        padding: 1.25rem 1rem;
-    }
-
-    .erp-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .filter-grid,
-    .filters-grid,
-    .form-grid {
-        grid-template-columns: 1fr;
-
-        .span-2 {
-            grid-column: span 1;
-        }
-    }
-
     .event-grid {
         grid-template-columns: 1fr;
 

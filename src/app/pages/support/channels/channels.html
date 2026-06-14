@@ -33,7 +33,8 @@
           [disabled]="loading()"
           type="button"
         >
-          Apply
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
         </button>
         <button
           mat-stroked-button
@@ -41,7 +42,8 @@
           [disabled]="loading() || (!searchInput && !search)"
           type="button"
         >
-          Clear
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
         </button>
       </div>
     </div>

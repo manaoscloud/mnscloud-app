@@ -33,14 +33,16 @@
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applySearchFilters(searchInput.value)">
-          Apply
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
         </button>
         <button
           mat-stroked-button
           type="button"
           (click)="searchInput.value = ''; clearSearchFilters()"
         >
-          Clear
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
         </button>
       </div>
     </div>

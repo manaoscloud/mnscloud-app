@@ -12,7 +12,9 @@ import {
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -103,7 +105,9 @@ const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
     RouterModule,
     MatButtonModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSortModule,
@@ -139,6 +143,9 @@ export class HostingStorageDashboardPage {
   readonly dashboard = computed(() => this.dashboardResource.value());
   readonly providers = computed(() => this.dashboard().providers);
   readonly accounts = computed(() => this.dashboard().accounts);
+  readonly dashboardSearchInput = signal('');
+  private readonly dashboardSearch = signal('');
+
 
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
   readonly accountDataSource = new MatTableDataSource<AccountRow>([]);
@@ -264,6 +271,12 @@ export class HostingStorageDashboardPage {
     this.accountDataSource.sortingDataAccessor = (row, column) =>
       this.accountSortValue(row, column);
     this.typeDataSource.sortingDataAccessor = (row, column) => this.typeSortValue(row, column);
+    this.providerDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.accountDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
+    this.typeDataSource.filterPredicate = (row, filter) =>
+      this.matchesDashboardFilter(row, filter);
 
     this.providerDataSource.sort = this.providerSort() ?? null;
     this.providerDataSource.paginator = this.providerPaginator() ?? null;
@@ -271,10 +284,26 @@ export class HostingStorageDashboardPage {
     this.accountDataSource.paginator = this.accountPaginator() ?? null;
     this.typeDataSource.sort = this.typeSort() ?? null;
     this.typeDataSource.paginator = this.typePaginator() ?? null;
+    this.applyTableFilters();
   });
 
   refreshList() {
     this.dashboardResource.reload();
+  }
+
+  onDashboardSearchChange(value: string) {
+    this.dashboardSearchInput.set(value);
+  }
+
+  applyDashboardFilters() {
+    this.dashboardSearch.set(this.dashboardSearchInput().trim());
+    this.applyTableFilters();
+  }
+
+  clearDashboardFilters() {
+    this.dashboardSearchInput.set('');
+    this.dashboardSearch.set('');
+    this.applyTableFilters();
   }
 
   async loadDashboardSnapshot(): Promise<StorageDashboardSnapshot> {
@@ -328,6 +357,24 @@ export class HostingStorageDashboardPage {
   private accountEndpoint() {
     return this.isMaster() ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts';
   }
+  private applyTableFilters() {
+    const filter = this.dashboardSearch().trim().toLowerCase();
+    this.providerDataSource.filter = filter;
+    this.accountDataSource.filter = filter;
+    this.typeDataSource.filter = filter;
+    this.providerDataSource.paginator?.firstPage();
+    this.accountDataSource.paginator?.firstPage();
+    this.typeDataSource.paginator?.firstPage();
+  }
+
+  private matchesDashboardFilter(row: object, filter: string) {
+    const term = filter.trim().toLowerCase();
+    if (!term) return true;
+    return Object.values(row).some((value) =>
+      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
+    );
+  }
+
 
   private providerRows(): ProviderRow[] {
     return this.providers().map((provider) => {

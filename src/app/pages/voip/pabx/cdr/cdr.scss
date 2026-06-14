@@ -1,64 +1,5 @@
-.erp-page {
-  padding: 1.75rem;
-}
-
-.erp-card {
-  background: var(--mat-sys-color-surface-container-high);
-  border: 1px solid var(--mat-sys-color-outline-variant);
-  border-radius: 1rem;
-  padding: 1.5rem 1.75rem;
-}
-
-.erp-header {
-  align-items: center;
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-
-  h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  p {
-    color: var(--mat-sys-color-on-surface-variant);
-    font-size: 0.95rem;
-    margin: 0.25rem 0 0;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-
-  button mat-icon {
-    margin-right: 0.25rem;
-  }
-}
-
-.filter-grid {
-  align-items: center;
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-bottom: 1rem;
-}
-
 .filter-grid .span-2 {
   grid-column: span 2;
-}
-
-.filter-actions {
-  align-items: center;
-  align-self: center;
-  display: flex;
-  gap: 0.5rem;
-  grid-column: 1 / -1;
-  justify-content: flex-end;
-  padding-right: 0.25rem;
 }
 
 .filter-actions button {
@@ -181,39 +122,11 @@
 }
 
 @media (max-width: 1200px) {
-  .filter-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 900px) {
-  .erp-page {
-    padding: 1rem;
-  }
-
-  .erp-card {
-    padding: 1rem;
-  }
-
-  .erp-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .header-actions {
-    justify-content: flex-end;
-    width: 100%;
-  }
-
-  .filter-grid {
-    grid-template-columns: 1fr;
-  }
-
   .filter-grid .span-2 {
     grid-column: span 1;
   }
 
-  .filter-actions {
-    justify-content: flex-end;
-  }
 }

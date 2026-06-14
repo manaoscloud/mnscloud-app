@@ -1,4 +1,5 @@
 import { afterNextRender, Component, effect, resource, viewChild } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -24,6 +25,7 @@ type Lead = {
   selector: 'app-crm-leads',
   standalone: true,
   imports: [
+    TranslocoPipe,
     RefreshButtonComponent,
     MatCardModule,
     MatButtonModule,

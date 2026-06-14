@@ -10,6 +10,29 @@
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
       </div>
     </header>
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
+        <input
+          matInput
+          [value]="dashboardSearchInput()"
+          [placeholder]="'Search dashboard' | transloco"
+          (input)="onDashboardSearchChange($any($event.target).value)"
+        />
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyDashboardFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
+        </button>
+        <button mat-stroked-button type="button" (click)="clearDashboardFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
+        </button>
+      </div>
+    </div>
+
 
     <div class="dashboard-content" [class.is-loading]="loading()">
       @if (loading()) {

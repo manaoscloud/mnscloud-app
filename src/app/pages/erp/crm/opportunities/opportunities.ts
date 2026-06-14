@@ -1,4 +1,5 @@
 import { afterNextRender, Component, effect, resource, viewChild } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,6 +24,7 @@ type Opportunity = {
   selector: 'app-crm-opportunities',
   standalone: true,
   imports: [
+    TranslocoPipe,
     RefreshButtonComponent,
     MatCardModule,
     MatButtonModule,

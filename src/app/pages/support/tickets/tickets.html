@@ -109,9 +109,13 @@
           [disabled]="loading()"
           type="button"
         >
-          Apply
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
         </button>
-        <button mat-stroked-button (click)="clearSearchFilters()" type="button">Clear</button>
+        <button mat-stroked-button (click)="clearSearchFilters()" type="button">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
+        </button>
       </div>
     </div>
 
