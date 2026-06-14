@@ -11,8 +11,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -53,7 +52,7 @@ import type {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -77,7 +76,6 @@ import type {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HostingVpsContainerProviderPage {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
@@ -151,28 +149,37 @@ export class HostingVpsContainerProviderPage {
     { value: 'incus', label: 'Incus' },
   ];
 
-  readonly filterForm = this.fb.nonNullable.group({
-    search: [''],
-    status: [''],
+  readonly filterFormModel = signal({
+    search: '',
+    status: '',
   });
+  readonly filterForm = createForm(this.filterFormModel);
 
-  readonly providerForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    provider: ['incus' as VpsContainerProvider, [Validators.required]],
-    apiUrl: [''],
-    project: ['default'],
-    target: [''],
-    storagePool: [''],
-    network: [''],
-    profile: ['default'],
-    remote: ['https://images.linuxcontainers.org'],
-    imageAlias: [''],
-    bearerToken: [''],
-    clientCertificate: [''],
-    clientPrivateKey: [''],
-    serverCertificate: [''],
-    isActive: [1, [Validators.required]],
-    isDefault: [0, [Validators.required]],
+  readonly providerFormModel = signal({
+    name: '',
+    provider: 'incus' as VpsContainerProvider,
+    apiUrl: '',
+    project: 'default',
+    target: '',
+    storagePool: '',
+    network: '',
+    profile: 'default',
+    remote: 'https://images.linuxcontainers.org',
+    imageAlias: '',
+    bearerToken: '',
+    clientCertificate: '',
+    clientPrivateKey: '',
+    serverCertificate: '',
+    isActive: 1,
+    isDefault: 0,
+  });
+  readonly providerForm = createForm(this.providerFormModel, (schema) => {
+    required(schema.name);
+    minLength(schema.name, 2);
+    required(schema.provider);
+    required(schema.apiUrl);
+    required(schema.isActive);
+    required(schema.isDefault);
   });
 
   private readonly providersResource = resource({
@@ -213,14 +220,6 @@ export class HostingVpsContainerProviderPage {
       this.closeDialog();
       this.stopDialogViewportObserver();
     });
-    this.applyProviderValidators(this.providerSelection(), false);
-    this.providerForm.controls.provider.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        if (!value) return;
-        this.providerSelection.set(value);
-        this.applyProviderValidators(value, !!this.editing());
-      });
   }
 
   refreshList() {
@@ -228,14 +227,14 @@ export class HostingVpsContainerProviderPage {
   }
 
   applyFilters() {
-    const values = this.filterForm.getRawValue();
+    const values = this.filterFormModel();
     this.appliedSearch.set(values.search);
     this.appliedStatus.set(values.status);
     this.resetPagination();
   }
 
   clearFilters() {
-    this.filterForm.reset({ search: '', status: '' });
+    this.filterFormModel.set({ search: '', status: '' });
     this.applyFilters();
   }
 
@@ -293,7 +292,7 @@ export class HostingVpsContainerProviderPage {
     const config = providerRecord.HcpConfig ?? {};
     const credentials = providerRecord.credentials ?? {};
     this.editing.set(providerRecord);
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: providerRecord.HcpName,
       provider: providerRecord.HcpProvider,
       apiUrl: config.apiUrl ?? '',
@@ -312,7 +311,6 @@ export class HostingVpsContainerProviderPage {
       isDefault: providerRecord.HcpIsDefault === 1 ? 1 : 0,
     });
     this.providerSelection.set(providerRecord.HcpProvider);
-    this.applyProviderValidators(providerRecord.HcpProvider, true);
     this.openDialog();
   }
 
@@ -323,13 +321,12 @@ export class HostingVpsContainerProviderPage {
   }
 
   async submit(closeAfterSave = true) {
-    if (this.providerForm.invalid) {
-      this.providerForm.markAllAsTouched();
+    if (!this.providerForm().valid()) {
       this.snack.warning('Please fill all required fields.');
       return;
     }
 
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const credentials = this.buildCredentialsPayload();
     if (!this.editing() && !credentials) {
       this.snack.warning('Credentials are required for new providers.');
@@ -513,20 +510,8 @@ export class HostingVpsContainerProviderPage {
     }
   }
 
-  private applyProviderValidators(_provider: VpsContainerProvider, _isEditing = false) {
-    const controls = this.providerForm.controls;
-    controls.apiUrl.clearValidators();
-    controls.bearerToken.clearValidators();
-    controls.clientCertificate.clearValidators();
-    controls.clientPrivateKey.clearValidators();
-    controls.apiUrl.setValidators([Validators.required]);
-    for (const control of Object.values(controls)) {
-      control.updateValueAndValidity({ emitEvent: false });
-    }
-  }
-
   private resetForm() {
-    this.providerForm.reset({
+    this.providerFormModel.set({
       name: '',
       provider: 'incus',
       apiUrl: '',
@@ -545,7 +530,6 @@ export class HostingVpsContainerProviderPage {
       isDefault: 0,
     });
     this.providerSelection.set('incus');
-    this.applyProviderValidators('incus', false);
   }
 
   private resetPagination() {
@@ -612,7 +596,7 @@ export class HostingVpsContainerProviderPage {
   }
 
   private buildConfigPayload(): VpsContainerProviderConfig {
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const config: VpsContainerProviderConfig = {};
     const apiUrl = this.normalizeString(values.apiUrl);
     const project = this.normalizeString(values.project);
@@ -634,7 +618,7 @@ export class HostingVpsContainerProviderPage {
   }
 
   private buildCredentialsPayload(): VpsContainerProviderCredentials | null {
-    const values = this.providerForm.getRawValue();
+    const values = this.providerFormModel();
     const credentials: VpsContainerProviderCredentials = {};
     const bearerToken = this.normalizeString(values.bearerToken);
     const clientCertificate = this.normalizeString(values.clientCertificate);

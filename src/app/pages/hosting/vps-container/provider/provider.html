@@ -15,15 +15,19 @@
       </div>
     </header>
 
-    <div class="filter-grid" [formGroup]="filterForm">
+    <div class="filter-grid">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
-        <input matInput placeholder="Name, provider, project or API URL" formControlName="search" />
+        <input
+          matInput
+          placeholder="Name, provider, project or API URL"
+          [formField]="filterForm.search"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
+        <mat-select [formField]="filterForm.status">
           <mat-option value="">All</mat-option>
           <mat-option value="1">Active</mat-option>
           <mat-option value="0">Inactive</mat-option>
@@ -192,10 +196,10 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Status</mat-label>
-                <mat-select formControlName="isActive">
+                <mat-select [formField]="providerForm.isActive">
                   <mat-option [value]="1">Active</mat-option>
                   <mat-option [value]="0">Inactive</mat-option>
                 </mat-select>
@@ -203,7 +207,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Default</mat-label>
-                <mat-select formControlName="isDefault">
+                <mat-select [formField]="providerForm.isDefault">
                   <mat-option [value]="1">Yes</mat-option>
                   <mat-option [value]="0">No</mat-option>
                 </mat-select>
@@ -211,7 +215,10 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Provider</mat-label>
-                <mat-select formControlName="provider">
+                <mat-select
+                  [formField]="providerForm.provider"
+                  (selectionChange)="providerSelection.set($event.value)"
+                >
                   @for (opt of providerOptions; track opt.value) {
                     <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                   }
@@ -220,7 +227,7 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="Primary provider" />
+                <input matInput [formField]="providerForm.name" placeholder="Primary provider" />
               </mat-form-field>
             </form>
           </div>
@@ -228,53 +235,53 @@
 
         <mat-tab label="API">
           <div class="tab-content">
-            <form class="form-grid" [formGroup]="providerForm">
+            <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Incus API URL</mat-label>
                 <input
                   matInput
-                  formControlName="apiUrl"
+                  [formField]="providerForm.apiUrl"
                   placeholder="https://incus.example.com:8443"
                 />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Project</mat-label>
-                <input matInput formControlName="project" placeholder="default" />
+                <input matInput [formField]="providerForm.project" placeholder="default" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Target node</mat-label>
-                <input matInput formControlName="target" placeholder="node-01" />
+                <input matInput [formField]="providerForm.target" placeholder="node-01" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Storage pool</mat-label>
-                <input matInput formControlName="storagePool" placeholder="default" />
+                <input matInput [formField]="providerForm.storagePool" placeholder="default" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Network</mat-label>
-                <input matInput formControlName="network" placeholder="incusbr0" />
+                <input matInput [formField]="providerForm.network" placeholder="incusbr0" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Profile</mat-label>
-                <input matInput formControlName="profile" placeholder="default" />
+                <input matInput [formField]="providerForm.profile" placeholder="default" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Image server</mat-label>
                 <input
                   matInput
-                  formControlName="remote"
+                  [formField]="providerForm.remote"
                   placeholder="https://images.linuxcontainers.org"
                 />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Default image alias</mat-label>
-                <input matInput formControlName="imageAlias" placeholder="debian/12" />
+                <input matInput [formField]="providerForm.imageAlias" placeholder="debian/12" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
@@ -282,7 +289,7 @@
                 <input
                   matInput
                   [type]="hideBearerToken() ? 'password' : 'text'"
-                  formControlName="bearerToken"
+                  [formField]="providerForm.bearerToken"
                   placeholder="optional token"
                 />
                 <button
@@ -301,7 +308,7 @@
                 <textarea
                   matInput
                   rows="4"
-                  formControlName="clientCertificate"
+                  [formField]="providerForm.clientCertificate"
                   placeholder="-----BEGIN CERTIFICATE-----"
                 ></textarea>
               </mat-form-field>
@@ -311,7 +318,7 @@
                 <textarea
                   matInput
                   rows="4"
-                  formControlName="clientPrivateKey"
+                  [formField]="providerForm.clientPrivateKey"
                   placeholder="-----BEGIN PRIVATE KEY-----"
                 ></textarea>
               </mat-form-field>
@@ -321,7 +328,7 @@
                 <textarea
                   matInput
                   rows="4"
-                  formControlName="serverCertificate"
+                  [formField]="providerForm.serverCertificate"
                   placeholder="Optional trusted server certificate"
                 ></textarea>
               </mat-form-field>
