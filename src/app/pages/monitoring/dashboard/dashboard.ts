@@ -31,7 +31,7 @@ type MonitoringAgent = {
   name?: string | null;
   type?: string | null;
   hostname?: string | null;
-  connectionStatus?: 'online' | 'offline' | string | null;
+  connectionStatus?: 'online' | 'degraded' | 'offline' | string | null;
   updateStatus?: 'current' | 'outdated' | 'unsupported' | 'unknown' | string | null;
   remoteUpdateSupported?: boolean | null;
   lastHeartbeatAt?: string | null;
@@ -160,10 +160,11 @@ export class MonitoringDashboardPage {
     const rows = this.agents();
     const total = rows.length;
     const online = rows.filter((row) => row.connectionStatus === 'online').length;
+    const degraded = rows.filter((row) => row.connectionStatus === 'degraded').length;
     const offline = rows.filter((row) => row.connectionStatus === 'offline').length;
     const outdated = rows.filter((row) => row.updateStatus === 'outdated').length;
     const unsupported = rows.filter((row) => row.updateStatus === 'unsupported').length;
-    return { total, online, offline, outdated, unsupported };
+    return { total, online, degraded, offline, outdated, unsupported };
   });
 
   readonly runtimeSummary = computed(() => {
@@ -186,10 +187,10 @@ export class MonitoringDashboardPage {
       {
         label: 'Online agents',
         value: this.ratio(agents.online, agents.total),
-        detailValue: String(agents.offline),
-        detailLabel: 'offline',
+        detailValue: String(agents.degraded + agents.offline),
+        detailLabel: 'attention',
         icon: 'sensors',
-        state: agents.offline > 0 ? 'warn' : 'good',
+        state: agents.offline > 0 || agents.degraded > 0 ? 'warn' : 'good',
       },
       {
         label: 'Runtime health',
@@ -274,7 +275,7 @@ export class MonitoringDashboardPage {
     if (['success', 'completed', 'online', 'info'].includes(normalized))
       return 'chip-success is-active';
     if (['failed', 'error', 'critical'].includes(normalized)) return 'chip-danger';
-    if (['warn', 'warning', 'outdated'].includes(normalized)) return 'chip-warning';
+    if (['warn', 'warning', 'outdated', 'degraded'].includes(normalized)) return 'chip-warning';
     return 'chip-skipped is-inactive';
   }
 

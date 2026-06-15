@@ -133,12 +133,9 @@
           <td mat-cell *matCellDef="let row" class="status-col">
             <span
               class="status-pill status-chip state-chip"
-              [class.is-active]="row.connectionStatus === 'online'"
-              [class.is-inactive]="row.connectionStatus !== 'online'"
-              [class.chip-success]="row.connectionStatus === 'online'"
-              [class.chip-skipped]="row.connectionStatus !== 'online'"
+              [ngClass]="chipClass(row.connectionStatus)"
             >
-              {{ row.connectionStatus === 'online' ? 'ONLINE' : 'OFFLINE' }}
+              {{ connectionStatusLabel(row) }}
             </span>
           </td>
         </ng-container>

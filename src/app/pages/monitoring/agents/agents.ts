@@ -61,7 +61,7 @@ type MonitoringAgent = {
   remoteUpdateSupported?: boolean | null;
   runtimeUpdates?: RuntimeUpdateTarget[] | null;
   status?: number | null;
-  connectionStatus: 'online' | 'offline';
+  connectionStatus: 'online' | 'degraded' | 'offline';
   lastHeartbeatAt?: string | null;
   uptimeSeconds?: number | null;
 };
@@ -221,7 +221,7 @@ export class MonitoringAgentsPage {
     'actions',
   ];
 
-  readonly statusOptions = ['', 'online', 'offline'];
+  readonly statusOptions = ['', 'online', 'degraded', 'offline'];
   readonly typeOptions = [
     '',
     'linux.status',
@@ -592,7 +592,16 @@ export class MonitoringAgentsPage {
   }
 
   chipClass(value: string | null | undefined) {
-    return value === 'online' ? 'chip-success is-active' : 'chip-skipped is-inactive';
+    if (value === 'online') return 'chip-success is-active';
+    if (value === 'degraded') return 'chip-warning';
+    return 'chip-skipped is-inactive';
+  }
+
+  connectionStatusLabel(row: MonitoringAgent) {
+    const status = row.connectionStatus || 'offline';
+    if (status === 'online') return 'ONLINE';
+    if (status === 'degraded') return 'DEGRADED';
+    return 'OFFLINE';
   }
 
   formatUptime(value: number | null | undefined) {

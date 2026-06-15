@@ -76,6 +76,15 @@
               <strong>{{ agentSummary().online }}</strong>
             </div>
             <div class="metric-row">
+              <span>{{ 'Degraded' | transloco }}</span>
+              <div class="metric-track is-warning">
+                <i
+                  [style.width.%]="metricPercent(agentSummary().degraded, agentSummary().total)"
+                ></i>
+              </div>
+              <strong>{{ agentSummary().degraded }}</strong>
+            </div>
+            <div class="metric-row">
               <span>{{ 'Offline' | transloco }}</span>
               <div class="metric-track is-warning">
                 <i
