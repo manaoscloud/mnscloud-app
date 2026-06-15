@@ -440,6 +440,29 @@ export class CyberSecurityTrustedNodesPage {
     return 'chip-skipped';
   }
 
+  statusLabel(status: string | null | undefined) {
+    const normalized = String(status ?? '').toLowerCase();
+    if (normalized === 'active') return this.t('Active');
+    if (normalized === 'suspended') return this.t('Suspended');
+    if (normalized === 'revoked') return this.t('Revoked');
+    return '-';
+  }
+
+  modeLabel(mode: string | null | undefined) {
+    const normalized = String(mode ?? '').toLowerCase();
+    if (normalized === 'monitor') return this.t('Monitor only');
+    if (normalized === 'enforce') return this.t('Enforce');
+    return mode || '-';
+  }
+
+  nodeTypeLabel(nodeType: string | null | undefined) {
+    const normalized = String(nodeType ?? '').toLowerCase();
+    if (normalized === 'worker') return this.t('Worker');
+    if (normalized === 'agent') return this.t('Agent');
+    if (normalized === 'other') return this.t('Other');
+    return nodeType || '-';
+  }
+
   private fillForm(trustedNode: CyberSecurityTrustedNode) {
     this.formModel.set({
       name: trustedNode.name ?? '',

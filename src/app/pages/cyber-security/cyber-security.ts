@@ -23,10 +23,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../../services/api.service';
+import { AppI18nService } from '../../services/app-i18n.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
@@ -184,6 +186,7 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
     MatSelectModule,
     MatSortModule,
     MatTableModule,
+    MatTabsModule,
     MatTooltipModule,
     RouterLink,
     TranslocoPipe,
@@ -200,6 +203,7 @@ export class CyberSecurityPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
+  private readonly i18n = inject(AppI18nService);
   private readonly routeParams = toSignal(this.route.paramMap, { initialValue: null });
 
   readonly listDialog = viewChild<TemplateRef<unknown>>('listDialog');
@@ -461,7 +465,7 @@ export class CyberSecurityPage {
     'detectedAt',
     'actions',
   ];
-  readonly listColumns = ['type', 'value', 'scope', 'reason', 'actions'];
+  readonly listColumns = ['type', 'value', 'scope', 'status', 'reason', 'actions'];
   readonly securityEventColumns = [
     'detectedAt',
     'decision',
@@ -828,6 +832,26 @@ export class CyberSecurityPage {
     return this.services().find((service) => service.slug === slug)?.name ?? slug;
   }
 
+  listTypeLabel(value: string | null | undefined) {
+    const normalized = String(value ?? '').toLowerCase();
+    if (normalized === 'allowlist') return this.t('Allowlist');
+    if (normalized === 'blocklist') return this.t('Blocklist');
+    return value || '-';
+  }
+
+  listScopeLabel(value: string | null | undefined) {
+    const normalized = String(value ?? '').toLowerCase();
+    if (normalized === 'ip') return 'IP';
+    if (normalized === 'range') return this.t('Range');
+    if (normalized === 'country') return this.t('Country');
+    if (normalized === 'asn') return this.t('ASN');
+    return value || '-';
+  }
+
+  enabledLabel(value: number | boolean | null | undefined) {
+    return Number(value ?? 0) === 1 ? this.t('Active') : this.t('Inactive');
+  }
+
   private async save(endpoint: string, payload: Record<string, any>, update: boolean) {
     try {
       if (update) await this.api.put(endpoint, payload);
@@ -894,6 +918,10 @@ export class CyberSecurityPage {
 
   private pretty(value: unknown) {
     return JSON.stringify(value ?? null, null, 2);
+  }
+
+  private t(value: string) {
+    return value ? this.i18n.t(value) : value;
   }
 
   private parseJsonFields(payload: Record<string, any>, fields: string[]) {

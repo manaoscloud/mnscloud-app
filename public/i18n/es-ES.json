@@ -1688,5 +1688,11 @@
   "this subscription": "esta suscripción",
   "total subscriptions": "suscripciones en total",
   "total packages": "paquetes en total",
-  "total promotions": "promociones en total"
+  "total promotions": "promociones en total",
+  "FreeSWITCH Edge 01": "FreeSWITCH Edge 01",
+  "List type": "Tipo de lista",
+  "Maintain Cyber Security allowlist and blocklist records.": "Mantenga registros de autorización y bloqueo de Cyber Security.",
+  "records": "registros",
+  "Select": "Seleccionar",
+  "Worker": "Worker"
 }
