@@ -156,6 +156,11 @@ type CyberSnapshot = {
   securityEvents: CyberRecord[];
 };
 
+type CyberResourceParams = {
+  section: CyberSection;
+  filters: CyberFilters;
+};
+
 const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
   dashboard: {},
   servers: [],
@@ -221,10 +226,14 @@ export class CyberSecurityPage {
     action: '',
     origin: '',
   });
+  readonly activeSection = signal<CyberSection>('dashboard');
   private readonly cyberResource = resource({
-    params: () => this.appliedFilters(),
+    params: (): CyberResourceParams => ({
+      section: this.activeSection(),
+      filters: this.appliedFilters(),
+    }),
     defaultValue: EMPTY_CYBER_SNAPSHOT,
-    loader: ({ params }) => this.fetchCyberSnapshot(params),
+    loader: ({ params }) => this.fetchCyberSnapshot(params.filters, params.section),
   });
 
   readonly loading = this.cyberResource.isLoading;
@@ -243,7 +252,6 @@ export class CyberSecurityPage {
   readonly selectedJobs = signal<CyberRecord[]>([]);
   readonly selectedAlert = signal<CyberRecord | null>(null);
   readonly selectedDecision = signal<CyberRecord | null>(null);
-  readonly activeSection = signal<CyberSection>('dashboard');
   readonly alertServerSearch = signal('');
   readonly alertServiceSearch = signal('');
   readonly decisionDataSource = new MatTableDataSource<CyberRecord>([]);
@@ -535,7 +543,6 @@ export class CyberSecurityPage {
       const params = this.routeParams();
       this.activeSection.set(this.normalizeSection(params?.get('section') ?? null));
     });
-    this.refreshList();
   }
 
   routeFor(section: CyberSection) {
@@ -549,42 +556,86 @@ export class CyberSecurityPage {
     this.cyberResource.reload();
   }
 
-  private async fetchCyberSnapshot(filters: CyberFilters): Promise<CyberSnapshot> {
+  private emptyCyberSnapshot(): CyberSnapshot {
+    return {
+      dashboard: {},
+      servers: [],
+      services: [],
+      profiles: [],
+      decisions: [],
+      alerts: [],
+      listEntries: [],
+      trustedNodes: [],
+      securityEvents: [],
+    };
+  }
+
+  private async fetchCyberSnapshot(
+    filters: CyberFilters,
+    section: CyberSection,
+  ): Promise<CyberSnapshot> {
+    const snapshot = this.emptyCyberSnapshot();
     const query = this.queryString(filters);
     const decisionQuery = this.decisionQueryString(filters);
     const alertQuery = this.alertQueryString(filters);
-    const [
-      dashboard,
-      servers,
-      services,
-      profiles,
-      decisions,
-      alerts,
-      lists,
-      trustedNodes,
-      securityEvents,
-    ] = await Promise.all([
-      this.api.get<any>('cyber-security/dashboard'),
-      this.api.get<any>(`cyber-security/servers${query}`),
-      this.api.get<any>(`cyber-security/services${query}`),
-      this.api.get<any>(`cyber-security/profiles${query}`),
-      this.api.get<any>(`cyber-security/decisions${decisionQuery}`),
-      this.api.get<any>(`cyber-security/alerts${alertQuery}`),
-      this.api.get<any>(`cyber-security/lists${query}`),
-      this.api.get<any>(`cyber-security/trusted-nodes${query}`),
-      this.api.get<any>(`cyber-security/security-events${query}`),
-    ]);
-    return {
-      dashboard: dashboard?.data ?? {},
-      servers: servers?.data?.items ?? [],
-      services: services?.data?.items ?? [],
-      profiles: profiles?.data?.items ?? [],
-      decisions: decisions?.data?.items ?? [],
-      alerts: alerts?.data?.items ?? [],
-      listEntries: lists?.data?.items ?? [],
-      trustedNodes: trustedNodes?.data?.items ?? [],
-      securityEvents: securityEvents?.data?.items ?? [],
-    };
+
+    switch (section) {
+      case 'dashboard': {
+        const dashboard = await this.api.get<any>('cyber-security/dashboard');
+        snapshot.dashboard = dashboard?.data ?? {};
+        return snapshot;
+      }
+      case 'servers': {
+        const [servers, profiles] = await Promise.all([
+          this.api.get<any>(`cyber-security/servers${query}`),
+          this.api.get<any>(`cyber-security/profiles${query}`),
+        ]);
+        snapshot.servers = servers?.data?.items ?? [];
+        snapshot.profiles = profiles?.data?.items ?? [];
+        return snapshot;
+      }
+      case 'decisions': {
+        const [decisions, servers, services] = await Promise.all([
+          this.api.get<any>(`cyber-security/decisions${decisionQuery}`),
+          this.api.get<any>(`cyber-security/servers${query}`),
+          this.api.get<any>(`cyber-security/services${query}`),
+        ]);
+        snapshot.decisions = decisions?.data?.items ?? [];
+        snapshot.servers = servers?.data?.items ?? [];
+        snapshot.services = services?.data?.items ?? [];
+        return snapshot;
+      }
+      case 'alerts': {
+        const [alerts, servers, services] = await Promise.all([
+          this.api.get<any>(`cyber-security/alerts${alertQuery}`),
+          this.api.get<any>(`cyber-security/servers${query}`),
+          this.api.get<any>(`cyber-security/services${query}`),
+        ]);
+        snapshot.alerts = alerts?.data?.items ?? [];
+        snapshot.servers = servers?.data?.items ?? [];
+        snapshot.services = services?.data?.items ?? [];
+        return snapshot;
+      }
+      case 'lists': {
+        const lists = await this.api.get<any>(`cyber-security/lists${query}`);
+        snapshot.listEntries = lists?.data?.items ?? [];
+        return snapshot;
+      }
+      case 'security-events': {
+        const [securityEvents, trustedNodes] = await Promise.all([
+          this.api.get<any>(`cyber-security/security-events${query}`),
+          this.api.get<any>(`cyber-security/trusted-nodes${query}`),
+        ]);
+        snapshot.securityEvents = securityEvents?.data?.items ?? [];
+        snapshot.trustedNodes = trustedNodes?.data?.items ?? [];
+        return snapshot;
+      }
+      case 'profiles':
+      case 'trusted-nodes':
+      case 'network-policies':
+      default:
+        return snapshot;
+    }
   }
 
   applyFilters() {
