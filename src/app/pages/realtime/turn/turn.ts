@@ -36,7 +36,7 @@ import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-b
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { RealtimeTurnService, TurnRecord } from './turn.service';
 
-type FieldType = 'text' | 'number' | 'select' | 'textarea';
+type FieldType = 'text' | 'number' | 'select' | 'domain' | 'textarea';
 type Field = {
   key: string;
   label: string;
@@ -62,10 +62,9 @@ const CERTIFICATE_PROVIDER_OPTIONS = [
 const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
   { key: 'name', label: 'Name', required: true },
-  { key: 'realm', label: 'Realm', required: true },
+  { key: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'domain', required: true },
   { key: 'nodeUUID', label: 'Node UUID' },
   { key: 'hostname', label: 'Hostname' },
-  { key: 'publicDomain', label: 'Public Domain' },
   { key: 'publicIP', label: 'Public IP' },
   { key: 'privateIP', label: 'Private IP' },
 ];
@@ -139,13 +138,13 @@ export class RealtimeTurnPage {
   readonly generatedInstall = signal<TurnRecord | null>(null);
   readonly generatedInstallSource = signal<TurnRecord | null>(null);
   readonly formModel = signal<Record<string, any>>(this.defaultFormModel());
+  readonly domainSearch = signal('');
 
   readonly dataSource = new MatTableDataSource<TurnRecord>([]);
   readonly displayedColumns = [
     'select',
     'name',
-    'realm',
-    'publicDomain',
+    'domain',
     'externalIP',
     'ports',
     'certificateProvider',
@@ -175,6 +174,22 @@ export class RealtimeTurnPage {
       return response?.data?.items ?? [];
     },
   });
+
+  private readonly domainsResource = resource({
+    params: () => this.domainSearch().trim(),
+    defaultValue: [] as TurnRecord[],
+    loader: async ({ params }) => {
+      const response = await this.api.listRealtimeDomains({
+        purpose: 'turn',
+        status: 1,
+        limit: 5000,
+        search: params,
+      });
+      return response?.data?.items ?? [];
+    },
+  });
+
+  readonly domainOptions = computed(() => this.domainsResource.value());
 
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 
@@ -403,7 +418,7 @@ export class RealtimeTurnPage {
       '--runtime-token',
       this.shellQuote(String(token['runtimeToken'] ?? '')),
       '--realm',
-      this.shellQuote(String(token['realm'] || source?.['RtsRealm'] || '')),
+      this.shellQuote(String(token['realm'] || source?.['RtdName'] || source?.['DomainName'] || '')),
       '--listening-ip',
       this.shellQuote(String(source?.['RtsListeningIP'] || '0.0.0.0')),
       '--listening-port',
@@ -445,6 +460,10 @@ export class RealtimeTurnPage {
     this.formModel.update((current) => ({ ...current, [key]: value }));
   }
 
+  clearDomainSearch(opened: boolean): void {
+    if (!opened) this.domainSearch.set('');
+  }
+
   isFormValid(): boolean {
     const model = this.formModel();
     return RECORD_FIELDS.every((field) => {
@@ -469,8 +488,7 @@ export class RealtimeTurnPage {
   cell(row: TurnRecord, column: string): string {
     const map: Record<string, any> = {
       name: row['RtsName'],
-      realm: row['RtsRealm'],
-      publicDomain: row['RtsPublicDomain'],
+      domain: row['RtdName'] ?? row['DomainName'],
       externalIP: row['RtsExternalIP'] || row['RtsPublicIP'],
       ports: `${row['RtsListeningPort'] ?? 3478} / ${row['RtsTlsListeningPort'] ?? 5349}`,
       certificateProvider: row['RtsCertificateProvider'],
@@ -483,8 +501,7 @@ export class RealtimeTurnPage {
   columnLabel(column: string): string {
     const labels: Record<string, string> = {
       name: 'Name',
-      realm: 'Realm',
-      publicDomain: 'Public Domain',
+      domain: 'Domain',
       externalIP: 'External IP',
       ports: 'Ports',
       certificateProvider: 'Certificate',
@@ -548,10 +565,9 @@ export class RealtimeTurnPage {
     return {
       status: 1,
       name: '',
-      realm: '',
+      realtimeDomainUUID: '',
       nodeUUID: '',
       hostname: '',
-      publicDomain: '',
       publicIP: '',
       privateIP: '',
       listeningIP: '0.0.0.0',
@@ -574,10 +590,9 @@ export class RealtimeTurnPage {
     return {
       status: Number(row['RtsStatus'] ?? 1),
       name: row['RtsName'] ?? '',
-      realm: row['RtsRealm'] ?? '',
+      realtimeDomainUUID: row['RealtimeDomainRtdUUID'] ?? '',
       nodeUUID: row['RtsNodeUUID'] ?? '',
       hostname: row['RtsHostname'] ?? '',
-      publicDomain: row['RtsPublicDomain'] ?? '',
       publicIP: row['RtsPublicIP'] ?? '',
       privateIP: row['RtsPrivateIP'] ?? '',
       listeningIP: row['RtsListeningIP'] ?? '0.0.0.0',

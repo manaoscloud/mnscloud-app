@@ -2,10 +2,8 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'TURN/STUN Servers' | transloco }}</h1>
-        <p>
-          {{ 'Register dedicated coturn relay servers for realtime media traversal.' | transloco }}
-        </p>
+        <h1>{{ 'Realtime Domains' | transloco }}</h1>
+        <p>{{ 'Manage public realtime domains used by TURN/STUN, WebRTC, SFU and signaling edges.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
@@ -22,7 +20,7 @@
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          [placeholder]="'Search TURN/STUN servers' | transloco"
+          [placeholder]="'Search realtime domains' | transloco"
           [value]="searchInput()"
           (input)="searchInput.set($any($event.target).value)"
         />
@@ -96,11 +94,6 @@
                   >
                     {{ cell(row, column) | transloco }}
                   </span>
-                } @else if (column === 'ports') {
-                  <div class="port-stack">
-                    <span>UDP/TCP {{ cell(row, column).split(' / ')[0] }}</span>
-                    <span>TLS {{ cell(row, column).split(' / ')[1] }}</span>
-                  </div>
                 } @else {
                   {{ cell(row, column) || '-' }}
                 }
@@ -122,14 +115,6 @@
                 (click)="startEdit(row)"
               >
                 <mat-icon>edit</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                type="button"
-                [matTooltip]="'Generate install command' | transloco"
-                (click)="generateInstallCommand(row)"
-              >
-                <mat-icon>terminal</mat-icon>
               </button>
               <button
                 mat-icon-button
@@ -162,12 +147,12 @@
   </mat-card>
 </section>
 
-<ng-template #turnFormDialog>
-  <div class="crud-dialog turn-dialog">
+<ng-template #domainFormDialog>
+  <div class="crud-dialog realtime-domain-dialog">
     <header class="dialog-header">
       <div>
-        <h2>{{ (editing() ? 'Edit TURN/STUN Server' : 'New TURN/STUN Server') | transloco }}</h2>
-        <p>{{ 'Dedicated coturn relay server authorized by runtime node UUID.' | transloco }}</p>
+        <h2>{{ (editing() ? 'Edit realtime domain' : 'New realtime domain') | transloco }}</h2>
+        <p>{{ 'Public realtime domain assigned to realtime edge services.' | transloco }}</p>
       </div>
     </header>
 
@@ -175,44 +160,19 @@
       <mat-tab-group class="form-tabs" animationDuration="0ms">
         <mat-tab [label]="'Record' | transloco">
           <form
-            id="turnForm"
+            id="realtimeDomainForm"
             class="form-grid tab-content"
             (submit)="submit(); $event.preventDefault()"
           >
             @for (field of recordFields; track field.key) {
               <mat-form-field appearance="outline" [class]="field.span || ''">
-                <mat-label
-                  >{{ field.label | transloco }}
+                <mat-label>
+                  {{ field.label | transloco }}
                   @if (field.required) {
                     *
                   }
                 </mat-label>
-                @if (field.type === 'domain') {
-                  <mat-select
-                    [value]="fieldValue(field.key)"
-                    (selectionChange)="setFieldValue(field.key, $event.value)"
-                    (openedChange)="clearDomainSearch($event)"
-                  >
-                    <mat-option class="select-search-option" disabled>
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <mat-icon matPrefix>search</mat-icon>
-                        <input
-                          matInput
-                          [placeholder]="'Search domains' | transloco"
-                          [value]="domainSearch()"
-                          (input)="domainSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (domain of domainOptions(); track domain['RtdUUID']) {
-                      <mat-option [value]="domain['RtdUUID']">
-                        {{ domain['RtdName'] || domain['DomainName'] }}
-                      </mat-option>
-                    }
-                  </mat-select>
-                } @else if (field.type === 'select') {
+                @if (field.type === 'select') {
                   <mat-select
                     [value]="fieldValue(field.key)"
                     (selectionChange)="setFieldValue(field.key, $event.value)"
@@ -224,7 +184,6 @@
                 } @else {
                   <input
                     matInput
-                    [type]="field.type === 'number' ? 'number' : 'text'"
                     [value]="fieldValue(field.key)"
                     (input)="setFieldValue(field.key, $any($event.target).value)"
                   />
@@ -234,26 +193,10 @@
           </form>
         </mat-tab>
 
-        <mat-tab [label]="'Network' | transloco">
-          <div class="form-grid tab-content">
-            @for (field of networkFields; track field.key) {
-              <mat-form-field appearance="outline">
-                <mat-label>{{ field.label | transloco }}</mat-label>
-                <input
-                  matInput
-                  [type]="field.type === 'number' ? 'number' : 'text'"
-                  [value]="fieldValue(field.key)"
-                  (input)="setFieldValue(field.key, $any($event.target).value)"
-                />
-              </mat-form-field>
-            }
-          </div>
-        </mat-tab>
-
         <mat-tab [label]="'Certificate' | transloco">
           <div class="form-grid tab-content">
             @for (field of certificateFields; track field.key) {
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" [class]="field.span || ''">
                 <mat-label>{{ field.label | transloco }}</mat-label>
                 @if (field.type === 'select') {
                   <mat-select
@@ -279,7 +222,7 @@
         <mat-tab [label]="'Notes' | transloco">
           <div class="form-grid tab-content">
             @for (field of notesFields; track field.key) {
-              <mat-form-field appearance="outline" [class]="field.span || ''">
+              <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ field.label | transloco }}</mat-label>
                 <textarea
                   matInput
@@ -294,80 +237,34 @@
       </mat-tab-group>
     </mat-dialog-content>
 
-    <mat-dialog-actions class="form-actions">
-      <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">
-          {{ 'Cancel' | transloco }}
-        </button>
-      </div>
-      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+    <mat-dialog-actions class="dialog-actions">
+      <button mat-stroked-button type="button" (click)="closeDialog()">
+        {{ 'Cancel' | transloco }}
+      </button>
+      <div class="dialog-save-actions">
         <button
-          class="save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="turnForm"
-          [disabled]="!isFormValid() || saving()"
+          type="button"
+          [disabled]="saving()"
+          (click)="submit()"
         >
           <mat-icon>save</mat-icon>
           {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
-            class="save-more-button"
             mat-flat-button
             color="primary"
             type="button"
-            [matMenuTriggerFor]="saveMenu"
-            [disabled]="!isFormValid() || saving()"
-            [attr.aria-label]="'More save actions' | transloco"
-            [matTooltip]="'More save actions' | transloco"
+            [disabled]="saving()"
+            (click)="submit(true)"
           >
-            <mat-icon>expand_more</mat-icon>
+            <mat-icon>add</mat-icon>
+            {{ 'Save and new' | transloco }}
           </button>
         }
       </div>
-      <mat-menu #saveMenu="matMenu" class="save-more-menu" xPosition="before" yPosition="below">
-        <button
-          mat-menu-item
-          type="button"
-          (click)="submit(true)"
-          [disabled]="!isFormValid() || saving()"
-        >
-          <mat-icon>add</mat-icon>
-          <span>{{ 'Save/New' | transloco }}</span>
-        </button>
-      </mat-menu>
-    </mat-dialog-actions>
-  </div>
-</ng-template>
-
-<ng-template #installCommandDialog>
-  <div class="turn-token-dialog">
-    <h2 mat-dialog-title>{{ 'TURN/STUN install command' | transloco }}</h2>
-    <mat-dialog-content>
-      <p>{{ 'Run this command on the TURN/STUN edge server.' | transloco }}</p>
-      <p class="token-warning">
-        {{
-          'This runtime token is shown only once. Generating a new command replaces the previous token for this TURN/STUN server.'
-            | transloco
-        }}
-      </p>
-      <pre>{{ installCommand() }}</pre>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button
-        mat-stroked-button
-        type="button"
-        [cdkCopyToClipboard]="installCommand()"
-        (cdkCopyToClipboardCopied)="notifyCommandCopied($event)"
-      >
-        <mat-icon>content_copy</mat-icon>
-        {{ 'Copy' | transloco }}
-      </button>
-      <button mat-flat-button color="primary" mat-dialog-close type="button">
-        {{ 'Done' | transloco }}
-      </button>
     </mat-dialog-actions>
   </div>
 </ng-template>

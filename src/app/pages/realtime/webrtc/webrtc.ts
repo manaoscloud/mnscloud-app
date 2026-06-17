@@ -68,7 +68,7 @@ const COLUMN_LABELS: Record<string, string> = {
   hostname: 'Hostname',
   publicDomain: 'Public Domain',
   publicIP: 'Public IP',
-  domain: 'VoIP Domain',
+  domain: 'Realtime Domain',
   certificateProvider: 'Certificate',
   nginxStatus: 'Nginx',
   certificateStatus: 'TLS',
@@ -139,7 +139,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     title: 'WebRTC Domains',
     subtitle: 'Publish partner and tenant WSS domains on authorized WebRTC edge nodes.',
     uuid: 'RwdUUID',
-    name: 'VdmName',
+    name: 'RtdName',
     status: 'RwdStatus',
     columns: [
       'domain',
@@ -153,8 +153,8 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     fields: [
       { key: 'serverUUID', label: 'Server', type: 'lookup', lookup: 'servers', required: true },
       {
-        key: 'domainUUID',
-        label: 'VoIP Domain',
+        key: 'realtimeDomainUUID',
+        label: 'Realtime Domain',
         type: 'lookup',
         lookup: 'domains',
         required: true,
@@ -315,7 +315,7 @@ export class RealtimeWebRtcPage {
       version: row['RwsVersion'],
       lastSeen: row['RwsLastSeenAt'],
       server: row['RwsName'],
-      domain: row['VdmName'],
+      domain: row['RtdName'] ?? row['DomainName'],
       certificateProvider: row['RwdCertificateProvider'],
       nginxStatus: row['RwdNginxStatus'],
       certificateStatus: row['RwdCertificateStatus'],
@@ -368,15 +368,20 @@ export class RealtimeWebRtcPage {
       [...needs].map(async (key) => {
         const res =
           key === 'domains'
-            ? await this.api.listVoipDomains(this.scope(), { limit: 5000 })
+            ? await this.api.listRealtimeDomains({
+                limit: 5000,
+                purpose: 'webrtc',
+              })
             : this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
               ? await this.api.listServerOptions()
               : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
         this.lookups[key] = rows
           .map((row: WebRtcRecord) => ({
-            value: String(key === 'domains' ? (row['VdmUUID'] ?? '') : (row['RwsUUID'] ?? '')),
-            label: String(key === 'domains' ? (row['VdmName'] ?? '') : (row['RwsName'] ?? '')),
+            value: String(key === 'domains' ? (row['RtdUUID'] ?? '') : (row['RwsUUID'] ?? '')),
+            label: String(
+              key === 'domains' ? (row['RtdName'] ?? row['DomainName'] ?? '') : (row['RwsName'] ?? ''),
+            ),
           }))
           .filter((option: LookupOption) => option.value);
       }),
@@ -426,7 +431,7 @@ export class RealtimeWebRtcPage {
       baseUrl: 'RwsBaseUrl',
       version: 'RwsVersion',
       serverUUID: 'RealtimeWebRtcServerRwsUUID',
-      domainUUID: 'VoipDomainVdmUUID',
+      realtimeDomainUUID: 'RealtimeDomainRtdUUID',
       certificateProvider: 'RwdCertificateProvider',
       autoProvision: 'RwdAutoProvision',
       key: 'RwpKey',

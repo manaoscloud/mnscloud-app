@@ -1279,6 +1279,13 @@ export const routes: Routes = [
                 title: 'System Realtime • WebRTC Dashboard | mnscloud',
                 data: { scope: 'master' },
               },
+              {
+                path: 'realtime/domain',
+                loadComponent: () =>
+                  import('./pages/realtime/domains/domains').then((m) => m.RealtimeDomainsPage),
+                title: 'System Realtime • Domains | mnscloud',
+                data: { scope: 'master' },
+              },
               ...(['domain', 'server', 'parameter'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
                 loadComponent: () =>

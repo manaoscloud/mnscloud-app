@@ -1487,6 +1487,13 @@ export class MainLayout {
       requiresEnvironment: true,
       children: [
         {
+          id: 'realtime/domain',
+          label: 'Domains',
+          icon: 'language',
+          masterRoute: '/system/realtime/domain',
+          roles: ['MASTER'],
+        },
+        {
           id: 'realtime/webrtc',
           label: 'WebRTC',
           icon: 'settings_input_antenna',

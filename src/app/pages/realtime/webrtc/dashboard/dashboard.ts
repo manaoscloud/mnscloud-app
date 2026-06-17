@@ -295,8 +295,8 @@ export class RealtimeWebRtcDashboardPage {
         }`,
       }));
       this.domainOptions = this.items<WebRtcRecord>(domainResponse).map((item) => ({
-        value: item['RwdUUID'] ?? item['VoipDomainVdmUUID'] ?? item['VdmUUID'],
-        label: item['VdmName'] ?? item['domainName'] ?? item['label'] ?? '-',
+        value: item['RwdUUID'] ?? item['RealtimeDomainRtdUUID'] ?? item['RtdUUID'],
+        label: item['RtdName'] ?? item['domainName'] ?? item['label'] ?? '-',
       }));
     } catch (error: any) {
       this.snack.error(error?.error?.error || 'Failed to load WebRTC dashboard filters.');
