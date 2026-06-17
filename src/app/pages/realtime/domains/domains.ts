@@ -18,6 +18,7 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -25,10 +26,11 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../../services/snackbar.service';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -116,6 +118,7 @@ const NOTES_FIELDS: Field[] = [
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatMenuModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
@@ -132,6 +135,7 @@ export class RealtimeDomainsPage {
   private readonly api = inject(RealtimeDomainsService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(TranslocoService);
   private readonly snack = inject(SnackbarService);
 
   readonly searchInput = signal('');
@@ -311,7 +315,7 @@ export class RealtimeDomainsPage {
       } else {
         await this.api.create(this.payload());
       }
-      this.snack.success('Realtime domain saved.');
+      this.snack.success(this.t('Realtime domain saved.'));
       this.itemsResource.reload();
       if (saveAndNew && !row) {
         this.editing.set(null);
@@ -320,7 +324,7 @@ export class RealtimeDomainsPage {
         this.closeDialog();
       }
     } catch (error: any) {
-      this.snack.error(this.errorMessage(error, 'Failed to save realtime domain.'));
+      this.snack.error(this.errorMessage(error, this.t('Failed to save realtime domain.')));
     } finally {
       this.saving.set(false);
     }
@@ -333,16 +337,16 @@ export class RealtimeDomainsPage {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
-            title: 'Delete realtime domain',
-            message: `Delete ${this.name(row)}?`,
-            confirmText: 'Delete',
+            title: this.t('Delete realtime domain'),
+            message: this.t('Delete realtime domain confirmation', { name: this.name(row) }),
+            confirmText: this.t('Delete'),
           },
         })
         .afterClosed(),
     );
     if (!ok) return;
     await this.api.remove(this.uuid(row));
-    this.snack.success('Realtime domain deleted.');
+    this.snack.success(this.t('Realtime domain deleted.'));
     this.itemsResource.reload();
   }
 
@@ -355,9 +359,9 @@ export class RealtimeDomainsPage {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
-            title: 'Delete selected realtime domains',
-            message: `Delete ${ids.length} selected realtime domain(s)?`,
-            confirmText: 'Delete selected',
+            title: this.t('Delete selected realtime domains'),
+            message: this.t('Delete selected realtime domains confirmation', { count: ids.length }),
+            confirmText: this.t('Delete selected'),
           },
         })
         .afterClosed(),
@@ -370,9 +374,9 @@ export class RealtimeDomainsPage {
     );
     this.selected.set(failedIds);
     if (failed.length) {
-      this.snack.error(`${failed.length} selected realtime domain(s) could not be deleted.`);
+      this.snack.error(this.t('Selected realtime domains could not be deleted.', { count: failed.length }));
     } else {
-      this.snack.success('Selected realtime domains deleted.');
+      this.snack.success(this.t('Selected realtime domains deleted.'));
     }
     this.itemsResource.reload();
   }
@@ -392,6 +396,12 @@ export class RealtimeDomainsPage {
       onEscape: () => this.closeDialog(),
     });
     this.dialogRef = this.binding.ref;
+    bindDialogClosed(this.dialogRef, () => {
+      this.binding?.stop();
+      this.binding = null;
+      this.dialogRef = null;
+      this.saving.set(false);
+    });
   }
 
   private defaultFormModel(): Record<string, any> {
@@ -454,5 +464,9 @@ export class RealtimeDomainsPage {
   private errorMessage(error: unknown, fallback: string): string {
     const maybe = error as { error?: { error?: string; message?: string }; message?: string };
     return maybe?.error?.error || maybe?.error?.message || maybe?.message || fallback;
+  }
+
+  private t(key: string, params?: Record<string, unknown>): string {
+    return this.i18n.translate(key, params);
   }
 }

@@ -237,12 +237,16 @@
       </mat-tab-group>
     </mat-dialog-content>
 
-    <mat-dialog-actions class="dialog-actions">
-      <button mat-stroked-button type="button" (click)="closeDialog()">
-        {{ 'Cancel' | transloco }}
-      </button>
-      <div class="dialog-save-actions">
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
+      </div>
+
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
         <button
+          class="save-main-button"
           mat-flat-button
           color="primary"
           type="button"
@@ -254,17 +258,25 @@
         </button>
         @if (!editing()) {
           <button
+            class="save-more-button"
             mat-flat-button
             color="primary"
             type="button"
+            [matMenuTriggerFor]="domainSaveMenu"
             [disabled]="saving()"
-            (click)="submit(true)"
+            [attr.aria-label]="'More save actions' | transloco"
           >
-            <mat-icon>add</mat-icon>
-            {{ 'Save and new' | transloco }}
+            <mat-icon>expand_more</mat-icon>
           </button>
         }
       </div>
+
+      <mat-menu #domainSaveMenu="matMenu" xPosition="before" yPosition="below">
+        <button mat-menu-item type="button" (click)="submit(true)" [disabled]="saving()">
+          <mat-icon>add</mat-icon>
+          <span>{{ 'Save/New' | transloco }}</span>
+        </button>
+      </mat-menu>
     </mat-dialog-actions>
   </div>
 </ng-template>

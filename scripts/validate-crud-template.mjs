@@ -31,7 +31,7 @@ const htmlRules = [
   ['card root', '<mat-card class="erp-card'],
   ['header', 'erp-header'],
   ['header actions', 'header-actions'],
-  ['refresh action', /<mat-icon>\s*refresh\s*<\/mat-icon>/],
+  ['refresh action', /<app-refresh-button\b|<mat-icon>\s*refresh\s*<\/mat-icon>/],
   ['new action', /<mat-icon>\s*add\s*<\/mat-icon>/],
   ['filter grid', 'filter-grid'],
   ['filter actions row', 'filter-actions'],
