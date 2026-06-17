@@ -65,11 +65,11 @@ export type WebRtcDashboardFilters = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class VoipWebRtcDashboardService {
+export class RealtimeWebRtcDashboardService {
   private readonly api = inject(ApiService);
 
   private basePath(system = false) {
-    return system ? 'system/voip/webrtc/dashboard' : 'voip/webrtc/dashboard';
+    return system ? 'system/realtime/webrtc/dashboard' : 'realtime/webrtc/dashboard';
   }
 
   get(filters: WebRtcDashboardFilters = {}, system = false) {

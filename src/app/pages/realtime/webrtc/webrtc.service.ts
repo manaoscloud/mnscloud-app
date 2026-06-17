@@ -7,10 +7,10 @@ export type WebRtcScope = 'tenant' | 'master';
 export type WebRtcRecord = Record<string, any>;
 
 @Injectable({ providedIn: 'root' })
-export class VoipWebRtcService {
+export class RealtimeWebRtcService {
   private readonly api = inject(ApiService);
-  private readonly basePath = 'voip/webrtc';
-  private readonly systemBasePath = 'system/voip/webrtc';
+  private readonly basePath = 'realtime/webrtc';
+  private readonly systemBasePath = 'system/realtime/webrtc';
 
   private resourcePath(resource: WebRtcResource, scope: WebRtcScope = 'tenant') {
     if (scope === 'master' || resource === 'servers' || resource === 'parameters') {

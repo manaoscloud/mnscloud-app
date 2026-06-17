@@ -1277,41 +1277,6 @@ export class MainLayout {
           ],
         },
         {
-          id: 'voip/webrtc',
-          label: 'WebRTC',
-          icon: 'settings_input_antenna',
-          children: [
-            {
-              id: 'voip/webrtc/dashboard',
-              label: 'Dashboard',
-              icon: 'dashboard',
-              route: '/voip/webrtc',
-              masterRoute: '/system/webrtc',
-            },
-            {
-              id: 'voip/webrtc/domain',
-              label: 'Domain',
-              icon: 'language',
-              route: '/voip/webrtc/domain',
-              masterRoute: '/system/webrtc/domain',
-            },
-            {
-              id: 'voip/webrtc/server',
-              label: 'Server',
-              icon: 'dns',
-              masterRoute: '/system/webrtc/server',
-              roles: ['MASTER'],
-            },
-            {
-              id: 'voip/webrtc/parameter',
-              label: 'Parameter',
-              icon: 'tune',
-              masterRoute: '/system/webrtc/parameter',
-              roles: ['MASTER'],
-            },
-          ],
-        },
-        {
           id: 'voip/softswitch',
           label: 'Softswitch',
           icon: 'router',
@@ -1506,6 +1471,53 @@ export class MainLayout {
               label: 'Media Files',
               icon: 'library_music',
               route: '/voip/pabx/media-files',
+            },
+          ],
+        },
+      ],
+    },
+
+    // ✅ Realtime media/signaling infrastructure
+    {
+      id: 'realtime',
+      label: 'Realtime',
+      icon: 'cell_tower',
+      entitlementCode: 'module.realtime.*',
+      roles: ['OWNER', 'ADMIN', 'USER'],
+      requiresEnvironment: true,
+      children: [
+        {
+          id: 'realtime/webrtc',
+          label: 'WebRTC',
+          icon: 'settings_input_antenna',
+          children: [
+            {
+              id: 'realtime/webrtc/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/realtime/webrtc',
+              masterRoute: '/system/realtime/webrtc',
+            },
+            {
+              id: 'realtime/webrtc/domain',
+              label: 'Domain',
+              icon: 'language',
+              route: '/realtime/webrtc/domain',
+              masterRoute: '/system/realtime/webrtc/domain',
+            },
+            {
+              id: 'realtime/webrtc/server',
+              label: 'Server',
+              icon: 'dns',
+              masterRoute: '/system/realtime/webrtc/server',
+              roles: ['MASTER'],
+            },
+            {
+              id: 'realtime/webrtc/parameter',
+              label: 'Parameter',
+              icon: 'tune',
+              masterRoute: '/system/realtime/webrtc/parameter',
+              roles: ['MASTER'],
             },
           ],
         },

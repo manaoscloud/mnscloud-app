@@ -233,7 +233,7 @@ export class MonitoringAgentsPage {
     'security.logs.read',
     'voip.asterisk.manage',
     'voip.freeswitch.manage',
-    'webrtc.turn.manage',
+    'realtime.turn.manage',
     'docker.manage',
   ];
 

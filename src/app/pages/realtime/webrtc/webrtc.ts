@@ -35,7 +35,7 @@ import { firstValueFrom } from 'rxjs';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { VoipWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
+import { RealtimeWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 
@@ -88,9 +88,9 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     resource: 'servers',
     title: 'WebRTC Servers',
     subtitle: 'Register Kamailio WebRTC edge nodes authorized by node UUID.',
-    uuid: 'VwrUUID',
-    name: 'VwrName',
-    status: 'VwrStatus',
+    uuid: 'RwsUUID',
+    name: 'RwsName',
+    status: 'RwsStatus',
     columns: ['name', 'engine', 'hostname', 'publicDomain', 'publicIP', 'status', 'lastSeen'],
     fields: [
       { key: 'name', label: 'Name', required: true },
@@ -116,9 +116,9 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     resource: 'parameters',
     title: 'WebRTC Parameters',
     subtitle: 'Manage tenant and edge-specific WebRTC runtime parameters.',
-    uuid: 'VwpUUID',
-    name: 'VwpKey',
-    status: 'VwpStatus',
+    uuid: 'RwpUUID',
+    name: 'RwpKey',
+    status: 'RwpStatus',
     columns: ['key', 'server', 'type', 'value', 'status'],
     fields: [
       { key: 'serverUUID', label: 'Server', type: 'lookup', lookup: 'servers' },
@@ -138,9 +138,9 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     resource: 'domains',
     title: 'WebRTC Domains',
     subtitle: 'Publish partner and tenant WSS domains on authorized WebRTC edge nodes.',
-    uuid: 'VwdUUID',
+    uuid: 'RwdUUID',
     name: 'VdmName',
-    status: 'VwdStatus',
+    status: 'RwdStatus',
     columns: [
       'domain',
       'server',
@@ -178,7 +178,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
 };
 
 @Component({
-  selector: 'app-voip-webrtc',
+  selector: 'app-realtime-webrtc',
   standalone: true,
   imports: [
     RefreshButtonComponent,
@@ -204,8 +204,8 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   templateUrl: './webrtc.html',
   styleUrls: ['./webrtc.scss'],
 })
-export class VoipWebRtcPage {
-  private readonly api = inject(VoipWebRtcService);
+export class RealtimeWebRtcPage {
+  private readonly api = inject(RealtimeWebRtcService);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -308,22 +308,22 @@ export class VoipWebRtcPage {
   cell(row: WebRtcRecord, column: string) {
     const map: Record<string, any> = {
       name: this.name(row),
-      engine: row['VwrEngine'],
-      hostname: row['VwrHostname'],
-      publicDomain: row['VwrPublicDomain'],
-      publicIP: row['VwrPublicIP'],
-      version: row['VwrVersion'],
-      lastSeen: row['VwrLastSeenAt'],
-      server: row['VwrName'],
+      engine: row['RwsEngine'],
+      hostname: row['RwsHostname'],
+      publicDomain: row['RwsPublicDomain'],
+      publicIP: row['RwsPublicIP'],
+      version: row['RwsVersion'],
+      lastSeen: row['RwsLastSeenAt'],
+      server: row['RwsName'],
       domain: row['VdmName'],
-      certificateProvider: row['VwdCertificateProvider'],
-      nginxStatus: row['VwdNginxStatus'],
-      certificateStatus: row['VwdCertificateStatus'],
-      autoProvision: Number(row['VwdAutoProvision'] ?? 0) === 1 ? 'YES' : 'NO',
-      key: row['VwpKey'],
-      value: this.displayValue(row['VwpValue']),
-      type: row['VwpType'],
-      description: row['VwpDescription'],
+      certificateProvider: row['RwdCertificateProvider'],
+      nginxStatus: row['RwdNginxStatus'],
+      certificateStatus: row['RwdCertificateStatus'],
+      autoProvision: Number(row['RwdAutoProvision'] ?? 0) === 1 ? 'YES' : 'NO',
+      key: row['RwpKey'],
+      value: this.displayValue(row['RwpValue']),
+      type: row['RwpType'],
+      description: row['RwpDescription'],
       status: this.status(row) ? 'ACTIVE' : 'INACTIVE',
     };
     return map[column] ?? '';
@@ -375,8 +375,8 @@ export class VoipWebRtcPage {
         const rows = res?.data?.items ?? [];
         this.lookups[key] = rows
           .map((row: WebRtcRecord) => ({
-            value: String(key === 'domains' ? (row['VdmUUID'] ?? '') : (row['VwrUUID'] ?? '')),
-            label: String(key === 'domains' ? (row['VdmName'] ?? '') : (row['VwrName'] ?? '')),
+            value: String(key === 'domains' ? (row['VdmUUID'] ?? '') : (row['RwsUUID'] ?? '')),
+            label: String(key === 'domains' ? (row['VdmName'] ?? '') : (row['RwsName'] ?? '')),
           }))
           .filter((option: LookupOption) => option.value);
       }),
@@ -417,32 +417,32 @@ export class VoipWebRtcPage {
     }
     const m: Record<string, string> = {
       name: this.config().name,
-      engine: 'VwrEngine',
-      nodeUUID: 'VwrNodeUUID',
-      hostname: 'VwrHostname',
-      publicDomain: 'VwrPublicDomain',
-      publicIP: 'VwrPublicIP',
-      privateIP: 'VwrPrivateIP',
-      baseUrl: 'VwrBaseUrl',
-      version: 'VwrVersion',
-      serverUUID: 'VoipWebRtcServerVwrUUID',
+      engine: 'RwsEngine',
+      nodeUUID: 'RwsNodeUUID',
+      hostname: 'RwsHostname',
+      publicDomain: 'RwsPublicDomain',
+      publicIP: 'RwsPublicIP',
+      privateIP: 'RwsPrivateIP',
+      baseUrl: 'RwsBaseUrl',
+      version: 'RwsVersion',
+      serverUUID: 'RealtimeWebRtcServerRwsUUID',
       domainUUID: 'VoipDomainVdmUUID',
-      certificateProvider: 'VwdCertificateProvider',
-      autoProvision: 'VwdAutoProvision',
-      key: 'VwpKey',
-      type: 'VwpType',
-      description: 'VwpDescription',
+      certificateProvider: 'RwdCertificateProvider',
+      autoProvision: 'RwdAutoProvision',
+      key: 'RwpKey',
+      type: 'RwpType',
+      description: 'RwpDescription',
     };
     if (key === 'status') return this.status(row) ? 'active' : 'inactive';
     if (key === 'autoProvision')
-      return Number(row['VwdAutoProvision'] ?? 1) === 1 ? 'active' : 'inactive';
+      return Number(row['RwdAutoProvision'] ?? 1) === 1 ? 'active' : 'inactive';
     if (key === 'notes') {
       return this.config().resource === 'domains'
-        ? (row['VwdNotes'] ?? '')
-        : (row['VwrNotes'] ?? '');
+        ? (row['RwdNotes'] ?? '')
+        : (row['RwsNotes'] ?? '');
     }
-    if (key === 'configJson') return JSON.stringify(row['VwrConfig'] ?? {}, null, 2);
-    if (key === 'valueJson') return this.displayValue(row['VwpValue']);
+    if (key === 'configJson') return JSON.stringify(row['RwsConfig'] ?? {}, null, 2);
+    if (key === 'valueJson') return this.displayValue(row['RwpValue']);
     return row[m[key]] ?? '';
   }
   async startCreate() {
@@ -460,7 +460,7 @@ export class VoipWebRtcPage {
   openDialog() {
     const formDialog = this.formDialog();
     if (!formDialog) return;
-    this.binding = openCrudTemplateDialog(this.dialog, formDialog, 'voip-webrtc-form-dialog', {
+    this.binding = openCrudTemplateDialog(this.dialog, formDialog, 'realtime-webrtc-form-dialog', {
       onEscape: () => this.closeDialog(),
     });
     this.dialogRef = this.binding.ref;

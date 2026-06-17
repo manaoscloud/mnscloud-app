@@ -104,11 +104,6 @@ export class VoipDashboardPage {
         icon: 'phone_in_talk',
       },
       {
-        label: 'WebRTC online',
-        value: this.ratio(item.webrtcOnline, item.webrtcServers),
-        icon: 'settings_input_antenna',
-      },
-      {
         label: 'Answered calls',
         value: this.number(item.callsAnswered),
         icon: 'call',

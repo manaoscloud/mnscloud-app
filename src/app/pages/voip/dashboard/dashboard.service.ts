@@ -18,10 +18,6 @@ export type VoipDashboardSummary = {
   sbcOnline?: number;
   sbcTrunks?: number;
   sbcRoutes?: number;
-  webrtcServers?: number;
-  webrtcOnline?: number;
-  webrtcDomains?: number;
-  webrtcDomainsActive?: number;
   softswitchAccounts?: number;
   softswitchActive?: number;
   softswitchServers?: number;

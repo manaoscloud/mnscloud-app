@@ -24,10 +24,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { VoipWebRtcService, WebRtcRecord } from '../webrtc.service';
+import { RealtimeWebRtcService, WebRtcRecord } from '../webrtc.service';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import {
-  VoipWebRtcDashboardService,
+  RealtimeWebRtcDashboardService,
   WebRtcDashboardDomain,
   WebRtcDashboardData,
   WebRtcDashboardFilters,
@@ -57,7 +57,7 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
 };
 
 @Component({
-  selector: 'app-voip-webrtc-dashboard',
+  selector: 'app-realtime-webrtc-dashboard',
   standalone: true,
   imports: [
     RefreshButtonComponent,
@@ -79,9 +79,9 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })
-export class VoipWebRtcDashboardPage {
-  private readonly api = inject(VoipWebRtcDashboardService);
-  private readonly webrtcApi = inject(VoipWebRtcService);
+export class RealtimeWebRtcDashboardPage {
+  private readonly api = inject(RealtimeWebRtcDashboardService);
+  private readonly webrtcApi = inject(RealtimeWebRtcService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 5000;
@@ -289,13 +289,13 @@ export class VoipWebRtcDashboardPage {
       ]);
 
       this.serverOptions = this.items<WebRtcRecord>(serverResponse).map((item) => ({
-        value: item['VwrUUID'],
-        label: `${item['VwrName'] ?? item['label'] ?? item['name'] ?? '-'}${
-          item['VwrEngine'] ? ` (${item['VwrEngine']})` : ''
+        value: item['RwsUUID'],
+        label: `${item['RwsName'] ?? item['label'] ?? item['name'] ?? '-'}${
+          item['RwsEngine'] ? ` (${item['RwsEngine']})` : ''
         }`,
       }));
       this.domainOptions = this.items<WebRtcRecord>(domainResponse).map((item) => ({
-        value: item['VwdUUID'] ?? item['VoipDomainVdmUUID'] ?? item['VdmUUID'],
+        value: item['RwdUUID'] ?? item['VoipDomainVdmUUID'] ?? item['VdmUUID'],
         label: item['VdmName'] ?? item['domainName'] ?? item['label'] ?? '-',
       }));
     } catch (error: any) {

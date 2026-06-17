@@ -896,19 +896,19 @@ export const routes: Routes = [
                 },
               })) as any),
               {
-                path: 'voip/webrtc',
+                path: 'realtime/webrtc',
                 loadComponent: () =>
-                  import('./pages/voip/webrtc/dashboard/dashboard').then(
-                    (m) => m.VoipWebRtcDashboardPage,
+                  import('./pages/realtime/webrtc/dashboard/dashboard').then(
+                    (m) => m.RealtimeWebRtcDashboardPage,
                   ),
-                title: 'VoIP • WebRTC Dashboard | mnscloud',
+                title: 'Realtime • WebRTC Dashboard | mnscloud',
                 data: { scope: 'tenant' },
               },
               ...(['domain'].map((section) => ({
-                path: `voip/webrtc/${section}`,
+                path: `realtime/webrtc/${section}`,
                 loadComponent: () =>
-                  import('./pages/voip/webrtc/webrtc').then((m) => m.VoipWebRtcPage),
-                title: `VoIP • WebRTC • ${section} | mnscloud`,
+                  import('./pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcPage),
+                title: `Realtime • WebRTC • ${section} | mnscloud`,
                 data: {
                   resource:
                     section === 'server'
@@ -1264,26 +1264,26 @@ export const routes: Routes = [
                 data: { scope: 'master', resource: 'servers' },
               })) as any),
               {
-                path: 'webrtc',
-                loadComponent: () =>
-                  import('./pages/voip/webrtc/dashboard/dashboard').then(
-                    (m) => m.VoipWebRtcDashboardPage,
-                  ),
-                title: 'System WebRTC Dashboard | mnscloud',
-                data: { scope: 'master' },
-              },
-              {
                 path: 'voip/domain',
                 loadComponent: () =>
                   import('./pages/voip/domain/domain').then((m) => m.VoipDomainPage),
                 title: 'System VoIP Domain | mnscloud',
                 data: { scope: 'master' },
               },
-              ...(['domain', 'server', 'parameter'].map((section) => ({
-                path: `webrtc/${section}`,
+              {
+                path: 'realtime/webrtc',
                 loadComponent: () =>
-                  import('./pages/voip/webrtc/webrtc').then((m) => m.VoipWebRtcPage),
-                title: `System WebRTC • ${section} | mnscloud`,
+                  import('./pages/realtime/webrtc/dashboard/dashboard').then(
+                    (m) => m.RealtimeWebRtcDashboardPage,
+                  ),
+                title: 'System Realtime • WebRTC Dashboard | mnscloud',
+                data: { scope: 'master' },
+              },
+              ...(['domain', 'server', 'parameter'].map((section) => ({
+                path: `realtime/webrtc/${section}`,
+                loadComponent: () =>
+                  import('./pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcPage),
+                title: `System Realtime • WebRTC • ${section} | mnscloud`,
                 data: {
                   scope: 'master',
                   resource:
