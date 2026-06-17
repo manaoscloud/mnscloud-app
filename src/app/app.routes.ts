@@ -1295,6 +1295,18 @@ export const routes: Routes = [
                 },
               })) as any),
               {
+                path: 'realtime/turn',
+                redirectTo: 'realtime/turn/server',
+                pathMatch: 'full',
+              },
+              {
+                path: 'realtime/turn/server',
+                loadComponent: () =>
+                  import('./pages/realtime/turn/turn').then((m) => m.RealtimeTurnPage),
+                title: 'System Realtime • TURN/STUN Servers | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'pabx',
                 loadComponent: () =>
                   import('./pages/voip/pabx/dashboard/dashboard').then(

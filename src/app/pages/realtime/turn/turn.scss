@@ -1,0 +1,29 @@
+.turn-dialog {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.turn-token-dialog {
+  pre {
+    max-height: min(52vh, 520px);
+    overflow: auto;
+    padding: 1rem;
+    border: 1px solid var(--mns-border-subtle);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.28);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.token-warning {
+  color: var(--mns-warning, #facc15);
+}
+
+.ip-stack,
+.port-stack {
+  display: grid;
+  gap: 0.15rem;
+}

@@ -1521,6 +1521,20 @@ export class MainLayout {
             },
           ],
         },
+        {
+          id: 'realtime/turn',
+          label: 'TURN/STUN',
+          icon: 'router',
+          children: [
+            {
+              id: 'realtime/turn/server',
+              label: 'Servers',
+              icon: 'dns',
+              masterRoute: '/system/realtime/turn/server',
+              roles: ['MASTER'],
+            },
+          ],
+        },
       ],
     },
 
