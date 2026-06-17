@@ -910,6 +910,7 @@ export const routes: Routes = [
                   import('./pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcPage),
                 title: `Realtime • WebRTC • ${section} | mnscloud`,
                 data: {
+                  scope: 'tenant',
                   resource:
                     section === 'server'
                       ? 'servers'

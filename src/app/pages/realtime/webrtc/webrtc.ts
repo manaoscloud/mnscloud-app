@@ -210,8 +210,18 @@ export class RealtimeWebRtcPage {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly currentResource = signal<WebRtcResource>('servers');
-  readonly scope = signal<WebRtcScope>('tenant');
+  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
+  readonly currentResource = computed<WebRtcResource>(() => {
+    const data = this.routeData() as Record<string, unknown>;
+    const resource = data['resource'];
+    return resource === 'domains' || resource === 'parameters' || resource === 'servers'
+      ? resource
+      : 'servers';
+  });
+  readonly scope = computed<WebRtcScope>(() => {
+    const data = this.routeData() as Record<string, unknown>;
+    return data['scope'] === 'master' ? 'master' : 'tenant';
+  });
   readonly config = computed(() => CONFIGS[this.currentResource()]);
   readonly title = computed(() => this.config().title);
   readonly subtitle = computed(() => this.config().subtitle);
@@ -233,8 +243,6 @@ export class RealtimeWebRtcPage {
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
-  private viewReady = false;
-  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
 
   private readonly recordsResource = resource({
     params: () => ({
@@ -269,20 +277,18 @@ export class RealtimeWebRtcPage {
     this.snack.error(this.errorMessage(error, 'Failed to load WebRTC records.'));
   });
 
-  private readonly initializePage = effect(() => {
-    const data = this.routeData() as Record<string, unknown>;
+  private readonly resetPageStateOnRouteChange = effect(() => {
+    this.currentResource();
+    this.scope();
     untracked(() => {
-      this.currentResource.set((data['resource'] ?? 'servers') as WebRtcResource);
-      this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
       this.searchInput.set('');
       this.search.set('');
+      this.appliedSearch.set('');
       this.dataSource.filter = '';
       this.selected.clear();
-      if (this.viewReady) this.recordsResource.reload();
     });
   });
   private readonly afterViewReady = afterNextRender(() => {
-    this.viewReady = true;
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
     this.dataSource.filterPredicate = (row, filter) =>
