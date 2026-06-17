@@ -8,6 +8,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { ClipboardModule } from '@angular/cdk/clipboard';
@@ -555,10 +556,10 @@ export class RealtimeTurnPage {
 
   private reconcileSelection(): void {
     const valid = new Set(this.dataSource.data.map((row) => this.uuid(row)));
-    this.selected.update((current) => {
-      const next = new Set([...current].filter((uuid) => valid.has(uuid)));
-      return next;
-    });
+    const current = untracked(() => this.selected());
+    const next = new Set([...current].filter((uuid) => valid.has(uuid)));
+    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
+    this.selected.set(next);
   }
 
   private defaultFormModel(): Record<string, any> {

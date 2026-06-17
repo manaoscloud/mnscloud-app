@@ -8,6 +8,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -444,7 +445,9 @@ export class RealtimeDomainsPage {
 
   private reconcileSelection(): void {
     const valid = new Set(this.dataSource.data.map((row) => this.uuid(row)));
-    const next = new Set([...this.selected()].filter((id) => valid.has(id)));
+    const current = untracked(() => this.selected());
+    const next = new Set([...current].filter((id) => valid.has(id)));
+    if (next.size === current.size && [...next].every((id) => current.has(id))) return;
     this.selected.set(next);
   }
 
