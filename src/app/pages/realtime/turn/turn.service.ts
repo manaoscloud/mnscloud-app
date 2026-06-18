@@ -12,8 +12,9 @@ export class RealtimeTurnService {
   private readonly tenantBasePath = 'realtime/turn';
 
   private resourcePath(resource: TurnResource, scope: TurnScope = 'master') {
-    if (scope === 'master' || resource === 'servers') return `${this.systemBasePath}/${resource}`;
-    return `${this.tenantBasePath}/${resource}`;
+    if (scope === 'master') return `${this.systemBasePath}/${resource}`;
+    if (resource === 'domains') return `${this.tenantBasePath}/domains`;
+    throw new Error('TURN/STUN servers are available only from the system scope.');
   }
 
   list(
@@ -61,7 +62,13 @@ export class RealtimeTurnService {
     return this.api.get<any>(`${basePath}/server-options`);
   }
 
-  listRealtimeDomains(params: { purpose?: string; status?: number; limit?: number; search?: string } = {}) {
+  listRealtimeDomains(
+    params: { purpose?: string; status?: number; limit?: number; search?: string } = {},
+    scope: TurnScope = 'master',
+  ) {
+    if (scope !== 'master') {
+      throw new Error('Realtime domain lookup is available only from the system scope.');
+    }
     const query = new URLSearchParams();
     if (params.purpose) query.set('purpose', params.purpose);
     if (params.status !== undefined && params.status !== null)

@@ -258,7 +258,7 @@ export class RealtimeTurnPage {
         status: 1,
         limit: 5000,
         search: params.search,
-      });
+      }, this.scope());
       return response?.data?.items ?? [];
     },
   });

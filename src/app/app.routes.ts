@@ -1304,7 +1304,7 @@ export const routes: Routes = [
               })) as any),
               {
                 path: 'realtime/turn',
-                redirectTo: 'realtime/turn/server',
+                redirectTo: '/system/realtime/turn/server',
                 pathMatch: 'full',
               },
               {
