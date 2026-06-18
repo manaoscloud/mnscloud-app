@@ -1573,12 +1573,13 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
 
 .select-search-option {
   height: auto;
-  cursor: text;
+  cursor: default;
   padding: 0;
 }
 
 .select-search-option.mdc-list-item--disabled {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .mat-mdc-form-field .mat-mdc-select-trigger {
@@ -1619,10 +1620,13 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
   padding: 0;
   box-sizing: border-box;
   cursor: text !important;
+  pointer-events: auto;
 }
 
 .select-search-option .mdc-list-item__primary-text {
   width: 100%;
+  cursor: text !important;
+  pointer-events: auto;
 }
 
 .select-search-field .mat-mdc-form-field {
@@ -1648,6 +1652,7 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
 .select-search-field textarea,
 .select-search-field * {
   cursor: text !important;
+  pointer-events: auto;
 }
 
 app-isp-geomap-assets .mapboxgl-popup.geomap-measure-popup .mapboxgl-popup-content {
