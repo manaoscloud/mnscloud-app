@@ -21,7 +21,7 @@ Use this repository as an independent public frontend client for the MNSCloud AP
   Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
 - Searchable `mat-select` controls must use the global `select-search-option` and
   `select-search-field` layout from `src/styles.scss`; do not add page-local spacing overrides for
-  those classes.
+  those classes. The search field and its Material wrappers must keep the editable text cursor.
 - Monetary CRUD inputs must follow the `app.md` system parameter defaults contract: resolve
   `DEFAULT_CURRENCY` with `SystemParameterService.resolveDefaultCurrency()`, initialize create forms
   from that value, let existing record currency win in edit mode, and normalize editable currency

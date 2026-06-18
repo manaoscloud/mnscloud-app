@@ -1636,6 +1636,14 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
   max-width: 100%;
 }
 
+.select-search-field .mat-mdc-text-field-wrapper,
+.select-search-field .mat-mdc-form-field-flex,
+.select-search-field .mat-mdc-form-field-infix,
+.select-search-field input,
+.select-search-field textarea {
+  cursor: text;
+}
+
 app-isp-geomap-assets .mapboxgl-popup.geomap-measure-popup .mapboxgl-popup-content {
   background: var(--mat-sys-color-surface-container-high);
   color: var(--mat-sys-color-on-surface);
