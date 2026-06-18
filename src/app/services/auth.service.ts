@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 import {
   normalizeEnvironmentUUID,
@@ -68,6 +69,8 @@ function normalizeAppRole(value: unknown): AppRole | undefined {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly router = inject(Router);
+
   private _loggedIn = signal<boolean>(this.readInitialState());
   readonly isLoggedIn = this._loggedIn.asReadonly();
 
@@ -128,6 +131,13 @@ export class AuthService {
     this._loggedIn.set(false);
   }
 
+  expireSession() {
+    this.logout();
+    if (this.router.url !== '/signin') {
+      void this.router.navigate(['/signin'], { replaceUrl: true });
+    }
+  }
+
   // ---------------------------------------------------------
   // TOKEN
   // ---------------------------------------------------------
@@ -153,7 +163,7 @@ export class AuthService {
   async loadUserFromApi(api: ApiService): Promise<boolean> {
     const jwt = this.getJwt();
     if (!jwt) {
-      this.logout();
+      this.expireSession();
       return false;
     }
 
@@ -195,7 +205,7 @@ export class AuthService {
       return true;
     } catch (err) {
       console.error('❌ Failed to load user/profile', err);
-      this.logout();
+      this.expireSession();
       return false;
     }
   }

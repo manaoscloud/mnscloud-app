@@ -1,6 +1,5 @@
 import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 
@@ -8,7 +7,6 @@ import { AuthService } from './auth.service';
 export class SessionService {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly intervalMs = 10 * 60 * 1000; // 10 minutos
@@ -51,10 +49,7 @@ export class SessionService {
       // se der 401, o interceptor global já trata (logout + redirect)
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === 401) {
-        this.auth.logout();
-        if (this.router.url !== '/signin') {
-          void this.router.navigate(['/signin']);
-        }
+        this.auth.expireSession();
         return;
       }
       console.error('Session heartbeat failed', err);

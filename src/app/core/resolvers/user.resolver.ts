@@ -16,13 +16,13 @@ export const userResolver: ResolveFn<Promise<boolean>> = async () => {
 
   const okProfile = await auth.loadUserFromApi(api);
 
-  // ✅ garante role/env para menu/guards no refresh
-  await auth.loadMeFromApi(api);
-
   if (!okProfile) {
     router.navigate(['/signin']);
     return false;
   }
+
+  // ✅ garante role/env para menu/guards no refresh
+  await auth.loadMeFromApi(api);
 
   return true;
 };
