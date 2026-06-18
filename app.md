@@ -118,6 +118,11 @@
   upload progress flows have a tested replacement.
 - Transloco is the only runtime i18n layer. Do not add component-local translation maps, custom
   translation pipes, DOM translation fallbacks, or Angular built-in i18n for runtime CRUD labels.
+- Date/time display must use the shared `DateTimeFormatService`, which resolves the effective
+  `DEFAULT_TIMEZONE` from tenant/master Parameters and formats with the active app language. Do not
+  show raw ISO timestamps or rely on Angular `DatePipe` defaults for user-facing table/detail
+  fields. Inputs that submit date-only or date-time payloads may keep explicit API serialization
+  helpers, but visible output must follow the configured timezone.
 - Before finishing any Angular migration/refactor, run a residue check for:
   `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, `@Output(`, `@ViewChild`, `@ViewChildren`,
   `ChangeDetectionStrategy.Eager`, constructor dependency injection, `ngx-translate`,

@@ -30,6 +30,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
+import { DateTimeFormatService } from '../../../services/date-time-format.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
@@ -166,6 +167,7 @@ export class RealtimeDomainsPage {
   private readonly api = inject(RealtimeDomainsService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dateTime = inject(DateTimeFormatService);
   private readonly i18n = inject(TranslocoService);
   private readonly snack = inject(SnackbarService);
 
@@ -216,8 +218,12 @@ export class RealtimeDomainsPage {
   private readonly setupTable = afterNextRender(() => {
     this.dataSource.paginator = this.paginator() ?? null;
     this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) =>
-      String(this.cell(row, column) ?? '').toLowerCase();
+    this.dataSource.sortingDataAccessor = (row, column) => {
+      if (column === 'updatedAt') {
+        return this.dateTime.toEpoch(row['RtdDateUpdated'] ?? row['RtdDateCreated']);
+      }
+      return String(this.cell(row, column) ?? '').toLowerCase();
+    };
   });
 
   private readonly syncRows = effect(() => {
@@ -279,7 +285,7 @@ export class RealtimeDomainsPage {
       certificateProvider: this.optionLabel(CERTIFICATE_PROVIDER_LABELS, row['RtdCertificateProvider']),
       certificateStatus: this.optionLabel(CERTIFICATE_STATUS_LABELS, row['RtdCertificateStatus']),
       status: this.status(row) ? 'Active' : 'Inactive',
-      updatedAt: row['RtdDateUpdated'] ?? row['RtdDateCreated'],
+      updatedAt: this.dateTime.formatDateTime(row['RtdDateUpdated'] ?? row['RtdDateCreated']),
     };
     return String(map[column] ?? '');
   }
