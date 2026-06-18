@@ -1,4 +1,4 @@
-import { DatePipe, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, computed, inject, resource } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -10,6 +10,7 @@ import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { AppI18nService } from '../../services/app-i18n.service';
 import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../shared/date-time/date-time.pipe';
 
 type ApiResponse<T> = {
   status: string;
@@ -100,8 +101,8 @@ const EMPTY_DASHBOARD: TenantDashboardSnapshot = {
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
-    DatePipe,
     NgClass,
     RouterLink,
     TranslocoPipe,

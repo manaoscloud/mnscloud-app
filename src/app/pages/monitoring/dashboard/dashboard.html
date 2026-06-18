@@ -163,7 +163,7 @@
             <ng-container matColumnDef="created">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
-                {{ row.dateCreated ? (row.dateCreated | date: 'short') : '-' }}
+                {{ row.dateCreated ? (row.dateCreated | mnsDateTime) : '-' }}
               </td>
             </ng-container>
 

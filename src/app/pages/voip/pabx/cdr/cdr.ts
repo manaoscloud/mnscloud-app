@@ -22,6 +22,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { DateTimeFormatService } from '../../../../services/date-time-format.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { PabxCdrKind, VoipPabxCdrService } from './cdr.service';
 import { VoipPabxCdrRecordingDialogComponent } from './recording-dialog/recording-dialog';
@@ -67,6 +68,7 @@ type CdrRequest = CdrFilters & {
 })
 export class VoipPabxCdrPage {
   private readonly api = inject(VoipPabxCdrService);
+  private readonly dateTime = inject(DateTimeFormatService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   readonly activeKind = signal<PabxCdrKind>('all');
@@ -171,7 +173,7 @@ export class VoipPabxCdrPage {
   }
 
   formatDate(value: string | null | undefined) {
-    return value ? new Date(value).toLocaleString() : '';
+    return this.dateTime.formatDateTime(value);
   }
 
   statusClass(value: string | null | undefined) {

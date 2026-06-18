@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import {
   Component,
   DestroyRef,
@@ -33,6 +33,7 @@ import { SlowConfirmDialogComponent } from '../../shared/slow-confirm-dialog/slo
 import { TenantsService } from './tenants.service';
 import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../shared/dialog/dialog-events.util';
+import { MnsDateTimePipe } from '../../shared/date-time/date-time.pipe';
 
 type TenantAccess = {
   UscUUID?: string | null;
@@ -76,6 +77,7 @@ type TenantInviteFormModel = {
   selector: 'settings-tenants',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -91,7 +93,6 @@ type TenantInviteFormModel = {
     MatTableModule,
     MatTabsModule,
     TranslocoPipe,
-    DatePipe,
   ],
   templateUrl: './tenants.html',
   styleUrl: './tenants.scss',

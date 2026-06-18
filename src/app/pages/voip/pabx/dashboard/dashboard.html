@@ -178,7 +178,7 @@
                 {{ 'Last Seen' | transloco }}
               </th>
               <td mat-cell *matCellDef="let row">
-                {{ row.lastSeenAt ? (row.lastSeenAt | date: 'short') : '-' }}
+                {{ row.lastSeenAt ? (row.lastSeenAt | mnsDateTime) : '-' }}
               </td></ng-container
             >
             <tr mat-header-row *matHeaderRowDef="serverColumns"></tr>

@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import {
   VoipDashboardMetric,
   VoipDashboardModule,
@@ -41,6 +42,7 @@ const EMPTY_VOIP_DASHBOARD: VoipDashboardSnapshot = {
   selector: 'app-voip-dashboard',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
@@ -50,7 +52,6 @@ const EMPTY_VOIP_DASHBOARD: VoipDashboardSnapshot = {
     MatProgressSpinnerModule,
     MatSelectModule,
     TranslocoPipe,
-    DatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],

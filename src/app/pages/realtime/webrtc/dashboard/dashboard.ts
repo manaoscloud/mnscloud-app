@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import {
   afterNextRender,
   Component,
@@ -26,6 +26,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RealtimeWebRtcService, WebRtcRecord } from '../webrtc.service';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 import {
   RealtimeWebRtcDashboardService,
   WebRtcDashboardDomain,
@@ -60,6 +61,7 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   selector: 'app-realtime-webrtc-dashboard',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
@@ -74,7 +76,6 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
     MatTableModule,
     MatTooltipModule,
     TranslocoPipe,
-    DatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],

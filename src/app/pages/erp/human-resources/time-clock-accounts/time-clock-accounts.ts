@@ -26,6 +26,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ApiService } from '../../../../services/api.service';
+import { DateTimeFormatService } from '../../../../services/date-time-format.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
@@ -92,6 +93,7 @@ type TimeClockAccountListParams = {
 })
 export class ErpHumanResourcesTimeClockAccountsPage {
   private readonly api = inject(ApiService);
+  private readonly dateTime = inject(DateTimeFormatService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
@@ -301,11 +303,7 @@ export class ErpHumanResourcesTimeClockAccountsPage {
   }
 
   formatDate(value?: string | null) {
-    if (!value) return '-';
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return this.dateTime.formatDateTime(value) || '-';
   }
 
   private openCredentialDialog() {

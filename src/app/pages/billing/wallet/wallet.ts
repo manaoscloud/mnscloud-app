@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -37,6 +37,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import {
   BillingCatalogItem,
   BillingLedgerEntry,
@@ -57,7 +58,6 @@ type BillingWalletSnapshot = {
 };
 
 export const BILLING_WALLET_IMPORTS = [
-  DatePipe,
   FormField,
   MatButtonModule,
   MatCardModule,
@@ -77,6 +77,7 @@ export const BILLING_WALLET_IMPORTS = [
   RefreshButtonComponent,
   TranslocoPipe,
   CurrencyMaskDirective,
+  MnsDateTimePipe,
 ];
 
 @Component({

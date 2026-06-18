@@ -10,7 +10,7 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -38,6 +38,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 
 type Ticket = {
   SupportTicketUUID: string;
@@ -105,6 +106,7 @@ const emptyTicketFilters = (): TicketFilters => ({
   selector: 'app-support-tickets',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     MatCardModule,
     MatButtonModule,
@@ -126,7 +128,6 @@ const emptyTicketFilters = (): TicketFilters => ({
     TranslocoPipe,
     PhoneInputComponent,
     DateMaskDirective,
-    DatePipe,
   ],
   templateUrl: './tickets.html',
   styleUrls: ['./tickets.scss'],

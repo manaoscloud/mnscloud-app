@@ -210,7 +210,7 @@
         <ng-container matColumnDef="heartbeat">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Heartbeat</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.lastHeartbeatAt ? (row.lastHeartbeatAt | date: 'short') : '-' }}
+            {{ row.lastHeartbeatAt ? (row.lastHeartbeatAt | mnsDateTime) : '-' }}
           </td>
         </ng-container>
 

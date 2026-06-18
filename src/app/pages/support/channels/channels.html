@@ -81,7 +81,7 @@
         <ng-container matColumnDef="lastSyncAt">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Last sync</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.LastSyncAt ? (row.LastSyncAt | date: 'short') : '-' }}
+            {{ row.LastSyncAt ? (row.LastSyncAt | mnsDateTime) : '-' }}
           </td>
         </ng-container>
 

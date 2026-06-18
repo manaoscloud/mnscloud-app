@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
   Component,
@@ -38,6 +38,7 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { VoipPabxServerItem, VoipPabxServerService } from './server.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 
 type ServerPayload = {
   name: string;
@@ -63,6 +64,7 @@ type ServerPayload = {
   selector: 'app-voip-pabx-server',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     ClipboardModule,
     FormField,
@@ -83,7 +85,6 @@ type ServerPayload = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
-    DatePipe,
   ],
   templateUrl: './server.html',
   styleUrls: ['./server.scss'],

@@ -121,7 +121,7 @@
         <ng-container matColumnDef="lastSeen">
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="last-seen-col">Last Seen</th>
           <td mat-cell *matCellDef="let row" class="last-seen-col">
-            {{ row.VsrLastSeenAt ? (row.VsrLastSeenAt | date: 'short') : '-' }}
+            {{ row.VsrLastSeenAt ? (row.VsrLastSeenAt | mnsDateTime) : '-' }}
           </td>
         </ng-container>
 

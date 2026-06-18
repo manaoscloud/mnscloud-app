@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import {
   Component,
   TemplateRef,
@@ -42,6 +42,7 @@ import { VoipPabxQueueAgentItem, VoipPabxQueueAgentService } from './queue-agent
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 
 type RuntimeStatus = VoipPabxQueueAgentItem['VqaRuntimeStatus'];
 type RuntimeAction = 'login' | 'logout' | 'pause' | 'unpause';
@@ -77,6 +78,7 @@ const emptyQueueAgentFilters = (): QueueAgentFilters => ({
   selector: 'app-voip-pabx-queue-agent',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -96,7 +98,6 @@ const emptyQueueAgentFilters = (): QueueAgentFilters => ({
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
-    DatePipe,
   ],
   templateUrl: './queue-agent.html',
   styleUrls: ['./queue-agent.scss'],

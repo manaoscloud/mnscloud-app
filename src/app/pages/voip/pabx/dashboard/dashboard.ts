@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import {
   afterNextRender,
   Component,
@@ -28,6 +28,7 @@ import { VoipDomainItem, VoipDomainService } from '../../domain/domain.service';
 import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxServerItem, VoipPabxServerService } from '../server/server.service';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 import {
   PabxDashboardMetric,
   PabxDashboardQueue,
@@ -80,6 +81,7 @@ const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
   selector: 'app-voip-pabx-dashboard',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
@@ -94,7 +96,6 @@ const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
     MatTableModule,
     MatTooltipModule,
     TranslocoPipe,
-    DatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],

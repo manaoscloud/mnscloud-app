@@ -3,6 +3,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 
+import { DateTimeFormatService } from '../../../../../services/date-time-format.service';
+
 export type VoipPabxCdrRecordingDialogData = {
   url: string;
   filename: string;
@@ -26,6 +28,7 @@ export type VoipPabxCdrRecordingDialogData = {
 export class VoipPabxCdrRecordingDialogComponent {
   private readonly dialogRef =
     inject<MatDialogRef<VoipPabxCdrRecordingDialogComponent>>(MatDialogRef);
+  private readonly dateTime = inject(DateTimeFormatService);
   readonly data = inject<VoipPabxCdrRecordingDialogData>(MAT_DIALOG_DATA);
 
   close() {
@@ -33,6 +36,6 @@ export class VoipPabxCdrRecordingDialogComponent {
   }
 
   formatDate(value: string | null | undefined) {
-    return value ? new Date(value).toLocaleString() : '-';
+    return this.dateTime.formatDateTime(value) || '-';
   }
 }

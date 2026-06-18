@@ -1,4 +1,4 @@
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { FormField, form as createForm } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +19,7 @@ import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 
 type ActivityLog = {
   uuid: string;
@@ -77,6 +78,7 @@ const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
   selector: 'app-monitoring-activity-logs',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -92,7 +94,6 @@ const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
     MatTableModule,
     MatTooltipModule,
     TranslocoPipe,
-    DatePipe,
     NgClass,
   ],
   templateUrl: './activity.html',

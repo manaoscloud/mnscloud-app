@@ -1,5 +1,5 @@
 import { Component, effect, inject, resource } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 
 type AttendanceStatus = 'automation' | 'waiting' | 'serving';
 
@@ -43,6 +44,7 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   selector: 'app-support-attendance',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     MatCardModule,
     MatButtonModule,
@@ -52,7 +54,6 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
     MatSelectModule,
     MatChipsModule,
     MatProgressSpinnerModule,
-    DatePipe,
   ],
   templateUrl: './attendance.html',
   styleUrls: ['./attendance.scss'],

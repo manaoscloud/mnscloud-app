@@ -160,7 +160,7 @@
                   <small>
                     {{ entry.type }}
                     @if (entry.createdAt) {
-                      - {{ entry.createdAt | date: 'short' }}
+                      - {{ entry.createdAt | mnsDateTime }}
                     }
                   </small>
                 </div>

@@ -10,7 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -36,6 +36,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import {
   CyberSecurityTrustedNode,
   CyberSecurityTrustedNodePayload,
@@ -46,6 +47,7 @@ import {
   selector: 'app-cyber-security-trusted-nodes',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -64,7 +66,6 @@ import {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
-    DatePipe,
     NgClass,
   ],
   templateUrl: './trusted-nodes.html',

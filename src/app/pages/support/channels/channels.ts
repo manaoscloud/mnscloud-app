@@ -10,7 +10,7 @@ import {
   afterNextRender,
   DestroyRef,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,6 +33,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 
 type SupportChannel = {
   SupportChannelUUID: string;
@@ -65,6 +66,7 @@ type ChannelConfig = {
   selector: 'app-support-channels',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     MatCardModule,
     MatButtonModule,
@@ -81,7 +83,6 @@ type ChannelConfig = {
     MatProgressSpinnerModule,
     MatTabsModule,
     TranslocoPipe,
-    DatePipe,
   ],
   templateUrl: './channels.html',
   styleUrls: ['./channels.scss'],

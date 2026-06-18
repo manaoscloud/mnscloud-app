@@ -181,7 +181,7 @@
                 <div class="item-footer">
                   <mat-icon>schedule</mat-icon>
                   @if (displayQueueTime(item)) {
-                    <span>{{ displayQueueTime(item) | date: 'short' }}</span>
+                    <span>{{ displayQueueTime(item) | mnsDateTime }}</span>
                   } @else {
                     <span>No timestamp</span>
                   }

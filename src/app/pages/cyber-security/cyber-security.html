@@ -297,7 +297,7 @@
               <ng-container matColumnDef="lastSync">
                 <th mat-header-cell *matHeaderCellDef>Last Sync</th>
                 <td mat-cell *matCellDef="let row">
-                  {{ row.lastSyncAt ? (row.lastSyncAt | date: 'short') : '-' }}
+                  {{ row.lastSyncAt ? (row.lastSyncAt | mnsDateTime) : '-' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="actions">
@@ -417,7 +417,7 @@
                 <td mat-cell *matCellDef="let row">
                   {{
                     row.startedAt || row.dateCreated
-                      ? (row.startedAt || row.dateCreated | date: 'short')
+                      ? ((row.startedAt || row.dateCreated) | mnsDateTime)
                       : '-'
                   }}
                 </td>
@@ -425,7 +425,7 @@
               <ng-container matColumnDef="expires">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>Expires</th>
                 <td mat-cell *matCellDef="let row">
-                  {{ row.expiresAt ? (row.expiresAt | date: 'short') : '-' }}
+                  {{ row.expiresAt ? (row.expiresAt | mnsDateTime) : '-' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="actions">
@@ -507,7 +507,7 @@
                     {{ row.enforcementAction || row.enforcementStatus || '-' | transloco }}
                   </span>
                   @if (row.enforcementExpiresAt) {
-                    <small>{{ row.enforcementExpiresAt | date: 'short' }}</small>
+                    <small>{{ row.enforcementExpiresAt | mnsDateTime }}</small>
                   }
                 </td>
               </ng-container>
@@ -532,7 +532,7 @@
                 <td mat-cell *matCellDef="let row">
                   {{
                     row.detectedAt || row.dateCreated
-                      ? (row.detectedAt || row.dateCreated | date: 'short')
+                      ? ((row.detectedAt || row.dateCreated) | mnsDateTime)
                       : '-'
                   }}
                 </td>
@@ -694,7 +694,7 @@
               <ng-container matColumnDef="detectedAt">
                 <th mat-header-cell *matHeaderCellDef>Detected</th>
                 <td mat-cell *matCellDef="let row">
-                  {{ row.detectedAt ? (row.detectedAt | date: 'short') : '-' }}
+                  {{ row.detectedAt ? (row.detectedAt | mnsDateTime) : '-' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="decision">
@@ -752,7 +752,7 @@
           <header>
             <div>
               <strong>{{ job.command }}</strong>
-              <small>{{ job.dateCreated ? (job.dateCreated | date: 'medium') : '-' }}</small>
+              <small>{{ job.dateCreated ? (job.dateCreated | mnsDateTime: 'medium': 'medium') : '-' }}</small>
             </div>
             <span class="status-chip" [ngClass]="chipClass(job.status)">
               {{ job.status }}
@@ -842,14 +842,14 @@
             <strong>
               {{
                 decision.startedAt || decision.dateCreated
-                  ? (decision.startedAt || decision.dateCreated | date: 'medium')
+                  ? ((decision.startedAt || decision.dateCreated) | mnsDateTime: 'medium': 'medium')
                   : '-'
               }}
             </strong>
           </div>
           <div>
             <span>Expires</span>
-            <strong>{{ decision.expiresAt ? (decision.expiresAt | date: 'medium') : '-' }}</strong>
+            <strong>{{ decision.expiresAt ? (decision.expiresAt | mnsDateTime: 'medium': 'medium') : '-' }}</strong>
           </div>
           <div class="full">
             <span>Scenario</span>
@@ -893,7 +893,7 @@
               alert.enforcementAction || alert.enforcementStatus || '-' | transloco
             }}</strong>
             @if (alert.enforcementExpiresAt) {
-              <small>{{ alert.enforcementExpiresAt | date: 'medium' }}</small>
+              <small>{{ alert.enforcementExpiresAt | mnsDateTime: 'medium': 'medium' }}</small>
             }
           </div>
           <div>

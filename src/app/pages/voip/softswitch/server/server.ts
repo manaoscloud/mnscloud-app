@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+
 import {
   Component,
   TemplateRef,
@@ -37,6 +37,7 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 
 type ServerPayload = {
   name: string;
@@ -54,6 +55,7 @@ type ServerPayload = {
   selector: 'app-voip-softswitch-server',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -73,7 +75,6 @@ type ServerPayload = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
-    DatePipe,
   ],
   templateUrl: './server.html',
   styleUrls: ['./server.scss'],

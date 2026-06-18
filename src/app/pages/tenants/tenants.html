@@ -261,7 +261,7 @@
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>
                   {{ 'Invited at' | transloco }}
                 </th>
-                <td mat-cell *matCellDef="let row">{{ row.UsiDateCreated | date: 'short' }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.UsiDateCreated | mnsDateTime }}</td>
               </ng-container>
 
               <ng-container matColumnDef="acceptedAt">
@@ -269,7 +269,7 @@
                   {{ 'Accepted at' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row">
-                  {{ row.UsiDateAccepted ? (row.UsiDateAccepted | date: 'short') : '-' }}
+                  {{ row.UsiDateAccepted ? (row.UsiDateAccepted | mnsDateTime) : '-' }}
                 </td>
               </ng-container>
 

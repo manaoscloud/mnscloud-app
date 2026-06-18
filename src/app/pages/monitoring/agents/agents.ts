@@ -1,4 +1,4 @@
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
   Component,
@@ -38,6 +38,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 
 type MonitoringAgent = {
   uuid: string;
@@ -140,6 +141,7 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   selector: 'app-monitoring-agents',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     ClipboardModule,
     FormField,
@@ -159,7 +161,6 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
-    DatePipe,
     NgClass,
   ],
   templateUrl: './agents.html',

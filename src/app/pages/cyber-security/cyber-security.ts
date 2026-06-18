@@ -1,4 +1,4 @@
-import { NgClass, JsonPipe, DatePipe } from '@angular/common';
+import { NgClass, JsonPipe } from '@angular/common';
 import {
   Component,
   computed,
@@ -32,6 +32,7 @@ import { AppI18nService } from '../../services/app-i18n.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../shared/date-time/date-time.pipe';
 
 type CyberRecord = {
   [key: string]: any;
@@ -177,6 +178,7 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
   selector: 'app-cyber-security',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -195,7 +197,6 @@ const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
     MatTooltipModule,
     RouterLink,
     TranslocoPipe,
-    DatePipe,
     JsonPipe,
     NgClass,
   ],

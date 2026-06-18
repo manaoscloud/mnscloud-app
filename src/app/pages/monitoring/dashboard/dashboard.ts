@@ -1,4 +1,4 @@
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 import {
   afterNextRender,
   Component,
@@ -25,6 +25,7 @@ import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 
 type MonitoringAgent = {
   uuid: string;
@@ -100,6 +101,7 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
   selector: 'app-monitoring-dashboard',
   standalone: true,
   imports: [
+    MnsDateTimePipe,
     RefreshButtonComponent,
     RouterModule,
     MatButtonModule,
@@ -112,7 +114,6 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
-    DatePipe,
     NgClass,
   ],
   templateUrl: './dashboard.html',

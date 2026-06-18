@@ -347,7 +347,7 @@
         <table mat-table [dataSource]="ledgerSource" matSort #ledgerSort="matSort">
           <ng-container matColumnDef="date">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Date' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.BleDateCreated | date: 'short' }}</td>
+            <td mat-cell *matCellDef="let row">{{ row.BleDateCreated | mnsDateTime }}</td>
           </ng-container>
           <ng-container matColumnDef="type">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | transloco }}</th>

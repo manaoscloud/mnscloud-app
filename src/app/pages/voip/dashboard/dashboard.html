@@ -136,7 +136,7 @@
             </p>
           </div>
           @if (generatedAt()) {
-            <small>{{ 'Last generated' | transloco }}: {{ generatedAt() | date: 'short' }}</small>
+            <small>{{ 'Last generated' | transloco }}: {{ generatedAt() | mnsDateTime }}</small>
           }
         </div>
 
