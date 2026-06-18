@@ -169,7 +169,6 @@ export class RealtimeTurnPage {
   readonly selected = signal<Set<string>>(new Set());
   readonly generatedInstall = signal<TurnRecord | null>(null);
   readonly generatedInstallSource = signal<TurnRecord | null>(null);
-  readonly formModel = signal<Record<string, any>>(this.defaultFormModel());
   readonly domainSearch = signal('');
   readonly domainLookupEnabled = signal(false);
   readonly serverOptions = signal<TurnRecord[]>([]);
@@ -184,6 +183,7 @@ export class RealtimeTurnPage {
     return scope === 'tenant' ? 'tenant' : 'master';
   });
   readonly isDomains = computed(() => this.currentResource() === 'domains');
+  readonly formModel = signal<Record<string, any>>(this.defaultFormModel());
   readonly pageTitle = computed(() => this.isDomains() ? 'TURN/STUN Domains' : 'TURN/STUN Servers');
   readonly pageSubtitle = computed(() =>
     this.isDomains()
