@@ -12,6 +12,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -35,7 +37,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { RealtimeTurnService, TurnRecord } from './turn.service';
+import { RealtimeTurnService, TurnRecord, TurnResource, TurnScope } from './turn.service';
 
 type FieldType = 'text' | 'number' | 'select' | 'domain' | 'textarea';
 type Field = {
@@ -63,11 +65,29 @@ const CERTIFICATE_PROVIDER_OPTIONS = [
 const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
   { key: 'name', label: 'Name', required: true },
-  { key: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'domain', required: true },
+  { key: 'realtimeDomainUUID', label: 'Primary Realm Domain', type: 'domain' },
   { key: 'nodeUUID', label: 'Node UUID' },
   { key: 'hostname', label: 'Hostname' },
   { key: 'publicIP', label: 'Public IP' },
   { key: 'privateIP', label: 'Private IP' },
+];
+
+const DOMAIN_RECORD_FIELDS: Field[] = [
+  { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
+  { key: 'serverUUID', label: 'Server', type: 'select', required: true },
+  { key: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'domain', required: true },
+  {
+    key: 'certificateProvider',
+    label: 'Certificate Provider',
+    type: 'select',
+    options: CERTIFICATE_PROVIDER_OPTIONS,
+  },
+  {
+    key: 'autoProvision',
+    label: 'Auto Provision',
+    type: 'select',
+    options: STATUS_OPTIONS,
+  },
 ];
 
 const NETWORK_FIELDS: Field[] = [
@@ -92,8 +112,17 @@ const CERTIFICATE_FIELDS: Field[] = [
   { key: 'tlsKeyPath', label: 'TLS Key Path' },
 ];
 
+const DOMAIN_CERTIFICATE_FIELDS: Field[] = [
+  { key: 'tlsCertPath', label: 'TLS Cert Path' },
+  { key: 'tlsKeyPath', label: 'TLS Key Path' },
+];
+
 const NOTES_FIELDS: Field[] = [
   { key: 'configJson', label: 'Config JSON', type: 'textarea', span: 'span-4', rows: 8 },
+  { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 4 },
+];
+
+const DOMAIN_NOTES_FIELDS: Field[] = [
   { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 4 },
 ];
 
@@ -126,6 +155,7 @@ const NOTES_FIELDS: Field[] = [
 })
 export class RealtimeTurnPage {
   private readonly api = inject(RealtimeTurnService);
+  private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly snack = inject(SnackbarService);
@@ -140,24 +170,57 @@ export class RealtimeTurnPage {
   readonly generatedInstallSource = signal<TurnRecord | null>(null);
   readonly formModel = signal<Record<string, any>>(this.defaultFormModel());
   readonly domainSearch = signal('');
+  readonly serverOptions = signal<TurnRecord[]>([]);
+  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
+
+  readonly currentResource = computed<TurnResource>(() => {
+    const resource = (this.routeData() as Record<string, unknown>)['resource'];
+    return resource === 'domains' ? 'domains' : 'servers';
+  });
+  readonly scope = computed<TurnScope>(() => {
+    const scope = (this.routeData() as Record<string, unknown>)['scope'];
+    return scope === 'tenant' ? 'tenant' : 'master';
+  });
+  readonly isDomains = computed(() => this.currentResource() === 'domains');
+  readonly pageTitle = computed(() => this.isDomains() ? 'TURN/STUN Domains' : 'TURN/STUN Servers');
+  readonly pageSubtitle = computed(() =>
+    this.isDomains()
+      ? 'Assign realtime TURN/STUN domains to managed coturn edge nodes.'
+      : 'Register dedicated coturn relay servers for realtime media traversal.'
+  );
 
   readonly dataSource = new MatTableDataSource<TurnRecord>([]);
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'domain',
-    'externalIP',
-    'ports',
-    'certificateProvider',
-    'status',
-    'lastSeen',
-    'actions',
-  ];
+  readonly displayedColumns = computed(() =>
+    this.isDomains()
+      ? [
+          'select',
+          'domain',
+          'server',
+          'certificateProvider',
+          'provisionStatus',
+          'certificateStatus',
+          'status',
+          'actions',
+        ]
+      : [
+          'select',
+          'name',
+          'domain',
+          'externalIP',
+          'ports',
+          'certificateProvider',
+          'status',
+          'lastSeen',
+          'actions',
+        ],
+  );
 
-  readonly recordFields = RECORD_FIELDS;
-  readonly networkFields = NETWORK_FIELDS;
-  readonly certificateFields = CERTIFICATE_FIELDS;
-  readonly notesFields = NOTES_FIELDS;
+  readonly recordFields = computed(() => (this.isDomains() ? DOMAIN_RECORD_FIELDS : RECORD_FIELDS));
+  readonly networkFields = computed(() => (this.isDomains() ? [] : NETWORK_FIELDS));
+  readonly certificateFields = computed(() =>
+    this.isDomains() ? DOMAIN_CERTIFICATE_FIELDS : CERTIFICATE_FIELDS,
+  );
+  readonly notesFields = computed(() => (this.isDomains() ? DOMAIN_NOTES_FIELDS : NOTES_FIELDS));
 
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
@@ -168,10 +231,14 @@ export class RealtimeTurnPage {
   private binding: CrudDialogBinding | null = null;
 
   private readonly itemsResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => ({
+      resource: this.currentResource(),
+      scope: this.scope(),
+      search: this.appliedSearch(),
+    }),
     defaultValue: [] as TurnRecord[],
     loader: async ({ params }) => {
-      const response = await this.api.list({ limit: 5000, search: params });
+      const response = await this.api.list(params.resource, { limit: 5000, search: params.search }, params.scope);
       return response?.data?.items ?? [];
     },
   });
@@ -211,7 +278,15 @@ export class RealtimeTurnPage {
   private readonly reportLoadError = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load TURN/STUN servers.'));
+    this.snack.error(this.errorMessage(error, `Failed to load ${this.pageTitle()}.`));
+  });
+
+  private readonly loadServerOptions = effect(() => {
+    if (!this.isDomains()) return;
+    this.api
+      .listServerOptions(this.scope())
+      .then((response) => this.serverOptions.set(response?.data?.items ?? []))
+      .catch(() => this.serverOptions.set([]));
   });
 
   private readonly cleanup = this.destroyRef.onDestroy(() => this.closeDialog());
@@ -277,15 +352,15 @@ export class RealtimeTurnPage {
     try {
       const row = this.editing();
       if (row) {
-        await this.api.update(this.uuid(row), this.payload());
-        this.snack.success('TURN/STUN server updated.');
+        await this.api.update(this.currentResource(), this.uuid(row), this.payload(), this.scope());
+        this.snack.success(`${this.itemLabel()} updated.`);
       } else {
-        const response = await this.api.create(this.payload());
-        this.snack.success('TURN/STUN server created.');
+        const response = await this.api.create(this.currentResource(), this.payload(), this.scope());
+        this.snack.success(`${this.itemLabel()} created.`);
         if (!saveAndNew) {
           const item = response?.data?.item ?? null;
           this.closeDialog();
-          if (item?.RtsUUID)
+          if (!this.isDomains() && item?.RtsUUID)
             await this.generateInstallCommandForUUID(String(item.RtsUUID), item, false);
           this.itemsResource.reload();
           return;
@@ -300,7 +375,7 @@ export class RealtimeTurnPage {
         this.closeDialog();
       }
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to save TURN/STUN server.'));
+      this.snack.error(this.errorMessage(error, `Failed to save ${this.itemLabel()}.`));
     } finally {
       this.saving.set(false);
     }
@@ -313,7 +388,7 @@ export class RealtimeTurnPage {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
-            title: 'Delete TURN/STUN Server',
+            title: `Delete ${this.itemLabel()}`,
             message: `Delete ${this.name(row)}?`,
             confirmText: 'Delete',
           },
@@ -322,8 +397,8 @@ export class RealtimeTurnPage {
     );
     if (!ok) return;
     await this.runMutation(async () => {
-      await this.api.remove(this.uuid(row));
-      this.snack.success('TURN/STUN server deleted.');
+      await this.api.remove(this.currentResource(), this.uuid(row), this.scope());
+      this.snack.success(`${this.itemLabel()} deleted.`);
       this.itemsResource.reload();
     });
   }
@@ -337,8 +412,8 @@ export class RealtimeTurnPage {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
-            title: 'Delete Selected TURN/STUN Servers',
-            message: `Delete ${ids.length} selected server(s)?`,
+            title: `Delete Selected ${this.pageTitle()}`,
+            message: `Delete ${ids.length} selected record(s)?`,
             confirmText: 'Delete selected',
           },
         })
@@ -346,22 +421,23 @@ export class RealtimeTurnPage {
     );
     if (!ok) return;
     await this.runMutation(async () => {
-      const result = await this.api.removeMany(ids);
+      const result = await this.api.removeMany(this.currentResource(), ids, this.scope());
       const failed = result?.data?.failed ?? [];
       const failedIds = new Set<string>(
         failed.map((item: any) => String(item.uuid ?? '')).filter(Boolean),
       );
       this.selected.set(failedIds);
       if (failed.length) {
-        this.snack.error(`${failed.length} selected TURN/STUN server(s) could not be deleted.`);
+        this.snack.error(`${failed.length} selected record(s) could not be deleted.`);
       } else {
-        this.snack.success('Selected TURN/STUN servers deleted.');
+        this.snack.success(`Selected ${this.pageTitle()} deleted.`);
       }
       this.itemsResource.reload();
     });
   }
 
   async generateInstallCommand(row: TurnRecord): Promise<void> {
+    if (this.isDomains()) return;
     const ok = await firstValueFrom(
       this.dialog
         .open(SlowConfirmDialogComponent, {
@@ -377,6 +453,15 @@ export class RealtimeTurnPage {
     );
     if (!ok) return;
     await this.generateInstallCommandForUUID(this.uuid(row), row);
+  }
+
+  async provisionDomain(row: TurnRecord): Promise<void> {
+    if (!this.isDomains()) return;
+    await this.runMutation(async () => {
+      await this.api.provisionDomain(this.uuid(row), this.scope());
+      this.snack.success('TURN/STUN domain provisioning queued.');
+      this.itemsResource.reload();
+    });
   }
 
   private async generateInstallCommandForUUID(
@@ -467,7 +552,7 @@ export class RealtimeTurnPage {
 
   isFormValid(): boolean {
     const model = this.formModel();
-    return RECORD_FIELDS.every((field) => {
+    return this.recordFields().every((field) => {
       if (!field.required) return true;
       const value = model[field.key];
       return value !== undefined && value !== null && String(value).trim() !== '';
@@ -475,15 +560,19 @@ export class RealtimeTurnPage {
   }
 
   uuid(row: TurnRecord): string {
-    return String(row['RtsUUID'] ?? '');
+    return String(this.isDomains() ? (row['RtnUUID'] ?? '') : (row['RtsUUID'] ?? ''));
   }
 
   name(row: TurnRecord): string {
-    return String(row['RtsName'] ?? '');
+    return String(
+      this.isDomains()
+        ? (row['RtdName'] ?? row['DomainName'] ?? '')
+        : (row['RtsName'] ?? ''),
+    );
   }
 
   status(row: TurnRecord): boolean {
-    return Number(row['RtsStatus'] ?? 0) === 1;
+    return Number(this.isDomains() ? (row['RtnStatus'] ?? 0) : (row['RtsStatus'] ?? 0)) === 1;
   }
 
   cell(row: TurnRecord, column: string): string {
@@ -492,7 +581,12 @@ export class RealtimeTurnPage {
       domain: row['RtdName'] ?? row['DomainName'],
       externalIP: row['RtsExternalIP'] || row['RtsPublicIP'],
       ports: `${row['RtsListeningPort'] ?? 3478} / ${row['RtsTlsListeningPort'] ?? 5349}`,
-      certificateProvider: row['RtsCertificateProvider'],
+      certificateProvider: this.isDomains()
+        ? row['RtnCertificateProvider']
+        : row['RtsCertificateProvider'],
+      server: row['RtsName'],
+      provisionStatus: row['RtnProvisionStatus'],
+      certificateStatus: row['RtnCertificateStatus'],
       status: this.status(row) ? 'ACTIVE' : 'INACTIVE',
       lastSeen: row['RtsLastSeenAt'] || '-',
     };
@@ -503,9 +597,12 @@ export class RealtimeTurnPage {
     const labels: Record<string, string> = {
       name: 'Name',
       domain: 'Domain',
+      server: 'Server',
       externalIP: 'External IP',
       ports: 'Ports',
       certificateProvider: 'Certificate',
+      provisionStatus: 'Provisioning',
+      certificateStatus: 'TLS',
       status: 'Status',
       lastSeen: 'Last Seen',
       actions: 'Actions',
@@ -563,6 +660,18 @@ export class RealtimeTurnPage {
   }
 
   private defaultFormModel(): Record<string, any> {
+    if (this.isDomains()) {
+      return {
+        status: 1,
+        serverUUID: '',
+        realtimeDomainUUID: '',
+        certificateProvider: 'letsencrypt',
+        autoProvision: 1,
+        tlsCertPath: '',
+        tlsKeyPath: '',
+        notes: '',
+      };
+    }
     return {
       status: 1,
       name: '',
@@ -588,6 +697,18 @@ export class RealtimeTurnPage {
   }
 
   private formModelFromRow(row: TurnRecord): Record<string, any> {
+    if (this.isDomains()) {
+      return {
+        status: Number(row['RtnStatus'] ?? 1),
+        serverUUID: row['RealtimeTurnServerRtsUUID'] ?? '',
+        realtimeDomainUUID: row['RealtimeDomainRtdUUID'] ?? '',
+        certificateProvider: row['RtnCertificateProvider'] ?? 'letsencrypt',
+        autoProvision: Number(row['RtnAutoProvision'] ?? 1),
+        tlsCertPath: row['RtnTlsCertPath'] ?? '',
+        tlsKeyPath: row['RtnTlsKeyPath'] ?? '',
+        notes: row['RtnNotes'] ?? '',
+      };
+    }
     return {
       status: Number(row['RtsStatus'] ?? 1),
       name: row['RtsName'] ?? '',
@@ -633,6 +754,10 @@ export class RealtimeTurnPage {
     }
     delete payload['configJson'];
     return payload;
+  }
+
+  itemLabel(): string {
+    return this.isDomains() ? 'TURN/STUN domain' : 'TURN/STUN server';
   }
 
   private numberOrNull(value: unknown): number | null {

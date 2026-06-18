@@ -1312,7 +1312,14 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/realtime/turn/turn').then((m) => m.RealtimeTurnPage),
                 title: 'System Realtime • TURN/STUN Servers | mnscloud',
-                data: { scope: 'master' },
+                data: { scope: 'master', resource: 'servers' },
+              },
+              {
+                path: 'realtime/turn/domains',
+                loadComponent: () =>
+                  import('./pages/realtime/turn/turn').then((m) => m.RealtimeTurnPage),
+                title: 'System Realtime • TURN/STUN Domains | mnscloud',
+                data: { scope: 'master', resource: 'domains' },
               },
               {
                 path: 'pabx',

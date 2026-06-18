@@ -2,9 +2,9 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'TURN/STUN Servers' | transloco }}</h1>
+        <h1>{{ pageTitle() | transloco }}</h1>
         <p>
-          {{ 'Register dedicated coturn relay servers for realtime media traversal.' | transloco }}
+          {{ pageSubtitle() | transloco }}
         </p>
       </div>
 
@@ -74,7 +74,7 @@
           </td>
         </ng-container>
 
-        @for (column of displayedColumns; track column) {
+        @for (column of displayedColumns(); track column) {
           @if (column !== 'select' && column !== 'actions') {
             <ng-container [matColumnDef]="column">
               <th
@@ -123,14 +123,25 @@
               >
                 <mat-icon>edit</mat-icon>
               </button>
-              <button
-                mat-icon-button
-                type="button"
-                [matTooltip]="'Generate install command' | transloco"
-                (click)="generateInstallCommand(row)"
-              >
-                <mat-icon>terminal</mat-icon>
-              </button>
+              @if (!isDomains()) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'Generate install command' | transloco"
+                  (click)="generateInstallCommand(row)"
+                >
+                  <mat-icon>terminal</mat-icon>
+                </button>
+              } @else {
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'Provision' | transloco"
+                  (click)="provisionDomain(row)"
+                >
+                  <mat-icon>sync</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 color="warn"
@@ -144,10 +155,10 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
         <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+          <td class="mat-cell" [attr.colspan]="displayedColumns().length">
             {{ loading() ? ('Loading...' | transloco) : ('No records found.' | transloco) }}
           </td>
         </tr>
@@ -166,8 +177,8 @@
   <div class="crud-dialog turn-dialog">
     <header class="dialog-header">
       <div>
-        <h2>{{ (editing() ? 'Edit TURN/STUN Server' : 'New TURN/STUN Server') | transloco }}</h2>
-        <p>{{ 'Dedicated coturn relay server authorized by runtime node UUID.' | transloco }}</p>
+        <h2>{{ (editing() ? 'Edit' : 'New') | transloco }} {{ itemLabel() | transloco }}</h2>
+        <p>{{ pageSubtitle() | transloco }}</p>
       </div>
     </header>
 
@@ -179,7 +190,7 @@
             class="form-grid tab-content"
             (submit)="submit(); $event.preventDefault()"
           >
-            @for (field of recordFields; track field.key) {
+            @for (field of recordFields(); track field.key) {
               <mat-form-field appearance="outline" [class]="field.span || ''">
                 <mat-label
                   >{{ field.label | transloco }}
@@ -187,7 +198,18 @@
                     *
                   }
                 </mat-label>
-                @if (field.type === 'domain') {
+                @if (field.key === 'serverUUID') {
+                  <mat-select
+                    [value]="fieldValue(field.key)"
+                    (selectionChange)="setFieldValue(field.key, $event.value)"
+                  >
+                    @for (server of serverOptions(); track server['RtsUUID']) {
+                      <mat-option [value]="server['RtsUUID']">
+                        {{ server['RtsName'] }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                } @else if (field.type === 'domain') {
                   <mat-select
                     [value]="fieldValue(field.key)"
                     (selectionChange)="setFieldValue(field.key, $event.value)"
@@ -234,25 +256,27 @@
           </form>
         </mat-tab>
 
-        <mat-tab [label]="'Network' | transloco">
-          <div class="form-grid tab-content">
-            @for (field of networkFields; track field.key) {
-              <mat-form-field appearance="outline">
-                <mat-label>{{ field.label | transloco }}</mat-label>
-                <input
-                  matInput
-                  [type]="field.type === 'number' ? 'number' : 'text'"
-                  [value]="fieldValue(field.key)"
-                  (input)="setFieldValue(field.key, $any($event.target).value)"
-                />
-              </mat-form-field>
-            }
-          </div>
-        </mat-tab>
+        @if (!isDomains()) {
+          <mat-tab [label]="'Network' | transloco">
+            <div class="form-grid tab-content">
+              @for (field of networkFields(); track field.key) {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ field.label | transloco }}</mat-label>
+                  <input
+                    matInput
+                    [type]="field.type === 'number' ? 'number' : 'text'"
+                    [value]="fieldValue(field.key)"
+                    (input)="setFieldValue(field.key, $any($event.target).value)"
+                  />
+                </mat-form-field>
+              }
+            </div>
+          </mat-tab>
+        }
 
         <mat-tab [label]="'Certificate' | transloco">
           <div class="form-grid tab-content">
-            @for (field of certificateFields; track field.key) {
+            @for (field of certificateFields(); track field.key) {
               <mat-form-field appearance="outline">
                 <mat-label>{{ field.label | transloco }}</mat-label>
                 @if (field.type === 'select') {
@@ -278,7 +302,7 @@
 
         <mat-tab [label]="'Notes' | transloco">
           <div class="form-grid tab-content">
-            @for (field of notesFields; track field.key) {
+            @for (field of notesFields(); track field.key) {
               <mat-form-field appearance="outline" [class]="field.span || ''">
                 <mat-label>{{ field.label | transloco }}</mat-label>
                 <textarea

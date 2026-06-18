@@ -1540,6 +1540,13 @@ export class MainLayout {
               masterRoute: '/system/realtime/turn/server',
               roles: ['MASTER'],
             },
+            {
+              id: 'realtime/turn/domains',
+              label: 'Domains',
+              icon: 'language',
+              masterRoute: '/system/realtime/turn/domains',
+              roles: ['MASTER'],
+            },
           ],
         },
       ],
