@@ -11,6 +11,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { form as createForm, required, type Field as SignalField } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -33,6 +34,13 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import {
+  MnsSelectFieldComponent,
+  MnsStatusSelectFieldComponent,
+  MnsTextFieldComponent,
+  MnsTextareaFieldComponent,
+  type MnsSelectFieldOption,
+} from '../../../shared/forms';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { RealtimeDomainRecord, RealtimeDomainsService } from './domains.service';
 
@@ -45,6 +53,17 @@ type Field = {
   span?: string;
   rows?: number;
   options?: { value: string | number; label: string }[];
+};
+type SignalFormField = SignalField<any, any>;
+type RealtimeDomainFormModel = {
+  status: number;
+  name: string;
+  purpose: string;
+  certificateProvider: string;
+  certificateStatus: string;
+  tlsCertPath: string;
+  tlsKeyPath: string;
+  notes: string;
 };
 
 const STATUS_OPTIONS = [
@@ -111,6 +130,10 @@ const NOTES_FIELDS: Field[] = [
   standalone: true,
   imports: [
     RefreshButtonComponent,
+    MnsSelectFieldComponent,
+    MnsStatusSelectFieldComponent,
+    MnsTextFieldComponent,
+    MnsTextareaFieldComponent,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -144,7 +167,11 @@ export class RealtimeDomainsPage {
   readonly mutating = signal(false);
   readonly editing = signal<RealtimeDomainRecord | null>(null);
   readonly selected = signal<Set<string>>(new Set());
-  readonly formModel = signal<Record<string, any>>(this.defaultFormModel());
+  readonly formModel = signal<RealtimeDomainFormModel>(this.defaultFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.name);
+    required(schema.purpose);
+  });
   readonly dataSource = new MatTableDataSource<RealtimeDomainRecord>([]);
   readonly displayedColumns = [
     'select',
@@ -285,12 +312,12 @@ export class RealtimeDomainsPage {
     this.selected.set(next);
   }
 
-  fieldValue(key: string): any {
-    return this.formModel()[key] ?? '';
+  formField(key: keyof RealtimeDomainFormModel | string): SignalFormField {
+    return (this.form as any)[key];
   }
 
-  setFieldValue(key: string, value: any): void {
-    this.formModel.update((current) => ({ ...current, [key]: value }));
+  selectOptions(field: Field): MnsSelectFieldOption[] {
+    return field.options ?? [];
   }
 
   startCreate(): void {
@@ -404,7 +431,7 @@ export class RealtimeDomainsPage {
     });
   }
 
-  private defaultFormModel(): Record<string, any> {
+  private defaultFormModel(): RealtimeDomainFormModel {
     return {
       status: 1,
       name: '',
@@ -417,7 +444,7 @@ export class RealtimeDomainsPage {
     };
   }
 
-  private formModelFromRow(row: RealtimeDomainRecord): Record<string, any> {
+  private formModelFromRow(row: RealtimeDomainRecord): RealtimeDomainFormModel {
     return {
       status: Number(row['RtdStatus'] ?? 0) === 1 ? 1 : 0,
       name: row['RtdName'] ?? '',
@@ -445,12 +472,7 @@ export class RealtimeDomainsPage {
   }
 
   private isFormValid(): boolean {
-    const model = this.formModel();
-    return RECORD_FIELDS.every((field) => {
-      if (!field.required) return true;
-      const value = model[field.key];
-      return value !== undefined && value !== null && String(value).trim() !== '';
-    });
+    return this.form().valid();
   }
 
   private reconcileSelection(): void {

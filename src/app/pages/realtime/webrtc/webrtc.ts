@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { FormField, form as createForm, type Field as SignalField } from '@angular/forms/signals';
 
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,11 +34,19 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { RealtimeWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import {
+  MnsSelectFieldComponent,
+  MnsStatusSelectFieldComponent,
+  MnsTextFieldComponent,
+  MnsTextareaFieldComponent,
+  type MnsSelectFieldOption,
+} from '../../../shared/forms';
 
 type LookupKey = 'servers' | 'domains';
 type LookupOption = { value: string; label: string };
@@ -50,6 +59,7 @@ type Field = {
   required?: boolean;
   span?: string;
 };
+type SignalFormField = SignalField<any, any>;
 
 type Config = {
   resource: WebRtcResource;
@@ -182,6 +192,11 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
+    FormField,
+    MnsSelectFieldComponent,
+    MnsStatusSelectFieldComponent,
+    MnsTextFieldComponent,
+    MnsTextareaFieldComponent,
     ClipboardModule,
     MatButtonModule,
     MatCardModule,
@@ -237,6 +252,7 @@ export class RealtimeWebRtcPage {
   readonly lookups: Record<LookupKey, LookupOption[]> = { servers: [], domains: [] };
   readonly lookupSearch = signal<Record<LookupKey, string>>({ servers: '', domains: '' });
   readonly formModel = signal<Record<string, any>>({});
+  readonly form = createForm(this.formModel);
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
@@ -475,6 +491,12 @@ export class RealtimeWebRtcPage {
       onEscape: () => this.closeDialog(),
     });
     this.dialogRef = this.binding.ref;
+    bindDialogClosed(this.dialogRef, () => {
+      this.binding?.stop();
+      this.binding = null;
+      this.dialogRef = null;
+      this.saving.set(false);
+    });
   }
   closeDialog() {
     this.dialogRef?.close();
@@ -536,12 +558,31 @@ export class RealtimeWebRtcPage {
     }
   }
 
-  fieldValue(key: string) {
-    return this.formModel()[key] ?? '';
+  formField(key: string): SignalFormField {
+    return (this.form as any)[key];
   }
 
-  setFieldValue(key: string, value: any) {
-    this.formModel.update((current) => ({ ...current, [key]: value }));
+  selectOptions(field: Field): MnsSelectFieldOption[] {
+    return (field.options ?? []).map((option) => ({
+      value: option,
+      label: this.optionLabel(option),
+    }));
+  }
+
+  optionLabel(option: string): string {
+    const labels: Record<string, string> = {
+      active: 'Active',
+      inactive: 'Inactive',
+      kamailio: 'Kamailio',
+      string: 'String',
+      number: 'Number',
+      boolean: 'Boolean',
+      json: 'JSON',
+      letsencrypt: 'Let’s Encrypt',
+      manual: 'Manual',
+      self_signed: 'Self-signed',
+    };
+    return labels[option] ?? option;
   }
 
   setLookupSearch(key: LookupKey, value: string) {

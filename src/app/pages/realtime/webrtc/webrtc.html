@@ -84,12 +84,13 @@
               [class.ip-col]="column === 'publicIP'"
             >
               @if (column === 'status') {
-                <mat-chip
-                  class="status-pill"
+                <span
+                  class="status-pill status-chip state-chip chip-success"
                   [class.is-active]="status(row)"
                   [class.is-inactive]="!status(row)"
-                  >{{ cell(row, column) }}</mat-chip
                 >
+                  {{ cell(row, column) }}
+                </span>
               } @else if (column === 'publicIP') {
                 <div class="ip-stack">
                   @for (ip of publicIpParts(row); track ip) {
@@ -174,21 +175,11 @@
           <form id="webrtcForm" class="form-grid tab-content" (submit)="submit(); $event.preventDefault()">
             @for (field of config().fields; track field.key) {
               @if (field.type !== 'textarea') {
-                <mat-form-field appearance="outline" [class]="field.span || ''">
-                  <mat-label>{{ field.label }}</mat-label>
-                  @if (field.type === 'select') {
+                @if (field.type === 'lookup' && field.lookup) {
+                  <mat-form-field appearance="outline" [class]="field.span || ''">
+                    <mat-label>{{ field.label | transloco }}</mat-label>
                     <mat-select
-                      [value]="fieldValue(field.key)"
-                      (selectionChange)="setFieldValue(field.key, $event.value)"
-                    >
-                      @for (option of field.options || []; track option) {
-                        <mat-option [value]="option">{{ option }}</mat-option>
-                      }
-                    </mat-select>
-                  } @else if (field.type === 'lookup' && field.lookup) {
-                    <mat-select
-                      [value]="fieldValue(field.key)"
-                      (selectionChange)="setFieldValue(field.key, $event.value)"
+                      [formField]="formField(field.key)"
                       (openedChange)="clearLookupSearch($event, field.lookup)"
                     >
                       <mat-option class="select-search-option">
@@ -206,15 +197,30 @@
                         <mat-option [value]="option.value">{{ option.label }}</mat-option>
                       }
                     </mat-select>
-                  } @else {
-                    <input
-                      matInput
-                      [type]="field.type === 'number' ? 'number' : 'text'"
-                      [value]="fieldValue(field.key)"
-                      (input)="setFieldValue(field.key, $any($event.target).value)"
-                    />
-                  }
-                </mat-form-field>
+                  </mat-form-field>
+                } @else if (field.key === 'status' || field.key === 'autoProvision') {
+                  <mns-status-select-field
+                    [field]="formField(field.key)"
+                    [label]="field.label | transloco"
+                    [fieldClass]="field.span || ''"
+                    activeValue="active"
+                    inactiveValue="inactive"
+                  />
+                } @else if (field.type === 'select') {
+                  <mns-select-field
+                    [field]="formField(field.key)"
+                    [label]="field.label | transloco"
+                    [options]="selectOptions(field)"
+                    [fieldClass]="field.span || ''"
+                  />
+                } @else {
+                  <mns-text-field
+                    [field]="formField(field.key)"
+                    [label]="field.label | transloco"
+                    [fieldClass]="field.span || ''"
+                    [type]="field.type === 'number' ? 'number' : 'text'"
+                  />
+                }
               }
             }
           </form>
@@ -224,15 +230,12 @@
             <div class="form-grid tab-content">
               @for (field of config().fields; track field.key) {
                 @if (field.type === 'textarea') {
-                  <mat-form-field appearance="outline" class="span-4">
-                    <mat-label>{{ field.label }}</mat-label>
-                    <textarea
-                      matInput
-                      rows="10"
-                      [value]="fieldValue(field.key)"
-                      (input)="setFieldValue(field.key, $any($event.target).value)"
-                    ></textarea>
-                  </mat-form-field>
+                  <mns-textarea-field
+                    [field]="formField(field.key)"
+                    [label]="field.label | transloco"
+                    [fieldClass]="field.span || ''"
+                    [rows]="10"
+                  />
                 }
               }
             </div>

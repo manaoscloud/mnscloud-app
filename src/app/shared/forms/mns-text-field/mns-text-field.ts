@@ -10,7 +10,7 @@ type SignalFormField = Field<any, string | number>;
   standalone: true,
   imports: [FormField, MatFormFieldModule, MatInputModule],
   template: `
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" [class]="fieldClass()">
       <mat-label>{{ label() }}</mat-label>
       <input
         matInput
@@ -35,4 +35,5 @@ export class MnsTextFieldComponent {
   readonly type = input('text');
   readonly autocomplete = input('');
   readonly placeholder = input('');
+  readonly fieldClass = input('');
 }

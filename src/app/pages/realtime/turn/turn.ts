@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { FormField, form as createForm, type Field as SignalField } from '@angular/forms/signals';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,6 +38,13 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import {
+  MnsSelectFieldComponent,
+  MnsStatusSelectFieldComponent,
+  MnsTextFieldComponent,
+  MnsTextareaFieldComponent,
+  type MnsSelectFieldOption,
+} from '../../../shared/forms';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { RealtimeTurnService, TurnRecord, TurnResource, TurnScope } from './turn.service';
 
@@ -49,6 +57,31 @@ type Field = {
   span?: string;
   rows?: number;
   options?: { value: string | number; label: string }[];
+};
+type SignalFormField = SignalField<any, any>;
+type TurnFormModel = {
+  status: number;
+  serverUUID: string;
+  realtimeDomainUUID: string;
+  name: string;
+  nodeUUID: string;
+  hostname: string;
+  publicIP: string;
+  privateIP: string;
+  listeningIP: string;
+  externalIP: string;
+  listeningPort: number | string;
+  tlsListeningPort: number | string;
+  minRelayPort: number | string;
+  maxRelayPort: number | string;
+  totalQuota: number | string;
+  bpsCapacity: number | string;
+  certificateProvider: string;
+  autoProvision: number;
+  tlsCertPath: string;
+  tlsKeyPath: string;
+  configJson: string;
+  notes: string;
 };
 
 const STATUS_OPTIONS = [
@@ -132,6 +165,11 @@ const DOMAIN_NOTES_FIELDS: Field[] = [
   standalone: true,
   imports: [
     RefreshButtonComponent,
+    FormField,
+    MnsSelectFieldComponent,
+    MnsStatusSelectFieldComponent,
+    MnsTextFieldComponent,
+    MnsTextareaFieldComponent,
     ClipboardModule,
     MatButtonModule,
     MatCardModule,
@@ -183,7 +221,8 @@ export class RealtimeTurnPage {
     return scope === 'tenant' ? 'tenant' : 'master';
   });
   readonly isDomains = computed(() => this.currentResource() === 'domains');
-  readonly formModel = signal<Record<string, any>>(this.defaultFormModel());
+  readonly formModel = signal<TurnFormModel>(this.defaultFormModel());
+  readonly form = createForm(this.formModel);
   readonly pageTitle = computed(() => this.isDomains() ? 'TURN/STUN Domains' : 'TURN/STUN Servers');
   readonly pageSubtitle = computed(() =>
     this.isDomains()
@@ -553,12 +592,12 @@ export class RealtimeTurnPage {
       : this.snack.error('Failed to copy install command.');
   }
 
-  fieldValue(key: string): any {
-    return this.formModel()[key] ?? '';
+  formField(key: keyof TurnFormModel | string): SignalFormField {
+    return (this.form as any)[key];
   }
 
-  setFieldValue(key: string, value: any): void {
-    this.formModel.update((current) => ({ ...current, [key]: value }));
+  selectOptions(field: Field): MnsSelectFieldOption[] {
+    return field.options ?? [];
   }
 
   clearDomainSearch(opened: boolean): void {
@@ -566,7 +605,7 @@ export class RealtimeTurnPage {
   }
 
   isFormValid(): boolean {
-    const model = this.formModel();
+    const model = this.formModel() as Record<string, unknown>;
     return this.recordFields().every((field) => {
       if (!field.required) return true;
       const value = model[field.key];
@@ -674,21 +713,10 @@ export class RealtimeTurnPage {
     this.selected.set(next);
   }
 
-  private defaultFormModel(): Record<string, any> {
-    if (this.isDomains()) {
-      return {
-        status: 1,
-        serverUUID: '',
-        realtimeDomainUUID: '',
-        certificateProvider: 'letsencrypt',
-        autoProvision: 1,
-        tlsCertPath: '',
-        tlsKeyPath: '',
-        notes: '',
-      };
-    }
-    return {
+  private defaultFormModel(): TurnFormModel {
+    const base: TurnFormModel = {
       status: 1,
+      serverUUID: '',
       name: '',
       realtimeDomainUUID: '',
       nodeUUID: '',
@@ -704,16 +732,28 @@ export class RealtimeTurnPage {
       totalQuota: 1000,
       bpsCapacity: 0,
       certificateProvider: 'letsencrypt',
+      autoProvision: 1,
       tlsCertPath: '',
       tlsKeyPath: '',
       configJson: '{}',
       notes: '',
     };
-  }
-
-  private formModelFromRow(row: TurnRecord): Record<string, any> {
     if (this.isDomains()) {
       return {
+        ...base,
+        certificateProvider: 'letsencrypt',
+        autoProvision: 1,
+        configJson: '',
+      };
+    }
+    return base;
+  }
+
+  private formModelFromRow(row: TurnRecord): TurnFormModel {
+    const base = this.defaultFormModel();
+    if (this.isDomains()) {
+      return {
+        ...base,
         status: Number(row['RtnStatus'] ?? 1),
         serverUUID: row['RealtimeTurnServerRtsUUID'] ?? '',
         realtimeDomainUUID: row['RealtimeDomainRtdUUID'] ?? '',
@@ -725,6 +765,7 @@ export class RealtimeTurnPage {
       };
     }
     return {
+      ...base,
       status: Number(row['RtsStatus'] ?? 1),
       name: row['RtsName'] ?? '',
       realtimeDomainUUID: row['RealtimeDomainRtdUUID'] ?? '',

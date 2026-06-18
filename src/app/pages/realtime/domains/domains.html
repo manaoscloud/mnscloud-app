@@ -165,30 +165,20 @@
             (submit)="submit(); $event.preventDefault()"
           >
             @for (field of recordFields; track field.key) {
-              <mat-form-field appearance="outline" [class]="field.span || ''">
-                <mat-label>
-                  {{ field.label | transloco }}
-                  @if (field.required) {
-                    *
-                  }
-                </mat-label>
-                @if (field.type === 'select') {
-                  <mat-select
-                    [value]="fieldValue(field.key)"
-                    (selectionChange)="setFieldValue(field.key, $event.value)"
-                  >
-                    @for (option of field.options || []; track option.value) {
-                      <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
-                    }
-                  </mat-select>
-                } @else {
-                  <input
-                    matInput
-                    [value]="fieldValue(field.key)"
-                    (input)="setFieldValue(field.key, $any($event.target).value)"
-                  />
-                }
-              </mat-form-field>
+              @if (field.key === 'status') {
+                <mns-status-select-field [field]="formField(field.key)" [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''" />
+              } @else if (field.type === 'select') {
+                <mns-select-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [options]="selectOptions(field)"
+                  [fieldClass]="field.span || ''"
+                />
+              } @else {
+                <mns-text-field [field]="formField(field.key)" [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''" />
+              }
             }
           </form>
         </mat-tab>
@@ -196,25 +186,17 @@
         <mat-tab [label]="'Certificate' | transloco">
           <div class="form-grid tab-content">
             @for (field of certificateFields; track field.key) {
-              <mat-form-field appearance="outline" [class]="field.span || ''">
-                <mat-label>{{ field.label | transloco }}</mat-label>
-                @if (field.type === 'select') {
-                  <mat-select
-                    [value]="fieldValue(field.key)"
-                    (selectionChange)="setFieldValue(field.key, $event.value)"
-                  >
-                    @for (option of field.options || []; track option.value) {
-                      <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
-                    }
-                  </mat-select>
-                } @else {
-                  <input
-                    matInput
-                    [value]="fieldValue(field.key)"
-                    (input)="setFieldValue(field.key, $any($event.target).value)"
-                  />
-                }
-              </mat-form-field>
+              @if (field.type === 'select') {
+                <mns-select-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [options]="selectOptions(field)"
+                  [fieldClass]="field.span || ''"
+                />
+              } @else {
+                <mns-text-field [field]="formField(field.key)" [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''" />
+              }
             }
           </div>
         </mat-tab>
@@ -222,15 +204,12 @@
         <mat-tab [label]="'Notes' | transloco">
           <div class="form-grid tab-content">
             @for (field of notesFields; track field.key) {
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ field.label | transloco }}</mat-label>
-                <textarea
-                  matInput
-                  [rows]="field.rows || 4"
-                  [value]="fieldValue(field.key)"
-                  (input)="setFieldValue(field.key, $any($event.target).value)"
-                ></textarea>
-              </mat-form-field>
+              <mns-textarea-field
+                [field]="formField(field.key)"
+                [label]="field.label | transloco"
+                [fieldClass]="field.span || ''"
+                [rows]="field.rows || 4"
+              />
             }
           </div>
         </mat-tab>
