@@ -34,6 +34,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../../services/snackbar.service';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -170,6 +171,7 @@ export class RealtimeTurnPage {
   readonly generatedInstallSource = signal<TurnRecord | null>(null);
   readonly formModel = signal<Record<string, any>>(this.defaultFormModel());
   readonly domainSearch = signal('');
+  readonly domainLookupEnabled = signal(false);
   readonly serverOptions = signal<TurnRecord[]>([]);
   private readonly routeData = toSignal(this.route.data, { initialValue: {} });
 
@@ -244,14 +246,18 @@ export class RealtimeTurnPage {
   });
 
   private readonly domainsResource = resource({
-    params: () => this.domainSearch().trim(),
+    params: () => ({
+      enabled: this.isDomains() || this.domainLookupEnabled(),
+      search: this.domainSearch().trim(),
+    }),
     defaultValue: [] as TurnRecord[],
     loader: async ({ params }) => {
+      if (!params.enabled) return [];
       const response = await this.api.listRealtimeDomains({
         purpose: 'turn',
         status: 1,
         limit: 5000,
-        search: params,
+        search: params.search,
       });
       return response?.data?.items ?? [];
     },
@@ -336,6 +342,14 @@ export class RealtimeTurnPage {
       onEscape: () => this.closeDialog(),
     });
     this.dialogRef = this.binding.ref;
+    this.domainLookupEnabled.set(true);
+    bindDialogClosed(this.dialogRef, () => {
+      this.binding?.stop();
+      this.binding = null;
+      this.dialogRef = null;
+      this.domainLookupEnabled.set(false);
+      this.saving.set(false);
+    });
   }
 
   closeDialog(): void {
@@ -343,6 +357,7 @@ export class RealtimeTurnPage {
     this.dialogRef = null;
     this.binding?.stop();
     this.binding = null;
+    this.domainLookupEnabled.set(false);
     this.saving.set(false);
   }
 
