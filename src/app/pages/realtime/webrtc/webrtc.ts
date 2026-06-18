@@ -105,21 +105,34 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     status: 'RwsStatus',
     columns: ['name', 'engine', 'hostname', 'publicDomain', 'publicIP', 'status', 'lastSeen'],
     fields: [
-      { key: 'name', label: 'Name', required: true },
-      { key: 'nodeUUID', label: 'Node UUID' },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: ['active', 'inactive'],
+        span: 'span-1',
+      },
       {
         key: 'engine',
         label: 'Engine',
         type: 'select',
         options: ['kamailio'],
+        span: 'span-1',
       },
+      { key: 'name', label: 'Name', required: true, span: 'span-1' },
+      {
+        key: 'publicDomain',
+        label: 'Public Domain',
+        type: 'lookup',
+        lookup: 'domains',
+        span: 'span-1',
+      },
+      { key: 'nodeUUID', label: 'Node UUID' },
       { key: 'hostname', label: 'Hostname' },
-      { key: 'publicDomain', label: 'Public Domain' },
       { key: 'publicIP', label: 'Public IP' },
       { key: 'privateIP', label: 'Private IP' },
       { key: 'baseUrl', label: 'Base URL' },
       { key: 'version', label: 'Version' },
-      { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
       { key: 'configJson', label: 'Config JSON', type: 'textarea', span: 'span-4' },
       { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4' },
     ],
@@ -444,6 +457,9 @@ export class RealtimeWebRtcPage {
       if (key === 'engine' && this.config().resource === 'servers') return 'kamailio';
       return '';
     }
+    if (key === 'publicDomain' && this.config().resource === 'servers') {
+      return this.realtimeDomainValueForPublicDomain(row['RwsPublicDomain']);
+    }
     const m: Record<string, string> = {
       name: this.config().name,
       engine: 'RwsEngine',
@@ -511,7 +527,10 @@ export class RealtimeWebRtcPage {
     const raw = this.formModel();
     const p: Record<string, any> = { ...raw, status: raw['status'] === 'inactive' ? 0 : 1 };
     if ('autoProvision' in raw) p['autoProvision'] = raw['autoProvision'] === 'inactive' ? 0 : 1;
-    if (this.config().resource === 'servers') p['engine'] = 'kamailio';
+    if (this.config().resource === 'servers') {
+      p['engine'] = 'kamailio';
+      p['publicDomain'] = this.publicDomainPayloadValue(raw['publicDomain']);
+    }
     if (raw['configJson']) {
       try {
         p['config'] = JSON.parse(raw['configJson']);
@@ -530,6 +549,25 @@ export class RealtimeWebRtcPage {
     delete p['valueJson'];
     return p;
   }
+
+  private realtimeDomainValueForPublicDomain(publicDomain: unknown): string {
+    const raw = String(publicDomain ?? '').trim().toLowerCase();
+    if (!raw) return '';
+    const match = this.lookups.domains.find((option) => {
+      const label = String(option.label ?? '').trim().toLowerCase();
+      const searchText = String(option.searchText ?? '').toLowerCase();
+      return label === raw || searchText.split(/\s+/).includes(raw);
+    });
+    return String(match?.value ?? publicDomain ?? '');
+  }
+
+  private publicDomainPayloadValue(value: unknown): string {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+    const match = this.lookups.domains.find((option) => String(option.value) === raw);
+    return String(match?.label ?? raw).trim().toLowerCase();
+  }
+
   async submit(saveAndNew = false) {
     if (!this.isFormValid()) return;
     this.saving.set(true);
