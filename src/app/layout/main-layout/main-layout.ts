@@ -976,11 +976,11 @@ export class MainLayout {
           icon: 'assignment',
           children: [
             { id: 'erp/companies', label: 'Companies', icon: 'apartment', route: '/erp/companies' },
-            { id: 'erp/customer', label: 'Customer', icon: 'person', route: '/erp/customer' },
-            { id: 'erp/supplier', label: 'Supplier', icon: 'inventory_2', route: '/erp/supplier' },
-            { id: 'erp/carrier', label: 'Carrier', icon: 'local_shipping', route: '/erp/carrier' },
-            { id: 'erp/reseller', label: 'Reseller', icon: 'storefront', route: '/erp/reseller' },
-            { id: 'erp/complex', label: 'Complex', icon: 'location_city', route: '/erp/complex' },
+            { id: 'erp/customer', label: 'Customers', icon: 'person', route: '/erp/customer' },
+            { id: 'erp/supplier', label: 'Suppliers', icon: 'inventory_2', route: '/erp/supplier' },
+            { id: 'erp/carrier', label: 'Carriers', icon: 'local_shipping', route: '/erp/carrier' },
+            { id: 'erp/reseller', label: 'Resellers', icon: 'storefront', route: '/erp/reseller' },
+            { id: 'erp/complex', label: 'Complexes', icon: 'location_city', route: '/erp/complex' },
           ],
         },
         {
@@ -1020,7 +1020,7 @@ export class MainLayout {
                 },
                 {
                   id: 'erp/financial/payment-gateway',
-                  label: 'Gateway',
+                  label: 'Gateways',
                   icon: 'credit_card',
                   route: '/erp/financial/payment-gateway',
                   masterRoute: '/system/payment-gateway',
@@ -1139,19 +1139,19 @@ export class MainLayout {
         },
         {
           id: 'isp/radius-server',
-          label: 'Radius Server',
+          label: 'RADIUS Servers',
           icon: 'security',
           children: [
             {
               id: 'isp/radius-server/registry',
-              label: 'Registry',
+              label: 'Servers',
               icon: 'badge',
               route: '/isp/radius-server',
               masterRoute: '/system/isp/radius-server',
             },
             {
               id: 'isp/radius-server/pppoe-client',
-              label: 'PPPoE Client',
+              label: 'PPPoE Clients',
               icon: 'vpn_key',
               route: '/isp/radius-server/pppoe-client',
             },
@@ -1159,11 +1159,11 @@ export class MainLayout {
         },
         {
           id: 'isp/vendor',
-          label: 'Vendor',
+          label: 'Vendors',
           icon: 'factory',
           children: [
-            { id: 'isp/vendor/registry', label: 'Registry', icon: 'badge', route: '/isp/vendor' },
-            { id: 'isp/vendor/model', label: 'Model', icon: 'memory', route: '/isp/vendor-model' },
+            { id: 'isp/vendor/registry', label: 'Vendors', icon: 'badge', route: '/isp/vendor' },
+            { id: 'isp/vendor/model', label: 'Models', icon: 'memory', route: '/isp/vendor-model' },
           ],
         },
       ],
@@ -1199,7 +1199,7 @@ export class MainLayout {
         },
         {
           id: 'voip/domain',
-          label: 'Domain',
+          label: 'Domains',
           icon: 'language',
           route: '/voip/domain',
           masterRoute: '/system/voip/domain',
@@ -1225,7 +1225,7 @@ export class MainLayout {
             },
             {
               id: 'voip/did/operator',
-              label: 'Operator',
+              label: 'Operators',
               icon: 'badge',
               route: '/voip/did/operator',
               masterRoute: '/system/did/operator',
@@ -1233,14 +1233,14 @@ export class MainLayout {
             },
             {
               id: 'voip/did/number',
-              label: 'Number',
+              label: 'Numbers',
               icon: 'dialpad',
               route: '/voip/did/number',
               masterRoute: '/system/did/number',
             },
             {
               id: 'voip/did/external',
-              label: 'External',
+              label: 'External Numbers',
               icon: 'add_ic_call',
               route: '/voip/did/external',
               masterRoute: '/system/did/external',
@@ -1254,7 +1254,7 @@ export class MainLayout {
           children: [
             {
               id: 'voip/sbc/server',
-              label: 'Server',
+              label: 'Servers',
               icon: 'dns',
               route: '/voip/sbc/server',
               masterRoute: '/system/sbc/server',
@@ -1262,18 +1262,18 @@ export class MainLayout {
             },
             {
               id: 'voip/sbc/provider',
-              label: 'Provider',
+              label: 'Providers',
               icon: 'hub',
               route: '/voip/sbc/provider',
             },
             {
               id: 'voip/sbc/trunk',
-              label: 'Trunk',
+              label: 'Trunks',
               icon: 'settings_ethernet',
               route: '/voip/sbc/trunk',
             },
-            { id: 'voip/sbc/route', label: 'Route', icon: 'alt_route', route: '/voip/sbc/route' },
-            { id: 'voip/sbc/policy', label: 'Policy', icon: 'policy', route: '/voip/sbc/policy' },
+            { id: 'voip/sbc/route', label: 'Routes', icon: 'alt_route', route: '/voip/sbc/route' },
+            { id: 'voip/sbc/policy', label: 'Policies', icon: 'policy', route: '/voip/sbc/policy' },
           ],
         },
         {
@@ -1283,7 +1283,7 @@ export class MainLayout {
           children: [
             {
               id: 'voip/softswitch/server',
-              label: 'Server',
+              label: 'Servers',
               icon: 'dns',
               route: '/voip/softswitch/server',
               masterRoute: '/system/softswitch/server',
@@ -1291,20 +1291,20 @@ export class MainLayout {
             },
             {
               id: 'voip/softswitch/provider',
-              label: 'Provider',
+              label: 'Providers',
               icon: 'hub',
               route: '/voip/softswitch/provider',
             },
             {
               id: 'voip/softswitch/account',
-              label: 'Softswitch',
+              label: 'Softswitches',
               icon: 'router',
               route: '/voip/softswitch',
               masterRoute: '/system/softswitch',
             },
             {
               id: 'voip/softswitch/subscriber',
-              label: 'Subscriber',
+              label: 'Subscribers',
               icon: 'person',
               route: '/voip/softswitch/subscriber',
             },
@@ -1316,25 +1316,25 @@ export class MainLayout {
             },
             {
               id: 'voip/softswitch/trunks',
-              label: 'Trunk',
+              label: 'Trunks',
               icon: 'settings_input_component',
               route: '/voip/softswitch/trunks',
             },
             {
               id: 'voip/softswitch/routes',
-              label: 'Route',
+              label: 'Routes',
               icon: 'alt_route',
               route: '/voip/softswitch/routes',
             },
             {
               id: 'voip/softswitch/policies',
-              label: 'Policy',
+              label: 'Policies',
               icon: 'policy',
               route: '/voip/softswitch/policies',
             },
             {
               id: 'voip/softswitch/rates',
-              label: 'Rate',
+              label: 'Rates',
               icon: 'payments',
               route: '/voip/softswitch/rates',
             },
@@ -1360,7 +1360,7 @@ export class MainLayout {
             },
             {
               id: 'voip/pabx/server',
-              label: 'Server',
+              label: 'Servers',
               icon: 'dns',
               route: '/voip/pabx/server',
               masterRoute: '/system/pabx/server',
@@ -1368,38 +1368,38 @@ export class MainLayout {
             },
             {
               id: 'voip/pabx/registry',
-              label: 'PABX',
+              label: 'PABXs',
               icon: 'settings_phone',
               route: '/voip/pabx/accounts',
             },
             {
               id: 'voip/pabx/trunks',
-              label: 'Trunk',
+              label: 'Trunks',
               icon: 'settings_input_component',
               route: '/voip/pabx/trunks',
             },
             {
               id: 'voip/pabx/extension',
-              label: 'Extension',
+              label: 'Extensions',
               icon: 'dialpad',
               route: '/voip/pabx/extension',
             },
             {
               id: 'voip/pabx/inbound-routes',
-              label: 'Inbound Route',
+              label: 'Inbound Routes',
               icon: 'call_received',
               route: '/voip/pabx/inbound-routes',
             },
             { id: 'voip/pabx/ivr', label: 'IVR', icon: 'account_tree', route: '/voip/pabx/ivr' },
             {
               id: 'voip/pabx/group',
-              label: 'Group',
+              label: 'Groups',
               icon: 'ring_volume',
               route: '/voip/pabx/group',
             },
             {
               id: 'voip/pabx/queue',
-              label: 'Queue',
+              label: 'Queues',
               icon: 'groups',
               children: [
                 {
@@ -1418,7 +1418,7 @@ export class MainLayout {
             },
             {
               id: 'voip/pabx/external',
-              label: 'External',
+              label: 'External Numbers',
               icon: 'phone_forwarded',
               route: '/voip/pabx/external',
             },
@@ -1430,12 +1430,12 @@ export class MainLayout {
             },
             {
               id: 'voip/pabx/dial-plan',
-              label: 'Dial Plan',
+              label: 'Dial Plans',
               icon: 'rule',
               children: [
                 {
                   id: 'voip/pabx/dial-plan/plan',
-                  label: 'Plan',
+                  label: 'Plans',
                   icon: 'fact_check',
                   route: '/voip/pabx/dial-plan/plan',
                 },
@@ -1449,18 +1449,18 @@ export class MainLayout {
             },
             {
               id: 'voip/pabx/blacklist',
-              label: 'Blacklist',
+              label: 'Blacklists',
               icon: 'block',
               children: [
                 {
                   id: 'voip/pabx/blacklist/list',
-                  label: 'List',
+                  label: 'Lists',
                   icon: 'format_list_bulleted',
                   route: '/voip/pabx/blacklist/list',
                 },
                 {
                   id: 'voip/pabx/blacklist/number',
-                  label: 'Number',
+                  label: 'Numbers',
                   icon: 'pin',
                   route: '/voip/pabx/blacklist/number',
                 },
@@ -1604,21 +1604,21 @@ export class MainLayout {
             },
             {
               id: 'hosting/smtp/providers',
-              label: 'Provider',
+              label: 'Providers',
               icon: 'cloud_sync',
               route: '/hosting/smtp/providers',
               masterRoute: '/system/hosting/smtp/providers',
             },
             {
               id: 'hosting/smtp/accounts',
-              label: 'Account',
+              label: 'Accounts',
               icon: 'alternate_email',
               route: '/hosting/smtp/accounts',
               masterRoute: '/system/hosting/smtp/accounts',
             },
             {
               id: 'hosting/smtp/routes',
-              label: 'Route',
+              label: 'Routes',
               icon: 'route',
               route: '/hosting/smtp/routes',
               masterRoute: '/system/hosting/smtp/routes',
@@ -1639,14 +1639,14 @@ export class MainLayout {
             },
             {
               id: 'hosting/storage/providers',
-              label: 'Provider',
+              label: 'Providers',
               icon: 'cloud_sync',
               route: '/hosting/storage/providers',
               masterRoute: '/system/hosting/storage/providers',
             },
             {
               id: 'hosting/storage/accounts',
-              label: 'Storage',
+              label: 'Accounts',
               icon: 'inventory_2',
               route: '/hosting/storage/accounts',
               masterRoute: '/system/hosting/storage/accounts',
@@ -1667,7 +1667,7 @@ export class MainLayout {
             },
             {
               id: 'hosting/vps/provider',
-              label: 'Provider',
+              label: 'Providers',
               icon: 'cloud_sync',
               route: '/hosting/vps/provider',
               masterRoute: '/system/vps/provider',
@@ -1702,7 +1702,7 @@ export class MainLayout {
             },
             {
               id: 'hosting/vps-container/provider',
-              label: 'Provider',
+              label: 'Providers',
               icon: 'cloud_sync',
               route: '/hosting/vps-container/provider',
               masterRoute: '/system/vps-container/provider',
@@ -1971,16 +1971,16 @@ export class MainLayout {
           icon: 'inventory_2',
           children: [
             { id: 'sale/stock/registry', label: 'Registry', icon: 'badge', route: '/sale/stock' },
-            { id: 'sale/stock/type', label: 'Type', icon: 'category', route: '/sale/stock-type' },
+            { id: 'sale/stock/type', label: 'Types', icon: 'category', route: '/sale/stock-type' },
           ],
         },
-        { id: 'sale/unit', label: 'Unit of Measure', icon: 'straighten', route: '/sale/unit' },
-        { id: 'sale/brand', label: 'Brand', icon: 'branding_watermark', route: '/sale/brand' },
-        { id: 'sale/category', label: 'Category', icon: 'sell', route: '/sale/category' },
-        { id: 'sale/product', label: 'Product', icon: 'shopping_bag', route: '/sale/product' },
+        { id: 'sale/unit', label: 'Units of Measure', icon: 'straighten', route: '/sale/unit' },
+        { id: 'sale/brand', label: 'Brands', icon: 'branding_watermark', route: '/sale/brand' },
+        { id: 'sale/category', label: 'Categories', icon: 'sell', route: '/sale/category' },
+        { id: 'sale/product', label: 'Products', icon: 'shopping_bag', route: '/sale/product' },
         {
           id: 'sale/quotation',
-          label: 'Quotation',
+          label: 'Quotations',
           icon: 'request_quote',
           route: '/sale/quotation',
         },

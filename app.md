@@ -38,6 +38,16 @@
 - Main shell and menu are in:
   - `src/app/layout/main-layout/main-layout.ts`
   - `src/app/layout/main-layout/main-layout.html`
+- Menu labels must distinguish conceptual modules from resources:
+  - Product/module groups may use canonical product names, acronyms, or concepts such as `VoIP`,
+    `PABX`, `DID`, `SBC`, `SMTP`, `Realtime`, `WebRTC`, and `TURN/STUN`.
+  - Entries that open CRUD/list collection resources must use plural labels such as `Servers`,
+    `Domains`, `Providers`, `Routes`, `Policies`, `Extensions`, `Queues`, and `Inbound Routes`.
+  - Parent groups that only organize collection resources may be plural when they represent the
+    same collection family, for example `Blacklists` or `Dial Plans`.
+  - Every visible menu label must exist in all runtime Transloco dictionaries
+    (`public/i18n/en-US.json`, `public/i18n/pt-BR.json`, and `public/i18n/es-ES.json`). Do not rely
+    on untranslated label fallbacks in the menu.
 
 ## Angular Runtime Baseline
 
