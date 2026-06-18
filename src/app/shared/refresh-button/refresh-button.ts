@@ -42,11 +42,21 @@ import { TranslocoPipe } from '@jsverse/transloco';
       }
 
       .refresh-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-width: var(--crud-action-button-width, 120px);
         height: 40px;
         line-height: 1;
         white-space: nowrap;
         --mdc-outlined-button-container-height: 40px;
+      }
+
+      .refresh-button ::ng-deep .mdc-button__label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
       }
 
       .refresh-button-content {

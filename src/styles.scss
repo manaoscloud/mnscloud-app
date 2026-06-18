@@ -457,8 +457,13 @@ mat-card.erp-card,
   gap: 0.5rem;
 
   button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: var(--crud-action-button-width);
     min-width: var(--crud-action-button-width);
+    height: var(--form-control-height);
+    line-height: normal;
     white-space: nowrap;
   }
 
@@ -490,15 +495,26 @@ mat-card.erp-card,
 }
 
 .filter-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: var(--crud-action-button-width);
   min-width: var(--crud-action-button-width);
   height: var(--form-control-height);
-  line-height: var(--form-control-height);
+  line-height: normal;
   white-space: nowrap;
 
   mat-icon {
     margin-right: 0.25rem;
   }
+}
+
+.header-actions button .mdc-button__label,
+.filter-actions button .mdc-button__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 .filter-actions button[color='warn'] {

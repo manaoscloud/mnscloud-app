@@ -98,6 +98,14 @@ const CERTIFICATE_STATUS_OPTIONS = [
   { value: 'none', label: 'None' },
 ];
 
+const PURPOSE_LABELS = Object.fromEntries(PURPOSE_OPTIONS.map((option) => [option.value, option.label]));
+const CERTIFICATE_PROVIDER_LABELS = Object.fromEntries(
+  CERTIFICATE_PROVIDER_OPTIONS.map((option) => [option.value, option.label]),
+);
+const CERTIFICATE_STATUS_LABELS = Object.fromEntries(
+  CERTIFICATE_STATUS_OPTIONS.map((option) => [option.value, option.label]),
+);
+
 const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
   { key: 'name', label: 'Domain', required: true },
@@ -267,13 +275,17 @@ export class RealtimeDomainsPage {
   cell(row: RealtimeDomainRecord, column: string): string {
     const map: Record<string, any> = {
       name: row['RtdName'],
-      purpose: row['RtdPurpose'],
-      certificateProvider: row['RtdCertificateProvider'],
-      certificateStatus: row['RtdCertificateStatus'],
+      purpose: this.optionLabel(PURPOSE_LABELS, row['RtdPurpose']),
+      certificateProvider: this.optionLabel(CERTIFICATE_PROVIDER_LABELS, row['RtdCertificateProvider']),
+      certificateStatus: this.optionLabel(CERTIFICATE_STATUS_LABELS, row['RtdCertificateStatus']),
       status: this.status(row) ? 'Active' : 'Inactive',
       updatedAt: row['RtdDateUpdated'] ?? row['RtdDateCreated'],
     };
     return String(map[column] ?? '');
+  }
+
+  isTranslatedColumn(column: string): boolean {
+    return ['purpose', 'certificateProvider', 'certificateStatus'].includes(column);
   }
 
   isSelected(row: RealtimeDomainRecord): boolean {
@@ -490,5 +502,10 @@ export class RealtimeDomainsPage {
 
   private t(key: string, params?: Record<string, unknown>): string {
     return this.i18n.translate(key, params);
+  }
+
+  private optionLabel(options: Record<string, string>, value: unknown): string {
+    const key = String(value ?? '');
+    return options[key] ?? key;
   }
 }

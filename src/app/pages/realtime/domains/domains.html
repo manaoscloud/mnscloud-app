@@ -95,7 +95,11 @@
                     {{ cell(row, column) | transloco }}
                   </span>
                 } @else {
-                  {{ cell(row, column) || '-' }}
+                  @if (isTranslatedColumn(column)) {
+                    {{ (cell(row, column) || '-') | transloco }}
+                  } @else {
+                    {{ cell(row, column) || '-' }}
+                  }
                 }
               </td>
             </ng-container>
