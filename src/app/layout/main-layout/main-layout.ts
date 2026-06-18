@@ -1532,6 +1532,7 @@ export class MainLayout {
           id: 'realtime/turn',
           label: 'TURN/STUN',
           icon: 'router',
+          scope: 'master',
           children: [
             {
               id: 'realtime/turn/server',
