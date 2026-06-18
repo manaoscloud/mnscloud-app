@@ -199,9 +199,7 @@
                       *
                     }
                   </mat-label>
-                  <mat-select
-                    [formField]="formField(field.key)"
-                  >
+                  <mat-select [formField]="formField(field.key)">
                     @for (server of serverOptions(); track server['RtsUUID']) {
                       <mat-option [value]="server['RtsUUID']">
                         {{ server['RtsName'] }}
@@ -210,40 +208,19 @@
                   </mat-select>
                 </mat-form-field>
               } @else if (field.type === 'domain') {
-                <mat-form-field appearance="outline" floatLabel="always" [class]="field.span || ''">
-                  <mat-label>
-                    {{ field.label | transloco }}
-                    @if (field.required) {
-                      *
-                    }
-                  </mat-label>
-                  <mat-select
-                    [formField]="formField(field.key)"
-                    (openedChange)="clearDomainSearch($event)"
-                  >
-                    <mat-option class="select-search-option" disabled>
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <mat-icon matPrefix>search</mat-icon>
-                        <input
-                          matInput
-                          [placeholder]="'Search domains' | transloco"
-                          [value]="domainSearch()"
-                          (input)="domainSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (domain of domainOptions(); track domain['RtdUUID']) {
-                      <mat-option [value]="domain['RtdUUID']">
-                        {{ domain['RtdName'] || domain['DomainName'] }}
-                      </mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [options]="domainSelectOptions()"
+                  [fieldClass]="field.span || ''"
+                  placeholder="Search domains"
+                />
               } @else if (field.key === 'status') {
-                <mns-status-select-field [field]="formField(field.key)" [label]="field.label | transloco"
-                  [fieldClass]="field.span || ''" />
+                <mns-status-select-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''"
+                />
               } @else if (field.type === 'select') {
                 <mns-select-field
                   [field]="formField(field.key)"
@@ -289,8 +266,11 @@
                   [fieldClass]="field.span || ''"
                 />
               } @else {
-                <mns-text-field [field]="formField(field.key)" [label]="field.label | transloco"
-                  [fieldClass]="field.span || ''" />
+                <mns-text-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''"
+                />
               }
             }
           </div>

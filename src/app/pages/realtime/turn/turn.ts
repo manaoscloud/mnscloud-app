@@ -39,10 +39,12 @@ import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import {
+  MnsSearchSelectFieldComponent,
   MnsSelectFieldComponent,
   MnsStatusSelectFieldComponent,
   MnsTextFieldComponent,
   MnsTextareaFieldComponent,
+  type MnsSearchSelectFieldOption,
   type MnsSelectFieldOption,
 } from '../../../shared/forms';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -166,6 +168,7 @@ const DOMAIN_NOTES_FIELDS: Field[] = [
   imports: [
     RefreshButtonComponent,
     FormField,
+    MnsSearchSelectFieldComponent,
     MnsSelectFieldComponent,
     MnsStatusSelectFieldComponent,
     MnsTextFieldComponent,
@@ -207,7 +210,6 @@ export class RealtimeTurnPage {
   readonly selected = signal<Set<string>>(new Set());
   readonly generatedInstall = signal<TurnRecord | null>(null);
   readonly generatedInstallSource = signal<TurnRecord | null>(null);
-  readonly domainSearch = signal('');
   readonly domainLookupEnabled = signal(false);
   readonly serverOptions = signal<TurnRecord[]>([]);
   private readonly routeData = toSignal(this.route.data, { initialValue: {} });
@@ -223,11 +225,13 @@ export class RealtimeTurnPage {
   readonly isDomains = computed(() => this.currentResource() === 'domains');
   readonly formModel = signal<TurnFormModel>(this.defaultFormModel());
   readonly form = createForm(this.formModel);
-  readonly pageTitle = computed(() => this.isDomains() ? 'TURN/STUN Domains' : 'TURN/STUN Servers');
+  readonly pageTitle = computed(() =>
+    this.isDomains() ? 'TURN/STUN Domains' : 'TURN/STUN Servers',
+  );
   readonly pageSubtitle = computed(() =>
     this.isDomains()
       ? 'Assign realtime TURN/STUN domains to managed coturn edge nodes.'
-      : 'Register dedicated coturn relay servers for realtime media traversal.'
+      : 'Register dedicated coturn relay servers for realtime media traversal.',
   );
 
   readonly dataSource = new MatTableDataSource<TurnRecord>([]);
@@ -279,7 +283,11 @@ export class RealtimeTurnPage {
     }),
     defaultValue: [] as TurnRecord[],
     loader: async ({ params }) => {
-      const response = await this.api.list(params.resource, { limit: 5000, search: params.search }, params.scope);
+      const response = await this.api.list(
+        params.resource,
+        { limit: 5000, search: params.search },
+        params.scope,
+      );
       return response?.data?.items ?? [];
     },
   });
@@ -287,22 +295,32 @@ export class RealtimeTurnPage {
   private readonly domainsResource = resource({
     params: () => ({
       enabled: this.isDomains() || this.domainLookupEnabled(),
-      search: this.domainSearch().trim(),
     }),
     defaultValue: [] as TurnRecord[],
     loader: async ({ params }) => {
       if (!params.enabled) return [];
-      const response = await this.api.listRealtimeDomains({
-        purpose: 'turn',
-        status: 1,
-        limit: 5000,
-        search: params.search,
-      }, this.scope());
+      const response = await this.api.listRealtimeDomains(
+        {
+          purpose: 'turn',
+          status: 1,
+          limit: 5000,
+        },
+        this.scope(),
+      );
       return response?.data?.items ?? [];
     },
   });
 
   readonly domainOptions = computed(() => this.domainsResource.value());
+  readonly domainSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.domainOptions()
+      .map((domain: TurnRecord) => ({
+        value: String(domain['RtdUUID'] ?? ''),
+        label: String(domain['RtdName'] || domain['DomainName'] || domain['RtdUUID'] || ''),
+        searchText: `${domain['RtdName'] ?? ''} ${domain['DomainName'] ?? ''} ${domain['RtdUUID'] ?? ''}`,
+      }))
+      .filter((option: MnsSearchSelectFieldOption) => option.value),
+  );
 
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 
@@ -409,7 +427,11 @@ export class RealtimeTurnPage {
         await this.api.update(this.currentResource(), this.uuid(row), this.payload(), this.scope());
         this.snack.success(`${this.itemLabel()} updated.`);
       } else {
-        const response = await this.api.create(this.currentResource(), this.payload(), this.scope());
+        const response = await this.api.create(
+          this.currentResource(),
+          this.payload(),
+          this.scope(),
+        );
         this.snack.success(`${this.itemLabel()} created.`);
         if (!saveAndNew) {
           const item = response?.data?.item ?? null;
@@ -558,7 +580,9 @@ export class RealtimeTurnPage {
       '--runtime-token',
       this.shellQuote(String(token['runtimeToken'] ?? '')),
       '--realm',
-      this.shellQuote(String(token['realm'] || source?.['RtdName'] || source?.['DomainName'] || '')),
+      this.shellQuote(
+        String(token['realm'] || source?.['RtdName'] || source?.['DomainName'] || ''),
+      ),
       '--listening-ip',
       this.shellQuote(String(source?.['RtsListeningIP'] || '0.0.0.0')),
       '--listening-port',
@@ -600,10 +624,6 @@ export class RealtimeTurnPage {
     return field.options ?? [];
   }
 
-  clearDomainSearch(opened: boolean): void {
-    if (!opened) this.domainSearch.set('');
-  }
-
   isFormValid(): boolean {
     const model = this.formModel() as Record<string, unknown>;
     return this.recordFields().every((field) => {
@@ -619,9 +639,7 @@ export class RealtimeTurnPage {
 
   name(row: TurnRecord): string {
     return String(
-      this.isDomains()
-        ? (row['RtdName'] ?? row['DomainName'] ?? '')
-        : (row['RtsName'] ?? ''),
+      this.isDomains() ? (row['RtdName'] ?? row['DomainName'] ?? '') : (row['RtsName'] ?? ''),
     );
   }
 

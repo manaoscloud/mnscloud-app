@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { FormField, form as createForm, type Field as SignalField } from '@angular/forms/signals';
+import { form as createForm, type Field as SignalField } from '@angular/forms/signals';
 
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -41,15 +41,17 @@ import { RealtimeWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import {
+  MnsSearchSelectFieldComponent,
   MnsSelectFieldComponent,
   MnsStatusSelectFieldComponent,
   MnsTextFieldComponent,
   MnsTextareaFieldComponent,
+  type MnsSearchSelectFieldOption,
   type MnsSelectFieldOption,
 } from '../../../shared/forms';
 
 type LookupKey = 'servers' | 'domains';
-type LookupOption = { value: string; label: string };
+type LookupOption = MnsSearchSelectFieldOption;
 type Field = {
   key: string;
   label: string;
@@ -192,7 +194,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormField,
+    MnsSearchSelectFieldComponent,
     MnsSelectFieldComponent,
     MnsStatusSelectFieldComponent,
     MnsTextFieldComponent,
@@ -250,7 +252,6 @@ export class RealtimeWebRtcPage {
   readonly dataSource = new MatTableDataSource<WebRtcRecord>([]);
   readonly displayedColumns = computed(() => ['select', ...this.config().columns, 'actions']);
   readonly lookups: Record<LookupKey, LookupOption[]> = { servers: [], domains: [] };
-  readonly lookupSearch = signal<Record<LookupKey, string>>({ servers: '', domains: '' });
   readonly formModel = signal<Record<string, any>>({});
   readonly form = createForm(this.formModel);
   readonly paginator = viewChild(MatPaginator);
@@ -402,24 +403,25 @@ export class RealtimeWebRtcPage {
           .map((row: WebRtcRecord) => ({
             value: String(key === 'domains' ? (row['RtdUUID'] ?? '') : (row['RwsUUID'] ?? '')),
             label: String(
-              key === 'domains' ? (row['RtdName'] ?? row['DomainName'] ?? '') : (row['RwsName'] ?? ''),
+              key === 'domains'
+                ? (row['RtdName'] ?? row['DomainName'] ?? '')
+                : (row['RwsName'] ?? ''),
+            ),
+            searchText: String(
+              key === 'domains'
+                ? `${row['RtdName'] ?? ''} ${row['DomainName'] ?? ''} ${row['RtdUUID'] ?? ''}`
+                : `${row['RwsName'] ?? ''} ${row['RwsHostname'] ?? ''} ${row['RwsUUID'] ?? ''}`,
             ),
           }))
           .filter((option: LookupOption) => option.value);
       }),
     );
   }
-  filteredLookup(key: LookupKey) {
-    const term = this.lookupSearch()[key].trim().toLowerCase();
-    if (!term) return this.lookups[key];
-    return this.lookups[key].filter((option) =>
-      `${option.label} ${option.value}`.toLowerCase().includes(term),
-    );
+  lookupOptions(key: LookupKey): readonly MnsSearchSelectFieldOption[] {
+    return this.lookups[key];
   }
-  clearLookupSearch(opened: boolean, key: LookupKey) {
-    if (!opened) {
-      this.lookupSearch.update((value) => ({ ...value, [key]: '' }));
-    }
+  lookupPlaceholder(key: LookupKey): string {
+    return key === 'domains' ? 'Search domains' : 'Search servers';
   }
   hasTextareaFields() {
     return this.config().fields.some((field) => field.type === 'textarea');
@@ -583,10 +585,6 @@ export class RealtimeWebRtcPage {
       self_signed: 'Self-signed',
     };
     return labels[option] ?? option;
-  }
-
-  setLookupSearch(key: LookupKey, value: string) {
-    this.lookupSearch.update((current) => ({ ...current, [key]: value }));
   }
 
   isFormValid() {

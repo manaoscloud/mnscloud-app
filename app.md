@@ -98,12 +98,13 @@
   progress, or custom error handling are required.
 - Signal Forms are the default for new forms and refactors. Use shared adapters from
   `src/app/shared/forms/` before writing raw `mat-form-field` controls in CRUD dialogs. Current
-  baseline adapters include `mns-text-field`, `mns-textarea-field`, `mns-select-field`, and
-  `mns-status-select-field`; add new adapters there for repeated controls such as searchable
-  selects, currency, date/time, upload, phone, and JSON fields. Existing Material-heavy CRUDs that
-  depend on custom control-value accessors may be migrated incrementally, but new CRUD code must not
-  introduce component-local form wiring when a shared adapter exists. Do not perform a cosmetic
-  migration that wraps the old form API without reducing state, validation, or template complexity.
+  baseline adapters include `mns-text-field`, `mns-textarea-field`, `mns-select-field`,
+  `mns-search-select-field`, and `mns-status-select-field`; add new adapters there for repeated
+  controls such as currency, date/time, upload, phone, and JSON fields. Existing Material-heavy
+  CRUDs that depend on custom control-value accessors may be migrated incrementally, but new CRUD
+  code must not introduce component-local form wiring when a shared adapter exists. Do not perform a
+  cosmetic migration that wraps the old form API without reducing state, validation, or template
+  complexity.
 - Prefer direct standalone imports (`DatePipe`, `JsonPipe`, `NgClass`, specific Material modules,
   etc.) instead of broad `CommonModule` when the component can declare the exact template
   dependency. Run the Angular unused-import cleanup after migration/refactor work.
@@ -266,6 +267,10 @@
 ## Searchable Select Baseline (Current)
 
 - Any `mat-select` bound to records from another table/entity (FK-like fields) must be searchable.
+- Signal Forms CRUD dialogs must use the shared `mns-search-select-field` adapter for FK-like
+  selects instead of hand-written page-local `mat-select` search blocks. The adapter owns
+  `select-search-option`, `select-search-field`, real-time filtering, option spacing, empty state,
+  and clearing the search text when the panel closes.
 - Any free-text code field backed by a canonical DB/API registry, such as Billing Product Code, must
   use `mat-autocomplete` with API-provided suggestions and still preserve manual typing when the
   workflow intentionally creates a new registry entry.

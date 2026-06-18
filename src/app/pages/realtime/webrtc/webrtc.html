@@ -172,32 +172,21 @@
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs" animationDuration="0ms">
         <mat-tab [label]="'Record' | transloco">
-          <form id="webrtcForm" class="form-grid tab-content" (submit)="submit(); $event.preventDefault()">
+          <form
+            id="webrtcForm"
+            class="form-grid tab-content"
+            (submit)="submit(); $event.preventDefault()"
+          >
             @for (field of config().fields; track field.key) {
               @if (field.type !== 'textarea') {
                 @if (field.type === 'lookup' && field.lookup) {
-                  <mat-form-field appearance="outline" [class]="field.span || ''">
-                    <mat-label>{{ field.label | transloco }}</mat-label>
-                    <mat-select
-                      [formField]="formField(field.key)"
-                      (openedChange)="clearLookupSearch($event, field.lookup)"
-                    >
-                      <mat-option class="select-search-option">
-                        <input
-                          matInput
-                          class="select-search-field"
-                          placeholder="Search"
-                          [value]="lookupSearch()[field.lookup]"
-                          (input)="setLookupSearch(field.lookup, $any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                        />
-                      </mat-option>
-                      @for (option of filteredLookup(field.lookup); track option.value) {
-                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                  <mns-search-select-field
+                    [field]="formField(field.key)"
+                    [label]="field.label | transloco"
+                    [options]="lookupOptions(field.lookup)"
+                    [fieldClass]="field.span || ''"
+                    [placeholder]="lookupPlaceholder(field.lookup)"
+                  />
                 } @else if (field.key === 'status' || field.key === 'autoProvision') {
                   <mns-status-select-field
                     [field]="formField(field.key)"
