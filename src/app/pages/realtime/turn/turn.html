@@ -192,7 +192,7 @@
           >
             @for (field of recordFields(); track field.key) {
               @if (field.key === 'serverUUID') {
-                <mat-form-field appearance="outline" [class]="field.span || ''">
+                <mat-form-field appearance="outline" floatLabel="always" [class]="field.span || ''">
                   <mat-label>
                     {{ field.label | transloco }}
                     @if (field.required) {
@@ -210,7 +210,7 @@
                   </mat-select>
                 </mat-form-field>
               } @else if (field.type === 'domain') {
-                <mat-form-field appearance="outline" [class]="field.span || ''">
+                <mat-form-field appearance="outline" floatLabel="always" [class]="field.span || ''">
                   <mat-label>
                     {{ field.label | transloco }}
                     @if (field.required) {
