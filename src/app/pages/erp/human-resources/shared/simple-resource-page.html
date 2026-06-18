@@ -149,32 +149,15 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
-            <mat-form-field appearance="outline" class="span-3">
-              <mat-label>Name</mat-label>
-              <input matInput [formField]="form.name" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Status</mat-label>
-              <mat-select [formField]="form.status">
-                <mat-option [value]="1">Active</mat-option>
-                <mat-option [value]="0">Inactive</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Description</mat-label>
-              <textarea matInput rows="3" [formField]="form.description"></textarea>
-            </mat-form-field>
+            <mns-text-field class="span-3" [field]="form.name" label="Name" />
+            <mns-status-select-field [field]="form.status" />
+            <mns-textarea-field class="span-4" [field]="form.description" label="Description" />
           </form>
         </mat-tab>
 
         <mat-tab label="Notes">
           <form class="tab-content form-grid">
-            <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Notes</mat-label>
-              <textarea matInput rows="4" [formField]="form.notes"></textarea>
-            </mat-form-field>
+            <mns-textarea-field class="span-4" [field]="form.notes" label="Notes" [rows]="4" />
           </form>
         </mat-tab>
       </mat-tab-group>

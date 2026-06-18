@@ -33,6 +33,11 @@ import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import {
+  MnsStatusSelectFieldComponent,
+  MnsTextFieldComponent,
+  MnsTextareaFieldComponent,
+} from '../../../shared/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
@@ -63,6 +68,9 @@ type Entity = {
     MatTabsModule,
     MatMenuModule,
     MatChipsModule,
+    MnsStatusSelectFieldComponent,
+    MnsTextFieldComponent,
+    MnsTextareaFieldComponent,
     TranslocoPipe,
   ],
   templateUrl: './page.html',
