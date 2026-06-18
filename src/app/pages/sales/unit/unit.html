@@ -16,15 +16,8 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Unt. Code</mat-label>
-        <input matInput placeholder="Search by code" [formField]="filterForm.code" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput placeholder="Search by name" [formField]="filterForm.name" />
-      </mat-form-field>
+      <mns-text-field [field]="filterForm.code" label="Unt. Code" placeholder="Search by code" />
+      <mns-text-field [field]="filterForm.name" label="Name" placeholder="Search by name" />
 
       <div class="filter-actions">
         <button mat-stroked-button (click)="applyFilters()" type="button">
@@ -102,15 +95,8 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid" (ngSubmit)="saveUnit()">
-              <mat-form-field appearance="outline">
-                <mat-label>Unt. Code</mat-label>
-                <input matInput placeholder="e.g. KG" [formField]="unitForm.code" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. Kilogram" [formField]="unitForm.name" />
-              </mat-form-field>
+              <mns-text-field [field]="unitForm.code" label="Unt. Code" placeholder="e.g. KG" />
+              <mns-text-field [field]="unitForm.name" label="Name" placeholder="e.g. Kilogram" />
             </form>
           </div>
         </mat-tab>

@@ -16,10 +16,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput placeholder="Search by name" [formField]="filterForm.search" />
-      </mat-form-field>
+      <mns-text-field [field]="filterForm.search" label="Name" placeholder="Search by name" />
 
       <div class="filter-actions">
         <button mat-stroked-button (click)="applyFilters()" type="button">
@@ -97,10 +94,11 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid" (ngSubmit)="saveStockType()">
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput placeholder="e.g. Refrigerated" [formField]="stockTypeForm.name" />
-              </mat-form-field>
+              <mns-text-field
+                [field]="stockTypeForm.name"
+                label="Name"
+                placeholder="e.g. Refrigerated"
+              />
             </form>
           </div>
         </mat-tab>

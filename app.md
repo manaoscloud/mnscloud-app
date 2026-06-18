@@ -88,7 +88,7 @@
   progress, or custom error handling are required.
 - Signal Forms are the default for new forms and refactors. Use shared adapters from
   `src/app/shared/forms/` before writing raw `mat-form-field` controls in CRUD dialogs. Current
-  baseline adapters include `mns-text-field`, `mns-textarea-field`, and
+  baseline adapters include `mns-text-field`, `mns-textarea-field`, `mns-select-field`, and
   `mns-status-select-field`; add new adapters there for repeated controls such as searchable
   selects, currency, date/time, upload, phone, and JSON fields. Existing Material-heavy CRUDs that
   depend on custom control-value accessors may be migrated incrementally, but new CRUD code must not

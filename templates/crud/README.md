@@ -31,8 +31,9 @@ How to use:
    queue/provision actions). Mutations may call `resource.reload()` after success, but must not be
    hidden inside a resource loader.
 6. Use Signal Forms for new forms. CRUD dialogs must prefer shared adapters from
-   `src/app/shared/forms/` (`mns-text-field`, `mns-textarea-field`, `mns-status-select-field`, and
-   future adapters for repeated controls) before writing raw `mat-form-field` markup. Add missing
+   `src/app/shared/forms/` (`mns-text-field`, `mns-textarea-field`, `mns-select-field`,
+   `mns-status-select-field`, and future adapters for repeated controls) before writing raw
+   `mat-form-field` markup. Add missing
    repeated controls as adapters first; do not copy component-local form wiring across pages.
 7. Keep the list layout structure intact (`.erp-page` → `.erp-card` → `.erp-header` → `.filter-grid` → `.table-wrapper` → `.mobile-paginator`).
 8. Keep `<table mat-table [dataSource]="dataSource" matSort>`, `MatTableDataSource`, `MatPaginator`, and `MatSort`.

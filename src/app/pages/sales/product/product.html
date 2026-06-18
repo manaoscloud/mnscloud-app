@@ -270,37 +270,24 @@
           <div class="tab-content">
             <div class="form-section">
               <form class="form-grid" (ngSubmit)="saveProduct()">
-                <mat-form-field appearance="outline">
-                  <mat-label>Type</mat-label>
-                  <mat-select [formField]="productForm.type">
-                    @for (item of productTypes(); track item.value) {
-                      <mat-option [value]="item.value">{{ item.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Status</mat-label>
-                  <mat-select [formField]="productForm.status">
-                    <mat-option [value]="1">Active</mat-option>
-                    <mat-option [value]="0">Inactive</mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>Name</mat-label>
-                  <input matInput placeholder="Product name" [formField]="productForm.name" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>Description</mat-label>
-                  <textarea
-                    matInput
-                    rows="3"
-                    placeholder="Product description"
-                    [formField]="productForm.description"
-                  ></textarea>
-                </mat-form-field>
+                <mns-select-field
+                  [field]="productForm.type"
+                  label="Type"
+                  [options]="productTypes()"
+                />
+                <mns-status-select-field [field]="productForm.status" />
+                <mns-text-field
+                  class="span-2"
+                  [field]="productForm.name"
+                  label="Name"
+                  placeholder="Product name"
+                />
+                <mns-textarea-field
+                  class="span-2"
+                  [field]="productForm.description"
+                  label="Description"
+                  placeholder="Product description"
+                />
 
                 <mat-form-field appearance="outline">
                   <mat-label>Unit</mat-label>

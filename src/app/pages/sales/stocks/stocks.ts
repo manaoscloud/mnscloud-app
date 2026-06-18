@@ -33,6 +33,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { MnsTextFieldComponent } from '../../../shared/forms';
 
 type SaleStockItem = {
   SskUUID: string;
@@ -63,6 +64,7 @@ type StockFormModel = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
+    MnsTextFieldComponent,
     FormField,
     MatCardModule,
     MatFormFieldModule,

@@ -34,6 +34,12 @@ import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-ma
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import {
+  MnsSelectFieldComponent,
+  MnsStatusSelectFieldComponent,
+  MnsTextFieldComponent,
+  MnsTextareaFieldComponent,
+} from '../../../shared/forms';
 
 type ProductItem = {
   SprUUID: string;
@@ -109,6 +115,10 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   standalone: true,
   imports: [
     RefreshButtonComponent,
+    MnsSelectFieldComponent,
+    MnsStatusSelectFieldComponent,
+    MnsTextFieldComponent,
+    MnsTextareaFieldComponent,
     FormField,
     MatCardModule,
     MatFormFieldModule,

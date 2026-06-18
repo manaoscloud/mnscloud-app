@@ -198,35 +198,26 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid" (ngSubmit)="submitGateway()">
-              <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
-                <mat-select [formField]="gatewayForm.isActive">
-                  <mat-option [value]="true">Active</mat-option>
-                  <mat-option [value]="false">Inactive</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Default</mat-label>
-                <mat-select [formField]="gatewayForm.isDefault">
-                  <mat-option [value]="true">Yes</mat-option>
-                  <mat-option [value]="false">No</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Provider</mat-label>
-                <mat-select [formField]="gatewayForm.provider">
-                  @for (provider of providerOptions; track provider.value) {
-                    <mat-option [value]="provider.value">{{ provider.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput [formField]="gatewayForm.name" placeholder="Default Gateway" />
-              </mat-form-field>
+              <mns-select-field
+                [field]="gatewayForm.isActive"
+                label="Status"
+                [options]="activeOptions"
+              />
+              <mns-select-field
+                [field]="gatewayForm.isDefault"
+                label="Default"
+                [options]="yesNoOptions"
+              />
+              <mns-select-field
+                [field]="gatewayForm.provider"
+                label="Provider"
+                [options]="providerOptions"
+              />
+              <mns-text-field
+                [field]="gatewayForm.name"
+                label="Name"
+                placeholder="Default Gateway"
+              />
             </form>
           </div>
         </mat-tab>

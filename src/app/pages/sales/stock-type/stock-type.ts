@@ -10,11 +10,9 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { FormField, form as createForm, required } from '@angular/forms/signals';
+import { form as createForm, required } from '@angular/forms/signals';
 
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -31,6 +29,7 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { MnsTextFieldComponent } from '../../../shared/forms';
 
 type SaleStockTypeItem = {
   SstUUID: string;
@@ -49,10 +48,8 @@ type StockTypeFilters = {
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormField,
+    MnsTextFieldComponent,
     MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
     MatTableModule,

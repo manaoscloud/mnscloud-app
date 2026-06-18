@@ -43,6 +43,7 @@ import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-d
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
+import { MnsSelectFieldComponent, MnsTextFieldComponent } from '../../../../../shared/forms';
 
 type PaymentGatewayProvider = 'pagarme' | 'asaas' | 'stripe' | 'efi' | 'inter_business';
 
@@ -204,6 +205,8 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   standalone: true,
   imports: [
     RefreshButtonComponent,
+    MnsSelectFieldComponent,
+    MnsTextFieldComponent,
     FormField,
     MatCardModule,
     MatIconModule,
@@ -303,6 +306,14 @@ export class FinancialPaymentGatewayPage {
     { value: 'efi', label: 'Efi' },
     { value: 'inter_business', label: 'Inter Empresas' },
   ];
+  readonly yesNoOptions = [
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+  ] as const;
+  readonly activeOptions = [
+    { value: true, label: 'Active' },
+    { value: false, label: 'Inactive' },
+  ] as const;
   readonly selectedProviderConfigFields = computed(() =>
     PROVIDER_FIELD_DEFINITIONS[this.selectedProvider()]
       .filter((field) => field.section === 'config')
