@@ -120,13 +120,6 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         span: 'span-1',
       },
       { key: 'name', label: 'Name', required: true, span: 'span-1' },
-      {
-        key: 'publicDomain',
-        label: 'Public Domain',
-        type: 'lookup',
-        lookup: 'domains',
-        span: 'span-1',
-      },
       { key: 'nodeUUID', label: 'Node UUID' },
       { key: 'hostname', label: 'Hostname' },
       { key: 'publicIP', label: 'Public IP' },
@@ -457,15 +450,11 @@ export class RealtimeWebRtcPage {
       if (key === 'engine' && this.config().resource === 'servers') return 'kamailio';
       return '';
     }
-    if (key === 'publicDomain' && this.config().resource === 'servers') {
-      return this.realtimeDomainValueForPublicDomain(row['RwsPublicDomain']);
-    }
     const m: Record<string, string> = {
       name: this.config().name,
       engine: 'RwsEngine',
       nodeUUID: 'RwsNodeUUID',
       hostname: 'RwsHostname',
-      publicDomain: 'RwsPublicDomain',
       publicIP: 'RwsPublicIP',
       privateIP: 'RwsPrivateIP',
       baseUrl: 'RwsBaseUrl',
@@ -529,7 +518,6 @@ export class RealtimeWebRtcPage {
     if ('autoProvision' in raw) p['autoProvision'] = raw['autoProvision'] === 'inactive' ? 0 : 1;
     if (this.config().resource === 'servers') {
       p['engine'] = 'kamailio';
-      p['publicDomain'] = this.publicDomainPayloadValue(raw['publicDomain']);
     }
     if (raw['configJson']) {
       try {
@@ -548,24 +536,6 @@ export class RealtimeWebRtcPage {
     }
     delete p['valueJson'];
     return p;
-  }
-
-  private realtimeDomainValueForPublicDomain(publicDomain: unknown): string {
-    const raw = String(publicDomain ?? '').trim().toLowerCase();
-    if (!raw) return '';
-    const match = this.lookups.domains.find((option) => {
-      const label = String(option.label ?? '').trim().toLowerCase();
-      const searchText = String(option.searchText ?? '').toLowerCase();
-      return label === raw || searchText.split(/\s+/).includes(raw);
-    });
-    return String(match?.value ?? publicDomain ?? '');
-  }
-
-  private publicDomainPayloadValue(value: unknown): string {
-    const raw = String(value ?? '').trim();
-    if (!raw) return '';
-    const match = this.lookups.domains.find((option) => String(option.value) === raw);
-    return String(match?.label ?? raw).trim().toLowerCase();
   }
 
   async submit(saveAndNew = false) {
@@ -698,15 +668,11 @@ export class RealtimeWebRtcPage {
     const data = this.generatedInstall();
     if (!data) return '';
     const apiBase = window.location.origin;
-    const publicDomain = String(data['publicDomain'] || '').trim();
     const installArgs = [
       `--api-base ${this.shellQuote(apiBase)}`,
       `--node-uuid ${this.shellQuote(data['nodeUUID'] || '')}`,
       `--runtime-token ${this.shellQuote(data['runtimeToken'] || '')}`,
     ];
-    if (publicDomain) {
-      installArgs.push(`--public-domain ${this.shellQuote(publicDomain)}`);
-    }
     return [
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
