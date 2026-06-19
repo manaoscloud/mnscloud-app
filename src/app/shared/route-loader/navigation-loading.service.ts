@@ -18,14 +18,19 @@ export class NavigationLoadingService {
 
   private readonly activeNavigation = signal(false);
   private readonly lazyLoadDepth = signal(0);
+  private readonly progressVisible = signal(false);
   private readonly overlayVisible = signal(false);
 
   private overlayTimer: ReturnType<typeof setTimeout> | null = null;
   private hideTimer: ReturnType<typeof setTimeout> | null = null;
+  private progressHideTimer: ReturnType<typeof setTimeout> | null = null;
   private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
+  private progressStartedAt = 0;
+
+  private static readonly MIN_PROGRESS_MS = 900;
 
   readonly isNavigating = computed(() => this.activeNavigation() || this.lazyLoadDepth() > 0);
-  readonly showProgressBar = computed(() => this.isNavigating());
+  readonly showProgressBar = computed(() => this.progressVisible());
   readonly showOverlay = computed(() => this.overlayVisible() && this.isNavigating());
 
   constructor() {
@@ -60,7 +65,10 @@ export class NavigationLoadingService {
 
   private startNavigation() {
     this.clearHideTimer();
+    this.clearProgressHideTimer();
     this.lazyLoadDepth.set(0);
+    this.progressStartedAt = Date.now();
+    this.progressVisible.set(true);
     this.activeNavigation.set(true);
     this.scheduleOverlay();
     this.scheduleWatchdog();
@@ -102,11 +110,16 @@ export class NavigationLoadingService {
     if (this.isNavigating()) return;
     this.clearOverlayTimer();
     this.clearHideTimer();
+    this.clearProgressHideTimer();
     this.clearWatchdogTimer();
     this.hideTimer = setTimeout(() => {
       this.hideTimer = null;
       this.overlayVisible.set(false);
     }, 140);
+    this.progressHideTimer = setTimeout(() => {
+      this.progressHideTimer = null;
+      this.progressVisible.set(false);
+    }, this.remainingProgressTime());
   }
 
   private finishAll() {
@@ -118,7 +131,13 @@ export class NavigationLoadingService {
   private clearTimers() {
     this.clearOverlayTimer();
     this.clearHideTimer();
+    this.clearProgressHideTimer();
     this.clearWatchdogTimer();
+  }
+
+  private remainingProgressTime() {
+    const elapsed = Date.now() - this.progressStartedAt;
+    return Math.max(0, NavigationLoadingService.MIN_PROGRESS_MS - elapsed);
   }
 
   private clearOverlayTimer() {
@@ -131,6 +150,12 @@ export class NavigationLoadingService {
     if (!this.hideTimer) return;
     clearTimeout(this.hideTimer);
     this.hideTimer = null;
+  }
+
+  private clearProgressHideTimer() {
+    if (!this.progressHideTimer) return;
+    clearTimeout(this.progressHideTimer);
+    this.progressHideTimer = null;
   }
 
   private clearWatchdogTimer() {
