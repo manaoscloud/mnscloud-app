@@ -217,6 +217,8 @@
     `NavigationLoadingService`; pages must not create their own route-change loaders.
   - Navigation feedback uses a top progress bar immediately and a delayed centered overlay only
     when the route/lazy chunk is slow enough to need explicit feedback.
+  - Router terminal events must clear every navigation-loading signal, and the global service must
+    keep a short watchdog so a missed lazy-load event never leaves the page blocked.
   - Layout menus may read `NavigationLoadingService.isNavigating` to prevent repeated clicks while
     the router is already processing a navigation.
   - Use list loading state + overlay (`.table-loading`) on table wrapper.

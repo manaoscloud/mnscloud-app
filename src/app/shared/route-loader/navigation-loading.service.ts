@@ -22,6 +22,7 @@ export class NavigationLoadingService {
 
   private overlayTimer: ReturnType<typeof setTimeout> | null = null;
   private hideTimer: ReturnType<typeof setTimeout> | null = null;
+  private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly isNavigating = computed(() => this.activeNavigation() || this.lazyLoadDepth() > 0);
   readonly showProgressBar = computed(() => this.isNavigating());
@@ -59,14 +60,18 @@ export class NavigationLoadingService {
 
   private startNavigation() {
     this.clearHideTimer();
+    this.lazyLoadDepth.set(0);
     this.activeNavigation.set(true);
     this.scheduleOverlay();
+    this.scheduleWatchdog();
   }
 
   private startLazyLoad() {
+    if (!this.activeNavigation()) return;
     this.clearHideTimer();
     this.lazyLoadDepth.update((depth) => depth + 1);
     this.scheduleOverlay();
+    this.scheduleWatchdog();
   }
 
   private finishLazyLoad() {
@@ -75,8 +80,7 @@ export class NavigationLoadingService {
   }
 
   private finishNavigation() {
-    this.activeNavigation.set(false);
-    this.scheduleFinishIfIdle();
+    this.finishAll();
   }
 
   private scheduleOverlay() {
@@ -89,19 +93,32 @@ export class NavigationLoadingService {
     }, 350);
   }
 
+  private scheduleWatchdog() {
+    this.clearWatchdogTimer();
+    this.watchdogTimer = setTimeout(() => this.finishAll(), 12000);
+  }
+
   private scheduleFinishIfIdle() {
     if (this.isNavigating()) return;
     this.clearOverlayTimer();
     this.clearHideTimer();
+    this.clearWatchdogTimer();
     this.hideTimer = setTimeout(() => {
       this.hideTimer = null;
       this.overlayVisible.set(false);
     }, 140);
   }
 
+  private finishAll() {
+    this.activeNavigation.set(false);
+    this.lazyLoadDepth.set(0);
+    this.scheduleFinishIfIdle();
+  }
+
   private clearTimers() {
     this.clearOverlayTimer();
     this.clearHideTimer();
+    this.clearWatchdogTimer();
   }
 
   private clearOverlayTimer() {
@@ -114,5 +131,11 @@ export class NavigationLoadingService {
     if (!this.hideTimer) return;
     clearTimeout(this.hideTimer);
     this.hideTimer = null;
+  }
+
+  private clearWatchdogTimer() {
+    if (!this.watchdogTimer) return;
+    clearTimeout(this.watchdogTimer);
+    this.watchdogTimer = null;
   }
 }
