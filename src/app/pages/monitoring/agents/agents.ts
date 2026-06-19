@@ -35,7 +35,7 @@ import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
@@ -109,6 +109,11 @@ type AgentFilters = {
   status: string;
 };
 
+type AgentSelectOption<T extends string | number = string> = {
+  value: T;
+  label: string;
+};
+
 type AgentFormModel = {
   agentUUID: string;
   name: string;
@@ -172,6 +177,7 @@ export class MonitoringAgentsPage {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly transloco = inject(TranslocoService);
 
   readonly agentDialog = viewChild<TemplateRef<unknown>>('agentDialog');
   readonly tokenDialog = viewChild<TemplateRef<unknown>>('tokenDialog');
@@ -222,20 +228,31 @@ export class MonitoringAgentsPage {
     'actions',
   ];
 
-  readonly statusOptions = ['', 'online', 'degraded', 'offline'];
-  readonly typeOptions = [
-    '',
-    'linux.status',
-    'mnscloud.agent.update',
-    'mnscloud.api.update',
-    'mnscloud.app.update',
-    'security.nftables.manage',
-    'security.crowdsec.manage',
-    'security.logs.read',
-    'voip.asterisk.manage',
-    'voip.freeswitch.manage',
-    'realtime.turn.manage',
-    'docker.manage',
+  readonly statusOptions: AgentSelectOption[] = [
+    { value: '', label: 'All' },
+    { value: 'online', label: 'Online' },
+    { value: 'degraded', label: 'Degraded' },
+    { value: 'offline', label: 'Offline' },
+  ];
+
+  readonly recordStatusOptions: AgentSelectOption<number>[] = [
+    { value: 1, label: 'Active' },
+    { value: 0, label: 'Inactive' },
+  ];
+
+  readonly typeOptions: AgentSelectOption[] = [
+    { value: '', label: 'All' },
+    { value: 'linux.status', label: 'linux.status' },
+    { value: 'mnscloud.agent.update', label: 'mnscloud.agent.update' },
+    { value: 'mnscloud.api.update', label: 'mnscloud.api.update' },
+    { value: 'mnscloud.app.update', label: 'mnscloud.app.update' },
+    { value: 'security.nftables.manage', label: 'security.nftables.manage' },
+    { value: 'security.crowdsec.manage', label: 'security.crowdsec.manage' },
+    { value: 'security.logs.read', label: 'security.logs.read' },
+    { value: 'voip.asterisk.manage', label: 'voip.asterisk.manage' },
+    { value: 'voip.freeswitch.manage', label: 'voip.freeswitch.manage' },
+    { value: 'realtime.turn.manage', label: 'realtime.turn.manage' },
+    { value: 'docker.manage', label: 'docker.manage' },
   ];
 
   readonly filterFormModel = signal<AgentFilters>({ ...EMPTY_AGENT_FILTERS });
@@ -294,12 +311,16 @@ export class MonitoringAgentsPage {
 
   async queueRuntimeProductUpdate(product: RuntimeProductFleet) {
     if (!this.canUpdateRuntimeProduct(product)) return;
-    const target = product.targetRef || product.latestVersion || 'the latest release';
-    const modeLabel = product.mode === 'cluster' ? 'cluster' : 'runtime';
+    const target = product.targetRef || product.latestVersion || this.t('the latest release');
+    const modeLabel = product.mode === 'cluster' ? this.t('cluster') : this.t('runtime');
     const ok = await this.confirm(
-      `Update ${product.label}`,
-      `Queue ${product.label} ${modeLabel} update to ${target}? The API will update every eligible online node for this product.`,
-      'Queue update',
+      `${this.t('Update')} ${product.label}`,
+      `${this.t('Queue')} ${product.label} ${modeLabel} ${this.t(
+        'update to',
+      )} ${target}? ${this.t(
+        'The API will update every eligible online node for this product.',
+      )}`,
+      this.t('Queue update'),
     );
     if (!ok) return;
     const next = new Set(this.updatingProducts());
@@ -313,15 +334,19 @@ export class MonitoringAgentsPage {
       const queued = response?.data?.jobs?.length ?? 0;
       const skipped = response?.data?.skipped?.length ?? 0;
       if (queued > 0) {
-        this.snack.success(`${product.label} rollout queued for ${queued} node(s).`);
+        this.snack.success(`${product.label} ${this.t('rollout queued for')} ${queued} node(s).`);
       } else if (skipped > 0) {
-        this.snack.success(`${product.label} rollout already has pending or current node(s).`);
+        this.snack.success(
+          `${product.label} ${this.t('rollout already has pending or current node(s).')}`,
+        );
       } else {
-        this.snack.success(`${product.label} is already up to date.`);
+        this.snack.success(`${product.label} ${this.t('is already up to date.')}`);
       }
       this.agentsResource.reload();
     } catch (error) {
-      this.snack.error(this.errorMessage(error, `Failed to queue ${product.label} rollout.`));
+      this.snack.error(
+        this.errorMessage(error, `${this.t('Failed to queue')} ${product.label} rollout.`),
+      );
     } finally {
       const current = new Set(this.updatingProducts());
       current.delete(product.product);
@@ -417,11 +442,11 @@ export class MonitoringAgentsPage {
       const editing = this.editing();
       if (editing) {
         await this.api.put(`monitoring/agents/${editing.uuid}`, payload);
-        this.snack.success('Agent updated.');
+        this.snack.success(this.t('Agent updated.'));
       } else {
         const response = await this.api.post<any>('monitoring/agents/enrollments', payload);
         this.generatedToken.set(response?.data?.enrollmentToken ?? '');
-        this.snack.success('Agent enrollment created. Copy the install command.');
+        this.snack.success(this.t('Agent enrollment created. Copy the install command.'));
         this.openTokenDialog();
       }
       this.agentsResource.reload();
@@ -431,7 +456,7 @@ export class MonitoringAgentsPage {
         this.closeDialog();
       }
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to save agent.'));
+      this.snack.error(this.errorMessage(error, this.t('Failed to save agent.')));
     } finally {
       this.saving.set(false);
     }
@@ -439,18 +464,22 @@ export class MonitoringAgentsPage {
 
   async generateInstallCommand(row: MonitoringAgent) {
     const ok = await this.confirm(
-      'Generate install command',
-      `Generate a short-lived install command for agent ${row.name || row.uuid}? The runtime token will be issued directly to the server when the enrollment is consumed.`,
-      'Generate command',
+      this.t('Generate install command'),
+      `${this.t('Generate a short-lived install command for agent')} ${
+        row.name || row.uuid
+      }? ${this.t(
+        'The runtime token will be issued directly to the server when the enrollment is consumed.',
+      )}`,
+      this.t('Generate command'),
     );
     if (!ok) return;
     try {
       const response = await this.api.post<any>(`monitoring/agents/${row.uuid}/enrollments`, {});
       this.generatedToken.set(response?.data?.enrollmentToken ?? '');
       this.openTokenDialog();
-      this.snack.success('Agent enrollment command generated.');
+      this.snack.success(this.t('Agent enrollment command generated.'));
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to generate install command.'));
+      this.snack.error(this.errorMessage(error, this.t('Failed to generate install command.')));
     }
   }
 
@@ -459,11 +488,11 @@ export class MonitoringAgentsPage {
     const targetRef =
       target.targetRef || (target.latestVersion ? `v${target.latestVersion}` : null);
     const ok = await this.confirm(
-      `Update ${target.label}`,
-      `Queue remote update for ${row.name || row.uuid} to ${
-        targetRef || 'the latest release'
-      }? The selected runtime will update by explicit release tag.`,
-      'Queue update',
+      `${this.t('Update')} ${target.label}`,
+      `${this.t('Queue remote update for')} ${row.name || row.uuid} ${this.t('to')} ${
+        targetRef || this.t('the latest release')
+      }? ${this.t('The selected runtime will update by explicit release tag.')}`,
+      this.t('Queue update'),
     );
     if (!ok) return;
     const next = new Set(this.updatingIds());
@@ -475,15 +504,17 @@ export class MonitoringAgentsPage {
       });
       const status = response?.data?.status;
       if (status === 'current') {
-        this.snack.success(`${target.label} is already up to date.`);
+        this.snack.success(`${target.label} ${this.t('is already up to date.')}`);
       } else if (status === 'pending') {
-        this.snack.success(`${target.label} update is already pending.`);
+        this.snack.success(`${target.label} ${this.t('update is already pending.')}`);
       } else {
-        this.snack.success(`${target.label} update queued.`);
+        this.snack.success(`${target.label} ${this.t('update queued.')}`);
       }
       this.agentsResource.reload();
     } catch (error) {
-      this.snack.error(this.errorMessage(error, `Failed to queue ${target.label} update.`));
+      this.snack.error(
+        this.errorMessage(error, `${this.t('Failed to queue')} ${target.label} update.`),
+      );
     } finally {
       const current = new Set(this.updatingIds());
       current.delete(this.updateKey(row, target));
@@ -493,17 +524,17 @@ export class MonitoringAgentsPage {
 
   async deleteAgent(row: MonitoringAgent) {
     const ok = await this.confirm(
-      'Confirm delete',
-      `Delete agent ${row.name || row.uuid}?`,
-      'Delete',
+      this.t('Confirm delete'),
+      `${this.t('Delete agent')} ${row.name || row.uuid}?`,
+      this.t('Delete'),
     );
     if (!ok) return;
     try {
       await this.api.delete(`monitoring/agents/${row.uuid}`);
-      this.snack.success('Agent deleted.');
+      this.snack.success(this.t('Agent deleted.'));
       this.agentsResource.reload();
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete agent.'));
+      this.snack.error(this.errorMessage(error, this.t('Failed to delete agent.')));
     }
   }
 
@@ -511,9 +542,9 @@ export class MonitoringAgentsPage {
     const ids = [...this.selectedIds()];
     if (!ids.length) return;
     const ok = await this.confirm(
-      'Confirm delete',
-      `Delete ${ids.length} selected agent(s)?`,
-      'Delete',
+      this.t('Confirm delete'),
+      `${this.t('Delete')} ${ids.length} ${this.t('selected agent(s)?')}`,
+      this.t('Delete'),
     );
     if (!ok) return;
     try {
@@ -524,12 +555,14 @@ export class MonitoringAgentsPage {
       this.selectedIds.set(new Set(failedIds));
       failedIds.length
         ? this.snack.warning(
-            `${ids.length - failedIds.length} agent(s) deleted; ${failedIds.length} failed.`,
+            `${ids.length - failedIds.length} ${this.t('agent(s) deleted;')} ${
+              failedIds.length
+            } ${this.t('failed.')}`,
           )
-        : this.snack.success('Selected agents deleted.');
+        : this.snack.success(this.t('Selected agents deleted.'));
       this.agentsResource.reload();
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete selected agents.'));
+      this.snack.error(this.errorMessage(error, this.t('Failed to delete selected agents.')));
     }
   }
 
@@ -561,8 +594,8 @@ export class MonitoringAgentsPage {
 
   notifyCommandCopied(copied: boolean) {
     copied
-      ? this.snack.success('Install command copied.')
-      : this.snack.error('Failed to copy install command.');
+      ? this.snack.success(this.t('Install command copied.'))
+      : this.snack.error(this.t('Failed to copy install command.'));
   }
 
   isSelected(row: MonitoringAgent) {
@@ -601,9 +634,9 @@ export class MonitoringAgentsPage {
 
   connectionStatusLabel(row: MonitoringAgent) {
     const status = row.connectionStatus || 'offline';
-    if (status === 'online') return 'ONLINE';
-    if (status === 'degraded') return 'DEGRADED';
-    return 'OFFLINE';
+    if (status === 'online') return 'Online';
+    if (status === 'degraded') return 'Degraded';
+    return 'Offline';
   }
 
   formatUptime(value: number | null | undefined) {
@@ -709,6 +742,10 @@ export class MonitoringAgentsPage {
     if (product.outdatedCount > 0 || product.rolloutStatus === 'outdated') return 'Outdated';
     if (product.unknownCount > 0) return 'Check';
     return 'Up to date';
+  }
+
+  runtimeModeLabel(mode: string | null | undefined) {
+    return mode === 'cluster' ? 'Cluster' : 'Single node';
   }
 
   runtimeProductClass(product: RuntimeProductFleet) {
@@ -846,5 +883,9 @@ export class MonitoringAgentsPage {
   private errorMessage(error: unknown, fallback: string) {
     const maybe = error as { error?: { error?: string; message?: string }; message?: string };
     return maybe?.error?.message || maybe?.error?.error || maybe?.message || fallback;
+  }
+
+  private t(key: string) {
+    return this.transloco.translate(key);
   }
 }
