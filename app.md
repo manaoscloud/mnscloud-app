@@ -213,6 +213,12 @@
   - `MatTableDataSource.filter` must not be the only search mechanism for resources where the loaded rows can be an incomplete backend window.
   - Reference bug: `VoipDid` initially loaded the procedure default of 50 rows, so valid DIDs outside that window could not be found in the app even though they existed in the database.
 - Loading behavior:
+  - Route/component transitions are owned by the global `RouteLoader` plus
+    `NavigationLoadingService`; pages must not create their own route-change loaders.
+  - Navigation feedback uses a top progress bar immediately and a delayed centered overlay only
+    when the route/lazy chunk is slow enough to need explicit feedback.
+  - Layout menus may read `NavigationLoadingService.isNavigating` to prevent repeated clicks while
+    the router is already processing a navigation.
   - Use list loading state + overlay (`.table-loading`) on table wrapper.
   - Keep minimum visible loading duration around `600ms`.
   - Header-level refresh actions must show local progress inside the refresh button. Do not rely

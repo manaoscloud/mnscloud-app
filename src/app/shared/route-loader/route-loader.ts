@@ -1,20 +1,18 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { NavigationLoadingService } from './navigation-loading.service';
 
 @Component({
   selector: 'app-route-loader',
   standalone: true,
-  imports: [],
+  imports: [MatProgressSpinnerModule, TranslocoPipe],
   templateUrl: './route-loader.html',
   styleUrls: ['./route-loader.scss'],
 })
 export class RouteLoader {
-  visible = signal(false);
+  private readonly navigationLoading = inject(NavigationLoadingService);
 
-  show() {
-    this.visible.set(true);
-  }
-
-  hide() {
-    this.visible.set(false);
-  }
+  readonly showProgressBar = this.navigationLoading.showProgressBar;
+  readonly showOverlay = this.navigationLoading.showOverlay;
 }

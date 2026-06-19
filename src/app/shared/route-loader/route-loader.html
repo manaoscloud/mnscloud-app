@@ -1,5 +1,25 @@
-@if (visible()) {
-  <div class="loader-overlay" animate.enter="app-fade-in" animate.leave="app-fade-out">
-    <div class="loader-circle"></div>
+@if (showProgressBar()) {
+  <div
+    class="route-progress"
+    aria-hidden="true"
+    animate.enter="app-fade-in"
+    animate.leave="app-fade-out"
+  >
+    <span></span>
+  </div>
+}
+
+@if (showOverlay()) {
+  <div
+    class="loader-overlay"
+    animate.enter="app-fade-in"
+    animate.leave="app-fade-out"
+    aria-busy="true"
+    aria-live="polite"
+  >
+    <div class="loader-panel">
+      <mat-progress-spinner diameter="34" mode="indeterminate" />
+      <span>{{ 'Loading...' | transloco }}</span>
+    </div>
   </div>
 }

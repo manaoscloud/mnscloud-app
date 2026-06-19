@@ -36,7 +36,7 @@
 
     <!-- MENU -->
     <div class="sidenav-scroll">
-      <nav class="nav-menu">
+      <nav class="nav-menu" [class.is-navigation-pending]="navigationLoading()">
         @for (item of filteredNavItems; track item.id) {
           <!-- ROOT -->
           <button

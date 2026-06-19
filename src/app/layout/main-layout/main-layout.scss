@@ -64,7 +64,6 @@ mat-sidenav.sidenav.compact {
   border-radius: 999px;
 }
 
-
 .sidenav.compact .drawer-header {
   justify-content: center;
 }
@@ -93,7 +92,6 @@ mat-sidenav.sidenav.compact {
 .sidenav.compact .menu-icon {
   margin-right: 0;
 }
-
 
 /* ================= HEADER ================= */
 
@@ -217,6 +215,18 @@ mat-sidenav.sidenav.compact {
   display: flex;
   flex-direction: column;
   padding: 0.25rem 0;
+}
+
+.nav-menu.is-navigation-pending {
+  cursor: wait;
+}
+
+.nav-menu.is-navigation-pending .menu-item {
+  pointer-events: none;
+}
+
+.nav-menu.is-navigation-pending .menu-item:not(.active-root):not(.active-child):not(.active-grand) {
+  opacity: 0.72;
 }
 
 .compact-flyout {

@@ -21,6 +21,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 // Shared
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
 import { isSignedStorageUrl } from '../../shared/storage/signed-url';
+import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
 
 // Material
 import { MatIconModule } from '@angular/material/icon';
@@ -123,6 +124,7 @@ export class MainLayout {
   private readonly parameters = inject(SystemParameterService);
   private readonly billing = inject(BillingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
 
   // =======================================================
@@ -156,6 +158,7 @@ export class MainLayout {
   readonly currentLanguageOption = this.i18n.selectedLanguageOption;
   readonly languageOptions = this.i18n.languageOptions;
   readonly appVersion = this.runtimeVersion.appVersion;
+  readonly navigationLoading = this.navigationLoadingService.isNavigating;
 
   // =======================================================
   // Tenant Signals
