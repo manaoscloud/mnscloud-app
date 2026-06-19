@@ -60,10 +60,6 @@ type RealtimeDomainFormModel = {
   status: number;
   name: string;
   purpose: string;
-  certificateProvider: string;
-  certificateStatus: string;
-  tlsCertPath: string;
-  tlsKeyPath: string;
   notes: string;
 };
 
@@ -81,53 +77,12 @@ const PURPOSE_OPTIONS = [
   { value: 'mixed', label: 'Mixed' },
 ];
 
-const CERTIFICATE_PROVIDER_OPTIONS = [
-  { value: 'letsencrypt', label: 'Let’s Encrypt' },
-  { value: 'manual', label: 'Manual' },
-  { value: 'self_signed', label: 'Self-signed' },
-  { value: 'none', label: 'None' },
-];
-
-const CERTIFICATE_STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'queued', label: 'Queued' },
-  { value: 'issued', label: 'Issued' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'manual', label: 'Manual' },
-  { value: 'self_signed', label: 'Self-signed' },
-  { value: 'disabled', label: 'Disabled' },
-  { value: 'none', label: 'None' },
-];
-
 const PURPOSE_LABELS = Object.fromEntries(PURPOSE_OPTIONS.map((option) => [option.value, option.label]));
-const CERTIFICATE_PROVIDER_LABELS = Object.fromEntries(
-  CERTIFICATE_PROVIDER_OPTIONS.map((option) => [option.value, option.label]),
-);
-const CERTIFICATE_STATUS_LABELS = Object.fromEntries(
-  CERTIFICATE_STATUS_OPTIONS.map((option) => [option.value, option.label]),
-);
 
 const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
   { key: 'name', label: 'Domain', required: true },
   { key: 'purpose', label: 'Purpose', type: 'select', required: true, options: PURPOSE_OPTIONS },
-  {
-    key: 'certificateProvider',
-    label: 'Certificate Provider',
-    type: 'select',
-    options: CERTIFICATE_PROVIDER_OPTIONS,
-  },
-];
-
-const CERTIFICATE_FIELDS: Field[] = [
-  {
-    key: 'certificateStatus',
-    label: 'Certificate Status',
-    type: 'select',
-    options: CERTIFICATE_STATUS_OPTIONS,
-  },
-  { key: 'tlsCertPath', label: 'TLS Cert Path' },
-  { key: 'tlsKeyPath', label: 'TLS Key Path' },
 ];
 
 const NOTES_FIELDS: Field[] = [
@@ -187,15 +142,12 @@ export class RealtimeDomainsPage {
     'select',
     'name',
     'purpose',
-    'certificateProvider',
-    'certificateStatus',
     'status',
     'updatedAt',
     'actions',
   ];
 
   readonly recordFields = RECORD_FIELDS;
-  readonly certificateFields = CERTIFICATE_FIELDS;
   readonly notesFields = NOTES_FIELDS;
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
@@ -270,8 +222,6 @@ export class RealtimeDomainsPage {
     const labels: Record<string, string> = {
       name: 'Domain',
       purpose: 'Purpose',
-      certificateProvider: 'Certificate Provider',
-      certificateStatus: 'Certificate Status',
       status: 'Status',
       updatedAt: 'Updated',
     };
@@ -282,8 +232,6 @@ export class RealtimeDomainsPage {
     const map: Record<string, any> = {
       name: row['RtdName'],
       purpose: this.optionLabel(PURPOSE_LABELS, row['RtdPurpose']),
-      certificateProvider: this.optionLabel(CERTIFICATE_PROVIDER_LABELS, row['RtdCertificateProvider']),
-      certificateStatus: this.optionLabel(CERTIFICATE_STATUS_LABELS, row['RtdCertificateStatus']),
       status: this.status(row) ? 'Active' : 'Inactive',
       updatedAt: this.dateTime.formatDateTime(row['RtdDateUpdated'] ?? row['RtdDateCreated']),
     };
@@ -291,7 +239,7 @@ export class RealtimeDomainsPage {
   }
 
   isTranslatedColumn(column: string): boolean {
-    return ['purpose', 'certificateProvider', 'certificateStatus'].includes(column);
+    return ['purpose'].includes(column);
   }
 
   isSelected(row: RealtimeDomainRecord): boolean {
@@ -454,10 +402,6 @@ export class RealtimeDomainsPage {
       status: 1,
       name: '',
       purpose: 'turn',
-      certificateProvider: 'letsencrypt',
-      certificateStatus: 'pending',
-      tlsCertPath: '',
-      tlsKeyPath: '',
       notes: '',
     };
   }
@@ -467,10 +411,6 @@ export class RealtimeDomainsPage {
       status: Number(row['RtdStatus'] ?? 0) === 1 ? 1 : 0,
       name: row['RtdName'] ?? '',
       purpose: row['RtdPurpose'] ?? 'turn',
-      certificateProvider: row['RtdCertificateProvider'] ?? 'letsencrypt',
-      certificateStatus: row['RtdCertificateStatus'] ?? 'pending',
-      tlsCertPath: row['RtdTlsCertPath'] ?? '',
-      tlsKeyPath: row['RtdTlsKeyPath'] ?? '',
       notes: row['RtdNotes'] ?? '',
     };
   }
@@ -480,10 +420,6 @@ export class RealtimeDomainsPage {
     return {
       name: String(model['name'] ?? '').trim(),
       purpose: model['purpose'],
-      certificateProvider: model['certificateProvider'],
-      certificateStatus: model['certificateStatus'],
-      tlsCertPath: String(model['tlsCertPath'] ?? '').trim() || null,
-      tlsKeyPath: String(model['tlsKeyPath'] ?? '').trim() || null,
       notes: String(model['notes'] ?? '').trim() || null,
       status: Number(model['status']) === 1 ? 1 : 0,
     };

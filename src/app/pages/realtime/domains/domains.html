@@ -187,24 +187,6 @@
           </form>
         </mat-tab>
 
-        <mat-tab [label]="'Certificate' | transloco">
-          <div class="form-grid tab-content">
-            @for (field of certificateFields; track field.key) {
-              @if (field.type === 'select') {
-                <mns-select-field
-                  [field]="formField(field.key)"
-                  [label]="field.label | transloco"
-                  [options]="selectOptions(field)"
-                  [fieldClass]="field.span || ''"
-                />
-              } @else {
-                <mns-text-field [field]="formField(field.key)" [label]="field.label | transloco"
-                  [fieldClass]="field.span || ''" />
-              }
-            }
-          </div>
-        </mat-tab>
-
         <mat-tab [label]="'Notes' | transloco">
           <div class="form-grid tab-content">
             @for (field of notesFields; track field.key) {
