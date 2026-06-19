@@ -698,11 +698,20 @@ export class RealtimeWebRtcPage {
     const data = this.generatedInstall();
     if (!data) return '';
     const apiBase = window.location.origin;
+    const publicDomain = String(data['publicDomain'] || '').trim();
+    const installArgs = [
+      `--api-base ${this.shellQuote(apiBase)}`,
+      `--node-uuid ${this.shellQuote(data['nodeUUID'] || '')}`,
+      `--runtime-token ${this.shellQuote(data['runtimeToken'] || '')}`,
+    ];
+    if (publicDomain) {
+      installArgs.push(`--public-domain ${this.shellQuote(publicDomain)}`);
+    }
     return [
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
       '[ -d mnscloud-kamailio-webrtc/.git ] && sudo git -C mnscloud-kamailio-webrtc pull || gh repo clone manaoscloud/mnscloud-kamailio-webrtc',
-      `sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/install-kamailio-webrtc.sh --api-base ${this.shellQuote(apiBase)} --node-uuid ${this.shellQuote(data['nodeUUID'] || '')} --runtime-token ${this.shellQuote(data['runtimeToken'] || '')}`,
+      `sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/install-kamailio-webrtc.sh ${installArgs.join(' ')}`,
       'sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/validate-kamailio-webrtc.sh',
     ].join(' && ');
   }
