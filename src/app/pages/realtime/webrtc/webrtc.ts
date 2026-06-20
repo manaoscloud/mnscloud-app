@@ -78,7 +78,7 @@ const COLUMN_LABELS: Record<string, string> = {
   name: 'Name',
   engine: 'Engine',
   hostname: 'Hostname',
-  publicDomain: 'Public Domain',
+  publicDomain: 'Primary Domain',
   publicIP: 'Public IP',
   domain: 'Realtime Domain',
   certificateProvider: 'Certificate',
@@ -120,6 +120,13 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         span: 'span-1',
       },
       { key: 'name', label: 'Name', required: true, span: 'span-1' },
+      {
+        key: 'realtimeDomainUUID',
+        label: 'Primary Domain',
+        type: 'lookup',
+        lookup: 'domains',
+        span: 'span-1',
+      },
       { key: 'nodeUUID', label: 'Node UUID' },
       { key: 'hostname', label: 'Hostname' },
       { key: 'publicIP', label: 'Public IP' },
@@ -339,7 +346,7 @@ export class RealtimeWebRtcPage {
       name: this.name(row),
       engine: row['RwsEngine'],
       hostname: row['RwsHostname'],
-      publicDomain: row['RwsPublicDomain'],
+      publicDomain: row['RtdName'] ?? row['DomainName'] ?? row['RwsPublicDomain'],
       publicIP: row['RwsPublicIP'],
       version: row['RwsVersion'],
       lastSeen: row['RwsLastSeenAt'],
@@ -454,13 +461,13 @@ export class RealtimeWebRtcPage {
       name: this.config().name,
       engine: 'RwsEngine',
       nodeUUID: 'RwsNodeUUID',
+      realtimeDomainUUID: 'RealtimeDomainRtdUUID',
       hostname: 'RwsHostname',
       publicIP: 'RwsPublicIP',
       privateIP: 'RwsPrivateIP',
       baseUrl: 'RwsBaseUrl',
       version: 'RwsVersion',
       serverUUID: 'RealtimeWebRtcServerRwsUUID',
-      realtimeDomainUUID: 'RealtimeDomainRtdUUID',
       certificateProvider: 'RwdCertificateProvider',
       autoProvision: 'RwdAutoProvision',
       key: 'RwpKey',
@@ -673,6 +680,9 @@ export class RealtimeWebRtcPage {
       `--node-uuid ${this.shellQuote(data['nodeUUID'] || '')}`,
       `--runtime-token ${this.shellQuote(data['runtimeToken'] || '')}`,
     ];
+    if (data['publicDomain']) {
+      installArgs.push(`--public-domain ${this.shellQuote(String(data['publicDomain']))}`);
+    }
     return [
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
