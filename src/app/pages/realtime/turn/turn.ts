@@ -295,32 +295,45 @@ export class RealtimeTurnPage {
   private readonly domainsResource = resource({
     params: () => ({
       enabled: this.isDomains() || this.domainLookupEnabled(),
+      resource: this.currentResource(),
+      scope: this.scope(),
     }),
     defaultValue: [] as TurnRecord[],
     loader: async ({ params }) => {
       if (!params.enabled) return [];
-      const response = await this.api.listRealtimeDomains(
-        {
-          purpose: 'turn',
-          status: 1,
-          limit: 5000,
-        },
-        this.scope(),
-      );
+      const response =
+        params.resource === 'domains'
+          ? await this.api.listRealtimeDomains(
+              {
+                purpose: 'turn',
+                status: 1,
+                limit: 5000,
+              },
+              params.scope,
+            )
+          : await this.api.listTurnDomainOptions(params.scope);
       return response?.data?.items ?? [];
     },
   });
 
   readonly domainOptions = computed(() => this.domainsResource.value());
-  readonly domainSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
-    this.domainOptions()
-      .map((domain: TurnRecord) => ({
-        value: String(domain['RtdUUID'] ?? ''),
-        label: String(domain['RtdName'] || domain['DomainName'] || domain['RtdUUID'] || ''),
-        searchText: `${domain['RtdName'] ?? ''} ${domain['DomainName'] ?? ''} ${domain['RtdUUID'] ?? ''}`,
-      }))
-      .filter((option: MnsSearchSelectFieldOption) => option.value),
-  );
+  readonly domainSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
+    const fromRealtimeDomain = this.isDomains();
+    return this.domainOptions()
+      .map((domain: TurnRecord) => {
+        const value = fromRealtimeDomain
+          ? domain['RtdUUID']
+          : domain['RealtimeDomainRtdUUID'];
+        const label = domain['RtdName'] || domain['DomainName'] || value;
+        const server = domain['RtsName'] || domain['ServerName'] || '';
+        return {
+          value: String(value ?? ''),
+          label: String(label ?? ''),
+          searchText: `${label ?? ''} ${server} ${domain['RtnUUID'] ?? ''} ${value ?? ''}`,
+        };
+      })
+      .filter((option: MnsSearchSelectFieldOption) => option.value);
+  });
 
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 

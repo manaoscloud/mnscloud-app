@@ -78,4 +78,8 @@ export class RealtimeTurnService {
     const suffix = query.toString();
     return this.api.get<any>(`system/realtime/domains${suffix ? `?${suffix}` : ''}`);
   }
+
+  listTurnDomainOptions(scope: TurnScope = 'master') {
+    return this.list('domains', { status: 1, limit: 5000 }, scope);
+  }
 }
