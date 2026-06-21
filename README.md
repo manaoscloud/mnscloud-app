@@ -209,11 +209,15 @@ Use the installer when this module owns its own Nginx process on the app host. B
 the built app from `/var/www/mnscloud-app` and listens on `0.0.0.0:8080`, so an external
 `mnscloud-nginx` edge on another host can proxy to it without sharing the app files.
 
+Resolve the latest approved release from the MNSCloud workspace when installing from a published
+artifact:
+
 ```bash
-sudo APP_ARTIFACT_URL=https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
-  APP_ARTIFACT_SHA256=<sha256> \
-  ./scripts/install-nginx-runtime.sh
+cd /opt/mnscloud
+scripts/runtime/latest-release.sh mnscloud-app --format env
 ```
+
+Then pass the release artifact URL and SHA-256 digest to the installer.
 
 Useful options:
 
@@ -221,8 +225,8 @@ Useful options:
 sudo APP_LISTEN_ADDR=0.0.0.0 \
   APP_LISTEN_PORT=8080 \
   APP_API_BASE_URL="" \
-  APP_ARTIFACT_URL=https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
-  APP_ARTIFACT_SHA256=<sha256> \
+  APP_ARTIFACT_URL=<release-artifact-url> \
+  APP_ARTIFACT_SHA256=<release-artifact-sha256> \
   ./scripts/install-nginx-runtime.sh
 ```
 
@@ -260,19 +264,28 @@ call a separate API origin, pass the full API v1 URL:
 
 ```bash
 sudo APP_API_BASE_URL=https://api.example.com/api/v1 \
-  APP_ARTIFACT_URL=https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
-  APP_ARTIFACT_SHA256=<sha256> \
+  APP_ARTIFACT_URL=<release-artifact-url> \
+  APP_ARTIFACT_SHA256=<release-artifact-sha256> \
   ./scripts/install-nginx-runtime.sh
 ```
 
 Update and validate the runtime later:
 
 ```bash
+cd /opt/mnscloud
+scripts/runtime/update-command.sh mnscloud-app
+```
+
+The generated command includes the latest approved release tag, artifact URL, and SHA-256 digest.
+If the workspace helper is unavailable, use the same shape manually with values copied from the
+published release registry:
+
+```bash
 cd /opt/mnscloud/mnscloud-app
 sudo ./scripts/update-nginx-runtime.sh \
-  --ref v0.1.0 \
-  --artifact-url https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
-  --artifact-sha256 <sha256>
+  --ref <release-tag> \
+  --artifact-url <release-artifact-url> \
+  --artifact-sha256 <release-artifact-sha256>
 sudo ./scripts/validate-nginx-runtime.sh
 ```
 
@@ -289,7 +302,7 @@ Recommended operator flow after a repository commit:
 ```bash
 cd /opt/mnscloud/mnscloud-app
 git status --short
-sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0 --artifact-url <release-asset-url> --artifact-sha256 <sha256>
+sudo ./scripts/update-nginx-runtime.sh --ref <release-tag> --artifact-url <release-artifact-url> --artifact-sha256 <release-artifact-sha256>
 sudo ./scripts/validate-nginx-runtime.sh
 curl -I http://127.0.0.1:8080
 ```
@@ -308,18 +321,18 @@ Deploy a specific release manually only when the control plane/Agent flow is una
 
 ```bash
 sudo ./scripts/update-nginx-runtime.sh \
-  --ref v0.1.1 \
-  --artifact-url https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.1/mnscloud-app-browser-v0.1.1.tar.gz \
-  --artifact-sha256 <sha256>
+  --ref <release-tag> \
+  --artifact-url <release-artifact-url> \
+  --artifact-sha256 <release-artifact-sha256>
 ```
 
 Rollback to a known-good release uses the same artifact contract:
 
 ```bash
 sudo ./scripts/rollback-nginx-runtime.sh \
-  --ref v0.1.0 \
-  --artifact-url https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
-  --artifact-sha256 <sha256>
+  --ref <known-good-release-tag> \
+  --artifact-url <known-good-release-artifact-url> \
+  --artifact-sha256 <known-good-release-artifact-sha256>
 ```
 
 Example edge proxy to the app runtime:
