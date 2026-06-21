@@ -278,18 +278,19 @@ Preferred manual update on App runtime hosts that already have
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://dev.publichost.cloud/api/v1
+sudo ./scripts/update-latest-nginx-runtime.sh
 ```
 
 Inspect without applying:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://dev.publichost.cloud/api/v1 --print-command
+sudo ./scripts/update-latest-nginx-runtime.sh --print-command
 ```
 
-For other environments, replace only the API base URL with that environment's public edge API v1
-URL:
+The helper resolves the latest approved version, artifact URL, and SHA-256 automatically from the
+release registry. If the host needs to use a registry other than the default development edge, set
+`MNSCLOUD_RELEASE_API_BASE_URL` in `/etc/mnscloud/app.env` or pass `--api-base` explicitly:
 
 ```text
 sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://<edge-domain>/api/v1

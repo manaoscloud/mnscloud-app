@@ -4,21 +4,22 @@ set -Eeuo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="/etc/mnscloud/app.env"
 CHANNEL="stable"
-API_BASE="${MNSCLOUD_RELEASE_API_BASE_URL:-${MNSCLOUD_API_BASE_URL:-${APP_API_BASE_URL:-}}}"
+DEFAULT_API_BASE="https://dev.publichost.cloud/api/v1"
+API_BASE="${MNSCLOUD_RELEASE_API_BASE_URL:-${MNSCLOUD_API_BASE_URL:-${APP_API_BASE_URL:-$DEFAULT_API_BASE}}}"
 PRINT_COMMAND=0
 
 usage() {
   cat <<'EOF'
 Usage:
-  sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://dev.publichost.cloud/api/v1 [--channel stable] [--env /etc/mnscloud/app.env] [--print-command]
+  sudo ./scripts/update-latest-nginx-runtime.sh [--api-base https://dev.publichost.cloud/api/v1] [--channel stable] [--env /etc/mnscloud/app.env] [--print-command]
 
 This helper resolves the latest approved mnscloud-app release from the MNSCloud API registry,
 then calls update-nginx-runtime.sh with the required release ref, artifact URL, and SHA-256.
 
 Use this on app runtime hosts when the control plane/Agent flow is unavailable.
 Use --print-command to inspect the resolved update command without applying it.
-For other environments, replace only the --api-base value with that environment's public edge API
-v1 URL.
+If no API base is configured, the helper uses the development edge registry:
+https://dev.publichost.cloud/api/v1.
 EOF
 }
 
@@ -41,11 +42,7 @@ if [[ -f "$ENV_FILE" ]]; then
   API_BASE="${MNSCLOUD_RELEASE_API_BASE_URL:-${MNSCLOUD_API_BASE_URL:-${APP_API_BASE_URL:-$API_BASE}}}"
 fi
 
-if [[ -z "$API_BASE" ]]; then
-  printf '[mnscloud-app] ERROR: --api-base is required when no release API base is configured.\n' >&2
-  usage >&2
-  exit 1
-fi
+API_BASE="${API_BASE:-$DEFAULT_API_BASE}"
 
 API_BASE="${API_BASE%/}"
 if [[ "$API_BASE" != */api/v1 ]]; then
