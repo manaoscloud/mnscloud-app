@@ -463,8 +463,6 @@
   must use `InstallCommandDialogComponent` from `src/app/shared/install-command-dialog`.
 - Install command dialogs must open through `openCrudTemplateDialog` so their viewport size,
   position, resize behavior, footer density, and mobile behavior match CRUD dialogs.
-- The command body must scroll inside the dialog content area; `mat-dialog-actions.form-actions`
-  stays anchored at the bottom exactly like CRUD action footers.
 - Pages must not define page-local `*-token-dialog`, fixed-width script modals, local clipboard
   markup, or local command-shell SCSS.
 - The API/DB remains the source of truth for generated enrollment/runtime tokens and command
