@@ -289,12 +289,9 @@ sudo ./scripts/update-latest-nginx-runtime.sh --print-command
 ```
 
 The helper resolves the latest approved version, artifact URL, and SHA-256 automatically from the
-release registry. If the host needs to use a registry other than the default development edge, set
-`MNSCLOUD_RELEASE_API_BASE_URL` in `/etc/mnscloud/app.env` or pass `--api-base` explicitly:
-
-```text
-sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://<edge-domain>/api/v1
-```
+release registry. It reads `/etc/mnscloud/app.env` and uses `MNSCLOUD_RELEASE_API_BASE_URL` when
+that value exists. If it is not configured, the helper uses the development edge registry
+automatically. Operators do not type the API base in the normal update flow.
 
 #### First Update On Older Hosts
 
@@ -309,6 +306,17 @@ scripts/runtime/update-command.sh mnscloud-app
 The generated command includes the latest approved release tag, artifact URL, and SHA-256 digest.
 After that first update, the App host will include `scripts/update-latest-nginx-runtime.sh`, and
 future manual updates can use the shorter module-local helper from the Update section.
+
+If an older host already has `scripts/update-latest-nginx-runtime.sh` but the helper still asks for
+`--api-base`, refresh just the helper from the repository and run the normal command again:
+
+```bash
+cd /opt/mnscloud/mnscloud-app
+sudo git fetch origin main
+sudo git checkout origin/main -- scripts/update-latest-nginx-runtime.sh
+sudo chmod +x scripts/update-latest-nginx-runtime.sh
+sudo ./scripts/update-latest-nginx-runtime.sh
+```
 
 If both helpers are unavailable, use the same shape manually with values copied from the published
 release registry.
