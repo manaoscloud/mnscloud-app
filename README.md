@@ -209,8 +209,8 @@ Use the installer when this module owns its own Nginx process on the app host. B
 the built app from `/var/www/mnscloud-app` and listens on `0.0.0.0:8080`, so an external
 `mnscloud-nginx` edge on another host can proxy to it without sharing the app files.
 
-Resolve the latest approved release from the MNSCloud workspace when installing from a published
-artifact:
+Resolve the latest approved release from the MNSCloud API registry when installing from a published
+artifact. On a full MNSCloud workspace host, this can be inspected with:
 
 ```bash
 cd /opt/mnscloud
@@ -272,15 +272,29 @@ sudo APP_API_BASE_URL=https://api.example.com/api/v1 \
 Update and validate the runtime later:
 
 ```bash
+cd /opt/mnscloud/mnscloud-app
+sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://edge.example.com/api/v1
+```
+
+Inspect without applying:
+
+```bash
+cd /opt/mnscloud/mnscloud-app
+sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://edge.example.com/api/v1 --print-command
+```
+
+On a full MNSCloud workspace host, you can also generate the copyable command:
+
+```bash
 cd /opt/mnscloud
 scripts/runtime/update-command.sh mnscloud-app
 ```
 
 The generated command includes the latest approved release tag, artifact URL, and SHA-256 digest.
-If the workspace helper is unavailable, use the same shape manually with values copied from the
-published release registry:
+If both helpers are unavailable, use the same shape manually with values copied from the published
+release registry. Do not execute the placeholders literally:
 
-```bash
+```text
 cd /opt/mnscloud/mnscloud-app
 sudo ./scripts/update-nginx-runtime.sh \
   --ref <release-tag> \
@@ -299,7 +313,7 @@ validation fails, the script restores the previous commit and previous web root.
 
 Recommended operator flow after a repository commit:
 
-```bash
+```text
 cd /opt/mnscloud/mnscloud-app
 git status --short
 sudo ./scripts/update-nginx-runtime.sh --ref <release-tag> --artifact-url <release-artifact-url> --artifact-sha256 <release-artifact-sha256>
@@ -319,7 +333,7 @@ Run the script manually only as a break-glass maintainer operation.
 
 Deploy a specific release manually only when the control plane/Agent flow is unavailable:
 
-```bash
+```text
 sudo ./scripts/update-nginx-runtime.sh \
   --ref <release-tag> \
   --artifact-url <release-artifact-url> \
@@ -328,7 +342,7 @@ sudo ./scripts/update-nginx-runtime.sh \
 
 Rollback to a known-good release uses the same artifact contract:
 
-```bash
+```text
 sudo ./scripts/rollback-nginx-runtime.sh \
   --ref <known-good-release-tag> \
   --artifact-url <known-good-release-artifact-url> \
