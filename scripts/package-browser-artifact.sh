@@ -17,6 +17,25 @@ version="$(tr -d '[:space:]' < VERSION)"
 [[ -d "$BUILD_DIR" ]] || die "browser build output not found at ${BUILD_DIR}"
 [[ -f "${BUILD_DIR}/index.html" ]] || die "browser build is missing index.html"
 
+validate_browser_assets() {
+  local root="$1"
+  local index_file="${root}/index.html"
+  local missing=0
+  local asset
+
+  while IFS= read -r asset; do
+    [[ -n "$asset" ]] || continue
+    if [[ ! -f "${root}/${asset}" ]]; then
+      printf '[mnscloud-app] ERROR: browser build references missing asset: %s\n' "$asset" >&2
+      missing=1
+    fi
+  done < <(grep -Eo '(main|polyfills|styles|chunk)-[A-Za-z0-9_-]+[.](js|css)' "$index_file" | sort -u)
+
+  [[ "$missing" == "0" ]] || die "browser build asset validation failed"
+}
+
+validate_browser_assets "$BUILD_DIR"
+
 mkdir -p "$RELEASES_DIR"
 rm -f "${RELEASES_DIR}"/mnscloud-app-browser-v*.tar.gz \
   "${RELEASES_DIR}"/mnscloud-app-browser-v*.tar.gz.sha256

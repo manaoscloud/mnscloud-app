@@ -191,6 +191,25 @@ verify_artifact() {
     die "artifact checksum mismatch: expected ${APP_ARTIFACT_SHA256,,}, got ${actual,,}"
 }
 
+validate_browser_assets() {
+  local root="$1"
+  local index_file="${root}/index.html"
+  local missing=0
+  local asset
+
+  [[ -f "$index_file" ]] || die "artifact does not contain index.html at its root"
+
+  while IFS= read -r asset; do
+    [[ -n "$asset" ]] || continue
+    if [[ ! -f "${root}/${asset}" ]]; then
+      printf '[mnscloud-app] ERROR: artifact references missing asset: %s\n' "$asset" >&2
+      missing=1
+    fi
+  done < <(grep -Eo '(main|polyfills|styles|chunk)-[A-Za-z0-9_-]+[.](js|css)' "$index_file" | sort -u)
+
+  [[ "$missing" == "0" ]] || die "artifact asset validation failed"
+}
+
 publish_artifact() {
   local artifact_path extract_dir artifact_name
   APP_ARTIFACT_TMP_DIR="$(mktemp -d)"
@@ -205,7 +224,7 @@ publish_artifact() {
 
   log "extracting browser artifact"
   tar -xzf "$artifact_path" -C "$extract_dir"
-  [[ -f "${extract_dir}/index.html" ]] || die "artifact does not contain index.html at its root"
+  validate_browser_assets "$extract_dir"
 
   log "deploying browser files to ${APP_WEB_ROOT}"
   install -d -m 0755 "${APP_WEB_ROOT}"
