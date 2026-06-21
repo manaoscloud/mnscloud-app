@@ -295,20 +295,8 @@ automatically. Operators do not type the API base in the normal update flow.
 
 #### First Update On Older Hosts
 
-Older App hosts may not have `scripts/update-latest-nginx-runtime.sh` yet. On those hosts, generate
-the full command from a full MNSCloud workspace host and run the generated command on the App host:
-
-```bash
-cd /opt/mnscloud
-scripts/runtime/update-command.sh mnscloud-app
-```
-
-The generated command includes the latest approved release tag, artifact URL, and SHA-256 digest.
-After that first update, the App host will include `scripts/update-latest-nginx-runtime.sh`, and
-future manual updates can use the shorter module-local helper from the Update section.
-
-If an older host already has `scripts/update-latest-nginx-runtime.sh` but the helper still asks for
-`--api-base`, refresh just the helper from the repository and run the normal command again:
+Older App hosts may not have `scripts/update-latest-nginx-runtime.sh` yet. On those hosts, refresh
+only the helper from the repository and then run the normal copy/paste update command:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
@@ -317,6 +305,9 @@ sudo git checkout origin/main -- scripts/update-latest-nginx-runtime.sh
 sudo chmod +x scripts/update-latest-nginx-runtime.sh
 sudo ./scripts/update-latest-nginx-runtime.sh
 ```
+
+After that first update, future manual updates can use the shorter module-local helper from the
+Update section.
 
 If both helpers are unavailable, use the same shape manually with values copied from the published
 release registry.
