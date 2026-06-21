@@ -278,27 +278,14 @@
 </ng-template>
 
 <ng-template #installCommandDialog>
-  <div class="webrtc-token-dialog">
-    <h2 mat-dialog-title>WebRTC install command</h2>
-    <mat-dialog-content>
-      <p>Run this command on the Kamailio WebRTC edge server.</p>
-      <p class="token-warning">
-        This runtime token is shown only once. Generating a new command replaces the previous token
-        for this WebRTC server.
-      </p>
-      <pre>{{ installCommand() }}</pre>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button
-        mat-stroked-button
-        type="button"
-        [cdkCopyToClipboard]="installCommand()"
-        (cdkCopyToClipboardCopied)="notifyCommandCopied($event)"
-      >
-        <mat-icon>content_copy</mat-icon>
-        Copy
-      </button>
-      <button mat-flat-button color="primary" mat-dialog-close type="button">Done</button>
-    </mat-dialog-actions>
-  </div>
+  <mns-install-command-dialog
+    [title]="'WebRTC install command'"
+    [description]="'Run this command on the Kamailio WebRTC edge server.'"
+    [warning]="
+      'This runtime token is shown only once. Generating a new command replaces the previous token for this WebRTC server.'
+    "
+    [details]="installCommandDetails()"
+    [command]="installCommand()"
+    (copied)="notifyCommandCopied($event)"
+  />
 </ng-template>

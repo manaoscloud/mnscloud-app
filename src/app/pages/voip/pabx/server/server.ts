@@ -1,7 +1,6 @@
-
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
   Component,
+  DestroyRef,
   TemplateRef,
   effect,
   inject,
@@ -39,6 +38,8 @@ import { VoipPabxServerItem, VoipPabxServerService } from './server.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { InstallCommandDialogComponent } from '../../../../shared/install-command-dialog/install-command-dialog';
 
 type ServerPayload = {
   name: string;
@@ -66,7 +67,7 @@ type ServerPayload = {
   imports: [
     MnsDateTimePipe,
     RefreshButtonComponent,
-    ClipboardModule,
+    InstallCommandDialogComponent,
     FormField,
     MatButtonModule,
     MatCardModule,
@@ -93,6 +94,7 @@ export class VoipPabxServerPage {
   private readonly api = inject(VoipPabxServerService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly dataSource = new MatTableDataSource<VoipPabxServerItem>([]);
   readonly displayedColumns = [
@@ -117,6 +119,7 @@ export class VoipPabxServerPage {
   readonly searchInput = signal('');
   private dialogBinding: CrudDialogBinding | null = null;
   private dialogRef: MatDialogRef<unknown> | null = null;
+  private installCommandBinding: CrudDialogBinding | null = null;
   private lastLoadError = '';
   private readonly appliedSearch = signal('');
   private readonly serversResource = resource({
@@ -140,6 +143,10 @@ export class VoipPabxServerPage {
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.closeInstallCommandDialog();
+    });
     this.dataSource.sortingDataAccessor = (row, column) => {
       switch (column) {
         case 'nodeUUID':
@@ -334,12 +341,24 @@ export class VoipPabxServerPage {
 
   openInstallCommandDialog() {
     const installCommandDialog = this.installCommandDialog();
-    if (!installCommandDialog) return;
-    this.dialog.open(installCommandDialog, {
-      width: 'min(860px, calc(100vw - 32px))',
-      maxWidth: '860px',
-      disableClose: false,
+    if (!installCommandDialog || this.installCommandBinding) return;
+    const binding = openCrudTemplateDialog(
+      this.dialog,
+      installCommandDialog,
+      'install-command-dialog-panel',
+    );
+    this.installCommandBinding = binding;
+    bindDialogClosed(binding.ref, () => {
+      binding.stop();
+      if (this.installCommandBinding === binding) this.installCommandBinding = null;
     });
+  }
+
+  closeInstallCommandDialog() {
+    const binding = this.installCommandBinding;
+    this.installCommandBinding = null;
+    binding?.stop();
+    binding?.ref.close();
   }
 
   installCommand() {
@@ -370,6 +389,21 @@ export class VoipPabxServerPage {
     copied
       ? this.snack.success('Install command copied.')
       : this.snack.error('Failed to copy install command.');
+  }
+
+  installCommandDetails() {
+    const data = this.generatedInstall();
+    const engine = String(data?.['engine'] || '').toLowerCase();
+    return [
+      { label: 'API base', value: window.location.origin, monospace: true },
+      { label: 'Node UUID', value: data?.['nodeUUID'], monospace: true },
+      { label: 'Engine', value: engine || null, monospace: true },
+      {
+        label: 'Runtime',
+        value: engine === 'asterisk' ? 'mnscloud-asterisk' : 'mnscloud-freeswitch',
+        monospace: true,
+      },
+    ];
   }
 
   async removeSelectedServers() {

@@ -12,7 +12,6 @@ import {
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import { form as createForm, type Field as SignalField } from '@angular/forms/signals';
 
 import { ActivatedRoute } from '@angular/router';
@@ -40,6 +39,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { RealtimeWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { InstallCommandDialogComponent } from '../../../shared/install-command-dialog/install-command-dialog';
 import {
   MnsSearchSelectFieldComponent,
   MnsSelectFieldComponent,
@@ -212,7 +212,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     MnsStatusSelectFieldComponent,
     MnsTextFieldComponent,
     MnsTextareaFieldComponent,
-    ClipboardModule,
+    InstallCommandDialogComponent,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -273,6 +273,7 @@ export class RealtimeWebRtcPage {
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
+  private installCommandBinding: CrudDialogBinding | null = null;
 
   private readonly recordsResource = resource({
     params: () => ({
@@ -328,6 +329,7 @@ export class RealtimeWebRtcPage {
   });
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.binding?.stop();
+    this.installCommandBinding?.stop();
   });
   uuid(row: WebRtcRecord) {
     return String(row[this.config().uuid] ?? '');
@@ -664,11 +666,16 @@ export class RealtimeWebRtcPage {
   }
   openInstallCommandDialog() {
     const installCommandDialog = this.installCommandDialog();
-    if (!installCommandDialog) return;
-    this.dialog.open(installCommandDialog, {
-      width: 'min(860px, calc(100vw - 32px))',
-      maxWidth: '860px',
-      disableClose: false,
+    if (!installCommandDialog || this.installCommandBinding) return;
+    const binding = openCrudTemplateDialog(
+      this.dialog,
+      installCommandDialog,
+      'install-command-dialog-panel',
+    );
+    this.installCommandBinding = binding;
+    bindDialogClosed(binding.ref, () => {
+      binding.stop();
+      if (this.installCommandBinding === binding) this.installCommandBinding = null;
     });
   }
   installCommand() {
@@ -695,6 +702,15 @@ export class RealtimeWebRtcPage {
     copied
       ? this.snack.success('Install command copied.')
       : this.snack.error('Failed to copy install command.');
+  }
+  installCommandDetails() {
+    const data = this.generatedInstall();
+    return [
+      { label: 'API base', value: window.location.origin, monospace: true },
+      { label: 'Node UUID', value: data?.['nodeUUID'], monospace: true },
+      { label: 'Public domain', value: data?.['publicDomain'], monospace: true },
+      { label: 'Runtime', value: 'mnscloud-kamailio-webrtc', monospace: true },
+    ];
   }
   private shellQuote(value: string) {
     return `'${value.replace(/'/g, `'\\''`)}'`;

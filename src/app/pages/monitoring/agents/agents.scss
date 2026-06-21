@@ -142,27 +142,3 @@
   border-color: rgba(255, 107, 122, 0.64);
   color: #ff6b7a;
 }
-
-.agent-token-dialog {
-  max-width: 100%;
-}
-
-.agent-token-dialog p {
-  margin: 0 0 0.75rem;
-}
-
-.agent-token-dialog .token-warning {
-  color: var(--warn-color, #ffb4ab);
-}
-
-.agent-token-dialog pre {
-  background: rgba(0, 0, 0, 0.24);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 0.75rem;
-  margin: 0;
-  max-height: 45vh;
-  overflow: auto;
-  padding: 1rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-}

@@ -1,5 +1,4 @@
 import { NgClass } from '@angular/common';
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
   Component,
   DestroyRef,
@@ -39,6 +38,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import { InstallCommandDialogComponent } from '../../../shared/install-command-dialog/install-command-dialog';
 
 type MonitoringAgent = {
   uuid: string;
@@ -148,7 +148,7 @@ const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   imports: [
     MnsDateTimePipe,
     RefreshButtonComponent,
-    ClipboardModule,
+    InstallCommandDialogComponent,
     FormField,
     MatButtonModule,
     MatCardModule,
@@ -185,6 +185,7 @@ export class MonitoringAgentsPage {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
+  private tokenDialogBinding: CrudDialogBinding | null = null;
   private lastRuntimeProductsError = '';
 
   readonly saving = signal(false);
@@ -302,7 +303,10 @@ export class MonitoringAgentsPage {
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.destroyRef.onDestroy(() => this.closeDialog());
+    this.destroyRef.onDestroy(() => {
+      this.closeDialog();
+      this.closeTokenDialog();
+    });
   }
 
   refreshList() {
@@ -568,12 +572,27 @@ export class MonitoringAgentsPage {
 
   openTokenDialog() {
     const tokenDialog = this.tokenDialog();
-    if (!tokenDialog) return;
-    this.dialog.open(tokenDialog, {
-      width: 'min(760px, calc(100vw - 32px))',
-      maxWidth: '760px',
-      disableClose: false,
+    if (!tokenDialog || this.tokenDialogBinding) return;
+    const binding = openCrudTemplateDialog(this.dialog, tokenDialog, 'install-command-dialog-panel');
+    this.tokenDialogBinding = binding;
+    bindDialogClosed(binding.ref, () => {
+      binding.stop();
+      if (this.tokenDialogBinding === binding) this.tokenDialogBinding = null;
     });
+  }
+
+  closeTokenDialog() {
+    const binding = this.tokenDialogBinding;
+    this.tokenDialogBinding = null;
+    binding?.stop();
+    binding?.ref.close();
+  }
+
+  tokenCommandDetails() {
+    return [
+      { label: 'API base', value: window.location.origin, monospace: true },
+      { label: 'Resource type', value: 'mnscloud.agent', monospace: true },
+    ];
   }
 
   tokenCommand() {

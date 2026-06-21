@@ -11,7 +11,6 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import { FormField, form as createForm, type Field as SignalField } from '@angular/forms/signals';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -38,6 +37,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { InstallCommandDialogComponent } from '../../../shared/install-command-dialog/install-command-dialog';
 import {
   MnsSearchSelectFieldComponent,
   MnsSelectFieldComponent,
@@ -173,7 +173,7 @@ const DOMAIN_NOTES_FIELDS: Field[] = [
     MnsStatusSelectFieldComponent,
     MnsTextFieldComponent,
     MnsTextareaFieldComponent,
-    ClipboardModule,
+    InstallCommandDialogComponent,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -274,6 +274,7 @@ export class RealtimeTurnPage {
 
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
+  private installCommandBinding: CrudDialogBinding | null = null;
 
   private readonly itemsResource = resource({
     params: () => ({
@@ -365,7 +366,10 @@ export class RealtimeTurnPage {
       .catch(() => this.serverOptions.set([]));
   });
 
-  private readonly cleanup = this.destroyRef.onDestroy(() => this.closeDialog());
+  private readonly cleanup = this.destroyRef.onDestroy(() => {
+    this.closeDialog();
+    this.closeInstallCommandDialog();
+  });
 
   refreshList(): void {
     this.itemsResource.reload();
@@ -571,12 +575,20 @@ export class RealtimeTurnPage {
 
   openInstallCommandDialog(): void {
     const template = this.installCommandDialog();
-    if (!template) return;
-    this.dialog.open(template, {
-      width: 'min(920px, calc(100vw - 32px))',
-      maxWidth: '920px',
-      disableClose: false,
+    if (!template || this.installCommandBinding) return;
+    const binding = openCrudTemplateDialog(this.dialog, template, 'install-command-dialog-panel');
+    this.installCommandBinding = binding;
+    bindDialogClosed(binding.ref, () => {
+      binding.stop();
+      if (this.installCommandBinding === binding) this.installCommandBinding = null;
     });
+  }
+
+  closeInstallCommandDialog(): void {
+    const binding = this.installCommandBinding;
+    this.installCommandBinding = null;
+    binding?.stop();
+    binding?.ref.close();
   }
 
   installCommand(): string {
@@ -627,6 +639,17 @@ export class RealtimeTurnPage {
     copied
       ? this.snack.success('Install command copied.')
       : this.snack.error('Failed to copy install command.');
+  }
+
+  installCommandDetails(): Array<{ label: string; value: unknown; monospace?: boolean }> {
+    const token = this.generatedInstall();
+    const source = this.generatedInstallSource();
+    return [
+      { label: 'API base', value: window.location.origin, monospace: true },
+      { label: 'Node UUID', value: token?.['nodeUUID'], monospace: true },
+      { label: 'Realm', value: token?.['realm'] || source?.['RtdName'] || source?.['DomainName'], monospace: true },
+      { label: 'Runtime', value: 'mnscloud-turn', monospace: true },
+    ];
   }
 
   formField(key: keyof TurnFormModel | string): SignalFormField {

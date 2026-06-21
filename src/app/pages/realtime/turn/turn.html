@@ -340,31 +340,14 @@
 </ng-template>
 
 <ng-template #installCommandDialog>
-  <div class="turn-token-dialog">
-    <h2 mat-dialog-title>{{ 'TURN/STUN install command' | transloco }}</h2>
-    <mat-dialog-content>
-      <p>{{ 'Run this command on the TURN/STUN edge server.' | transloco }}</p>
-      <p class="token-warning">
-        {{
-          'This runtime token is shown only once. Generating a new command replaces the previous token for this TURN/STUN server.'
-            | transloco
-        }}
-      </p>
-      <pre>{{ installCommand() }}</pre>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button
-        mat-stroked-button
-        type="button"
-        [cdkCopyToClipboard]="installCommand()"
-        (cdkCopyToClipboardCopied)="notifyCommandCopied($event)"
-      >
-        <mat-icon>content_copy</mat-icon>
-        {{ 'Copy' | transloco }}
-      </button>
-      <button mat-flat-button color="primary" mat-dialog-close type="button">
-        {{ 'Done' | transloco }}
-      </button>
-    </mat-dialog-actions>
-  </div>
+  <mns-install-command-dialog
+    [title]="'TURN/STUN install command'"
+    [description]="'Run this command on the TURN/STUN edge server.'"
+    [warning]="
+      'This runtime token is shown only once. Generating a new command replaces the previous token for this TURN/STUN server.'
+    "
+    [details]="installCommandDetails()"
+    [command]="installCommand()"
+    (copied)="notifyCommandCopied($event)"
+  />
 </ng-template>

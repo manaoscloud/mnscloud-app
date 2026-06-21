@@ -422,37 +422,14 @@
 </ng-template>
 
 <ng-template #tokenDialog>
-  <div class="agent-token-dialog">
-    <h2 mat-dialog-title>{{ 'Agent install command' | transloco }}</h2>
-    <mat-dialog-content>
-      <p>{{ 'Run this command on the server that should be enrolled as an Agent.' | transloco }}</p>
-      <p class="token-warning">
-        {{
-          'This enrollment token is short-lived and shown only once. The runtime Agent token is issued directly to the server and is never displayed in the browser.'
-            | transloco
-        }}
-      </p>
-      <p>
-        {{
-          'The API base is generated from the current MNSCloud App origin. Use this command from the production/control-plane URL, not from a local browser preview.'
-            | transloco
-        }}
-      </p>
-      <pre>{{ tokenCommand() }}</pre>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button
-        mat-stroked-button
-        type="button"
-        [cdkCopyToClipboard]="tokenCommand()"
-        (cdkCopyToClipboardCopied)="notifyCommandCopied($event)"
-      >
-        <mat-icon>content_copy</mat-icon>
-        {{ 'Copy' | transloco }}
-      </button>
-      <button mat-flat-button color="primary" mat-dialog-close type="button">
-        {{ 'Done' | transloco }}
-      </button>
-    </mat-dialog-actions>
-  </div>
+  <mns-install-command-dialog
+    [title]="'Agent install command'"
+    [description]="'Run this command on the server that should be enrolled as an Agent.'"
+    [warning]="
+      'This enrollment token is short-lived and shown only once. The runtime Agent token is issued directly to the server and is never displayed in the browser.'
+    "
+    [details]="tokenCommandDetails()"
+    [command]="tokenCommand()"
+    (copied)="notifyCommandCopied($event)"
+  />
 </ng-template>

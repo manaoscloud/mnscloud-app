@@ -1,0 +1,56 @@
+<div class="install-command-dialog crud-dialog">
+  <header class="dialog-header">
+    <div>
+      <h2>{{ title() | transloco }}</h2>
+      <p>{{ description() | transloco }}</p>
+    </div>
+  </header>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="install-command-content">
+      <section class="install-command-section">
+        <h3>{{ 'Security' | transloco }}</h3>
+        <p class="token-warning">{{ warning() | transloco }}</p>
+      </section>
+
+      @if (visibleDetails().length) {
+        <section class="install-command-section">
+          <h3>{{ 'Context' | transloco }}</h3>
+          <dl class="install-command-details">
+            @for (detail of visibleDetails(); track detail.label) {
+              <div class="install-command-detail">
+                <dt>{{ detail.label | transloco }}</dt>
+                <dd [class.monospace]="detail.monospace">{{ detail.value }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+      }
+
+      <section class="install-command-section">
+        <h3>{{ 'Command' | transloco }}</h3>
+        <pre class="install-command-shell"><code>{{ command() }}</code></pre>
+      </section>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" mat-dialog-close>
+        {{ 'Close' | transloco }}
+      </button>
+    </div>
+    <div class="primary-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [cdkCopyToClipboard]="command()"
+        (cdkCopyToClipboardCopied)="notifyCopied($event)"
+      >
+        <mat-icon>content_copy</mat-icon>
+        {{ 'Copy command' | transloco }}
+      </button>
+    </div>
+  </mat-dialog-actions>
+</div>
