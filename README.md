@@ -278,20 +278,21 @@ Preferred manual update on App runtime hosts that already have
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-latest-nginx-runtime.sh --api-base <api-base-url>
+sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://dev.publichost.cloud/api/v1
 ```
 
 Inspect without applying:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-latest-nginx-runtime.sh --api-base <api-base-url> --print-command
+sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://dev.publichost.cloud/api/v1 --print-command
 ```
 
-Example development API base:
+For other environments, replace only the API base URL with that environment's public edge API v1
+URL:
 
 ```text
-https://dev.publichost.cloud/api/v1
+sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://<edge-domain>/api/v1
 ```
 
 #### First Update On Older Hosts

@@ -210,6 +210,9 @@ publish_artifact() {
   log "deploying browser files to ${APP_WEB_ROOT}"
   install -d -m 0755 "${APP_WEB_ROOT}"
   rsync -a --delete "${extract_dir}/" "${APP_WEB_ROOT}/"
+  # Browser artifacts are built deterministically and may carry normalized mtimes.
+  # Runtime files should expose the deployment timestamp for operator validation.
+  find "${APP_WEB_ROOT}" -type f -exec touch {} +
 }
 
 reload_nginx() {

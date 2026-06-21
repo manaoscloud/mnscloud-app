@@ -10,13 +10,15 @@ PRINT_COMMAND=0
 usage() {
   cat <<'EOF'
 Usage:
-  sudo ./scripts/update-latest-nginx-runtime.sh --api-base <https://edge.example.com/api/v1> [--channel stable] [--env /etc/mnscloud/app.env] [--print-command]
+  sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://dev.publichost.cloud/api/v1 [--channel stable] [--env /etc/mnscloud/app.env] [--print-command]
 
 This helper resolves the latest approved mnscloud-app release from the MNSCloud API registry,
 then calls update-nginx-runtime.sh with the required release ref, artifact URL, and SHA-256.
 
 Use this on app runtime hosts when the control plane/Agent flow is unavailable.
 Use --print-command to inspect the resolved update command without applying it.
+For other environments, replace only the --api-base value with that environment's public edge API
+v1 URL.
 EOF
 }
 
