@@ -22,12 +22,21 @@ APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaosc
 APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
 APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
 APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
+APP_ARTIFACT_TMP_DIR=""
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 log() { printf '[mnscloud-app] %s\n' "$*"; }
 die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
 require_root() { [[ "${EUID}" -eq 0 ]] || die "this command must run as root"; }
+
+cleanup_artifact_tmp() {
+  if [[ -n "${APP_ARTIFACT_TMP_DIR:-}" && -d "$APP_ARTIFACT_TMP_DIR" ]]; then
+    rm -rf "$APP_ARTIFACT_TMP_DIR"
+  fi
+}
+
+trap cleanup_artifact_tmp EXIT
 
 detect_os() {
   [[ -r /etc/os-release ]] || die "/etc/os-release not found"
@@ -201,12 +210,11 @@ verify_artifact() {
 }
 
 publish_artifact() {
-  local tmp_dir artifact_path extract_dir artifact_name
-  tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "$tmp_dir"' EXIT
+  local artifact_path extract_dir artifact_name
+  APP_ARTIFACT_TMP_DIR="$(mktemp -d)"
   artifact_name="$(artifact_basename)"
-  artifact_path="${tmp_dir}/${artifact_name}"
-  extract_dir="${tmp_dir}/browser"
+  artifact_path="${APP_ARTIFACT_TMP_DIR}/${artifact_name}"
+  extract_dir="${APP_ARTIFACT_TMP_DIR}/browser"
   mkdir -p "$extract_dir"
 
   log "fetching browser artifact ${artifact_name}"
