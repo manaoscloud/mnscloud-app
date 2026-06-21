@@ -6,16 +6,22 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 usage() {
   cat <<'EOF'
 Usage:
-  sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-release-tag>
+  sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-release-tag> --artifact-url <url> --artifact-sha256 <sha256>
 
 Environment options are the same as scripts/install-nginx-runtime.sh.
 EOF
 }
 
 REF=""
+APP_ARTIFACT_URL="${APP_ARTIFACT_URL:-}"
+APP_ARTIFACT_SHA256="${APP_ARTIFACT_SHA256:-}"
+APP_ARTIFACT_NAME="${APP_ARTIFACT_NAME:-}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --ref) REF="${2:-}"; shift 2 ;;
+    --artifact-url) APP_ARTIFACT_URL="${2:-}"; shift 2 ;;
+    --artifact-sha256) APP_ARTIFACT_SHA256="${2:-}"; shift 2 ;;
+    --artifact-name) APP_ARTIFACT_NAME="${2:-}"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) printf '[mnscloud-app] ERROR: unknown argument: %s\n' "$1" >&2; usage; exit 1 ;;
   esac
@@ -46,6 +52,8 @@ checkout_detached_ref() {
 
 [[ -n "$REF" ]] || { usage; exit 1; }
 validate_release_ref "$REF"
+[[ -n "$APP_ARTIFACT_URL" ]] || die "--artifact-url is required"
+[[ -n "$APP_ARTIFACT_SHA256" ]] || die "--artifact-sha256 is required"
 [[ "${EUID}" -eq 0 ]] || { printf '[mnscloud-app] ERROR: this command must run as root\n' >&2; exit 1; }
 
 cd "$REPO_ROOT"
@@ -58,6 +66,9 @@ if [[ -z "$TARGET_COMMIT" ]]; then
 fi
 checkout_detached_ref "$TARGET_COMMIT"
 
-"$REPO_ROOT/scripts/install-nginx-runtime.sh"
+APP_ARTIFACT_URL="$APP_ARTIFACT_URL" \
+  APP_ARTIFACT_SHA256="$APP_ARTIFACT_SHA256" \
+  APP_ARTIFACT_NAME="$APP_ARTIFACT_NAME" \
+  "$REPO_ROOT/scripts/install-nginx-runtime.sh"
 "$REPO_ROOT/scripts/validate-nginx-runtime.sh"
 printf '[mnscloud-app] rollback completed: %s\n' "$REF"

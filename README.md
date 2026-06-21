@@ -6,12 +6,21 @@ the business core stays in the API/control plane.
 
 ## Requirements
 
+Local development and GitHub release builds:
+
 - Node.js 24 or a compatible current Node.js runtime
 - npm
 - Access to an MNSCloud API endpoint
 
-The bare-metal Nginx runtime installer uses `mnscloud-runtime-kit` to install Node.js 24
-automatically when a suitable `node` and `npm` are not already available.
+Bare-metal app runtime hosts:
+
+- Nginx, installed through `mnscloud-runtime-kit`
+- `curl`, `git`, `rsync`, `tar`, and `sha256sum`
+- Access to the published GitHub Release artifact
+
+Bare-metal runtime hosts do not compile Angular and do not require Node.js or npm. The browser
+bundle is built once by GitHub Actions, attached to the GitHub Release, synchronized into the
+MNSCloud runtime release cache, downloaded by the agent, checksum-verified, and published to Nginx.
 
 ## Contract
 
@@ -201,7 +210,9 @@ the built app from `/var/www/mnscloud-app` and listens on `0.0.0.0:8080`, so an 
 `mnscloud-nginx` edge on another host can proxy to it without sharing the app files.
 
 ```bash
-sudo ./scripts/install-nginx-runtime.sh
+sudo APP_ARTIFACT_URL=https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
+  APP_ARTIFACT_SHA256=<sha256> \
+  ./scripts/install-nginx-runtime.sh
 ```
 
 Useful options:
@@ -210,6 +221,8 @@ Useful options:
 sudo APP_LISTEN_ADDR=0.0.0.0 \
   APP_LISTEN_PORT=8080 \
   APP_API_BASE_URL="" \
+  APP_ARTIFACT_URL=https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
+  APP_ARTIFACT_SHA256=<sha256> \
   ./scripts/install-nginx-runtime.sh
 ```
 
@@ -217,11 +230,6 @@ Use `APP_LISTEN_ADDR=127.0.0.1` only when the app runtime and the edge gateway a
 When the edge is on another host, keep the listener on the private interface and use
 mnscloud-agent/cyber security network policies so only the edge can connect to the app runtime port.
 Firewall/nftables ownership stays with the agent/security layer, not this app installer.
-
-The installer uses Node.js 24 by default through `mnscloud-runtime-kit`. During the Angular build it
-sets `NG_CLI_ANALYTICS=false`, installs build dependencies explicitly, and applies
-`APP_NODE_MAX_OLD_SPACE_SIZE=2048` unless `NODE_OPTIONS` already defines a
-`--max-old-space-size` value.
 
 Supported operating systems match the `mnscloud-nginx` edge module:
 
@@ -232,47 +240,56 @@ Supported operating systems match the `mnscloud-nginx` edge module:
 
 The installer:
 
-- uses `mnscloud-runtime-kit` for the base Nginx package and Node.js installation;
-- runs `npm ci --include=dev` and `npm run build`, because Angular build tooling lives in
-  development dependencies even when the target host serves a production static bundle;
-- copies `dist/app/browser` into `/var/www/mnscloud-app`;
+- uses `mnscloud-runtime-kit` for the base Nginx package;
+- requires `APP_ARTIFACT_URL` or `APP_ARTIFACT_PATH`;
+- requires `APP_ARTIFACT_SHA256` and validates the browser artifact before publishing;
+- extracts the verified browser artifact into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;
 - creates `/etc/nginx/conf.d/mnscloud-app.conf`;
 - removes the official Nginx `default.conf` unless `DISABLE_DEFAULT_NGINX_CONF=0`;
 - validates and reloads Nginx.
 
-When `APP_API_BASE_URL` is not provided, the installer reads `public/env.js` and publishes that
-value to `/var/www/mnscloud-app/env.js`. If `APP_API_BASE_URL` is provided, it takes precedence,
-including an explicit empty value.
+When `APP_API_BASE_URL` is not provided, the installer preserves the current
+`/var/www/mnscloud-app/env.js` value when available. If no runtime value exists, it writes an empty
+value so the browser uses same-origin `/api/v1`. If `APP_API_BASE_URL` is provided, it takes
+precedence, including an explicit empty value.
 
 When the final `apiBaseUrl` is empty, the app uses same-origin `/api/v1`. That is the preferred
 setup when the edge gateway exposes both the app and `/api` on the public domain. If the app must
 call a separate API origin, pass the full API v1 URL:
 
 ```bash
-sudo APP_API_BASE_URL=https://api.example.com/api/v1 ./scripts/install-nginx-runtime.sh
+sudo APP_API_BASE_URL=https://api.example.com/api/v1 \
+  APP_ARTIFACT_URL=https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
+  APP_ARTIFACT_SHA256=<sha256> \
+  ./scripts/install-nginx-runtime.sh
 ```
 
 Update and validate the runtime later:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0
+sudo ./scripts/update-nginx-runtime.sh \
+  --ref v0.1.0 \
+  --artifact-url https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
+  --artifact-sha256 <sha256>
 sudo ./scripts/validate-nginx-runtime.sh
 ```
 
 Use this same update flow for development, staging, and production app hosts after a release tag has
-been created and pushed. The command checks out the requested release, installs dependencies, builds
-the Angular browser bundle, publishes it to `/var/www/mnscloud-app`, refreshes
-`/var/www/mnscloud-app/env.js`, writes `/var/www/mnscloud-app/build.json`, validates Nginx, and
-reloads the app runtime. If install or validation fails, the script restores the previous commit.
+been created and pushed. In normal MNSCloud operation the Agent receives the artifact URL and SHA
+from the API, so operators do not type those values manually. The command checks out the requested
+release, downloads the browser artifact, validates the SHA-256 digest, publishes it to
+`/var/www/mnscloud-app`, refreshes `/var/www/mnscloud-app/env.js`, writes
+`/var/www/mnscloud-app/build.json`, validates Nginx, and reloads the app runtime. If install or
+validation fails, the script restores the previous commit and previous web root.
 
 Recommended operator flow after a repository commit:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
 git status --short
-sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0
+sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0 --artifact-url <release-asset-url> --artifact-sha256 <sha256>
 sudo ./scripts/validate-nginx-runtime.sh
 curl -I http://127.0.0.1:8080
 ```

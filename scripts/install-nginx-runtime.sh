@@ -11,47 +11,23 @@ if [[ "${APP_API_BASE_URL+x}" == "x" ]]; then
   APP_API_BASE_URL_PROVIDED=1
 fi
 APP_API_BASE_URL="${APP_API_BASE_URL:-}"
+APP_ARTIFACT_URL="${APP_ARTIFACT_URL:-}"
+APP_ARTIFACT_PATH="${APP_ARTIFACT_PATH:-}"
+APP_ARTIFACT_SHA256="${APP_ARTIFACT_SHA256:-}"
+APP_ARTIFACT_NAME="${APP_ARTIFACT_NAME:-}"
 NGINX_CONF_PATH="${NGINX_CONF_PATH:-/etc/nginx/conf.d/${APP_NAME}.conf}"
 DISABLE_DEFAULT_NGINX_CONF="${DISABLE_DEFAULT_NGINX_CONF:-1}"
-SKIP_BUILD="${SKIP_BUILD:-0}"
-NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION:-24}"
 APP_RUNTIME_KIT_DIR="${APP_RUNTIME_KIT_DIR:-/opt/mnscloud/runtime-kit}"
 APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaoscloud/mnscloud-runtime-kit.git}"
 APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
 APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
 APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
-APP_NODE_MAX_OLD_SPACE_SIZE="${APP_NODE_MAX_OLD_SPACE_SIZE:-2048}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD_DIR="${REPO_ROOT}/dist/app/browser"
 
 log() { printf '[mnscloud-app] %s\n' "$*"; }
 die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
 require_root() { [[ "${EUID}" -eq 0 ]] || die "this command must run as root"; }
-
-write_build_metadata() {
-  local version build_ref build_date git_ref metadata
-
-  version="0.0.0"
-  [[ -r "${REPO_ROOT}/VERSION" ]] && version="$(tr -d '[:space:]' < "${REPO_ROOT}/VERSION")"
-  build_ref="$(git -C "$REPO_ROOT" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown')"
-  build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  git_ref="$(git -C "$REPO_ROOT" describe --tags --exact-match 2>/dev/null || printf '%s' "$build_ref")"
-  metadata="$(cat <<EOF
-{
-  "product": "mnscloud-app",
-  "version": "${version}",
-  "buildRef": "${build_ref}",
-  "buildDate": "${build_date}",
-  "updateChannel": "${APP_UPDATE_CHANNEL}",
-  "gitRef": "${git_ref}"
-}
-EOF
-)"
-
-  printf '%s\n' "$metadata" > "${REPO_ROOT}/build.json"
-  printf '%s\n' "$metadata" > "${APP_WEB_ROOT}/build.json"
-}
 
 detect_os() {
   [[ -r /etc/os-release ]] || die "/etc/os-release not found"
@@ -72,10 +48,32 @@ detect_os() {
 install_packages() {
   if [[ "${OS_FAMILY}" == "debian" ]]; then
     apt-get update -y
-    apt-get install -y --no-install-recommends ca-certificates curl git rsync
+    apt-get install -y --no-install-recommends ca-certificates curl git rsync tar
   else
-    dnf install -y ca-certificates curl git rsync
+    dnf install -y ca-certificates curl git rsync tar
   fi
+}
+
+resolve_runtime_kit_ref() {
+  local kit_dir="$1"
+  local channel="$2"
+  local manifest ref
+
+  manifest="$(git -C "$kit_dir" show "origin/main:releases/manifest.json" 2>/dev/null)" ||
+    die "cannot read runtime kit release manifest from origin/main"
+  ref="$(printf '%s\n' "$manifest" | awk -v channel="$channel" '
+    $0 ~ "\"" channel "\"" { in_channel = 1; next }
+    in_channel && /"ref"[[:space:]]*:/ {
+      gsub(/.*"ref"[[:space:]]*:[[:space:]]*"/, "")
+      gsub(/".*/, "")
+      print
+      exit
+    }
+    in_channel && /^[[:space:]]*}/ { in_channel = 0 }
+  ')"
+  [[ "$ref" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] ||
+    die "invalid runtime kit ref for channel ${channel}: ${ref:-empty}"
+  printf '%s\n' "$ref"
 }
 
 load_runtime_kit() {
@@ -107,68 +105,15 @@ load_runtime_kit() {
   APP_RUNTIME_KIT_LOADED=1
 }
 
-resolve_runtime_kit_ref() {
-  local kit_dir="$1"
-  local channel="$2"
-  local manifest ref
-
-  manifest="$(git -C "$kit_dir" show "origin/main:releases/manifest.json" 2>/dev/null)" ||
-    die "cannot read runtime kit release manifest from origin/main"
-  ref="$(printf '%s\n' "$manifest" | awk -v channel="$channel" '
-    $0 ~ "\"" channel "\"" { in_channel = 1; next }
-    in_channel && /"ref"[[:space:]]*:/ {
-      gsub(/.*"ref"[[:space:]]*:[[:space:]]*"/, "")
-      gsub(/".*/, "")
-      print
-      exit
-    }
-    in_channel && /^[[:space:]]*}/ { in_channel = 0 }
-  ')"
-  [[ "$ref" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] ||
-    die "invalid runtime kit ref for channel ${channel}: ${ref:-empty}"
-  printf '%s\n' "$ref"
-}
-
 install_nginx_package() {
   load_runtime_kit
   mrtk_install_nginx_package
 }
 
-install_nodejs() {
-  load_runtime_kit
-  export MNSCLOUD_NODE_MAJOR_VERSION="${NODE_MAJOR_VERSION}"
-  mrtk_ensure_nodejs
-  log "using Node.js $(node -v) and npm $(npm -v)"
-}
-
-configure_build_environment() {
-  export NG_CLI_ANALYTICS="${NG_CLI_ANALYTICS:-false}"
-
-  if [[ -n "$APP_NODE_MAX_OLD_SPACE_SIZE" && "${NODE_OPTIONS:-}" != *"--max-old-space-size="* ]]; then
-    if [[ -n "${NODE_OPTIONS:-}" ]]; then
-      export NODE_OPTIONS="${NODE_OPTIONS} --max-old-space-size=${APP_NODE_MAX_OLD_SPACE_SIZE}"
-    else
-      export NODE_OPTIONS="--max-old-space-size=${APP_NODE_MAX_OLD_SPACE_SIZE}"
-    fi
-  fi
-}
-
-read_public_env_api_base_url() {
-  local env_file="${REPO_ROOT}/public/env.js"
+read_existing_api_base_url() {
+  local env_file="${APP_WEB_ROOT}/env.js"
   [[ -f "$env_file" ]] || return 0
-
-  node - "$env_file" <<'NODE' 2>/dev/null || true
-const fs = require("node:fs");
-const vm = require("node:vm");
-
-const envFile = process.argv[2];
-const source = fs.readFileSync(envFile, "utf8");
-const sandbox = { window: {} };
-sandbox.window.window = sandbox.window;
-new vm.Script(source, { filename: envFile }).runInNewContext(sandbox, { timeout: 1000 });
-const value = sandbox.window.MNSCLOUD_APP_CONFIG?.apiBaseUrl;
-if (typeof value === "string") process.stdout.write(value.trim());
-NODE
+  sed -nE 's/.*apiBaseUrl:[[:space:]]*"([^"]*)".*/\1/p' "$env_file" | head -n1
 }
 
 resolve_app_api_base_url() {
@@ -176,8 +121,105 @@ resolve_app_api_base_url() {
     printf '%s\n' "$APP_API_BASE_URL"
     return 0
   fi
+  read_existing_api_base_url
+}
 
-  read_public_env_api_base_url
+js_escape() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+write_env_js() {
+  local escaped
+  escaped="$(js_escape "$APP_API_BASE_URL")"
+  cat > "${APP_WEB_ROOT}/env.js" <<EOF
+(function (window) {
+  window.MNSCLOUD_APP_CONFIG = window.MNSCLOUD_APP_CONFIG || {
+    apiBaseUrl: "${escaped}",
+  };
+})(window);
+EOF
+}
+
+write_build_metadata() {
+  local version build_ref build_date git_ref metadata
+
+  version="0.0.0"
+  [[ -r "${REPO_ROOT}/VERSION" ]] && version="$(tr -d '[:space:]' < "${REPO_ROOT}/VERSION")"
+  build_ref="$(git -C "$REPO_ROOT" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown')"
+  build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  git_ref="$(git -C "$REPO_ROOT" describe --tags --exact-match 2>/dev/null || printf '%s' "$build_ref")"
+  metadata="$(cat <<EOF
+{
+  "product": "mnscloud-app",
+  "version": "${version}",
+  "buildRef": "${build_ref}",
+  "buildDate": "${build_date}",
+  "updateChannel": "${APP_UPDATE_CHANNEL}",
+  "gitRef": "${git_ref}"
+}
+EOF
+)"
+
+  printf '%s\n' "$metadata" > "${REPO_ROOT}/build.json"
+  printf '%s\n' "$metadata" > "${APP_WEB_ROOT}/build.json"
+}
+
+artifact_basename() {
+  if [[ -n "$APP_ARTIFACT_NAME" ]]; then
+    printf '%s\n' "$APP_ARTIFACT_NAME"
+    return 0
+  fi
+  if [[ -n "$APP_ARTIFACT_PATH" ]]; then
+    basename "$APP_ARTIFACT_PATH"
+    return 0
+  fi
+  basename "${APP_ARTIFACT_URL%%\?*}"
+}
+
+fetch_artifact() {
+  local target="$1"
+  if [[ -n "$APP_ARTIFACT_PATH" ]]; then
+    [[ -f "$APP_ARTIFACT_PATH" ]] || die "artifact file not found: ${APP_ARTIFACT_PATH}"
+    cp "$APP_ARTIFACT_PATH" "$target"
+    return 0
+  fi
+  [[ -n "$APP_ARTIFACT_URL" ]] || die "APP_ARTIFACT_URL or APP_ARTIFACT_PATH is required"
+  [[ "$APP_ARTIFACT_URL" =~ ^https:// ]] || die "APP_ARTIFACT_URL must use HTTPS"
+  curl -fsSL --retry 3 --retry-delay 2 -o "$target" "$APP_ARTIFACT_URL"
+}
+
+verify_artifact() {
+  local file="$1"
+  if [[ -z "$APP_ARTIFACT_SHA256" ]]; then
+    die "APP_ARTIFACT_SHA256 is required"
+  fi
+  [[ "$APP_ARTIFACT_SHA256" =~ ^[0-9a-fA-F]{64}$ ]] || die "APP_ARTIFACT_SHA256 must be a SHA-256 hex digest"
+  local actual
+  actual="$(sha256sum "$file" | awk '{print $1}')"
+  [[ "${actual,,}" == "${APP_ARTIFACT_SHA256,,}" ]] ||
+    die "artifact checksum mismatch: expected ${APP_ARTIFACT_SHA256,,}, got ${actual,,}"
+}
+
+publish_artifact() {
+  local tmp_dir artifact_path extract_dir artifact_name
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' EXIT
+  artifact_name="$(artifact_basename)"
+  artifact_path="${tmp_dir}/${artifact_name}"
+  extract_dir="${tmp_dir}/browser"
+  mkdir -p "$extract_dir"
+
+  log "fetching browser artifact ${artifact_name}"
+  fetch_artifact "$artifact_path"
+  verify_artifact "$artifact_path"
+
+  log "extracting browser artifact"
+  tar -xzf "$artifact_path" -C "$extract_dir"
+  [[ -f "${extract_dir}/index.html" ]] || die "artifact does not contain index.html at its root"
+
+  log "deploying browser files to ${APP_WEB_ROOT}"
+  install -d -m 0755 "${APP_WEB_ROOT}"
+  rsync -a --delete "${extract_dir}/" "${APP_WEB_ROOT}/"
 }
 
 reload_nginx() {
@@ -191,53 +233,13 @@ reload_nginx() {
   fi
 }
 
-require_root
-detect_os
-log "detected ${OS_PRETTY_NAME}"
-install_packages
-install_nginx_package
-install_nodejs
+write_nginx_site() {
+  log "writing Nginx site ${NGINX_CONF_PATH}"
+  if [[ "${DISABLE_DEFAULT_NGINX_CONF}" == "1" ]]; then
+    rm -f /etc/nginx/conf.d/default.conf
+  fi
 
-APP_API_BASE_URL="$(resolve_app_api_base_url)"
-if [[ -n "$APP_API_BASE_URL" ]]; then
-  log "using API base URL from runtime configuration"
-else
-  log "using same-origin API base URL /api/v1"
-fi
-
-if [[ "${SKIP_BUILD}" != "1" ]]; then
-  configure_build_environment
-  log "installing dependencies"
-  npm --prefix "${REPO_ROOT}" ci --include=dev
-  log "building Angular app"
-  npm --prefix "${REPO_ROOT}" run build
-fi
-
-if [[ ! -d "${BUILD_DIR}" ]]; then
-  die "build output not found at ${BUILD_DIR}. Run npm run build or set SKIP_BUILD=0"
-fi
-
-log "deploying browser files to ${APP_WEB_ROOT}"
-install -d -m 0755 "${APP_WEB_ROOT}"
-rsync -a --delete "${BUILD_DIR}/" "${APP_WEB_ROOT}/"
-write_build_metadata
-
-APP_API_BASE_URL="${APP_API_BASE_URL}" node <<'NODE' > "${APP_WEB_ROOT}/env.js"
-const apiBaseUrl = process.env.APP_API_BASE_URL || "";
-process.stdout.write(`(function (window) {
-  window.MNSCLOUD_APP_CONFIG = window.MNSCLOUD_APP_CONFIG || {
-    apiBaseUrl: ${JSON.stringify(apiBaseUrl)},
-  };
-})(window);
-`);
-NODE
-
-log "writing Nginx site ${NGINX_CONF_PATH}"
-if [[ "${DISABLE_DEFAULT_NGINX_CONF}" == "1" ]]; then
-  rm -f /etc/nginx/conf.d/default.conf
-fi
-
-cat > "${NGINX_CONF_PATH}" <<EOF
+  cat > "${NGINX_CONF_PATH}" <<EOF
 server {
   listen ${APP_LISTEN_ADDR}:${APP_LISTEN_PORT};
   server_name ${APP_SERVER_NAME};
@@ -270,7 +272,25 @@ server {
   }
 }
 EOF
+}
 
+require_root
+detect_os
+log "detected ${OS_PRETTY_NAME}"
+install_packages
+install_nginx_package
+
+APP_API_BASE_URL="$(resolve_app_api_base_url)"
+if [[ -n "$APP_API_BASE_URL" ]]; then
+  log "using API base URL from runtime configuration"
+else
+  log "using same-origin API base URL /api/v1"
+fi
+
+publish_artifact
+write_build_metadata
+write_env_js
+write_nginx_site
 reload_nginx
 
 echo "${APP_NAME} installed at ${APP_WEB_ROOT}"

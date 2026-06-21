@@ -25,8 +25,14 @@ The API repository dispatches this payload after API validation/deployment:
 1. Install dependencies with `npm ci`.
 2. Generate `public/env.js` from environment variables.
 3. Build the Angular app.
-4. Upload the browser artifact.
-5. Request deployment through the MNSCloud control plane.
+4. Package `dist/app/browser` as the release browser artifact.
+5. Upload the browser artifact to the GitHub Release.
+6. Synchronize artifact URL, SHA-256, size, and content type to the MNSCloud runtime release cache.
+7. Request deployment through the MNSCloud control plane.
+
+App runtime hosts do not install Node.js and do not run Angular builds. The Agent downloads the
+published browser artifact, validates its SHA-256 digest, publishes it to Nginx, and reports the
+installed runtime version back to the API.
 
 ## GitHub Environments
 
@@ -48,7 +54,8 @@ MNSCLOUD_API_BASE_URL=
 
 `MNSCLOUD_API_BASE_URL` may stay empty when the app and API share the same public origin and the edge gateway proxies `/api/v1`.
 
-When `MNSCLOUD_DEPLOY_ENABLED` is not `true`, the workflow validates/builds and uploads the artifact, but it does not modify servers.
+When `MNSCLOUD_DEPLOY_ENABLED` is not `true`, the workflow validates/builds and uploads the artifact,
+but it does not modify servers.
 
 ## Secrets
 

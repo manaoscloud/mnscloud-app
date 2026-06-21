@@ -42,3 +42,5 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 /build.json
+/releases/*.tar.gz
+/releases/*.tar.gz.sha256

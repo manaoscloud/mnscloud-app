@@ -35,4 +35,7 @@ mrtk_release_prepare \
   --validate 'bash -n scripts/*.sh' \
   --validate 'deno run --allow-read --allow-write scripts/write-app-build-info.ts' \
   --validate 'npm run build' \
+  --validate 'bash scripts/package-browser-artifact.sh' \
+  --asset-glob 'releases/mnscloud-app-browser-v*.tar.gz' \
+  --asset-glob 'releases/mnscloud-app-browser-v*.tar.gz.sha256' \
   "$@"
