@@ -209,6 +209,8 @@ Use the installer when this module owns its own Nginx process on the app host. B
 the built app from `/var/www/mnscloud-app` and listens on `0.0.0.0:8080`, so an external
 `mnscloud-nginx` edge on another host can proxy to it without sharing the app files.
 
+#### Install
+
 Resolve the latest approved release from the MNSCloud API registry when installing from a published
 artifact. On a full MNSCloud workspace host, this can be inspected with:
 
@@ -269,21 +271,33 @@ sudo APP_API_BASE_URL=https://api.example.com/api/v1 \
   ./scripts/install-nginx-runtime.sh
 ```
 
-Update and validate the runtime later:
+#### Update
+
+Preferred manual update on App runtime hosts that already have
+`scripts/update-latest-nginx-runtime.sh`:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://edge.example.com/api/v1
+sudo ./scripts/update-latest-nginx-runtime.sh --api-base <api-base-url>
 ```
 
 Inspect without applying:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-latest-nginx-runtime.sh --api-base https://edge.example.com/api/v1 --print-command
+sudo ./scripts/update-latest-nginx-runtime.sh --api-base <api-base-url> --print-command
 ```
 
-On a full MNSCloud workspace host, you can also generate the copyable command:
+Example development API base:
+
+```text
+https://dev.publichost.cloud/api/v1
+```
+
+#### First Update On Older Hosts
+
+Older App hosts may not have `scripts/update-latest-nginx-runtime.sh` yet. On those hosts, generate
+the full command from a full MNSCloud workspace host and run the generated command on the App host:
 
 ```bash
 cd /opt/mnscloud
@@ -291,8 +305,13 @@ scripts/runtime/update-command.sh mnscloud-app
 ```
 
 The generated command includes the latest approved release tag, artifact URL, and SHA-256 digest.
+After that first update, the App host will include `scripts/update-latest-nginx-runtime.sh`, and
+future manual updates can use the shorter module-local helper from the Update section.
+
 If both helpers are unavailable, use the same shape manually with values copied from the published
-release registry. Do not execute the placeholders literally:
+release registry.
+
+Do not execute the placeholder command below literally. Replace every `<...>` value first:
 
 ```text
 cd /opt/mnscloud/mnscloud-app
@@ -311,12 +330,10 @@ release, downloads the browser artifact, validates the SHA-256 digest, publishes
 `/var/www/mnscloud-app/build.json`, validates Nginx, and reloads the app runtime. If install or
 validation fails, the script restores the previous commit and previous web root.
 
-Recommended operator flow after a repository commit:
+#### Validation
 
 ```text
 cd /opt/mnscloud/mnscloud-app
-git status --short
-sudo ./scripts/update-nginx-runtime.sh --ref <release-tag> --artifact-url <release-artifact-url> --artifact-sha256 <release-artifact-sha256>
 sudo ./scripts/validate-nginx-runtime.sh
 curl -I http://127.0.0.1:8080
 ```
@@ -331,7 +348,10 @@ The workflow uses `scripts/release-app.sh` as the canonical release engine,
 updates release metadata, creates the tag, and publishes the GitHub Release.
 Run the script manually only as a break-glass maintainer operation.
 
-Deploy a specific release manually only when the control plane/Agent flow is unavailable:
+#### Break-Glass Specific Release
+
+Deploy a specific release manually only when the control plane/Agent flow is unavailable.
+Do not execute this placeholder command literally. Replace every `<...>` value first:
 
 ```text
 sudo ./scripts/update-nginx-runtime.sh \
@@ -339,6 +359,8 @@ sudo ./scripts/update-nginx-runtime.sh \
   --artifact-url <release-artifact-url> \
   --artifact-sha256 <release-artifact-sha256>
 ```
+
+#### Rollback
 
 Rollback to a known-good release uses the same artifact contract:
 
