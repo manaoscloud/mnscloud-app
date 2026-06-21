@@ -89,8 +89,8 @@ Do not commit tenant, partner, staging, or production API URLs into `public/env.
 these environment-specific mechanisms instead:
 
 - Local development: copy `public/env.example.js` to `public/env.js` and edit only the local file.
-- Bare-metal installer: either edit local `public/env.js` before running
-  `scripts/install-nginx-runtime.sh`, or pass `APP_API_BASE_URL` explicitly.
+- Bare-metal installer: keep the default same-origin behavior, or pass `APP_API_BASE_URL`
+  explicitly when the app must call a separate public API origin.
 - GitHub static build: pass `api_base_url` when manually running the `CI` workflow, or configure the
   `MNSCLOUD_API_BASE_URL` GitHub Actions variable.
 - Docker production runtime: keep `apiBaseUrl` empty for same-origin `/api/v1`, or mount an
@@ -249,10 +249,10 @@ The installer:
 - removes the official Nginx `default.conf` unless `DISABLE_DEFAULT_NGINX_CONF=0`;
 - validates and reloads Nginx.
 
-When `APP_API_BASE_URL` is not provided, the installer preserves the current
-`/var/www/mnscloud-app/env.js` value when available. If no runtime value exists, it writes an empty
-value so the browser uses same-origin `/api/v1`. If `APP_API_BASE_URL` is provided, it takes
-precedence, including an explicit empty value.
+When `APP_API_BASE_URL` is not provided, the installer writes an empty runtime value so the browser
+uses same-origin `/api/v1`. It does not preserve a previous `/var/www/mnscloud-app/env.js` value,
+because stale internal hostnames or private API URLs must not leak back into browser-facing runtime
+configuration. If `APP_API_BASE_URL` is provided, it takes precedence.
 
 When the final `apiBaseUrl` is empty, the app uses same-origin `/api/v1`. That is the preferred
 setup when the edge gateway exposes both the app and `/api` on the public domain. If the app must

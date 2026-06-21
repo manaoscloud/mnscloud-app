@@ -6,10 +6,6 @@ APP_WEB_ROOT="${APP_WEB_ROOT:-/var/www/mnscloud-app}"
 APP_LISTEN_ADDR="${APP_LISTEN_ADDR:-0.0.0.0}"
 APP_LISTEN_PORT="${APP_LISTEN_PORT:-8080}"
 APP_SERVER_NAME="${APP_SERVER_NAME:-_}"
-APP_API_BASE_URL_PROVIDED=0
-if [[ "${APP_API_BASE_URL+x}" == "x" ]]; then
-  APP_API_BASE_URL_PROVIDED=1
-fi
 APP_API_BASE_URL="${APP_API_BASE_URL:-}"
 APP_ARTIFACT_URL="${APP_ARTIFACT_URL:-}"
 APP_ARTIFACT_PATH="${APP_ARTIFACT_PATH:-}"
@@ -117,20 +113,6 @@ load_runtime_kit() {
 install_nginx_package() {
   load_runtime_kit
   mrtk_install_nginx_package
-}
-
-read_existing_api_base_url() {
-  local env_file="${APP_WEB_ROOT}/env.js"
-  [[ -f "$env_file" ]] || return 0
-  sed -nE 's/.*apiBaseUrl:[[:space:]]*"([^"]*)".*/\1/p' "$env_file" | head -n1
-}
-
-resolve_app_api_base_url() {
-  if [[ "$APP_API_BASE_URL_PROVIDED" == "1" ]]; then
-    printf '%s\n' "$APP_API_BASE_URL"
-    return 0
-  fi
-  read_existing_api_base_url
 }
 
 js_escape() {
@@ -288,9 +270,8 @@ log "detected ${OS_PRETTY_NAME}"
 install_packages
 install_nginx_package
 
-APP_API_BASE_URL="$(resolve_app_api_base_url)"
 if [[ -n "$APP_API_BASE_URL" ]]; then
-  log "using API base URL from runtime configuration"
+  log "using explicit API base URL from APP_API_BASE_URL"
 else
   log "using same-origin API base URL /api/v1"
 fi
