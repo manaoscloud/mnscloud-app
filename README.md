@@ -304,16 +304,22 @@ The workflow uses `scripts/release-app.sh` as the canonical release engine,
 updates release metadata, creates the tag, and publishes the GitHub Release.
 Run the script manually only as a break-glass maintainer operation.
 
-Deploy a specific release:
+Deploy a specific release manually only when the control plane/Agent flow is unavailable:
 
 ```bash
-sudo ./scripts/update-nginx-runtime.sh --ref v0.1.1
+sudo ./scripts/update-nginx-runtime.sh \
+  --ref v0.1.1 \
+  --artifact-url https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.1/mnscloud-app-browser-v0.1.1.tar.gz \
+  --artifact-sha256 <sha256>
 ```
 
-Rollback to a known-good tag or commit:
+Rollback to a known-good release uses the same artifact contract:
 
 ```bash
-sudo ./scripts/rollback-nginx-runtime.sh --ref v0.1.0
+sudo ./scripts/rollback-nginx-runtime.sh \
+  --ref v0.1.0 \
+  --artifact-url https://github.com/manaoscloud/mnscloud-app/releases/download/v0.1.0/mnscloud-app-browser-v0.1.0.tar.gz \
+  --artifact-sha256 <sha256>
 ```
 
 Example edge proxy to the app runtime:
