@@ -44,6 +44,8 @@ type SelectOption = {
 type WebRtcDashboardRequest = Required<Pick<WebRtcDashboardFilters, 'period'>> &
   Omit<WebRtcDashboardFilters, 'period'> & {
     scope: string;
+    search: string;
+    status: string;
   };
 
 const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
@@ -88,6 +90,8 @@ export class RealtimeWebRtcDashboardPage {
   private readonly listLimit = 5000;
 
   readonly period = signal('today');
+  readonly searchInput = signal('');
+  readonly statusInput = signal('');
   readonly serverUUID = signal('');
   readonly domainUUID = signal('');
   readonly serverSearch = signal('');
@@ -99,6 +103,8 @@ export class RealtimeWebRtcDashboardPage {
     serverUUID: '',
     domainUUID: '',
     scope: this.scope(),
+    search: '',
+    status: '',
   });
 
   private readonly dashboardResource = resource({
@@ -194,8 +200,14 @@ export class RealtimeWebRtcDashboardPage {
 
   private readonly syncDashboardTables = effect(() => {
     const dashboard = this.dashboard();
-    this.serverDataSource.data = dashboard.servers;
-    this.domainDataSource.data = dashboard.domains;
+    const search = this.appliedFilters().search.trim().toLowerCase();
+    const status = this.appliedFilters().status;
+    this.serverDataSource.data = dashboard.servers.filter((item) =>
+      this.matchesTableFilters(item, search, status),
+    );
+    this.domainDataSource.data = dashboard.domains.filter((item) =>
+      this.matchesTableFilters(item, search, status),
+    );
   });
 
   private readonly reportDashboardError = effect(() => {
@@ -219,11 +231,15 @@ export class RealtimeWebRtcDashboardPage {
       serverUUID: this.serverUUID(),
       domainUUID: this.domainUUID(),
       scope: this.scope(),
+      search: this.searchInput().trim(),
+      status: this.statusInput(),
     });
   }
 
   clearSearchFilters() {
     this.period.set('today');
+    this.searchInput.set('');
+    this.statusInput.set('');
     this.serverUUID.set('');
     this.domainUUID.set('');
     this.serverSearch.set('');
@@ -326,6 +342,17 @@ export class RealtimeWebRtcDashboardPage {
   private filterOptions(options: SelectOption[], search: string) {
     const term = search.trim().toLowerCase();
     return term ? options.filter((option) => option.label.toLowerCase().includes(term)) : options;
+  }
+
+  private matchesTableFilters(
+    item: WebRtcDashboardServer | WebRtcDashboardDomain,
+    search: string,
+    status: string,
+  ) {
+    const itemStatus = Number((item as any).status ?? 0);
+    if (status !== '' && itemStatus !== Number(status)) return false;
+    if (!search) return true;
+    return JSON.stringify(item).toLowerCase().includes(search);
   }
 
   private ratio(value?: number, total?: number) {

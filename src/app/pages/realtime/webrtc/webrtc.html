@@ -14,14 +14,23 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
-        <mat-label>Search</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          placeholder="Search"
+          [placeholder]="'Search' | transloco"
           [value]="searchInput()"
           (input)="searchInput.set($any($event.target).value)"
         />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
+        </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         @if (selected.size > 0) {

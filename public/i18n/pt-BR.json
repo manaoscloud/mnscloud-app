@@ -1881,6 +1881,7 @@
   "Zip": "CEP",
   "Zone Editor": "Editor de zona",
   "Media/RTP": "Media/RTP",
+  "Media Server": "Servidor de media",
   "Media Servers": "Servidores de media",
   "media server": "servidor de media",
   "Register dedicated RTP/media relay servers for realtime sessions.": "Cadastre servidores dedicados de relay RTP/media para sessões realtime.",

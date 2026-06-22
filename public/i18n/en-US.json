@@ -1881,6 +1881,7 @@
   "Zip": "Zip",
   "Zone Editor": "Zone Editor",
   "Media/RTP": "Media/RTP",
+  "Media Server": "Media Server",
   "Media Servers": "Media Servers",
   "media server": "media server",
   "Register dedicated RTP/media relay servers for realtime sessions.": "Register dedicated RTP/media relay servers for realtime sessions.",

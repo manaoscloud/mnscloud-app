@@ -21,19 +21,26 @@ export class RealtimeWebRtcService {
 
   list(
     resource: WebRtcResource,
-    params: { limit?: number; offset?: number; search?: string } = {},
+    params: { limit?: number; offset?: number; search?: string; status?: string | number | null } = {},
     scope: WebRtcScope = 'tenant',
   ) {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     if (params.search) query.set('search', params.search);
+    if (params.status !== undefined && params.status !== null && params.status !== '') {
+      query.set('status', String(params.status));
+    }
     const suffix = query.toString();
     return this.api.get<any>(`${this.resourcePath(resource, scope)}${suffix ? `?${suffix}` : ''}`);
   }
 
   listServerOptions() {
     return this.api.get<any>(`${this.basePath}/server-options`);
+  }
+
+  listMediaServerOptions() {
+    return this.api.get<any>('system/realtime/media/server-options');
   }
 
   listRealtimeDomains(params: { limit?: number; search?: string; purpose?: string } = {}) {

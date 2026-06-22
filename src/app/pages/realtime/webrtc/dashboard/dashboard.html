@@ -17,7 +17,26 @@
     </header>
 
     <div class="filter-grid dashboard-filters">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
+        <input
+          matInput
+          [placeholder]="'Search' | transloco"
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Period' | transloco }}</mat-label>
         <mat-select [value]="period()" (selectionChange)="period.set($event.value)">
           @for (option of periodOptions; track option.value) {
@@ -26,7 +45,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Server' | transloco }}</mat-label>
         <mat-select
           [value]="serverUUID()"
@@ -51,7 +70,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Domain' | transloco }}</mat-label>
         <mat-select
           [value]="domainUUID()"

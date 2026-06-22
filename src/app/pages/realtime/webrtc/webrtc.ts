@@ -50,7 +50,7 @@ import {
   type MnsSelectFieldOption,
 } from '../../../shared/forms';
 
-type LookupKey = 'servers' | 'domains';
+type LookupKey = 'servers' | 'domains' | 'mediaServers';
 type LookupOption = MnsSearchSelectFieldOption;
 type Field = {
   key: string;
@@ -79,6 +79,7 @@ const COLUMN_LABELS: Record<string, string> = {
   engine: 'Engine',
   hostname: 'Hostname',
   publicDomain: 'Primary Domain',
+  mediaServer: 'Media Server',
   publicIP: 'Public IP',
   domain: 'Realtime Domain',
   certificateProvider: 'Certificate',
@@ -103,7 +104,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     uuid: 'RwsUUID',
     name: 'RwsName',
     status: 'RwsStatus',
-    columns: ['name', 'engine', 'hostname', 'publicDomain', 'publicIP', 'status', 'lastSeen'],
+    columns: ['name', 'engine', 'hostname', 'publicDomain', 'mediaServer', 'publicIP', 'status', 'lastSeen'],
     fields: [
       {
         key: 'status',
@@ -125,6 +126,13 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         label: 'Primary Domain',
         type: 'lookup',
         lookup: 'domains',
+        span: 'span-1',
+      },
+      {
+        key: 'mediaServerUUID',
+        label: 'Media Server',
+        type: 'lookup',
+        lookup: 'mediaServers',
         span: 'span-1',
       },
       { key: 'nodeUUID', label: 'Node UUID' },
@@ -260,11 +268,13 @@ export class RealtimeWebRtcPage {
   readonly selected = new Set<string>();
   readonly generatedInstall = signal<Record<string, string> | null>(null);
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal('');
   readonly searchInput = signal('');
   readonly search = signal('');
+  readonly statusInput = signal('');
   readonly dataSource = new MatTableDataSource<WebRtcRecord>([]);
   readonly displayedColumns = computed(() => ['select', ...this.config().columns, 'actions']);
-  readonly lookups: Record<LookupKey, LookupOption[]> = { servers: [], domains: [] };
+  readonly lookups: Record<LookupKey, LookupOption[]> = { servers: [], domains: [], mediaServers: [] };
   readonly formModel = signal<Record<string, any>>({});
   readonly form = createForm(this.formModel);
   readonly paginator = viewChild(MatPaginator);
@@ -280,6 +290,7 @@ export class RealtimeWebRtcPage {
       resource: this.config().resource,
       scope: this.scope(),
       search: this.appliedSearch(),
+      status: this.appliedStatus(),
     }),
     defaultValue: [] as WebRtcRecord[],
     loader: async ({ params }) => {
@@ -288,6 +299,7 @@ export class RealtimeWebRtcPage {
         {
           limit: 5000,
           search: params.search,
+          status: params.status,
         },
         params.scope,
       );
@@ -314,7 +326,9 @@ export class RealtimeWebRtcPage {
     untracked(() => {
       this.searchInput.set('');
       this.search.set('');
+      this.statusInput.set('');
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
       this.dataSource.filter = '';
       this.selected.clear();
     });
@@ -349,6 +363,7 @@ export class RealtimeWebRtcPage {
       engine: row['RwsEngine'],
       hostname: row['RwsHostname'],
       publicDomain: row['RtdName'] ?? row['DomainName'] ?? row['RwsPublicDomain'],
+      mediaServer: row['RmsName'] ?? row['MediaServerName'],
       publicIP: row['RwsPublicIP'],
       version: row['RwsVersion'],
       lastSeen: row['RwsLastSeenAt'],
@@ -388,13 +403,16 @@ export class RealtimeWebRtcPage {
     this.dataSource.filter = nextSearch.toLowerCase();
     this.paginator()?.firstPage();
     this.appliedSearch.set(nextSearch);
+    this.appliedStatus.set(this.statusInput());
   }
   clearSearchFilters() {
     this.searchInput.set('');
     this.search.set('');
+    this.statusInput.set('');
     this.dataSource.filter = '';
     this.paginator()?.firstPage();
     this.appliedSearch.set('');
+    this.appliedStatus.set('');
   }
   async fetchLookups() {
     const needs = new Set(
@@ -410,22 +428,34 @@ export class RealtimeWebRtcPage {
                 limit: 5000,
                 purpose: 'webrtc',
               })
-            : this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
-              ? await this.api.listServerOptions()
-              : await this.api.list(key, { limit: 5000 }, 'master');
+            : key === 'mediaServers'
+              ? await this.api.listMediaServerOptions()
+              : this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
+                ? await this.api.listServerOptions()
+                : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
         this.lookups[key] = rows
           .map((row: WebRtcRecord) => ({
-            value: String(key === 'domains' ? (row['RtdUUID'] ?? '') : (row['RwsUUID'] ?? '')),
+            value: String(
+              key === 'domains'
+                ? (row['RtdUUID'] ?? '')
+                : key === 'mediaServers'
+                  ? (row['value'] ?? row['RmsUUID'] ?? '')
+                  : (row['RwsUUID'] ?? ''),
+            ),
             label: String(
               key === 'domains'
                 ? (row['RtdName'] ?? row['DomainName'] ?? '')
+                : key === 'mediaServers'
+                  ? (row['label'] ?? row['RmsName'] ?? '')
                 : (row['RwsName'] ?? ''),
             ),
             searchText: String(
               key === 'domains'
                 ? `${row['RtdName'] ?? ''} ${row['DomainName'] ?? ''} ${row['RtdUUID'] ?? ''}`
-                : `${row['RwsName'] ?? ''} ${row['RwsHostname'] ?? ''} ${row['RwsUUID'] ?? ''}`,
+                : key === 'mediaServers'
+                  ? `${row['label'] ?? ''} ${row['hostname'] ?? ''} ${row['controlIP'] ?? ''} ${row['value'] ?? ''}`
+                  : `${row['RwsName'] ?? ''} ${row['RwsHostname'] ?? ''} ${row['RwsUUID'] ?? ''}`,
             ),
           }))
           .filter((option: LookupOption) => option.value);
@@ -436,7 +466,9 @@ export class RealtimeWebRtcPage {
     return this.lookups[key];
   }
   lookupPlaceholder(key: LookupKey): string {
-    return key === 'domains' ? 'Search domains' : 'Search servers';
+    if (key === 'domains') return 'Search domains';
+    if (key === 'mediaServers') return 'Search media servers';
+    return 'Search servers';
   }
   hasTextareaFields() {
     return this.config().fields.some((field) => field.type === 'textarea');
@@ -464,6 +496,7 @@ export class RealtimeWebRtcPage {
       engine: 'RwsEngine',
       nodeUUID: 'RwsNodeUUID',
       realtimeDomainUUID: 'RealtimeDomainRtdUUID',
+      mediaServerUUID: 'RealtimeMediaServerRmsUUID',
       hostname: 'RwsHostname',
       publicIP: 'RwsPublicIP',
       privateIP: 'RwsPrivateIP',
