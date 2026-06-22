@@ -480,6 +480,10 @@ mat-card.erp-card,
   margin-bottom: 1rem;
 }
 
+.filter-grid .span-1 {
+  grid-column: span 1;
+}
+
 .filter-grid .span-4 {
   grid-column: 1 / -1;
 }

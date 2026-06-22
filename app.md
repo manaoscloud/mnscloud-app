@@ -200,9 +200,11 @@
   - `New` uses `mat-stroked-button color="primary"` with an icon.
   - Short header action buttons share the global fixed width from `--crud-action-button-width` so actions in the same group feel visually equal on desktop and mobile.
 - Filter behavior:
-  - Filter fields use the global 3-column `.filter-grid`; every filter input/select is `span-1`
-    by default. Do not make `Search`, `Status`, or normal filter controls `span-2`, `span-3`,
-    `span-4`, or custom fractional widths such as `1.5`.
+  - Filter fields use the global 3-column `.filter-grid`; every filter input/select must declare
+    `class="span-1"` unless the user explicitly requests a larger filter field. Do not leave normal
+    filter width implicit, and do not use custom fractional widths such as `1.5`.
+  - Do not make `Search`, `Status`, or normal filter controls `span-2`, `span-3`, or `span-4`
+    unless that larger width was explicitly requested for that exact field.
   - Every CRUD list must include a `Search` filter as the first filter control.
   - If the resource has a status field/table status column, include a `Status` filter in the
     filter row. Use `''` for the `All` UI value and normalize only before API calls when needed.
@@ -485,8 +487,8 @@
 - Layout and list:
   - use `.erp-page`, `.erp-card`, `.erp-header`, `.filter-grid`, `.table-wrapper`, `.mobile-paginator`
   - list actions must include `Refresh` and `New`
-  - filters must use `span-1` controls only; `Search` is first, and `Status` is present when the
-    resource has status
+  - filters must explicitly declare `span-1` controls only; `Search` is first, and `Status` is
+    present when the resource has status
   - filters must expose explicit `Apply` and `Clear`
   - filters must keep mandatory order/placement: `Apply` then `Clear`, in a dedicated right-aligned `filter-actions` row
   - filter buttons must use the standard icons: `filter_alt` for `Apply` and `backspace` for `Clear`
@@ -632,7 +634,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `<=900px`: 1 column
 - On mobile (`<=900px`), span classes should collapse to 1 column.
 - Filter grid baseline:
-  - desktop: 3 equal columns, each filter control occupying 1 column (`span-1`).
+  - desktop: 3 equal columns, each filter control explicitly declaring `span-1` and occupying 1
+    column.
   - mobile (`<=900px`): 1 column.
   - `filter-actions` is the only full-row element inside `.filter-grid`.
   - Do not add component-local filter width overrides; update `src/styles.scss` if the reusable

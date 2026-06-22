@@ -16,7 +16,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
@@ -26,7 +26,7 @@
         />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select
           [value]="statusInput()"

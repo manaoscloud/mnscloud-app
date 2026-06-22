@@ -157,6 +157,14 @@ function hasForbiddenFilterSpan(block) {
   return /class="[^"]*\bspan-[234]\b[^"]*"/.test(fieldsOnly);
 }
 
+function hasImplicitFilterSpan(block) {
+  const fieldsOnly = withoutFilterActions(block);
+  const fieldTags = [
+    ...fieldsOnly.matchAll(/<(mat-form-field|mns-[\w-]*field)\b([^>]*)>/g),
+  ];
+  return fieldTags.some(([, , attrs]) => !/\bclass="[^"]*\bspan-1\b[^"]*"/.test(attrs));
+}
+
 function validateTarget(target) {
   const files = walk(relative(root, target));
   const htmlFiles = files.filter((file) => extname(file) === '.html');
@@ -201,7 +209,12 @@ function validateTarget(target) {
       }
       if (blocks.some((block) => hasForbiddenFilterSpan(block))) {
         errors.push(
-          `${relative(root, htmlFile)} invalid: normal filter controls must use span-1/default width`,
+          `${relative(root, htmlFile)} invalid: normal filter controls must not use span-2/span-3/span-4 unless explicitly requested`,
+        );
+      }
+      if (blocks.some((block) => hasImplicitFilterSpan(block))) {
+        errors.push(
+          `${relative(root, htmlFile)} invalid: normal filter controls must explicitly declare span-1`,
         );
       }
       if (!/<mat-icon>\s*filter_alt\s*<\/mat-icon>/.test(content)) {
