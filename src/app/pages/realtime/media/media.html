@@ -16,7 +16,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
@@ -24,6 +24,18 @@
           [value]="searchInput()"
           (input)="searchInput.set($any($event.target).value)"
         />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select
+          [value]="statusInput()"
+          (selectionChange)="statusInput.set($any($event.value))"
+        >
+          @for (option of statusFilterOptions(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">

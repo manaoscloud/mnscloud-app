@@ -148,7 +148,9 @@ export class RealtimeMediaPage {
   private readonly snack = inject(SnackbarService);
 
   readonly searchInput = signal('');
+  readonly statusInput = signal('');
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal('');
   readonly saving = signal(false);
   readonly mutating = signal(false);
   readonly editing = signal<MediaRecord | null>(null);
@@ -160,6 +162,11 @@ export class RealtimeMediaPage {
   readonly form = createForm(this.formModel);
   readonly pageTitle = signal('Media Servers');
   readonly pageSubtitle = signal('Register dedicated RTP/media relay servers for realtime sessions.');
+  readonly statusFilterOptions = signal([
+    { value: '', label: 'All' },
+    { value: '1', label: 'Active' },
+    { value: '0', label: 'Inactive' },
+  ]);
 
   readonly dataSource = new MatTableDataSource<MediaRecord>([]);
   readonly displayedColumns = signal([
@@ -187,10 +194,15 @@ export class RealtimeMediaPage {
   private installCommandBinding: CrudDialogBinding | null = null;
 
   private readonly itemsResource = resource({
-    params: () => ({ search: this.appliedSearch() }),
+    params: () => ({ search: this.appliedSearch(), status: this.appliedStatus() }),
     defaultValue: [] as MediaRecord[],
     loader: async ({ params }) => {
-      const response = await this.api.list('servers', { limit: 5000, search: params.search });
+      const status = params.status === '' ? null : Number(params.status);
+      const response = await this.api.list('servers', {
+        limit: 5000,
+        search: params.search,
+        status,
+      });
       return response?.data?.items ?? [];
     },
   });
@@ -253,21 +265,25 @@ export class RealtimeMediaPage {
 
   applySearchFilters(): void {
     const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusInput();
     this.dataSource.filter = nextSearch.toLowerCase();
     this.paginator()?.firstPage();
-    if (nextSearch === this.appliedSearch()) {
+    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
       this.itemsResource.reload();
     } else {
       this.appliedSearch.set(nextSearch);
+      this.appliedStatus.set(nextStatus);
     }
   }
 
   clearSearchFilters(): void {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.dataSource.filter = '';
     this.paginator()?.firstPage();
-    if (this.appliedSearch()) {
+    if (this.appliedSearch() || this.appliedStatus()) {
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
     } else {
       this.itemsResource.reload();
     }
