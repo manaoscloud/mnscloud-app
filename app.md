@@ -200,7 +200,7 @@
   - `New` uses `mat-stroked-button color="primary"` with an icon.
   - Short header action buttons share the global fixed width from `--crud-action-button-width` so actions in the same group feel visually equal on desktop and mobile.
 - Filter behavior:
-  - Filter fields use the global 3-column `.filter-grid`; every filter input/select must declare
+  - Filter fields use the global 4-column `.filter-grid`; every filter input/select must declare
     `class="span-1"` unless the user explicitly requests a larger filter field. Do not leave normal
     filter width implicit, and do not use custom fractional widths such as `1.5`.
   - Do not make `Search`, `Status`, or normal filter controls `span-2`, `span-3`, or `span-4`
@@ -505,7 +505,7 @@
 - Styling and responsiveness:
   - use `span.status-pill.status-chip.state-chip` with Activity Log palette classes (`chip-success`, `chip-running`, `chip-queued`, `chip-failed`, `chip-skipped`) plus `is-active`/`is-inactive`
   - do not use `::ng-deep` for table column alignment; use local classes on `th/td` (for example: `.status-col`, `.actions-col-cell`)
-  - table list styling must follow the ERP baseline: `.erp-card` radius `1rem`, 3-column desktop `.filter-grid`, right-aligned `.filter-actions`, equal-width short action buttons, table header background, cell borders, row hover, and fixed status/actions widths
+  - table list styling must follow the ERP baseline: `.erp-card` radius `1rem`, 4-column desktop `.filter-grid`, right-aligned `.filter-actions`, equal-width short action buttons, table header background, cell borders, row hover, and fixed status/actions widths
   - form grids must follow `4/3/2/1` (`desktop`, `<=1400`, `<=1200`, `<=900`)
   - on `<=900`, span classes collapse to 1 column
 - Validation:
@@ -634,7 +634,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `<=900px`: 1 column
 - On mobile (`<=900px`), span classes should collapse to 1 column.
 - Filter grid baseline:
-  - desktop: 3 equal columns, each filter control explicitly declaring `span-1` and occupying 1
+  - desktop: 4 equal columns, each filter control explicitly declaring `span-1` and occupying 1
     column.
   - mobile (`<=900px`): 1 column.
   - `filter-actions` is the only full-row element inside `.filter-grid`.

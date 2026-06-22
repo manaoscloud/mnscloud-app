@@ -1532,6 +1532,21 @@ export class MainLayout {
           ],
         },
         {
+          id: 'realtime/media',
+          label: 'Media/RTP',
+          icon: 'settings_ethernet',
+          scope: 'master',
+          children: [
+            {
+              id: 'realtime/media/server',
+              label: 'Servers',
+              icon: 'dns',
+              masterRoute: '/system/realtime/media/server',
+              roles: ['MASTER'],
+            },
+          ],
+        },
+        {
           id: 'realtime/turn',
           label: 'TURN/STUN',
           icon: 'router',
@@ -1549,21 +1564,6 @@ export class MainLayout {
               label: 'Servers',
               icon: 'dns',
               masterRoute: '/system/realtime/turn/server',
-              roles: ['MASTER'],
-            },
-          ],
-        },
-        {
-          id: 'realtime/media',
-          label: 'Media/RTP',
-          icon: 'settings_ethernet',
-          scope: 'master',
-          children: [
-            {
-              id: 'realtime/media/server',
-              label: 'Servers',
-              icon: 'dns',
-              masterRoute: '/system/realtime/media/server',
               roles: ['MASTER'],
             },
           ],
