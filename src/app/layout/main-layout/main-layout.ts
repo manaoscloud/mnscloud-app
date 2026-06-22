@@ -1553,6 +1553,21 @@ export class MainLayout {
             },
           ],
         },
+        {
+          id: 'realtime/media',
+          label: 'Media/RTP',
+          icon: 'settings_ethernet',
+          scope: 'master',
+          children: [
+            {
+              id: 'realtime/media/server',
+              label: 'Servers',
+              icon: 'dns',
+              masterRoute: '/system/realtime/media/server',
+              roles: ['MASTER'],
+            },
+          ],
+        },
       ],
     },
 
