@@ -463,6 +463,9 @@
   must use `InstallCommandDialogComponent` from `src/app/shared/install-command-dialog`.
 - Install command dialogs must open through `openCrudTemplateDialog` so their viewport size,
   position, resize behavior, footer density, and mobile behavior match CRUD dialogs.
+- Footer actions must follow the CRUD action contract: `Copy command` is the primary action,
+  `Close` is secondary, desktop keeps secondary left and primary right, and mobile stacks both
+  actions at equal full width with the primary action first.
 - Pages must not define page-local `*-token-dialog`, fixed-width script modals, local clipboard
   markup, or local command-shell SCSS.
 - The API/DB remains the source of truth for generated enrollment/runtime tokens and command
