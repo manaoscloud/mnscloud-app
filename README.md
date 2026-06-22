@@ -211,25 +211,30 @@ the built app from `/var/www/mnscloud-app` and listens on `0.0.0.0:8080`, so an 
 
 #### Install
 
-Resolve the latest approved release from the MNSCloud API registry when installing from a published
-artifact. On a full MNSCloud workspace host, this can be inspected with:
+Fresh app runtime hosts install from the latest approved release artifact. The host does not need a
+workspace checkout, Node.js, npm, or Angular build tools. Clone this repository and run the
+module-local latest-release helper:
 
 ```bash
+sudo install -d -m 0755 /opt/mnscloud
 cd /opt/mnscloud
-scripts/runtime/latest-release.sh mnscloud-app --format env
+gh repo clone manaoscloud/mnscloud-app
+cd /opt/mnscloud/mnscloud-app
+sudo ./scripts/update-latest-nginx-runtime.sh
 ```
 
-Then pass the release artifact URL and SHA-256 digest to the installer.
+The helper resolves the latest approved version, artifact URL, and SHA-256 automatically from the
+MNSCloud release registry, then calls the artifact installer. Operators do not type the release tag,
+artifact URL, SHA-256, or API base during the normal install/update flow.
 
-Useful options:
+Optional runtime overrides can be exported only when the default app runtime listener is not
+appropriate:
 
 ```bash
 sudo APP_LISTEN_ADDR=0.0.0.0 \
   APP_LISTEN_PORT=8080 \
   APP_API_BASE_URL="" \
-  APP_ARTIFACT_URL=<release-artifact-url> \
-  APP_ARTIFACT_SHA256=<release-artifact-sha256> \
-  ./scripts/install-nginx-runtime.sh
+  ./scripts/update-latest-nginx-runtime.sh
 ```
 
 Use `APP_LISTEN_ADDR=127.0.0.1` only when the app runtime and the edge gateway are on the same host.
@@ -266,9 +271,7 @@ call a separate API origin, pass the full API v1 URL:
 
 ```bash
 sudo APP_API_BASE_URL=https://api.example.com/api/v1 \
-  APP_ARTIFACT_URL=<release-artifact-url> \
-  APP_ARTIFACT_SHA256=<release-artifact-sha256> \
-  ./scripts/install-nginx-runtime.sh
+  ./scripts/update-latest-nginx-runtime.sh
 ```
 
 #### Update

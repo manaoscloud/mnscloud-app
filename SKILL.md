@@ -42,33 +42,34 @@ npm run build
 
 Use `npm run check:crud` when changing CRUD templates or CRUD baseline behavior.
 
-For bare-metal production runtime validation, the installer is:
-
-```bash
-sudo ./scripts/install-nginx-runtime.sh
-```
-
-It supports Debian 12/13 and RHEL/Rocky/AlmaLinux 9/10, uses `mnscloud-runtime-kit` for the base
-Nginx package installation, installs Node.js 24 from NodeSource when needed, builds the app,
-deploys `dist/app/browser`, writes runtime `env.js`, and creates
-`/etc/nginx/conf.d/mnscloud-app.conf`. The app runtime listens on `0.0.0.0:8080` by
-default so a separate `mnscloud-nginx` edge host can reach it; use mnscloud-agent/cyber security
-network policies to restrict access to the edge host, or use `APP_LISTEN_ADDR=127.0.0.1` for
-same-host edge deployments. Do not manage nftables in this installer.
-
-After a repository commit has been pushed, update an existing app host with:
+For bare-metal production runtime install/update, use the module-local latest-release helper:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
-sudo ./scripts/update-nginx-runtime.sh --ref v0.1.0
-sudo ./scripts/validate-nginx-runtime.sh
-curl -I http://127.0.0.1:8080
+sudo ./scripts/update-latest-nginx-runtime.sh
 ```
 
-The update script requires an explicit semver release tag, checks out that release, rebuilds the
-Angular bundle, deploys it to `/var/www/mnscloud-app`, writes runtime `env.js` and `build.json`,
-validates Nginx, reloads the service, and restores the previous commit if validation fails. Use
-`sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-release-tag>` for rollback.
+It supports Debian 12/13 and RHEL/Rocky/AlmaLinux 9/10, resolves the latest approved release from
+the MNSCloud release registry, downloads the prebuilt browser artifact, validates its SHA-256 and
+referenced assets, deploys it to `/var/www/mnscloud-app`, writes runtime `env.js`, and creates
+`/etc/nginx/conf.d/mnscloud-app.conf`. Runtime hosts do not install Node.js, npm, Angular CLI, or
+run local Angular builds. The app runtime listens on `0.0.0.0:8080` by default so a separate
+`mnscloud-nginx` edge host can reach it; use mnscloud-agent/cyber security network policies to
+restrict access to the edge host, or use `APP_LISTEN_ADDR=127.0.0.1` for same-host edge
+deployments. Do not manage nftables in this installer.
+
+Fresh runtime hosts use the same helper after cloning the repository:
+
+```bash
+sudo install -d -m 0755 /opt/mnscloud
+cd /opt/mnscloud
+gh repo clone manaoscloud/mnscloud-app
+cd /opt/mnscloud/mnscloud-app
+sudo ./scripts/update-latest-nginx-runtime.sh
+```
+
+Use `sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-release-tag> --artifact-url <url>
+--artifact-sha256 <sha256>` only for explicit emergency rollback to a known-good release artifact.
 
 Production App releases are created by the repository `Auto Release` GitHub Actions workflow after
 validated changes are committed and pushed to `main`. The workflow uses
