@@ -17,6 +17,9 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - API calls must go through `src/app/services/api.service.ts`.
 - Runtime URL resolution must stay in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD pages must follow `app.md`.
+- CRUD list filters must use the canonical filter row from `app.md`: `Search` as the first
+  `span-1` control, `Status` present when the resource has a status field/column, no custom
+  fractional widths, and `filter-actions` as the only full-row element.
 - CRUD dialog primary record tabs must use the translated `Record` key (`[label]="'Record' | t`).
   Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
 - Searchable `mat-select` controls must use the global `select-search-option` and

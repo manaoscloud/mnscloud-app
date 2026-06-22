@@ -200,6 +200,12 @@
   - `New` uses `mat-stroked-button color="primary"` with an icon.
   - Short header action buttons share the global fixed width from `--crud-action-button-width` so actions in the same group feel visually equal on desktop and mobile.
 - Filter behavior:
+  - Filter fields use the global 3-column `.filter-grid`; every filter input/select is `span-1`
+    by default. Do not make `Search`, `Status`, or normal filter controls `span-2`, `span-3`,
+    `span-4`, or custom fractional widths such as `1.5`.
+  - Every CRUD list must include a `Search` filter as the first filter control.
+  - If the resource has a status field/table status column, include a `Status` filter in the
+    filter row. Use `''` for the `All` UI value and normalize only before API calls when needed.
   - Use explicit `Apply` and `Clear` actions.
   - Button order is mandatory: `Apply` first, `Clear` second.
   - Filter action icons are mandatory: `Apply` uses `<mat-icon>filter_alt</mat-icon>` and `Clear` uses `<mat-icon>backspace</mat-icon>`.
@@ -479,6 +485,8 @@
 - Layout and list:
   - use `.erp-page`, `.erp-card`, `.erp-header`, `.filter-grid`, `.table-wrapper`, `.mobile-paginator`
   - list actions must include `Refresh` and `New`
+  - filters must use `span-1` controls only; `Search` is first, and `Status` is present when the
+    resource has status
   - filters must expose explicit `Apply` and `Clear`
   - filters must keep mandatory order/placement: `Apply` then `Clear`, in a dedicated right-aligned `filter-actions` row
   - filter buttons must use the standard icons: `filter_alt` for `Apply` and `backspace` for `Clear`
@@ -623,6 +631,12 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `<=1200px`: 2 columns
   - `<=900px`: 1 column
 - On mobile (`<=900px`), span classes should collapse to 1 column.
+- Filter grid baseline:
+  - desktop: 3 equal columns, each filter control occupying 1 column (`span-1`).
+  - mobile (`<=900px`): 1 column.
+  - `filter-actions` is the only full-row element inside `.filter-grid`.
+  - Do not add component-local filter width overrides; update `src/styles.scss` if the reusable
+    filter baseline needs to evolve.
 - Dialog CRUD form grids must follow the same breakpoint rule (`4/3/2/1`) and span behavior (`.span-2/.span-3/.span-4`) as page forms.
 - Dialog form density/layout standard (mandatory):
   - vertical spacing: prefer compact form rows (`.form-grid { gap: 0.5rem 0.75rem; margin-bottom: 0.35rem; }`)

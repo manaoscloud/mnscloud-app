@@ -121,6 +121,42 @@ function filterGridBlocks(content) {
   return blocks;
 }
 
+function withoutFilterActions(block) {
+  return block.replace(/<div[^>]*class="[^"]*\bfilter-actions\b[^"]*"[\s\S]*?<\/div>/g, '');
+}
+
+function hasSearchFilter(block) {
+  const fieldsOnly = withoutFilterActions(block);
+  const firstField = fieldsOnly.match(/<mat-form-field\b[\s\S]*?<\/mat-form-field>/)?.[0] ?? '';
+  return (
+    /(['"])Search\1\s*\|\s*transloco/.test(firstField) ||
+    />\s*Search\s*</i.test(firstField) ||
+    /placeholder\]?\s*=\s*(['"])[^'"]*Search[^'"]*\1/i.test(firstField)
+  );
+}
+
+function hasStatusSurface(content) {
+  return (
+    /matColumnDef="status"/i.test(content) ||
+    /\bstatusOptions\b/.test(content) ||
+    /\brecordStatusOptions\b/.test(content) ||
+    /\bstatus-col\b/.test(content)
+  );
+}
+
+function hasStatusFilter(block) {
+  const fieldsOnly = withoutFilterActions(block);
+  return (
+    /(['"])Status\1\s*\|\s*transloco/.test(fieldsOnly) ||
+    />\s*Status\s*</i.test(fieldsOnly)
+  );
+}
+
+function hasForbiddenFilterSpan(block) {
+  const fieldsOnly = withoutFilterActions(block);
+  return /class="[^"]*\bspan-[234]\b[^"]*"/.test(fieldsOnly);
+}
+
 function validateTarget(target) {
   const files = walk(relative(root, target));
   const htmlFiles = files.filter((file) => extname(file) === '.html');
@@ -150,6 +186,22 @@ function validateTarget(target) {
       if (!hasActionsInsideGrid) {
         errors.push(
           `${relative(root, htmlFile)} invalid: filter-actions must be inside filter-grid`,
+        );
+      }
+      const missingSearch = blocks.some((block) => !hasSearchFilter(block));
+      if (missingSearch) {
+        errors.push(
+          `${relative(root, htmlFile)} invalid: first filter control must be Search`,
+        );
+      }
+      if (hasStatusSurface(content) && blocks.some((block) => !hasStatusFilter(block))) {
+        errors.push(
+          `${relative(root, htmlFile)} invalid: resources with status must include a Status filter`,
+        );
+      }
+      if (blocks.some((block) => hasForbiddenFilterSpan(block))) {
+        errors.push(
+          `${relative(root, htmlFile)} invalid: normal filter controls must use span-1/default width`,
         );
       }
       if (!/<mat-icon>\s*filter_alt\s*<\/mat-icon>/.test(content)) {
