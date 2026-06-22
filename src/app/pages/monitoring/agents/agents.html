@@ -7,7 +7,7 @@
       </div>
 
       <div class="header-actions">
-        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+        <app-refresh-button [loading]="tableLoading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
           {{ 'New' | transloco }}
@@ -105,8 +105,8 @@
       }
     </section>
 
-    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
-      @if (loading()) {
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="tableLoading()">
+      @if (tableLoading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
@@ -260,7 +260,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ (loading() ? 'Loading agents...' : 'No agents found.') | transloco }}
+            {{ (tableLoading() ? 'Loading agents...' : 'No agents found.') | transloco }}
           </td>
         </tr>
       </table>

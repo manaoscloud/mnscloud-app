@@ -189,6 +189,8 @@ export class MonitoringAgentsPage {
   private lastRuntimeProductsError = '';
 
   readonly saving = signal(false);
+  private readonly listRefreshRequested = signal(false);
+  private readonly hasLoadedAgents = signal(false);
   readonly editing = signal<MonitoringAgent | null>(null);
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly updatingIds = signal<Set<string>>(new Set());
@@ -212,6 +214,9 @@ export class MonitoringAgentsPage {
   });
 
   readonly loading = this.agentsResource.isLoading;
+  readonly tableLoading = computed(
+    () => this.loading() && (!this.hasLoadedAgents() || this.listRefreshRequested()),
+  );
   readonly agentsSnapshot = computed(() => this.agentsResource.value());
   readonly agents = computed(() => this.agentsSnapshot().agents);
   readonly runtimeProducts = computed(() => this.agentsSnapshot().runtimeProducts);
@@ -288,8 +293,14 @@ export class MonitoringAgentsPage {
   private readonly reportLoadErrors = effect(() => {
     const error = this.agentsResource.error();
     if (error) {
+      this.listRefreshRequested.set(false);
       this.snack.error(this.errorMessage(error, 'Failed to load agents.'));
       return;
+    }
+
+    if (!this.loading()) {
+      this.hasLoadedAgents.set(true);
+      this.listRefreshRequested.set(false);
     }
 
     const runtimeProductsError = this.agentsSnapshot().runtimeProductsError ?? '';
@@ -310,6 +321,7 @@ export class MonitoringAgentsPage {
   }
 
   refreshList() {
+    this.listRefreshRequested.set(true);
     this.agentsResource.reload();
   }
 
@@ -346,7 +358,7 @@ export class MonitoringAgentsPage {
       } else {
         this.snack.success(`${product.label} ${this.t('is already up to date.')}`);
       }
-      this.agentsResource.reload();
+      this.refreshSnapshotSilently();
     } catch (error) {
       this.snack.error(
         this.errorMessage(error, `${this.t('Failed to queue')} ${product.label} rollout.`),
@@ -453,7 +465,7 @@ export class MonitoringAgentsPage {
         this.snack.success(this.t('Agent enrollment created. Copy the install command.'));
         this.openTokenDialog();
       }
-      this.agentsResource.reload();
+      this.refreshSnapshotSilently();
       if (keepOpen && !editing) {
         this.startCreate();
       } else {
@@ -791,6 +803,11 @@ export class MonitoringAgentsPage {
 
   private updateKey(row: MonitoringAgent, target: RuntimeUpdateTarget) {
     return `${row.uuid}:${target.product}`;
+  }
+
+  private refreshSnapshotSilently() {
+    this.listRefreshRequested.set(false);
+    this.agentsResource.reload();
   }
 
   shortBuildRef(value: string | null | undefined) {
