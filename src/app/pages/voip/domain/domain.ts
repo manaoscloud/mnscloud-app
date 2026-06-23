@@ -283,6 +283,11 @@ export class VoipDomainPage {
     this.closeDomainDialog();
   }
 
+  submitDomainForm(event: Event) {
+    event.preventDefault();
+    void this.saveDomain();
+  }
+
   async saveDomain(createAnother = false) {
     if (!this.form().valid()) {
       this.snack.warning('Please fill all required fields.');

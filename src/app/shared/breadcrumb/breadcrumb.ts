@@ -32,7 +32,7 @@ export class BreadcrumbComponent {
   }
 
   private buildBreadcrumbs() {
-    const url = this.router.url;
+    const url = this.router.url.split(/[?#]/)[0];
     const parts = url.split('/').filter(Boolean);
 
     const items: Crumb[] = [];

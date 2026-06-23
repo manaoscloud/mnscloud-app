@@ -194,7 +194,7 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form id="voipDomainForm" class="form-grid" (ngSubmit)="saveDomain()">
+            <form id="voipDomainForm" class="form-grid" (submit)="submitDomainForm($event)">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="form.status">
@@ -220,8 +220,8 @@
           class="dialog-action-button save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="voipDomainForm"
+          type="button"
+          (click)="saveDomain()"
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
