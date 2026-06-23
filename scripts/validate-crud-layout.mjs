@@ -96,6 +96,13 @@ const forbiddenLocalScssRules = [
   ['filter-actions local layout override', /^\s*\.filter-actions\s*[{,]/m],
 ];
 
+const forbiddenHtmlRules = [
+  [
+    'native external dialog form submit',
+    /<button\b[^>]*\btype="submit"[^>]*\bform="[^"]+"/i,
+  ],
+];
+
 function filterGridBlocks(content) {
   const blocks = [];
   const openTag = /<([a-zA-Z][\w:-]*)[^>]*class="[^"]*\bfilter-grid\b[^"]*"[^>]*>/g;
@@ -180,6 +187,9 @@ function validateTarget(target) {
     const content = read(htmlFile);
     for (const [name, pattern] of requiredHtmlRules) {
       if (!pattern.test(content)) errors.push(`${relative(root, htmlFile)} missing: ${name}`);
+    }
+    for (const [name, pattern] of forbiddenHtmlRules) {
+      if (pattern.test(content)) errors.push(`${relative(root, htmlFile)} forbidden: ${name}`);
     }
 
     const requiresFilters =

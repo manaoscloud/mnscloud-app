@@ -390,6 +390,17 @@
   - first tab label must be the translated `Record` key (`[label]="'Record' | transloco`) by default, because it contains the primary record fields. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
   - footer (`.form-actions`) with `Cancel`, `Save`, and create-only `Save/New` in the save split menu
   - footer must stay fixed at the bottom of dialog (`mat-dialog-actions` cannot move with content length)
+- Dialog form submission:
+  - CRUD dialog save actions must be controlled by Angular component methods, not by browser-native
+    external form submission.
+  - The primary `Save` button must use `type="button"` and `(click)="save...()"`.
+  - `Save/New` must use `type="button"` and call the create-and-reset method directly.
+  - Do not use a dialog footer button with `type="submit"` plus a `form="..."` attribute. That
+    pattern can trigger a native GET submit, append form values to the route as query text, break
+    breadcrumbs, and prevent a second `Save/New` save from running through the Angular flow.
+  - If a form handles Enter-key submit, bind native `(submit)` and call `$event.preventDefault()`
+    before delegating to the same save method. Avoid relying on `(ngSubmit)` for CRUD dialogs with
+    footer actions outside the `<form>`.
 - Action labels:
   - list create action: `New`
   - dialog primary action: `Save`

@@ -102,6 +102,10 @@ const fkTsRules = [
 
 const forbiddenHtmlRules = [
   ['raw column label', /\{\{\s*column\s*\}\}/],
+  [
+    'native external dialog form submit',
+    /<button\b[^>]*\btype="submit"[^>]*\bform="[^"]+"/i,
+  ],
   ['legacy data tab label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*t"/],
   ['legacy data tab transloco label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*transloco"/],
   ['legacy details tab label', /<mat-tab[^>]*\[label\]="'Details'\s*\|\s*t"/],
