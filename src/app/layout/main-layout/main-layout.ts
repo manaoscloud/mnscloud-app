@@ -1552,6 +1552,13 @@ export class MainLayout {
               roles: ['MASTER'],
             },
             {
+              id: 'realtime/media/domains',
+              label: 'Domains',
+              icon: 'language',
+              masterRoute: '/system/realtime/media/domains',
+              roles: ['MASTER'],
+            },
+            {
               id: 'realtime/media/server',
               label: 'Servers',
               icon: 'dns',

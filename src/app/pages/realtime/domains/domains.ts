@@ -71,6 +71,7 @@ const STATUS_OPTIONS = [
 const PURPOSE_OPTIONS = [
   { value: 'turn', label: 'TURN/STUN' },
   { value: 'webrtc', label: 'WebRTC' },
+  { value: 'media', label: 'Media/RTP' },
   { value: 'sfu', label: 'SFU' },
   { value: 'signaling', label: 'Signaling' },
   { value: 'chat', label: 'Chat' },

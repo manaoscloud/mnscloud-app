@@ -1351,6 +1351,13 @@ export const routes: Routes = [
                 data: { scope: 'master', resource: 'servers' },
               },
               {
+                path: 'realtime/media/domains',
+                loadComponent: () =>
+                  import('./pages/realtime/media/media').then((m) => m.RealtimeMediaPage),
+                title: 'System Realtime • Media Domains | mnscloud',
+                data: { scope: 'master', resource: 'domains' },
+              },
+              {
                 path: 'pabx',
                 loadComponent: () =>
                   import('./pages/voip/pabx/dashboard/dashboard').then(

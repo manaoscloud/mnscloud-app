@@ -128,14 +128,16 @@
               >
                 <mat-icon>edit</mat-icon>
               </button>
-              <button
-                mat-icon-button
-                type="button"
-                [matTooltip]="'Generate install command' | transloco"
-                (click)="generateInstallCommand(row)"
-              >
-                <mat-icon>terminal</mat-icon>
-              </button>
+              @if (isServers()) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'Generate install command' | transloco"
+                  (click)="generateInstallCommand(row)"
+                >
+                  <mat-icon>terminal</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 color="warn"
@@ -171,7 +173,7 @@
   <div class="crud-dialog media-dialog">
     <header class="dialog-header">
       <div>
-        <h2>{{ (editing() ? 'Edit' : 'New') | transloco }} {{ 'media server' | transloco }}</h2>
+        <h2>{{ (editing() ? 'Edit' : 'New') | transloco }} {{ resourceLabel() | transloco }}</h2>
         <p>{{ pageSubtitle() | transloco }}</p>
       </div>
     </header>
@@ -189,6 +191,14 @@
                   [options]="domainSelectOptions()"
                   [fieldClass]="field.span || ''"
                   [placeholder]="'Search domains'"
+                />
+              } @else if (field.type === 'mediaDomain') {
+                <mns-search-select-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [options]="mediaDomainSelectOptions()"
+                  [fieldClass]="field.span || ''"
+                  [placeholder]="'Search media domains'"
                 />
               } @else if (field.key === 'status') {
                 <mns-status-select-field
@@ -215,18 +225,20 @@
             </div>
           </mat-tab>
 
-          <mat-tab [label]="'Network' | transloco">
-            <div class="form-grid tab-content">
-              @for (field of networkFields(); track field.key) {
-                <mns-text-field
-                  [field]="formField(field.key)"
-                  [label]="field.label | transloco"
-                  [fieldClass]="field.span || ''"
-                  [type]="field.type === 'number' ? 'number' : 'text'"
-                />
-              }
-            </div>
-          </mat-tab>
+          @if (isServers()) {
+            <mat-tab [label]="'Network' | transloco">
+              <div class="form-grid tab-content">
+                @for (field of networkFields(); track field.key) {
+                  <mns-text-field
+                    [field]="formField(field.key)"
+                    [label]="field.label | transloco"
+                    [fieldClass]="field.span || ''"
+                    [type]="field.type === 'number' ? 'number' : 'text'"
+                  />
+                }
+              </div>
+            </mat-tab>
+          }
 
           <mat-tab [label]="'Notes' | transloco">
             <div class="form-grid tab-content">

@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { form as createForm, type Field as SignalField } from '@angular/forms/signals';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -28,6 +29,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -45,9 +47,9 @@ import {
   type MnsSelectFieldOption,
 } from '../../../shared/forms';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { RealtimeMediaService, MediaRecord } from './media.service';
+import { RealtimeMediaService, MediaRecord, type MediaResource } from './media.service';
 
-type FieldType = 'text' | 'number' | 'select' | 'domain' | 'textarea';
+type FieldType = 'text' | 'number' | 'select' | 'domain' | 'mediaDomain' | 'textarea';
 type Field = {
   key: keyof MediaFormModel;
   label: string;
@@ -62,6 +64,7 @@ type MediaFormModel = {
   status: number;
   name: string;
   engine: string;
+  mediaDomainUUID: string;
   realtimeDomainUUID: string;
   nodeUUID: string;
   hostname: string;
@@ -90,11 +93,20 @@ const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
   { key: 'engine', label: 'Engine', type: 'select', options: ENGINE_OPTIONS },
   { key: 'name', label: 'Name', required: true },
-  { key: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'domain' },
+  { key: 'mediaDomainUUID', label: 'Media Domain', type: 'mediaDomain' },
   { key: 'nodeUUID', label: 'Node UUID' },
   { key: 'hostname', label: 'Hostname' },
   { key: 'publicIP', label: 'Public IP' },
   { key: 'privateIP', label: 'Private IP' },
+];
+
+const DOMAIN_RECORD_FIELDS: Field[] = [
+  { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
+  { key: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'domain', required: true },
+];
+
+const DOMAIN_NOTES_FIELDS: Field[] = [
+  { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 8 },
 ];
 
 const NETWORK_FIELDS: Field[] = [
@@ -145,8 +157,16 @@ export class RealtimeMediaPage {
   private readonly api = inject(RealtimeMediaService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
+  private readonly routeData = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
 
+  readonly resource = computed<MediaResource>(() => {
+    const value = this.routeData()?.['resource'];
+    return value === 'domains' ? 'domains' : 'servers';
+  });
+  readonly isServers = computed(() => this.resource() === 'servers');
+  readonly isDomains = computed(() => this.resource() === 'domains');
   readonly searchInput = signal('');
   readonly statusInput = signal('');
   private readonly appliedSearch = signal('');
@@ -160,8 +180,14 @@ export class RealtimeMediaPage {
   readonly domainLookupEnabled = signal(false);
   readonly formModel = signal<MediaFormModel>(this.defaultFormModel());
   readonly form = createForm(this.formModel);
-  readonly pageTitle = signal('Media Servers');
-  readonly pageSubtitle = signal('Register dedicated RTP/media relay servers for realtime sessions.');
+  readonly pageTitle = computed(() =>
+    this.isDomains() ? 'Media/RTP Domains' : 'Media Servers',
+  );
+  readonly pageSubtitle = computed(() =>
+    this.isDomains()
+      ? 'Assign realtime media domains to RTP/media relay operations.'
+      : 'Register dedicated RTP/media relay servers for realtime sessions.',
+  );
   readonly statusFilterOptions = signal([
     { value: '', label: 'All' },
     { value: '1', label: 'Active' },
@@ -169,20 +195,14 @@ export class RealtimeMediaPage {
   ]);
 
   readonly dataSource = new MatTableDataSource<MediaRecord>([]);
-  readonly displayedColumns = signal([
-    'select',
-    'name',
-    'engine',
-    'domain',
-    'control',
-    'ports',
-    'status',
-    'lastSeen',
-    'actions',
-  ]);
-  readonly recordFields = signal(RECORD_FIELDS);
+  readonly displayedColumns = computed(() =>
+    this.isDomains()
+      ? ['select', 'domain', 'purpose', 'status', 'updated', 'actions']
+      : ['select', 'name', 'engine', 'domain', 'control', 'ports', 'status', 'lastSeen', 'actions'],
+  );
+  readonly recordFields = computed(() => (this.isDomains() ? DOMAIN_RECORD_FIELDS : RECORD_FIELDS));
   readonly networkFields = signal(NETWORK_FIELDS);
-  readonly notesFields = signal(NOTES_FIELDS);
+  readonly notesFields = computed(() => (this.isDomains() ? DOMAIN_NOTES_FIELDS : NOTES_FIELDS));
 
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
@@ -194,11 +214,15 @@ export class RealtimeMediaPage {
   private installCommandBinding: CrudDialogBinding | null = null;
 
   private readonly itemsResource = resource({
-    params: () => ({ search: this.appliedSearch(), status: this.appliedStatus() }),
+    params: () => ({
+      resource: this.resource(),
+      search: this.appliedSearch(),
+      status: this.appliedStatus(),
+    }),
     defaultValue: [] as MediaRecord[],
     loader: async ({ params }) => {
       const status = params.status === '' ? null : Number(params.status);
-      const response = await this.api.list('servers', {
+      const response = await this.api.list(params.resource, {
         limit: 5000,
         search: params.search,
         status,
@@ -212,7 +236,17 @@ export class RealtimeMediaPage {
     defaultValue: [] as MediaRecord[],
     loader: async ({ params }) => {
       if (!params.enabled) return [];
-      const response = await this.api.listRealtimeDomains({ status: 1, limit: 5000 });
+      const response = await this.api.listRealtimeDomains({ purpose: 'media', status: 1, limit: 5000 });
+      return response?.data?.items ?? [];
+    },
+  });
+
+  private readonly mediaDomainsResource = resource({
+    params: () => ({ enabled: this.domainLookupEnabled() && this.isServers() }),
+    defaultValue: [] as MediaRecord[],
+    loader: async ({ params }) => {
+      if (!params.enabled) return [];
+      const response = await this.api.list('domains', { status: 1, limit: 5000 });
       return response?.data?.items ?? [];
     },
   });
@@ -227,6 +261,23 @@ export class RealtimeMediaPage {
           value: String(value ?? ''),
           label: String(label ?? ''),
           searchText: `${label ?? ''} ${domain['RtdPurpose'] ?? ''} ${value ?? ''}`,
+        };
+      })
+      .filter((option: MnsSearchSelectFieldOption) => option.value),
+  );
+
+  readonly mediaDomainSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.mediaDomainsResource
+      .value()
+      .map((domain: MediaRecord) => {
+        const value = domain['RmdUUID'];
+        const label = domain['RtdName'] || domain['DomainName'] || value;
+        return {
+          value: String(value ?? ''),
+          label: String(label ?? ''),
+          searchText: `${label ?? ''} ${domain['RtdPurpose'] ?? ''} ${domain['RmdID'] ?? ''} ${
+            value ?? ''
+          }`,
         };
       })
       .filter((option: MnsSearchSelectFieldOption) => option.value),
@@ -251,7 +302,7 @@ export class RealtimeMediaPage {
   private readonly reportLoadError = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load media servers.'));
+    this.snack.error(this.errorMessage(error, `Failed to load ${this.resourceLabelPlural()}.`));
   });
 
   private readonly cleanup = this.destroyRef.onDestroy(() => {
@@ -332,16 +383,19 @@ export class RealtimeMediaPage {
     this.saving.set(true);
     try {
       const row = this.editing();
+      const resource = this.resource();
       if (row) {
-        await this.api.update('servers', this.uuid(row), this.payload());
-        this.snack.success('Media server updated.');
+        await this.api.update(resource, this.uuid(row), this.payload());
+        this.snack.success(`${this.resourceLabel()} updated.`);
       } else {
-        const response = await this.api.create('servers', this.payload());
-        this.snack.success('Media server created.');
+        const response = await this.api.create(resource, this.payload());
+        this.snack.success(`${this.resourceLabel()} created.`);
         if (!saveAndNew) {
           const item = response?.data?.item ?? null;
           this.closeDialog();
-          if (item?.RmsUUID) await this.generateInstallCommandForUUID(String(item.RmsUUID), item, false);
+          if (resource === 'servers' && item?.RmsUUID) {
+            await this.generateInstallCommandForUUID(String(item.RmsUUID), item, false);
+          }
           this.itemsResource.reload();
           return;
         }
@@ -354,7 +408,7 @@ export class RealtimeMediaPage {
         this.closeDialog();
       }
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to save media server.'));
+      this.snack.error(this.errorMessage(error, `Failed to save ${this.resourceLabel()}.`));
     } finally {
       this.saving.set(false);
     }
@@ -367,7 +421,7 @@ export class RealtimeMediaPage {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
-            title: 'Delete media server',
+            title: `Delete ${this.resourceLabel()}`,
             message: `Delete ${this.name(row)}?`,
             confirmLabel: 'Delete',
           },
@@ -376,8 +430,8 @@ export class RealtimeMediaPage {
     );
     if (!ok) return;
     await this.runMutation(async () => {
-      await this.api.remove('servers', this.uuid(row));
-      this.snack.success('Media server deleted.');
+      await this.api.remove(this.resource(), this.uuid(row));
+      this.snack.success(`${this.resourceLabel()} deleted.`);
       this.itemsResource.reload();
     });
   }
@@ -391,7 +445,7 @@ export class RealtimeMediaPage {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
-            title: 'Delete selected media servers',
+            title: `Delete selected ${this.resourceLabelPlural()}`,
             message: `Delete ${ids.length} selected record(s)?`,
             confirmLabel: 'Delete selected',
           },
@@ -400,14 +454,14 @@ export class RealtimeMediaPage {
     );
     if (!ok) return;
     await this.runMutation(async () => {
-      const result = await this.api.removeMany('servers', ids);
+      const result = await this.api.removeMany(this.resource(), ids);
       const failed = result?.data?.failed ?? [];
       this.selected.set(
         new Set<string>(failed.map((item: any) => String(item.uuid ?? '')).filter(Boolean)),
       );
       failed.length
         ? this.snack.error(`${failed.length} selected record(s) could not be deleted.`)
-        : this.snack.success('Selected media servers deleted.');
+        : this.snack.success(`Selected ${this.resourceLabelPlural()} deleted.`);
       this.itemsResource.reload();
     });
   }
@@ -534,15 +588,19 @@ export class RealtimeMediaPage {
   }
 
   uuid(row: MediaRecord): string {
-    return String(row['RmsUUID'] ?? '');
+    return String(this.isDomains() ? row['RmdUUID'] ?? '' : row['RmsUUID'] ?? '');
   }
 
   name(row: MediaRecord): string {
-    return String(row['RmsName'] ?? '');
+    return String(
+      this.isDomains()
+        ? row['RtdName'] ?? row['DomainName'] ?? row['RmdID'] ?? ''
+        : row['RmsName'] ?? '',
+    );
   }
 
   status(row: MediaRecord): boolean {
-    return Number(row['RmsStatus'] ?? 0) === 1;
+    return Number(this.isDomains() ? row['RmdStatus'] ?? 0 : row['RmsStatus'] ?? 0) === 1;
   }
 
   cell(row: MediaRecord, column: string): string {
@@ -550,10 +608,12 @@ export class RealtimeMediaPage {
       name: row['RmsName'],
       engine: row['RmsEngine'],
       domain: row['RtdName'] ?? row['DomainName'],
+      purpose: this.purposeLabel(row['RtdPurpose']),
       control: `${row['RmsControlIP'] || '127.0.0.1'}:${row['RmsControlPort'] ?? 2223}`,
       ports: `${row['RmsMinMediaPort'] ?? 30000}-${row['RmsMaxMediaPort'] ?? 40000}`,
       status: this.status(row) ? 'ACTIVE' : 'INACTIVE',
       lastSeen: row['RmsLastSeenAt'] || '-',
+      updated: row['RmdDateUpdated'] || '-',
     };
     return String(map[column] ?? '');
   }
@@ -563,10 +623,12 @@ export class RealtimeMediaPage {
       name: 'Name',
       engine: 'Engine',
       domain: 'Domain',
+      purpose: 'Purpose',
       control: 'Control',
       ports: 'RTP Ports',
       status: 'Status',
       lastSeen: 'Last Seen',
+      updated: 'Updated',
       actions: 'Actions',
     };
     return labels[column] ?? column;
@@ -626,6 +688,7 @@ export class RealtimeMediaPage {
       status: 1,
       name: '',
       engine: 'rtpengine',
+      mediaDomainUUID: '',
       realtimeDomainUUID: '',
       nodeUUID: '',
       hostname: '',
@@ -645,9 +708,10 @@ export class RealtimeMediaPage {
     const base = this.defaultFormModel();
     return {
       ...base,
-      status: Number(row['RmsStatus'] ?? 1),
+      status: Number(this.isDomains() ? row['RmdStatus'] ?? 1 : row['RmsStatus'] ?? 1),
       name: row['RmsName'] ?? '',
       engine: row['RmsEngine'] ?? 'rtpengine',
+      mediaDomainUUID: row['RealtimeMediaDomainRmdUUID'] ?? '',
       realtimeDomainUUID: row['RealtimeDomainRtdUUID'] ?? '',
       nodeUUID: row['RmsNodeUUID'] ?? '',
       hostname: row['RmsHostname'] ?? '',
@@ -665,6 +729,13 @@ export class RealtimeMediaPage {
 
   private payload(): MediaRecord {
     const raw = this.formModel();
+    if (this.isDomains()) {
+      return {
+        realtimeDomainUUID: raw.realtimeDomainUUID,
+        notes: String(raw.notes ?? '').trim() || null,
+        status: Number(raw.status ?? 1),
+      };
+    }
     const payload: MediaRecord = {
       ...raw,
       status: Number(raw.status ?? 1),
@@ -681,6 +752,26 @@ export class RealtimeMediaPage {
     }
     delete payload['configJson'];
     return payload;
+  }
+
+  resourceLabel(): string {
+    return this.isDomains() ? 'Media domain' : 'Media server';
+  }
+
+  resourceLabelPlural(): string {
+    return this.isDomains() ? 'media domains' : 'media servers';
+  }
+
+  private purposeLabel(value: unknown): string {
+    const purpose = String(value ?? '').toLowerCase();
+    if (purpose === 'media') return 'Media/RTP';
+    if (purpose === 'turn') return 'TURN/STUN';
+    if (purpose === 'webrtc') return 'WebRTC';
+    if (purpose === 'sfu') return 'SFU';
+    if (purpose === 'signaling') return 'Signaling';
+    if (purpose === 'chat') return 'Chat';
+    if (purpose === 'mixed') return 'Mixed';
+    return purpose || '-';
   }
 
   private numberOrNull(value: unknown): number | null {
