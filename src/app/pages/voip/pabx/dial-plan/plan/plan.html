@@ -15,13 +15,21 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
           [value]="searchInput()"
           (input)="searchInput.set($any($event.target).value)"
         />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          @for (option of statusFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
@@ -50,7 +58,14 @@
         </div>
       }
 
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -70,7 +85,10 @@
 
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.name }}</div>
+            <div class="record-uuid">{{ row.uuid }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="code">
@@ -82,9 +100,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.isDefault === 1"
               [class.is-inactive]="row.isDefault !== 1"
+              [class.chip-success]="row.isDefault === 1"
+              [class.chip-skipped]="row.isDefault !== 1"
             >
               {{ row.isDefault === 1 ? 'YES' : 'NO' }}
             </mat-chip>
@@ -95,9 +115,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="isActive(row)"
               [class.is-inactive]="!isActive(row)"
+              [class.chip-success]="isActive(row)"
+              [class.chip-skipped]="!isActive(row)"
             >
               {{ isActive(row) ? 'ACTIVE' : 'INACTIVE' }}
             </mat-chip>
@@ -136,8 +158,13 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>

@@ -56,7 +56,7 @@ export type VoipPabxTrunkOption = {
 export class VoipPabxDialPlanUiService {
   private readonly api = inject(ApiService);
 
-  listPlans(params: { search?: string; limit?: number; offset?: number } = {}) {
+  listPlans(params: { search?: string; status?: number | ''; limit?: number; offset?: number } = {}) {
     return this.list('dial-plans', params);
   }
 
@@ -78,13 +78,19 @@ export class VoipPabxDialPlanUiService {
 
   listRules(
     dialPlanUUID: string,
-    params: { search?: string; limit?: number; offset?: number } = {},
+    params: { search?: string; status?: number | ''; limit?: number; offset?: number } = {},
   ) {
     return this.list('dial-plan-rules', { ...params, dialPlanUUID });
   }
 
   listAllRules(
-    params: { search?: string; limit?: number; offset?: number; dialPlanUUID?: string } = {},
+    params: {
+      search?: string;
+      status?: number | '';
+      limit?: number;
+      offset?: number;
+      dialPlanUUID?: string;
+    } = {},
   ) {
     return this.list('dial-plan-rules', params);
   }

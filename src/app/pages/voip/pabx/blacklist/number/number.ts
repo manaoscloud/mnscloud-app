@@ -7,7 +7,6 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
@@ -20,14 +19,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
+import { createSignalCrudTable } from '../../../../../shared/crud/signal-crud-table';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import {
@@ -39,6 +39,10 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
 import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import {
   VoipBlacklistItem,
   VoipBlacklistNumberItem,
   VoipBlacklistUiService,
@@ -47,11 +51,13 @@ import {
 type BlacklistNumberFilters = {
   search: string;
   blacklistUUID: string;
+  status: number | '';
 };
 
 const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
   search: '',
   blacklistUUID: '',
+  status: '',
 });
 
 @Component({
@@ -77,6 +83,7 @@ const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './number.html',
   styleUrls: ['./number.scss'],
@@ -99,11 +106,23 @@ export class VoipPabxBlacklistNumberPage {
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly blacklistFilter = signal('');
-  readonly blacklistSearch = signal('');
+  readonly statusFilter = signal<number | ''>('');
+  readonly statusFilterOptions = [
+    { value: '', label: 'All' },
+    { value: 1, label: 'Active' },
+    { value: 0, label: 'Inactive' },
+  ];
   readonly lists = signal<VoipBlacklistItem[]>([]);
   readonly editing = signal<VoipBlacklistNumberItem | null>(null);
   readonly selectedUUIDs = signal<Set<string>>(new Set());
-  readonly dataSource = new MatTableDataSource<VoipBlacklistNumberItem>([]);
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly table = createSignalCrudTable<VoipBlacklistNumberItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   readonly displayedColumns = [
     'select',
     'number',
@@ -114,11 +133,17 @@ export class VoipPabxBlacklistNumberPage {
     'status',
     'actions',
   ];
-  readonly filteredLists = computed(() => {
-    const term = this.blacklistSearch().trim().toLowerCase();
-    if (!term) return this.lists();
-    return this.lists().filter((item) => item.VbkName.toLowerCase().includes(term));
-  });
+  readonly blacklistOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.lists().map((item) => ({
+      value: item.VbkUUID,
+      label: item.VbkName,
+      searchText: item.VbkUUID,
+    })),
+  );
+  readonly blacklistFilterOptions = computed<MnsSearchSelectFieldOption[]>(() => [
+    { value: '', label: 'All' },
+    ...this.blacklistOptions(),
+  ]);
 
   readonly formModel = signal({
     blacklistUUID: '',
@@ -137,28 +162,18 @@ export class VoipPabxBlacklistNumberPage {
     required(schema.matchType);
     required(schema.action);
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly itemsEffect = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
   });
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
     this.snack.error(this.messageFromError(error, 'Failed to load blacklist numbers.'));
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.bootstrap();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -168,6 +183,13 @@ export class VoipPabxBlacklistNumberPage {
   async bootstrap() {
     await this.fetchLists();
     this.itemsResource.reload();
+  }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
   }
 
   refreshList() {
@@ -188,16 +210,13 @@ export class VoipPabxBlacklistNumberPage {
     this.searchInput.set('');
     this.search.set('');
     this.blacklistFilter.set('');
+    this.statusFilter.set('');
     const nextFilters = emptyBlacklistNumberFilters();
     if (this.sameBlacklistNumberFilters(nextFilters, this.appliedFilters())) {
       this.itemsResource.reload();
     } else {
       this.appliedFilters.set(nextFilters);
     }
-  }
-
-  onBlacklistOpened(opened: boolean) {
-    if (!opened) this.blacklistSearch.set('');
   }
 
   async fetchLists() {
@@ -208,6 +227,7 @@ export class VoipPabxBlacklistNumberPage {
   private async fetchItems(filters: BlacklistNumberFilters): Promise<VoipBlacklistNumberItem[]> {
     const response = await this.api.listNumbers(filters.blacklistUUID, {
       search: filters.search,
+      status: filters.status,
       limit: this.listLimit,
     });
     return (response?.data?.items ?? []) as VoipBlacklistNumberItem[];
@@ -217,11 +237,16 @@ export class VoipPabxBlacklistNumberPage {
     return {
       search: this.searchInput().trim(),
       blacklistUUID: this.blacklistFilter(),
+      status: this.statusFilter(),
     };
   }
 
   private sameBlacklistNumberFilters(left: BlacklistNumberFilters, right: BlacklistNumberFilters) {
-    return left.search === right.search && left.blacklistUUID === right.blacklistUUID;
+    return (
+      left.search === right.search &&
+      left.blacklistUUID === right.blacklistUUID &&
+      left.status === right.status
+    );
   }
 
   startCreate() {
@@ -324,14 +349,6 @@ export class VoipPabxBlacklistNumberPage {
     return this.selectedUUIDs().size;
   }
 
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
   isSelected(item: VoipBlacklistNumberItem) {
     return this.selectedUUIDs().has(item.VbnUUID);
   }
@@ -373,7 +390,7 @@ export class VoipPabxBlacklistNumberPage {
       const response = await this.api.removeManyNumbers(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       const failed = this.failedUUIDs(response?.data?.failed ?? []);
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VbnUUID));
+    this.rows();
       this.selectedUUIDs.set(failed);
       if (failed.size) this.snack.error(`${failed.size} selected number(s) could not be deleted.`);
       else this.snack.success(`${deleted.size || ids.length} selected number(s) deleted.`);
@@ -431,7 +448,7 @@ export class VoipPabxBlacklistNumberPage {
   }
 
   private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((item) => item.VbnUUID));
+    const valid = new Set(this.rows().map((item) => item.VbnUUID));
     this.selectedUUIDs.update(
       (current) => new Set(Array.from(current).filter((uuid) => valid.has(uuid))),
     );

@@ -15,7 +15,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-2">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
@@ -24,25 +24,21 @@
         />
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="span-2">
-        <mat-label>Dial Plan</mat-label>
-        <mat-select
-          [value]="dialPlanFilter()"
-          (selectionChange)="dialPlanFilter.set($event.value)"
-          (openedChange)="onDialPlanSelectOpened($event)"
-        >
-          <mat-option class="select-search-option" disabled>
-            <input
-              class="select-search-field"
-              placeholder="Search dial plan"
-              [value]="dialPlanSearch()"
-              (input)="dialPlanSearch.set($any($event.target).value)"
-              (click)="$event.stopPropagation()"
-            />
-          </mat-option>
-          <mat-option value="">All</mat-option>
-          @for (plan of filteredDialPlans(); track plan.uuid) {
-            <mat-option [value]="plan.uuid">{{ plan.name }} ({{ plan.code }})</mat-option>
+      <mns-search-select-field
+        fieldClass="span-1"
+        label="Dial Plan"
+        [value]="dialPlanFilter()"
+        (valueChange)="dialPlanFilter.set(($any($event) || '').toString())"
+        [options]="dialPlanFilterOptions()"
+        placeholder="Search dial plan"
+        emptyLabel="No dial plans found."
+      />
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+          @for (option of statusFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -73,7 +69,14 @@
         </div>
       }
 
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -93,13 +96,17 @@
 
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.name }}</div>
+            <div class="record-uuid">{{ row.uuid }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="dialPlan">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Dial Plan</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.dialPlanName || dialPlanLabel(row.dialPlanUUID) }}
+            <div class="record-main">{{ row.dialPlanName || dialPlanLabel(row.dialPlanUUID) }}</div>
+            <div class="record-uuid">{{ row.dialPlanUUID }}</div>
           </td>
         </ng-container>
 
@@ -130,6 +137,8 @@
               class="status-pill status-chip"
               [class.is-active]="isActive(row)"
               [class.is-inactive]="!isActive(row)"
+              [class.chip-success]="isActive(row)"
+              [class.chip-skipped]="!isActive(row)"
               [class.chip-success]="isActive(row)"
               [class.chip-failed]="!isActive(row)"
             >
@@ -170,8 +179,13 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>
@@ -196,26 +210,14 @@
                 <mat-option [value]="0">Inactive</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Dial Plan</mat-label>
-              <mat-select
-                [formField]="form.dialPlanUUID"
-                (openedChange)="onDialPlanSelectOpened($event)"
-              >
-                <mat-option class="select-search-option" disabled>
-                  <input
-                    class="select-search-field"
-                    placeholder="Search dial plan"
-                    [value]="dialPlanSearch()"
-                    (input)="dialPlanSearch.set($any($event.target).value)"
-                    (click)="$event.stopPropagation()"
-                  />
-                </mat-option>
-                @for (plan of filteredDialPlans(); track plan.uuid) {
-                  <mat-option [value]="plan.uuid">{{ plan.name }} ({{ plan.code }})</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <mns-search-select-field
+              fieldClass="span-1"
+              [field]="form.dialPlanUUID"
+              label="Dial Plan"
+              [options]="dialPlanSelectOptions()"
+              placeholder="Search dial plan"
+              emptyLabel="No dial plans found."
+            />
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Priority</mat-label>
               <input matInput type="number" [formField]="form.priority" />
@@ -281,26 +283,14 @@
         </mat-tab>
         <mat-tab label="Routing">
           <form class="tab-content form-grid">
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Trunk</mat-label>
-              <mat-select [formField]="form.trunkUUID" (openedChange)="onTrunkSelectOpened($event)">
-                <mat-option class="select-search-option" disabled>
-                  <input
-                    class="select-search-field"
-                    placeholder="Search trunk"
-                    [value]="trunkSearch()"
-                    (input)="trunkSearch.set($any($event.target).value)"
-                    (click)="$event.stopPropagation()"
-                  />
-                </mat-option>
-                <mat-option value="">None</mat-option>
-                @for (trunk of filteredTrunks(); track trunk.uuid) {
-                  <mat-option [value]="trunk.uuid">
-                    {{ trunk.name }}{{ trunk.host ? ' - ' + trunk.host : '' }}
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <mns-search-select-field
+              fieldClass="span-2"
+              [field]="form.trunkUUID"
+              label="Trunk"
+              [options]="trunkSelectOptions()"
+              placeholder="Search trunk"
+              emptyLabel="No outbound trunks found."
+            />
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>Caller ID mode</mat-label>
               <mat-select [formField]="form.callerIdMode">

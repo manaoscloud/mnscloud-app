@@ -15,7 +15,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-2">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
@@ -23,25 +23,20 @@
           (input)="searchInput.set($any($event.target).value)"
         />
       </mat-form-field>
-      <mat-form-field appearance="outline" class="span-2">
-        <mat-label>Blacklist</mat-label>
-        <mat-select
-          [value]="blacklistFilter()"
-          (selectionChange)="blacklistFilter.set($event.value)"
-          (openedChange)="onBlacklistOpened($event)"
-        >
-          <mat-option class="select-search-option" disabled>
-            <input
-              class="select-search-field"
-              placeholder="Search blacklist"
-              [value]="blacklistSearch()"
-              (input)="blacklistSearch.set($any($event.target).value)"
-              (click)="$event.stopPropagation()"
-            />
-          </mat-option>
-          <mat-option value="">All</mat-option>
-          @for (item of filteredLists(); track item.VbkUUID) {
-            <mat-option [value]="item.VbkUUID">{{ item.VbkName }}</mat-option>
+      <mns-search-select-field
+        fieldClass="span-1"
+        label="Blacklist"
+        [value]="blacklistFilter()"
+        (valueChange)="blacklistFilter.set($any($event))"
+        [options]="blacklistFilterOptions()"
+        placeholder="Search blacklist"
+        emptyLabel="No blacklists found."
+      />
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+          @for (option of statusFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -70,7 +65,14 @@
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -89,12 +91,18 @@
         </ng-container>
         <ng-container matColumnDef="number">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Number</th>
-          <td mat-cell *matCellDef="let row">{{ row.VbnNumber }}</td>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.VbnNumber }}</div>
+            <div class="record-uuid">{{ row.VbnUUID }}</div>
+          </td>
         </ng-container>
         <ng-container matColumnDef="blacklist">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Blacklist</th>
           <td mat-cell *matCellDef="let row">
-            {{ listLabel(row.VoipBlacklistVbkUUID, row.BlacklistName) }}
+            <div class="record-main">
+              {{ listLabel(row.VoipBlacklistVbkUUID, row.BlacklistName) }}
+            </div>
+            <div class="record-uuid">{{ row.VoipBlacklistVbkUUID }}</div>
           </td>
         </ng-container>
         <ng-container matColumnDef="matchType">
@@ -113,9 +121,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="isActive(row)"
               [class.is-inactive]="!isActive(row)"
+              [class.chip-success]="isActive(row)"
+              [class.chip-skipped]="!isActive(row)"
             >
               {{ isActive(row) ? 'ACTIVE' : 'INACTIVE' }}
             </mat-chip>
@@ -151,8 +161,13 @@
     </div>
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>
@@ -169,26 +184,14 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>Blacklist</mat-label>
-              <mat-select
-                [formField]="form.blacklistUUID"
-                (openedChange)="onBlacklistOpened($event)"
-              >
-                <mat-option class="select-search-option" disabled>
-                  <input
-                    class="select-search-field"
-                    placeholder="Search blacklist"
-                    [value]="blacklistSearch()"
-                    (input)="blacklistSearch.set($any($event.target).value)"
-                    (click)="$event.stopPropagation()"
-                  />
-                </mat-option>
-                @for (item of filteredLists(); track item.VbkUUID) {
-                  <mat-option [value]="item.VbkUUID">{{ item.VbkName }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <mns-search-select-field
+              fieldClass="span-2"
+              [field]="form.blacklistUUID"
+              label="Blacklist"
+              [options]="blacklistOptions()"
+              placeholder="Search blacklist"
+              emptyLabel="No blacklists found."
+            />
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>Number or pattern</mat-label>
               <input matInput [formField]="form.number" />

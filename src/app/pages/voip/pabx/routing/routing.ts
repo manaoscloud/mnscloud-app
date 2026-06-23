@@ -8,10 +8,10 @@ import {
   signal,
   TemplateRef,
   viewChild,
-  afterNextRender,
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 import { ActivatedRoute } from '@angular/router';
 import { FormField, form as createForm, required } from '@angular/forms/signals';
@@ -22,12 +22,12 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
@@ -47,11 +47,19 @@ import { PabxRoutingResource, VoipPabxRoutingService } from './routing.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
 type Option = { value: string; label: string; pabxUUID?: string | null };
 type MemberResource = Extract<PabxRoutingResource, 'group' | 'queue'>;
 type RouteTargetType = 'extension' | 'external' | 'group' | 'queue' | 'ivr';
+type RoutingListFilters = {
+  search: string;
+  status: number | '';
+};
 type RoutingFormModel = {
   pabxUUID: string;
   name: string;
@@ -112,6 +120,7 @@ type OptionFormModel = {
     MatTooltipModule,
     MatCheckboxModule,
     MatMenuModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './routing.html',
   styleUrls: ['./routing.scss'],
@@ -139,34 +148,56 @@ export class VoipPabxRoutingPage {
   readonly memberRows = signal<any[]>([]);
   readonly ivrOptionRows = signal<any[]>([]);
   readonly optionTargetOptions = signal<Option[]>([]);
-  readonly pabxSearch = signal('');
-  readonly targetSearch = signal('');
-  readonly mediaFileSearch = signal('');
-  readonly memberExtensionSearch = signal('');
-  readonly optionTargetSearch = signal('');
   readonly membersLoading = signal(false);
   readonly memberSaving = signal(false);
   readonly optionsLoading = signal(false);
   readonly optionSaving = signal(false);
 
-  readonly filteredPabxOptions = computed(() =>
-    this.filterOptions(this.pabxOptions(), this.pabxSearch()),
+  readonly pabxSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.toSelectOptions(this.pabxOptions()),
   );
-  readonly filteredTargetOptions = computed(() =>
-    this.filterOptions(this.targetOptions(), this.targetSearch()),
+  readonly targetSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.toSelectOptions(this.targetOptions()),
   );
-  readonly filteredMediaFileOptions = computed(() => {
+  readonly mediaFileSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
     const pabxUUID = this.formModel().pabxUUID;
-    return this.filterOptions(
-      this.mediaFileOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
-      this.mediaFileSearch(),
+    return [
+      { value: '', label: 'None' },
+      ...this.toSelectOptions(
+        this.mediaFileOptions().filter((option) => !pabxUUID || option.pabxUUID === pabxUUID),
+      ),
+    ];
+  });
+  readonly memberExtensionSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
+    const selectedPabxUUID = this.formModel().pabxUUID;
+    const linkedExtensions = new Set(
+      this.memberRows()
+        .map((row) => row.VoipPabxExtensionVpeUUID)
+        .filter(Boolean),
+    );
+    return this.toSelectOptions(
+      this.extensionOptions().filter(
+        (option) =>
+          (!selectedPabxUUID || option.pabxUUID === selectedPabxUUID) &&
+          !linkedExtensions.has(option.value),
+      ),
     );
   });
-
-  readonly dataSource = new MatTableDataSource<any>([]);
+  readonly optionTargetSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.toSelectOptions(this.optionTargetOptions()),
+  );
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly table = createSignalCrudTable<any>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal<number | ''>('');
   private readonly itemsResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => ({ search: this.appliedSearch(), status: this.appliedStatus() }),
     defaultValue: [] as any[],
     loader: ({ params }) => this.fetchItems(params),
   });
@@ -179,7 +210,13 @@ export class VoipPabxRoutingPage {
   });
 
   readonly searchInput = signal('');
+  readonly statusInput = signal<number | ''>('');
   readonly search = signal('');
+  readonly statusFilterOptions = [
+    { value: '', label: 'All' },
+    { value: 1, label: 'Active' },
+    { value: 0, label: 'Inactive' },
+  ];
   readonly selectedRoutingUUIDs = new Set<string>();
 
   readonly formModel = signal<RoutingFormModel>(this.emptyRoutingFormModel());
@@ -195,25 +232,21 @@ export class VoipPabxRoutingPage {
     required(schema.digit);
     required(schema.routeType);
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly routingFormDialog = viewChild<TemplateRef<unknown>>('routingFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private viewReady = false;
   private readonly routeData = toSignal(this.route.data, { initialValue: {} });
   private readonly itemsEffect = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
-    this.dataSource.filter = '';
-    this.dataSource.paginator?.firstPage();
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
   });
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
     this.snack.error(this.messageFromError(error));
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
   });
   private readonly routeDataEffect = effect(() => {
@@ -232,19 +265,16 @@ export class VoipPabxRoutingPage {
     return titles[this.resource()];
   });
 
-  private readonly afterViewReady = afterNextRender(() => {
-    this.viewReady = true;
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.dataSource.filterPredicate = (row, filter) =>
-      JSON.stringify(row).toLowerCase().includes(filter.trim().toLowerCase());
-    this.applyRouteData(this.routeData());
-  });
-
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
   });
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
+  }
 
   async refreshList() {
     await this.bootstrap();
@@ -258,19 +288,23 @@ export class VoipPabxRoutingPage {
 
   applySearchFilters() {
     const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusInput();
     this.search.set(nextSearch);
-    if (nextSearch === this.appliedSearch()) {
+    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
       this.itemsResource.reload();
     } else {
       this.appliedSearch.set(nextSearch);
+      this.appliedStatus.set(nextStatus);
     }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
-    if (this.appliedSearch()) {
+    if (this.appliedSearch() || this.appliedStatus() !== '') {
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
     } else {
       this.itemsResource.reload();
     }
@@ -379,14 +413,6 @@ export class VoipPabxRoutingPage {
     return this.selectedRoutingUUIDs.size;
   }
 
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
   isSelected(row: any) {
     return this.selectedRoutingUUIDs.has(this.uuidOf(row));
   }
@@ -441,7 +467,7 @@ export class VoipPabxRoutingPage {
           return String(values[0]?.[1] ?? '');
         }),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(this.uuidOf(row)));
+    this.rows();
       this.selectedRoutingUUIDs.clear();
       failed.forEach((uuid) => {
         if (uuid) this.selectedRoutingUUIDs.add(uuid);
@@ -451,7 +477,7 @@ export class VoipPabxRoutingPage {
       } else {
         this.snack.success(`${deleted.size} selected record(s) deleted successfully.`);
       }
-      this.dataSource.filter = this.search().trim().toLowerCase();
+      this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
     } catch (err: any) {
       this.snack.error(this.messageFromError(err));
     } finally {
@@ -461,7 +487,6 @@ export class VoipPabxRoutingPage {
 
   async onRouteTypeChange() {
     this.formModel.update((current) => ({ ...current, routeTargetUUID: '' }));
-    this.targetSearch.set('');
     await this.fetchTargets();
   }
 
@@ -469,60 +494,15 @@ export class VoipPabxRoutingPage {
     this.formModel.update((current) => ({ ...current, routeTargetUUID: '' }));
     this.memberFormModel.update((current) => ({ ...current, extensionUUID: '' }));
     this.optionFormModel.update((current) => ({ ...current, routeTargetUUID: '' }));
-    this.targetSearch.set('');
-    this.memberExtensionSearch.set('');
-    this.optionTargetSearch.set('');
     if (this.isMemberResource() && !this.editing()) this.memberRows.set([]);
     if (this.resource() === 'ivr' && !this.editing()) this.ivrOptionRows.set([]);
     await this.fetchTargets();
     await this.fetchOptionTargets();
   }
 
-  onPabxOpened(opened: boolean) {
-    if (!opened) this.pabxSearch.set('');
-  }
-
-  onTargetOpened(opened: boolean) {
-    if (!opened) this.targetSearch.set('');
-  }
-
-  onMediaFileOpened(opened: boolean) {
-    if (!opened) this.mediaFileSearch.set('');
-  }
-
-  onMemberExtensionOpened(opened: boolean) {
-    if (!opened) this.memberExtensionSearch.set('');
-  }
-
-  onOptionTargetOpened(opened: boolean) {
-    if (!opened) this.optionTargetSearch.set('');
-  }
-
   async onOptionRouteTypeChange() {
     this.optionFormModel.update((current) => ({ ...current, routeTargetUUID: '' }));
-    this.optionTargetSearch.set('');
     await this.fetchOptionTargets();
-  }
-
-  filteredMemberExtensionOptions() {
-    const selectedPabxUUID = this.formModel().pabxUUID;
-    const linkedExtensions = new Set(
-      this.memberRows()
-        .map((row) => row.VoipPabxExtensionVpeUUID)
-        .filter(Boolean),
-    );
-    return this.filterOptions(
-      this.extensionOptions().filter(
-        (option) =>
-          (!selectedPabxUUID || option.pabxUUID === selectedPabxUUID) &&
-          !linkedExtensions.has(option.value),
-      ),
-      this.memberExtensionSearch(),
-    );
-  }
-
-  filteredOptionTargetOptions() {
-    return this.filterOptions(this.optionTargetOptions(), this.optionTargetSearch());
   }
 
   routeLabel(row: any) {
@@ -624,10 +604,11 @@ export class VoipPabxRoutingPage {
     this.itemsResource.reload();
   }
 
-  private async fetchItems(search: string): Promise<any[]> {
+  private async fetchItems(filters: RoutingListFilters): Promise<any[]> {
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (search) params.set('search', search);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status !== '') params.set('status', String(filters.status));
     const response = await this.api.list(this.resource(), params);
     return response?.data?.items ?? [];
   }
@@ -903,11 +884,6 @@ export class VoipPabxRoutingPage {
 
   private resetForm() {
     this.editing.set(null);
-    this.pabxSearch.set('');
-    this.targetSearch.set('');
-    this.mediaFileSearch.set('');
-    this.memberExtensionSearch.set('');
-    this.optionTargetSearch.set('');
     this.memberRows.set([]);
     this.ivrOptionRows.set([]);
     this.optionTargetOptions.set([]);
@@ -917,7 +893,6 @@ export class VoipPabxRoutingPage {
   }
 
   private resetMemberForm() {
-    this.memberExtensionSearch.set('');
     this.memberFormModel.set(this.emptyMemberFormModel());
   }
 
@@ -976,7 +951,6 @@ export class VoipPabxRoutingPage {
   }
 
   private resetOptionForm() {
-    this.optionTargetSearch.set('');
     this.optionFormModel.set(this.emptyOptionFormModel());
   }
 
@@ -1027,6 +1001,10 @@ export class VoipPabxRoutingPage {
     bindDialogEscape(this.dialogRef, () => {
       this.closeDialog();
     });
+    bindDialogClosed(this.dialogRef, () => {
+      this.dialogBinding = null;
+      this.dialogRef = null;
+    });
   }
 
   closeDialog() {
@@ -1040,14 +1018,16 @@ export class VoipPabxRoutingPage {
     return err?.error?.message || err?.error?.error || err?.message || 'Operation failed.';
   }
 
-  private filterOptions(options: Option[], search: string) {
-    const value = search.trim().toLowerCase();
-    if (!value) return options;
-    return options.filter((option) => option.label.toLowerCase().includes(value));
+  private toSelectOptions(options: Option[]): MnsSearchSelectFieldOption[] {
+    return options.map((option) => ({
+      value: option.value,
+      label: option.label,
+      searchText: [option.label, option.pabxUUID].filter(Boolean).join(' '),
+    }));
   }
 
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => this.uuidOf(row)));
+    const validIds = new Set(this.rows().map((row) => this.uuidOf(row)));
     Array.from(this.selectedRoutingUUIDs).forEach((uuid) => {
       if (!validIds.has(uuid)) this.selectedRoutingUUIDs.delete(uuid);
     });

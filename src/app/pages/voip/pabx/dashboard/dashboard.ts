@@ -1,25 +1,24 @@
 
 import {
-  afterNextRender,
   Component,
   computed,
   effect,
   inject,
   resource,
   signal,
-  viewChild,
 } from '@angular/core';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -29,6 +28,10 @@ import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxServerItem, VoipPabxServerService } from '../server/server.service';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import {
   PabxDashboardMetric,
   PabxDashboardQueue,
@@ -95,6 +98,7 @@ const EMPTY_PABX_OPTIONS: PabxDashboardOptions = {
     MatSortModule,
     MatTableModule,
     MatTooltipModule,
+    MnsSearchSelectFieldComponent,
     TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
@@ -113,9 +117,6 @@ export class VoipPabxDashboardPage {
   readonly pabxUUID = signal('');
   readonly serverUUID = signal('');
   readonly domainUUID = signal('');
-  readonly pabxSearch = signal('');
-  readonly serverSearch = signal('');
-  readonly domainSearch = signal('');
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
 
@@ -146,25 +147,35 @@ export class VoipPabxDashboardPage {
   readonly startAt = computed(() => this.dashboard().startAt);
   readonly callBreakdown = computed(() => this.dashboard().callBreakdown);
   readonly agentBreakdown = computed(() => this.dashboard().agentBreakdown);
+  readonly serverRows = computed(() => this.dashboard().servers);
+  readonly queueRows = computed(() => this.dashboard().queues);
+  readonly trunkRows = computed(() => this.dashboard().trunks);
   readonly pabxOptions = computed(() => this.optionsResource.value().pabxOptions);
   readonly serverOptions = computed(() => this.optionsResource.value().serverOptions);
   readonly domainOptions = computed(() => this.optionsResource.value().domainOptions);
 
-  readonly serverDataSource = new MatTableDataSource<PabxDashboardServer>([]);
-  readonly queueDataSource = new MatTableDataSource<PabxDashboardQueue>([]);
-  readonly trunkDataSource = new MatTableDataSource<PabxDashboardTrunk>([]);
   readonly serverColumns = ['health', 'name', 'engine', 'hostname', 'pabxAccounts', 'lastSeenAt'];
   readonly queueColumns = ['name', 'pabxName', 'strategy', 'members', 'availableAgents', 'status'];
   readonly trunkColumns = ['name', 'pabxName', 'direction', 'host', 'transport', 'status'];
+  readonly serverTable = createSignalCrudTable<PabxDashboardServer>(
+    this.serverRows,
+    (row, column) => this.serverSortValue(row, column),
+  );
+  readonly queueTable = createSignalCrudTable<PabxDashboardQueue>(this.queueRows, (row, column) =>
+    this.defaultSortValue(row, column),
+  );
+  readonly trunkTable = createSignalCrudTable<PabxDashboardTrunk>(this.trunkRows, (row, column) =>
+    this.defaultSortValue(row, column),
+  );
 
-  readonly filteredPabxOptions = computed(() =>
-    this.filterOptions(this.pabxOptions(), this.pabxSearch()),
+  readonly pabxSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.toSelectOptions(this.pabxOptions()),
   );
-  readonly filteredServerOptions = computed(() =>
-    this.filterOptions(this.serverOptions(), this.serverSearch()),
+  readonly serverSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.toSelectOptions(this.serverOptions()),
   );
-  readonly filteredDomainOptions = computed(() =>
-    this.filterOptions(this.domainOptions(), this.domainSearch()),
+  readonly domainSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.toSelectOptions(this.domainOptions()),
   );
   readonly periodOptions = [
     { value: 'today', label: 'Today' },
@@ -204,20 +215,6 @@ export class VoipPabxDashboardPage {
     ];
   });
 
-  readonly serverSort = viewChild<MatSort>('serverSort');
-  readonly queueSort = viewChild<MatSort>('queueSort');
-  readonly trunkSort = viewChild<MatSort>('trunkSort');
-  readonly serverPaginator = viewChild<MatPaginator>('serverPaginator');
-  readonly queuePaginator = viewChild<MatPaginator>('queuePaginator');
-  readonly trunkPaginator = viewChild<MatPaginator>('trunkPaginator');
-
-  private readonly syncDashboardTables = effect(() => {
-    const dashboard = this.dashboard();
-    this.serverDataSource.data = dashboard.servers;
-    this.queueDataSource.data = dashboard.queues;
-    this.trunkDataSource.data = dashboard.trunks;
-  });
-
   private readonly reportDashboardState = effect(() => {
     const dashboardError = this.dashboardResource.error();
     if (dashboardError) {
@@ -228,10 +225,6 @@ export class VoipPabxDashboardPage {
     if (optionsError) {
       this.snack.error(this.errorMessage(optionsError, 'Failed to load PABX dashboard filters.'));
     }
-  });
-
-  private readonly setupTables = afterNextRender(() => {
-    this.bindTables();
   });
 
   refreshList() {
@@ -248,22 +241,31 @@ export class VoipPabxDashboardPage {
     this.pabxUUID.set('');
     this.serverUUID.set('');
     this.domainUUID.set('');
-    this.pabxSearch.set('');
-    this.serverSearch.set('');
-    this.domainSearch.set('');
     this.dashboardResource.reload();
   }
 
-  onPabxSelectOpened(open: boolean) {
-    if (!open) this.pabxSearch.set('');
+  setServerSort(sort: Sort) {
+    this.serverTable.setSort(sort);
   }
 
-  onServerSelectOpened(open: boolean) {
-    if (!open) this.serverSearch.set('');
+  setServerPage(page: PageEvent) {
+    this.serverTable.setPage(page);
   }
 
-  onDomainSelectOpened(open: boolean) {
-    if (!open) this.domainSearch.set('');
+  setQueueSort(sort: Sort) {
+    this.queueTable.setSort(sort);
+  }
+
+  setQueuePage(page: PageEvent) {
+    this.queueTable.setPage(page);
+  }
+
+  setTrunkSort(sort: Sort) {
+    this.trunkTable.setSort(sort);
+  }
+
+  setTrunkPage(page: PageEvent) {
+    this.trunkTable.setPage(page);
   }
 
   metricPercent(item: PabxDashboardMetric, items: PabxDashboardMetric[]) {
@@ -333,32 +335,15 @@ export class VoipPabxDashboardPage {
     };
   }
 
-  private bindTables() {
-    this.serverDataSource.sortingDataAccessor = (item, column) => {
-      if (column === 'lastSeenAt') return item.lastSeenAt ?? '';
-      return String((item as any)[column] ?? '').toLowerCase();
-    };
-    this.queueDataSource.sortingDataAccessor = (item, column) =>
-      String((item as any)[column] ?? '').toLowerCase();
-    this.trunkDataSource.sortingDataAccessor = (item, column) =>
-      String((item as any)[column] ?? '').toLowerCase();
-    const serverSort = this.serverSort();
-    if (serverSort) this.serverDataSource.sort = serverSort;
-    const queueSort = this.queueSort();
-    if (queueSort) this.queueDataSource.sort = queueSort;
-    const trunkSort = this.trunkSort();
-    if (trunkSort) this.trunkDataSource.sort = trunkSort;
-    const serverPaginator = this.serverPaginator();
-    if (serverPaginator) this.serverDataSource.paginator = serverPaginator;
-    const queuePaginator = this.queuePaginator();
-    if (queuePaginator) this.queueDataSource.paginator = queuePaginator;
-    const trunkPaginator = this.trunkPaginator();
-    if (trunkPaginator) this.trunkDataSource.paginator = trunkPaginator;
-  }
-
-  private filterOptions(options: SelectOption[], search: string) {
-    const term = search.trim().toLowerCase();
-    return term ? options.filter((option) => option.label.toLowerCase().includes(term)) : options;
+  private toSelectOptions(options: SelectOption[]): MnsSearchSelectFieldOption[] {
+    return [
+      { value: '', label: 'All', searchText: 'All' },
+      ...options.map((option) => ({
+        value: option.value,
+        label: option.label,
+        searchText: option.label,
+      })),
+    ];
   }
 
   private ratio(value?: number, total?: number) {
@@ -367,6 +352,16 @@ export class VoipPabxDashboardPage {
 
   private number(value?: number | null) {
     return String(Number(value ?? 0));
+  }
+
+  private serverSortValue(row: PabxDashboardServer, column: string): string | number {
+    if (column === 'lastSeenAt') return row.lastSeenAt ?? '';
+    return this.defaultSortValue(row, column);
+  }
+
+  private defaultSortValue(row: Record<string, unknown>, column: string): string | number {
+    const value = row[column];
+    return typeof value === 'number' ? value : String(value ?? '').toLowerCase();
   }
 
   private items<T>(result: PromiseSettledResult<any>): T[] {

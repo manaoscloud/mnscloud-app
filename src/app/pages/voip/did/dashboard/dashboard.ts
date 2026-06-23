@@ -1,24 +1,23 @@
 import { NgClass } from '@angular/common';
 import {
-  afterNextRender,
   Component,
   computed,
   effect,
   inject,
   resource,
   signal,
-  viewChild,
 } from '@angular/core';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -107,13 +106,6 @@ export class VoipDidDashboardPage {
   private readonly snack = inject(SnackbarService);
   private lastDashboardFailure = '';
 
-  readonly operatorSort = viewChild<MatSort>('operatorSort');
-  readonly operatorPaginator = viewChild<MatPaginator>('operatorPaginator');
-  readonly statusSort = viewChild<MatSort>('statusSort');
-  readonly statusPaginator = viewChild<MatPaginator>('statusPaginator');
-  readonly externalSort = viewChild<MatSort>('externalSort');
-  readonly externalPaginator = viewChild<MatPaginator>('externalPaginator');
-
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
   private readonly dashboardResource = resource({
@@ -128,10 +120,6 @@ export class VoipDidDashboardPage {
   readonly externalDids = signal<VoipDidExternalItem[]>([]);
   readonly dashboardSearchInput = signal('');
   private readonly dashboardSearch = signal('');
-
-  readonly operatorDataSource = new MatTableDataSource<OperatorRow>([]);
-  readonly statusDataSource = new MatTableDataSource<NumberStatusRow>([]);
-  readonly externalDataSource = new MatTableDataSource<ExternalRow>([]);
 
   readonly operatorColumns = [
     'operator',
@@ -151,7 +139,6 @@ export class VoipDidDashboardPage {
     this.operators.set(snapshot.operators);
     this.dids.set(snapshot.dids);
     this.externalDids.set(snapshot.externalDids);
-    this.applyDataSources();
 
     if (snapshot.failed === 0) {
       this.lastDashboardFailure = '';
@@ -167,6 +154,98 @@ export class VoipDidDashboardPage {
       snapshot.failed === 3 ? this.snack.error(message) : this.snack.warning(message);
     }
   });
+
+  private readonly normalizedDashboardSearch = computed(() =>
+    this.dashboardSearch().trim().toLowerCase(),
+  );
+
+  readonly operatorRows = computed<OperatorRow[]>(() =>
+    this.operators().map((operator) => {
+      const dids = this.dids().filter((did) => did.VoipDidOperatorVdoUUID === operator.VdoUUID);
+      return {
+        uuid: operator.VdoUUID,
+        name: operator.VdoName,
+        nick: operator.VdoNick || '-',
+        active: this.isActive(operator.VdoStatus),
+        numbers: dids.length,
+        available: dids.filter((did) => this.isAvailable(did)).length,
+        assigned: dids.filter((did) => this.isAssigned(did)).length,
+        issues: this.operatorIssues(operator, dids),
+      };
+    }),
+  );
+
+  readonly statusRows = computed<NumberStatusRow[]>(() => {
+    const groups = new Map<string, VoipDidItem[]>();
+    this.dids().forEach((did) => {
+      const status = this.numberStatusLabel(did);
+      groups.set(status, [...(groups.get(status) ?? []), did]);
+    });
+    return [...groups.entries()]
+      .map(([status, rows]) => ({
+        status,
+        total: rows.length,
+        available: rows.filter((row) => this.isAvailable(row)).length,
+        assigned: rows.filter((row) => this.isAssigned(row)).length,
+        issues: rows.filter((row) => !this.isActive(row.VddStatus)).length,
+      }))
+      .sort((a, b) => b.total - a.total || a.status.localeCompare(b.status));
+  });
+
+  readonly externalRows = computed<ExternalRow[]>(() =>
+    this.externalDids().map((item) => ({
+      uuid: item.VddUUID,
+      number: item.VddNumber,
+      provider: item.VddExternalProviderName || '-',
+      validation: item.VddValidationStatus || '-',
+      billing: item.VddBillingStatus || '-',
+      active: this.isActive(item.VddStatus),
+    })),
+  );
+
+  readonly filteredOperatorRows = computed(() =>
+    this.operatorRows().filter((row) =>
+      this.matchesFilter(
+        [row.name, row.nick, row.active ? 'Active' : 'Inactive', row.numbers, row.issues],
+        this.normalizedDashboardSearch(),
+      ),
+    ),
+  );
+  readonly filteredStatusRows = computed(() =>
+    this.statusRows().filter((row) =>
+      this.matchesFilter(
+        [row.status, row.total, row.available, row.assigned, row.issues],
+        this.normalizedDashboardSearch(),
+      ),
+    ),
+  );
+  readonly filteredExternalRows = computed(() =>
+    this.externalRows().filter((row) =>
+      this.matchesFilter(
+        [
+          row.number,
+          row.provider,
+          row.validation,
+          row.billing,
+          row.active ? 'Active' : 'Inactive',
+        ],
+        this.normalizedDashboardSearch(),
+      ),
+    ),
+  );
+
+  readonly operatorTable = createSignalCrudTable<OperatorRow>(
+    this.filteredOperatorRows,
+    (row, column) => this.operatorSortValue(row, column),
+  );
+  readonly statusTable = createSignalCrudTable<NumberStatusRow>(
+    this.filteredStatusRows,
+    (row, column) => this.statusSortValue(row, column),
+  );
+  readonly externalTable = createSignalCrudTable<ExternalRow>(
+    this.filteredExternalRows,
+    (row, column) => this.externalSortValue(row, column),
+  );
 
   private readonly reportDashboardError = effect(() => {
     const error = this.dashboardResource.error();
@@ -255,40 +334,6 @@ export class VoipDidDashboardPage {
     },
   ]);
 
-  private readonly setupTables = afterNextRender(() => {
-    this.operatorDataSource.sortingDataAccessor = (row, column) =>
-      this.operatorSortValue(row, column);
-    this.statusDataSource.sortingDataAccessor = (row, column) => this.statusSortValue(row, column);
-    this.externalDataSource.sortingDataAccessor = (row, column) =>
-      this.externalSortValue(row, column);
-    this.operatorDataSource.filterPredicate = (row, filter) =>
-      this.matchesFilter(
-        [row.name, row.nick, row.active ? 'Active' : 'Inactive', row.numbers, row.issues],
-        filter,
-      );
-    this.statusDataSource.filterPredicate = (row, filter) =>
-      this.matchesFilter([row.status, row.total, row.available, row.assigned, row.issues], filter);
-    this.externalDataSource.filterPredicate = (row, filter) =>
-      this.matchesFilter(
-        [
-          row.number,
-          row.provider,
-          row.validation,
-          row.billing,
-          row.active ? 'Active' : 'Inactive',
-        ],
-        filter,
-      );
-
-    this.operatorDataSource.sort = this.operatorSort() ?? null;
-    this.operatorDataSource.paginator = this.operatorPaginator() ?? null;
-    this.statusDataSource.sort = this.statusSort() ?? null;
-    this.statusDataSource.paginator = this.statusPaginator() ?? null;
-    this.externalDataSource.sort = this.externalSort() ?? null;
-    this.externalDataSource.paginator = this.externalPaginator() ?? null;
-    this.applyTableFilters();
-  });
-
   refreshList() {
     this.dashboardResource.reload();
   }
@@ -299,13 +344,37 @@ export class VoipDidDashboardPage {
 
   applyDashboardFilters() {
     this.dashboardSearch.set(this.dashboardSearchInput().trim());
-    this.applyTableFilters();
+    this.resetDashboardPages();
   }
 
   clearDashboardFilters() {
     this.dashboardSearchInput.set('');
     this.dashboardSearch.set('');
-    this.applyTableFilters();
+    this.resetDashboardPages();
+  }
+
+  setOperatorSort(sort: Sort) {
+    this.operatorTable.setSort(sort);
+  }
+
+  setOperatorPage(page: PageEvent) {
+    this.operatorTable.setPage(page);
+  }
+
+  setStatusSort(sort: Sort) {
+    this.statusTable.setSort(sort);
+  }
+
+  setStatusPage(page: PageEvent) {
+    this.statusTable.setPage(page);
+  }
+
+  setExternalSort(sort: Sort) {
+    this.externalTable.setSort(sort);
+  }
+
+  setExternalPage(page: PageEvent) {
+    this.externalTable.setPage(page);
   }
 
   routeTo(section: 'operator' | 'number' | 'external') {
@@ -331,23 +400,6 @@ export class VoipDidDashboardPage {
       return 'chip-warning';
     }
     return 'chip-success is-active';
-  }
-
-  private applyDataSources() {
-    this.operatorDataSource.data = this.operatorRows();
-    this.statusDataSource.data = this.statusRows();
-    this.externalDataSource.data = this.externalRows();
-    this.applyTableFilters();
-  }
-
-  private applyTableFilters() {
-    const filter = this.dashboardSearch().trim().toLowerCase();
-    this.operatorDataSource.filter = filter;
-    this.statusDataSource.filter = filter;
-    this.externalDataSource.filter = filter;
-    this.operatorDataSource.paginator?.firstPage();
-    this.statusDataSource.paginator?.firstPage();
-    this.externalDataSource.paginator?.firstPage();
   }
 
   private matchesFilter(values: unknown[], filter: string) {
@@ -381,50 +433,6 @@ export class VoipDidDashboardPage {
           : [],
       failed,
     };
-  }
-
-  private operatorRows(): OperatorRow[] {
-    return this.operators().map((operator) => {
-      const dids = this.dids().filter((did) => did.VoipDidOperatorVdoUUID === operator.VdoUUID);
-      return {
-        uuid: operator.VdoUUID,
-        name: operator.VdoName,
-        nick: operator.VdoNick || '-',
-        active: this.isActive(operator.VdoStatus),
-        numbers: dids.length,
-        available: dids.filter((did) => this.isAvailable(did)).length,
-        assigned: dids.filter((did) => this.isAssigned(did)).length,
-        issues: this.operatorIssues(operator, dids),
-      };
-    });
-  }
-
-  private statusRows(): NumberStatusRow[] {
-    const groups = new Map<string, VoipDidItem[]>();
-    this.dids().forEach((did) => {
-      const status = this.numberStatusLabel(did);
-      groups.set(status, [...(groups.get(status) ?? []), did]);
-    });
-    return [...groups.entries()]
-      .map(([status, rows]) => ({
-        status,
-        total: rows.length,
-        available: rows.filter((row) => this.isAvailable(row)).length,
-        assigned: rows.filter((row) => this.isAssigned(row)).length,
-        issues: rows.filter((row) => !this.isActive(row.VddStatus)).length,
-      }))
-      .sort((a, b) => b.total - a.total || a.status.localeCompare(b.status));
-  }
-
-  private externalRows(): ExternalRow[] {
-    return this.externalDids().map((item) => ({
-      uuid: item.VddUUID,
-      number: item.VddNumber,
-      provider: item.VddExternalProviderName || '-',
-      validation: item.VddValidationStatus || '-',
-      billing: item.VddBillingStatus || '-',
-      active: this.isActive(item.VddStatus),
-    }));
   }
 
   private operatorIssues(operator: VoipDidOperatorItem, dids: VoipDidItem[]) {
@@ -497,6 +505,24 @@ export class VoipDidDashboardPage {
     if (column === 'billing') return row.billing;
     if (column === 'active') return row.active ? 1 : 0;
     return '';
+  }
+
+  private resetDashboardPages() {
+    this.operatorTable.setPage({
+      pageIndex: 0,
+      pageSize: this.operatorTable.pageSize(),
+      length: this.filteredOperatorRows().length,
+    });
+    this.statusTable.setPage({
+      pageIndex: 0,
+      pageSize: this.statusTable.pageSize(),
+      length: this.filteredStatusRows().length,
+    });
+    this.externalTable.setPage({
+      pageIndex: 0,
+      pageSize: this.externalTable.pageSize(),
+      length: this.filteredExternalRows().length,
+    });
   }
 
   private errorMessage(error: unknown, fallback: string) {

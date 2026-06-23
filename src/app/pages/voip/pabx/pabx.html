@@ -16,7 +16,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search accounts</mat-label>
         <input
           matInput
@@ -56,7 +56,14 @@
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -77,7 +84,10 @@
 
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.VpaName }}</td>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.VpaName }}</div>
+            <div class="record-uuid">{{ row.VpaUUID }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="audioCodecs">
@@ -93,7 +103,12 @@
         <ng-container matColumnDef="server">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Server</th>
           <td mat-cell *matCellDef="let row">
-            {{ serverLabel(row.VoipPabxServerVpsUUID || '', row.ServerName || null) }}
+            <div class="record-main">
+              {{ serverLabel(row.VoipPabxServerVpsUUID || '', row.ServerName || null) }}
+            </div>
+            @if (row.VoipPabxServerVpsUUID) {
+              <div class="record-uuid">{{ row.VoipPabxServerVpsUUID }}</div>
+            }
           </td>
         </ng-container>
 
@@ -129,9 +144,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.VpaIsActive === 1"
               [class.is-inactive]="row.VpaIsActive !== 1"
+              [class.chip-success]="row.VpaIsActive === 1"
+              [class.chip-skipped]="row.VpaIsActive !== 1"
             >
               {{ row.VpaIsActive === 1 ? 'active' : 'inactive' }}
             </mat-chip>
@@ -142,9 +159,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.VpaIsDefault === 1"
               [class.is-inactive]="row.VpaIsDefault !== 1"
+              [class.chip-success]="row.VpaIsDefault === 1"
+              [class.chip-skipped]="row.VpaIsDefault !== 1"
             >
               {{ row.VpaIsDefault === 1 ? 'yes' : 'no' }}
             </mat-chip>
@@ -152,7 +171,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
@@ -192,8 +211,13 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>
@@ -244,158 +268,55 @@
                 <input matInput [formField]="form.name" placeholder="Account name" />
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Server</mat-label>
-                <mat-select
-                  [formField]="form.serverUUID"
-                  (openedChange)="onServerOpened($event)"
-                  (selectionChange)="selectedServerUUID.set($event.value || '')"
-                >
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        [value]="serverSearch()"
-                        (input)="serverSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search server"
-                        autocomplete="off"
-                      />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (option of filteredServerOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [field]="form.serverUUID"
+                label="Server"
+                [options]="serverSelectOptions()"
+                placeholder="Search server"
+                emptyLabel="No servers found."
+                (selectionChange)="selectedServerUUID.set(($any($event) || '').toString())"
+              />
 
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Customer</mat-label>
-                <mat-select
-                  [formField]="form.customerUUID"
-                  (openedChange)="onCustomerOpened($event)"
-                >
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        [value]="customerSearch()"
-                        (input)="customerSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search customer"
-                        autocomplete="off"
-                      />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (option of filteredCustomerOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [field]="form.customerUUID"
+                label="Customer"
+                [options]="customerSelectOptions()"
+                placeholder="Search customer"
+                emptyLabel="No customers found."
+              />
 
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Domain</mat-label>
-                <mat-select [formField]="form.domainUUID" (openedChange)="onDomainOpened($event)">
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        [value]="domainSearch()"
-                        (input)="domainSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search domain"
-                        autocomplete="off"
-                      />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (option of filteredDomainOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [field]="form.domainUUID"
+                label="Domain"
+                [options]="domainSelectOptions()"
+                placeholder="Search domain"
+                emptyLabel="No domains found."
+              />
 
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Dial Plan</mat-label>
-                <mat-select
-                  [formField]="form.dialPlanUUID"
-                  (openedChange)="onDialPlanOpened($event)"
-                >
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        [value]="dialPlanSearch()"
-                        (input)="dialPlanSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search dial plan"
-                        autocomplete="off"
-                      />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (option of filteredDialPlanOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [field]="form.dialPlanUUID"
+                label="Dial Plan"
+                [options]="dialPlanSelectOptions()"
+                placeholder="Search dial plan"
+                emptyLabel="No dial plans found."
+              />
             </div>
           </mat-tab>
 
           <mat-tab label="Routing">
             <div class="tab-content form-grid">
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Inbound blacklist</mat-label>
-                <mat-select
-                  [formField]="form.blacklistUUID"
-                  (openedChange)="onBlacklistOpened($event)"
-                >
-                  <mat-option value="">None</mat-option>
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        [value]="blacklistSearch()"
-                        (input)="blacklistSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search blacklist"
-                        autocomplete="off"
-                      />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (option of filteredBlacklistOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [field]="form.blacklistUUID"
+                label="Inbound blacklist"
+                [options]="blacklistSelectOptions()"
+                placeholder="Search blacklist"
+                emptyLabel="No blacklists found."
+              />
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Timezone</mat-label>
@@ -446,37 +367,15 @@
               </mat-form-field>
 
               @if (recordingStorageMode() === 'storage') {
-                <mat-form-field appearance="outline" class="span-3">
-                  <mat-label>Storage account</mat-label>
-                  <mat-select
-                    [formField]="form.storageAccountUUID"
-                    (openedChange)="onStorageAccountOpened($event)"
-                    (selectionChange)="selectedStorageAccountUUID.set($event.value || '')"
-                  >
-                    <mat-option value="">Default storage account</mat-option>
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="storageAccountSearch()"
-                          (input)="storageAccountSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search storage account"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (option of filteredStorageAccountOptions(); track option.value) {
-                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="span-3"
+                  [field]="form.storageAccountUUID"
+                  label="Storage account"
+                  [options]="storageAccountSelectOptions()"
+                  placeholder="Search storage account"
+                  emptyLabel="No storage accounts found."
+                  (selectionChange)="selectedStorageAccountUUID.set(($any($event) || '').toString())"
+                />
               }
 
               <mat-form-field appearance="outline" class="span-4">
@@ -501,37 +400,15 @@
               </mat-form-field>
 
               @if (mediaStorageMode() === 'storage') {
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>Media storage account</mat-label>
-                  <mat-select
-                    [formField]="form.mediaStorageAccountUUID"
-                    (openedChange)="onStorageAccountOpened($event)"
-                    (selectionChange)="selectedMediaStorageAccountUUID.set($event.value || '')"
-                  >
-                    <mat-option value="">Default storage account</mat-option>
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="storageAccountSearch()"
-                          (input)="storageAccountSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search storage account"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (option of filteredStorageAccountOptions(); track option.value) {
-                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="span-2"
+                  [field]="form.mediaStorageAccountUUID"
+                  label="Media storage account"
+                  [options]="storageAccountSelectOptions()"
+                  placeholder="Search storage account"
+                  emptyLabel="No storage accounts found."
+                  (selectionChange)="selectedMediaStorageAccountUUID.set(($any($event) || '').toString())"
+                />
               }
 
               <mat-form-field appearance="outline" class="span-1">

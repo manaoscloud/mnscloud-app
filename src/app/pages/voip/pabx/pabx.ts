@@ -7,9 +7,9 @@ import {
   signal,
   TemplateRef,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
+import { createSignalCrudTable } from '../../../shared/crud/signal-crud-table';
 
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 
@@ -17,14 +17,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
+import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -41,6 +41,10 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
 type ServerOption = {
   value: string;
@@ -141,6 +145,7 @@ const emptyPabxAccountFilters = (): PabxAccountFilters => ({
     TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './pabx.html',
   styleUrls: ['./pabx.scss'],
@@ -163,8 +168,14 @@ export class VoipPabxPage {
   readonly editing = signal<VoipPabxAccount | null>(null);
   readonly search = signal('');
   readonly searchInput = signal('');
-
-  readonly dataSource = new MatTableDataSource<VoipPabxAccount>([]);
+  readonly rows = computed(() => this.accountsResource.value());
+  readonly table = createSignalCrudTable<VoipPabxAccount>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   private readonly appliedFilters = signal<PabxAccountFilters>(emptyPabxAccountFilters());
   private readonly accountsResource = resource({
     params: () => this.appliedFilters(),
@@ -200,31 +211,19 @@ export class VoipPabxPage {
   private dialPlanMap = new Map<string, DialPlanItem>();
   storageAccountOptions: StorageAccountOption[] = [];
   private storageAccountMap = new Map<string, StorageAccountItem>();
-  readonly serverSearch = signal('');
-  readonly domainSearch = signal('');
-  readonly customerSearch = signal('');
-  readonly blacklistSearch = signal('');
-  readonly dialPlanSearch = signal('');
-  readonly storageAccountSearch = signal('');
   readonly selectedServerUUID = signal('');
-  readonly filteredServerOptions = computed(() =>
-    this.filterOptions(this.serverOptions, this.serverSearch()),
-  );
-  readonly filteredDomainOptions = computed(() =>
-    this.filterOptions(this.domainOptions, this.domainSearch()),
-  );
-  readonly filteredCustomerOptions = computed(() =>
-    this.filterOptions(this.customerOptions, this.customerSearch()),
-  );
-  readonly filteredBlacklistOptions = computed(() =>
-    this.filterOptions(this.blacklistOptions, this.blacklistSearch()),
-  );
-  readonly filteredDialPlanOptions = computed(() =>
-    this.filterOptions(this.dialPlanOptions, this.dialPlanSearch()),
-  );
-  readonly filteredStorageAccountOptions = computed(() =>
-    this.filterOptions(this.storageAccountOptions, this.storageAccountSearch()),
-  );
+  readonly serverSelectOptions = computed(() => this.toSelectOptions(this.serverOptions));
+  readonly domainSelectOptions = computed(() => this.toSelectOptions(this.domainOptions));
+  readonly customerSelectOptions = computed(() => this.toSelectOptions(this.customerOptions));
+  readonly blacklistSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => [
+    { value: '', label: 'None' },
+    ...this.toSelectOptions(this.blacklistOptions),
+  ]);
+  readonly dialPlanSelectOptions = computed(() => this.toSelectOptions(this.dialPlanOptions));
+  readonly storageAccountSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => [
+    { value: '', label: 'Default storage account' },
+    ...this.toSelectOptions(this.storageAccountOptions),
+  ]);
   readonly statusOptions = [
     { value: 1, label: 'Active' },
     { value: 0, label: 'Inactive' },
@@ -285,14 +284,11 @@ export class VoipPabxPage {
       `${provider}://${account}/pabx/{pabx_uuid}/recordings/YYYY/MM/DD/{call_uuid}.wav`
     );
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly pabxFormDialog = viewChild<TemplateRef<unknown>>('pabxFormDialog');
   private pabxFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly accountsEffect = effect(() => {
-    this.dataSource.data = this.accountsResource.value();
+    this.rows();
     this.reconcileSelection();
     this.applyFilter();
   });
@@ -300,52 +296,8 @@ export class VoipPabxPage {
     const error = this.accountsResource.error();
     if (!error) return;
     this.snack.error(this.messageFromError(error, 'Failed to load accounts.'));
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      const serverLabel = this.serverLabel(
-        data.VoipPabxServerVpsUUID ?? '',
-        data.ServerName ?? null,
-      ).toLowerCase();
-      const domainLabel = this.domainLabel(
-        data.VoipDomainVdmUUID ?? '',
-        data.DomainName ?? null,
-      ).toLowerCase();
-      const customerLabel = this.customerLabel(
-        data.CustomerCusUUID ?? '',
-        data.CustomerName ?? null,
-      ).toLowerCase();
-      const dialPlanLabel = this.dialPlanLabel(
-        data.VoipPabxDialPlanVdpUUID ?? '',
-        data.DialPlanName ?? null,
-      ).toLowerCase();
-      const statusLabel = data.VpaIsActive === 1 ? 'active' : 'inactive';
-      const defaultLabel = data.VpaIsDefault === 1 ? 'default' : 'not default';
-      return [
-        data.VpaName,
-        customerLabel,
-        data.VpaDefaultAudioCodecs ?? '',
-        data.VpaDefaultVideoCodecs ?? '',
-        serverLabel,
-        domainLabel,
-        data.BlacklistName ?? '',
-        dialPlanLabel,
-        statusLabel,
-        defaultLabel,
-      ]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-
-    this.accountsResource.reload();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -354,6 +306,13 @@ export class VoipPabxPage {
 
   onSearchChange(value: string) {
     this.searchInput.set(value);
+  }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
   }
 
   applySearchFilters() {
@@ -502,14 +461,6 @@ export class VoipPabxPage {
     return this.selectedAccountUUIDs.size;
   }
 
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
   isSelected(item: VoipPabxAccount) {
     return this.selectedAccountUUIDs.has(item.VpaUUID);
   }
@@ -560,7 +511,7 @@ export class VoipPabxPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.VpaUUID),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VpaUUID));
+    this.rows();
       this.selectedAccountUUIDs.clear();
       failed.forEach((uuid) => this.selectedAccountUUIDs.add(uuid));
       if (failed.size) {
@@ -616,42 +567,6 @@ export class VoipPabxPage {
     return dialPlanUUID;
   }
 
-  onCustomerOpened(opened: boolean) {
-    if (!opened) {
-      this.customerSearch.set('');
-    }
-  }
-
-  onServerOpened(opened: boolean) {
-    if (!opened) {
-      this.serverSearch.set('');
-    }
-  }
-
-  onDomainOpened(opened: boolean) {
-    if (!opened) {
-      this.domainSearch.set('');
-    }
-  }
-
-  onBlacklistOpened(opened: boolean) {
-    if (!opened) {
-      this.blacklistSearch.set('');
-    }
-  }
-
-  onDialPlanOpened(opened: boolean) {
-    if (!opened) {
-      this.dialPlanSearch.set('');
-    }
-  }
-
-  onStorageAccountOpened(opened: boolean) {
-    if (!opened) {
-      this.storageAccountSearch.set('');
-    }
-  }
-
   onRecordingStorageModeChange(value: 'default' | 'filesystem' | 'storage') {
     this.recordingStorageMode.set(value);
     if (value !== 'storage') {
@@ -704,14 +619,11 @@ export class VoipPabxPage {
   }
 
   private applyFilter() {
-    this.dataSource.filter = this.search().trim().toLowerCase();
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
   }
 
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => row.VpaUUID));
+    const validIds = new Set(this.rows().map((row) => row.VpaUUID));
     Array.from(this.selectedAccountUUIDs).forEach((uuid) => {
       if (!validIds.has(uuid)) this.selectedAccountUUIDs.delete(uuid);
     });
@@ -887,10 +799,14 @@ export class VoipPabxPage {
     return [...new Set(source.map((item) => item.trim().toUpperCase()).filter(Boolean))].join(',');
   }
 
-  private filterOptions<T extends { label: string }>(options: T[], search: string): T[] {
-    const value = search.trim().toLowerCase();
-    if (!value) return options;
-    return options.filter((option) => option.label.toLowerCase().includes(value));
+  private toSelectOptions<T extends { value: string; label: string }>(
+    options: T[],
+  ): MnsSearchSelectFieldOption[] {
+    return options.map((option) => ({
+      value: option.value,
+      label: option.label,
+      searchText: option.value,
+    }));
   }
 
   private sortValue(row: VoipPabxAccount, column: string): string | number {

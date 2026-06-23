@@ -25,62 +25,35 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'PABX' | transloco }}</mat-label>
-        <mat-select
-          (openedChange)="onPabxSelectOpened($event)" [value]="pabxUUID()" (selectionChange)="pabxUUID.set($event.value)">
-          <mat-option value="">{{ 'All' | transloco }}</mat-option>
-          <mat-option class="select-search-option" disabled>
-            <input
-              class="select-search-field"
-              matInput
-              [placeholder]="'Search PABX' | transloco"
-              (click)="$event.stopPropagation()"
-              (keydown)="$event.stopPropagation()" [value]="pabxSearch()" (input)="pabxSearch.set($any($event.target).value)" />
-          </mat-option>
-          @for (option of filteredPabxOptions(); track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <mns-search-select-field
+        fieldClass="span-1"
+        [value]="pabxUUID()"
+        (valueChange)="pabxUUID.set($any($event))"
+        [label]="'PABX' | transloco"
+        [options]="pabxSelectOptions()"
+        [placeholder]="'Search PABX' | transloco"
+        [emptyLabel]="'No PABX accounts found.' | transloco"
+      />
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Server' | transloco }}</mat-label>
-        <mat-select
-          (openedChange)="onServerSelectOpened($event)" [value]="serverUUID()" (selectionChange)="serverUUID.set($event.value)">
-          <mat-option value="">{{ 'All' | transloco }}</mat-option>
-          <mat-option class="select-search-option" disabled>
-            <input
-              class="select-search-field"
-              matInput
-              [placeholder]="'Search server' | transloco"
-              (click)="$event.stopPropagation()"
-              (keydown)="$event.stopPropagation()" [value]="serverSearch()" (input)="serverSearch.set($any($event.target).value)" />
-          </mat-option>
-          @for (option of filteredServerOptions(); track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <mns-search-select-field
+        fieldClass="span-1"
+        [value]="serverUUID()"
+        (valueChange)="serverUUID.set($any($event))"
+        [label]="'Server' | transloco"
+        [options]="serverSelectOptions()"
+        [placeholder]="'Search server' | transloco"
+        [emptyLabel]="'No servers found.' | transloco"
+      />
 
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Domain' | transloco }}</mat-label>
-        <mat-select
-          (openedChange)="onDomainSelectOpened($event)" [value]="domainUUID()" (selectionChange)="domainUUID.set($event.value)">
-          <mat-option value="">{{ 'All' | transloco }}</mat-option>
-          <mat-option class="select-search-option" disabled>
-            <input
-              class="select-search-field"
-              matInput
-              [placeholder]="'Search domain' | transloco"
-              (click)="$event.stopPropagation()"
-              (keydown)="$event.stopPropagation()" [value]="domainSearch()" (input)="domainSearch.set($any($event.target).value)" />
-          </mat-option>
-          @for (option of filteredDomainOptions(); track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <mns-search-select-field
+        fieldClass="span-1"
+        [value]="domainUUID()"
+        (valueChange)="domainUUID.set($any($event))"
+        [label]="'Domain' | transloco"
+        [options]="domainSelectOptions()"
+        [placeholder]="'Search domain' | transloco"
+        [emptyLabel]="'No domains found.' | transloco"
+      />
 
       <div class="filter-actions">
         <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
@@ -142,7 +115,14 @@
       <section class="dashboard-panel">
         <h2>{{ 'Server Health' | transloco }}</h2>
         <div class="table-wrapper mat-elevation-z8">
-          <table mat-table [dataSource]="serverDataSource" matSort #serverSort="matSort">
+          <table
+            mat-table
+            [dataSource]="serverTable.visibleRows()"
+            matSort
+            [matSortActive]="serverTable.sortActive()"
+            [matSortDirection]="serverTable.sortDirection()"
+            (matSortChange)="setServerSort($event)"
+          >
             <ng-container matColumnDef="health">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
@@ -191,9 +171,12 @@
           </table>
         </div>
         <mat-paginator
-          #serverPaginator
           class="mobile-paginator"
+          [length]="serverTable.sortedRows().length"
+          [pageIndex]="serverTable.pageIndex()"
+          [pageSize]="serverTable.pageSize()"
           [pageSizeOptions]="[5, 10, 25, 100]"
+          (page)="setServerPage($event)"
           showFirstLastButtons
         />
       </section>
@@ -202,7 +185,14 @@
         <section class="dashboard-panel">
           <h2>{{ 'Queues' | transloco }}</h2>
           <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="queueDataSource" matSort #queueSort="matSort">
+            <table
+              mat-table
+              [dataSource]="queueTable.visibleRows()"
+              matSort
+              [matSortActive]="queueTable.sortActive()"
+              [matSortDirection]="queueTable.sortDirection()"
+              (matSortChange)="setQueueSort($event)"
+            >
               <ng-container matColumnDef="name"
                 ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
@@ -247,9 +237,12 @@
             </table>
           </div>
           <mat-paginator
-            #queuePaginator
             class="mobile-paginator"
+            [length]="queueTable.sortedRows().length"
+            [pageIndex]="queueTable.pageIndex()"
+            [pageSize]="queueTable.pageSize()"
             [pageSizeOptions]="[5, 10, 25, 100]"
+            (page)="setQueuePage($event)"
             showFirstLastButtons
           />
         </section>
@@ -257,7 +250,14 @@
         <section class="dashboard-panel">
           <h2>{{ 'Trunks' | transloco }}</h2>
           <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="trunkDataSource" matSort #trunkSort="matSort">
+            <table
+              mat-table
+              [dataSource]="trunkTable.visibleRows()"
+              matSort
+              [matSortActive]="trunkTable.sortActive()"
+              [matSortDirection]="trunkTable.sortDirection()"
+              (matSortChange)="setTrunkSort($event)"
+            >
               <ng-container matColumnDef="name"
                 ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
@@ -300,9 +300,12 @@
             </table>
           </div>
           <mat-paginator
-            #trunkPaginator
             class="mobile-paginator"
+            [length]="trunkTable.sortedRows().length"
+            [pageIndex]="trunkTable.pageIndex()"
+            [pageSize]="trunkTable.pageSize()"
             [pageSizeOptions]="[5, 10, 25, 100]"
+            (page)="setTrunkPage($event)"
             showFirstLastButtons
           />
         </section>

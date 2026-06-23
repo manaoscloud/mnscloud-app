@@ -15,7 +15,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
@@ -23,6 +23,14 @@
           (input)="searchInput.set($any($event.target).value)"
           placeholder="Name, number, route, status..."
         />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          @for (option of statusFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         @if (selectedCount) {
@@ -56,7 +64,14 @@
         </div>
       }
 
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -80,7 +95,10 @@
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.VpxName || row.VpgName || row.VpqName || row.VpiName }}
+            <div class="record-main">
+              {{ row.VpxName || row.VpgName || row.VpqName || row.VpiName }}
+            </div>
+            <div class="record-uuid">{{ uuidOf(row) }}</div>
           </td>
         </ng-container>
 
@@ -91,7 +109,12 @@
 
         <ng-container matColumnDef="pabx">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
-          <td mat-cell *matCellDef="let row">{{ row.PabxName }}</td>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.PabxName }}</div>
+            @if (row.VoipPabxAccountVpaUUID) {
+              <div class="record-uuid">{{ row.VoipPabxAccountVpaUUID }}</div>
+            }
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="engine">
@@ -110,11 +133,17 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="
                 (row.VpxEnabled ?? row.VpgEnabled ?? row.VpqEnabled ?? row.VpiEnabled) === 1
               "
               [class.is-inactive]="
+                (row.VpxEnabled ?? row.VpgEnabled ?? row.VpqEnabled ?? row.VpiEnabled) !== 1
+              "
+              [class.chip-success]="
+                (row.VpxEnabled ?? row.VpgEnabled ?? row.VpqEnabled ?? row.VpiEnabled) === 1
+              "
+              [class.chip-skipped]="
                 (row.VpxEnabled ?? row.VpgEnabled ?? row.VpqEnabled ?? row.VpiEnabled) !== 1
               "
             >
@@ -128,7 +157,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
@@ -159,8 +188,13 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>
@@ -182,36 +216,15 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form id="voipPabxRoutingForm" class="form-grid" (ngSubmit)="save()">
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>PABX</mat-label>
-                <mat-select
-                  [formField]="form.pabxUUID"
-                  (openedChange)="onPabxOpened($event)"
-                  (selectionChange)="onPabxChange()"
-                >
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        [value]="pabxSearch()"
-                        (input)="pabxSearch.set($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search PABX"
-                        autocomplete="off"
-                      />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (option of filteredPabxOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [field]="form.pabxUUID"
+                label="PABX"
+                [options]="pabxSelectOptions()"
+                placeholder="Search PABX"
+                emptyLabel="No PABX accounts found."
+                (selectionChange)="onPabxChange()"
+              />
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Name</mat-label>
                 <input matInput [formField]="form.name" />
@@ -250,72 +263,26 @@
                     <mat-option value="fewest_calls">Fewest calls</mat-option>
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Hold media file</mat-label>
-                  <mat-select
-                    [formField]="form.mediaFileUUID"
-                    (openedChange)="onMediaFileOpened($event)"
-                  >
-                    <mat-option [value]="''">None</mat-option>
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="mediaFileSearch()"
-                          (input)="mediaFileSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search media file"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (option of filteredMediaFileOptions(); track option.value) {
-                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  [field]="form.mediaFileUUID"
+                  label="Hold media file"
+                  [options]="mediaFileSelectOptions()"
+                  placeholder="Search media file"
+                  emptyLabel="No media files found."
+                />
               }
               @if (resource() === 'ivr') {
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Greeting text</mat-label>
                   <input matInput [formField]="form.greetingText" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Greeting media file</mat-label>
-                  <mat-select
-                    [formField]="form.mediaFileUUID"
-                    (openedChange)="onMediaFileOpened($event)"
-                  >
-                    <mat-option [value]="''">None</mat-option>
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="mediaFileSearch()"
-                          (input)="mediaFileSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search media file"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (option of filteredMediaFileOptions(); track option.value) {
-                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  [field]="form.mediaFileUUID"
+                  label="Greeting media file"
+                  [options]="mediaFileSelectOptions()"
+                  placeholder="Search media file"
+                  emptyLabel="No media files found."
+                />
                 <mat-form-field appearance="outline">
                   <mat-label>Invalid retries</mat-label>
                   <input matInput type="number" [formField]="form.invalidRetries" />
@@ -341,35 +308,14 @@
           <mat-tab label="Members">
             <div class="tab-content members-tab">
               <form class="member-form-grid" (ngSubmit)="addMember()">
-                <mat-form-field appearance="outline" class="member-extension-field">
-                  <mat-label>Extension</mat-label>
-                  <mat-select
-                    [formField]="memberForm.extensionUUID"
-                    (openedChange)="onMemberExtensionOpened($event)"
-                  >
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="memberExtensionSearch()"
-                          (input)="memberExtensionSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search extension"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (option of filteredMemberExtensionOptions(); track option.value) {
-                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="member-extension-field"
+                  [field]="memberForm.extensionUUID"
+                  label="Extension"
+                  [options]="memberExtensionSelectOptions()"
+                  placeholder="Search extension"
+                  emptyLabel="No extensions found."
+                />
 
                 <mat-form-field appearance="outline">
                   <mat-label>Priority</mat-label>
@@ -445,9 +391,11 @@
                         }
                         <td>
                           <mat-chip
-                            class="status-pill"
+              class="status-pill status-chip state-chip"
                             [class.is-active]="(member.VgmEnabled ?? member.VqmEnabled) === 1"
-                            [class.is-inactive]="(member.VgmEnabled ?? member.VqmEnabled) !== 1"
+              [class.is-inactive]="(member.VgmEnabled ?? member.VqmEnabled) !== 1"
+              [class.chip-success]="(member.VgmEnabled ?? member.VqmEnabled) === 1"
+              [class.chip-skipped]="(member.VgmEnabled ?? member.VqmEnabled) !== 1"
                           >
                             {{
                               (member.VgmEnabled ?? member.VqmEnabled) === 1 ? 'ACTIVE' : 'INACTIVE'
@@ -503,35 +451,14 @@
                   </mat-select>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="option-target-field">
-                  <mat-label>Destination</mat-label>
-                  <mat-select
-                    [formField]="optionForm.routeTargetUUID"
-                    (openedChange)="onOptionTargetOpened($event)"
-                  >
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="optionTargetSearch()"
-                          (input)="optionTargetSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search destination"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (option of filteredOptionTargetOptions(); track option.value) {
-                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="option-target-field"
+                  [field]="optionForm.routeTargetUUID"
+                  label="Destination"
+                  [options]="optionTargetSelectOptions()"
+                  placeholder="Search destination"
+                  emptyLabel="No destinations found."
+                />
 
                 <mat-form-field appearance="outline">
                   <mat-label>Target value</mat-label>
@@ -591,9 +518,11 @@
                         <td>{{ option.VioDescription }}</td>
                         <td>
                           <mat-chip
-                            class="status-pill"
+              class="status-pill status-chip state-chip"
                             [class.is-active]="option.VioEnabled === 1"
-                            [class.is-inactive]="option.VioEnabled !== 1"
+              [class.is-inactive]="option.VioEnabled !== 1"
+              [class.chip-success]="option.VioEnabled === 1"
+              [class.chip-skipped]="option.VioEnabled !== 1"
                           >
                             {{ option.VioEnabled === 1 ? 'ACTIVE' : 'INACTIVE' }}
                           </mat-chip>

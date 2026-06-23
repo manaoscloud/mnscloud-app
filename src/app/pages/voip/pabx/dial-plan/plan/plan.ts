@@ -7,7 +7,6 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
 import {
@@ -26,14 +25,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
+import { createSignalCrudTable } from '../../../../../shared/crud/signal-crud-table';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import {
@@ -45,6 +45,11 @@ import { VoipPabxDialPlanItem, VoipPabxDialPlanUiService } from '../dial-plan.se
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
+
+type DialPlanListFilters = {
+  search: string;
+  status: number | '';
+};
 
 @Component({
   selector: 'app-voip-pabx-dial-plan-plan',
@@ -80,8 +85,9 @@ export class VoipPabxDialPlanPlanPage {
   private readonly listLimit = 5000;
 
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal<number | ''>('');
   private readonly itemsResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => ({ search: this.appliedSearch(), status: this.appliedStatus() }),
     defaultValue: [] as VoipPabxDialPlanItem[],
     loader: ({ params }) => this.fetchItems(params),
   });
@@ -89,10 +95,23 @@ export class VoipPabxDialPlanPlanPage {
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly saving = signal(false);
   readonly searchInput = signal('');
+  readonly statusInput = signal<number | ''>('');
   readonly search = signal('');
+  readonly statusFilterOptions = [
+    { value: '', label: 'All' },
+    { value: 1, label: 'Active' },
+    { value: 0, label: 'Inactive' },
+  ];
   readonly editing = signal<VoipPabxDialPlanItem | null>(null);
   readonly selectedUUIDs = signal<Set<string>>(new Set());
-  readonly dataSource = new MatTableDataSource<VoipPabxDialPlanItem>([]);
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly table = createSignalCrudTable<VoipPabxDialPlanItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   readonly displayedColumns = ['select', 'name', 'code', 'default', 'status', 'actions'];
 
   readonly formModel = signal({
@@ -108,33 +127,30 @@ export class VoipPabxDialPlanPlanPage {
     required(schema.code);
     pattern(schema.code, /^[A-Za-z0-9][A-Za-z0-9_-]{1,39}$/);
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly itemsEffect = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
   });
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
     this.snack.error(this.messageFromError(error, 'Failed to load dial plans.'));
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.itemsResource.reload();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
   });
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
+  }
 
   refreshList() {
     this.itemsResource.reload();
@@ -142,26 +158,34 @@ export class VoipPabxDialPlanPlanPage {
 
   applySearchFilters() {
     const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusInput();
     this.search.set(nextSearch);
-    if (nextSearch === this.appliedSearch()) {
+    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
       this.itemsResource.reload();
     } else {
       this.appliedSearch.set(nextSearch);
+      this.appliedStatus.set(nextStatus);
     }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
-    if (this.appliedSearch()) {
+    if (this.appliedSearch() || this.appliedStatus() !== '') {
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
     } else {
       this.itemsResource.reload();
     }
   }
 
-  private async fetchItems(search: string): Promise<VoipPabxDialPlanItem[]> {
-    const response = await this.api.listPlans({ search, limit: this.listLimit });
+  private async fetchItems(filters: DialPlanListFilters): Promise<VoipPabxDialPlanItem[]> {
+    const response = await this.api.listPlans({
+      search: filters.search,
+      status: filters.status,
+      limit: this.listLimit,
+    });
     return (response?.data?.items ?? []) as VoipPabxDialPlanItem[];
   }
 
@@ -253,14 +277,6 @@ export class VoipPabxDialPlanPlanPage {
     return this.selectedUUIDs().size;
   }
 
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
   isSelected(item: VoipPabxDialPlanItem) {
     return this.selectedUUIDs().has(item.uuid);
   }
@@ -301,7 +317,7 @@ export class VoipPabxDialPlanPlanPage {
       const response = await this.api.removeManyPlans(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       const failed = this.failedUUIDs(response?.data?.failed ?? [], ['VdpUUID', 'uuid']);
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.uuid));
+    this.rows();
       this.selectedUUIDs.set(failed);
       if (failed.size)
         this.snack.error(`${failed.size} selected dial plan(s) could not be deleted.`);
@@ -352,7 +368,7 @@ export class VoipPabxDialPlanPlanPage {
   }
 
   private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((item) => item.uuid));
+    const valid = new Set(this.rows().map((item) => item.uuid));
     this.selectedUUIDs.update(
       (current) => new Set(Array.from(current).filter((uuid) => valid.has(uuid))),
     );

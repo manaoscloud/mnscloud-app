@@ -15,11 +15,11 @@
     </header>
 
     <div class="filter-grid">
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Search</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Search</mat-label>
         <input matInput [value]="searchInput()" (input)="searchInput.set($any($event.target).value)" />
       </mat-form-field>
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Status</mat-label>
         <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           <mat-option value="">All</mat-option>
@@ -54,7 +54,14 @@
         </div>
       }
 
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -75,7 +82,8 @@
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
           <td mat-cell *matCellDef="let row">
-            <strong>{{ row.name }}</strong>
+            <div class="record-main">{{ row.name }}</div>
+            <div class="record-uuid">{{ row.uuid }}</div>
             @if (row.pabxName) {
               <small>{{ row.pabxName }}</small>
             }
@@ -85,9 +93,9 @@
         <ng-container matColumnDef="storage">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Storage</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.storageMode }}
+            <div class="record-main">{{ row.storageMode }}</div>
             @if (row.storageAccountName) {
-              · {{ row.storageAccountName }}
+              <div class="record-uuid">{{ row.storageAccountUUID }}</div>
             }
           </td>
         </ng-container>
@@ -159,8 +167,13 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>
@@ -178,25 +191,14 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>PABX</mat-label>
-              <mat-select [formField]="form.pabxUUID" (openedChange)="clearPabxSearch($event)">
-                <mat-option class="select-search-option" disabled>
-                  <input
-                    matInput
-                    class="select-search-field"
-                    placeholder="Search PABX"
-                    [value]="pabxSearch()"
-                    (input)="pabxSearch.set($any($event.target).value)"
-                    (click)="$event.stopPropagation()"
-                    (keydown)="$event.stopPropagation()"
-                  />
-                </mat-option>
-                @for (pabx of filteredPabxOptions(); track pabx.value) {
-                  <mat-option [value]="pabx.value">{{ pabx.label }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <mns-search-select-field
+              fieldClass="span-2"
+              [field]="form.pabxUUID"
+              label="PABX"
+              [options]="pabxSelectOptions()"
+              placeholder="Search PABX"
+              emptyLabel="No PABX accounts found."
+            />
             <mat-form-field appearance="outline">
               <mat-label>Status</mat-label>
               <mat-select [formField]="form.enabled">
@@ -228,15 +230,14 @@
               </mat-select>
             </mat-form-field>
             @if (storageMode() === 'storage') {
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Storage account</mat-label>
-                <mat-select [formField]="form.storageAccountUUID">
-                  <mat-option value="">Default storage account</mat-option>
-                  @for (account of storageAccountOptions(); track account.value) {
-                    <mat-option [value]="account.value">{{ account.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [field]="form.storageAccountUUID"
+                label="Storage account"
+                [options]="storageAccountSelectOptions()"
+                placeholder="Search storage account"
+                emptyLabel="No storage accounts found."
+              />
             }
           </form>
         </mat-tab>

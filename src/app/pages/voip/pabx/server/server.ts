@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   DestroyRef,
   TemplateRef,
   effect,
@@ -8,7 +9,6 @@ import {
   signal,
   untracked,
   viewChild,
-  afterNextRender,
 } from '@angular/core';
 import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,11 +20,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
@@ -40,6 +40,7 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 import { InstallCommandDialogComponent } from '../../../../shared/install-command-dialog/install-command-dialog';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 type ServerPayload = {
   name: string;
@@ -95,8 +96,14 @@ export class VoipPabxServerPage {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
-
-  readonly dataSource = new MatTableDataSource<VoipPabxServerItem>([]);
+  readonly rows = computed(() => this.serversResource.value());
+  readonly table = createSignalCrudTable<VoipPabxServerItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   readonly displayedColumns = [
     'select',
     'name',
@@ -117,13 +124,15 @@ export class VoipPabxServerPage {
 
   readonly search = signal('');
   readonly searchInput = signal('');
+  readonly statusInput = signal<number | ''>('');
   private dialogBinding: CrudDialogBinding | null = null;
   private dialogRef: MatDialogRef<unknown> | null = null;
   private installCommandBinding: CrudDialogBinding | null = null;
   private lastLoadError = '';
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal<number | ''>('');
   private readonly serversResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => ({ search: this.appliedSearch(), status: this.appliedStatus() }),
     defaultValue: [] as VoipPabxServerItem[],
     loader: ({ params }) => this.fetchServers(params),
   });
@@ -136,45 +145,21 @@ export class VoipPabxServerPage {
     required(schema.engine);
     required(schema.status);
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
+  readonly statusFilterOptions = [
+    { value: '', label: 'All' },
+    { value: 1, label: 'Active' },
+    { value: 0, label: 'Inactive' },
+  ];
 
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDialog();
-      this.closeInstallCommandDialog();
-    });
-    this.dataSource.sortingDataAccessor = (row, column) => {
-      switch (column) {
-        case 'nodeUUID':
-          return row.VpsNodeUUID || '';
-        case 'name':
-          return row.VpsName || '';
-        case 'hostname':
-          return row.VpsHostname || '';
-        case 'publicIPs':
-          return this.publicIPv4(row) || this.publicIPv6(row);
-        case 'privateIPs':
-          return this.privateIPv4(row) || this.privateIPv6(row);
-        case 'engine':
-          return this.engineLabel(row.VpsEngine);
-        case 'control':
-          return this.controlTarget(row);
-        case 'status':
-          return this.statusLabel(row);
-        case 'lastSeen':
-          return row.VpsLastSeenAt || '';
-        default:
-          return '';
-      }
-    };
-  }
+  private readonly cleanupOnDestroy = this.destroyRef.onDestroy(() => {
+    this.closeDialog();
+    this.closeInstallCommandDialog();
+  });
 
   private readonly syncRows = effect(() => {
-    this.dataSource.data = this.serversResource.value();
+    this.rows();
     this.reconcileSelection();
   });
 
@@ -191,15 +176,15 @@ export class VoipPabxServerPage {
     }
   });
 
-  private readonly afterViewReady = afterNextRender(() => {
-    const sort = this.sort();
-    if (sort) this.dataSource.sort = sort;
-    const paginator = this.paginator();
-    if (paginator) this.dataSource.paginator = paginator;
-  });
-
   get selectedCount() {
     return this.selectedIds().size;
+  }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
   }
 
   refreshList() {
@@ -208,24 +193,25 @@ export class VoipPabxServerPage {
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
-    const paginator = this.paginator();
-    if (paginator) paginator.firstPage();
-    if (this.appliedSearch() === this.search()) {
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
+    if (this.appliedSearch() === this.search() && this.appliedStatus() === this.statusInput()) {
       this.serversResource.reload();
     } else {
       this.appliedSearch.set(this.search());
+      this.appliedStatus.set(this.statusInput());
     }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
-    const paginator = this.paginator();
-    if (paginator) paginator.firstPage();
-    if (this.appliedSearch() === '') {
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
+    if (this.appliedSearch() === '' && this.appliedStatus() === '') {
       this.serversResource.reload();
     } else {
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
     }
   }
 
@@ -409,7 +395,7 @@ export class VoipPabxServerPage {
   async removeSelectedServers() {
     const ids = [...this.selectedIds()];
     if (!ids.length) return;
-    const labels = this.dataSource.data
+    const labels = this.rows()
       .filter((row) => this.selectedIds().has(row.VpsUUID))
       .slice(0, 3)
       .map((row) => row.VpsName)
@@ -590,18 +576,8 @@ export class VoipPabxServerPage {
     };
   }
 
-  private visibleRows() {
-    const rows = this.dataSource.filteredData.length
-      ? this.dataSource.filteredData
-      : this.dataSource.data;
-    const paginator = this.paginator();
-    if (!paginator) return rows;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return rows.slice(start, start + paginator.pageSize);
-  }
-
   private reconcileSelection() {
-    const existing = new Set(this.dataSource.data.map((row) => row.VpsUUID));
+    const existing = new Set(this.rows().map((row) => row.VpsUUID));
     const current = untracked(() => this.selectedIds());
     const next = new Set([...current].filter((id) => existing.has(id)));
     if (next.size === current.size && [...next].every((id) => current.has(id))) return;
@@ -618,8 +594,16 @@ export class VoipPabxServerPage {
     this.selectedIds.set(new Set(ids));
   }
 
-  private async fetchServers(search: string): Promise<VoipPabxServerItem[]> {
-    const res = await this.api.list(true, { search, limit: 5000, offset: 0 });
+  private async fetchServers(filters: {
+    search: string;
+    status: number | '';
+  }): Promise<VoipPabxServerItem[]> {
+    const res = await this.api.list(true, {
+      search: filters.search,
+      status: filters.status === '' ? undefined : filters.status,
+      limit: 5000,
+      offset: 0,
+    });
     return res?.data?.items ?? [];
   }
 
@@ -658,5 +642,10 @@ export class VoipPabxServerPage {
 
   private shellQuote(value: string) {
     return `'${value.replace(/'/g, `'\\''`)}'`;
+  }
+  private sortValue(row: VoipPabxServerItem, column: string): string | number {
+    const value = (row as Record<string, unknown>)[column];
+    if (typeof value === 'number') return value;
+    return String(value ?? '');
   }
 }

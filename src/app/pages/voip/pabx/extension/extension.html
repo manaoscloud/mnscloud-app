@@ -16,8 +16,8 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search extensions</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Search</mat-label>
         <input
           matInput
           [value]="searchInput()"
@@ -26,17 +26,17 @@
         />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>PABX</mat-label>
-        <mat-select [value]="pabxFilter()" (selectionChange)="onPabxFilterChange($event.value)">
-          <mat-option value="">All</mat-option>
-          @for (option of pabxOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <mns-search-select-field
+        fieldClass="span-1"
+        [value]="pabxFilter()"
+        (valueChange)="onPabxFilterChange($any($event))"
+        [label]="'PABX' | transloco"
+        [options]="pabxFilterOptions()"
+        [placeholder]="'Search PABX' | transloco"
+        [emptyLabel]="'No PABX accounts found.' | transloco"
+      />
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Status</mat-label>
         <mat-select [value]="statusFilter()" (selectionChange)="onStatusFilterChange($event.value)">
           <mat-option value="">All</mat-option>
@@ -77,7 +77,14 @@
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -100,7 +107,7 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Username</th>
           <td mat-cell *matCellDef="let row">
             <div class="copy-cell">
-              <span class="username-value">{{ row.VpeUsername }}</span>
+              <span class="record-main username-value">{{ row.VpeUsername }}</span>
               <button
                 mat-icon-button
                 type="button"
@@ -111,6 +118,7 @@
                 <mat-icon>content_copy</mat-icon>
               </button>
             </div>
+            <div class="record-uuid">{{ row.VpeUUID }}</div>
           </td>
         </ng-container>
 
@@ -135,7 +143,8 @@
         <ng-container matColumnDef="pabx">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.PabxName || pabxLabel(row.VoipPabxAccountVpaUUID) }}
+            <div class="record-main">{{ row.PabxName || pabxLabel(row.VoipPabxAccountVpaUUID) }}</div>
+            <div class="record-uuid">{{ row.VoipPabxAccountVpaUUID }}</div>
           </td>
         </ng-container>
 
@@ -166,9 +175,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Recording</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.VpeRecordCalls !== 0"
               [class.is-inactive]="row.VpeRecordCalls === 0"
+              [class.chip-success]="row.VpeRecordCalls !== 0"
+              [class.chip-skipped]="row.VpeRecordCalls === 0"
             >
               {{ row.VpeRecordCalls !== 0 ? 'enabled' : 'disabled' }}
             </mat-chip>
@@ -179,9 +190,11 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.VpeEnabled === 1"
               [class.is-inactive]="row.VpeEnabled !== 1"
+              [class.chip-success]="row.VpeEnabled === 1"
+              [class.chip-skipped]="row.VpeEnabled !== 1"
             >
               {{ row.VpeEnabled === 1 ? 'active' : 'inactive' }}
             </mat-chip>
@@ -189,7 +202,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
@@ -227,7 +240,13 @@
       </table>
     </div>
 
-    <mat-paginator class="mobile-paginator" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons />
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons
+      (page)="setPage($event)"
+    />
   </mat-card>
 </section>
 
@@ -264,42 +283,15 @@
                   </mat-select>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>PABX</mat-label>
-                  <mat-select
-                    [formField]="form.pabxUUID"
-                    (selectionChange)="onFormPabxChange($event.value)"
-                    (openedChange)="onFormPabxOpened($event)"
-                  >
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="pabxSearch()"
-                          (input)="pabxSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search PABX"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (option of filteredPabxOptions; track option.value) {
-                      <mat-option
-                        [value]="option.value"
-                        [disabled]="option.disabled"
-                        [matTooltip]="option.disabledReason || ''"
-                      >
-                        {{ option.label }}
-                      </mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="span-2"
+                  [field]="form.pabxUUID"
+                  label="PABX"
+                  [options]="pabxSelectOptions()"
+                  placeholder="Search PABX"
+                  emptyLabel="No PABX accounts found."
+                  (selectionChange)="onFormPabxChange($any($event))"
+                />
 
                 @if (!editing()) {
                   <mat-form-field appearance="outline">
@@ -348,30 +340,8 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Audio Codecs</mat-label>
-                  <mat-select
-                    [formField]="form.audioCodecs"
-                    multiple
-                    (openedChange)="onCodecOpened($event)"
-                  >
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="audioCodecSearch()"
-                          (input)="audioCodecSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search audio codec"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (codec of filteredAudioCodecOptions; track codec) {
+                  <mat-select [formField]="form.audioCodecs" multiple>
+                    @for (codec of audioCodecOptions; track codec) {
                       <mat-option [value]="codec">{{ codec }}</mat-option>
                     }
                   </mat-select>
@@ -380,30 +350,8 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Video Codecs</mat-label>
-                  <mat-select
-                    [formField]="form.videoCodecs"
-                    multiple
-                    (openedChange)="onCodecOpened($event)"
-                  >
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          [value]="videoCodecSearch()"
-                          (input)="videoCodecSearch.set($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="Search video codec"
-                          autocomplete="off"
-                        />
-                      </mat-form-field>
-                    </mat-option>
-                    @for (codec of filteredVideoCodecOptions; track codec) {
+                  <mat-select [formField]="form.videoCodecs" multiple>
+                    @for (codec of videoCodecOptions; track codec) {
                       <mat-option [value]="codec">{{ codec }}</mat-option>
                     }
                   </mat-select>

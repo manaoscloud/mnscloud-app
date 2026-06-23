@@ -7,7 +7,6 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
@@ -19,15 +18,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -51,6 +51,10 @@ import { VoipPabxMediaFileItem, VoipPabxMediaFilesService } from './media-files.
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
 type StorageAccountOption = { value: string; label: string };
 type PabxOption = { value: string; label: string };
@@ -97,6 +101,7 @@ const emptyMediaFileFilters = (): MediaFileFilters => ({
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './media-files.html',
   styleUrls: ['./media-files.scss'],
@@ -137,14 +142,16 @@ export class VoipPabxMediaFilesPage {
     return 'Save';
   });
   readonly storageMode = signal<'default' | 'filesystem' | 'storage'>('default');
-  readonly pabxSearch = signal('');
   readonly pabxOptions = signal<PabxOption[]>([]);
-  readonly filteredPabxOptions = computed(() => {
-    const search = this.pabxSearch().trim().toLowerCase();
-    if (!search) return this.pabxOptions();
-    return this.pabxOptions().filter((item) => item.label.toLowerCase().includes(search));
-  });
-  readonly dataSource = new MatTableDataSource<VoipPabxMediaFileItem>([]);
+  readonly pabxSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => this.pabxOptions());
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly table = createSignalCrudTable<VoipPabxMediaFileItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   readonly displayedColumns = [
     'select',
     'name',
@@ -156,6 +163,10 @@ export class VoipPabxMediaFilesPage {
   ];
 
   readonly storageAccountOptions = signal<StorageAccountOption[]>([]);
+  readonly storageAccountSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => [
+    { value: '', label: 'Default storage account' },
+    ...this.storageAccountOptions(),
+  ]);
 
   readonly formModel = signal<MediaFileFormModel>(this.emptyFormModel());
   readonly form = createForm(this.formModel, (schema) => {
@@ -163,29 +174,19 @@ export class VoipPabxMediaFilesPage {
     required(schema.name);
     minLength(schema.name, 2);
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   private dialogBinding: CrudDialogBinding | null = null;
   private activeUpload: FileUploadExecution | null = null;
   private readonly itemsEffect = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
   });
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
     this.snack.error(this.messageFromError(error, 'Failed to load media files.'));
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    void this.bootstrap();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -195,6 +196,13 @@ export class VoipPabxMediaFilesPage {
   async bootstrap() {
     await this.fetchLookups();
     this.itemsResource.reload();
+  }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
   }
 
   refreshList() {
@@ -289,10 +297,6 @@ export class VoipPabxMediaFilesPage {
       storageMode: value,
       storageAccountUUID: value === 'storage' ? current.storageAccountUUID : '',
     }));
-  }
-
-  clearPabxSearch(open: boolean) {
-    if (!open) this.pabxSearch.set('');
   }
 
   async saveItem(saveAndNew = false) {
@@ -393,16 +397,6 @@ export class VoipPabxMediaFilesPage {
 
   get selectedCount() {
     return this.selectedUUIDs().size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    return filtered.slice(
-      paginator.pageIndex * paginator.pageSize,
-      (paginator.pageIndex + 1) * paginator.pageSize,
-    );
   }
 
   isSelected(item: VoipPabxMediaFileItem) {
@@ -582,7 +576,7 @@ export class VoipPabxMediaFilesPage {
   }
 
   private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.uuid));
+    const valid = new Set(this.rows().map((row) => row.uuid));
     this.selectedUUIDs.update((current) => new Set([...current].filter((id) => valid.has(id))));
   }
 

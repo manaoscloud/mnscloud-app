@@ -162,7 +162,11 @@ function hasImplicitFilterSpan(block) {
   const fieldTags = [
     ...fieldsOnly.matchAll(/<(mat-form-field|mns-[\w-]*field)\b([^>]*)>/g),
   ];
-  return fieldTags.some(([, , attrs]) => !/\bclass="[^"]*\bspan-1\b[^"]*"/.test(attrs));
+  return fieldTags.some(
+    ([, , attrs]) =>
+      !/\bclass="[^"]*\bspan-1\b[^"]*"/.test(attrs) &&
+      !/\bfieldClass="[^"]*\bspan-1\b[^"]*"/.test(attrs),
+  );
 }
 
 function validateTarget(target) {

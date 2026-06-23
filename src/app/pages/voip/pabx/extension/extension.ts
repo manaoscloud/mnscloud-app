@@ -7,9 +7,9 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 import {
   FormField,
@@ -23,14 +23,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
+import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -47,6 +47,10 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import {
   VoipPabxExtensionGeneratedCredential,
   VoipPabxExtensionItem,
@@ -116,6 +120,7 @@ const emptyExtensionFilters = (): ExtensionFilters => ({
     TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './extension.html',
   styleUrls: ['./extension.scss'],
@@ -136,8 +141,14 @@ export class VoipPabxExtensionPage {
   readonly error = signal<string | null>(null);
   readonly editing = signal<VoipPabxExtensionItem | null>(null);
   readonly generatedCredentials = signal<VoipPabxExtensionGeneratedCredential[]>([]);
-
-  readonly dataSource = new MatTableDataSource<VoipPabxExtensionItem>([]);
+  readonly rows = computed(() => this.extensionsResource.value());
+  readonly table = createSignalCrudTable<VoipPabxExtensionItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   private readonly appliedFilters = signal<ExtensionFilters>(emptyExtensionFilters());
   private readonly extensionsResource = resource({
     params: () => this.appliedFilters(),
@@ -164,9 +175,19 @@ export class VoipPabxExtensionPage {
 
   pabxOptions: PabxOption[] = [];
   private readonly pabxMap = new Map<string, VoipPabxAccount>();
-  readonly pabxSearch = signal('');
-  readonly audioCodecSearch = signal('');
-  readonly videoCodecSearch = signal('');
+  readonly pabxSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.pabxOptions.map((option) => ({
+      value: option.value,
+      label: option.label,
+      disabled: option.disabled,
+      description: option.disabledReason,
+      searchText: option.value,
+    })),
+  );
+  readonly pabxFilterOptions = computed<MnsSearchSelectFieldOption[]>(() => [
+    { value: '', label: 'All', searchText: 'All' },
+    ...this.pabxSelectOptions(),
+  ]);
 
   readonly statusOptions = [
     { value: 1, label: 'Active' },
@@ -202,34 +223,21 @@ export class VoipPabxExtensionPage {
       when: () => this.formModel().vmPassword.trim().length > 0,
     });
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly extensionFormDialog = viewChild<TemplateRef<unknown>>('extensionFormDialog');
   private extensionFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly extensionsEffect = effect(() => {
-    this.dataSource.data = this.extensionsResource.value();
+    this.rows();
     this.reconcileSelection();
-    this.dataSource.filter = '';
-    this.paginator()?.firstPage();
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
   });
   private readonly extensionsErrorEffect = effect(() => {
     const error = this.extensionsResource.error();
     if (!error) return;
     this.error.set(null);
     this.snack.error(this.extractApiError(error, 'Failed to load extensions.'));
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) =>
-      this.sortValue(data, sortHeaderId);
-    this.dataSource.filterPredicate = (data) => this.matchesFilters(data);
-    this.extensionsResource.reload();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -244,19 +252,6 @@ export class VoipPabxExtensionPage {
     this.pabxFilter.set(value ?? '');
   }
 
-  onFormPabxOpened(opened: boolean) {
-    if (!opened) {
-      this.pabxSearch.set('');
-    }
-  }
-
-  onCodecOpened(opened: boolean) {
-    if (!opened) {
-      this.audioCodecSearch.set('');
-      this.videoCodecSearch.set('');
-    }
-  }
-
   onStatusFilterChange(value: number | '') {
     this.statusFilter.set(value === '' ? '' : (Number(value) as 0 | 1));
   }
@@ -265,22 +260,12 @@ export class VoipPabxExtensionPage {
     this.updateCodecOptions(value);
   }
 
-  get filteredPabxOptions() {
-    const search = this.pabxSearch().trim().toLowerCase();
-    if (!search) return this.pabxOptions;
-    return this.pabxOptions.filter((option) => option.label.toLowerCase().includes(search));
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
   }
 
-  get filteredAudioCodecOptions() {
-    const search = this.audioCodecSearch().trim().toLowerCase();
-    if (!search) return this.audioCodecOptions;
-    return this.audioCodecOptions.filter((codec) => codec.toLowerCase().includes(search));
-  }
-
-  get filteredVideoCodecOptions() {
-    const search = this.videoCodecSearch().trim().toLowerCase();
-    if (!search) return this.videoCodecOptions;
-    return this.videoCodecOptions.filter((codec) => codec.toLowerCase().includes(search));
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
   }
 
   applySearchFilters() {
@@ -543,14 +528,6 @@ export class VoipPabxExtensionPage {
     return this.selectedExtensionUUIDs.size;
   }
 
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
   isSelected(item: VoipPabxExtensionItem) {
     return this.selectedExtensionUUIDs.has(item.VpeUUID);
   }
@@ -602,7 +579,7 @@ export class VoipPabxExtensionPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.VpeUUID),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VpeUUID));
+    this.rows();
       this.selectedExtensionUUIDs.clear();
       failed.forEach((uuid) => this.selectedExtensionUUIDs.add(uuid));
       if (failed.size)
@@ -642,12 +619,11 @@ export class VoipPabxExtensionPage {
   }
 
   private applyFilter() {
-    this.dataSource.filter = `${this.search}|${this.statusFilter()}|${this.pabxFilter()}|${Date.now()}`;
-    this.paginator()?.firstPage();
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
   }
 
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => row.VpeUUID));
+    const validIds = new Set(this.rows().map((row) => row.VpeUUID));
     Array.from(this.selectedExtensionUUIDs).forEach((uuid) => {
       if (!validIds.has(uuid)) this.selectedExtensionUUIDs.delete(uuid);
     });

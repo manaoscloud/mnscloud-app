@@ -29,9 +29,10 @@ export class VoipBlacklistUiService {
   private readonly api = inject(ApiService);
   private readonly basePath = 'voip/pabx';
 
-  list(params: { search?: string; limit?: number } = {}) {
+  list(params: { search?: string; status?: number | ''; limit?: number } = {}) {
     const query = new URLSearchParams();
     if (params.search) query.set('search', params.search);
+    if (params.status !== undefined && params.status !== '') query.set('status', String(params.status));
     if (params.limit) query.set('limit', String(params.limit));
     const suffix = query.toString();
     return this.api.get<any>(`${this.basePath}/blacklists${suffix ? `?${suffix}` : ''}`);
@@ -53,10 +54,14 @@ export class VoipBlacklistUiService {
     return this.api.delete<any>(`${this.basePath}/blacklists/bulk`, { ids });
   }
 
-  listNumbers(blacklistUUID?: string, params: { search?: string; limit?: number } = {}) {
+  listNumbers(
+    blacklistUUID?: string,
+    params: { search?: string; status?: number | ''; limit?: number } = {},
+  ) {
     const query = new URLSearchParams();
     if (blacklistUUID) query.set('blacklistUUID', blacklistUUID);
     if (params.search) query.set('search', params.search);
+    if (params.status !== undefined && params.status !== '') query.set('status', String(params.status));
     if (params.limit) query.set('limit', String(params.limit));
     return this.api.get<any>(`${this.basePath}/blacklist-numbers?${query.toString()}`);
   }

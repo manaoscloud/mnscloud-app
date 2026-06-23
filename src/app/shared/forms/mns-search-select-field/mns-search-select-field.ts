@@ -1,4 +1,5 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormField, type Field } from '@angular/forms/signals';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,6 +22,7 @@ export type MnsSearchSelectFieldOption = {
   standalone: true,
   imports: [
     FormField,
+    NgTemplateOutlet,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -30,11 +32,27 @@ export type MnsSearchSelectFieldOption = {
   template: `
     <mat-form-field appearance="outline" floatLabel="always" [class]="fieldClass()">
       <mat-label>{{ label() }}</mat-label>
-      <mat-select
-        [formField]="field()"
-        [compareWith]="compareOptionValues"
-        (openedChange)="handleOpenedChange($event)"
-      >
+      @if (field(); as formField) {
+        <mat-select
+          [formField]="formField"
+          [compareWith]="compareOptionValues"
+          (selectionChange)="selectValue($event.value)"
+          (openedChange)="handleOpenedChange($event)"
+        >
+          <ng-container [ngTemplateOutlet]="selectContent" />
+        </mat-select>
+      } @else {
+        <mat-select
+          [value]="value()"
+          [compareWith]="compareOptionValues"
+          (selectionChange)="selectValue($event.value)"
+          (openedChange)="handleOpenedChange($event)"
+        >
+          <ng-container [ngTemplateOutlet]="selectContent" />
+        </mat-select>
+      }
+
+      <ng-template #selectContent>
         <mat-select-trigger>
           @if (selectedOption(); as option) {
             @if (translateOptions()) {
@@ -84,7 +102,7 @@ export type MnsSearchSelectFieldOption = {
             <mat-option disabled class="select-state-option">{{ emptyLabel() | transloco }}</mat-option>
           }
         }
-      </mat-select>
+      </ng-template>
     </mat-form-field>
   `,
   styles: [
@@ -96,7 +114,10 @@ export type MnsSearchSelectFieldOption = {
   ],
 })
 export class MnsSearchSelectFieldComponent {
-  readonly field = input.required<SignalFormField>();
+  readonly field = input<SignalFormField | null>(null);
+  readonly value = input<string | number | boolean | null>('');
+  readonly valueChange = output<string | number | boolean | null>();
+  readonly selectionChange = output<string | number | boolean | null>();
   readonly label = input.required<string>();
   readonly options = input.required<readonly MnsSearchSelectFieldOption[]>();
   readonly fieldClass = input('');
@@ -108,7 +129,8 @@ export class MnsSearchSelectFieldComponent {
 
   readonly search = signal('');
   readonly selectedOption = computed(() => {
-    const currentValue = this.field()().value();
+    const field = this.field();
+    const currentValue = field ? field().value() : this.value();
     return this.options().find((option) => this.areOptionValuesEqual(option.value, currentValue));
   });
 
@@ -126,6 +148,11 @@ export class MnsSearchSelectFieldComponent {
 
   readonly compareOptionValues = (left: unknown, right: unknown): boolean =>
     this.areOptionValuesEqual(left, right);
+
+  selectValue(value: string | number | boolean | null): void {
+    this.valueChange.emit(value);
+    this.selectionChange.emit(value);
+  }
 
   private optionSearchText(option: MnsSearchSelectFieldOption): string {
     return `${option.label} ${option.description ?? ''} ${option.searchText ?? ''} ${String(

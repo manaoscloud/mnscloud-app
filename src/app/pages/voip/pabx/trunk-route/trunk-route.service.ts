@@ -7,11 +7,18 @@ export class VoipPabxTrunkRouteUiService {
 
   list(
     resource: string,
-    params: { search?: string; limit?: number; offset?: number; pabxUUID?: string } = {},
+    params: {
+      search?: string;
+      status?: number;
+      limit?: number;
+      offset?: number;
+      pabxUUID?: string;
+    } = {},
   ) {
     const query = new URLSearchParams();
     if (params.pabxUUID) query.set('pabxUUID', params.pabxUUID);
     if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.status !== undefined && params.status !== null) query.set('status', String(params.status));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();

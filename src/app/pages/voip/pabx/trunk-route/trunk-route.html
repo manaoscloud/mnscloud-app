@@ -14,7 +14,7 @@
       </div>
     </header>
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
@@ -22,6 +22,14 @@
           placeholder="Search records"
           (input)="onSearchChange($any($event.target).value)"
         />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+          @for (option of statusFilterOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         @if (selectedCount) {
@@ -53,7 +61,14 @@
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -73,11 +88,19 @@
         </ng-container>
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.name }}</div>
+            <div class="record-uuid">{{ row.uuid }}</div>
+          </td>
         </ng-container>
         <ng-container matColumnDef="account">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>PABX</th>
-          <td mat-cell *matCellDef="let row">{{ row.pabxName || '-' }}</td>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.pabxName || '-' }}</div>
+            @if (row.pabxUUID) {
+              <div class="record-uuid">{{ row.pabxUUID }}</div>
+            }
+          </td>
         </ng-container>
         <ng-container matColumnDef="primary">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ meta().primary }}</th>
@@ -94,6 +117,8 @@
               class="status-pill status-chip"
               [class.is-active]="isActive(row)"
               [class.is-inactive]="!isActive(row)"
+              [class.chip-success]="isActive(row)"
+              [class.chip-skipped]="!isActive(row)"
               [class.chip-success]="isActive(row)"
               [class.chip-failed]="!isActive(row)"
             >
@@ -138,8 +163,13 @@
     </div>
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>
@@ -172,30 +202,15 @@
                   <mat-label>Name</mat-label>
                   <input matInput [formField]="form.name" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>PABX</mat-label>
-                  <mat-select
-                    [formField]="form.pabxUUID"
-                    (selectionChange)="onPabxChange()"
-                    (openedChange)="clearAccountSearch($event)"
-                  >
-                    <mat-option class="select-search-option">
-                      <input
-                        matInput
-                        class="select-search-field"
-                        placeholder="Search PABX"
-                        [value]="accountSearch()"
-                        (input)="setAccountSearch($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    @for (option of filteredAccounts(); track option) {
-                      <mat-option [value]="option.VpaUUID">
-                        {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
-                      </mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="span-2"
+                  [field]="form.pabxUUID"
+                  label="PABX"
+                  [options]="accountSelectOptions()"
+                  placeholder="Search PABX"
+                  emptyLabel="No PABX accounts found."
+                  (selectionChange)="onPabxChange()"
+                />
                 <mat-form-field appearance="outline" class="span-1">
                   <mat-label>Direction</mat-label>
                   <mat-select [formField]="form.secondary">
@@ -294,22 +309,8 @@
               <div class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Audio Codecs</mat-label>
-                  <mat-select
-                    [formField]="form.audioCodecs"
-                    multiple
-                    (openedChange)="clearCodecSearch($event)"
-                  >
-                    <mat-option class="select-search-option">
-                      <input
-                        matInput
-                        class="select-search-field"
-                        placeholder="Search audio codec"
-                        [value]="audioCodecSearch()"
-                        (input)="setAudioCodecSearch($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    @for (codec of filteredAudioCodecs(); track codec) {
+                  <mat-select [formField]="form.audioCodecs" multiple>
+                    @for (codec of audioCodecOptions; track codec) {
                       <mat-option [value]="codec">
                         {{ codec }}
                       </mat-option>
@@ -318,22 +319,8 @@
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="span-2">
                   <mat-label>Video Codecs</mat-label>
-                  <mat-select
-                    [formField]="form.videoCodecs"
-                    multiple
-                    (openedChange)="clearCodecSearch($event)"
-                  >
-                    <mat-option class="select-search-option">
-                      <input
-                        matInput
-                        class="select-search-field"
-                        placeholder="Search video codec"
-                        [value]="videoCodecSearch()"
-                        (input)="setVideoCodecSearch($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    @for (codec of filteredVideoCodecs(); track codec) {
+                  <mat-select [formField]="form.videoCodecs" multiple>
+                    @for (codec of videoCodecOptions; track codec) {
                       <mat-option [value]="codec">
                         {{ codec }}
                       </mat-option>
@@ -345,86 +332,39 @@
           } @else {
             <mat-tab [label]="'Record' | transloco">
               <div class="tab-content form-grid">
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>PABX</mat-label>
-                  <mat-select
-                    [formField]="form.pabxUUID"
-                    (selectionChange)="onPabxChange()"
-                    (openedChange)="clearAccountSearch($event)"
-                  >
-                    <mat-option class="select-search-option">
-                      <input
-                        matInput
-                        class="select-search-field"
-                        placeholder="Search PABX"
-                        [value]="accountSearch()"
-                        (input)="setAccountSearch($any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                      />
-                    </mat-option>
-                    @for (option of filteredAccounts(); track option) {
-                      <mat-option [value]="option.VpaUUID">
-                        {{ option.VpaName }} - {{ option.DomainName || 'No domain' }}
-                      </mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="span-2"
+                  [field]="form.pabxUUID"
+                  label="PABX"
+                  [options]="accountSelectOptions()"
+                  placeholder="Search PABX"
+                  emptyLabel="No PABX accounts found."
+                  (selectionChange)="onPabxChange()"
+                />
                 @if (usesTrunk()) {
-                  <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>Trunk{{ meta().trunkMode === 'required' ? ' *' : '' }}</mat-label>
-                    <mat-select
-                      [formField]="form.trunkUUID"
-                      (openedChange)="clearTrunkSearch($event)"
-                    >
-                      <mat-option class="select-search-option">
-                        <input
-                          matInput
-                          class="select-search-field"
-                          placeholder="Search trunk"
-                          [value]="trunkSearch()"
-                          (input)="setTrunkSearch($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                        />
-                      </mat-option>
-                      <mat-option value="">None</mat-option>
-                      @for (option of filteredTrunks(); track option) {
-                        <mat-option [value]="option.uuid">
-                          {{ option.name }} -
-                          {{ option['host'] || option['direction'] || 'No host' }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                  <mns-search-select-field
+                    fieldClass="span-2"
+                    [field]="form.trunkUUID"
+                    label="Trunk{{ meta().trunkMode === 'required' ? ' *' : '' }}"
+                    [options]="trunkSelectOptions()"
+                    placeholder="Search trunk"
+                    emptyLabel="No trunks found."
+                  />
                 }
                 <mat-form-field appearance="outline">
                   <mat-label>Name</mat-label>
                   <input matInput [formField]="form.name" />
                 </mat-form-field>
                 @if (isInboundRouteResource()) {
-                  <mat-form-field appearance="outline" class="start-new-row">
-                    <mat-label>Registered DID</mat-label>
-                    <mat-select
-                      [formField]="form.didUUID"
-                      (selectionChange)="onDidChange($event.value)"
-                      (openedChange)="clearDidSearch($event)"
-                    >
-                      <mat-option class="select-search-option">
-                        <input
-                          matInput
-                          class="select-search-field"
-                          placeholder="Search DID"
-                          [value]="didSearch()"
-                          (input)="setDidSearch($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                        />
-                      </mat-option>
-                      @for (option of filteredDids(); track option) {
-                        <mat-option [value]="option.VddUUID">
-                          {{ option.VddNumber }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                  <mns-search-select-field
+                    fieldClass="start-new-row"
+                    [field]="form.didUUID"
+                    label="Registered DID"
+                    [options]="didSelectOptions()"
+                    placeholder="Search DID"
+                    emptyLabel="No available DIDs found."
+                    (selectionChange)="onDidChange(($any($event) || '').toString())"
+                  />
                   <mat-form-field appearance="outline">
                     <mat-label>{{ meta().primary }}</mat-label>
                     <input matInput [formField]="form.primary" />
@@ -439,29 +379,13 @@
                       <mat-option value="ivr">ivr</mat-option>
                     </mat-select>
                   </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>Destination</mat-label>
-                    <mat-select
-                      [formField]="form.routeTargetUUID"
-                      (openedChange)="clearTargetSearch($event)"
-                    >
-                      <mat-option class="select-search-option">
-                        <input
-                          matInput
-                          class="select-search-field"
-                          placeholder="Search destination"
-                          [value]="targetSearch()"
-                          (input)="setTargetSearch($any($event.target).value)"
-                          (click)="$event.stopPropagation()"
-                        />
-                      </mat-option>
-                      @for (option of filteredTargets(); track option) {
-                        <mat-option [value]="option.uuid">
-                          {{ option.name }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                  <mns-search-select-field
+                    [field]="form.routeTargetUUID"
+                    label="Destination"
+                    [options]="targetSelectOptions()"
+                    placeholder="Search destination"
+                    emptyLabel="No destinations found."
+                  />
                 }
                 <div class="toggle-row">
                   <mat-slide-toggle [formField]="form.status">Active</mat-slide-toggle>

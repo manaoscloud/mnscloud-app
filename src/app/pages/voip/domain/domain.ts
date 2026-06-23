@@ -2,13 +2,13 @@ import {
   Component,
   DestroyRef,
   TemplateRef,
+  computed,
   effect,
   inject,
   resource,
   signal,
   untracked,
   viewChild,
-  afterNextRender,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -23,11 +23,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
+import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute } from '@angular/router';
@@ -39,7 +39,8 @@ import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialo
 import { VoipDomainService, VoipDomainItem, VoipDomainScope } from './domain.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { createSignalCrudTable } from '../../../shared/crud/signal-crud-table';
 
 const DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
@@ -94,11 +95,11 @@ export class VoipDomainPage {
   readonly selectedDomainUUIDs = signal<Set<string>>(new Set());
   readonly scope = signal<VoipDomainScope>('tenant');
 
-  readonly dataSource = new MatTableDataSource<VoipDomainItem>([]);
   readonly displayedColumns = ['select', 'name', 'status', 'actions'];
-  search = '';
   readonly searchInput = signal('');
+  readonly statusInput = signal('');
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal('');
   private readonly domainsResource = resource({
     params: (): DomainFilters => ({
       search: this.appliedSearch(),
@@ -107,11 +108,29 @@ export class VoipDomainPage {
     defaultValue: [] as VoipDomainItem[],
     loader: ({ params }) => this.fetchDomains(params),
   });
-  readonly loading = this.domainsResource.isLoading;
+  readonly rows = computed(() => {
+    const status = this.appliedStatus();
+    return this.domainsResource
+      .value()
+      .filter((row) => status === '' || String(row.VdmStatus) === status);
+  });
+  readonly table = createSignalCrudTable(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
+  readonly loading = computed(() => this.domainsResource.isLoading() || this.deletingSelected());
 
   readonly statusOptions = [
     { value: 1, label: 'Active' },
     { value: 0, label: 'Inactive' },
+  ];
+  readonly statusFilterOptions = [
+    { value: '', label: 'All' },
+    { value: '1', label: 'Active' },
+    { value: '0', label: 'Inactive' },
   ];
 
   readonly formModel = signal<DomainFormModel>({
@@ -124,24 +143,19 @@ export class VoipDomainPage {
     pattern(schema.name, DOMAIN_REGEX);
   });
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
   private domainFormDialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly routeData = toSignal(this.route.data, { initialValue: {} });
   private readonly domainsEffect = effect(() => {
-    this.dataSource.data = this.domainsResource.value();
+    this.rows();
     this.reconcileSelection();
-    this.dataSource.filter = '';
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   });
   private readonly domainsErrorEffect = effect(() => {
     const error = this.domainsResource.error();
     if (!error) return;
     const message = error instanceof Error ? error.message : 'Failed to load domains.';
     this.snack.error(message);
-    this.dataSource.data = [];
   });
 
   private readonly initializePage = effect(() => {
@@ -150,29 +164,6 @@ export class VoipDomainPage {
       this.scope.set(data['scope'] === 'master' ? 'master' : 'tenant');
       this.domainsResource.reload();
     });
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.VdmName ?? '';
-        case 'status':
-          return data.VdmStatus ?? 0;
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      const statusLabel = data.VdmStatus === 1 ? 'active' : 'inactive';
-      return [data.VdmName, statusLabel]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -185,19 +176,23 @@ export class VoipDomainPage {
 
   applySearchFilters() {
     const nextSearch = this.searchInput().trim();
-    this.search = nextSearch;
-    if (nextSearch === this.appliedSearch()) {
+    const nextStatus = this.statusInput();
+    this.table.resetPage();
+    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
       this.domainsResource.reload();
     } else {
       this.appliedSearch.set(nextSearch);
+      this.appliedStatus.set(nextStatus);
     }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    this.search = '';
-    if (this.appliedSearch()) {
+    this.statusInput.set('');
+    this.table.resetPage();
+    if (this.appliedSearch() || this.appliedStatus()) {
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
     } else {
       this.domainsResource.reload();
     }
@@ -211,13 +206,12 @@ export class VoipDomainPage {
     return this.selectedDomainUUIDs().size;
   }
 
-  visibleRows() {
-    const rows = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return rows;
+  setSort(sort: Sort) {
+    this.table.setSort(sort);
+  }
 
-    const start = paginator.pageIndex * paginator.pageSize;
-    return rows.slice(start, start + paginator.pageSize);
+  setPage(page: PageEvent) {
+    this.table.setPage(page);
   }
 
   isSelected(item: VoipDomainItem) {
@@ -346,8 +340,8 @@ export class VoipDomainPage {
 
     try {
       await this.api.remove(item.VdmUUID, this.scope());
-      this.dataSource.data = this.dataSource.data.filter((row) => row.VdmUUID !== item.VdmUUID);
       this.toggleDomainSelection(item, false);
+      this.domainsResource.reload();
       this.snack.success('VoIP domain deleted.');
     } catch (err: any) {
       const message =
@@ -360,7 +354,7 @@ export class VoipDomainPage {
     const ids = [...this.selectedDomainUUIDs()];
     if (!ids.length) return;
 
-    const selectedNames = this.dataSource.data
+    const selectedNames = this.rows()
       .filter((item) => this.selectedDomainUUIDs().has(item.VdmUUID))
       .slice(0, 3)
       .map((item) => item.VdmName)
@@ -384,10 +378,10 @@ export class VoipDomainPage {
     try {
       const response = await this.api.removeMany(ids, this.scope());
       const deleted = new Set<string>(response?.data?.deleted ?? []);
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VdmUUID));
       this.selectedDomainUUIDs.set(
         new Set([...this.selectedDomainUUIDs()].filter((uuid) => !deleted.has(uuid))),
       );
+      this.domainsResource.reload();
 
       const failed = response?.data?.failed ?? [];
       if (failed.length) {
@@ -413,7 +407,7 @@ export class VoipDomainPage {
   }
 
   private reconcileSelection() {
-    const available = new Set(this.dataSource.data.map((item) => item.VdmUUID));
+    const available = new Set(this.rows().map((item) => item.VdmUUID));
     const current = untracked(() => this.selectedDomainUUIDs());
     const next = new Set([...current].filter((uuid) => available.has(uuid)));
     if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
@@ -429,7 +423,7 @@ export class VoipDomainPage {
       'voip-domain-form-dialog',
     );
     this.domainFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.domainFormDialogRef, () => {
+    bindDialogClosed(this.domainFormDialogRef, () => {
       this.cancelEdit();
     });
   }
@@ -439,5 +433,20 @@ export class VoipDomainPage {
     this.dialogBinding = null;
     this.domainFormDialogRef?.close();
     this.domainFormDialogRef = null;
+  }
+
+  statusLabel(status: number) {
+    return status === 1 ? 'Active' : 'Inactive';
+  }
+
+  private sortValue(row: VoipDomainItem, column: string): string | number {
+    switch (column) {
+      case 'name':
+        return row.VdmName ?? '';
+      case 'status':
+        return row.VdmStatus ?? 0;
+      default:
+        return '';
+    }
   }
 }

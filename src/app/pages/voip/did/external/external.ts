@@ -1,12 +1,12 @@
 import {
   Component,
+  computed,
   TemplateRef,
   effect,
   inject,
   resource,
   signal,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
@@ -19,10 +19,10 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -33,6 +33,7 @@ import {
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipDidExternalItem, VoipDidExternalService } from './external.service';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 type ExternalDidFormModel = {
   number: string;
@@ -76,10 +77,17 @@ export class VoipDidExternalPage {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
 
-  readonly isMasterScope = signal(false);
+  readonly isMasterScope = signal(this.route.snapshot.data['scope'] === 'master');
   readonly saving = signal(false);
   readonly editing = signal<VoipDidExternalItem | null>(null);
-  readonly dataSource = new MatTableDataSource<VoipDidExternalItem>([]);
+  readonly rows = computed(() => this.externalDidsResource.value());
+  readonly table = createSignalCrudTable<VoipDidExternalItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   readonly displayedColumns = ['number', 'provider', 'validation', 'billing', 'tenant', 'actions'];
   private readonly appliedSearch = signal('');
   readonly searchInput = signal('');
@@ -103,7 +111,7 @@ export class VoipDidExternalPage {
   readonly loading = this.externalDidsResource.isLoading;
 
   private readonly syncTableData = effect(() => {
-    this.dataSource.data = this.externalDidsResource.value();
+    this.rows();
   });
 
   private readonly reportLoadError = effect(() => {
@@ -128,38 +136,20 @@ export class VoipDidExternalPage {
     pattern(schema.number, /^\d{8,15}$/);
     required(schema.providerName);
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly externalFormDialog = viewChild<TemplateRef<unknown>>('externalFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
 
-  private readonly afterViewReady = afterNextRender(async () => {
-    this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => {
-      switch (column) {
-        case 'number':
-          return row.VddNumber ?? '';
-        case 'provider':
-          return row.VddExternalProviderName ?? '';
-        case 'validation':
-          return row.VddValidationStatus ?? '';
-        case 'billing':
-          return row.VddBillingStatus ?? '';
-        case 'tenant':
-          return row.TenantName ?? '';
-        default:
-          return '';
-      }
-    };
-  });
-
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDialog();
   });
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
+  }
 
   refreshList() {
     this.externalDidsResource.reload();
@@ -298,5 +288,10 @@ export class VoipDidExternalPage {
     if (error instanceof Error) return error.message;
     const maybe = error as { error?: { error?: string }; message?: string };
     return maybe?.error?.error || maybe?.message || fallback;
+  }
+  private sortValue(row: VoipDidExternalItem, column: string): string | number {
+    const value = (row as Record<string, unknown>)[column];
+    if (typeof value === 'number') return value;
+    return String(value ?? '');
   }
 }

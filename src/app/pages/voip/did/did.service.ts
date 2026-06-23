@@ -37,11 +37,18 @@ export class VoipDidService {
   }
 
   list(
-    params: { search?: string; limit?: number; offset?: number; availableOnly?: boolean } = {},
+    params: {
+      search?: string;
+      status?: number;
+      limit?: number;
+      offset?: number;
+      availableOnly?: boolean;
+    } = {},
     system = false,
   ) {
     const query = new URLSearchParams();
     if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.status !== undefined && params.status !== null) query.set('status', String(params.status));
     if (params.availableOnly) query.set('availableOnly', 'true');
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));

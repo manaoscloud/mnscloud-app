@@ -7,9 +7,9 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 import { FormField, form as createForm, max, min, required } from '@angular/forms/signals';
 import { ActivatedRoute } from '@angular/router';
@@ -17,15 +17,15 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
+import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -41,7 +41,11 @@ import { VoipPabxAccount, VoipPabxService } from '../voip-pabx.service';
 import { VoipPabxTrunkRouteUiService } from './trunk-route.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
 type ResourceKind = 'trunks' | 'inbound-routes';
 type ResourceRow = {
@@ -102,6 +106,7 @@ type TrunkRouteFormModel = {
 type TrunkRouteFilters = {
   resource: ResourceKind;
   search: string;
+  status: number | '';
 };
 
 const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
@@ -162,6 +167,7 @@ const RESOURCE_META: Record<ResourceKind, ResourceMeta> = {
     TranslocoPipe,
     MatCheckboxModule,
     MatMenuModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './trunk-route.html',
   styleUrls: ['./trunk-route.scss'],
@@ -195,10 +201,18 @@ export class VoipPabxTrunkRoutePage {
     'status',
     'actions',
   ];
-  readonly dataSource = new MatTableDataSource<ResourceRow>([]);
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly table = createSignalCrudTable<ResourceRow>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   private readonly appliedFilters = signal<TrunkRouteFilters>({
     resource: this.resource(),
     search: '',
+    status: '',
   });
   private readonly itemsResource = resource({
     params: () => this.appliedFilters(),
@@ -211,14 +225,51 @@ export class VoipPabxTrunkRoutePage {
   readonly directionOptions = ['inbound', 'outbound', 'both'];
   readonly authModeOptions = ['ip_acl', 'digest', 'register', 'none'];
   readonly transportOptions = ['udp', 'tcp', 'tls'];
+  readonly statusFilter = signal<number | ''>('');
+  readonly statusFilterOptions = [
+    { value: '', label: 'All' },
+    { value: 1, label: 'Active' },
+    { value: 0, label: 'Inactive' },
+  ];
   readonly search = signal('');
   readonly searchInput = signal('');
-  readonly accountSearch = signal('');
-  readonly trunkSearch = signal('');
-  readonly didSearch = signal('');
-  readonly targetSearch = signal('');
-  readonly audioCodecSearch = signal('');
-  readonly videoCodecSearch = signal('');
+  readonly accountSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.accountOptions().map((item) => ({
+      value: item.VpaUUID,
+      label: `${item.VpaName} - ${item.DomainName || 'No domain'}`,
+      searchText: `${item.CustomerName ?? ''} ${item.DomainName ?? ''}`,
+    })),
+  );
+  readonly trunkSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
+    const selectedPabxUUID = this.formModel().pabxUUID;
+    return [
+      { value: '', label: 'None' },
+      ...this.trunkOptions()
+        .filter((item) => {
+          const belongsToSelectedPabx = !selectedPabxUUID || item.pabxUUID === selectedPabxUUID;
+          return Number(item.enabled ?? 0) === 1 && belongsToSelectedPabx;
+        })
+        .map((item) => ({
+          value: item.uuid,
+          label: `${item.name} - ${String(item['host'] || item['direction'] || 'No host')}`,
+          searchText: `${item.uuid} ${String(item['host'] ?? '')} ${String(item['direction'] ?? '')}`,
+        })),
+    ];
+  });
+  readonly didSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.didOptions().map((item) => ({
+      value: item.VddUUID,
+      label: item.VddNumber,
+      searchText: `${item.CustomerName ?? ''} ${item.OperatorName ?? ''}`,
+    })),
+  );
+  readonly targetSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.targetOptions().map((item) => ({
+      value: item.uuid,
+      label: item.name,
+      searchText: `${item.number ?? ''} ${item.username ?? ''}`,
+    })),
+  );
   passwordVisible = false;
   readonly formModel = signal<TrunkRouteFormModel>(this.emptyFormModel());
   readonly form = createForm(this.formModel, (schema) => {
@@ -230,36 +281,20 @@ export class VoipPabxTrunkRoutePage {
     min(schema.priority, 1);
     min(schema.stripDigits, 0);
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly resourceFormDialog = viewChild<TemplateRef<unknown>>('resourceFormDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly itemsEffect = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
-    this.dataSource.paginator?.firstPage();
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
   });
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
     this.snack.error(this.messageFromError(error));
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, column) => {
-      if (column === 'primary') return this.primaryValue(data);
-      if (column === 'secondary') return this.secondaryValue(data);
-      if (column === 'account') return data.pabxName ?? '';
-      if (column === 'status') return this.statusLabel(data);
-      return String((data as Record<string, unknown>)[column] ?? '');
-    };
-    void this.bootstrap();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -268,6 +303,14 @@ export class VoipPabxTrunkRoutePage {
   onSearchChange(value: string) {
     this.searchInput.set(value);
   }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
+  }
+
   applySearchFilters() {
     const nextFilters = this.currentTrunkRouteFilters();
     this.search.set(nextFilters.search);
@@ -280,7 +323,8 @@ export class VoipPabxTrunkRoutePage {
   clearSearchFilters() {
     this.search.set('');
     this.searchInput.set('');
-    const nextFilters = { resource: this.resource(), search: '' };
+    this.statusFilter.set('');
+    const nextFilters: TrunkRouteFilters = { resource: this.resource(), search: '', status: '' };
     if (this.sameTrunkRouteFilters(nextFilters, this.appliedFilters())) {
       this.itemsResource.reload();
     } else {
@@ -382,13 +426,6 @@ export class VoipPabxTrunkRoutePage {
   get selectedCount() {
     return this.selectedIds.size;
   }
-  visibleRows() {
-    const rows = this.dataSource.filteredData.length
-      ? this.dataSource.filteredData
-      : this.dataSource.data;
-    const p = this.dataSource.paginator;
-    return p ? rows.slice(p.pageIndex * p.pageSize, p.pageIndex * p.pageSize + p.pageSize) : rows;
-  }
   isSelected(item: ResourceRow) {
     return this.selectedIds.has(item.uuid);
   }
@@ -429,106 +466,10 @@ export class VoipPabxTrunkRoutePage {
       );
       this.selectedIds.clear();
       failed.forEach((uuid) => this.selectedIds.add(uuid));
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.uuid));
+    this.rows();
     } finally {
       this.deletingSelected.set(false);
     }
-  }
-  filteredAccounts() {
-    const value = this.accountSearch().trim().toLowerCase();
-    if (!value) return this.accountOptions();
-    return this.accountOptions().filter((item) =>
-      [item.VpaName, item.CustomerName, item.DomainName].some((field) =>
-        String(field ?? '')
-          .toLowerCase()
-          .includes(value),
-      ),
-    );
-  }
-  filteredTrunks() {
-    const value = this.trunkSearch().trim().toLowerCase();
-    const selectedPabxUUID = this.formModel().pabxUUID;
-    const rows = this.trunkOptions().filter((item) => {
-      const direction = String(item['direction'] ?? '').toLowerCase();
-      const belongsToSelectedPabx = !selectedPabxUUID || item.pabxUUID === selectedPabxUUID;
-      return item.enabled === 1 && belongsToSelectedPabx;
-    });
-    if (!value) return rows;
-    return rows.filter((item) =>
-      [item.name, item['host'], item['direction']].some((field) =>
-        String(field ?? '')
-          .toLowerCase()
-          .includes(value),
-      ),
-    );
-  }
-  filteredDids() {
-    const value = this.didSearch().trim().toLowerCase();
-    if (!value) return this.didOptions();
-    return this.didOptions().filter((item) =>
-      [item.VddNumber, item.CustomerName, item.OperatorName].some((field) =>
-        String(field ?? '')
-          .toLowerCase()
-          .includes(value),
-      ),
-    );
-  }
-  filteredTargets() {
-    const value = this.targetSearch().trim().toLowerCase();
-    if (!value) return this.targetOptions();
-    return this.targetOptions().filter((item) =>
-      [item.name, item['number'], item['username']].some((field) =>
-        String(field ?? '')
-          .toLowerCase()
-          .includes(value),
-      ),
-    );
-  }
-  setAccountSearch(value: string) {
-    this.accountSearch.set(value);
-  }
-  clearAccountSearch(opened: boolean) {
-    if (!opened) this.accountSearch.set('');
-  }
-  setTrunkSearch(value: string) {
-    this.trunkSearch.set(value);
-  }
-  clearTrunkSearch(opened: boolean) {
-    if (!opened) this.trunkSearch.set('');
-  }
-  setDidSearch(value: string) {
-    this.didSearch.set(value);
-  }
-  clearDidSearch(opened: boolean) {
-    if (!opened) this.didSearch.set('');
-  }
-  setTargetSearch(value: string) {
-    this.targetSearch.set(value);
-  }
-  clearTargetSearch(opened: boolean) {
-    if (!opened) this.targetSearch.set('');
-  }
-  setAudioCodecSearch(value: string) {
-    this.audioCodecSearch.set(value);
-  }
-  setVideoCodecSearch(value: string) {
-    this.videoCodecSearch.set(value);
-  }
-  clearCodecSearch(opened: boolean) {
-    if (!opened) {
-      this.audioCodecSearch.set('');
-      this.videoCodecSearch.set('');
-    }
-  }
-  filteredAudioCodecs() {
-    const value = this.audioCodecSearch().trim().toLowerCase();
-    if (!value) return this.audioCodecOptions;
-    return this.audioCodecOptions.filter((codec) => codec.toLowerCase().includes(value));
-  }
-  filteredVideoCodecs() {
-    const value = this.videoCodecSearch().trim().toLowerCase();
-    if (!value) return this.videoCodecOptions;
-    return this.videoCodecOptions.filter((codec) => codec.toLowerCase().includes(value));
   }
   usesTrunk() {
     return false;
@@ -662,6 +603,10 @@ export class VoipPabxTrunkRoutePage {
     bindDialogEscape(this.dialogRef, () => {
       this.cancelEdit();
     });
+    bindDialogClosed(this.dialogRef, () => {
+      this.dialogBinding = null;
+      this.dialogRef = null;
+    });
   }
   private closeDialog() {
     this.dialogBinding?.stop();
@@ -693,6 +638,7 @@ export class VoipPabxTrunkRoutePage {
   private async fetchItems(filters: TrunkRouteFilters): Promise<ResourceRow[]> {
     const res = await this.api.list(filters.resource, {
       search: filters.search,
+      status: filters.status === '' ? undefined : filters.status,
       limit: this.listLimit,
     });
     return res?.data?.items ?? [];
@@ -701,10 +647,11 @@ export class VoipPabxTrunkRoutePage {
     return {
       resource: this.resource(),
       search: this.searchInput().trim(),
+      status: this.statusFilter(),
     };
   }
   private sameTrunkRouteFilters(left: TrunkRouteFilters, right: TrunkRouteFilters) {
-    return left.resource === right.resource && left.search === right.search;
+    return left.resource === right.resource && left.search === right.search && left.status === right.status;
   }
   private async refreshInboundLookupsForSelectedPabx(includeDidUUID = '') {
     if (!this.isInboundRouteResource() || !this.formModel().pabxUUID) {
@@ -795,7 +742,7 @@ export class VoipPabxTrunkRoutePage {
     };
   }
   private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.uuid));
+    const valid = new Set(this.rows().map((row) => row.uuid));
     Array.from(this.selectedIds).forEach((uuid) => {
       if (!valid.has(uuid)) this.selectedIds.delete(uuid);
     });
@@ -863,5 +810,10 @@ export class VoipPabxTrunkRoutePage {
       videoCodecs: [],
       status: true,
     };
+  }
+  private sortValue(row: ResourceRow, column: string): string | number {
+    const value = (row as Record<string, unknown>)[column];
+    if (typeof value === 'number') return value;
+    return String(value ?? '');
   }
 }

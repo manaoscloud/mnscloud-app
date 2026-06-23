@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   TemplateRef,
   effect,
   inject,
@@ -7,9 +8,9 @@ import {
   signal,
   untracked,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
+import { createSignalCrudTable } from '../../../shared/crud/signal-crud-table';
 
 import { ActivatedRoute } from '@angular/router';
 import { FormField, form as createForm, pattern, required } from '@angular/forms/signals';
@@ -23,11 +24,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
+import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom, takeUntil } from 'rxjs';
@@ -41,6 +42,10 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
 type OperatorOption = {
   value: string;
@@ -49,6 +54,7 @@ type OperatorOption = {
 
 type DidFilters = {
   search: string;
+  status: number | '';
   isMasterScope: boolean;
 };
 
@@ -85,6 +91,7 @@ type DidFormModel = {
     MatTabsModule,
     TranslocoPipe,
     PhoneInputComponent,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './did.html',
   styleUrls: ['./did.scss'],
@@ -103,24 +110,33 @@ export class VoipDidPage {
   readonly selectedDidUUIDs = signal<Set<string>>(new Set());
   readonly skippedExisting = signal<Array<{ number: string; reason: string }>>([]);
   readonly failedBulkItems = signal<Array<{ number: string; message: string }>>([]);
-  readonly isMasterScope = signal(false);
+  readonly isMasterScope = signal(this.route.snapshot.data['scope'] === 'master');
   readonly availableDids = signal<VoipDidItem[]>([]);
   readonly availableLoading = signal(false);
   readonly claimingUUID = signal<string | null>(null);
 
   readonly operators = signal<OperatorOption[]>([]);
+  readonly operatorOptions = computed<MnsSearchSelectFieldOption[]>(() => this.operators());
   readonly operatorMap = signal<Map<string, VoipDidOperatorItem>>(new Map());
-  readonly operatorSearch = signal('');
-
-  readonly dataSource = new MatTableDataSource<VoipDidItem>([]);
+  readonly rows = computed(() => this.didsResource.value());
+  readonly table = createSignalCrudTable<VoipDidItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   private readonly masterDisplayedColumns = ['select', 'number', 'operator', 'status', 'actions'];
   private readonly tenantDisplayedColumns = ['number', 'operator', 'status', 'actions'];
   readonly search = signal('');
   readonly searchInput = signal('');
+  readonly statusInput = signal<number | ''>('');
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal<number | ''>('');
   private readonly didsResource = resource({
     params: (): DidFilters => ({
       search: this.appliedSearch(),
+      status: this.appliedStatus(),
       isMasterScope: this.isMasterScope(),
     }),
     defaultValue: [] as VoipDidItem[],
@@ -134,6 +150,7 @@ export class VoipDidPage {
     { value: 1, label: 'Active' },
     { value: 0, label: 'Inactive' },
   ];
+  readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
 
   readonly formModel = signal<DidFormModel>(this.emptyFormModel());
   readonly form = createForm(this.formModel, (schema) => {
@@ -145,9 +162,6 @@ export class VoipDidPage {
       when: () => this.isRangeMode(),
     });
   });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly didFormDialog = viewChild<TemplateRef<unknown>>('didFormDialog');
   readonly availableDidDialog = viewChild<TemplateRef<unknown>>('availableDidDialog');
   private didFormDialogRef: MatDialogRef<unknown> | null = null;
@@ -155,50 +169,19 @@ export class VoipDidPage {
   private dialogBinding: CrudDialogBinding | null = null;
   private readonly didsEffect = effect(() => {
     const dids = this.didsResource.value();
-    this.dataSource.data = dids;
+    this.rows();
     this.reconcileSelection(dids);
-    this.dataSource.filter = '';
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   });
   private readonly didsErrorEffect = effect(() => {
     const error = this.didsResource.error();
     if (!error) return;
     this.snack.error(this.extractErrorMessage(error, 'Failed to load DIDs.'));
-    this.dataSource.data = [];
+    this.rows();
   });
 
   get displayedColumns() {
     return this.isMasterScope() ? this.masterDisplayedColumns : this.tenantDisplayedColumns;
   }
-
-  private readonly afterViewReady = afterNextRender(async () => {
-    this.isMasterScope.set(this.route.snapshot.data['scope'] === 'master');
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'number':
-          return data.VddNumber ?? '';
-        case 'operator':
-          return this.operatorLabel(data.VoipDidOperatorVdoUUID).toLowerCase();
-        case 'status':
-          return data.VddStatus ?? 0;
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      const operatorLabel = this.operatorLabel(data.VoipDidOperatorVdoUUID).toLowerCase();
-      const statusLabel = data.VddStatus === 1 ? 'active' : 'inactive';
-      return [data.VddNumber, operatorLabel, statusLabel]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-
-    void this.refreshList();
-  });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.closeDidDialog();
@@ -208,22 +191,33 @@ export class VoipDidPage {
   onSearchChange(value: string) {
     this.searchInput.set(value);
   }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
+  }
 
   applySearchFilters() {
     const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusInput();
     this.search.set(nextSearch);
-    if (nextSearch === this.appliedSearch()) {
+    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
       this.didsResource.reload();
     } else {
       this.appliedSearch.set(nextSearch);
+      this.appliedStatus.set(nextStatus);
     }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
-    if (this.appliedSearch()) {
+    if (this.appliedSearch() || this.appliedStatus() !== '') {
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
     } else {
       this.didsResource.reload();
     }
@@ -231,15 +225,6 @@ export class VoipDidPage {
 
   selectedCount() {
     return this.selectedDidUUIDs().size;
-  }
-
-  visibleRows() {
-    const rows = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return rows;
-
-    const start = paginator.pageIndex * paginator.pageSize;
-    return rows.slice(start, start + paginator.pageSize);
   }
 
   isSelected(item: VoipDidItem) {
@@ -306,6 +291,7 @@ export class VoipDidPage {
     const response = await this.api.list(
       {
         search: filters.search || undefined,
+        status: filters.status === '' ? undefined : filters.status,
         limit: this.listLimit,
       },
       filters.isMasterScope,
@@ -518,7 +504,7 @@ export class VoipDidPage {
 
     try {
       await this.api.remove(item.VddUUID, this.isMasterScope());
-      this.dataSource.data = this.dataSource.data.filter((row) => row.VddUUID !== item.VddUUID);
+    this.rows();
       this.toggleDidSelection(item, false);
       this.snack.success('DID deleted successfully.');
     } catch (err: any) {
@@ -544,7 +530,7 @@ export class VoipDidPage {
 
     try {
       await this.api.release(item.VddUUID);
-      this.dataSource.data = this.dataSource.data.filter((row) => row.VddUUID !== item.VddUUID);
+    this.rows();
       this.snack.success('DID released successfully.');
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to release DID.'));
@@ -555,7 +541,7 @@ export class VoipDidPage {
     const ids = [...this.selectedDidUUIDs()];
     if (!ids.length) return;
 
-    const selectedNumbers = this.dataSource.data
+    const selectedNumbers = this.rows()
       .filter((item) => this.selectedDidUUIDs().has(item.VddUUID))
       .slice(0, 3)
       .map((item) => item.VddNumber)
@@ -579,7 +565,7 @@ export class VoipDidPage {
     try {
       const response = await this.api.removeMany(ids, this.isMasterScope());
       const deleted = new Set<string>(response?.data?.deleted ?? []);
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VddUUID));
+    this.rows();
       this.selectedDidUUIDs.set(
         new Set([...this.selectedDidUUIDs()].filter((uuid) => !deleted.has(uuid))),
       );
@@ -605,18 +591,6 @@ export class VoipDidPage {
     );
   }
 
-  get filteredOperators() {
-    const value = this.operatorSearch().trim().toLowerCase();
-    if (!value) return this.operators();
-    return this.operators().filter((item) => (item.label ?? '').toLowerCase().includes(value));
-  }
-
-  onOperatorOpened(opened: boolean) {
-    if (!opened) {
-      this.operatorSearch.set('');
-    }
-  }
-
   private resetForm() {
     this.formModel.set(this.emptyFormModel());
     this.editing.set(null);
@@ -624,7 +598,7 @@ export class VoipDidPage {
     this.failedBulkItems.set([]);
   }
 
-  private reconcileSelection(items = this.dataSource.data) {
+  private reconcileSelection(items = this.rows()) {
     const available = new Set(items.map((item) => item.VddUUID));
     const current = untracked(() => this.selectedDidUUIDs());
     const next = new Set([...current].filter((uuid) => available.has(uuid)));
@@ -680,5 +654,10 @@ export class VoipDidPage {
       operatorUUID: '',
       status: 1,
     };
+  }
+  private sortValue(row: VoipDidItem, column: string): string | number {
+    const value = (row as Record<string, unknown>)[column];
+    if (typeof value === 'number') return value;
+    return String(value ?? '');
   }
 }

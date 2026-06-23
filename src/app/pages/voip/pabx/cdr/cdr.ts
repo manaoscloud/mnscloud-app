@@ -1,12 +1,12 @@
 import { NgClass } from '@angular/common';
 import {
   Component,
+  computed,
   effect,
   inject,
   resource,
   signal,
   viewChild,
-  afterNextRender,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,11 +15,11 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DateTimeFormatService } from '../../../../services/date-time-format.service';
@@ -28,6 +28,7 @@ import { PabxCdrKind, VoipPabxCdrService } from './cdr.service';
 import { VoipPabxCdrRecordingDialogComponent } from './recording-dialog/recording-dialog';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 type CdrFilters = {
   search: string;
@@ -86,14 +87,20 @@ export class VoipPabxCdrPage {
   });
 
   readonly loading = this.cdrResource.isLoading;
-  readonly dataSource = new MatTableDataSource<any>([]);
+  readonly rows = computed(() => this.cdrResource.value());
+  readonly table = createSignalCrudTable<any>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
 
   search = '';
   status = '';
   direction = '';
   dateFrom = '';
   dateTo = '';
-  readonly pageSize = 25;
   private readonly apiWindowLimit = 500;
 
   readonly callColumns = [
@@ -109,11 +116,8 @@ export class VoipPabxCdrPage {
     'recording',
   ];
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-
   private readonly syncRows = effect(() => {
-    this.dataSource.data = this.cdrResource.value();
+    this.rows();
   });
 
   private readonly reportError = effect(() => {
@@ -122,26 +126,24 @@ export class VoipPabxCdrPage {
     this.snack.error(this.errorMessage(error, 'Failed to load PABX CDR.'));
   });
 
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.refreshList();
-  });
-
   onTabChange(index: number) {
     const kinds: PabxCdrKind[] = ['all', 'asterisk', 'freeswitch'];
     this.activeKind.set(kinds[index] ?? 'all');
-    this.dataSource.data = [];
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+    this.rows();
   }
 
   displayedColumns() {
     return this.callColumns;
   }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
+  }
 
   applySearchFilters() {
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
     this.appliedFilters.set(this.currentFilters());
   }
 
@@ -151,7 +153,6 @@ export class VoipPabxCdrPage {
     this.direction = '';
     this.dateFrom = '';
     this.dateTo = '';
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
     this.applySearchFilters();
   }
 

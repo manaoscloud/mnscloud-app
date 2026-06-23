@@ -72,7 +72,14 @@
           </div>
 
           <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="operatorDataSource" matSort #operatorSort="matSort">
+            <table
+              mat-table
+              [dataSource]="operatorTable.visibleRows()"
+              matSort
+              [matSortActive]="operatorTable.sortActive()"
+              [matSortDirection]="operatorTable.sortDirection()"
+              (matSortChange)="setOperatorSort($event)"
+            >
               <ng-container matColumnDef="operator">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>
                   {{ 'Operator' | transloco }}
@@ -155,10 +162,13 @@
           </div>
 
           <mat-paginator
-            #operatorPaginator
             class="mobile-paginator"
+            [length]="operatorTable.sortedRows().length"
+            [pageIndex]="operatorTable.pageIndex()"
+            [pageSize]="operatorTable.pageSize()"
             [pageSizeOptions]="[5, 10, 25, 100]"
             showFirstLastButtons
+            (page)="setOperatorPage($event)"
           />
         </section>
 
@@ -179,7 +189,14 @@
           </div>
 
           <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="statusDataSource" matSort #statusSort="matSort">
+            <table
+              mat-table
+              [dataSource]="statusTable.visibleRows()"
+              matSort
+              [matSortActive]="statusTable.sortActive()"
+              [matSortDirection]="statusTable.sortDirection()"
+              (matSortChange)="setStatusSort($event)"
+            >
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>
                   {{ 'Status' | transloco }}
@@ -242,10 +259,13 @@
           </div>
 
           <mat-paginator
-            #statusPaginator
             class="mobile-paginator"
+            [length]="statusTable.sortedRows().length"
+            [pageIndex]="statusTable.pageIndex()"
+            [pageSize]="statusTable.pageSize()"
             [pageSizeOptions]="[5, 10, 25, 100]"
             showFirstLastButtons
+            (page)="setStatusPage($event)"
           />
         </section>
       </div>
@@ -267,7 +287,14 @@
         </div>
 
         <div class="table-wrapper mat-elevation-z8">
-          <table mat-table [dataSource]="externalDataSource" matSort #externalSort="matSort">
+          <table
+            mat-table
+            [dataSource]="externalTable.visibleRows()"
+            matSort
+            [matSortActive]="externalTable.sortActive()"
+            [matSortDirection]="externalTable.sortDirection()"
+            (matSortChange)="setExternalSort($event)"
+          >
             <ng-container matColumnDef="number">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Number' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
@@ -332,10 +359,13 @@
         </div>
 
         <mat-paginator
-          #externalPaginator
           class="mobile-paginator"
+          [length]="externalTable.sortedRows().length"
+          [pageIndex]="externalTable.pageIndex()"
+          [pageSize]="externalTable.pageSize()"
           [pageSizeOptions]="[5, 10, 25, 100]"
           showFirstLastButtons
+          (page)="setExternalPage($event)"
         />
       </section>
     </div>

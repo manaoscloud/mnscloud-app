@@ -8,7 +8,6 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
   DestroyRef,
 } from '@angular/core';
 import { FormField, form as createForm, maxLength, required } from '@angular/forms/signals';
@@ -21,14 +20,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, type Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -43,6 +43,10 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
 type RuntimeStatus = VoipPabxQueueAgentItem['VqaRuntimeStatus'];
 type RuntimeAction = 'login' | 'logout' | 'pause' | 'unpause';
@@ -98,6 +102,7 @@ const emptyQueueAgentFilters = (): QueueAgentFilters => ({
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './queue-agent.html',
   styleUrls: ['./queue-agent.scss'],
@@ -125,13 +130,17 @@ export class VoipPabxQueueAgentPage {
   readonly search = signal('');
   readonly runtimeFilter = signal<RuntimeStatus | ''>('');
   readonly statusFilter = signal<'1' | '0' | ''>('');
-  readonly employeeSearch = signal('');
-  readonly extensionSearch = signal('');
   readonly employeeOptions = signal<LookupOption[]>([]);
   readonly extensionOptions = signal<LookupOption[]>([]);
   readonly selectedQueueAgentUUIDs = signal<Set<string>>(new Set());
-
-  readonly dataSource = new MatTableDataSource<VoipPabxQueueAgentItem>([]);
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly table = createSignalCrudTable<VoipPabxQueueAgentItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly sortActive = this.table.sortActive;
+  readonly sortDirection = this.table.sortDirection;
+  readonly pageIndex = this.table.pageIndex;
+  readonly pageSize = this.table.pageSize;
+  readonly sortedRows = this.table.sortedRows;
+  readonly visibleRows = this.table.visibleRows;
   readonly displayedColumns = [
     'select',
     'loginCode',
@@ -154,54 +163,36 @@ export class VoipPabxQueueAgentPage {
     maxLength(schema.pauseReason, 120);
   });
 
-  readonly filteredEmployeeOptions = computed(() =>
-    this.filterOptions(this.employeeOptions(), this.employeeSearch()),
+  readonly employeeSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.employeeOptions().map((option) => ({
+      value: option.uuid,
+      label: option.label,
+      description: option.detail ?? undefined,
+      searchText: option.uuid,
+    })),
   );
 
-  readonly filteredExtensionOptions = computed(() =>
-    this.filterOptions(this.extensionOptions(), this.extensionSearch()),
+  readonly extensionSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.extensionOptions().map((option) => ({
+      value: option.uuid,
+      label: option.label,
+      description: option.detail ?? undefined,
+      searchText: option.uuid,
+    })),
   );
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly queueAgentFormDialog = viewChild<TemplateRef<unknown>>('queueAgentFormDialog');
 
   private queueAgentDialogBinding: CrudDialogBinding | null = null;
   private readonly itemsEffect = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
   });
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
-    this.dataSource.data = [];
+    this.rows();
     this.reconcileSelection();
     this.snack.error(this.extractErrorMessage(error, 'Failed to load queue agents.'));
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => {
-      switch (column) {
-        case 'loginCode':
-          return row.VqaLoginCode ?? '';
-        case 'employee':
-          return this.employeeLabel(row);
-        case 'extension':
-          return this.extensionLabel(row);
-        case 'runtime':
-          return this.runtimeLabel(row.VqaRuntimeStatus);
-        case 'status':
-          return this.isActive(row) ? 'ACTIVE' : 'INACTIVE';
-        case 'lastStatus':
-          return row.VqaLastStatusAt ?? '';
-        default:
-          return '';
-      }
-    };
-
-    void this.bootstrap();
   });
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
@@ -211,6 +202,13 @@ export class VoipPabxQueueAgentPage {
   async bootstrap() {
     await this.fetchLookups();
     this.itemsResource.reload();
+  }
+  setSort(sort: Sort): void {
+    this.table.setSort(sort);
+  }
+
+  setPage(page: PageEvent): void {
+    this.table.setPage(page);
   }
 
   applySearchFilters() {
@@ -402,7 +400,7 @@ export class VoipPabxQueueAgentPage {
     const ids = Array.from(this.selectedQueueAgentUUIDs());
     if (!ids.length) return;
 
-    const labels = this.dataSource.data
+    const labels = this.rows()
       .filter((item) => ids.includes(item.VqaUUID))
       .slice(0, 3)
       .map((item) => this.rowLabel(item));
@@ -429,8 +427,7 @@ export class VoipPabxQueueAgentPage {
           .map((item: any) => item?.VqaUUID)
           .filter((uuid: string | null): uuid is string => !!uuid),
       );
-
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VqaUUID));
+    this.rows();
       this.selectedQueueAgentUUIDs.set(failed);
       if (failed.size) {
         this.snack.error(`${failed.size} selected queue agent(s) could not be deleted.`);
@@ -462,14 +459,6 @@ export class VoipPabxQueueAgentPage {
 
   get selectedCount() {
     return this.selectedQueueAgentUUIDs().size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
   }
 
   isSelected(item: VoipPabxQueueAgentItem) {
@@ -543,18 +532,8 @@ export class VoipPabxQueueAgentPage {
     };
   }
 
-  onEmployeeSelectOpened(opened: boolean) {
-    if (!opened) this.employeeSearch.set('');
-  }
-
-  onExtensionSelectOpened(opened: boolean) {
-    if (!opened) this.extensionSearch.set('');
-  }
-
   private resetForm() {
     this.formModel.set(this.emptyFormModel());
-    this.employeeSearch.set('');
-    this.extensionSearch.set('');
   }
 
   private emptyFormModel(): QueueAgentFormModel {
@@ -591,25 +570,16 @@ export class VoipPabxQueueAgentPage {
     this.queueAgentDialogBinding = null;
   }
 
-  private filterOptions(options: LookupOption[], search: string) {
-    const term = search.trim().toLowerCase();
-    if (!term) return options;
-    return options.filter((option) =>
-      `${option.label} ${option.detail ?? ''}`.toLowerCase().includes(term),
-    );
-  }
-
   rowLabel(item: VoipPabxQueueAgentItem) {
     return this.employeeLabel(item) || item.VqaLoginCode || item.VqaID || item.VqaUUID;
   }
 
   resetPaginator() {
-    const paginator = this.paginator();
-    if (paginator) paginator.firstPage();
+    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
   }
 
   private reconcileSelection() {
-    const available = new Set(this.dataSource.data.map((item) => item.VqaUUID));
+    const available = new Set(this.rows().map((item) => item.VqaUUID));
     this.selectedQueueAgentUUIDs.update((current) => {
       const next = new Set<string>();
       current.forEach((uuid) => {
@@ -621,5 +591,10 @@ export class VoipPabxQueueAgentPage {
 
   private extractErrorMessage(err: any, fallback: string) {
     return err?.error?.error || err?.error?.message || err?.message || fallback;
+  }
+  private sortValue(row: VoipPabxQueueAgentItem, column: string): string | number {
+    const value = (row as Record<string, unknown>)[column];
+    if (typeof value === 'number') return value;
+    return String(value ?? '');
   }
 }
