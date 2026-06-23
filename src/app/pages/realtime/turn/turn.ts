@@ -2,7 +2,6 @@ import {
   Component,
   DestroyRef,
   TemplateRef,
-  afterNextRender,
   computed,
   effect,
   inject,
@@ -11,7 +10,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { FormField, form as createForm, type Field as SignalField } from '@angular/forms/signals';
+import { form as createForm, type Field as SignalField } from '@angular/forms/signals';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,11 +22,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -50,7 +49,7 @@ import {
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { RealtimeTurnService, TurnRecord, TurnResource, TurnScope } from './turn.service';
 
-type FieldType = 'text' | 'number' | 'select' | 'domain' | 'textarea';
+type FieldType = 'text' | 'number' | 'select' | 'domain' | 'server' | 'textarea';
 type Field = {
   key: string;
   label: string;
@@ -110,7 +109,7 @@ const RECORD_FIELDS: Field[] = [
 
 const DOMAIN_RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
-  { key: 'serverUUID', label: 'Server', type: 'select', required: true },
+  { key: 'serverUUID', label: 'Server', type: 'server', required: true },
   { key: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'domain', required: true },
   {
     key: 'certificateProvider',
@@ -167,7 +166,6 @@ const DOMAIN_NOTES_FIELDS: Field[] = [
   standalone: true,
   imports: [
     RefreshButtonComponent,
-    FormField,
     MnsSearchSelectFieldComponent,
     MnsSelectFieldComponent,
     MnsStatusSelectFieldComponent,
@@ -203,7 +201,9 @@ export class RealtimeTurnPage {
   private readonly snack = inject(SnackbarService);
 
   readonly searchInput = signal('');
+  readonly statusInput = signal('');
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal('');
   readonly saving = signal(false);
   readonly mutating = signal(false);
   readonly editing = signal<TurnRecord | null>(null);
@@ -212,6 +212,10 @@ export class RealtimeTurnPage {
   readonly generatedInstallSource = signal<TurnRecord | null>(null);
   readonly domainLookupEnabled = signal(false);
   readonly serverOptions = signal<TurnRecord[]>([]);
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
   private readonly routeData = toSignal(this.route.data, { initialValue: {} });
 
   readonly currentResource = computed<TurnResource>(() => {
@@ -234,7 +238,6 @@ export class RealtimeTurnPage {
       : 'Register dedicated coturn relay servers for realtime media traversal.',
   );
 
-  readonly dataSource = new MatTableDataSource<TurnRecord>([]);
   readonly displayedColumns = computed(() =>
     this.isDomains()
       ? [
@@ -266,9 +269,6 @@ export class RealtimeTurnPage {
     this.isDomains() ? DOMAIN_CERTIFICATE_FIELDS : CERTIFICATE_FIELDS,
   );
   readonly notesFields = computed(() => (this.isDomains() ? DOMAIN_NOTES_FIELDS : NOTES_FIELDS));
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly turnFormDialog = viewChild<TemplateRef<unknown>>('turnFormDialog');
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
 
@@ -281,16 +281,35 @@ export class RealtimeTurnPage {
       resource: this.currentResource(),
       scope: this.scope(),
       search: this.appliedSearch(),
+      status: this.appliedStatus(),
     }),
     defaultValue: [] as TurnRecord[],
     loader: async ({ params }) => {
       const response = await this.api.list(
         params.resource,
-        { limit: 5000, search: params.search },
+        {
+          limit: 5000,
+          search: params.search,
+          status: params.status === '' ? null : Number(params.status),
+        },
         params.scope,
       );
       return response?.data?.items ?? [];
     },
+  });
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly sortedRows = computed(() => this.sortRows(this.rows()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
   });
 
   private readonly domainsResource = resource({
@@ -330,25 +349,34 @@ export class RealtimeTurnPage {
         return {
           value: String(value ?? ''),
           label: String(label ?? ''),
+          description: String(server || value || ''),
           searchText: `${label ?? ''} ${server} ${domain['RtnUUID'] ?? ''} ${value ?? ''}`,
         };
       })
       .filter((option: MnsSearchSelectFieldOption) => option.value);
   });
+  readonly serverSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.serverOptions()
+      .map((server: TurnRecord) => {
+        const value = server['RtsUUID'];
+        const label = server['RtsName'] || server['RtsHostname'] || value;
+        const description = server['RtsHostname'] || server['RtsExternalIP'] || value;
+        return {
+          value: String(value ?? ''),
+          label: String(label ?? ''),
+          description: String(description ?? ''),
+          searchText: `${label ?? ''} ${description ?? ''} ${server['RtsNodeUUID'] ?? ''} ${
+            value ?? ''
+          }`,
+        };
+      })
+      .filter((option: MnsSearchSelectFieldOption) => option.value),
+  );
 
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.filterPredicate = (row, filter) =>
-      JSON.stringify(row).toLowerCase().includes(filter);
-    this.dataSource.sortingDataAccessor = (row, column) =>
-      String(this.cell(row, column) ?? '').toLowerCase();
-  });
-
   private readonly syncRows = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
   });
 
@@ -377,24 +405,37 @@ export class RealtimeTurnPage {
 
   applySearchFilters(): void {
     const nextSearch = this.searchInput().trim();
-    this.dataSource.filter = nextSearch.toLowerCase();
-    this.paginator()?.firstPage();
-    if (nextSearch === this.appliedSearch()) {
+    const nextStatus = this.statusInput();
+    this.pageIndex.set(0);
+    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
       this.itemsResource.reload();
     } else {
       this.appliedSearch.set(nextSearch);
+      this.appliedStatus.set(nextStatus);
     }
   }
 
   clearSearchFilters(): void {
     this.searchInput.set('');
-    this.dataSource.filter = '';
-    this.paginator()?.firstPage();
-    if (this.appliedSearch()) {
+    this.statusInput.set('');
+    this.pageIndex.set(0);
+    if (this.appliedSearch() || this.appliedStatus()) {
       this.appliedSearch.set('');
+      this.appliedStatus.set('');
     } else {
       this.itemsResource.reload();
     }
+  }
+
+  setSort(sort: Sort): void {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent): void {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
   }
 
   startCreate(): void {
@@ -730,24 +771,6 @@ export class RealtimeTurnPage {
     });
   }
 
-  visibleRows(): TurnRecord[] {
-    const rows = this.dataSource.filteredData;
-    const paginator = this.paginator();
-    if (!paginator) return rows;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return rows.slice(start, start + paginator.pageSize);
-  }
-
-  allVisibleSelected(): boolean {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
-  }
-
-  someVisibleSelected(): boolean {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
-  }
-
   toggleVisible(checked: boolean): void {
     const rows = this.visibleRows();
     this.selected.update((current) => {
@@ -760,11 +783,22 @@ export class RealtimeTurnPage {
   }
 
   private reconcileSelection(): void {
-    const valid = new Set(this.dataSource.data.map((row) => this.uuid(row)));
+    const valid = new Set(this.rows().map((row: TurnRecord) => this.uuid(row)));
     const current = untracked(() => this.selected());
     const next = new Set([...current].filter((uuid) => valid.has(uuid)));
     if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
     this.selected.set(next);
+  }
+
+  private sortRows(rows: TurnRecord[]): TurnRecord[] {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    return [...rows].sort((left, right) =>
+      String(this.cell(left, active) ?? '').localeCompare(String(this.cell(right, active) ?? '')) *
+      multiplier,
+    );
   }
 
   private defaultFormModel(): TurnFormModel {

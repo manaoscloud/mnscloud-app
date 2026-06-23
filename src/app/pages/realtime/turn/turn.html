@@ -18,7 +18,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
@@ -26,6 +26,15 @@
           [value]="searchInput()"
           (input)="searchInput.set($any($event.target).value)"
         />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
+        </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
@@ -54,7 +63,14 @@
         </div>
       }
 
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -101,6 +117,9 @@
                     <span>UDP/TCP {{ cell(row, column).split(' / ')[0] }}</span>
                     <span>TLS {{ cell(row, column).split(' / ')[1] }}</span>
                   </div>
+                } @else if (column === 'name' || column === 'domain' || column === 'server') {
+                  <div class="record-main">{{ cell(row, column) || '-' }}</div>
+                  <div class="record-uuid">{{ uuid(row) }}</div>
                 } @else {
                   {{ cell(row, column) || '-' }}
                 }
@@ -167,7 +186,11 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
+      (page)="setPage($event)"
       showFirstLastButtons
     />
   </mat-card>
@@ -192,21 +215,13 @@
           >
             @for (field of recordFields(); track field.key) {
               @if (field.key === 'serverUUID') {
-                <mat-form-field appearance="outline" floatLabel="always" [class]="field.span || ''">
-                  <mat-label>
-                    {{ field.label | transloco }}
-                    @if (field.required) {
-                      *
-                    }
-                  </mat-label>
-                  <mat-select [formField]="formField(field.key)">
-                    @for (server of serverOptions(); track server['RtsUUID']) {
-                      <mat-option [value]="server['RtsUUID']">
-                        {{ server['RtsName'] }}
-                      </mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [options]="serverSelectOptions()"
+                  [fieldClass]="field.span || ''"
+                  placeholder="Search servers"
+                />
               } @else if (field.type === 'domain') {
                 <mns-search-select-field
                   [field]="formField(field.key)"

@@ -33,8 +33,8 @@
         </mat-select>
       </mat-form-field>
       <div class="filter-actions">
-        @if (selected.size > 0) {
-          <span class="selection-count">{{ selected.size }} selected</span>
+        @if (selected().size > 0) {
+          <span class="selection-count">{{ selected().size }} selected</span>
           <button mat-stroked-button color="warn" type="button" (click)="removeSelected()">
             <mat-icon>delete</mat-icon>Delete selected
           </button>
@@ -56,7 +56,14 @@
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -109,7 +116,10 @@
                   }
                 </div>
               } @else {
-                {{ cell(row, column) }}
+                <div class="record-main">{{ cell(row, column) || '-' }}</div>
+                @if (column === 'name' || column === 'domain' || column === 'server' || column === 'key') {
+                  <div class="record-uuid">{{ uuid(row) }}</div>
+                }
               }
             </td>
           </ng-container>
@@ -164,8 +174,12 @@
     </div>
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
+      (page)="setPage($event)"
     />
   </mat-card>
 </section>

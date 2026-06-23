@@ -8,7 +8,6 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -24,11 +23,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
@@ -265,20 +264,25 @@ export class RealtimeWebRtcPage {
   readonly subtitle = computed(() => this.config().subtitle);
   readonly saving = signal(false);
   readonly editing = signal<WebRtcRecord | null>(null);
-  readonly selected = new Set<string>();
+  readonly selected = signal<Set<string>>(new Set());
   readonly generatedInstall = signal<Record<string, string> | null>(null);
   private readonly appliedSearch = signal('');
   private readonly appliedStatus = signal('');
   readonly searchInput = signal('');
   readonly search = signal('');
   readonly statusInput = signal('');
-  readonly dataSource = new MatTableDataSource<WebRtcRecord>([]);
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
   readonly displayedColumns = computed(() => ['select', ...this.config().columns, 'actions']);
-  readonly lookups: Record<LookupKey, LookupOption[]> = { servers: [], domains: [], mediaServers: [] };
+  readonly lookups = signal<Record<LookupKey, LookupOption[]>>({
+    servers: [],
+    domains: [],
+    mediaServers: [],
+  });
   readonly formModel = signal<Record<string, any>>({});
   readonly form = createForm(this.formModel);
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
   private dialogRef: MatDialogRef<unknown> | null = null;
@@ -306,11 +310,25 @@ export class RealtimeWebRtcPage {
       return res?.data?.items ?? [];
     },
   });
+  readonly rows = computed(() => this.recordsResource.value());
+  readonly sortedRows = computed(() => this.sortRows(this.rows()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
+  });
 
   readonly loading = this.recordsResource.isLoading;
 
   private readonly syncTableData = effect(() => {
-    this.dataSource.data = this.recordsResource.value();
+    this.rows();
     this.reconcile();
   });
 
@@ -329,17 +347,9 @@ export class RealtimeWebRtcPage {
       this.statusInput.set('');
       this.appliedSearch.set('');
       this.appliedStatus.set('');
-      this.dataSource.filter = '';
-      this.selected.clear();
+      this.pageIndex.set(0);
+      this.selected.set(new Set());
     });
-  });
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.filterPredicate = (row, filter) =>
-      JSON.stringify(row).toLowerCase().includes(filter);
-    this.dataSource.sortingDataAccessor = (row, column) =>
-      String(this.cell(row, column) ?? '').toLowerCase();
   });
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
     this.binding?.stop();
@@ -400,8 +410,7 @@ export class RealtimeWebRtcPage {
   applySearchFilters() {
     const nextSearch = this.searchInput().trim();
     this.search.set(nextSearch);
-    this.dataSource.filter = nextSearch.toLowerCase();
-    this.paginator()?.firstPage();
+    this.pageIndex.set(0);
     this.appliedSearch.set(nextSearch);
     this.appliedStatus.set(this.statusInput());
   }
@@ -409,10 +418,20 @@ export class RealtimeWebRtcPage {
     this.searchInput.set('');
     this.search.set('');
     this.statusInput.set('');
-    this.dataSource.filter = '';
-    this.paginator()?.firstPage();
+    this.pageIndex.set(0);
     this.appliedSearch.set('');
     this.appliedStatus.set('');
+  }
+
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent) {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
   }
   async fetchLookups() {
     const needs = new Set(
@@ -434,7 +453,7 @@ export class RealtimeWebRtcPage {
                 ? await this.api.listServerOptions()
                 : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
-        this.lookups[key] = rows
+        const options = rows
           .map((row: WebRtcRecord) => ({
             value: String(
               key === 'domains'
@@ -450,6 +469,13 @@ export class RealtimeWebRtcPage {
                   ? (row['label'] ?? row['RmsName'] ?? '')
                 : (row['RwsName'] ?? ''),
             ),
+            description: String(
+              key === 'domains'
+                ? (row['RtdUUID'] ?? row['DomainName'] ?? '')
+                : key === 'mediaServers'
+                  ? (row['hostname'] ?? row['controlIP'] ?? row['value'] ?? row['RmsUUID'] ?? '')
+                  : (row['RwsHostname'] ?? row['RwsUUID'] ?? ''),
+            ),
             searchText: String(
               key === 'domains'
                 ? `${row['RtdName'] ?? ''} ${row['DomainName'] ?? ''} ${row['RtdUUID'] ?? ''}`
@@ -459,11 +485,12 @@ export class RealtimeWebRtcPage {
             ),
           }))
           .filter((option: LookupOption) => option.value);
+        this.lookups.update((current) => ({ ...current, [key]: options }));
       }),
     );
   }
   lookupOptions(key: LookupKey): readonly MnsSearchSelectFieldOption[] {
-    return this.lookups[key];
+    return this.lookups()[key];
   }
   lookupPlaceholder(key: LookupKey): string {
     if (key === 'domains') return 'Search domains';
@@ -749,35 +776,33 @@ export class RealtimeWebRtcPage {
     return `'${value.replace(/'/g, `'\\''`)}'`;
   }
   isSelected(row: WebRtcRecord) {
-    return this.selected.has(this.uuid(row));
+    return this.selected().has(this.uuid(row));
   }
   toggle(row: WebRtcRecord, checked: boolean) {
-    checked ? this.selected.add(this.uuid(row)) : this.selected.delete(this.uuid(row));
-  }
-  visibleRows() {
-    const rows = this.dataSource.filteredData;
-    const paginator = this.paginator();
-    if (!paginator) return rows;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return rows.slice(start, start + paginator.pageSize);
-  }
-  allVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((r) => this.selected.has(this.uuid(r)));
-  }
-  someVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((r) => this.selected.has(this.uuid(r))) && !this.allVisibleSelected();
+    this.selected.update((current) => {
+      const next = new Set(current);
+      checked ? next.add(this.uuid(row)) : next.delete(this.uuid(row));
+      return next;
+    });
   }
   toggleVisible(checked: boolean) {
-    for (const r of this.visibleRows()) this.toggle(r, checked);
+    this.selected.update((current) => {
+      const next = new Set(current);
+      for (const row of this.visibleRows()) {
+        checked ? next.add(this.uuid(row)) : next.delete(this.uuid(row));
+      }
+      return next;
+    });
   }
   reconcile() {
-    const valid = new Set(this.dataSource.data.map((r) => this.uuid(r)));
-    for (const id of [...this.selected]) if (!valid.has(id)) this.selected.delete(id);
+    const valid = new Set(this.rows().map((row: WebRtcRecord) => this.uuid(row)));
+    const current = untracked(() => this.selected());
+    const next = new Set([...current].filter((uuid) => valid.has(uuid)));
+    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
+    this.selected.set(next);
   }
   async removeSelected() {
-    const ids = [...this.selected];
+    const ids = [...this.selected()];
     if (!ids.length) return;
     const ok = await firstValueFrom(
       this.dialog
@@ -799,12 +824,22 @@ export class RealtimeWebRtcPage {
     const failedIds = new Set(
       failed.map((item: Record<string, string>) => item[uuidKey]).filter(Boolean),
     );
-    this.selected.clear();
-    for (const id of failedIds) this.selected.add(String(id));
+    this.selected.set(new Set([...failedIds].map(String)));
     if (failed.length)
       this.snack.error(`${failed.length} selected WebRTC record(s) could not be deleted.`);
     else this.snack.success('Selected WebRTC records deleted.');
     this.recordsResource.reload();
+  }
+
+  private sortRows(rows: WebRtcRecord[]): WebRtcRecord[] {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    return [...rows].sort((left, right) =>
+      String(this.cell(left, active) ?? '').localeCompare(String(this.cell(right, active) ?? '')) *
+      multiplier,
+    );
   }
 
   private errorMessage(error: unknown, fallback: string) {

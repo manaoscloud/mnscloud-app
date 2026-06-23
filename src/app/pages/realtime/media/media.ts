@@ -2,7 +2,6 @@ import {
   Component,
   DestroyRef,
   TemplateRef,
-  afterNextRender,
   computed,
   effect,
   inject,
@@ -21,11 +20,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -178,6 +177,10 @@ export class RealtimeMediaPage {
   readonly generatedInstall = signal<MediaRecord | null>(null);
   readonly generatedInstallSource = signal<MediaRecord | null>(null);
   readonly domainLookupEnabled = signal(false);
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
   readonly formModel = signal<MediaFormModel>(this.defaultFormModel());
   readonly form = createForm(this.formModel);
   readonly pageTitle = computed(() =>
@@ -194,7 +197,6 @@ export class RealtimeMediaPage {
     { value: '0', label: 'Inactive' },
   ]);
 
-  readonly dataSource = new MatTableDataSource<MediaRecord>([]);
   readonly displayedColumns = computed(() =>
     this.isDomains()
       ? ['select', 'domain', 'purpose', 'status', 'updated', 'actions']
@@ -203,9 +205,6 @@ export class RealtimeMediaPage {
   readonly recordFields = computed(() => (this.isDomains() ? DOMAIN_RECORD_FIELDS : RECORD_FIELDS));
   readonly networkFields = signal(NETWORK_FIELDS);
   readonly notesFields = computed(() => (this.isDomains() ? DOMAIN_NOTES_FIELDS : NOTES_FIELDS));
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly mediaFormDialog = viewChild<TemplateRef<unknown>>('mediaFormDialog');
   readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
 
@@ -229,6 +228,20 @@ export class RealtimeMediaPage {
       });
       return response?.data?.items ?? [];
     },
+  });
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly sortedRows = computed(() => this.sortRows(this.rows()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
   });
 
   private readonly domainsResource = resource({
@@ -260,6 +273,7 @@ export class RealtimeMediaPage {
         return {
           value: String(value ?? ''),
           label: String(label ?? ''),
+          description: String(domain['RtdPurpose'] || value || ''),
           searchText: `${label ?? ''} ${domain['RtdPurpose'] ?? ''} ${value ?? ''}`,
         };
       })
@@ -275,6 +289,7 @@ export class RealtimeMediaPage {
         return {
           value: String(value ?? ''),
           label: String(label ?? ''),
+          description: String(domain['RmdID'] || value || ''),
           searchText: `${label ?? ''} ${domain['RtdPurpose'] ?? ''} ${domain['RmdID'] ?? ''} ${
             value ?? ''
           }`,
@@ -285,17 +300,8 @@ export class RealtimeMediaPage {
 
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.filterPredicate = (row, filter) =>
-      JSON.stringify(row).toLowerCase().includes(filter);
-    this.dataSource.sortingDataAccessor = (row, column) =>
-      String(this.cell(row, column) ?? '').toLowerCase();
-  });
-
   private readonly syncRows = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
   });
 
@@ -317,8 +323,7 @@ export class RealtimeMediaPage {
   applySearchFilters(): void {
     const nextSearch = this.searchInput().trim();
     const nextStatus = this.statusInput();
-    this.dataSource.filter = nextSearch.toLowerCase();
-    this.paginator()?.firstPage();
+    this.pageIndex.set(0);
     if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
       this.itemsResource.reload();
     } else {
@@ -330,14 +335,24 @@ export class RealtimeMediaPage {
   clearSearchFilters(): void {
     this.searchInput.set('');
     this.statusInput.set('');
-    this.dataSource.filter = '';
-    this.paginator()?.firstPage();
+    this.pageIndex.set(0);
     if (this.appliedSearch() || this.appliedStatus()) {
       this.appliedSearch.set('');
       this.appliedStatus.set('');
     } else {
       this.itemsResource.reload();
     }
+  }
+
+  setSort(sort: Sort): void {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent): void {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
   }
 
   startCreate(): void {
@@ -646,24 +661,6 @@ export class RealtimeMediaPage {
     });
   }
 
-  visibleRows(): MediaRecord[] {
-    const rows = this.dataSource.filteredData;
-    const paginator = this.paginator();
-    if (!paginator) return rows;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return rows.slice(start, start + paginator.pageSize);
-  }
-
-  allVisibleSelected(): boolean {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
-  }
-
-  someVisibleSelected(): boolean {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
-  }
-
   toggleVisible(checked: boolean): void {
     const rows = this.visibleRows();
     this.selected.update((current) => {
@@ -676,11 +673,22 @@ export class RealtimeMediaPage {
   }
 
   private reconcileSelection(): void {
-    const valid = new Set(this.dataSource.data.map((row) => this.uuid(row)));
+    const valid = new Set(this.rows().map((row: MediaRecord) => this.uuid(row)));
     const current = untracked(() => this.selected());
     const next = new Set([...current].filter((uuid) => valid.has(uuid)));
     if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
     this.selected.set(next);
+  }
+
+  private sortRows(rows: MediaRecord[]): MediaRecord[] {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    return [...rows].sort((left, right) =>
+      String(this.cell(left, active) ?? '').localeCompare(String(this.cell(right, active) ?? '')) *
+      multiplier,
+    );
   }
 
   private defaultFormModel(): MediaFormModel {
