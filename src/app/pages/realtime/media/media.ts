@@ -606,6 +606,14 @@ export class RealtimeMediaPage {
     return String(this.isDomains() ? row['RmdUUID'] ?? '' : row['RmsUUID'] ?? '');
   }
 
+  relatedUuid(row: MediaRecord, column: string): string {
+    const map: Record<string, unknown> = {
+      name: this.uuid(row),
+      domain: row['RealtimeMediaDomainRmdUUID'] ?? row['RealtimeDomainRtdUUID'],
+    };
+    return String(map[column] ?? '');
+  }
+
   name(row: MediaRecord): string {
     return String(
       this.isDomains()

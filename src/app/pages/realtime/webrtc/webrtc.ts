@@ -358,6 +358,17 @@ export class RealtimeWebRtcPage {
   uuid(row: WebRtcRecord) {
     return String(row[this.config().uuid] ?? '');
   }
+  relatedUuid(row: WebRtcRecord, column: string): string {
+    const map: Record<string, unknown> = {
+      publicDomain: row['RealtimeDomainRtdUUID'],
+      mediaServer: row['RealtimeMediaServerRmsUUID'],
+      server: row['RealtimeWebRtcServerRwsUUID'],
+      domain: row['RealtimeDomainRtdUUID'],
+      name: this.uuid(row),
+      key: this.uuid(row),
+    };
+    return String(map[column] ?? '');
+  }
   name(row: WebRtcRecord) {
     return String(row[this.config().name] ?? '');
   }

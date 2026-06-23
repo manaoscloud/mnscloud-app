@@ -714,6 +714,15 @@ export class RealtimeTurnPage {
     return String(this.isDomains() ? (row['RtnUUID'] ?? '') : (row['RtsUUID'] ?? ''));
   }
 
+  relatedUuid(row: TurnRecord, column: string): string {
+    const map: Record<string, unknown> = {
+      name: this.uuid(row),
+      domain: row['RealtimeDomainRtdUUID'],
+      server: row['RealtimeTurnServerRtsUUID'],
+    };
+    return String(map[column] ?? '');
+  }
+
   name(row: TurnRecord): string {
     return String(
       this.isDomains() ? (row['RtdName'] ?? row['DomainName'] ?? '') : (row['RtsName'] ?? ''),

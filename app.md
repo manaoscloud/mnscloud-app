@@ -258,6 +258,9 @@
     the first line and the record UUID directly below it on the second line. Use the shared
     `.record-main` and `.record-uuid` classes. The UUID line is mandatory for auditability,
     support, and fast troubleshooting; do not move it to a tooltip or hide it behind an action.
+    When another column represents a related record/FK, its secondary `.record-uuid` line must show
+    that related entity UUID instead of repeating the current row UUID. For example, a `Server`
+    column shows the server UUID, and a `Realtime Domain` column shows the realtime domain UUID.
     If the API/model field is not literally `UUID`, expose a small component helper that returns
     the canonical record UUID and use that helper in the cell.
   - If column ids differ from API/model fields, or if displayed values are derived labels, define

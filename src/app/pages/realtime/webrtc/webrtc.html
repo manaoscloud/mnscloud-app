@@ -117,8 +117,8 @@
                 </div>
               } @else {
                 <div class="record-main">{{ cell(row, column) || '-' }}</div>
-                @if (column === 'name' || column === 'domain' || column === 'server' || column === 'key') {
-                  <div class="record-uuid">{{ uuid(row) }}</div>
+                @if (relatedUuid(row, column)) {
+                  <div class="record-uuid">{{ relatedUuid(row, column) }}</div>
                 }
               }
             </td>
