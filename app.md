@@ -313,19 +313,21 @@
 - Signal Forms CRUD dialogs must use the shared `mns-search-select-field` adapter for FK-like
   selects instead of hand-written page-local `mat-select` search blocks. The adapter owns
   `select-search-option`, `select-search-field`, real-time filtering, option spacing, empty state,
-  and clearing the search text when the panel closes.
+  selected trigger labels, optional option descriptions, loading state, and clearing the search text
+  when the panel closes.
 - Any free-text code field backed by a canonical DB/API registry, such as Billing Product Code, must
   use `mat-autocomplete` with API-provided suggestions and still preserve manual typing when the
   workflow intentionally creates a new registry entry.
 - Mandatory implementation pattern:
-  - first `mat-option` reserved for search input (`select-search-option`)
-  - nested search field class `select-search-field`
+  - page templates use `<mns-search-select-field ... />`, never inline `select-search-option` /
+    `select-search-field` blocks
+  - options are provided as `MnsSearchSelectFieldOption[]` from `resource()`/`computed()` state
+  - option `value`, `label`, optional `description`, and optional `searchText` must be enough for
+    users to identify the related record without opening another screen
+  - selected triggers, dropdown options, loading labels, empty labels, and translated static values
+    must be owned by the adapter/component, not by browser auto-translation
   - spacing, option padding, and search field sizing come from the global `src/styles.scss`
     contract; do not add page-local layout overrides for these classes
-  - the search input and its Material field wrappers must use the text caret cursor from the
-    global style contract, so hovering/clicking the search field shows an editable text cursor
-  - filtered options list updated in real time from typed value
-  - reset search text on close using `(openedChange)`
 - Exception: small static enum selects (for example `Active/Inactive`, `Yes/No`) can remain without search.
 - Static enum/control selects still must be fully internationalized by the component, not by the DOM
   translation fallback.

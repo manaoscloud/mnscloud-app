@@ -33,6 +33,8 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import {
+  MnsSearchSelectFieldComponent,
+  type MnsSearchSelectFieldOption,
   MnsStatusSelectFieldComponent,
   MnsTextFieldComponent,
   MnsTextareaFieldComponent,
@@ -67,6 +69,7 @@ type Entity = {
     MatTabsModule,
     MatMenuModule,
     MatChipsModule,
+    MnsSearchSelectFieldComponent,
     MnsStatusSelectFieldComponent,
     MnsTextFieldComponent,
     MnsTextareaFieldComponent,
@@ -118,9 +121,18 @@ export class CrudPage {
 
   readonly formModel = signal({
     name: '',
+    relatedUUID: '',
     status: 1,
     notes: '',
   });
+  readonly relatedOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.rows().map((item) => ({
+      value: item.UUID,
+      label: item.Name,
+      description: item.UUID,
+      searchText: `${item.Name} ${item.UUID}`,
+    })),
+  );
 
   readonly form = createForm(this.formModel, (schema) => {
     required(schema.name);
@@ -209,6 +221,7 @@ export class CrudPage {
     this.editing.set(null);
     this.formModel.set({
       name: '',
+      relatedUUID: '',
       status: 1,
       notes: '',
     });
@@ -219,6 +232,7 @@ export class CrudPage {
     this.editing.set(item);
     this.formModel.set({
       name: item.Name,
+      relatedUUID: '',
       status: Number(item.Status) || 1,
       notes: '',
     });
@@ -231,6 +245,7 @@ export class CrudPage {
     const value = this.formModel();
     const payload = {
       name: value.name.trim(),
+      relatedUUID: value.relatedUUID || null,
       status: value.status,
       notes: value.notes.trim() || null,
     };
@@ -251,13 +266,13 @@ export class CrudPage {
       this.reloadItems();
 
       if (saveAndNew && createMode) {
-        this.formModel.set({ name: '', status: 1, notes: '' });
+        this.formModel.set({ name: '', relatedUUID: '', status: 1, notes: '' });
         this.editing.set(null);
         return;
       }
 
       this.closeEntityDialog();
-      this.formModel.set({ name: '', status: 1, notes: '' });
+      this.formModel.set({ name: '', relatedUUID: '', status: 1, notes: '' });
       this.editing.set(null);
     } catch (err: any) {
       this.snack.error(this.extractErrorMessage(err, 'Failed to save item.'));
@@ -273,7 +288,7 @@ export class CrudPage {
 
   cancelForm() {
     this.closeEntityDialog();
-    this.formModel.set({ name: '', status: 1, notes: '' });
+    this.formModel.set({ name: '', relatedUUID: '', status: 1, notes: '' });
     this.editing.set(null);
   }
 

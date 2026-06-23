@@ -1625,6 +1625,25 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
   text-overflow: ellipsis;
 }
 
+.select-option-main,
+.select-option-description {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.select-option-description {
+  margin-top: 0.15rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.select-state-option {
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
 .select-search-option .mat-pseudo-checkbox {
   display: none;
 }

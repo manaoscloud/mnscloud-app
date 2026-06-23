@@ -9,9 +9,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
 type SignalFormField = Field<any, any>;
 
 export type MnsSearchSelectFieldOption = {
-  value: string | number | boolean;
+  value: string | number | boolean | null;
   label: string;
+  description?: string;
   searchText?: string;
+  disabled?: boolean;
 };
 
 @Component({
@@ -28,7 +30,21 @@ export type MnsSearchSelectFieldOption = {
   template: `
     <mat-form-field appearance="outline" floatLabel="always" [class]="fieldClass()">
       <mat-label>{{ label() }}</mat-label>
-      <mat-select [formField]="field()" (openedChange)="handleOpenedChange($event)">
+      <mat-select
+        [formField]="field()"
+        [compareWith]="compareOptionValues"
+        (openedChange)="handleOpenedChange($event)"
+      >
+        <mat-select-trigger>
+          @if (selectedOption(); as option) {
+            @if (translateOptions()) {
+              {{ option.label | transloco }}
+            } @else {
+              {{ option.label }}
+            }
+          }
+        </mat-select-trigger>
+
         <mat-option class="select-search-option" disabled>
           <mat-form-field appearance="outline" class="select-search-field">
             <mat-icon matPrefix>search</mat-icon>
@@ -39,19 +55,34 @@ export type MnsSearchSelectFieldOption = {
               (input)="search.set($any($event.target).value)"
               (click)="$event.stopPropagation()"
               (keydown)="$event.stopPropagation()"
+              autocomplete="off"
             />
           </mat-form-field>
         </mat-option>
+
+        @if (loading()) {
+          <mat-option disabled class="select-state-option">
+            {{ loadingLabel() | transloco }}
+          </mat-option>
+        }
+
         @for (option of filteredOptions(); track option.value) {
-          <mat-option [value]="option.value">
-            @if (translateOptions()) {
-              {{ option.label | transloco }}
-            } @else {
-              {{ option.label }}
+          <mat-option [value]="option.value" [disabled]="option.disabled">
+            <span class="select-option-main">
+              @if (translateOptions()) {
+                {{ option.label | transloco }}
+              } @else {
+                {{ option.label }}
+              }
+            </span>
+            @if (option.description) {
+              <span class="select-option-description">{{ option.description }}</span>
             }
           </mat-option>
         } @empty {
-          <mat-option disabled>{{ emptyLabel() | transloco }}</mat-option>
+          @if (!loading()) {
+            <mat-option disabled class="select-state-option">{{ emptyLabel() | transloco }}</mat-option>
+          }
         }
       </mat-select>
     </mat-form-field>
@@ -71,9 +102,15 @@ export class MnsSearchSelectFieldComponent {
   readonly fieldClass = input('');
   readonly placeholder = input('Search');
   readonly emptyLabel = input('No records found.');
+  readonly loadingLabel = input('Loading...');
+  readonly loading = input(false);
   readonly translateOptions = input(false);
 
   readonly search = signal('');
+  readonly selectedOption = computed(() => {
+    const currentValue = this.field()().value();
+    return this.options().find((option) => this.areOptionValuesEqual(option.value, currentValue));
+  });
 
   readonly filteredOptions = computed(() => {
     const term = this.normalize(this.search());
@@ -87,8 +124,17 @@ export class MnsSearchSelectFieldComponent {
     if (!opened) this.search.set('');
   }
 
+  readonly compareOptionValues = (left: unknown, right: unknown): boolean =>
+    this.areOptionValuesEqual(left, right);
+
   private optionSearchText(option: MnsSearchSelectFieldOption): string {
-    return `${option.label} ${option.searchText ?? ''} ${String(option.value)}`;
+    return `${option.label} ${option.description ?? ''} ${option.searchText ?? ''} ${String(
+      option.value,
+    )}`;
+  }
+
+  private areOptionValuesEqual(left: unknown, right: unknown): boolean {
+    return String(left ?? '') === String(right ?? '');
   }
 
   private normalize(value: string): string {

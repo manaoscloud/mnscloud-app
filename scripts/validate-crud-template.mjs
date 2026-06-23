@@ -73,6 +73,7 @@ const htmlRules = [
   ['save main button class', 'save-main-button'],
   ['save more button class', 'save-more-button'],
   ['save/new label', 'Save/New'],
+  ['shared FK search select adapter', '<mns-search-select-field'],
 ];
 
 const tsRules = [
@@ -80,6 +81,8 @@ const tsRules = [
   ['DestroyRef', 'DestroyRef'],
   ['signal query api', /viewChild|viewChildren/],
   ['shared dialog closed binding', 'bindDialogClosed'],
+  ['shared FK search select import', 'MnsSearchSelectFieldComponent'],
+  ['shared FK search select option type', 'MnsSearchSelectFieldOption'],
   ['resource read model', /resource\s*\(/],
   ['computed visible rows', /visibleRows\s*=\s*computed/],
   ['sort state signals', /sortActive\s*=\s*signal|sortDirection\s*=\s*signal/],
@@ -102,6 +105,7 @@ const forbiddenHtmlRules = [
   ['legacy t pipe alias', /\|\s*t\b/],
   ['old inactive status class', /\[class\.inactive\]/],
   ['inline notes tab hack', /config\(\)\.fields\s*\|\s*json/],
+  ['page-local searchable select block', /select-search-option|select-search-field/],
   ['browser confirm', /\bconfirm\s*\(/],
   ['browser alert', /\balert\s*\(/],
 ];

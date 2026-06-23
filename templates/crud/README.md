@@ -32,9 +32,13 @@ How to use:
    hidden inside a resource loader.
 6. Use Signal Forms for new forms. CRUD dialogs must prefer shared adapters from
    `src/app/shared/forms/` (`mns-text-field`, `mns-textarea-field`, `mns-select-field`,
-   `mns-status-select-field`, and future adapters for repeated controls) before writing raw
+   `mns-search-select-field`, `mns-status-select-field`, and future adapters for repeated controls)
+   before writing raw
    `mat-form-field` markup. Add missing
    repeated controls as adapters first; do not copy component-local form wiring across pages.
+   FK-like fields must use `mns-search-select-field` with options derived from `resource()` /
+   `computed()` state. Do not copy inline `select-search-option` / `select-search-field` blocks
+   into page templates.
 7. Keep the list layout structure intact (`.erp-page` → `.erp-card` → `.erp-header` → `.filter-grid` → `.table-wrapper` → `.mobile-paginator`).
 8. Keep `<table mat-table [dataSource]="visibleRows()" matSort>` with explicit sort/page signals
    (`sortActive`, `sortDirection`, `pageIndex`, `pageSize`). New CRUD pages must not use

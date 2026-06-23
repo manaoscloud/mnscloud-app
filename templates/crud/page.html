@@ -171,10 +171,17 @@
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
             <mns-text-field
-              class="span-3"
+              class="span-2"
               [field]="form.name"
               label="Name"
               placeholder="e.g. Sample"
+            />
+            <mns-search-select-field
+              class="span-1"
+              [field]="form.relatedUUID"
+              label="Related record"
+              placeholder="Search records"
+              [options]="relatedOptions()"
             />
             <mns-status-select-field [field]="form.status" />
           </form>
