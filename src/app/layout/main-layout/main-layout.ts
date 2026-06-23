@@ -1490,6 +1490,13 @@ export class MainLayout {
       requiresEnvironment: true,
       children: [
         {
+          id: 'realtime/dashboard',
+          label: 'Dashboard',
+          icon: 'dashboard',
+          masterRoute: '/system/realtime',
+          roles: ['MASTER'],
+        },
+        {
           id: 'realtime/domain',
           label: 'Domains',
           icon: 'language',
@@ -1538,6 +1545,13 @@ export class MainLayout {
           scope: 'master',
           children: [
             {
+              id: 'realtime/media/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              masterRoute: '/system/realtime/media',
+              roles: ['MASTER'],
+            },
+            {
               id: 'realtime/media/server',
               label: 'Servers',
               icon: 'dns',
@@ -1552,6 +1566,13 @@ export class MainLayout {
           icon: 'router',
           scope: 'master',
           children: [
+            {
+              id: 'realtime/turn/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              masterRoute: '/system/realtime/turn',
+              roles: ['MASTER'],
+            },
             {
               id: 'realtime/turn/domains',
               label: 'Domains',

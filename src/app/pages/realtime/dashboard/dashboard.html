@@ -1,0 +1,161 @@
+<section class="erp-page realtime-dashboard" animate.enter="app-fade-in">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ title() | transloco }}</h1>
+        <p>{{ subtitle() | transloco }}</p>
+      </div>
+
+      <div class="header-actions">
+        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
+        <input
+          matInput
+          [placeholder]="'Search' | transloco"
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
+        </button>
+      </div>
+    </div>
+
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+        </div>
+      }
+
+      <div class="kpi-grid">
+        @for (item of kpis(); track item.label) {
+          <article class="kpi-tile">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label | transloco }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.detail | transloco }}</small>
+          </article>
+        }
+      </div>
+
+      <div class="inventory-grid">
+        <section class="dashboard-panel">
+          <h2>{{ primaryTitle() | transloco }}</h2>
+          @if (primaryRows().length) {
+            <div class="inventory-list">
+              @for (row of primaryRows(); track rowTrack($index, row)) {
+                <article class="inventory-row">
+                  <div class="inventory-title">
+                    <div>
+                      <strong>{{ row.name }}</strong>
+                      <span>{{ row.meta }}</span>
+                    </div>
+                    <span
+                      class="status-pill status-chip state-chip"
+                      [class]="row.statusClass"
+                      [class.is-active]="row.statusClass === 'chip-success'"
+                      [class.is-inactive]="row.statusClass !== 'chip-success'"
+                    >
+                      {{ row.status | transloco }}
+                    </span>
+                  </div>
+
+                  <dl>
+                    @for (detail of row.details; track detail.label) {
+                      <div>
+                        <dt>{{ detail.label | transloco }}</dt>
+                        <dd>
+                          @if (
+                            detail.label === 'Last Seen' ||
+                            detail.label === 'Last Sync' ||
+                            detail.label === 'Updated'
+                          ) {
+                            {{ detail.value ? (detail.value | mnsDateTime) : '-' }}
+                          } @else {
+                            {{ detail.value | transloco }}
+                          }
+                        </dd>
+                      </div>
+                    }
+                  </dl>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="empty-state">{{ noPrimaryLabel() | transloco }}</p>
+          }
+        </section>
+
+        <section class="dashboard-panel">
+          <h2>{{ secondaryTitle() | transloco }}</h2>
+          @if (secondaryRows().length) {
+            <div class="inventory-list">
+              @for (row of secondaryRows(); track rowTrack($index, row)) {
+                <article class="inventory-row">
+                  <div class="inventory-title">
+                    <div>
+                      <strong>{{ row.name }}</strong>
+                      <span>{{ row.meta | transloco }}</span>
+                    </div>
+                    <span
+                      class="status-pill status-chip state-chip"
+                      [class]="row.statusClass"
+                      [class.is-active]="row.statusClass === 'chip-success'"
+                      [class.is-inactive]="row.statusClass !== 'chip-success'"
+                    >
+                      {{ row.status | transloco }}
+                    </span>
+                  </div>
+
+                  <dl>
+                    @for (detail of row.details; track detail.label) {
+                      <div>
+                        <dt>{{ detail.label | transloco }}</dt>
+                        <dd>
+                          @if (
+                            detail.label === 'Last Seen' ||
+                            detail.label === 'Last Sync' ||
+                            detail.label === 'Updated'
+                          ) {
+                            {{ detail.value ? (detail.value | mnsDateTime) : '-' }}
+                          } @else {
+                            {{ detail.value | transloco }}
+                          }
+                        </dd>
+                      </div>
+                    }
+                  </dl>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="empty-state">{{ noSecondaryLabel() | transloco }}</p>
+          }
+        </section>
+      </div>
+    </div>
+  </mat-card>
+</section>

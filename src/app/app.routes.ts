@@ -1272,6 +1272,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'realtime',
+                loadComponent: () =>
+                  import('./pages/realtime/dashboard/dashboard').then(
+                    (m) => m.RealtimeDashboardPage,
+                  ),
+                title: 'System Realtime Dashboard | mnscloud',
+                data: { scope: 'master', dashboardMode: 'overview' },
+              },
+              {
                 path: 'realtime/webrtc',
                 loadComponent: () =>
                   import('./pages/realtime/webrtc/dashboard/dashboard').then(
@@ -1304,8 +1313,12 @@ export const routes: Routes = [
               })) as any),
               {
                 path: 'realtime/turn',
-                redirectTo: '/system/realtime/turn/server',
-                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./pages/realtime/dashboard/dashboard').then(
+                    (m) => m.RealtimeDashboardPage,
+                  ),
+                title: 'System Realtime • TURN/STUN Dashboard | mnscloud',
+                data: { scope: 'master', dashboardMode: 'turn' },
               },
               {
                 path: 'realtime/turn/server',
@@ -1323,8 +1336,12 @@ export const routes: Routes = [
               },
               {
                 path: 'realtime/media',
-                redirectTo: '/system/realtime/media/server',
-                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./pages/realtime/dashboard/dashboard').then(
+                    (m) => m.RealtimeDashboardPage,
+                  ),
+                title: 'System Realtime • Media Dashboard | mnscloud',
+                data: { scope: 'master', dashboardMode: 'media' },
               },
               {
                 path: 'realtime/media/server',
