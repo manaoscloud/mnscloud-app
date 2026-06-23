@@ -245,6 +245,12 @@
   - Standard list pages use `<table mat-table [dataSource]="dataSource" matSort>`, `MatTableDataSource`, `MatPaginator`, and `MatSort`.
   - Every data column must be sortable with `mat-sort-header`.
   - `select` and `actions` columns must not be sortable.
+  - The primary identity column of every CRUD list must render the human-readable main value on
+    the first line and the record UUID directly below it on the second line. Use the shared
+    `.record-main` and `.record-uuid` classes. The UUID line is mandatory for auditability,
+    support, and fast troubleshooting; do not move it to a tooltip or hide it behind an action.
+    If the API/model field is not literally `UUID`, expose a small component helper that returns
+    the canonical record UUID and use that helper in the cell.
   - If column ids differ from API/model fields, or if displayed values are derived labels, define `sortingDataAccessor` or equivalent explicit sort logic.
   - Derived sort examples: provider label, plan label, status label, account/domain label, formatted price, region name, size/bundle display, image display.
   - After `.table-wrapper`, render a real `<mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons>`.
@@ -526,6 +532,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - The validator checks the required global CSS hooks, including:
   - `.table-wrapper mat-elevation-z8` with `[class.is-loading]`
   - `.select-col`, `.status-col`, `.actions-col-header`, `.actions-col-cell`, `.actions-col`
+  - `.record-main` and `.record-uuid` in the primary table cell
   - `span.status-pill.status-chip.state-chip` with `is-active`/`is-inactive` and Activity Log palette classes
   - `matNoDataRow`
   - `.save-split-action`, `.save-main-button`, `.save-more-button`, and `is-single-action`

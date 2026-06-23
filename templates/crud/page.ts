@@ -87,10 +87,12 @@ export class CrudPage {
   readonly saving = signal(false);
   readonly editing = signal<Entity | null>(null);
   readonly searchInput = signal('');
+  readonly statusInput = signal<number | ''>('');
   readonly search = signal('');
+  readonly status = signal<number | ''>('');
   readonly selectedEntityUUIDs = signal<Set<string>>(new Set());
   private readonly itemsResource = resource({
-    params: () => this.search(),
+    params: () => ({ search: this.search(), status: this.status() }),
     defaultValue: [] as Entity[],
     loader: ({ params }) => this.fetchItems(params),
   });
@@ -146,17 +148,21 @@ export class CrudPage {
 
   applySearchFilters() {
     const nextSearch = this.searchInput().trim();
-    if (nextSearch === this.search()) {
+    const nextStatus = this.statusInput();
+    if (nextSearch === this.search() && nextStatus === this.status()) {
       this.itemsResource.reload();
     } else {
       this.search.set(nextSearch);
+      this.status.set(nextStatus);
     }
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
-    if (this.search()) {
+    this.statusInput.set('');
+    if (this.search() || this.status() !== '') {
       this.search.set('');
+      this.status.set('');
     } else {
       this.itemsResource.reload();
     }
@@ -166,10 +172,11 @@ export class CrudPage {
     this.itemsResource.reload();
   }
 
-  private async fetchItems(search: string) {
+  private async fetchItems(filters: { search: string; status: number | '' }) {
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (search) params.set('q', search);
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status !== '') params.set('status', String(filters.status));
     const response = await this.api.get<any>(`endpoint?${params.toString()}`);
     return response?.data?.items ?? [];
   }

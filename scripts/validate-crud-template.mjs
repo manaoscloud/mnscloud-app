@@ -46,6 +46,8 @@ const htmlRules = [
   ['actions column header class', 'actions-col-header'],
   ['actions column cell class', 'actions-col-cell'],
   ['actions column wrapper', 'actions-col'],
+  ['record main line', 'record-main'],
+  ['record uuid line', 'record-uuid'],
   ['status pill', 'status-pill'],
   ['status chip variant', 'status-chip'],
   ['status chip state class', /chip-success|chip-running|chip-queued|chip-failed|chip-skipped/],

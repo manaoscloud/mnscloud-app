@@ -38,26 +38,29 @@ How to use:
 7. Keep the list layout structure intact (`.erp-page` → `.erp-card` → `.erp-header` → `.filter-grid` → `.table-wrapper` → `.mobile-paginator`).
 8. Keep `<table mat-table [dataSource]="dataSource" matSort>`, `MatTableDataSource`, `MatPaginator`, and `MatSort`.
 9. Add `mat-sort-header` to every data column; never add it to `select` or `actions`.
-10. Update `sortingDataAccessor` whenever a displayed column uses a derived value, related-entity label, formatted value, or a field name different from the API/model field.
-11. Keep the real `<mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons>` after `.table-wrapper`.
-12. Use `span.status-pill.status-chip.state-chip` for status values, with Activity Log palette classes such as `chip-success` and `chip-skipped`, plus `is-active`/`is-inactive` for boolean status.
-13. Keep list styling aligned with the ERP baseline by using the global hook classes only. Do not
+10. In the primary identity column, render the display name/value on the first line and the record
+    UUID below it using `.record-main` and `.record-uuid`. If the record UUID field is not named
+    `UUID`, add a helper such as `recordUUID(row)` and use that helper consistently.
+11. Update `sortingDataAccessor` whenever a displayed column uses a derived value, related-entity label, formatted value, or a field name different from the API/model field.
+12. Keep the real `<mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons>` after `.table-wrapper`.
+13. Use `span.status-pill.status-chip.state-chip` for status values, with Activity Log palette classes such as `chip-success` and `chip-skipped`, plus `is-active`/`is-inactive` for boolean status.
+14. Keep list styling aligned with the ERP baseline by using the global hook classes only. Do not
     redefine `.erp-page`, `.erp-card`, `.erp-header`, `.header-actions`, `.filter-grid`, or
     `.filter-actions` in component SCSS. Shared layout belongs in `src/styles.scss`; component SCSS
     is for resource-specific details only.
-14. Keep filter button icons standardized: `Apply` uses `filter_alt`; `Clear` uses `backspace`.
-15. Keep responsive breakpoints ordered `1400px` → `1200px` → `900px`.
-16. Keep the leading `select` checkbox column, selected count, `Delete selected` action in `filter-actions`, and call `ApiService.delete('<resource>/bulk', { ids })`; only remove bulk delete when the resource has a documented explicit exception.
-17. Keep individual delete available and use `SlowConfirmDialogComponent` for both individual and bulk delete confirmation.
-18. Use `SnackbarService` for transient success/error/warning/info feedback. Do not render CRUD operation messages inline in the page, table, dialog body, or dialog footer.
-19. Keep create/edit in `MatDialog`; never convert this template to an inline form section.
-20. Preserve the dialog viewport fallback: `updateSize(width, height || maxHeight)` so desktop dialogs do not collapse.
-21. Keep the first dialog tab label as the translated `Record` key (`[label]="'Record' | transloco`) by default. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
-22. Whenever the form has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent annotation), keep it in a dedicated `mat-tab label="Notes"` with a full-row textarea; never mix notes into `Record`, `Config`, `Pricing`, or `Provision`.
-23. Keep the dialog visual contract aligned with this CRUD template and `app.md`: root padding `1.5rem 1.75rem 1.25rem`, compact tab content, sticky translucent `.form-actions` with `margin: auto 0 0`, internal horizontal padding, blur/shadow, desktop Cancel left and Save split right, mobile Save first and Cancel second.
-24. For currency defaults, resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`; tenant parameters must win and master parameters are the fallback. Do not hardcode `BRL`/`USD` as the source of truth for create/reset flows.
-25. Add the dialog `panelClass` to global overlay styles in `src/styles.scss` when the page uses a new panel class, so `.mat-mdc-dialog-surface`, content, and actions match the shared CRUD surface.
-26. Run the CRUD validators before finishing:
+15. Keep filter button icons standardized: `Apply` uses `filter_alt`; `Clear` uses `backspace`.
+16. Keep responsive breakpoints ordered `1400px` → `1200px` → `900px`.
+17. Keep the leading `select` checkbox column, selected count, `Delete selected` action in `filter-actions`, and call `ApiService.delete('<resource>/bulk', { ids })`; only remove bulk delete when the resource has a documented explicit exception.
+18. Keep individual delete available and use `SlowConfirmDialogComponent` for both individual and bulk delete confirmation.
+19. Use `SnackbarService` for transient success/error/warning/info feedback. Do not render CRUD operation messages inline in the page, table, dialog body, or dialog footer.
+20. Keep create/edit in `MatDialog`; never convert this template to an inline form section.
+21. Preserve the dialog viewport fallback: `updateSize(width, height || maxHeight)` so desktop dialogs do not collapse.
+22. Keep the first dialog tab label as the translated `Record` key (`[label]="'Record' | transloco`) by default. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
+23. Whenever the form has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent annotation), keep it in a dedicated `mat-tab label="Notes"` with a full-row textarea; never mix notes into `Record`, `Config`, `Pricing`, or `Provision`.
+24. Keep the dialog visual contract aligned with this CRUD template and `app.md`: root padding `1.5rem 1.75rem 1.25rem`, compact tab content, sticky translucent `.form-actions` with `margin: auto 0 0`, internal horizontal padding, blur/shadow, desktop Cancel left and Save split right, mobile Save first and Cancel second.
+25. For currency defaults, resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`; tenant parameters must win and master parameters are the fallback. Do not hardcode `BRL`/`USD` as the source of truth for create/reset flows.
+26. Add the dialog `panelClass` to global overlay styles in `src/styles.scss` when the page uses a new panel class, so `.mat-mdc-dialog-surface`, content, and actions match the shared CRUD surface.
+27. Run the CRUD validators before finishing:
 
 ```bash
 npm run check:crud -- src/app/pages/<area>/<component>
