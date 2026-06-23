@@ -84,8 +84,10 @@
   snapshot. Required panels should reject the loader on failure; optional counters/panels may use
   settled fallbacks inside the snapshot so one secondary metric does not blank the full dashboard.
 - Use `resource.reload()` for explicit refresh actions. Do not duplicate resource state into manual
-  mutable signals unless a UI integration requires an adapter such as `MatTableDataSource`; in that
-  case, synchronize the adapter from the resource snapshot with a small explicit `effect()`.
+  mutable signals. CRUD/read-list pages must derive visible rows with `computed()` and pass the
+  computed array directly to Angular Material tables. If a third-party integration truly requires a
+  mutable adapter, document the exception in the component notes and keep the adapter synchronized
+  at that boundary only.
 - Do not scatter long-lived `.subscribe()` calls inside pages/components. Router events, route data,
   and read models must be adapted with `toSignal()`, `resource()`, and `effect()`. Keep direct
   subscriptions only in shared boundary helpers that intentionally adapt callback/event APIs. Pages
@@ -218,7 +220,8 @@
 - List data completeness:
   - When the API/list procedure supports `search`, `Apply` must reload from the API with the search parameter instead of filtering only the currently loaded table rows.
   - When the backend procedure has a default limit, the frontend service must pass an explicit `limit` appropriate for the workflow or implement real server-side pagination.
-  - `MatTableDataSource.filter` must not be the only search mechanism for resources where the loaded rows can be an incomplete backend window.
+  - Client-side filtering over the currently loaded rows must not be the only search mechanism for
+    resources where the loaded rows can be an incomplete backend window.
   - Reference bug: `VoipDid` initially loaded the procedure default of 50 rows, so valid DIDs outside that window could not be found in the app even though they existed in the database.
 - Loading behavior:
   - Route/component transitions are owned by the global `RouteLoader` plus
@@ -242,7 +245,13 @@
   - Do not render transient CRUD success/error/warning/info messages inline in pages, tables, dialogs, or form footers.
   - Inline state blocks are reserved for persistent empty/error states that require page-level action, not save/delete/load notifications.
 - Table behavior:
-  - Standard list pages use `<table mat-table [dataSource]="dataSource" matSort>`, `MatTableDataSource`, `MatPaginator`, and `MatSort`.
+  - Standard list pages use signal-first tables:
+    `<table mat-table [dataSource]="visibleRows()" matSort ...>`.
+  - Read/list data comes from `resource()`; table state such as sorted rows, visible page rows,
+    selected visible rows, and derived labels must be modeled with `computed()`.
+  - Do not introduce `MatTableDataSource` in new CRUD templates/refactors. It is treated as a
+    legacy adapter unless a specific third-party integration requires it and that exception is
+    documented.
   - Every data column must be sortable with `mat-sort-header`.
   - `select` and `actions` columns must not be sortable.
   - The primary identity column of every CRUD list must render the human-readable main value on
@@ -251,11 +260,16 @@
     support, and fast troubleshooting; do not move it to a tooltip or hide it behind an action.
     If the API/model field is not literally `UUID`, expose a small component helper that returns
     the canonical record UUID and use that helper in the cell.
-  - If column ids differ from API/model fields, or if displayed values are derived labels, define `sortingDataAccessor` or equivalent explicit sort logic.
+  - If column ids differ from API/model fields, or if displayed values are derived labels, define
+    explicit signal-friendly sort logic, for example a `sortValue(row, column)` helper used by the
+    sorted-row `computed()`.
   - Derived sort examples: provider label, plan label, status label, account/domain label, formatted price, region name, size/bundle display, image display.
-  - After `.table-wrapper`, render a real `<mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons>`.
+  - After `.table-wrapper`, render a real `<mat-paginator class="mobile-paginator"
+    [length]="sortedRows().length" [pageIndex]="pageIndex()" [pageSize]="pageSize()"
+    [pageSizeOptions]="[5, 10, 25, 100]" (page)="setPage($event)" showFirstLastButtons>`.
   - Do not use an empty `.mobile-paginator` placeholder.
-  - If a page uses signals/custom pagination instead of `MatTableDataSource`, it must still provide equivalent `matSort`, `mat-sort-header`, paginator, page reset on sort/filter, and derived-column sorting behavior.
+  - Sort/filter changes must reset `pageIndex` to `0`.
+  - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
 - Delete behavior:
   - Use `SlowConfirmDialogComponent` (`panelClass: 'slow-confirm-dialog'`, `disableClose: true`).
   - Individual row delete remains available even when bulk delete exists.

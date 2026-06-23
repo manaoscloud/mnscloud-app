@@ -22,9 +22,9 @@ How to use:
    `@angular/animations` triggers. Do not inject `ChangeDetectorRef` or call `detectChanges()`;
    model page state with signals/resources instead.
 4. Keep list/read state on Angular `resource()`. The default template uses `itemsResource`,
-   `resource.reload()`, and a small `effect()` to synchronize `MatTableDataSource`; do not replace
-   it with ad hoc `loadItems()`, parallel `loading/error/items` signals, or constructor lifecycle
-   work.
+   `resource.reload()`, and `computed()` table projections (`sortedRows`, `visibleRows`,
+   visible-selection state); do not replace it with ad hoc `loadItems()`, parallel
+   `loading/error/items` signals, `MatTableDataSource`, or constructor lifecycle work.
    Router events, route data, and read-model events must use `toSignal()`/`resource()`/`effect()`,
    not scattered long-lived `.subscribe()` calls.
 5. Keep mutations explicit in event handlers/service calls (`POST`, `PUT`, `DELETE`, uploads,
@@ -36,13 +36,19 @@ How to use:
    `mat-form-field` markup. Add missing
    repeated controls as adapters first; do not copy component-local form wiring across pages.
 7. Keep the list layout structure intact (`.erp-page` → `.erp-card` → `.erp-header` → `.filter-grid` → `.table-wrapper` → `.mobile-paginator`).
-8. Keep `<table mat-table [dataSource]="dataSource" matSort>`, `MatTableDataSource`, `MatPaginator`, and `MatSort`.
+8. Keep `<table mat-table [dataSource]="visibleRows()" matSort>` with explicit sort/page signals
+   (`sortActive`, `sortDirection`, `pageIndex`, `pageSize`). New CRUD pages must not use
+   `MatTableDataSource`.
 9. Add `mat-sort-header` to every data column; never add it to `select` or `actions`.
 10. In the primary identity column, render the display name/value on the first line and the record
     UUID below it using `.record-main` and `.record-uuid`. If the record UUID field is not named
     `UUID`, add a helper such as `recordUUID(row)` and use that helper consistently.
-11. Update `sortingDataAccessor` whenever a displayed column uses a derived value, related-entity label, formatted value, or a field name different from the API/model field.
-12. Keep the real `<mat-paginator class="mobile-paginator" [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons>` after `.table-wrapper`.
+11. Update explicit sort helpers such as `sortValue(row, column)` whenever a displayed column uses
+    a derived value, related-entity label, formatted value, or a field name different from the
+    API/model field.
+12. Keep the real `<mat-paginator class="mobile-paginator" [length]="sortedRows().length"
+    [pageIndex]="pageIndex()" [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 25, 100]"
+    (page)="setPage($event)" showFirstLastButtons>` after `.table-wrapper`.
 13. Use `span.status-pill.status-chip.state-chip` for status values, with Activity Log palette classes such as `chip-success` and `chip-skipped`, plus `is-active`/`is-inactive` for boolean status.
 14. Keep list styling aligned with the ERP baseline by using the global hook classes only. Do not
     redefine `.erp-page`, `.erp-card`, `.erp-header`, `.header-actions`, `.filter-grid`, or

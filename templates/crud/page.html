@@ -64,7 +64,14 @@
         </div>
       }
 
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -140,7 +147,11 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
+      (page)="setPage($event)"
       showFirstLastButtons
     ></mat-paginator>
   </mat-card>

@@ -41,6 +41,7 @@ const htmlRules = [
   ['table loading binding', '[class.is-loading]'],
   ['table loading overlay', 'table-loading'],
   ['mat table sort', /<table[^>]*mat-table[^>]*matSort/],
+  ['signal table data source', /\[dataSource\]="visibleRows\(\)"/],
   ['select column class', 'select-col'],
   ['status column class', 'status-col'],
   ['actions column header class', 'actions-col-header'],
@@ -79,10 +80,12 @@ const tsRules = [
   ['DestroyRef', 'DestroyRef'],
   ['signal query api', /viewChild|viewChildren/],
   ['shared dialog closed binding', 'bindDialogClosed'],
-  ['MatTableDataSource', 'MatTableDataSource'],
-  ['MatPaginator signal query', /viewChild\(MatPaginator\)/],
-  ['MatSort signal query', /viewChild\(MatSort\)/],
-  ['sortingDataAccessor', 'sortingDataAccessor'],
+  ['resource read model', /resource\s*\(/],
+  ['computed visible rows', /visibleRows\s*=\s*computed/],
+  ['sort state signals', /sortActive\s*=\s*signal|sortDirection\s*=\s*signal/],
+  ['page state signals', /pageIndex\s*=\s*signal|pageSize\s*=\s*signal/],
+  ['explicit sort handler', /setSort\s*\(/],
+  ['explicit page handler', /setPage\s*\(/],
   ['openCrudTemplateDialog', 'openCrudTemplateDialog'],
   ['SlowConfirmDialogComponent', 'SlowConfirmDialogComponent'],
   ['bulk delete method', /removeMany|deleteMany|bulk/i],
@@ -116,6 +119,7 @@ const forbiddenTsRules = [
     /constructor\s*\([^)]*(private|public|protected|readonly)\s+/s,
   ],
   ['ngx-translate residue', /ngx-translate|TranslateService|TranslateModule/],
+  ['MatTableDataSource residue', /MatTableDataSource/],
 ];
 
 let failed = false;

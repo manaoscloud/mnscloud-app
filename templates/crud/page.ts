@@ -2,7 +2,6 @@ import {
   Component,
   DestroyRef,
   TemplateRef,
-  afterNextRender,
   computed,
   effect,
   inject,
@@ -18,10 +17,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -90,6 +89,10 @@ export class CrudPage {
   readonly statusInput = signal<number | ''>('');
   readonly search = signal('');
   readonly status = signal<number | ''>('');
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
   readonly selectedEntityUUIDs = signal<Set<string>>(new Set());
   private readonly itemsResource = resource({
     params: () => ({ search: this.search(), status: this.status() }),
@@ -97,8 +100,20 @@ export class CrudPage {
     loader: ({ params }) => this.fetchItems(params),
   });
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
-
-  readonly dataSource = new MatTableDataSource<Entity>([]);
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly sortedRows = computed(() => this.sortRows(this.rows()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
+  });
   readonly displayedColumns = ['select', 'name', 'status', 'actions'];
 
   readonly formModel = signal({
@@ -112,31 +127,14 @@ export class CrudPage {
     minLength(schema.name, 2);
   });
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly entityFormDialog = viewChild<TemplateRef<unknown>>('entityFormDialog');
 
   private entityDialogBinding: CrudDialogBinding | null = null;
 
   private readonly cleanup = this.destroyRef.onDestroy(() => this.closeEntityDialog());
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'status':
-          return this.isActive(data) ? 'ACTIVE' : 'INACTIVE';
-        default:
-          return '';
-      }
-    };
-  });
-
-  private readonly syncItems = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+  private readonly syncSelection = effect(() => {
+    this.rows();
     queueMicrotask(() => this.reconcileSelection());
   });
 
@@ -149,6 +147,7 @@ export class CrudPage {
   applySearchFilters() {
     const nextSearch = this.searchInput().trim();
     const nextStatus = this.statusInput();
+    this.pageIndex.set(0);
     if (nextSearch === this.search() && nextStatus === this.status()) {
       this.itemsResource.reload();
     } else {
@@ -160,6 +159,7 @@ export class CrudPage {
   clearSearchFilters() {
     this.searchInput.set('');
     this.statusInput.set('');
+    this.pageIndex.set(0);
     if (this.search() || this.status() !== '') {
       this.search.set('');
       this.status.set('');
@@ -170,6 +170,17 @@ export class CrudPage {
 
   refreshList() {
     this.itemsResource.reload();
+  }
+
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent) {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
   }
 
   private async fetchItems(filters: { search: string; status: number | '' }) {
@@ -292,26 +303,16 @@ export class CrudPage {
     return this.selectedEntityUUIDs().size;
   }
 
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
   isSelected(item: Entity) {
     return this.selectedEntityUUIDs().has(item.UUID);
   }
 
   isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+    return this.allVisibleSelected();
   }
 
   isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
+    return this.someVisibleSelected();
   }
 
   toggleEntitySelection(item: Entity, checked: boolean) {
@@ -343,7 +344,7 @@ export class CrudPage {
   async deleteSelectedItems() {
     const ids = Array.from(this.selectedEntityUUIDs());
     if (!ids.length) return;
-    const labels = this.dataSource.data
+    const labels = this.rows()
       .filter((item) => ids.includes(item.UUID))
       .slice(0, 3)
       .map((item) => item.Name);
@@ -368,7 +369,6 @@ export class CrudPage {
           .map((item: any) => this.extractBulkFailureUUID(item))
           .filter((uuid: string | null): uuid is string => !!uuid),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.UUID));
       this.selectedEntityUUIDs.set(failed);
       if (failed.size) {
         this.snack.error(`${failed.size} selected item(s) could not be deleted.`);
@@ -424,13 +424,43 @@ export class CrudPage {
   }
 
   private reconcileSelection() {
-    const available = new Set(this.dataSource.data.map((item) => item.UUID));
+    const available = new Set(this.rows().map((item) => item.UUID));
     this.selectedEntityUUIDs.update((current) => {
       const next = new Set<string>();
       current.forEach((uuid) => {
         if (available.has(uuid)) next.add(uuid);
       });
       return next;
+    });
+  }
+
+  private sortRows(rows: Entity[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+
+    return [...rows].sort((left, right) => {
+      const result = this.compareValues(this.sortValue(left, active), this.sortValue(right, active));
+      return direction === 'asc' ? result : -result;
+    });
+  }
+
+  private sortValue(item: Entity, column: string): string | number {
+    switch (column) {
+      case 'name':
+        return item.Name ?? '';
+      case 'status':
+        return this.isActive(item) ? 'ACTIVE' : 'INACTIVE';
+      default:
+        return '';
+    }
+  }
+
+  private compareValues(left: string | number, right: string | number) {
+    if (typeof left === 'number' && typeof right === 'number') return left - right;
+    return String(left).localeCompare(String(right), undefined, {
+      numeric: true,
+      sensitivity: 'base',
     });
   }
 }
