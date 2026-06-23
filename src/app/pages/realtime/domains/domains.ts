@@ -2,7 +2,6 @@ import {
   Component,
   DestroyRef,
   TemplateRef,
-  afterNextRender,
   computed,
   effect,
   inject,
@@ -20,11 +19,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -128,7 +127,13 @@ export class RealtimeDomainsPage {
   private readonly snack = inject(SnackbarService);
 
   readonly searchInput = signal('');
+  readonly statusInput = signal('');
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal('');
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<Sort['direction']>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
   readonly saving = signal(false);
   readonly mutating = signal(false);
   readonly editing = signal<RealtimeDomainRecord | null>(null);
@@ -138,7 +143,6 @@ export class RealtimeDomainsPage {
     required(schema.name);
     required(schema.purpose);
   });
-  readonly dataSource = new MatTableDataSource<RealtimeDomainRecord>([]);
   readonly displayedColumns = [
     'select',
     'name',
@@ -150,37 +154,44 @@ export class RealtimeDomainsPage {
 
   readonly recordFields = RECORD_FIELDS;
   readonly notesFields = NOTES_FIELDS;
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
+  readonly statusFilterOptions = signal([
+    { value: '', label: 'All' },
+    { value: '1', label: 'Active' },
+    { value: '0', label: 'Inactive' },
+  ]);
   readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
 
   private dialogRef: MatDialogRef<unknown> | null = null;
   private binding: CrudDialogBinding | null = null;
 
   private readonly itemsResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => ({ search: this.appliedSearch(), status: this.appliedStatus() }),
     defaultValue: [] as RealtimeDomainRecord[],
     loader: async ({ params }) => {
-      const response = await this.api.list({ limit: 5000, search: params });
+      const status = params.status === '' ? undefined : Number(params.status);
+      const response = await this.api.list({ limit: 5000, search: params.search, status });
       return response?.data?.items ?? [];
     },
   });
 
+  readonly rows = computed(() => this.itemsResource.value());
+  readonly sortedRows = computed(() => this.sortRows(this.rows()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
+  });
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (row, column) => {
-      if (column === 'updatedAt') {
-        return this.dateTime.toEpoch(row['RtdDateUpdated'] ?? row['RtdDateCreated']);
-      }
-      return String(this.cell(row, column) ?? '').toLowerCase();
-    };
-  });
-
   private readonly syncRows = effect(() => {
-    this.dataSource.data = this.itemsResource.value();
+    this.rows();
     this.reconcileSelection();
   });
 
@@ -197,14 +208,38 @@ export class RealtimeDomainsPage {
   }
 
   applySearchFilters(): void {
-    this.appliedSearch.set(this.searchInput().trim());
-    this.paginator()?.firstPage();
+    const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusInput();
+    this.pageIndex.set(0);
+    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
+      this.itemsResource.reload();
+    } else {
+      this.appliedSearch.set(nextSearch);
+      this.appliedStatus.set(nextStatus);
+    }
   }
 
   clearSearchFilters(): void {
     this.searchInput.set('');
-    this.appliedSearch.set('');
-    this.paginator()?.firstPage();
+    this.statusInput.set('');
+    this.pageIndex.set(0);
+    if (this.appliedSearch() || this.appliedStatus()) {
+      this.appliedSearch.set('');
+      this.appliedStatus.set('');
+    } else {
+      this.itemsResource.reload();
+    }
+  }
+
+  setSort(sort: Sort): void {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent): void {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
   }
 
   uuid(row: RealtimeDomainRecord): string {
@@ -251,24 +286,6 @@ export class RealtimeDomainsPage {
     const next = new Set(this.selected());
     checked ? next.add(this.uuid(row)) : next.delete(this.uuid(row));
     this.selected.set(next);
-  }
-
-  visibleRows(): RealtimeDomainRecord[] {
-    const rows = this.dataSource.filteredData;
-    const paginator = this.paginator();
-    if (!paginator) return rows;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return rows.slice(start, start + paginator.pageSize);
-  }
-
-  allVisibleSelected(): boolean {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
-  }
-
-  someVisibleSelected(): boolean {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
   }
 
   toggleVisible(checked: boolean): void {
@@ -431,11 +448,29 @@ export class RealtimeDomainsPage {
   }
 
   private reconcileSelection(): void {
-    const valid = new Set(this.dataSource.data.map((row) => this.uuid(row)));
+    const valid = new Set(this.rows().map((row: RealtimeDomainRecord) => this.uuid(row)));
     const current = untracked(() => this.selected());
     const next = new Set([...current].filter((id) => valid.has(id)));
     if (next.size === current.size && [...next].every((id) => current.has(id))) return;
     this.selected.set(next);
+  }
+
+  private sortRows(rows: RealtimeDomainRecord[]): RealtimeDomainRecord[] {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    return [...rows].sort((left, right) => {
+      const leftValue =
+        active === 'updatedAt'
+          ? this.dateTime.toEpoch(left['RtdDateUpdated'] ?? left['RtdDateCreated'])
+          : String(this.cell(left, active) ?? '').toLowerCase();
+      const rightValue =
+        active === 'updatedAt'
+          ? this.dateTime.toEpoch(right['RtdDateUpdated'] ?? right['RtdDateCreated'])
+          : String(this.cell(right, active) ?? '').toLowerCase();
+      return (leftValue < rightValue ? -1 : leftValue > rightValue ? 1 : 0) * multiplier;
+    });
   }
 
   private errorMessage(error: unknown, fallback: string): string {

@@ -73,7 +73,6 @@ const htmlRules = [
   ['save main button class', 'save-main-button'],
   ['save more button class', 'save-more-button'],
   ['save/new label', 'Save/New'],
-  ['shared FK search select adapter', '<mns-search-select-field'],
 ];
 
 const tsRules = [
@@ -81,8 +80,6 @@ const tsRules = [
   ['DestroyRef', 'DestroyRef'],
   ['signal query api', /viewChild|viewChildren/],
   ['shared dialog closed binding', 'bindDialogClosed'],
-  ['shared FK search select import', 'MnsSearchSelectFieldComponent'],
-  ['shared FK search select option type', 'MnsSearchSelectFieldOption'],
   ['resource read model', /resource\s*\(/],
   ['computed visible rows', /visibleRows\s*=\s*computed/],
   ['sort state signals', /sortActive\s*=\s*signal|sortDirection\s*=\s*signal/],
@@ -94,6 +91,13 @@ const tsRules = [
   ['bulk delete method', /removeMany|deleteMany|bulk/i],
   ['visible row selection', /visibleRows|VisibleSelection|toggleVisible/],
   ['partial failure handling', /failed/i],
+];
+
+const fkHtmlRules = [['shared FK search select adapter', '<mns-search-select-field']];
+
+const fkTsRules = [
+  ['shared FK search select import', 'MnsSearchSelectFieldComponent'],
+  ['shared FK search select option type', 'MnsSearchSelectFieldOption'],
 ];
 
 const forbiddenHtmlRules = [
@@ -130,10 +134,18 @@ let failed = false;
 const files = args.flatMap(walk);
 const htmlFiles = files.filter((file) => extname(file) === '.html');
 const tsFiles = files.filter((file) => extname(file) === '.ts');
+const combinedTs = tsFiles.map((file) => readFileSync(file, 'utf8')).join('\n');
+const requiresFkSearchSelect =
+  /\blookup\b|domainLookupEnabled|SelectOptions|UUID['"]?,\s*label|realtimeDomainUUID|serverUUID|providerUUID|customerUUID|TenantUUID|EnvironmentUUID/.test(
+    combinedTs,
+  );
 
 for (const file of htmlFiles) {
   const content = readFileSync(file, 'utf8');
-  const missing = htmlRules.filter(([, pattern]) => !has(content, pattern)).map(([name]) => name);
+  const requiredHtmlRules = requiresFkSearchSelect ? [...htmlRules, ...fkHtmlRules] : htmlRules;
+  const missing = requiredHtmlRules
+    .filter(([, pattern]) => !has(content, pattern))
+    .map(([name]) => name);
   const forbidden = forbiddenHtmlRules
     .filter(([, pattern]) => has(content, pattern))
     .map(([name]) => name);
@@ -149,7 +161,8 @@ for (const file of tsFiles) {
   const content = readFileSync(file, 'utf8');
   if (!content.includes('@Component')) continue;
   if (!content.includes('erp-page') && !htmlFiles.length) continue;
-  const missing = tsRules.filter(([, pattern]) => !has(content, pattern)).map(([name]) => name);
+  const requiredTsRules = requiresFkSearchSelect ? [...tsRules, ...fkTsRules] : tsRules;
+  const missing = requiredTsRules.filter(([, pattern]) => !has(content, pattern)).map(([name]) => name);
   const forbidden = forbiddenTsRules
     .filter(([, pattern]) => has(content, pattern))
     .map(([name]) => name);

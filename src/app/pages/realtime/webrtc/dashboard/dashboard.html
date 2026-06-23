@@ -155,7 +155,14 @@
       <section class="dashboard-panel">
         <h2>{{ 'Server Health' | transloco }}</h2>
         <div class="table-wrapper mat-elevation-z8">
-          <table mat-table [dataSource]="serverDataSource" matSort #serverSort="matSort">
+          <table
+            mat-table
+            [dataSource]="visibleServers()"
+            matSort
+            [matSortActive]="serverSortActive()"
+            [matSortDirection]="serverSortDirection()"
+            (matSortChange)="setServerSort($event)"
+          >
             <ng-container matColumnDef="health">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
@@ -214,9 +221,12 @@
           </table>
         </div>
         <mat-paginator
-          #serverPaginator
           class="mobile-paginator"
+          [length]="sortedServers().length"
+          [pageIndex]="serverPageIndex()"
+          [pageSize]="serverPageSize()"
           [pageSizeOptions]="[5, 10, 25, 100]"
+          (page)="setServerPage($event)"
           showFirstLastButtons
         />
       </section>
@@ -224,7 +234,14 @@
       <section class="dashboard-panel">
         <h2>{{ 'Domain Health' | transloco }}</h2>
         <div class="table-wrapper mat-elevation-z8">
-          <table mat-table [dataSource]="domainDataSource" matSort #domainSort="matSort">
+          <table
+            mat-table
+            [dataSource]="visibleDomains()"
+            matSort
+            [matSortActive]="domainSortActive()"
+            [matSortDirection]="domainSortDirection()"
+            (matSortChange)="setDomainSort($event)"
+          >
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
               <td mat-cell *matCellDef="let row">{{ statusLabel(row.status) | transloco }}</td>
@@ -277,9 +294,12 @@
           </table>
         </div>
         <mat-paginator
-          #domainPaginator
           class="mobile-paginator"
+          [length]="sortedDomains().length"
+          [pageIndex]="domainPageIndex()"
+          [pageSize]="domainPageSize()"
           [pageSizeOptions]="[5, 10, 25, 100]"
+          (page)="setDomainPage($event)"
           showFirstLastButtons
         />
       </section>

@@ -16,7 +16,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
@@ -24,6 +24,18 @@
           [value]="searchInput()"
           (input)="searchInput.set($any($event.target).value)"
         />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select
+          [value]="statusInput()"
+          (selectionChange)="statusInput.set($any($event.value))"
+        >
+          @for (option of statusFilterOptions(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
@@ -52,7 +64,14 @@
         </div>
       }
 
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -95,7 +114,10 @@
                     {{ cell(row, column) | transloco }}
                   </span>
                 } @else {
-                  @if (isTranslatedColumn(column)) {
+                  @if (column === 'name') {
+                    <div class="record-main">{{ cell(row, column) || '-' }}</div>
+                    <div class="record-uuid">{{ uuid(row) }}</div>
+                  } @else if (isTranslatedColumn(column)) {
                     {{ (cell(row, column) || '-') | transloco }}
                   } @else {
                     {{ cell(row, column) || '-' }}
@@ -145,7 +167,11 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
+      (page)="setPage($event)"
       showFirstLastButtons
     />
   </mat-card>

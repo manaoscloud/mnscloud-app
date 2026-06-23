@@ -313,6 +313,9 @@
 ## Searchable Select Baseline (Current)
 
 - Any `mat-select` bound to records from another table/entity (FK-like fields) must be searchable.
+- CRUD validators should enforce searchable selects only when the page actually contains FK-like
+  dynamic relationship fields. Pages with static enum selects only, or no related-record selects,
+  must not add fake searchable adapters just to satisfy the template.
 - Signal Forms CRUD dialogs must use the shared `mns-search-select-field` adapter for FK-like
   selects instead of hand-written page-local `mat-select` search blocks. The adapter owns
   `select-search-option`, `select-search-field`, real-time filtering, option spacing, empty state,

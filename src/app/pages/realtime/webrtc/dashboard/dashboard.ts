@@ -1,13 +1,11 @@
 
 import {
-  afterNextRender,
   Component,
   computed,
   effect,
   inject,
   resource,
   signal,
-  viewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,11 +13,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -48,6 +46,11 @@ type WebRtcDashboardRequest = Required<Pick<WebRtcDashboardFilters, 'period'>> &
     status: string;
   };
 
+type DashboardFilterOptions = {
+  servers: SelectOption[];
+  domains: SelectOption[];
+};
+
 const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   period: 'today',
   startAt: null,
@@ -57,6 +60,11 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   domains: [],
   certificateBreakdown: [],
   jobBreakdown: [],
+};
+
+const EMPTY_FILTER_OPTIONS: DashboardFilterOptions = {
+  servers: [],
+  domains: [],
 };
 
 @Component({
@@ -96,6 +104,14 @@ export class RealtimeWebRtcDashboardPage {
   readonly domainUUID = signal('');
   readonly serverSearch = signal('');
   readonly domainSearch = signal('');
+  readonly serverSortActive = signal('');
+  readonly serverSortDirection = signal<Sort['direction']>('');
+  readonly serverPageIndex = signal(0);
+  readonly serverPageSize = signal(5);
+  readonly domainSortActive = signal('');
+  readonly domainSortDirection = signal<Sort['direction']>('');
+  readonly domainPageIndex = signal(0);
+  readonly domainPageSize = signal(5);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
   private readonly appliedFilters = signal<WebRtcDashboardRequest>({
@@ -113,14 +129,17 @@ export class RealtimeWebRtcDashboardPage {
     loader: ({ params }) => this.fetchDashboardSnapshot(params),
   });
 
+  private readonly filterOptionsResource = resource({
+    params: () => ({ scope: this.scope(), master: this.isMaster() }),
+    defaultValue: EMPTY_FILTER_OPTIONS,
+    loader: ({ params }) => this.fetchFilterOptions(params.master),
+  });
+
   readonly loading = this.dashboardResource.isLoading;
   readonly dashboard = computed(() => this.dashboardResource.value());
   readonly summary = computed(() => this.dashboard().summary);
   readonly certificateBreakdown = computed(() => this.dashboard().certificateBreakdown);
   readonly jobBreakdown = computed(() => this.dashboard().jobBreakdown);
-
-  readonly serverDataSource = new MatTableDataSource<WebRtcDashboardServer>([]);
-  readonly domainDataSource = new MatTableDataSource<WebRtcDashboardDomain>([]);
   readonly serverColumns = [
     'health',
     'name',
@@ -142,14 +161,11 @@ export class RealtimeWebRtcDashboardPage {
     'lastError',
   ];
 
-  serverOptions: SelectOption[] = [];
-  domainOptions: SelectOption[] = [];
-
   readonly filteredServerOptions = computed(() =>
-    this.filterOptions(this.serverOptions, this.serverSearch()),
+    this.filterOptions(this.filterOptionsResource.value().servers, this.serverSearch()),
   );
   readonly filteredDomainOptions = computed(() =>
-    this.filterOptions(this.domainOptions, this.domainSearch()),
+    this.filterOptions(this.filterOptionsResource.value().domains, this.domainSearch()),
   );
   readonly periodOptions = [
     { value: 'today', label: 'Today' },
@@ -193,21 +209,43 @@ export class RealtimeWebRtcDashboardPage {
     ];
   });
 
-  readonly serverSort = viewChild<MatSort>('serverSort');
-  readonly domainSort = viewChild<MatSort>('domainSort');
-  readonly serverPaginator = viewChild<MatPaginator>('serverPaginator');
-  readonly domainPaginator = viewChild<MatPaginator>('domainPaginator');
-
-  private readonly syncDashboardTables = effect(() => {
+  readonly filteredServers = computed(() => {
     const dashboard = this.dashboard();
     const search = this.appliedFilters().search.trim().toLowerCase();
     const status = this.appliedFilters().status;
-    this.serverDataSource.data = dashboard.servers.filter((item) =>
-      this.matchesTableFilters(item, search, status),
-    );
-    this.domainDataSource.data = dashboard.domains.filter((item) =>
-      this.matchesTableFilters(item, search, status),
-    );
+    return dashboard.servers.filter((item) => this.matchesTableFilters(item, search, status));
+  });
+  readonly filteredDomains = computed(() => {
+    const dashboard = this.dashboard();
+    const search = this.appliedFilters().search.trim().toLowerCase();
+    const status = this.appliedFilters().status;
+    return dashboard.domains.filter((item) => this.matchesTableFilters(item, search, status));
+  });
+  readonly sortedServers = computed(() =>
+    this.sortRows(this.filteredServers(), this.serverSortActive(), this.serverSortDirection()),
+  );
+  readonly sortedDomains = computed(() =>
+    this.sortRows(this.filteredDomains(), this.domainSortActive(), this.domainSortDirection()),
+  );
+  readonly visibleServers = computed(() => {
+    const start = this.serverPageIndex() * this.serverPageSize();
+    return this.sortedServers().slice(start, start + this.serverPageSize());
+  });
+  readonly visibleDomains = computed(() => {
+    const start = this.domainPageIndex() * this.domainPageSize();
+    return this.sortedDomains().slice(start, start + this.domainPageSize());
+  });
+
+  private readonly resetPagesOnDashboardFilter = effect(() => {
+    this.appliedFilters();
+    this.serverPageIndex.set(0);
+    this.domainPageIndex.set(0);
+  });
+
+  private readonly reportFilterOptionsError = effect(() => {
+    const error = this.filterOptionsResource.error();
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load WebRTC dashboard filters.'));
   });
 
   private readonly reportDashboardError = effect(() => {
@@ -216,13 +254,46 @@ export class RealtimeWebRtcDashboardPage {
     this.snack.error(this.errorMessage(error, 'Failed to load WebRTC dashboard.'));
   });
 
-  private readonly setupTables = afterNextRender(() => {
-    this.bindTables();
-    void this.fetchOptions();
-  });
+  setServerSort(sort: Sort): void {
+    this.serverSortActive.set(sort.active || '');
+    this.serverSortDirection.set(sort.direction || '');
+    this.serverPageIndex.set(0);
+  }
+
+  setDomainSort(sort: Sort): void {
+    this.domainSortActive.set(sort.active || '');
+    this.domainSortDirection.set(sort.direction || '');
+    this.domainPageIndex.set(0);
+  }
+
+  setServerPage(page: PageEvent): void {
+    this.serverPageIndex.set(page.pageIndex);
+    this.serverPageSize.set(page.pageSize);
+  }
+
+  setDomainPage(page: PageEvent): void {
+    this.domainPageIndex.set(page.pageIndex);
+    this.domainPageSize.set(page.pageSize);
+  }
+
+  private sortRows<T extends WebRtcDashboardServer | WebRtcDashboardDomain>(
+    rows: T[],
+    active: string,
+    direction: Sort['direction'],
+  ): T[] {
+    if (!active || !direction) return rows;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    return [...rows].sort(
+      (left, right) =>
+        String((left as any)[active] ?? '')
+          .toLowerCase()
+          .localeCompare(String((right as any)[active] ?? '').toLowerCase()) * multiplier,
+    );
+  }
 
   refreshList() {
     this.dashboardResource.reload();
+    this.filterOptionsResource.reload();
   }
 
   applySearchFilters() {
@@ -292,51 +363,35 @@ export class RealtimeWebRtcDashboardPage {
     return response?.data ?? EMPTY_WEBRTC_DASHBOARD;
   }
 
-  private async fetchOptions() {
+  private async fetchFilterOptions(master: boolean): Promise<DashboardFilterOptions> {
     try {
       const [serverResponse, domainResponse] = await Promise.allSettled([
-        this.isMaster()
+        master
           ? this.webrtcApi.list('servers', { limit: this.listLimit }, 'master')
           : this.webrtcApi.listServerOptions(),
         this.webrtcApi.list(
           'domains',
           { limit: this.listLimit },
-          this.isMaster() ? 'master' : 'tenant',
+          master ? 'master' : 'tenant',
         ),
       ]);
 
-      this.serverOptions = this.items<WebRtcRecord>(serverResponse).map((item) => ({
-        value: item['RwsUUID'],
-        label: `${item['RwsName'] ?? item['label'] ?? item['name'] ?? '-'}${
-          item['RwsEngine'] ? ` (${item['RwsEngine']})` : ''
-        }`,
-      }));
-      this.domainOptions = this.items<WebRtcRecord>(domainResponse).map((item) => ({
-        value: item['RwdUUID'] ?? item['RealtimeDomainRtdUUID'] ?? item['RtdUUID'],
-        label: item['RtdName'] ?? item['domainName'] ?? item['label'] ?? '-',
-      }));
+      return {
+        servers: this.items<WebRtcRecord>(serverResponse).map((item) => ({
+          value: item['RwsUUID'],
+          label: `${item['RwsName'] ?? item['label'] ?? item['name'] ?? '-'}${
+            item['RwsEngine'] ? ` (${item['RwsEngine']})` : ''
+          }`,
+        })),
+        domains: this.items<WebRtcRecord>(domainResponse).map((item) => ({
+          value: item['RwdUUID'] ?? item['RealtimeDomainRtdUUID'] ?? item['RtdUUID'],
+          label: item['RtdName'] ?? item['domainName'] ?? item['label'] ?? '-',
+        })),
+      };
     } catch (error: any) {
       this.snack.error(error?.error?.error || 'Failed to load WebRTC dashboard filters.');
+      return EMPTY_FILTER_OPTIONS;
     }
-  }
-
-  private bindTables() {
-    this.serverDataSource.sortingDataAccessor = (item, column) => {
-      if (column === 'lastSeenAt') return item.lastSeenAt ?? '';
-      return String((item as any)[column] ?? '').toLowerCase();
-    };
-    this.domainDataSource.sortingDataAccessor = (item, column) => {
-      if (column === 'lastSyncedAt') return item.lastSyncedAt ?? '';
-      return String((item as any)[column] ?? '').toLowerCase();
-    };
-    const serverSort = this.serverSort();
-    if (serverSort) this.serverDataSource.sort = serverSort;
-    const domainSort = this.domainSort();
-    if (domainSort) this.domainDataSource.sort = domainSort;
-    const serverPaginator = this.serverPaginator();
-    if (serverPaginator) this.serverDataSource.paginator = serverPaginator;
-    const domainPaginator = this.domainPaginator();
-    if (domainPaginator) this.domainDataSource.paginator = domainPaginator;
   }
 
   private filterOptions(options: SelectOption[], search: string) {
