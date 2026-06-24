@@ -1096,6 +1096,7 @@ mat-chip.status-pill.is-inactive,
   .crud-dialog .primary-actions {
     order: 1;
     display: grid;
+    justify-content: stretch;
     grid-column: auto;
     grid-row: auto;
     width: 100%;
@@ -1103,6 +1104,7 @@ mat-chip.status-pill.is-inactive,
 
   .crud-dialog .save-split-action {
     grid-template-columns: minmax(0, 1fr) 44px;
+    justify-self: stretch;
     width: 100%;
     max-width: 100%;
   }
