@@ -78,9 +78,17 @@ const COMPANY_CONFIG: DirectoryConfig = {
       key: 'addressZip',
       source: 'AddressZip',
       payloadKey: 'addressZip',
-      label: 'ZIP',
+      label: 'Zip',
       tab: 'address',
       span: 1,
+      postalLookup: {
+        streetKey: 'addressStreet',
+        districtKey: 'addressDistrict',
+        cityKey: 'addressCity',
+        stateKey: 'addressState',
+        countryKey: 'addressCountry',
+        numberKey: 'addressNumber',
+      },
     },
     {
       key: 'addressStreet',

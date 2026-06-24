@@ -713,6 +713,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
     - row 2: `Street (span-2)`, `Number`, `District`
 - CEP/Postal code UX baseline (mandatory when address has `Zip`):
   - `Zip` input must have a suffix search icon button (`matSuffix`) and also support `Enter` key.
+  - shared CRUD forms must enable this through field config `postalLookup` instead of custom
+    component-local postal lookup code.
   - trigger `GET postal-codes/:postalCode` through `ApiService`.
   - on success, autofill `Street`, `District`, `City`, `State`.
   - after autofill, focus `Number` field automatically.

@@ -1,6 +1,7 @@
 import {
   Directive,
   DestroyRef,
+  ElementRef,
   TemplateRef,
   computed,
   effect,
@@ -81,6 +82,15 @@ export type DirectoryFieldType =
   | 'status'
   | 'textarea';
 
+export type DirectoryPostalCodeLookup = {
+  streetKey?: string;
+  districtKey?: string;
+  cityKey?: string;
+  stateKey?: string;
+  countryKey?: string;
+  numberKey?: string;
+};
+
 export type DirectoryField = {
   key: string;
   label: string;
@@ -90,6 +100,7 @@ export type DirectoryField = {
   tab?: 'record' | 'address' | 'notes';
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
+  postalLookup?: DirectoryPostalCodeLookup;
   rows?: number;
   required?: boolean;
   placeholder?: string;
@@ -146,6 +157,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   protected readonly snack = inject(SnackbarService);
   protected readonly dialog = inject(MatDialog);
   protected readonly destroyRef = inject(DestroyRef);
+  protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly listLimit = 500;
   protected readonly config: DirectoryConfig;
 
@@ -162,6 +174,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   readonly pageSize = signal(5);
   readonly saving = signal(false);
   readonly mutating = signal(false);
+  readonly postalLookupLoadingKey = signal<string | null>(null);
   readonly editingRecord = signal<T | null>(null);
   readonly formValues = signal<DirectoryRecord>({});
 
@@ -371,10 +384,69 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     this.formValues.update((current) => ({ ...current, [key]: value }));
   }
 
+  async searchPostalCode(field: DirectoryField, event?: Event): Promise<void> {
+    event?.preventDefault();
+    if (!field.postalLookup || this.postalLookupLoadingKey()) return;
+
+    const normalizedZip = this.fieldValueString(field.key).replace(/\D/g, '');
+    if (!normalizedZip) {
+      this.snack.warning('Inform a postal code to search.');
+      return;
+    }
+    if (normalizedZip.length !== 8) {
+      this.snack.warning('Invalid postal code. Provide 8 digits.');
+      return;
+    }
+
+    this.postalLookupLoadingKey.set(field.key);
+    this.setFieldValue(field.key, normalizedZip);
+
+    try {
+      const response = await this.api.get<{ data?: { item?: DirectoryRecord } }>(
+        `postal-codes/${normalizedZip}`,
+      );
+      const item = response?.data?.item ?? {};
+      const lookup = field.postalLookup;
+      const next: DirectoryRecord = { [field.key]: normalizedZip };
+
+      this.assignPostalLookupValue(next, lookup.streetKey, item['street']);
+      this.assignPostalLookupValue(next, lookup.districtKey, item['district']);
+      this.assignPostalLookupValue(next, lookup.cityKey, item['city']);
+      this.assignPostalLookupValue(next, lookup.stateKey, item['state']);
+      this.assignPostalLookupValue(next, lookup.countryKey, item['country']);
+
+      this.formValues.update((current) => ({ ...current, ...next }));
+      if (lookup.numberKey) {
+        queueMicrotask(() => this.focusField(lookup.numberKey as string));
+      }
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to search postal code.');
+    } finally {
+      this.postalLookupLoadingKey.set(null);
+    }
+  }
+
+  isPostalLookupLoading(field: DirectoryField): boolean {
+    return this.postalLookupLoadingKey() === field.key;
+  }
+
   fieldClass(field: DirectoryField): string {
     return [`span-${field.span ?? 1}`, field.breakBefore ? 'break-before' : '']
       .filter(Boolean)
       .join(' ');
+  }
+
+  protected assignPostalLookupValue(
+    target: DirectoryRecord,
+    key: string | undefined,
+    value: unknown,
+  ): void {
+    if (!key || value === null || value === undefined) return;
+    target[key] = value;
+  }
+
+  protected focusField(key: string): void {
+    this.host.nativeElement.querySelector<HTMLInputElement>(`[data-field-key="${key}"]`)?.focus();
   }
 
   fieldOptions(field: DirectoryField): readonly DirectoryOption[] {

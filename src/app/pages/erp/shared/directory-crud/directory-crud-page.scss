@@ -71,6 +71,10 @@
   min-width: 0;
 }
 
+.postal-code-spinner {
+  display: inline-block;
+}
+
 @media (max-width: 1400px) {
   .crud-form-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
