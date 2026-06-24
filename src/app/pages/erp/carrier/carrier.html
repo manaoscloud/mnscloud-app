@@ -2,29 +2,38 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Carriers</h1>
-        <p>Manage carriers and keep partner data updated.</p>
+        <h1>{{ 'Carriers' | transloco }}</h1>
+        <p>{{ 'Manage carriers and keep partner data updated.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
-        <mat-label>Search carriers</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          placeholder="Name, email, document..." [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
+          [placeholder]="'Name, email, document...' | transloco" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [(value)]="statusFilter">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
+        </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} selected</span>
+          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
           <button
             mat-stroked-button
             color="warn"
@@ -33,7 +42,7 @@
             [disabled]="loading"
           >
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button (click)="applySearchFilters()" type="button">
@@ -60,60 +69,65 @@
               [checked]="isAllVisibleSelected()"
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
-              aria-label="Select visible carriers"
+              [attr.aria-label]="'Select visible carriers' | transloco"
             />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
               [checked]="isSelected(row)"
               (change)="toggleCarrierSelection(row, $event.checked)"
-              [attr.aria-label]="'Select ' + row.Name"
+              [attr.aria-label]="('Select' | transloco) + ' ' + row.Name"
             />
           </td>
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.Name }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="record-main">{{ row.Name }}</span>
+            <span class="record-uuid">{{ row.CarrierUUID }}</span>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="type-col">Type</th>
-          <td mat-cell *matCellDef="let row" class="type-col">{{ row.Type }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="type-col">{{ 'Type' | transloco }}</th>
+          <td mat-cell *matCellDef="let row" class="type-col">{{ row.Type | transloco }}</td>
         </ng-container>
 
         <ng-container matColumnDef="document">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Document</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Document' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.Document || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="email">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="email-col">Email</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="email-col">{{ 'Email' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="email-col">{{ row.Email || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
-            <mat-chip
-              class="status-pill"
+            <span
+              class="status-pill status-chip state-chip"
+              [class.chip-success]="row.Status === 1"
+              [class.chip-skipped]="row.Status !== 1"
               [class.is-active]="row.Status === 1"
               [class.is-inactive]="row.Status !== 1"
             >
-              {{ row.Status === 1 ? 'active' : 'inactive' }}
-            </mat-chip>
+              {{ statusLabel(row.Status) | transloco }}
+            </span>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
                 mat-icon-button
                 (click)="startEdit(row)"
                 type="button"
-                matTooltip="Edit carrier"
+                [matTooltip]="'Edit carrier' | transloco"
               >
                 <mat-icon>edit</mat-icon>
               </button>
@@ -121,7 +135,7 @@
                 mat-icon-button
                 color="warn"
                 (click)="deleteCarrier(row.CarrierUUID)"
-                matTooltip="Delete carrier"
+                [matTooltip]="'Delete carrier' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -135,7 +149,7 @@
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
             {{
-              loading ? 'Loading carriers...' : 'No carriers found for "' + (search || 'all') + '"'
+              loading ? ('Loading carriers...' | transloco) : ('No carriers found for' | transloco) + ' "' + (search || ('all' | transloco)) + '"'
             }}
           </td>
         </tr>
@@ -146,7 +160,7 @@
       class="mobile-paginator"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-      aria-label="Select page of carriers"
+      [attr.aria-label]="'Select page of' | transloco"
     />
   </mat-card>
 </section>
@@ -155,17 +169,17 @@
   <div class="carrier-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editingCarrier ? 'Edit carrier' : 'New carrier' }}</h2>
+        <h2>{{ editingCarrier ? ('Edit carrier' | transloco) : ('New carrier' | transloco) }}</h2>
         <p>
           {{
             editingCarrier
-              ? 'Update carrier details and save changes.'
-              : 'Add a new carrier to your partners list.'
+              ? ('Update carrier details and save changes.' | transloco)
+              : ('Add a new carrier to your partners list.' | transloco)
           }}
         </p>
       </div>
       @if (editingCarrier) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -175,33 +189,33 @@
           <div class="tab-content">
             <div class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Type</mat-label>
+                <mat-label>{{ 'Type' | transloco }}</mat-label>
                 <mat-select [value]="form.type" (selectionChange)="form.type = $event.value">
-                  <mat-option value="company">Company</mat-option>
-                  <mat-option value="person">Person</mat-option>
+                  <mat-option value="company">{{ 'Company' | transloco }}</mat-option>
+                  <mat-option value="person">{{ 'Person' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [value]="form.name" (input)="form.name = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Document</mat-label>
+                <mat-label>{{ 'Document' | transloco }}</mat-label>
                 <input matInput [value]="form.document" (input)="form.document = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Email</mat-label>
+                <mat-label>{{ 'Email' | transloco }}</mat-label>
                 <input
                   matInput
                   placeholder="name@example.com" [value]="form.email" (input)="form.email = $any($event.target).value; updateEmailError()" />
@@ -212,7 +226,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" floatLabel="always">
-                <mat-label>Phone</mat-label>
+                <mat-label>{{ 'Phone' | transloco }}</mat-label>
                 <app-phone-input placeholder="5511999999999" [value]="form.phone" (valueChange)="form.phone = $event" />
                 <mat-icon matSuffix>phone</mat-icon>
               </mat-form-field>
@@ -220,17 +234,17 @@
           </div>
         </mat-tab>
 
-        <mat-tab label="Addresses">
+        <mat-tab [label]="'Addresses' | transloco">
           <div class="tab-content">
             <div class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Zip</mat-label>
+                <mat-label>{{ 'Zip' | transloco }}</mat-label>
                 <input matInput (keyup.enter)="searchPostalCode()" [value]="form.zip" (input)="form.zip = $any($event.target).value" />
                 <button
                   mat-icon-button
                   matSuffix
                   type="button"
-                  matTooltip="Search postal code"
+                  [matTooltip]="'Search postal code' | transloco"
                   [disabled]="searchingPostalCode"
                   (click)="searchPostalCode()"
                 >
@@ -239,42 +253,42 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Country</mat-label>
+                <mat-label>{{ 'Country' | transloco }}</mat-label>
                 <input matInput [value]="form.country" (input)="form.country = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>City</mat-label>
+                <mat-label>{{ 'City' | transloco }}</mat-label>
                 <input matInput [value]="form.city" (input)="form.city = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>State</mat-label>
+                <mat-label>{{ 'State' | transloco }}</mat-label>
                 <input matInput [value]="form.state" (input)="form.state = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Street</mat-label>
+                <mat-label>{{ 'Street' | transloco }}</mat-label>
                 <input matInput [value]="form.street" (input)="form.street = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Number</mat-label>
+                <mat-label>{{ 'Number' | transloco }}</mat-label>
                 <input #addressNumberInput matInput [value]="form.number" (input)="form.number = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>District</mat-label>
+                <mat-label>{{ 'District' | transloco }}</mat-label>
                 <input matInput [value]="form.district" (input)="form.district = $any($event.target).value" />
               </mat-form-field>
             </div>
           </div>
         </mat-tab>
 
-        <mat-tab label="Notes">
+        <mat-tab [label]="'Notes' | transloco">
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
-              <mat-label>Notes</mat-label>
+              <mat-label>{{ 'Notes' | transloco }}</mat-label>
               <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
@@ -284,7 +298,7 @@
 
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button (click)="cancelCarrierForm()" type="button">Cancel</button>
+        <button mat-stroked-button (click)="cancelCarrierForm()" type="button">{{ 'Cancel' | transloco }}</button>
       </div>
 
       <div class="primary-actions save-split-action" [class.is-single-action]="editingCarrier">
@@ -307,8 +321,8 @@
             [matMenuTriggerFor]="carrierSaveMenu"
             [disabled]="saving"
             type="button"
-            aria-label="More save actions"
-            matTooltip="More save actions"
+            [attr.aria-label]="'More save actions' | transloco"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -323,7 +337,7 @@
       >
         <button mat-menu-item (click)="saveAndNewCarrier()" [disabled]="saving" type="button">
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>

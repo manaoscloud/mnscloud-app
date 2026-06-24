@@ -2,28 +2,38 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Complexes</h1>
-        <p>Manage complexes, locations, and contacts.</p>
+        <h1>{{ 'Complexes' | transloco }}</h1>
+        <p>{{ 'Manage complexes, facilities, and shared ERP locations.' | transloco }}</p>
       </div>
       <div class="header-actions">
         <app-refresh-button [loading]="loading" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
-        <mat-label>Search complexes</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          placeholder="Name, alias, document, city" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
+          [placeholder]="'Name, alias, document, city' | transloco" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [(value)]="statusFilter">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          @for (status of statusOptions; track status.value) {
+            <mat-option [value]="status.value">{{ status.label | transloco }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} selected</span>
+          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
           <button
             mat-stroked-button
             color="warn"
@@ -32,7 +42,7 @@
             [disabled]="loading"
           >
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button (click)="applySearchFilters()" type="button">
@@ -59,54 +69,59 @@
               [checked]="isAllVisibleSelected()"
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
-              aria-label="Select visible complexes"
+              [attr.aria-label]="'Select visible complexes' | transloco"
             />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
               [checked]="isSelected(row)"
               (change)="toggleComplexSelection(row, $event.checked)"
-              [attr.aria-label]="'Select ' + row.Name"
+              [attr.aria-label]="('Select' | transloco) + ' ' + row.Name"
             />
           </td>
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.Name }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="record-main">{{ row.Name }}</span>
+            <span class="record-uuid">{{ row.ComplexUUID }}</span>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="document">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Document</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Document' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.Document || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="cityState">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>City / State</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'City / State' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ formatCityState(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
-            <mat-chip
-              class="status-pill"
+            <span
+              class="status-pill status-chip state-chip"
+              [class.chip-success]="row.Status === 'active'"
+              [class.chip-skipped]="row.Status !== 'active'"
               [class.is-active]="row.Status === 'active'"
               [class.is-inactive]="row.Status !== 'active'"
             >
-              {{ row.Status }}
-            </mat-chip>
+              {{ statusLabel(row.Status) | transloco }}
+            </span>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
-              <button mat-icon-button matTooltip="Edit" (click)="startEdit(row)">
+              <button mat-icon-button [matTooltip]="'Edit' | transloco" (click)="startEdit(row)">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button matTooltip="Delete" (click)="deleteComplex(row.ComplexUUID)">
+              <button mat-icon-button [matTooltip]="'Delete' | transloco" (click)="deleteComplex(row.ComplexUUID)">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -119,8 +134,8 @@
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
             {{
               loading
-                ? 'Loading complexes...'
-                : 'No complexes found for "' + (search || 'all') + '"'
+                ? ('Loading complexes...' | transloco)
+                : ('No complexes found for' | transloco) + ' "' + (search || ('all' | transloco)) + '"'
             }}
           </td>
         </tr>
@@ -131,7 +146,7 @@
       class="mobile-paginator"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-      aria-label="Select page of complexes"
+      [attr.aria-label]="'Select page of' | transloco"
     />
   </mat-card>
 </section>
@@ -140,13 +155,13 @@
   <div class="complex-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editingComplex ? 'Edit complex' : 'New complex' }}</h2>
+        <h2>{{ editingComplex ? ('Edit complex' | transloco) : ('New complex' | transloco) }}</h2>
         <p>
-          {{ editingComplex ? 'Update complex details and save changes.' : 'Add a new complex.' }}
+          {{ editingComplex ? ('Update complex details and save changes.' | transloco) : ('Add a new complex.' | transloco) }}
         </p>
       </div>
       @if (editingComplex) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -156,31 +171,31 @@
           <div class="tab-content">
             <div class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [value]="form.name" (input)="form.name = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Alias</mat-label>
+                <mat-label>{{ 'Alias' | transloco }}</mat-label>
                 <input matInput [value]="form.alias" (input)="form.alias = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
-                    <mat-option [value]="status.value">{{ status.label }}</mat-option>
+                    <mat-option [value]="status.value">{{ status.label | transloco }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Document</mat-label>
+                <mat-label>{{ 'Document' | transloco }}</mat-label>
                 <input matInput [value]="form.document" (input)="form.document = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Email</mat-label>
+                <mat-label>{{ 'Email' | transloco }}</mat-label>
                 <input
                   matInput
                   placeholder="name@example.com" [value]="form.email" (input)="form.email = $any($event.target).value; updateEmailError()" />
@@ -191,7 +206,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" floatLabel="always">
-                <mat-label>Phone</mat-label>
+                <mat-label>{{ 'Phone' | transloco }}</mat-label>
                 <app-phone-input placeholder="5511999999999" [value]="form.phone" (valueChange)="form.phone = $event" />
                 <mat-icon matSuffix>phone</mat-icon>
               </mat-form-field>
@@ -199,17 +214,17 @@
           </div>
         </mat-tab>
 
-        <mat-tab label="Addresses">
+        <mat-tab [label]="'Addresses' | transloco">
           <div class="tab-content">
             <div class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Zip</mat-label>
+                <mat-label>{{ 'Zip' | transloco }}</mat-label>
                 <input matInput (keyup.enter)="searchPostalCode()" [value]="form.zip" (input)="form.zip = $any($event.target).value" />
                 <button
                   mat-icon-button
                   matSuffix
                   type="button"
-                  matTooltip="Search postal code"
+                  [matTooltip]="'Search postal code' | transloco"
                   [disabled]="searchingPostalCode"
                   (click)="searchPostalCode()"
                 >
@@ -218,42 +233,42 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Country</mat-label>
+                <mat-label>{{ 'Country' | transloco }}</mat-label>
                 <input matInput [value]="form.country" (input)="form.country = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>City</mat-label>
+                <mat-label>{{ 'City' | transloco }}</mat-label>
                 <input matInput [value]="form.city" (input)="form.city = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>State</mat-label>
+                <mat-label>{{ 'State' | transloco }}</mat-label>
                 <input matInput [value]="form.state" (input)="form.state = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Street</mat-label>
+                <mat-label>{{ 'Street' | transloco }}</mat-label>
                 <input matInput [value]="form.street" (input)="form.street = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Number</mat-label>
+                <mat-label>{{ 'Number' | transloco }}</mat-label>
                 <input #addressNumberInput matInput [value]="form.number" (input)="form.number = $any($event.target).value" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>District</mat-label>
+                <mat-label>{{ 'District' | transloco }}</mat-label>
                 <input matInput [value]="form.district" (input)="form.district = $any($event.target).value" />
               </mat-form-field>
             </div>
           </div>
         </mat-tab>
 
-        <mat-tab label="Notes">
+        <mat-tab [label]="'Notes' | transloco">
           <div class="tab-content notes-tab-content">
             <mat-form-field appearance="outline" class="notes-field">
-              <mat-label>Notes</mat-label>
+              <mat-label>{{ 'Notes' | transloco }}</mat-label>
               <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
             </mat-form-field>
           </div>
@@ -263,7 +278,7 @@
 
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button (click)="cancelComplexForm()" type="button">Cancel</button>
+        <button mat-stroked-button (click)="cancelComplexForm()" type="button">{{ 'Cancel' | transloco }}</button>
       </div>
 
       <div class="primary-actions save-split-action" [class.is-single-action]="editingComplex">
@@ -286,8 +301,8 @@
             [matMenuTriggerFor]="complexSaveMenu"
             [disabled]="saving"
             type="button"
-            aria-label="More save actions"
-            matTooltip="More save actions"
+            [attr.aria-label]="'More save actions' | transloco"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -302,7 +317,7 @@
       >
         <button mat-menu-item (click)="saveAndNewComplex()" [disabled]="saving" type="button">
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>

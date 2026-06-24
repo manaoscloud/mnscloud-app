@@ -114,6 +114,7 @@ export class ErpCompaniesPage {
   error = '';
   search = '';
   searchInput = '';
+  statusFilter = '';
   editingCompany: Company | null = null;
   selectedCompanyUUIDs = new Set<string>();
   readonly emailError = signal('');
@@ -187,7 +188,9 @@ export class ErpCompaniesPage {
       }
     };
     this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
+      const parsed = this.parseTableFilter(filter);
+      const value = parsed.search;
+      if (parsed.status && data.Status !== parsed.status) return false;
       if (!value) return true;
       return [data.Name, data.LegalName, data.Document, data.Email, data.Phone]
         .filter(Boolean)
@@ -212,6 +215,7 @@ export class ErpCompaniesPage {
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
+    this.statusFilter = '';
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
     } else {
@@ -224,8 +228,10 @@ export class ErpCompaniesPage {
   }
 
   applyFilter() {
-    const q = this.search.trim().toLowerCase();
-    this.dataSource.filter = q;
+    this.dataSource.filter = JSON.stringify({
+      search: this.search.trim().toLowerCase(),
+      status: this.statusFilter,
+    });
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
@@ -360,6 +366,22 @@ export class ErpCompaniesPage {
   statusClass(status?: string) {
     const normalized = (status ?? '').toLowerCase();
     return normalized === 'active' ? 'is-active' : 'is-inactive';
+  }
+
+  statusLabel(status?: string | null) {
+    return (status ?? '').toLowerCase() === 'active' ? 'Active' : 'Inactive';
+  }
+
+  private parseTableFilter(filter: string) {
+    try {
+      const parsed = JSON.parse(filter || '{}') as { search?: string; status?: CompanyStatus | '' };
+      return {
+        search: (parsed.search ?? '').trim().toLowerCase(),
+        status: parsed.status ?? '',
+      };
+    } catch {
+      return { search: filter.trim().toLowerCase(), status: '' as const };
+    }
   }
 
   get selectedCount() {

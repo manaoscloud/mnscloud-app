@@ -100,6 +100,7 @@ type PostalCodeLookupItem = {
 
 type CustomerFilters = {
   search: string;
+  status: string;
 };
 
 type MapStyleMode = 'street' | 'satellite';
@@ -238,9 +239,10 @@ export class ErpCustomerPage {
   error = '';
   search = '';
   searchInput = '';
+  statusFilter = '';
   editingCustomer: Customer | null = null;
   mapVisible = false;
-  private readonly customerFilters = signal<CustomerFilters>({ search: '' });
+  private readonly customerFilters = signal<CustomerFilters>({ search: '', status: '' });
   private readonly mutating = signal(false);
   readonly emailError = signal('');
   complexSearch = '';
@@ -352,7 +354,10 @@ export class ErpCustomerPage {
       }
     };
     this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
+      const parsed = this.parseTableFilter(filter);
+      const value = parsed.search;
+      const matchesStatus = !parsed.status || this.statusValue(data.Status) === parsed.status;
+      if (!matchesStatus) return false;
       if (!value) return true;
       return [data.Name, data.Document, data.Email, data.Phone]
         .filter(Boolean)
@@ -375,13 +380,16 @@ export class ErpCustomerPage {
 
   applySearchFilters() {
     this.search = this.searchInput.trim();
-    this.customerFilters.set({ search: this.search });
+    this.customerFilters.set({ search: this.search, status: this.statusFilter });
+    this.applyFilter();
   }
 
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
-    this.customerFilters.set({ search: '' });
+    this.statusFilter = '';
+    this.customerFilters.set({ search: '', status: '' });
+    this.applyFilter();
   }
 
   refreshList() {
@@ -393,8 +401,10 @@ export class ErpCustomerPage {
   }
 
   applyFilter() {
-    const q = this.search.trim().toLowerCase();
-    this.dataSource.filter = q;
+    this.dataSource.filter = JSON.stringify({
+      search: this.search.trim().toLowerCase(),
+      status: this.statusFilter,
+    });
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
@@ -406,6 +416,28 @@ export class ErpCustomerPage {
     if (filters.search) params.set('q', filters.search);
     const res = await this.api.get<any>(`erp/customers?${params.toString()}`);
     return res?.data?.items ?? [];
+  }
+
+  private parseTableFilter(filter: string): CustomerFilters {
+    try {
+      const parsed = JSON.parse(filter || '{}') as Partial<CustomerFilters>;
+      return {
+        search: (parsed.search ?? '').trim().toLowerCase(),
+        status: parsed.status ?? '',
+      };
+    } catch {
+      return { search: filter.trim().toLowerCase(), status: '' };
+    }
+  }
+
+  statusLabel(status?: number | string | null) {
+    return this.statusValue(status) === '1' ? 'Active' : 'Inactive';
+  }
+
+  statusValue(status?: number | string | null) {
+    return String(status ?? '') === '1' || String(status ?? '').toLowerCase() === 'active'
+      ? '1'
+      : '0';
   }
 
   async fetchComplexes() {

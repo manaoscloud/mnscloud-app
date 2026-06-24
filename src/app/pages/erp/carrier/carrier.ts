@@ -111,6 +111,7 @@ export class ErpCarrierPage {
   error = '';
   search = '';
   searchInput = '';
+  statusFilter = '';
   editingCarrier: Carrier | null = null;
   selectedCarrierUUIDs = new Set<string>();
   readonly emailError = signal('');
@@ -180,7 +181,9 @@ export class ErpCarrierPage {
       }
     };
     this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
+      const parsed = this.parseTableFilter(filter);
+      const value = parsed.search;
+      if (parsed.status && String(data.Status) !== parsed.status) return false;
       if (!value) return true;
       return [data.Name, data.Document, data.Email, data.Phone]
         .filter(Boolean)
@@ -205,6 +208,7 @@ export class ErpCarrierPage {
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
+    this.statusFilter = '';
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
     } else {
@@ -217,10 +221,28 @@ export class ErpCarrierPage {
   }
 
   applyFilter() {
-    const q = this.search.trim().toLowerCase();
-    this.dataSource.filter = q;
+    this.dataSource.filter = JSON.stringify({
+      search: this.search.trim().toLowerCase(),
+      status: this.statusFilter,
+    });
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
+    }
+  }
+
+  statusLabel(status?: number | string | null) {
+    return String(status ?? '') === '1' ? 'Active' : 'Inactive';
+  }
+
+  private parseTableFilter(filter: string) {
+    try {
+      const parsed = JSON.parse(filter || '{}') as { search?: string; status?: string };
+      return {
+        search: (parsed.search ?? '').trim().toLowerCase(),
+        status: parsed.status ?? '',
+      };
+    } catch {
+      return { search: filter.trim().toLowerCase(), status: '' };
     }
   }
 

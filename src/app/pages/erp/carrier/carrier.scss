@@ -1,16 +1,5 @@
 @use 'sass:map';
 
-.filter-grid .span-4 {
-  grid-column: 1 / -1;
-}
-
-.filter-actions button {
-  height: 40px;
-  line-height: 40px;
-  min-width: 96px;
-  white-space: nowrap;
-}
-
 .selection-count {
   color: var(--mat-sys-color-on-surface-variant);
   font-size: 0.9rem;

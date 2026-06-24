@@ -117,6 +117,7 @@ export class ErpComplexPage {
   error = '';
   search = '';
   searchInput = '';
+  statusFilter = '';
   editingComplex: ErpComplex | null = null;
   selectedComplexUUIDs = new Set<string>();
   readonly emailError = signal('');
@@ -189,7 +190,9 @@ export class ErpComplexPage {
       }
     };
     this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
+      const parsed = this.parseTableFilter(filter);
+      const value = parsed.search;
+      if (parsed.status && data.Status !== parsed.status) return false;
       if (!value) return true;
       return [data.Name, data.Alias, data.Document, data.Email, data.Phone, data.City, data.State]
         .filter(Boolean)
@@ -214,6 +217,7 @@ export class ErpComplexPage {
   clearSearchFilters() {
     this.searchInput = '';
     this.search = '';
+    this.statusFilter = '';
     if (this.appliedSearch()) {
       this.appliedSearch.set('');
     } else {
@@ -226,8 +230,10 @@ export class ErpComplexPage {
   }
 
   applyFilter() {
-    const q = this.search.trim().toLowerCase();
-    this.dataSource.filter = q;
+    this.dataSource.filter = JSON.stringify({
+      search: this.search.trim().toLowerCase(),
+      status: this.statusFilter,
+    });
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
@@ -415,6 +421,22 @@ export class ErpComplexPage {
 
   statusClass(status?: string) {
     return status ? `is-${status}` : '';
+  }
+
+  statusLabel(status?: string | null) {
+    return (status ?? '').toLowerCase() === 'active' ? 'Active' : 'Inactive';
+  }
+
+  private parseTableFilter(filter: string) {
+    try {
+      const parsed = JSON.parse(filter || '{}') as { search?: string; status?: ComplexStatus | '' };
+      return {
+        search: (parsed.search ?? '').trim().toLowerCase(),
+        status: parsed.status ?? '',
+      };
+    } catch {
+      return { search: filter.trim().toLowerCase(), status: '' as const };
+    }
   }
 
   formatCityState(complex: ErpComplex) {
