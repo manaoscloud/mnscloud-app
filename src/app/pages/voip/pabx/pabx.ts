@@ -203,30 +203,30 @@ export class VoipPabxPage {
   ];
   readonly selectedAccountUUIDs = new Set<string>();
 
-  serverOptions: ServerOption[] = [];
+  readonly serverOptions = signal<ServerOption[]>([]);
   private serverMap = new Map<string, VoipPabxServerItem>();
-  domainOptions: DomainOption[] = [];
+  readonly domainOptions = signal<DomainOption[]>([]);
   private domainMap = new Map<string, VoipDomainItem>();
-  customerOptions: CustomerOption[] = [];
+  readonly customerOptions = signal<CustomerOption[]>([]);
   private customerMap = new Map<string, CustomerItem>();
-  blacklistOptions: BlacklistOption[] = [];
+  readonly blacklistOptions = signal<BlacklistOption[]>([]);
   private blacklistMap = new Map<string, BlacklistItem>();
-  dialPlanOptions: DialPlanOption[] = [];
+  readonly dialPlanOptions = signal<DialPlanOption[]>([]);
   private dialPlanMap = new Map<string, DialPlanItem>();
-  storageAccountOptions: StorageAccountOption[] = [];
+  readonly storageAccountOptions = signal<StorageAccountOption[]>([]);
   private storageAccountMap = new Map<string, StorageAccountItem>();
   readonly selectedServerUUID = signal('');
-  readonly serverSelectOptions = computed(() => this.toSelectOptions(this.serverOptions));
-  readonly domainSelectOptions = computed(() => this.toSelectOptions(this.domainOptions));
-  readonly customerSelectOptions = computed(() => this.toSelectOptions(this.customerOptions));
+  readonly serverSelectOptions = computed(() => this.toSelectOptions(this.serverOptions()));
+  readonly domainSelectOptions = computed(() => this.toSelectOptions(this.domainOptions()));
+  readonly customerSelectOptions = computed(() => this.toSelectOptions(this.customerOptions()));
   readonly blacklistSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => [
     { value: '', label: 'None' },
-    ...this.toSelectOptions(this.blacklistOptions),
+    ...this.toSelectOptions(this.blacklistOptions()),
   ]);
-  readonly dialPlanSelectOptions = computed(() => this.toSelectOptions(this.dialPlanOptions));
+  readonly dialPlanSelectOptions = computed(() => this.toSelectOptions(this.dialPlanOptions()));
   readonly storageAccountSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => [
     { value: '', label: 'Default storage account' },
-    ...this.toSelectOptions(this.storageAccountOptions),
+    ...this.toSelectOptions(this.storageAccountOptions()),
   ]);
   readonly statusOptions = [
     { value: 1, label: 'Active' },
@@ -589,13 +589,17 @@ export class VoipPabxPage {
   }
 
   private resetForm() {
-    const fallbackServerUUID = this.serverOptions[0]?.value ?? '';
-    const fallbackDomainUUID = this.domainOptions[0]?.value ?? '';
-    const fallbackCustomerUUID = this.customerOptions[0]?.value ?? '';
+    const serverOptions = this.serverOptions();
+    const domainOptions = this.domainOptions();
+    const customerOptions = this.customerOptions();
+    const dialPlanOptions = this.dialPlanOptions();
+    const fallbackServerUUID = serverOptions[0]?.value ?? '';
+    const fallbackDomainUUID = domainOptions[0]?.value ?? '';
+    const fallbackCustomerUUID = customerOptions[0]?.value ?? '';
     const fallbackDialPlanUUID =
-      this.dialPlanOptions.find((option) => this.dialPlanMap.get(option.value)?.isDefault === 1)
+      dialPlanOptions.find((option) => this.dialPlanMap.get(option.value)?.isDefault === 1)
         ?.value ??
-      this.dialPlanOptions[0]?.value ??
+      dialPlanOptions[0]?.value ??
       '';
     this.formModel.set({
       name: '',
@@ -642,16 +646,17 @@ export class VoipPabxPage {
     const response = await this.domainApi.list({ limit: this.listLimit });
     const domains = (response?.data?.items ?? []) as VoipDomainItem[];
     this.domainMap = new Map(domains.map((domain) => [domain.VdmUUID, domain]));
-    this.domainOptions = domains.map((domain) => ({
+    const domainOptions = domains.map((domain) => ({
       value: domain.VdmUUID,
       label: Number(domain.VdmStatus ?? 0) === 1 ? domain.VdmName : `${domain.VdmName} (inactive)`,
     }));
+    this.domainOptions.set(domainOptions);
 
     const current = this.formModel().domainUUID;
     if (!current || !this.domainMap.has(current)) {
       this.formModel.update((value) => ({
         ...value,
-        domainUUID: this.domainOptions[0]?.value ?? '',
+        domainUUID: domainOptions[0]?.value ?? '',
       }));
     }
   }
@@ -660,17 +665,18 @@ export class VoipPabxPage {
     const response = await this.serverApi.list(false, { limit: this.listLimit });
     const servers = (response?.data?.items ?? []) as VoipPabxServerItem[];
     this.serverMap = new Map(servers.map((server) => [server.VpsUUID, server]));
-    this.serverOptions = servers.map((server) => ({
+    const serverOptions = servers.map((server) => ({
       value: server.VpsUUID,
       label: Number(server.VpsStatus ?? 0) === 1 ? server.VpsName : `${server.VpsName} (inactive)`,
     }));
+    this.serverOptions.set(serverOptions);
     const current = this.formModel().serverUUID;
     if (!current || !this.serverMap.has(current)) {
       this.formModel.update((value) => ({
         ...value,
-        serverUUID: this.serverOptions[0]?.value ?? '',
+        serverUUID: serverOptions[0]?.value ?? '',
       }));
-      this.selectedServerUUID.set(this.serverOptions[0]?.value ?? '');
+      this.selectedServerUUID.set(serverOptions[0]?.value ?? '');
     } else {
       this.selectedServerUUID.set(current);
     }
@@ -680,16 +686,17 @@ export class VoipPabxPage {
     const response = await this.customerApi.get<any>('erp/customers');
     const customers = (response?.data?.items ?? []) as CustomerItem[];
     this.customerMap = new Map(customers.map((customer) => [customer.CustomerUUID, customer]));
-    this.customerOptions = customers.map((customer) => ({
+    const customerOptions = customers.map((customer) => ({
       value: customer.CustomerUUID,
       label: customer.Name,
     }));
+    this.customerOptions.set(customerOptions);
 
     const current = this.formModel().customerUUID;
     if (!current || !this.customerMap.has(current)) {
       this.formModel.update((value) => ({
         ...value,
-        customerUUID: this.customerOptions[0]?.value ?? '',
+        customerUUID: customerOptions[0]?.value ?? '',
       }));
     }
   }
@@ -700,10 +707,10 @@ export class VoipPabxPage {
     );
     const blacklists = (response?.data?.items ?? []) as BlacklistItem[];
     this.blacklistMap = new Map(blacklists.map((item) => [item.VbkUUID, item]));
-    this.blacklistOptions = blacklists.map((item) => ({
+    this.blacklistOptions.set(blacklists.map((item) => ({
       value: item.VbkUUID,
       label: item.VbkName,
-    }));
+    })));
 
     const current = this.formModel().blacklistUUID;
     if (current && !this.blacklistMap.has(current)) {
@@ -715,12 +722,12 @@ export class VoipPabxPage {
     const response = await this.customerApi.get<any>('hosting/storage/accounts');
     const accounts = (Array.isArray(response?.data) ? response.data : []) as StorageAccountItem[];
     this.storageAccountMap = new Map(accounts.map((item) => [item.HsaUUID, item]));
-    this.storageAccountOptions = accounts
+    this.storageAccountOptions.set(accounts
       .filter((item) => Number(item.HsaIsActive ?? 0) === 1)
       .map((item) => ({
         value: item.HsaUUID,
         label: `${item.HsaName}${item.HsaIsDefault === 1 ? ' (default)' : ''}`,
-      }));
+      })));
 
     const current = this.formModel().storageAccountUUID;
     if (current && !this.storageAccountMap.has(current)) {
@@ -735,17 +742,18 @@ export class VoipPabxPage {
     );
     const dialPlans = (response?.data?.items ?? []) as DialPlanItem[];
     this.dialPlanMap = new Map(dialPlans.map((item) => [item.uuid, item]));
-    this.dialPlanOptions = dialPlans.map((item) => ({
+    const dialPlanOptions = dialPlans.map((item) => ({
       value: item.uuid,
       label: `${item.name}${item.isDefault === 1 ? ' (default)' : ''}`,
     }));
+    this.dialPlanOptions.set(dialPlanOptions);
 
     const current = this.formModel().dialPlanUUID;
     if (!current || !this.dialPlanMap.has(current)) {
       const defaultPlan = dialPlans.find((item) => item.isDefault === 1);
       this.formModel.update((value) => ({
         ...value,
-        dialPlanUUID: defaultPlan?.uuid ?? this.dialPlanOptions[0]?.value ?? '',
+        dialPlanUUID: defaultPlan?.uuid ?? dialPlanOptions[0]?.value ?? '',
       }));
     }
   }
