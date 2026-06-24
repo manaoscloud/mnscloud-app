@@ -91,6 +91,14 @@ const COMPANY_CONFIG: DirectoryConfig = {
       span: 1,
     },
     {
+      key: 'addressComplement',
+      source: 'AddressComplement',
+      payloadKey: 'addressComplement',
+      label: 'Complement',
+      tab: 'address',
+      span: 1,
+    },
+    {
       key: 'addressCity',
       source: 'AddressCity',
       payloadKey: 'addressCity',
@@ -115,14 +123,6 @@ const COMPANY_CONFIG: DirectoryConfig = {
       span: 1,
     },
     {
-      key: 'addressComplement',
-      source: 'AddressComplement',
-      payloadKey: 'addressComplement',
-      label: 'Complement',
-      tab: 'address',
-      span: 4,
-    },
-    {
       key: 'notes',
       source: 'Notes',
       payloadKey: 'notes',
@@ -130,7 +130,7 @@ const COMPANY_CONFIG: DirectoryConfig = {
       type: 'textarea',
       tab: 'notes',
       span: 4,
-      rows: 2,
+      rows: 4,
     },
   ],
 };
