@@ -704,6 +704,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - Dialog CRUD form grids must follow the same breakpoint rule (`4/3/2/1`) and span behavior (`.span-2/.span-3/.span-4`) as page forms.
 - When a dialog row intentionally leaves columns empty, use the shared field config `breakBefore: true`
   on the next field instead of adding invisible spacer controls or local CSS.
+  `breakBefore` must collapse with the same responsive span rules as normal fields, so it never
+  changes the declared field order or leaks a wider span into smaller breakpoints.
 - Dialog form density/layout standard (mandatory):
   - vertical spacing: prefer compact form rows (`.form-grid { gap: 0.5rem 0.75rem; margin-bottom: 0.35rem; }`)
   - tab content top spacing: keep compact (`.tab-content { padding-top: 0.65rem; }`)

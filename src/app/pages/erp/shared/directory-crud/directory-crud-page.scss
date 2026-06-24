@@ -91,7 +91,9 @@
   }
 
   .crud-form-grid > .span-3,
-  .crud-form-grid > .span-4 {
+  .crud-form-grid > .span-4,
+  .crud-form-grid > .break-before.span-3,
+  .crud-form-grid > .break-before.span-4 {
     grid-column: 1 / -1;
   }
 }
@@ -104,7 +106,11 @@
   .crud-form-grid > .span-1,
   .crud-form-grid > .span-2,
   .crud-form-grid > .span-3,
-  .crud-form-grid > .span-4 {
+  .crud-form-grid > .span-4,
+  .crud-form-grid > .break-before.span-1,
+  .crud-form-grid > .break-before.span-2,
+  .crud-form-grid > .break-before.span-3,
+  .crud-form-grid > .break-before.span-4 {
     grid-column: 1 / -1;
   }
 }
