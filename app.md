@@ -651,8 +651,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - maps, copy flows, and auxiliary sections are optional resource features, not global CRUD requirements
 - Visual validation must confirm that the dialog opens as a dialog overlay with visible content, not as an inline form or collapsed top band.
 - Visual validation must confirm footer actions have visible horizontal margin from the dialog edges on desktop and mobile.
-- Visual validation must confirm mobile stacked fields preserve the same order declared for desktop
-  inside each tab; only the column span changes.
+- Visual validation must confirm responsive field layouts preserve the same declaration order inside
+  each tab across every breakpoint and device; only the column span/count changes.
 
 ## Styling Baseline (Current)
 
@@ -689,10 +689,11 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `<=1200px`: 2 columns
   - `<=900px`: 1 column
 - On mobile (`<=900px`), span classes should collapse to 1 column.
-- Mobile collapse must preserve the exact desktop declaration order of fields within each tab.
-  Do not use CSS `order`, duplicate mobile-only field blocks, or alternative arrays that reorder
-  fields on small screens. A field sequence such as `Status`, `Document`, `Name`, `Legal name`,
-  `Email`, `Phone` on desktop must read in that same sequence when stacked on mobile.
+- Responsive breakpoints must preserve the exact declaration order of fields within each tab.
+  Do not use CSS `order`, breakpoint-specific field blocks, or alternative arrays that reorder
+  fields on tablet, mobile, ultrawide, or any intermediate viewport. A field sequence such as
+  `Status`, `Document`, `Name`, `Legal name`, `Email`, `Phone` on desktop must read in that same
+  sequence at every responsive size; only the number of columns and field spans may change.
 - Filter grid baseline:
   - desktop: 4 equal columns, each filter control explicitly declaring `span-1` and occupying 1
     column.
