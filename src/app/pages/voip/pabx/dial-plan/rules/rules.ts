@@ -8,6 +8,7 @@ import {
   signal,
   viewChild,
   DestroyRef,
+  OnInit,
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,7 +36,7 @@ import {
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
 import {
@@ -89,10 +90,11 @@ const emptyDialPlanRuleFilters = (): DialPlanRuleFilters => ({
   templateUrl: './rules.html',
   styleUrls: ['./rules.scss'],
 })
-export class VoipPabxDialPlanRulesPage {
+export class VoipPabxDialPlanRulesPage implements OnInit {
   private readonly api = inject(VoipPabxDialPlanUiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
+  private readonly transloco = inject(TranslocoService);
   private readonly listLimit = 5000;
 
   private readonly appliedFilters = signal<DialPlanRuleFilters>(emptyDialPlanRuleFilters());
@@ -143,7 +145,9 @@ export class VoipPabxDialPlanRulesPage {
     ];
   });
   readonly rows = computed(() => this.itemsResource.value());
-  readonly table = createSignalCrudTable<VoipPabxDialPlanRuleItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly table = createSignalCrudTable<VoipPabxDialPlanRuleItem>(this.rows, (row, column) =>
+    this.sortValue(row, column),
+  );
   readonly sortActive = this.table.sortActive;
   readonly sortDirection = this.table.sortDirection;
   readonly pageIndex = this.table.pageIndex;
@@ -200,7 +204,7 @@ export class VoipPabxDialPlanRulesPage {
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
-    this.snack.error(this.messageFromError(error, 'Failed to load dial plan rules.'));
+    this.snack.error(this.messageFromError(error, this.t('Failed to load dial plan rules.')));
     this.rows();
     this.reconcileSelection();
   });
@@ -209,7 +213,11 @@ export class VoipPabxDialPlanRulesPage {
     this.closeDialog();
   });
 
-  async bootstrap() {
+  ngOnInit(): void {
+    void this.bootstrap();
+  }
+
+  private async bootstrap() {
     await Promise.all([this.fetchDialPlans(), this.fetchTrunks()]);
     this.itemsResource.reload();
   }
@@ -247,7 +255,6 @@ export class VoipPabxDialPlanRulesPage {
       this.appliedFilters.set(nextFilters);
     }
   }
-
 
   async fetchDialPlans() {
     const response = await this.api.listPlans({ limit: this.listLimit });
@@ -340,7 +347,7 @@ export class VoipPabxDialPlanRulesPage {
     const value = this.formModel();
     const isOutbound = value.direction === 'outbound' && value.resultType === 'outbound';
     if (isOutbound && !value.trunkUUID) {
-      this.snack.error('Outbound dial plan rule trunk is required.');
+      this.snack.error(this.t('Outbound dial plan rule trunk is required.'));
       return;
     }
     const payload = {
@@ -370,7 +377,9 @@ export class VoipPabxDialPlanRulesPage {
       if (editing) await this.api.updateRule(editing.uuid, payload);
       else await this.api.createRule(payload);
       this.snack.success(
-        editing ? 'Dial plan rule updated successfully.' : 'Dial plan rule created successfully.',
+        this.t(
+          editing ? 'Dial plan rule updated successfully.' : 'Dial plan rule created successfully.',
+        ),
       );
       this.itemsResource.reload();
       if (saveAndNew && createMode) {
@@ -379,7 +388,7 @@ export class VoipPabxDialPlanRulesPage {
       }
       this.cancelForm();
     } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to save dial plan rule.'));
+      this.snack.error(this.messageFromError(err, this.t('Failed to save dial plan rule.')));
     } finally {
       this.saving.set(false);
     }
@@ -396,19 +405,19 @@ export class VoipPabxDialPlanRulesPage {
 
   async deleteItem(item: VoipPabxDialPlanRuleItem) {
     const confirmed = await this.confirmDelete(
-      'Delete dial plan rule',
-      `Delete rule "${item.name}"?`,
-      'Delete',
+      this.t('Delete dial plan rule'),
+      this.t('Delete rule "{{name}}"?', { name: item.name }),
+      this.t('Delete'),
     );
     if (!confirmed) return;
     this.mutating.set(true);
     try {
       await this.api.removeRule(item.uuid);
       this.selectedUUIDs.update((current) => this.removeFromSet(current, item.uuid));
-      this.snack.success('Dial plan rule deleted successfully.');
+      this.snack.success(this.t('Dial plan rule deleted successfully.'));
       this.itemsResource.reload();
     } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to delete dial plan rule.'));
+      this.snack.error(this.messageFromError(err, this.t('Failed to delete dial plan rule.')));
     } finally {
       this.mutating.set(false);
     }
@@ -448,9 +457,9 @@ export class VoipPabxDialPlanRulesPage {
     const ids = Array.from(this.selectedUUIDs());
     if (!ids.length) return;
     const confirmed = await this.confirmDelete(
-      'Delete selected rules',
-      `Delete ${ids.length} selected rule(s)?`,
-      'Delete selected',
+      this.t('Delete selected rules'),
+      this.t('Delete {{count}} selected rule(s)?', { count: ids.length }),
+      this.t('Delete selected'),
     );
     if (!confirmed) return;
     this.mutating.set(true);
@@ -458,13 +467,19 @@ export class VoipPabxDialPlanRulesPage {
       const response = await this.api.removeManyRules(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       const failed = this.failedUUIDs(response?.data?.failed ?? [], ['VdrUUID', 'uuid']);
-    this.rows();
+      this.rows();
       this.selectedUUIDs.set(failed);
-      if (failed.size) this.snack.error(`${failed.size} selected rule(s) could not be deleted.`);
-      else this.snack.success(`${deleted.size || ids.length} selected rule(s) deleted.`);
+      if (failed.size)
+        this.snack.error(
+          this.t('{{count}} selected rule(s) could not be deleted.', { count: failed.size }),
+        );
+      else
+        this.snack.success(
+          this.t('{{count}} selected rule(s) deleted.', { count: deleted.size || ids.length }),
+        );
       this.itemsResource.reload();
     } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to delete selected rules.'));
+      this.snack.error(this.messageFromError(err, this.t('Failed to delete selected rules.')));
     } finally {
       this.mutating.set(false);
     }
@@ -483,6 +498,20 @@ export class VoipPabxDialPlanRulesPage {
 
   isActive(item: VoipPabxDialPlanRuleItem) {
     return Number(item.enabled ?? 0) === 1;
+  }
+
+  directionLabel(value: string | null | undefined): string {
+    if (value === 'outbound') return 'Outbound';
+    if (value === 'inbound') return 'Inbound';
+    if (value === 'internal') return 'Internal';
+    return value || '-';
+  }
+
+  operatorLabel(value: string | null | undefined): string {
+    if (value === 'regex') return 'Regex';
+    if (value === 'prefix') return 'Prefix';
+    if (value === 'exact') return 'Exact';
+    return value || '-';
   }
 
   private openDialog() {
@@ -515,8 +544,14 @@ export class VoipPabxDialPlanRulesPage {
   private sortValue(row: VoipPabxDialPlanRuleItem, column: string): string | number {
     if (column === 'dialPlan') return row.dialPlanName ?? this.dialPlanLabel(row.dialPlanUUID);
     if (column === 'priority') return Number(row.priority ?? 0);
-    if (column === 'status') return this.isActive(row) ? 'ACTIVE' : 'INACTIVE';
+    if (column === 'direction') return this.t(this.directionLabel(row.direction));
+    if (column === 'operator') return this.t(this.operatorLabel(row.operator));
+    if (column === 'status') return this.isActive(row) ? this.t('Active') : this.t('Inactive');
     return String((row as any)[column] ?? '');
+  }
+
+  private t(key: string, params?: Record<string, unknown>): string {
+    return this.transloco.translate(key, params);
   }
 
   private reconcileSelection() {

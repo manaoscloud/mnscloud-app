@@ -1,18 +1,3 @@
-.filter-grid .span-4 {
-  grid-column: 1 / -1;
-}
-
-.filter-actions button {
-  height: 40px;
-  line-height: 40px;
-  min-width: 96px;
-  white-space: nowrap;
-
-  mat-icon {
-    margin-right: 0.25rem;
-  }
-}
-
 .selection-count {
   color: var(--mat-sys-color-on-surface-variant);
   font-size: 0.9rem;

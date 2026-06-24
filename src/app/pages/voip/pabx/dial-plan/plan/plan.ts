@@ -42,7 +42,7 @@ import {
 } from '../../../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { VoipPabxDialPlanItem, VoipPabxDialPlanUiService } from '../dial-plan.service';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
 
@@ -82,6 +82,7 @@ export class VoipPabxDialPlanPlanPage {
   private readonly api = inject(VoipPabxDialPlanUiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
+  private readonly transloco = inject(TranslocoService);
   private readonly listLimit = 5000;
 
   private readonly appliedSearch = signal('');
@@ -105,7 +106,9 @@ export class VoipPabxDialPlanPlanPage {
   readonly editing = signal<VoipPabxDialPlanItem | null>(null);
   readonly selectedUUIDs = signal<Set<string>>(new Set());
   readonly rows = computed(() => this.itemsResource.value());
-  readonly table = createSignalCrudTable<VoipPabxDialPlanItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly table = createSignalCrudTable<VoipPabxDialPlanItem>(this.rows, (row, column) =>
+    this.sortValue(row, column),
+  );
   readonly sortActive = this.table.sortActive;
   readonly sortDirection = this.table.sortDirection;
   readonly pageIndex = this.table.pageIndex;
@@ -136,7 +139,7 @@ export class VoipPabxDialPlanPlanPage {
   private readonly itemsErrorEffect = effect(() => {
     const error = this.itemsResource.error();
     if (!error) return;
-    this.snack.error(this.messageFromError(error, 'Failed to load dial plans.'));
+    this.snack.error(this.messageFromError(error, this.t('Failed to load dial plans.')));
     this.rows();
     this.reconcileSelection();
   });
@@ -224,7 +227,7 @@ export class VoipPabxDialPlanPlanPage {
       if (editing) await this.api.updatePlan(editing.uuid, payload);
       else await this.api.createPlan(payload);
       this.snack.success(
-        editing ? 'Dial plan updated successfully.' : 'Dial plan created successfully.',
+        this.t(editing ? 'Dial plan updated successfully.' : 'Dial plan created successfully.'),
       );
       this.itemsResource.reload();
       if (saveAndNew && createMode) {
@@ -233,7 +236,7 @@ export class VoipPabxDialPlanPlanPage {
       }
       this.cancelForm();
     } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to save dial plan.'));
+      this.snack.error(this.messageFromError(err, this.t('Failed to save dial plan.')));
     } finally {
       this.saving.set(false);
     }
@@ -255,19 +258,19 @@ export class VoipPabxDialPlanPlanPage {
 
   async deleteItem(item: VoipPabxDialPlanItem) {
     const confirmed = await this.confirmDelete(
-      'Delete dial plan',
-      `Delete dial plan "${item.name}"?`,
-      'Delete',
+      this.t('Delete dial plan'),
+      this.t('Delete dial plan "{{name}}"?', { name: item.name }),
+      this.t('Delete'),
     );
     if (!confirmed) return;
     this.mutating.set(true);
     try {
       await this.api.removePlan(item.uuid);
       this.selectedUUIDs.update((current) => this.removeFromSet(current, item.uuid));
-      this.snack.success('Dial plan deleted successfully.');
+      this.snack.success(this.t('Dial plan deleted successfully.'));
       this.itemsResource.reload();
     } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to delete dial plan.'));
+      this.snack.error(this.messageFromError(err, this.t('Failed to delete dial plan.')));
     } finally {
       this.mutating.set(false);
     }
@@ -307,9 +310,9 @@ export class VoipPabxDialPlanPlanPage {
     const ids = Array.from(this.selectedUUIDs());
     if (!ids.length) return;
     const confirmed = await this.confirmDelete(
-      'Delete selected dial plans',
-      `Delete ${ids.length} selected dial plan(s)?`,
-      'Delete selected',
+      this.t('Delete selected dial plans'),
+      this.t('Delete {{count}} selected dial plan(s)?', { count: ids.length }),
+      this.t('Delete selected'),
     );
     if (!confirmed) return;
     this.mutating.set(true);
@@ -317,14 +320,21 @@ export class VoipPabxDialPlanPlanPage {
       const response = await this.api.removeManyPlans(ids);
       const deleted = new Set<string>(response?.data?.deleted ?? []);
       const failed = this.failedUUIDs(response?.data?.failed ?? [], ['VdpUUID', 'uuid']);
-    this.rows();
+      this.rows();
       this.selectedUUIDs.set(failed);
       if (failed.size)
-        this.snack.error(`${failed.size} selected dial plan(s) could not be deleted.`);
-      else this.snack.success(`${deleted.size || ids.length} selected dial plan(s) deleted.`);
+        this.snack.error(
+          this.t('{{count}} selected dial plan(s) could not be deleted.', {
+            count: failed.size,
+          }),
+        );
+      else
+        this.snack.success(
+          this.t('{{count}} selected dial plan(s) deleted.', { count: deleted.size || ids.length }),
+        );
       this.itemsResource.reload();
     } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to delete selected dial plans.'));
+      this.snack.error(this.messageFromError(err, this.t('Failed to delete selected dial plans.')));
     } finally {
       this.mutating.set(false);
     }
@@ -362,9 +372,13 @@ export class VoipPabxDialPlanPlanPage {
   }
 
   private sortValue(row: VoipPabxDialPlanItem, column: string): string | number {
-    if (column === 'default') return row.isDefault === 1 ? 'YES' : 'NO';
-    if (column === 'status') return this.isActive(row) ? 'ACTIVE' : 'INACTIVE';
+    if (column === 'default') return row.isDefault === 1 ? this.t('Yes') : this.t('No');
+    if (column === 'status') return this.isActive(row) ? this.t('Active') : this.t('Inactive');
     return String((row as any)[column] ?? '');
+  }
+
+  private t(key: string, params?: Record<string, unknown>): string {
+    return this.transloco.translate(key, params);
   }
 
   private reconcileSelection() {

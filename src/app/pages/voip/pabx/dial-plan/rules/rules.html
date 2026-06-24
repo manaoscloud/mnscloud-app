@@ -2,21 +2,21 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Dial Plan Rules</h1>
-        <p>Create the dialing rules that belong to each dial plan.</p>
+        <h1>{{ 'Dial Plan Rules' | transloco }}</h1>
+        <p>{{ 'Create the dialing rules that belong to each dial plan.' | transloco }}</p>
       </div>
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Search</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
           [value]="searchInput()"
@@ -26,29 +26,29 @@
 
       <mns-search-select-field
         fieldClass="span-1"
-        label="Dial Plan"
+        [label]="'Dial Plan' | transloco"
         [value]="dialPlanFilter()"
         (valueChange)="dialPlanFilter.set(($any($event) || '').toString())"
         [options]="dialPlanFilterOptions()"
-        placeholder="Search dial plan"
-        emptyLabel="No dial plans found."
+        [placeholder]="'Search dial plan' | transloco"
+        [emptyLabel]="'No dial plans found.' | transloco"
       />
 
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           @for (option of statusFilterOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} selected</span>
+          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applySearchFilters()">
@@ -80,6 +80,7 @@
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
+              [attr.aria-label]="'Select visible dial plan rules' | transloco"
               [checked]="isAllVisibleSelected()"
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
@@ -87,6 +88,7 @@
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
+              [attr.aria-label]="'Select {{name}}' | transloco: { name: row.name }"
               [checked]="isSelected(row)"
               (click)="$event.stopPropagation()"
               (change)="toggleEntitySelection(row, $event.checked)"
@@ -95,7 +97,7 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="record-main">{{ row.name }}</div>
             <div class="record-uuid">{{ row.uuid }}</div>
@@ -103,7 +105,7 @@
         </ng-container>
 
         <ng-container matColumnDef="dialPlan">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Dial Plan</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Dial Plan' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="record-main">{{ row.dialPlanName || dialPlanLabel(row.dialPlanUUID) }}</div>
             <div class="record-uuid">{{ row.dialPlanUUID }}</div>
@@ -111,27 +113,31 @@
         </ng-container>
 
         <ng-container matColumnDef="direction">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Direction</th>
-          <td mat-cell *matCellDef="let row">{{ row.direction }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Direction' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">{{ directionLabel(row.direction) | transloco }}</td>
         </ng-container>
 
         <ng-container matColumnDef="operator">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Operator</th>
-          <td mat-cell *matCellDef="let row">{{ row.operator }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'Rule operator' | transloco }}
+          </th>
+          <td mat-cell *matCellDef="let row">{{ operatorLabel(row.operator) | transloco }}</td>
         </ng-container>
 
         <ng-container matColumnDef="pattern">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Expression</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Expression' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.pattern }}</td>
         </ng-container>
 
         <ng-container matColumnDef="priority">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Priority' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.priority }}</td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Status' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip"
@@ -139,26 +145,31 @@
               [class.is-inactive]="!isActive(row)"
               [class.chip-success]="isActive(row)"
               [class.chip-skipped]="!isActive(row)"
-              [class.chip-success]="isActive(row)"
-              [class.chip-failed]="!isActive(row)"
             >
-              {{ isActive(row) ? 'ACTIVE' : 'INACTIVE' }}
+              {{ (isActive(row) ? 'Active' : 'Inactive') | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+            {{ 'Actions' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
-              <button mat-icon-button type="button" matTooltip="Edit" (click)="startEdit(row)">
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="'Edit' | transloco"
+                (click)="startEdit(row)"
+              >
                 <mat-icon>edit</mat-icon>
               </button>
               <button
                 mat-icon-button
                 color="warn"
                 type="button"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
                 (click)="deleteItem(row)"
               >
                 <mat-icon>delete</mat-icon>
@@ -171,7 +182,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading...' : 'No dial plan rules found.' }}
+            {{ (loading() ? 'Loading...' : 'No dial plan rules found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -184,7 +195,6 @@
       [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-
       (page)="setPage($event)"
     />
   </mat-card>
@@ -194,8 +204,8 @@
   <div class="crud-dialog entity-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit Dial Plan Rule' : 'New Dial Plan Rule' }}</h2>
-        <p>Rule data.</p>
+        <h2>{{ (editing() ? 'Edit Dial Plan Rule' : 'New Dial Plan Rule') | transloco }}</h2>
+        <p>{{ 'Rule data.' | transloco }}</p>
       </div>
     </div>
 
@@ -204,120 +214,120 @@
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Status</mat-label>
+              <mat-label>{{ 'Status' | transloco }}</mat-label>
               <mat-select [formField]="form.enabled">
-                <mat-option [value]="1">Active</mat-option>
-                <mat-option [value]="0">Inactive</mat-option>
+                <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mns-search-select-field
               fieldClass="span-1"
               [field]="form.dialPlanUUID"
-              label="Dial Plan"
+              [label]="'Dial Plan' | transloco"
               [options]="dialPlanSelectOptions()"
-              placeholder="Search dial plan"
-              emptyLabel="No dial plans found."
+              [placeholder]="'Search dial plan' | transloco"
+              [emptyLabel]="'No dial plans found.' | transloco"
             />
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Priority</mat-label>
+              <mat-label>{{ 'Priority' | transloco }}</mat-label>
               <input matInput type="number" [formField]="form.priority" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Name</mat-label>
+              <mat-label>{{ 'Name' | transloco }}</mat-label>
               <input matInput [formField]="form.name" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Direction</mat-label>
+              <mat-label>{{ 'Direction' | transloco }}</mat-label>
               <mat-select [formField]="form.direction">
-                <mat-option value="outbound">Outbound</mat-option>
-                <mat-option value="inbound">Inbound</mat-option>
-                <mat-option value="internal">Internal</mat-option>
+                <mat-option value="outbound">{{ 'Outbound' | transloco }}</mat-option>
+                <mat-option value="inbound">{{ 'Inbound' | transloco }}</mat-option>
+                <mat-option value="internal">{{ 'Internal' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Operator</mat-label>
+              <mat-label>{{ 'Rule operator' | transloco }}</mat-label>
               <mat-select [formField]="form.operator">
-                <mat-option value="regex">Regex</mat-option>
-                <mat-option value="prefix">Prefix</mat-option>
-                <mat-option value="exact">Exact</mat-option>
+                <mat-option value="regex">{{ 'Regex' | transloco }}</mat-option>
+                <mat-option value="prefix">{{ 'Prefix' | transloco }}</mat-option>
+                <mat-option value="exact">{{ 'Exact' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Expression</mat-label>
+              <mat-label>{{ 'Expression' | transloco }}</mat-label>
               <input matInput [formField]="form.pattern" />
             </mat-form-field>
           </form>
         </mat-tab>
-        <mat-tab label="Transform">
+        <mat-tab [label]="'Transform' | transloco">
           <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Result</mat-label>
+              <mat-label>{{ 'Result' | transloco }}</mat-label>
               <mat-select [formField]="form.resultType">
-                <mat-option value="outbound">Outbound</mat-option>
-                <mat-option value="extension">Extension</mat-option>
-                <mat-option value="blocked">Blocked</mat-option>
-                <mat-option value="emergency">Emergency</mat-option>
-                <mat-option value="feature_code">Feature code</mat-option>
+                <mat-option value="outbound">{{ 'Outbound' | transloco }}</mat-option>
+                <mat-option value="extension">{{ 'Extension' | transloco }}</mat-option>
+                <mat-option value="blocked">{{ 'Blocked' | transloco }}</mat-option>
+                <mat-option value="emergency">{{ 'Emergency' | transloco }}</mat-option>
+                <mat-option value="feature_code">{{ 'Feature code' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Strip digits</mat-label>
+              <mat-label>{{ 'Strip digits' | transloco }}</mat-label>
               <input matInput type="number" [formField]="form.stripDigits" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Prepend</mat-label>
+              <mat-label>{{ 'Prepend' | transloco }}</mat-label>
               <input matInput [formField]="form.prepend" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Replacement</mat-label>
+              <mat-label>{{ 'Replacement' | transloco }}</mat-label>
               <input matInput [formField]="form.replacement" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Case sensitive</mat-label>
+              <mat-label>{{ 'Case sensitive' | transloco }}</mat-label>
               <mat-select [formField]="form.caseSensitive">
-                <mat-option [value]="1">Yes</mat-option>
-                <mat-option [value]="0">No</mat-option>
+                <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
+                <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
           </form>
         </mat-tab>
-        <mat-tab label="Routing">
+        <mat-tab [label]="'Routing' | transloco">
           <form class="tab-content form-grid">
             <mns-search-select-field
               fieldClass="span-2"
               [field]="form.trunkUUID"
-              label="Trunk"
+              [label]="'Trunk' | transloco"
               [options]="trunkSelectOptions()"
-              placeholder="Search trunk"
-              emptyLabel="No outbound trunks found."
+              [placeholder]="'Search trunk' | transloco"
+              [emptyLabel]="'No outbound trunks found.' | transloco"
             />
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Caller ID mode</mat-label>
+              <mat-label>{{ 'Caller ID mode' | transloco }}</mat-label>
               <mat-select [formField]="form.callerIdMode">
-                <mat-option value="extension">Extension</mat-option>
-                <mat-option value="fixed">Fixed</mat-option>
-                <mat-option value="anonymous">Anonymous</mat-option>
-                <mat-option value="passthrough">Passthrough</mat-option>
+                <mat-option value="extension">{{ 'Extension' | transloco }}</mat-option>
+                <mat-option value="fixed">{{ 'Fixed' | transloco }}</mat-option>
+                <mat-option value="anonymous">{{ 'Anonymous' | transloco }}</mat-option>
+                <mat-option value="passthrough">{{ 'Passthrough' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Caller ID value</mat-label>
+              <mat-label>{{ 'Caller ID value' | transloco }}</mat-label>
               <input matInput [formField]="form.callerIdValue" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Fallback trunks</mat-label>
+              <mat-label>{{ 'Fallback trunks' | transloco }}</mat-label>
               <input matInput [formField]="form.fallbackTrunks" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Engine config</mat-label>
+              <mat-label>{{ 'Engine config' | transloco }}</mat-label>
               <textarea matInput [formField]="form.engineConfig" rows="2"></textarea>
             </mat-form-field>
           </form>
         </mat-tab>
-        <mat-tab label="Notes">
+        <mat-tab [label]="'Notes' | transloco">
           <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Description</mat-label>
+              <mat-label>{{ 'Description' | transloco }}</mat-label>
               <textarea matInput [formField]="form.description" rows="2"></textarea>
             </mat-form-field>
           </form>
@@ -333,7 +343,7 @@
           type="button"
           (click)="cancelForm()"
         >
-          Cancel
+          {{ 'Cancel' | transloco }}
         </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
@@ -346,7 +356,7 @@
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -359,7 +369,9 @@
             <mat-icon>expand_more</mat-icon>
           </button>
           <mat-menu #saveMenu="matMenu">
-            <button mat-menu-item type="button" (click)="saveAndNew()">Save/New</button>
+            <button mat-menu-item type="button" (click)="saveAndNew()">
+              {{ 'Save/New' | transloco }}
+            </button>
           </mat-menu>
         }
       </div>

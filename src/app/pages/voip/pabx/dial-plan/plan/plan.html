@@ -2,21 +2,25 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Dial Plan</h1>
-        <p>Create reusable dialing plans selected by PABX accounts and extensions.</p>
+        <h1>{{ 'Dial Plans' | transloco }}</h1>
+        <p>
+          {{
+            'Create reusable dialing plans selected by PABX accounts and extensions.' | transloco
+          }}
+        </p>
       </div>
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Search</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
           [value]="searchInput()"
@@ -24,20 +28,20 @@
         />
       </mat-form-field>
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
           @for (option of statusFilterOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} selected</span>
+          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applySearchFilters()">
@@ -69,6 +73,7 @@
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
+              [attr.aria-label]="'Select visible dial plans' | transloco"
               [checked]="isAllVisibleSelected()"
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
@@ -76,6 +81,7 @@
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
+              [attr.aria-label]="'Select {{name}}' | transloco: { name: row.name }"
               [checked]="isSelected(row)"
               (click)="$event.stopPropagation()"
               (change)="toggleEntitySelection(row, $event.checked)"
@@ -84,7 +90,7 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="record-main">{{ row.name }}</div>
             <div class="record-uuid">{{ row.uuid }}</div>
@@ -92,12 +98,14 @@
         </ng-container>
 
         <ng-container matColumnDef="code">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Code' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.code }}</td>
         </ng-container>
 
         <ng-container matColumnDef="default">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Default' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -106,13 +114,15 @@
               [class.chip-success]="row.isDefault === 1"
               [class.chip-skipped]="row.isDefault !== 1"
             >
-              {{ row.isDefault === 1 ? 'YES' : 'NO' }}
+              {{ (row.isDefault === 1 ? 'Yes' : 'No') | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Status' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -121,23 +131,30 @@
               [class.chip-success]="isActive(row)"
               [class.chip-skipped]="!isActive(row)"
             >
-              {{ isActive(row) ? 'ACTIVE' : 'INACTIVE' }}
+              {{ (isActive(row) ? 'Active' : 'Inactive') | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+            {{ 'Actions' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
-              <button mat-icon-button type="button" matTooltip="Edit" (click)="startEdit(row)">
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="'Edit' | transloco"
+                (click)="startEdit(row)"
+              >
                 <mat-icon>edit</mat-icon>
               </button>
               <button
                 mat-icon-button
                 color="warn"
                 type="button"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
                 (click)="deleteItem(row)"
               >
                 <mat-icon>delete</mat-icon>
@@ -150,7 +167,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading...' : 'No dial plans found.' }}
+            {{ (loading() ? 'Loading...' : 'No dial plans found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -163,7 +180,6 @@
       [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-
       (page)="setPage($event)"
     />
   </mat-card>
@@ -173,8 +189,8 @@
   <div class="crud-dialog entity-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit Dial Plan' : 'New Dial Plan' }}</h2>
-        <p>Plan data.</p>
+        <h2>{{ (editing() ? 'Edit Dial Plan' : 'New Dial Plan') | transloco }}</h2>
+        <p>{{ 'Plan data.' | transloco }}</p>
       </div>
     </div>
 
@@ -183,33 +199,33 @@
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Status</mat-label>
+              <mat-label>{{ 'Status' | transloco }}</mat-label>
               <mat-select [formField]="form.enabled">
-                <mat-option [value]="1">Active</mat-option>
-                <mat-option [value]="0">Inactive</mat-option>
+                <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Default</mat-label>
+              <mat-label>{{ 'Default' | transloco }}</mat-label>
               <mat-select [formField]="form.isDefault">
-                <mat-option [value]="1">Yes</mat-option>
-                <mat-option [value]="0">No</mat-option>
+                <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
+                <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Code</mat-label>
+              <mat-label>{{ 'Code' | transloco }}</mat-label>
               <input matInput [formField]="form.code" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-1">
-              <mat-label>Name</mat-label>
+              <mat-label>{{ 'Name' | transloco }}</mat-label>
               <input matInput [formField]="form.name" />
             </mat-form-field>
           </form>
         </mat-tab>
-        <mat-tab label="Notes">
+        <mat-tab [label]="'Notes' | transloco">
           <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Description</mat-label>
+              <mat-label>{{ 'Description' | transloco }}</mat-label>
               <textarea matInput [formField]="form.description" rows="2"></textarea>
             </mat-form-field>
           </form>
@@ -225,7 +241,7 @@
           type="button"
           (click)="cancelForm()"
         >
-          Cancel
+          {{ 'Cancel' | transloco }}
         </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
@@ -238,7 +254,7 @@
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -251,7 +267,9 @@
             <mat-icon>expand_more</mat-icon>
           </button>
           <mat-menu #saveMenu="matMenu">
-            <button mat-menu-item type="button" (click)="saveAndNew()">Save/New</button>
+            <button mat-menu-item type="button" (click)="saveAndNew()">
+              {{ 'Save/New' | transloco }}
+            </button>
           </mat-menu>
         }
       </div>
