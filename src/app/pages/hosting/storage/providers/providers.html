@@ -2,47 +2,47 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Storage Providers</h1>
-        <p>Manage storage platforms and credentials.</p>
+        <h1>{{ 'Storage Providers' | transloco }}</h1>
+        <p>{{ 'Manage storage platforms and credentials.' | transloco }}</p>
       </div>
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input matInput [formField]="filterForm.search" />
       </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Provider</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Provider' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.provider">
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
           @for (provider of providerOptions; track provider.value) {
             <mat-option [value]="provider.value">{{ provider.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.status">
-          <mat-option value="">All</mat-option>
-          <mat-option value="1">Active</mat-option>
-          <mat-option value="0">Inactive</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount() > 0) {
-          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedProviders()">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
@@ -84,20 +84,23 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.HspName }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.HspName }}</div>
+            <div class="record-uuid">{{ row.HspUUID }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="provider">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ providerLabel(row.HspProvider) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="default">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="default-col">Default</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="default-col">{{ 'Default' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="default-col">
             @if (row.HspIsDefault === 1) {
-              <span class="status-pill status-chip state-chip chip-queued">Default</span>
+              <span class="status-pill status-chip state-chip chip-queued">{{ 'Default' | transloco }}</span>
             } @else {
               -
             }
@@ -105,7 +108,7 @@
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <span
               class="status-pill status-chip state-chip"
@@ -120,7 +123,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               @if (
@@ -133,12 +136,12 @@
                   type="button"
                   (click)="validateProvider(row)"
                   [disabled]="validatingId() === row.HspUUID"
-                  matTooltip="Validate"
+                  [matTooltip]="'Validate' | transloco"
                 >
                   <mat-icon>fact_check</mat-icon>
                 </button>
               }
-              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+              <button mat-icon-button type="button" (click)="startEdit(row)" [matTooltip]="'Edit' | transloco">
                 <mat-icon>edit</mat-icon>
               </button>
               <button
@@ -146,7 +149,7 @@
                 color="warn"
                 type="button"
                 (click)="deleteProvider(row)"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -158,7 +161,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading storage providers...' : 'No storage providers found.' }}
+            {{ (loading() ? 'Loading storage providers...' : 'No storage providers found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -180,13 +183,11 @@
   <div class="crud-dialog entity-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit storage provider' : 'New storage provider' }}</h2>
+        <h2>{{ (editing() ? 'Edit storage provider' : 'New storage provider') | transloco }}</h2>
         <p>
-          {{
-            editing()
+          {{ (editing()
               ? 'Update platform settings and credentials.'
-              : 'Create a storage provider account.'
-          }}
+              : 'Create a storage provider account.') | transloco }}
         </p>
       </div>
     </div>
@@ -196,21 +197,21 @@
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
             <mat-form-field appearance="outline">
-              <mat-label>Status</mat-label>
+              <mat-label>{{ 'Status' | transloco }}</mat-label>
               <mat-select [formField]="form.isActive">
-                <mat-option [value]="1">Active</mat-option>
-                <mat-option [value]="0">Inactive</mat-option>
+                <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Default provider</mat-label>
+              <mat-label>{{ 'Default' | transloco }} provider</mat-label>
               <mat-select [formField]="form.isDefault">
-                <mat-option [value]="1">Yes</mat-option>
-                <mat-option [value]="0">No</mat-option>
+                <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
+                <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Provider</mat-label>
+              <mat-label>{{ 'Provider' | transloco }}</mat-label>
               <mat-select
                 [formField]="form.provider"
                 (selectionChange)="onProviderChange($event.value)"
@@ -221,7 +222,7 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Name</mat-label>
+              <mat-label>{{ 'Name' | transloco }}</mat-label>
               <input matInput [formField]="form.name" />
             </mat-form-field>
           </form>
@@ -230,15 +231,15 @@
           <form class="tab-content form-grid">
             @if (selectedProvider() === 's3' || selectedProvider() === 'spaces') {
               <mat-form-field appearance="outline">
-                <mat-label>Region</mat-label>
+                <mat-label>{{ 'Region' | transloco }}</mat-label>
                 <input matInput [formField]="form.region" placeholder="us-east-1" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Access key</mat-label>
+                <mat-label>{{ 'Access key' | transloco }}</mat-label>
                 <input matInput [formField]="form.accessKeyId" autocomplete="off" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Secret access</mat-label>
+                <mat-label>{{ 'Secret access' | transloco }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -247,7 +248,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Endpoint</mat-label>
+                <mat-label>{{ 'Endpoint' | transloco }}</mat-label>
                 <input
                   matInput
                   [formField]="form.endpoint"
@@ -259,25 +260,25 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Force path style</mat-label>
+                <mat-label>{{ 'Force path style' | transloco }}</mat-label>
                 <mat-select [formField]="form.forcePathStyle">
-                  <mat-option [value]="true">Yes</mat-option>
-                  <mat-option [value]="false">No</mat-option>
+                  <mat-option [value]="true">{{ 'Yes' | transloco }}</mat-option>
+                  <mat-option [value]="false">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
             }
 
             @if (selectedProvider() === 'gcs') {
               <mat-form-field appearance="outline">
-                <mat-label>Project ID</mat-label>
+                <mat-label>{{ 'Project ID' | transloco }}</mat-label>
                 <input matInput [formField]="form.projectId" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Client email</mat-label>
+                <mat-label>{{ 'Client email' | transloco }}</mat-label>
                 <input matInput [formField]="form.clientEmail" autocomplete="off" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Private key</mat-label>
+                <mat-label>{{ 'Private key' | transloco }}</mat-label>
                 <textarea
                   matInput
                   rows="2"
@@ -289,11 +290,11 @@
 
             @if (selectedProvider() === 'azure') {
               <mat-form-field appearance="outline">
-                <mat-label>Account name</mat-label>
+                <mat-label>{{ 'Account name' | transloco }}</mat-label>
                 <input matInput [formField]="form.accountName" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Account key</mat-label>
+                <mat-label>{{ 'Account key' | transloco }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -305,30 +306,30 @@
 
             @if (selectedProvider() === 'sangfor_scp') {
               <mat-form-field appearance="outline">
-                <mat-label>Mode</mat-label>
+                <mat-label>{{ 'Mode' | transloco }}</mat-label>
                 <mat-select [formField]="form.mode">
-                  <mat-option value="scp_storage">SCP/HCI API</mat-option>
-                  <mat-option value="s3_compatible">S3 compatible</mat-option>
+                  <mat-option value="scp_storage">{{ 'SCP/HCI API' | transloco }}</mat-option>
+                  <mat-option value="s3_compatible">{{ 'S3 compatible' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>API URL</mat-label>
+                <mat-label>{{ 'API URL' | transloco }}</mat-label>
                 <input matInput [formField]="form.apiUrl" placeholder="https://scp.example.com" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>API version</mat-label>
+                <mat-label>{{ 'API version' | transloco }}</mat-label>
                 <input matInput [formField]="form.apiVersion" placeholder="v1" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Auth path</mat-label>
+                <mat-label>{{ 'Auth path' | transloco }}</mat-label>
                 <input matInput [formField]="form.authPath" placeholder="/api/v1/auth/login" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Validate path</mat-label>
+                <mat-label>{{ 'Validate path' | transloco }}</mat-label>
                 <input
                   matInput
                   [formField]="form.validatePath"
@@ -337,46 +338,46 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Resource pool ID</mat-label>
+                <mat-label>{{ 'Resource pool ID' | transloco }}</mat-label>
                 <input matInput [formField]="form.resourcePoolId" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Storage pool ID</mat-label>
+                <mat-label>{{ 'Storage pool ID' | transloco }}</mat-label>
                 <input matInput [formField]="form.storagePoolId" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Datastore ID</mat-label>
+                <mat-label>{{ 'Datastore ID' | transloco }}</mat-label>
                 <input matInput [formField]="form.datastoreId" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Verify TLS</mat-label>
+                <mat-label>{{ 'Verify TLS' | transloco }}</mat-label>
                 <mat-select [formField]="form.verifyTls">
-                  <mat-option [value]="true">Yes</mat-option>
-                  <mat-option [value]="false">No</mat-option>
+                  <mat-option [value]="true">{{ 'Yes' | transloco }}</mat-option>
+                  <mat-option [value]="false">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Timeout seconds</mat-label>
+                <mat-label>{{ 'Timeout seconds' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="form.timeoutSeconds" />
               </mat-form-field>
 
               @if (formModel().mode === 's3_compatible') {
                 <mat-form-field appearance="outline">
-                  <mat-label>Region</mat-label>
+                  <mat-label>{{ 'Region' | transloco }}</mat-label>
                   <input matInput [formField]="form.region" placeholder="us-east-1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Access key</mat-label>
+                  <mat-label>{{ 'Access key' | transloco }}</mat-label>
                   <input matInput [formField]="form.accessKeyId" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Secret access</mat-label>
+                  <mat-label>{{ 'Secret access' | transloco }}</mat-label>
                   <input
                     matInput
                     type="password"
@@ -386,7 +387,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Endpoint</mat-label>
+                  <mat-label>{{ 'Endpoint' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="form.endpoint"
@@ -395,16 +396,16 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Force path style</mat-label>
+                  <mat-label>{{ 'Force path style' | transloco }}</mat-label>
                   <mat-select [formField]="form.forcePathStyle">
-                    <mat-option [value]="true">Yes</mat-option>
-                    <mat-option [value]="false">No</mat-option>
+                    <mat-option [value]="true">{{ 'Yes' | transloco }}</mat-option>
+                    <mat-option [value]="false">{{ 'No' | transloco }}</mat-option>
                   </mat-select>
                 </mat-form-field>
               }
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>API token</mat-label>
+                <mat-label>{{ 'API token' | transloco }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -415,12 +416,12 @@
 
               @if (formModel().mode === 'scp_storage') {
                 <mat-form-field appearance="outline">
-                  <mat-label>Access Key</mat-label>
+                  <mat-label>{{ 'Access Key' | transloco }}</mat-label>
                   <input matInput [formField]="form.accessKeyId" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Secret Key</mat-label>
+                  <mat-label>{{ 'Secret Key' | transloco }}</mat-label>
                   <input
                     matInput
                     type="password"
@@ -431,12 +432,12 @@
               }
 
               <mat-form-field appearance="outline">
-                <mat-label>Username</mat-label>
+                <mat-label>{{ 'Username' | transloco }}</mat-label>
                 <input matInput [formField]="form.username" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Password</mat-label>
+                <mat-label>{{ 'Password' | transloco }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -450,11 +451,11 @@
         <mat-tab label="JSON">
           <form class="tab-content form-grid">
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Additional config JSON</mat-label>
+              <mat-label>{{ 'Additional config JSON' | transloco }}</mat-label>
               <textarea matInput rows="4" [formField]="form.configJson"></textarea>
             </mat-form-field>
             <mat-form-field appearance="outline" class="span-4">
-              <mat-label>Additional credentials JSON</mat-label>
+              <mat-label>{{ 'Additional credentials JSON' | transloco }}</mat-label>
               <textarea matInput rows="4" [formField]="form.credentialsJson"></textarea>
             </mat-form-field>
           </form>
@@ -469,9 +470,7 @@
           mat-stroked-button
           type="button"
           (click)="closeDialog()"
-        >
-          Cancel
-        </button>
+        >{{ 'Cancel' | transloco }}</button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
         <button
@@ -483,7 +482,7 @@
           (click)="save(false)"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -493,8 +492,8 @@
             class="save-more-button"
             [matMenuTriggerFor]="saveMenu"
             [disabled]="!form().valid() || saving()"
-            aria-label="More save actions"
-            matTooltip="More save actions"
+            [attr.aria-label]="'More save actions' | transloco"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -509,7 +508,7 @@
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>

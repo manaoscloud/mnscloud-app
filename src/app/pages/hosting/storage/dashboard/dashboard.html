@@ -15,7 +15,7 @@
       </div>
     </header>
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
@@ -94,7 +94,7 @@
                   {{ 'Active' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
+                  <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
                     {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
                   </span>
                 </td>
@@ -105,7 +105,7 @@
                   {{ 'Default' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip" [ngClass]="chipClass(row.isDefault)">
+                  <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.isDefault)">
                     {{ row.isDefault ? ('Yes' | transloco) : ('No' | transloco) }}
                   </span>
                 </td>
@@ -130,7 +130,7 @@
                   {{ 'Issues' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip" [ngClass]="issueChipClass(row.issues)">
+                  <span class="status-pill status-chip state-chip" [ngClass]="issueChipClass(row.issues)">
                     {{ row.issues }}
                   </span>
                 </td>
@@ -217,7 +217,7 @@
                   {{ 'Active' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip" [ngClass]="chipClass(row.active)">
+                  <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
                     {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
                   </span>
                 </td>
@@ -228,7 +228,7 @@
                   {{ 'Default' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip" [ngClass]="chipClass(row.isDefault)">
+                  <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.isDefault)">
                     {{ row.isDefault ? ('Yes' | transloco) : ('No' | transloco) }}
                   </span>
                 </td>
@@ -317,7 +317,7 @@
             <ng-container matColumnDef="issues">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Issues' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
-                <span class="status-pill status-chip" [ngClass]="issueChipClass(row.issues)">
+                <span class="status-pill status-chip state-chip" [ngClass]="issueChipClass(row.issues)">
                   {{ row.issues }}
                 </span>
               </td>

@@ -2,40 +2,40 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Domains</h1>
-        <p>Register domains and registrar metadata.</p>
+        <h1>{{ 'Domains' | transloco }}</h1>
+        <p>{{ 'Register domains and registrar metadata.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Domain</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Domain' | transloco }}</mat-label>
         <input matInput placeholder="Search by domain" [formField]="filterForm.name" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Customer</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Customer' | transloco }}</mat-label>
         <mat-select
           [formField]="filterForm.customerUUID"
           (openedChange)="onCustomerFilterOpened($event)"
         >
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option
             class="select-search-option"
             [value]="null"
             (click)="$event.stopPropagation()"
             (onSelectionChange)="$event.source.deselect()"
           >
-            <mat-form-field appearance="outline" class="select-search-field">
-              <mat-label>Search customers</mat-label>
+            <mat-form-field appearance="outline" class="select-search-field span-1">
+              <mat-label>{{ 'Search customers' | transloco }}</mat-label>
               <input
                 matInput
                 (input)="updateCustomerFilterSearch($event)"
@@ -50,21 +50,21 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Provider</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Provider' | transloco }}</mat-label>
         <mat-select
           [formField]="filterForm.providerUUID"
           (openedChange)="onProviderFilterOpened($event)"
         >
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option
             class="select-search-option"
             [value]="null"
             (click)="$event.stopPropagation()"
             (onSelectionChange)="$event.source.deselect()"
           >
-            <mat-form-field appearance="outline" class="select-search-field">
-              <mat-label>Search providers</mat-label>
+            <mat-form-field appearance="outline" class="select-search-field span-1">
+              <mat-label>{{ 'Search providers' | transloco }}</mat-label>
               <input
                 matInput
                 (input)="updateProviderFilterSearch($event)"
@@ -79,21 +79,21 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.status">
-          <mat-option value="">All</mat-option>
-          <mat-option value="1">Active</mat-option>
-          <mat-option value="0">Inactive</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount() > 0) {
-          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" (click)="deleteSelectedDomains()" type="button">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button (click)="applyFilters()" type="button">
@@ -135,25 +135,28 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
-          <td mat-cell *matCellDef="let row">{{ row.HddName }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Domain' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.HddName }}</div>
+            <div class="record-uuid">{{ row.HddUUID }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="provider">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ providerDisplay(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="customer">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Customer' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ customerDisplay(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.HddStatus === 1"
               [class.is-inactive]="row.HddStatus !== 1"
             >
@@ -163,10 +166,10 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
-              <button mat-icon-button (click)="startEdit(row)" type="button" matTooltip="Edit">
+              <button mat-icon-button (click)="startEdit(row)" type="button" [matTooltip]="'Edit' | transloco">
                 <mat-icon>edit</mat-icon>
               </button>
               <button
@@ -174,7 +177,7 @@
                 color="warn"
                 (click)="deleteDomain(row)"
                 type="button"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -187,7 +190,7 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading domains...' : 'No domains found.' }}
+            {{ (loading() ? 'Loading domains...' : 'No domains found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -210,17 +213,15 @@
   <div class="hosting-dns-domain-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit domain' : 'New domain' }}</h2>
+        <h2>{{ (editing() ? 'Edit domain' : 'New domain') | transloco }}</h2>
         <p>
-          {{
-            editing()
+          {{ (editing()
               ? 'Update registrar details and status.'
-              : 'Store registrar details and activation status.'
-          }}
+              : 'Store registrar details and activation status.') | transloco }}
         </p>
       </div>
       @if (editing()) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -230,12 +231,12 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Domain</mat-label>
+                <mat-label>{{ 'Domain' | transloco }}</mat-label>
                 <input matInput placeholder="example.com" [formField]="domainForm.name" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Customer</mat-label>
+                <mat-label>{{ 'Customer' | transloco }}</mat-label>
                 <mat-select
                   [formField]="domainForm.customerUUID"
                   (openedChange)="onCustomerFormOpened($event)"
@@ -247,7 +248,7 @@
                     (onSelectionChange)="$event.source.deselect()"
                   >
                     <mat-form-field appearance="outline" class="select-search-field">
-                      <mat-label>Search customers</mat-label>
+                      <mat-label>{{ 'Search customers' | transloco }}</mat-label>
                       <input
                         matInput
                         (input)="updateCustomerFormSearch($event)"
@@ -265,12 +266,12 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Provider</mat-label>
+                <mat-label>{{ 'Provider' | transloco }}</mat-label>
                 <mat-select
                   [formField]="domainForm.providerUUID"
                   (openedChange)="onProviderFormOpened($event)"
                 >
-                  <mat-option value="">No provider</mat-option>
+                  <mat-option value="">{{ 'No provider' | transloco }}</mat-option>
                   <mat-option
                     class="select-search-option"
                     [value]="null"
@@ -278,7 +279,7 @@
                     (onSelectionChange)="$event.source.deselect()"
                   >
                     <mat-form-field appearance="outline" class="select-search-field">
-                      <mat-label>Search providers</mat-label>
+                      <mat-label>{{ 'Search providers' | transloco }}</mat-label>
                       <input
                         matInput
                         (input)="updateProviderFormSearch($event)"
@@ -294,10 +295,10 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="domainForm.status">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </form>
@@ -308,7 +309,7 @@
           <div class="tab-content notes-tab-content">
             <form>
               <mat-form-field appearance="outline" class="notes-field">
-                <mat-label>Notes</mat-label>
+                <mat-label>{{ 'Notes' | transloco }}</mat-label>
                 <textarea
                   matInput
                   rows="12"
@@ -324,7 +325,7 @@
 
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button (click)="cancelForm()" type="button">Cancel</button>
+        <button mat-stroked-button (click)="cancelForm()" type="button">{{ 'Cancel' | transloco }}</button>
       </div>
 
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
@@ -337,7 +338,7 @@
           [disabled]="!domainForm().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -347,7 +348,7 @@
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
             [disabled]="!domainForm().valid() || saving()"
-            matTooltip="More save actions"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -367,7 +368,7 @@
           [disabled]="!domainForm().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>

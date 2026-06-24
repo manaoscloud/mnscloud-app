@@ -17,6 +17,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
@@ -135,6 +136,7 @@ const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
     MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
@@ -166,6 +168,7 @@ export class HostingDashboardPage {
   readonly data = computed(() => this.dashboard().data);
   readonly generatedAt = computed(() => this.dashboard().generatedAt);
   readonly dashboardSearchInput = signal('');
+  readonly statusInput = signal('');
   private readonly dashboardSearch = signal('');
 
 
@@ -305,6 +308,7 @@ export class HostingDashboardPage {
 
   clearDashboardFilters() {
     this.dashboardSearchInput.set('');
+    this.statusInput.set('');
     this.dashboardSearch.set('');
     this.applyTableFilters();
   }

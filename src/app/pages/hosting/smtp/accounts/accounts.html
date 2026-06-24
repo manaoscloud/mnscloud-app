@@ -2,30 +2,30 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>SMTP Accounts</h1>
-        <p>Manage sender identities linked to SMTP providers.</p>
+        <h1>{{ 'SMTP Accounts' | transloco }}</h1>
+        <p>{{ 'Manage sender identities linked to SMTP providers.' | transloco }}</p>
       </div>
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input matInput [formField]="filterForm.search" />
       </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Provider</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Provider' | transloco }}</mat-label>
         <mat-select
           [formField]="filterForm.providerUuid"
           (openedChange)="resetProviderSearch($event)"
         >
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option class="select-search-option" disabled>
             <input
               matInput
@@ -41,21 +41,21 @@
           }
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.status">
-          <mat-option value="">All</mat-option>
-          <mat-option value="1">Active</mat-option>
-          <mat-option value="0">Inactive</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount() > 0) {
-          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedAccounts()">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
@@ -97,25 +97,28 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.HsaName }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.HsaName }}</div>
+            <div class="record-uuid">{{ row.HsaUUID }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="provider">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ providerLabel(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="from">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>From Address</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'From Address' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ fromLabel(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="default">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="default-col">Default</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="default-col">{{ 'Default' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="default-col">
             @if (row.HsaIsDefault === 1) {
-              <mat-chip class="default-chip">Default</mat-chip>
+              <mat-chip class="default-chip">{{ 'Default' | transloco }}</mat-chip>
             } @else {
               -
             }
@@ -123,7 +126,7 @@
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <span
               class="status-pill status-chip state-chip"
@@ -138,7 +141,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               @if (canValidate(row)) {
@@ -147,12 +150,12 @@
                   type="button"
                   (click)="validateAccount(row)"
                   [disabled]="validatingId() === row.HsaUUID"
-                  matTooltip="Validate"
+                  [matTooltip]="'Validate' | transloco"
                 >
                   <mat-icon>fact_check</mat-icon>
                 </button>
               }
-              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+              <button mat-icon-button type="button" (click)="startEdit(row)" [matTooltip]="'Edit' | transloco">
                 <mat-icon>edit</mat-icon>
               </button>
               <button
@@ -160,7 +163,7 @@
                 color="warn"
                 type="button"
                 (click)="deleteAccount(row)"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -172,7 +175,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading SMTP accounts...' : 'No SMTP accounts found.' }}
+            {{ (loading() ? 'Loading SMTP accounts...' : 'No SMTP accounts found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -194,8 +197,8 @@
   <div class="smtp-account-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit SMTP account' : 'New SMTP account' }}</h2>
-        <p>{{ editing() ? 'Update sender identity settings.' : 'Create a sender identity.' }}</p>
+        <h2>{{ (editing() ? 'Edit SMTP account' : 'New SMTP account') | transloco }}</h2>
+        <p>{{ (editing() ? 'Update sender identity settings.' : 'Create a sender identity.') | transloco }}</p>
       </div>
     </div>
 
@@ -205,11 +208,11 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [formField]="form.name" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Provider</mat-label>
+                <mat-label>{{ 'Provider' | transloco }}</mat-label>
                 <mat-select
                   [formField]="form.providerUuid"
                   (openedChange)="resetProviderSearch($event)"
@@ -230,14 +233,14 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="form.isActive">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
               <div class="checkbox-wrap">
-                <mat-checkbox [formField]="form.isDefault">Default account</mat-checkbox>
+                <mat-checkbox [formField]="form.isDefault">{{ 'Default' | transloco }} account</mat-checkbox>
               </div>
             </form>
           </div>
@@ -246,11 +249,11 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Default From Name</mat-label>
+                <mat-label>{{ 'Default' | transloco }} From Name</mat-label>
                 <input matInput [formField]="form.defaultFromName" />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Default From Address</mat-label>
+                <mat-label>{{ 'Default' | transloco }} From Address</mat-label>
                 <input matInput type="email" [formField]="form.defaultFromEmail" />
               </mat-form-field>
             </form>
@@ -261,7 +264,7 @@
 
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | transloco }}</button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
         <button
@@ -273,7 +276,7 @@
           (click)="save(false)"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -283,8 +286,8 @@
             class="save-more-button"
             [matMenuTriggerFor]="saveMenu"
             [disabled]="!form().valid() || saving()"
-            aria-label="More save actions"
-            matTooltip="More save actions"
+            [attr.aria-label]="'More save actions' | transloco"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -299,7 +302,7 @@
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>

@@ -2,40 +2,40 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>VPS Provider</h1>
-        <p>Configure DigitalOcean and Amazon Lightsail providers.</p>
+        <h1>{{ 'VPS Provider' | transloco }}</h1>
+        <p>{{ 'Configure DigitalOcean and Amazon Lightsail providers.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input matInput placeholder="Name, provider or region" [formField]="filterForm.search" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.status">
-          <mat-option value="">All</mat-option>
-          <mat-option value="1">Active</mat-option>
-          <mat-option value="0">Inactive</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount() > 0) {
-          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" type="button" (click)="removeSelectedProviders()">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
@@ -77,40 +77,43 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.HvrName }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.HvrName }}</div>
+            <div class="record-uuid">{{ row.HvrUUID }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="provider">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ providerLabel(row.HvrProvider) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="region">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Region / Project</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Region / Project' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             {{ providerConfigValue(row, 'region') || providerConfigValue(row, 'projectId') || '-' }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="default">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Default' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="providerIsDefault(row)"
               [class.is-inactive]="!providerIsDefault(row)"
             >
-              {{ providerIsDefault(row) ? 'Yes' : 'No' }}
+              {{ (providerIsDefault(row) ? 'Yes' : 'No') | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.HvrIsActive === 1"
               [class.is-inactive]="row.HvrIsActive !== 1"
             >
@@ -120,7 +123,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
@@ -128,7 +131,7 @@
                 type="button"
                 (click)="validateProvider(row)"
                 [disabled]="validatingProviderId() === row.HvrUUID"
-                matTooltip="Test provider"
+                [matTooltip]="'Test provider' | transloco"
               >
                 @if (validatingProviderId() === row.HvrUUID) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
@@ -136,7 +139,7 @@
                   <mat-icon>science</mat-icon>
                 }
               </button>
-              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+              <button mat-icon-button type="button" (click)="startEdit(row)" [matTooltip]="'Edit' | transloco">
                 <mat-icon>edit</mat-icon>
               </button>
               <button
@@ -144,7 +147,7 @@
                 color="warn"
                 type="button"
                 (click)="remove(row)"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -157,7 +160,7 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading providers...' : 'No providers found.' }}
+            {{ (loading() ? 'Loading providers...' : 'No providers found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -180,17 +183,15 @@
   <div class="hosting-vps-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit provider' : 'New provider' }}</h2>
+        <h2>{{ (editing() ? 'Edit provider' : 'New provider') | transloco }}</h2>
         <p>
-          {{
-            editing()
+          {{ (editing()
               ? 'Update VPS provider metadata and credentials.'
-              : 'Configure credentials for VPS provisioning.'
-          }}
+              : 'Configure credentials for VPS provisioning.') | transloco }}
         </p>
       </div>
       @if (editing()) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -200,23 +201,23 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="providerForm.isActive">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Default</mat-label>
+                <mat-label>{{ 'Default' | transloco }}</mat-label>
                 <mat-select [formField]="providerForm.isDefault">
-                  <mat-option [value]="1">Yes</mat-option>
-                  <mat-option [value]="0">No</mat-option>
+                  <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Provider</mat-label>
+                <mat-label>{{ 'Provider' | transloco }}</mat-label>
                 <mat-select
                   [formField]="providerForm.provider"
                   (selectionChange)="providerSelection.set($event.value)"
@@ -228,7 +229,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [formField]="providerForm.name" placeholder="Primary provider" />
               </mat-form-field>
             </form>
@@ -240,12 +241,12 @@
             <form class="form-grid">
               @if (providerSelection() === 'digitalocean') {
                 <mat-form-field appearance="outline">
-                  <mat-label>Project ID</mat-label>
+                  <mat-label>{{ 'Project ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.projectId" placeholder="project-id" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>API Token</mat-label>
+                  <mat-label>{{ 'API Token' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="hideApiToken() ? 'password' : 'text'"
@@ -266,17 +267,17 @@
 
               @if (providerSelection() === 'lightsail') {
                 <mat-form-field appearance="outline">
-                  <mat-label>Region</mat-label>
+                  <mat-label>{{ 'Region' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.region" placeholder="us-east-1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Access Key ID</mat-label>
+                  <mat-label>{{ 'Access Key ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.accessKeyId" placeholder="AKIA..." />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Secret Access Key</mat-label>
+                  <mat-label>{{ 'Secret Access Key' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="hideSecretAccessKey() ? 'password' : 'text'"
@@ -292,16 +293,14 @@
                       hideSecretAccessKey() ? 'Show secret access key' : 'Hide secret access key'
                     "
                   >
-                    <mat-icon>{{
-                      hideSecretAccessKey() ? 'visibility_off' : 'visibility'
-                    }}</mat-icon>
+                    <mat-icon>{{ hideSecretAccessKey() ? 'visibility_off' : 'visibility' }}</mat-icon>
                   </button>
                 </mat-form-field>
               }
 
               @if (providerSelection() === 'proxmox') {
                 <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>API URL</mat-label>
+                  <mat-label>{{ 'API URL' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.apiUrl"
@@ -310,27 +309,27 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Node</mat-label>
+                  <mat-label>{{ 'Node' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.node" placeholder="pve1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Storage</mat-label>
+                  <mat-label>{{ 'Storage' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.storage" placeholder="local-lvm" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Bridge</mat-label>
+                  <mat-label>{{ 'Bridge' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.bridge" placeholder="vmbr0" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Template VMID</mat-label>
+                  <mat-label>{{ 'Template VMID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.templateVmid" placeholder="9000" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Token ID</mat-label>
+                  <mat-label>{{ 'Token ID' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.tokenId"
@@ -339,7 +338,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Token Secret</mat-label>
+                  <mat-label>{{ 'Token Secret' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="hideTokenSecret() ? 'password' : 'text'"
@@ -362,7 +361,7 @@
 
               @if (providerSelection() === 'vmware_vcenter') {
                 <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>vCenter URL</mat-label>
+                  <mat-label>{{ 'vCenter URL' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.vcenterUrl"
@@ -371,37 +370,37 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Datacenter</mat-label>
+                  <mat-label>{{ 'Datacenter' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.datacenter" placeholder="DC1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Cluster</mat-label>
+                  <mat-label>{{ 'Cluster' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.cluster" placeholder="Cluster01" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Resource pool</mat-label>
+                  <mat-label>{{ 'Resource pool' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.resourcePool" placeholder="Resources" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Datastore</mat-label>
+                  <mat-label>{{ 'Datastore' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.datastore" placeholder="datastore1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Network</mat-label>
+                  <mat-label>{{ 'Network' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.network" placeholder="VM Network" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Template VM ID</mat-label>
+                  <mat-label>{{ 'Template VM ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.templateVmId" placeholder="vm-123" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Customization spec</mat-label>
+                  <mat-label>{{ 'Customization spec' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.customizationSpec"
@@ -410,7 +409,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Username</mat-label>
+                  <mat-label>{{ 'Username' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.username"
@@ -419,7 +418,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Password</mat-label>
+                  <mat-label>{{ 'Password' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="hidePassword() ? 'password' : 'text'"
@@ -440,7 +439,7 @@
 
               @if (providerSelection() === 'sangfor_scp') {
                 <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>API URL</mat-label>
+                  <mat-label>{{ 'API URL' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.apiUrl"
@@ -449,12 +448,12 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>API version</mat-label>
+                  <mat-label>{{ 'API version' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.apiVersion" placeholder="v1" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Auth path</mat-label>
+                  <mat-label>{{ 'Auth path' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.authPath"
@@ -463,7 +462,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Validate path</mat-label>
+                  <mat-label>{{ 'Validate path' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.validatePath"
@@ -472,42 +471,42 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Region</mat-label>
+                  <mat-label>{{ 'Region' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.region" placeholder="default" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Resource pool ID</mat-label>
+                  <mat-label>{{ 'Resource pool ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.resourcePoolId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Cluster ID</mat-label>
+                  <mat-label>{{ 'Cluster ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.clusterId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Network ID</mat-label>
+                  <mat-label>{{ 'Network ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.networkId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Datastore ID</mat-label>
+                  <mat-label>{{ 'Datastore ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.datastoreId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Storage pool ID</mat-label>
+                  <mat-label>{{ 'Storage pool ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.storagePoolId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Image ID</mat-label>
+                  <mat-label>{{ 'Image ID' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.imageId" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Timeout seconds</mat-label>
+                  <mat-label>{{ 'Timeout seconds' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -516,7 +515,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Catalog regions path</mat-label>
+                  <mat-label>{{ 'Catalog regions path' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.catalogRegionsPath"
@@ -525,7 +524,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Catalog sizes path</mat-label>
+                  <mat-label>{{ 'Catalog sizes path' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.catalogSizesPath"
@@ -534,7 +533,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Catalog images path</mat-label>
+                  <mat-label>{{ 'Catalog images path' | transloco }}</mat-label>
                   <input
                     matInput
                     [formField]="providerForm.catalogImagesPath"
@@ -543,7 +542,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>API token</mat-label>
+                  <mat-label>{{ 'API token' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="hideApiToken() ? 'password' : 'text'"
@@ -562,12 +561,12 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Access Key</mat-label>
+                  <mat-label>{{ 'Access Key' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.accessKeyId" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Secret Key</mat-label>
+                  <mat-label>{{ 'Secret Key' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="hideSecretAccessKey() ? 'password' : 'text'"
@@ -583,19 +582,17 @@
                       hideSecretAccessKey() ? 'Show secret key' : 'Hide secret key'
                     "
                   >
-                    <mat-icon>{{
-                      hideSecretAccessKey() ? 'visibility_off' : 'visibility'
-                    }}</mat-icon>
+                    <mat-icon>{{ hideSecretAccessKey() ? 'visibility_off' : 'visibility' }}</mat-icon>
                   </button>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Username</mat-label>
+                  <mat-label>{{ 'Username' | transloco }}</mat-label>
                   <input matInput [formField]="providerForm.username" autocomplete="off" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Password</mat-label>
+                  <mat-label>{{ 'Password' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="hidePassword() ? 'password' : 'text'"
@@ -626,9 +623,7 @@
           mat-stroked-button
           (click)="cancelForm()"
           type="button"
-        >
-          Cancel
-        </button>
+        >{{ 'Cancel' | transloco }}</button>
       </div>
 
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
@@ -641,7 +636,7 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -651,7 +646,7 @@
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
             [disabled]="saving()"
-            matTooltip="More save actions"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -666,7 +661,7 @@
       >
         <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>

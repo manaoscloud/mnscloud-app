@@ -2,29 +2,29 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Webhost Plans</h1>
-        <p>Define hosting packages and commercial limits by provider.</p>
+        <h1>{{ 'Webhost Plans' | transloco }}</h1>
+        <p>{{ 'Define hosting packages and commercial limits by provider.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input matInput placeholder="Name, provider or package" [formField]="filterForm.search" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Provider</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Provider' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.provider">
-          <mat-option value="">All</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
           @for (provider of providerFilterOptions(); track provider.uuid) {
             <mat-option [value]="provider.uuid">
               {{ provider.name }} · {{ providerLabel(provider.platform) }}
@@ -33,21 +33,21 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.status">
-          <mat-option value="">All</mat-option>
-          <mat-option value="1">Active</mat-option>
-          <mat-option value="0">Inactive</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount() > 0) {
-          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" type="button" (click)="removeSelectedPlans()">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
@@ -89,35 +89,38 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.HwlName }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.HwlName }}</div>
+            <div class="record-uuid">{{ row.HwlUUID }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="provider">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ providerLabelForPlan(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="package">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Package</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Package' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.HwlPackage || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="resources">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Resources</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Resources' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ resourcesLabel(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="price">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Price' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ moneyLabel(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.HwlIsActive === 1"
               [class.is-inactive]="row.HwlIsActive !== 1"
             >
@@ -127,10 +130,10 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
-              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+              <button mat-icon-button type="button" (click)="startEdit(row)" [matTooltip]="'Edit' | transloco">
                 <mat-icon>edit</mat-icon>
               </button>
               <button
@@ -138,7 +141,7 @@
                 color="warn"
                 type="button"
                 (click)="remove(row)"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -151,7 +154,7 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading Webhost plans...' : 'No Webhost plans found.' }}
+            {{ (loading() ? 'Loading Webhost plans...' : 'No Webhost plans found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -174,17 +177,15 @@
   <div class="hosting-webhost-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit Webhost plan' : 'New Webhost plan' }}</h2>
+        <h2>{{ (editing() ? 'Edit Webhost plan' : 'New Webhost plan') | transloco }}</h2>
         <p>
-          {{
-            editing()
+          {{ (editing()
               ? 'Update package limits and commercial pricing.'
-              : 'Create a hosting package linked to a provider.'
-          }}
+              : 'Create a hosting package linked to a provider.') | transloco }}
         </p>
       </div>
       @if (editing()) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -194,15 +195,15 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="planForm.isActive">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Provider</mat-label>
+                <mat-label>{{ 'Provider' | transloco }}</mat-label>
                 <mat-select
                   [formField]="planForm.providerUUID"
                   (openedChange)="onProviderOpened($event)"
@@ -234,12 +235,12 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [formField]="planForm.name" placeholder="Starter Hosting" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Package</mat-label>
+                <mat-label>{{ 'Package' | transloco }}</mat-label>
                 <input matInput [formField]="planForm.packageName" placeholder="starter" />
               </mat-form-field>
             </form>
@@ -250,31 +251,31 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Disk MB</mat-label>
+                <mat-label>{{ 'Disk MB' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.diskMb" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Bandwidth MB</mat-label>
+                <mat-label>{{ 'Bandwidth MB' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.bandwidthMb" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Domains</mat-label>
+                <mat-label>{{ 'Domains' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.domains" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Subdomains</mat-label>
+                <mat-label>{{ 'Subdomains' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.subdomains" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Email Accounts</mat-label>
+                <mat-label>{{ 'Email Accounts' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.emailAccounts" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Databases</mat-label>
+                <mat-label>{{ 'Databases' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.databases" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>FTP Accounts</mat-label>
+                <mat-label>{{ 'FTP Accounts' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.ftpAccounts" />
               </mat-form-field>
             </form>
@@ -285,11 +286,11 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Price</mat-label>
+                <mat-label>{{ 'Price' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.price" />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Setup Fee</mat-label>
+                <mat-label>{{ 'Setup Fee' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="planForm.setupFee" />
               </mat-form-field>
             </form>
@@ -300,7 +301,7 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Notes</mat-label>
+                <mat-label>{{ 'Notes' | transloco }}</mat-label>
                 <textarea matInput rows="4" [formField]="planForm.notes"></textarea>
               </mat-form-field>
             </form>
@@ -316,9 +317,7 @@
           mat-stroked-button
           (click)="cancelForm()"
           type="button"
-        >
-          Cancel
-        </button>
+        >{{ 'Cancel' | transloco }}</button>
       </div>
 
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
@@ -331,7 +330,7 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -341,7 +340,7 @@
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
             [disabled]="saving()"
-            matTooltip="More save actions"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -356,7 +355,7 @@
       >
         <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>

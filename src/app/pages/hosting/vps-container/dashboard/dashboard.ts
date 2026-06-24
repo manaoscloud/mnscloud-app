@@ -17,6 +17,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
@@ -100,6 +101,7 @@ const EMPTY_VPS_CONTAINER_DASHBOARD: VpsContainerDashboardSnapshot = {
     MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
@@ -135,6 +137,7 @@ export class HostingVpsContainerDashboardPage {
   readonly plans = computed(() => this.dashboard().plans);
   readonly instances = computed(() => this.dashboard().instances);
   readonly dashboardSearchInput = signal('');
+  readonly statusInput = signal('');
   private readonly dashboardSearch = signal('');
 
 
@@ -296,6 +299,7 @@ export class HostingVpsContainerDashboardPage {
 
   clearDashboardFilters() {
     this.dashboardSearchInput.set('');
+    this.statusInput.set('');
     this.dashboardSearch.set('');
     this.applyTableFilters();
   }

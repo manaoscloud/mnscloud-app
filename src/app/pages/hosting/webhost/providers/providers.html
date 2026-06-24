@@ -2,40 +2,40 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Webhost Providers</h1>
-        <p>Configure provider accounts for Webhost automation.</p>
+        <h1>{{ 'Webhost Providers' | transloco }}</h1>
+        <p>{{ 'Configure provider accounts for Webhost automation.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input matInput placeholder="Name, provider or hostname" [formField]="filterForm.search" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.status">
-          <mat-option value="">All</mat-option>
-          <mat-option value="1">Active</mat-option>
-          <mat-option value="0">Inactive</mat-option>
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount() > 0) {
-          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button mat-stroked-button color="warn" type="button" (click)="removeSelectedProviders()">
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applyFilters()">
@@ -77,43 +77,46 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.HwpName }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="record-main">{{ row.HwpName }}</div>
+            <div class="record-uuid">{{ row.HwpUUID }}</div>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="provider">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Provider' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ providerLabel(row.HwpProvider) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="host">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Host</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ hostLabel(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="username">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>User</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'User' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ usernameLabel(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="default">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Default' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="providerIsDefault(row)"
               [class.is-inactive]="!providerIsDefault(row)"
             >
-              {{ providerIsDefault(row) ? 'Yes' : 'No' }}
+              {{ (providerIsDefault(row) ? 'Yes' : 'No') | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
-              class="status-pill"
+              class="status-pill status-chip state-chip"
               [class.is-active]="row.HwpIsActive === 1"
               [class.is-inactive]="row.HwpIsActive !== 1"
             >
@@ -123,7 +126,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">{{ 'Actions' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
@@ -131,7 +134,7 @@
                 type="button"
                 (click)="validateProvider(row)"
                 [disabled]="validatingProviderId() === row.HwpUUID"
-                matTooltip="Test provider"
+                [matTooltip]="'Test provider' | transloco"
               >
                 @if (validatingProviderId() === row.HwpUUID) {
                   <mat-progress-spinner diameter="18" mode="indeterminate" />
@@ -139,7 +142,7 @@
                   <mat-icon>science</mat-icon>
                 }
               </button>
-              <button mat-icon-button type="button" (click)="startEdit(row)" matTooltip="Edit">
+              <button mat-icon-button type="button" (click)="startEdit(row)" [matTooltip]="'Edit' | transloco">
                 <mat-icon>edit</mat-icon>
               </button>
               <button
@@ -147,7 +150,7 @@
                 color="warn"
                 type="button"
                 (click)="remove(row)"
-                matTooltip="Delete"
+                [matTooltip]="'Delete' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -160,7 +163,7 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading Webhost providers...' : 'No Webhost providers found.' }}
+            {{ (loading() ? 'Loading Webhost providers...' : 'No Webhost providers found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -183,17 +186,15 @@
   <div class="hosting-webhost-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit Webhost provider' : 'New Webhost provider' }}</h2>
+        <h2>{{ (editing() ? 'Edit Webhost provider' : 'New Webhost provider') | transloco }}</h2>
         <p>
-          {{
-            editing()
+          {{ (editing()
               ? 'Update provider endpoint metadata and credentials.'
-              : 'Configure a Webhost provider API token.'
-          }}
+              : 'Configure a Webhost provider API token.') | transloco }}
         </p>
       </div>
       @if (editing()) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -203,23 +204,23 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="providerForm.isActive">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Default</mat-label>
+                <mat-label>{{ 'Default' | transloco }}</mat-label>
                 <mat-select [formField]="providerForm.isDefault">
-                  <mat-option [value]="1">Yes</mat-option>
-                  <mat-option [value]="0">No</mat-option>
+                  <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Provider</mat-label>
+                <mat-label>{{ 'Provider' | transloco }}</mat-label>
                 <mat-select [formField]="providerForm.provider">
                   @for (opt of providerOptions; track opt.value) {
                     <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
@@ -228,7 +229,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [formField]="providerForm.name" placeholder="Primary provider" />
               </mat-form-field>
             </form>
@@ -239,7 +240,7 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Hostname</mat-label>
+                <mat-label>{{ 'Hostname' | transloco }}</mat-label>
                 <input
                   matInput
                   [formField]="providerForm.hostname"
@@ -248,25 +249,25 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Port</mat-label>
+                <mat-label>{{ 'Port' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="providerForm.port" placeholder="2087" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>SSL Verify</mat-label>
+                <mat-label>{{ 'SSL Verify' | transloco }}</mat-label>
                 <mat-select [formField]="providerForm.sslVerify">
-                  <mat-option [value]="1">Yes</mat-option>
-                  <mat-option [value]="0">No</mat-option>
+                  <mat-option [value]="1">{{ 'Yes' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'No' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Username</mat-label>
+                <mat-label>{{ 'Username' | transloco }}</mat-label>
                 <input matInput [formField]="providerForm.username" placeholder="root" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>API Token</mat-label>
+                <mat-label>{{ 'API Token' | transloco }}</mat-label>
                 <input
                   matInput
                   [type]="hideApiToken() ? 'password' : 'text'"
@@ -291,7 +292,7 @@
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Notes</mat-label>
+                <mat-label>{{ 'Notes' | transloco }}</mat-label>
                 <textarea matInput rows="5" [formField]="providerForm.notes"></textarea>
               </mat-form-field>
             </form>
@@ -307,9 +308,7 @@
           mat-stroked-button
           (click)="cancelForm()"
           type="button"
-        >
-          Cancel
-        </button>
+        >{{ 'Cancel' | transloco }}</button>
       </div>
 
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
@@ -322,7 +321,7 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -332,7 +331,7 @@
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
             [disabled]="saving()"
-            matTooltip="More save actions"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -347,7 +346,7 @@
       >
         <button mat-menu-item type="button" (click)="saveAndNew()" [disabled]="saving()">
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
     </mat-dialog-actions>
