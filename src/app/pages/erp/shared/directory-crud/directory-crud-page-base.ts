@@ -89,6 +89,7 @@ export type DirectoryField = {
   type?: DirectoryFieldType;
   tab?: 'record' | 'address' | 'notes';
   span?: 1 | 2 | 3 | 4;
+  breakBefore?: boolean;
   rows?: number;
   required?: boolean;
   placeholder?: string;
@@ -371,7 +372,9 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   }
 
   fieldClass(field: DirectoryField): string {
-    return `span-${field.span ?? 1}`;
+    return [`span-${field.span ?? 1}`, field.breakBefore ? 'break-before' : '']
+      .filter(Boolean)
+      .join(' ');
   }
 
   fieldOptions(field: DirectoryField): readonly DirectoryOption[] {

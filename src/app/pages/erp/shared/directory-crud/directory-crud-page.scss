@@ -30,6 +30,10 @@
   grid-column: 1 / -1;
 }
 
+.crud-form-grid > .break-before {
+  grid-column-start: 1;
+}
+
 .email-col,
 .phone-col,
 .document-col {

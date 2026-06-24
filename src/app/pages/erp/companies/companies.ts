@@ -54,9 +54,25 @@ const COMPANY_CONFIG: DirectoryConfig = {
   fields: [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    {
+      key: 'name',
+      source: 'Name',
+      payloadKey: 'name',
+      label: 'Name',
+      required: true,
+      span: 2,
+      breakBefore: true,
+    },
     { key: 'legalName', source: 'LegalName', payloadKey: 'legalName', label: 'Legal name', span: 2 },
-    { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
+    {
+      key: 'email',
+      source: 'Email',
+      payloadKey: 'email',
+      label: 'E-mail',
+      type: 'email',
+      span: 1,
+      breakBefore: true,
+    },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
     {
       key: 'addressZip',
