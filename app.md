@@ -273,6 +273,17 @@
   - Do not use an empty `.mobile-paginator` placeholder.
   - Sort/filter changes must reset `pageIndex` to `0`.
   - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
+- ERP directory CRUDs:
+  - Simple directory-style ERP resources such as customers, companies, suppliers, resellers,
+    carriers, and complexes should use the shared base in
+    `src/app/pages/erp/shared/directory-crud/`.
+  - The resource component should only declare its endpoint, UUID field, columns, fields, labels,
+    and optional lookup resources. Do not recreate page-local CRUD HTML/SCSS for these resources.
+  - This keeps the app.md CRUD contract centralized: signal-first `resource()` lists,
+    `computed()` table state, searchable FK selects, UUID secondary lines, bulk delete, standard
+    dialog footer, and filter grid behavior all come from the shared base.
+  - If a directory resource needs behavior outside this base, document the reason in the component
+    before adding a local extension.
 - Delete behavior:
   - Use `SlowConfirmDialogComponent` (`panelClass: 'slow-confirm-dialog'`, `disableClose: true`).
   - Individual row delete remains available even when bulk delete exists.

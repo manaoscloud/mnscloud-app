@@ -1,0 +1,304 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <div class="erp-header">
+      <div>
+        <h1>{{ config.pageTitle | transloco }}</h1>
+        <p>{{ config.pageDescription | transloco }}</p>
+      </div>
+      <div class="header-actions">
+        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          {{ 'New' | transloco }}
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
+        <input
+          matInput
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+          (keyup.enter)="applySearchFilters()"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [value]="status()" (selectionChange)="status.set($event.value)">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          @for (option of statusOptions(); track option.value) {
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
+        </button>
+      </div>
+    </div>
+
+    @if (selectedCount()) {
+      <div class="bulk-actions">
+        <span>{{ selectedCount() }} {{ 'selected' | transloco }}</span>
+        <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
+          <mat-icon>delete</mat-icon>
+          {{ 'Delete selected' | transloco }}
+        </button>
+      </div>
+    }
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading">
+          <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
+        </div>
+      }
+
+      <table
+        mat-table
+        matSort
+        [dataSource]="visibleRows()"
+        (matSortChange)="setSort($event)"
+        class="erp-table"
+      >
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="allVisibleSelected()"
+              [indeterminate]="someVisibleSelected() && !allVisibleSelected()"
+              (change)="toggleVisibleRows($event.checked)"
+            />
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox [checked]="isSelected(row)" (change)="toggleRow(row, $event.checked)" />
+          </td>
+        </ng-container>
+
+        @for (column of config.columns; track column.id) {
+          <ng-container [matColumnDef]="column.id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [class]="column.className ?? ''">
+              {{ column.label | transloco }}
+            </th>
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [class]="column.className ?? ''"
+              [class.status-col]="column.kind === 'status'"
+            >
+              @if (column.kind === 'identity' || column.kind === 'related') {
+                <div class="record-stack">
+                  <span class="record-main">{{ columnMain(row, column) }}</span>
+                  @if (columnUUID(row, column)) {
+                    <span class="record-uuid">{{ columnUUID(row, column) }}</span>
+                  }
+                </div>
+              } @else if (column.kind === 'status') {
+                <mat-chip
+                  class="status-pill status-chip chip-success"
+                  [class.is-active]="isActiveStatus(row[column.field ?? column.id])"
+                  [class.is-inactive]="!isActiveStatus(row[column.field ?? column.id])"
+                >
+                  {{ statusLabel(row[column.field ?? column.id]) | transloco }}
+                </mat-chip>
+              } @else {
+                {{ columnText(row, column) }}
+              }
+            </td>
+          </ng-container>
+        }
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+            {{ 'Actions' | transloco }}
+          </th>
+          <td mat-cell *matCellDef="let row" class="actions-cell actions-col-cell">
+            <div class="actions-col">
+              <button mat-icon-button type="button" [matTooltip]="'Edit' | transloco" (click)="startEdit(row)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button type="button" [matTooltip]="'Delete' | transloco" (click)="deleteItem(row)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns().length">
+            {{ config.emptyLabel | transloco }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      showFirstLastButtons
+      (page)="setPage($event)"
+    />
+  </mat-card>
+</section>
+
+<ng-template #directoryFormDialog>
+  <div class="crud-dialog crud-dialog-shell">
+    <div class="dialog-header crud-dialog-header">
+      <div>
+        <h2>{{ dialogTitle() | transloco }}</h2>
+        <p>{{ config.dialogDescription | transloco }}</p>
+      </div>
+    </div>
+
+    <div class="dialog-content">
+    <mat-tab-group class="form-tabs crud-tabs">
+      <mat-tab [label]="'Record' | transloco">
+        <div class="tab-content crud-form-grid">
+          @for (field of recordFields(); track field.key) {
+            @switch (field.type) {
+              @case ('select') {
+                <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                  <mat-label>{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label>
+                  <mat-select
+                    [value]="fieldValue(field.key)"
+                    (selectionChange)="setFieldValue(field.key, $event.value)"
+                  >
+                    @for (option of fieldOptions(field); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+              @case ('search-select') {
+                <mns-search-select-field
+                  [fieldClass]="fieldClass(field)"
+                  [label]="(field.label | transloco) + (field.required ? '*' : '')"
+                  [placeholder]="field.placeholder ?? 'Search'"
+                  [options]="fieldOptions(field)"
+                  [loading]="fieldLoading(field)"
+                  [value]="fieldValue(field.key)"
+                  (valueChange)="setFieldValue(field.key, $event)"
+                />
+              }
+              @case ('status') {
+                <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                  <mat-label>{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label>
+                  <mat-select
+                    [value]="fieldValue(field.key)"
+                    (selectionChange)="setFieldValue(field.key, $event.value)"
+                  >
+                    @for (option of statusOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+              @default {
+                <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                  <mat-label>{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label>
+                  <input
+                    matInput
+                    [type]="field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : 'text'"
+                    [autocomplete]="field.autocomplete ?? 'off'"
+                    [value]="fieldValueString(field.key)"
+                    (input)="setFieldValue(field.key, $any($event.target).value)"
+                  />
+                </mat-form-field>
+              }
+            }
+          }
+        </div>
+      </mat-tab>
+
+      @if (addressFields().length) {
+        <mat-tab [label]="'Address' | transloco">
+          <div class="tab-content crud-form-grid">
+            @for (field of addressFields(); track field.key) {
+              <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                <mat-label>{{ field.label | transloco }}</mat-label>
+                <input
+                  matInput
+                  [value]="fieldValueString(field.key)"
+                  (input)="setFieldValue(field.key, $any($event.target).value)"
+                  autocomplete="off"
+                />
+              </mat-form-field>
+            }
+          </div>
+        </mat-tab>
+      }
+
+      @if (notesFields().length) {
+        <mat-tab [label]="'Notes' | transloco">
+          <div class="tab-content crud-form-grid">
+            @for (field of notesFields(); track field.key) {
+              <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                <mat-label>{{ field.label | transloco }}</mat-label>
+                <textarea
+                  matInput
+                  [rows]="field.rows ?? 5"
+                  [value]="fieldValueString(field.key)"
+                  (input)="setFieldValue(field.key, $any($event.target).value)"
+                ></textarea>
+              </mat-form-field>
+            }
+          </div>
+        </mat-tab>
+      }
+    </mat-tab-group>
+    </div>
+
+    <div class="form-actions crud-dialog-actions">
+      <div class="secondary-actions">
+      <button mat-stroked-button type="button" (click)="closeDialog()">
+        {{ 'Cancel' | transloco }}
+      </button>
+      </div>
+      <div class="primary-actions">
+      <div class="save-split-action" [class.is-single-action]="false">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="save-main-button"
+          [disabled]="saving()"
+          (click)="saveItem(false)"
+        >
+          <mat-icon>save</mat-icon>
+          {{ 'Save' | transloco }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="save-more-button"
+          [disabled]="saving()"
+          [matMenuTriggerFor]="saveMenu"
+        >
+          <mat-icon>expand_more</mat-icon>
+        </button>
+        <mat-menu #saveMenu="matMenu">
+          <button mat-menu-item type="button" (click)="saveItem(true)">
+            <mat-icon>add</mat-icon>
+            {{ 'Save/New' | transloco }}
+          </button>
+        </mat-menu>
+      </div>
+      </div>
+    </div>
+  </div>
+</ng-template>

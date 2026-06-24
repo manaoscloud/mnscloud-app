@@ -1,278 +1,43 @@
+import { Component, computed, resource } from '@angular/core';
+
 import {
-  Component,
-  computed,
-  DestroyRef,
-  ElementRef,
-  TemplateRef,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+  DirectoryConfig,
+  DirectoryCrudPageBase,
+  DirectoryOption,
+  DirectoryRecord,
+  ERP_DIRECTORY_CRUD_IMPORTS,
+} from '../shared/directory-crud/directory-crud-page-base';
 
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, takeUntil } from 'rxjs';
+const TYPE_OPTIONS: readonly DirectoryOption[] = [
+  { value: 'company', label: 'Company' },
+  { value: 'person', label: 'Person' },
+];
 
-import { ApiService } from '../../../services/api.service';
-import { SnackbarService } from '../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
-import {
-  MnsSearchSelectFieldComponent,
-  type MnsSearchSelectFieldOption,
-} from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-
-type Customer = {
-  CustomerUUID: string;
-  ComplexUUID?: string | null;
-  DueDayUUID?: string | null;
-  Type: 'company' | 'person';
-  Name: string;
-  Document?: string | null;
-  Email?: string | null;
-  Phone?: string | null;
-  AddressMainStreet?: string | null;
-  AddressMainNumber?: string | null;
-  AddressMainDistrict?: string | null;
-  AddressMainCity?: string | null;
-  AddressMainState?: string | null;
-  AddressMainZip?: string | null;
-  AddressMainCountry?: string | null;
-  AddressBillingStreet?: string | null;
-  AddressBillingNumber?: string | null;
-  AddressBillingDistrict?: string | null;
-  AddressBillingCity?: string | null;
-  AddressBillingState?: string | null;
-  AddressBillingZip?: string | null;
-  AddressBillingCountry?: string | null;
-  AddressInstallStreet?: string | null;
-  AddressInstallNumber?: string | null;
-  AddressInstallDistrict?: string | null;
-  AddressInstallCity?: string | null;
-  AddressInstallState?: string | null;
-  AddressInstallZip?: string | null;
-  AddressInstallCountry?: string | null;
-  Lat?: number | null;
-  Lng?: number | null;
-  Status: number;
-  Notes?: string | null;
-};
-
-type ErpComplexOption = {
-  ComplexUUID: string;
-  Name: string;
-  Address?: string | null;
-  City?: string | null;
-  State?: string | null;
-  Zip?: string | null;
-};
-
-type DueDayOption = {
-  ErpFinInvDueDayUUID: string;
-  Name: string;
-  DueDay: number;
-  BillingDay: number;
-  ClosedMonth: boolean;
-  Status: 'active' | 'inactive';
-};
-
-type PostalCodeLookupItem = {
-  street?: string | null;
-  district?: string | null;
-  city?: string | null;
-  state?: string | null;
-};
-
-type CustomerFilters = {
-  search: string;
-  status: string;
-};
-
-type MapStyleMode = 'street' | 'satellite';
-
-const MAP_STYLE_URLS: Record<MapStyleMode, string> = {
-  street: 'mapbox://styles/mapbox/streets-v12',
-  satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
-};
-
-const STREET_ICON = `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M20.5 3l-5.5 2-6-2-5.5 2v16l5.5-2 6 2 5.5-2V3zm-11.5 2.38l4 1.33v11.91l-4-1.33V5.38zm-4 1.29l2-.73v11.91l-2 .73V6.67zm14 11.66l-2 .73V6.77l2-.73v11.56z"></path>
-    </svg>
-`;
-
-const SATELLITE_ICON = `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c.9 0 1.76.13 2.58.37-.5.78-1.16 1.5-1.96 2.12-.47-.39-1.02-.7-1.62-.91V4zm-2.58.37c.82-.24 1.68-.37 2.58-.37v1.58c-.6.21-1.15.52-1.62.91-.8-.62-1.46-1.34-1.96-2.12zM4 12c0-1.64.49-3.17 1.33-4.44.8.72 1.72 1.31 2.74 1.74-.21.86-.31 1.78-.31 2.7s.1 1.84.31 2.7c-1.02.43-1.94 1.02-2.74 1.74C4.49 15.17 4 13.64 4 12zm6 7.63c-1.02-.43-1.94-1.02-2.74-1.74.5-.78 1.16-1.5 1.96-2.12.47.39 1.02.7 1.62.91v2.95zm2 0v-2.95c.6-.21 1.15-.52 1.62-.91.8.62 1.46 1.34 1.96 2.12-0.8.72-1.72 1.31-2.74 1.74zM14.6 12c0-.92-.1-1.84-.31-2.7 1.02-.43 1.94-1.02 2.74-1.74C19.51 8.83 20 10.36 20 12s-.49 3.17-1.33 4.44c-.8-.72-1.72-1.31-2.74-1.74.21-.86.31-1.78.31-2.7z"></path>
-    </svg>
-`;
-
-class MapStyleControl {
-  private container?: HTMLElement;
-  private button?: HTMLButtonElement;
-  private readonly options: {
-    getNextMode: () => MapStyleMode;
-    onToggle: () => void;
-  };
-  private readonly handleClick = () => {
-    this.options.onToggle();
-    this.update();
-  };
-
-  constructor(options: { getNextMode: () => MapStyleMode; onToggle: () => void }) {
-    this.options = options;
-  }
-
-  onAdd() {
-    this.container = document.createElement('div');
-    this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group map-style-control';
-
-    this.button = document.createElement('button');
-    this.button.type = 'button';
-    this.button.className = 'mapboxgl-ctrl-icon map-style-toggle';
-    this.button.addEventListener('click', this.handleClick);
-
-    this.container.appendChild(this.button);
-    this.update();
-    return this.container;
-  }
-
-  onRemove() {
-    if (this.button) {
-      this.button.removeEventListener('click', this.handleClick);
-    }
-    if (this.container?.parentNode) {
-      this.container.parentNode.removeChild(this.container);
-    }
-    this.container = undefined;
-    this.button = undefined;
-  }
-
-  update() {
-    if (!this.button) return;
-    const nextMode = this.options.getNextMode();
-    const nextLabel =
-      nextMode === 'satellite' ? 'Switch to satellite view' : 'Switch to streets view';
-    this.button.setAttribute('aria-label', nextLabel);
-    this.button.setAttribute('title', nextLabel);
-    this.button.dataset['next'] = nextMode;
-    this.button.innerHTML = nextMode === 'satellite' ? SATELLITE_ICON : STREET_ICON;
-  }
-}
-
-@Component({
-  selector: 'app-erp-customer',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatMenuModule,
-    PhoneInputComponent,
-    MnsSearchSelectFieldComponent,
-  ],
-  templateUrl: './customer.html',
-  styleUrls: ['./customer.scss'],
-})
-export class ErpCustomerPage {
-  private readonly listLimit = 200;
-  private api = inject(ApiService);
-  private snack = inject(SnackbarService);
-  private dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-  private map: any;
-  private mapMarker: any;
-  private mapboxgl?: any;
-  private mapboxToken: string | null = null;
-  private styleControl?: MapStyleControl;
-  private mapStyle: MapStyleMode = 'street';
-  private mapResizeTimers: ReturnType<typeof setTimeout>[] = [];
-  complexes: ErpComplexOption[] = [];
-  complexMap = new Map<string, ErpComplexOption>();
-  dueDays: DueDayOption[] = [];
-  dueDayMap = new Map<string, DueDayOption>();
-  readonly customers = computed(() => this.normalizeRows(this.customersResource.value()));
-  displayedColumns: string[] = [
-    'select',
-    'name',
-    'complex',
-    'dueDay',
-    'type',
-    'document',
-    'email',
-    'status',
-    'actions',
-  ];
-  readonly selectedCustomerUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedCustomerUUIDs().size);
-  saving = false;
-  searchingMainPostalCode = false;
-  searchingBillingPostalCode = false;
-  searchingInstallPostalCode = false;
-  error = '';
-  readonly search = signal('');
-  readonly searchInput = signal('');
-  readonly statusFilter = signal('');
-  editingCustomer: Customer | null = null;
-  mapVisible = false;
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<SortDirection>('');
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(5);
-  private readonly appliedFilters = signal<CustomerFilters>({ search: '', status: '' });
-  private readonly mutating = signal(false);
-  readonly emailError = signal('');
-  private readonly lookupVersion = signal(0);
-
-  readonly customerFormDialog = viewChild<TemplateRef<unknown>>('customerFormDialog');
-  readonly mainAddressNumberInput =
-    viewChild<ElementRef<HTMLInputElement>>('mainAddressNumberInput');
-  readonly billingAddressNumberInput = viewChild<ElementRef<HTMLInputElement>>(
-    'billingAddressNumberInput',
-  );
-  readonly installAddressNumberInput = viewChild<ElementRef<HTMLInputElement>>(
-    'installAddressNumberInput',
-  );
-  private customerDialogBinding: CrudDialogBinding | null = null;
-
-  form = {
+const CUSTOMER_CONFIG: DirectoryConfig = {
+  endpoint: 'erp/customers',
+  uuidField: 'CustomerUUID',
+  pageTitle: 'Customers',
+  pageDescription: 'Manage customer records, billing data and service addresses.',
+  createTitle: 'New customer',
+  editTitle: 'Edit customer',
+  dialogDescription: 'Maintain customer identity, billing and installation data.',
+  searchPlaceholder: 'Search',
+  emptyLabel: 'No customers found.',
+  deleteTitle: 'Delete customer',
+  deleteMessage: 'Are you sure you want to delete this customer?',
+  deleteSelectedTitle: 'Delete selected customers',
+  deleteSelectedMessage: 'Delete {count} selected customers?',
+  savedMessage: 'Customer saved successfully.',
+  deletedMessage: 'Customer deleted successfully.',
+  deleteFailedMessage: 'Failed to delete customer.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  initialValues: {
+    status: 1,
+    type: 'company',
     complexUUID: '',
     dueDayUUID: '',
-    type: 'company' as 'company' | 'person',
     name: '',
     document: '',
     email: '',
@@ -298,1015 +63,286 @@ export class ErpCustomerPage {
     addressInstallState: '',
     addressInstallZip: '',
     addressInstallCountry: '',
-    lat: null as number | null,
-    lng: null as number | null,
+    lat: null,
+    lng: null,
     notes: '',
-    status: 1,
-  };
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'CustomerUUID' },
+    { id: 'type', label: 'Type', field: 'Type' },
+    {
+      id: 'complex',
+      label: 'Complex',
+      kind: 'related',
+      uuidField: 'ComplexUUID',
+      lookupKey: 'complexUUID',
+    },
+    { id: 'document', label: 'Document', field: 'Document', className: 'document-col' },
+    { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
+  ],
+  fields: [
+    { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    { key: 'type', source: 'Type', payloadKey: 'type', label: 'Type', type: 'select', options: TYPE_OPTIONS, span: 1 },
+    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
+    {
+      key: 'complexUUID',
+      source: 'ComplexUUID',
+      payloadKey: 'complexUUID',
+      label: 'Complex',
+      type: 'search-select',
+      placeholder: 'Search complexes',
+      span: 1,
+    },
+    {
+      key: 'dueDayUUID',
+      source: 'DueDayUUID',
+      payloadKey: 'dueDayUUID',
+      label: 'Due day',
+      type: 'search-select',
+      placeholder: 'Search due days',
+      span: 1,
+    },
+    { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
+    { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
+    {
+      key: 'addressMainStreet',
+      source: 'AddressMainStreet',
+      payloadKey: 'addressMainStreet',
+      label: 'Main street',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressMainNumber',
+      source: 'AddressMainNumber',
+      payloadKey: 'addressMainNumber',
+      label: 'Main number',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressMainDistrict',
+      source: 'AddressMainDistrict',
+      payloadKey: 'addressMainDistrict',
+      label: 'Main district',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressMainCity',
+      source: 'AddressMainCity',
+      payloadKey: 'addressMainCity',
+      label: 'Main city',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressMainState',
+      source: 'AddressMainState',
+      payloadKey: 'addressMainState',
+      label: 'Main state',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressMainZip',
+      source: 'AddressMainZip',
+      payloadKey: 'addressMainZip',
+      label: 'Main ZIP',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressMainCountry',
+      source: 'AddressMainCountry',
+      payloadKey: 'addressMainCountry',
+      label: 'Main country',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressBillingStreet',
+      source: 'AddressBillingStreet',
+      payloadKey: 'addressBillingStreet',
+      label: 'Billing street',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressBillingNumber',
+      source: 'AddressBillingNumber',
+      payloadKey: 'addressBillingNumber',
+      label: 'Billing number',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressBillingDistrict',
+      source: 'AddressBillingDistrict',
+      payloadKey: 'addressBillingDistrict',
+      label: 'Billing district',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressBillingCity',
+      source: 'AddressBillingCity',
+      payloadKey: 'addressBillingCity',
+      label: 'Billing city',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressBillingState',
+      source: 'AddressBillingState',
+      payloadKey: 'addressBillingState',
+      label: 'Billing state',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressBillingZip',
+      source: 'AddressBillingZip',
+      payloadKey: 'addressBillingZip',
+      label: 'Billing ZIP',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressBillingCountry',
+      source: 'AddressBillingCountry',
+      payloadKey: 'addressBillingCountry',
+      label: 'Billing country',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressInstallStreet',
+      source: 'AddressInstallStreet',
+      payloadKey: 'addressInstallStreet',
+      label: 'Install street',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressInstallNumber',
+      source: 'AddressInstallNumber',
+      payloadKey: 'addressInstallNumber',
+      label: 'Install number',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressInstallDistrict',
+      source: 'AddressInstallDistrict',
+      payloadKey: 'addressInstallDistrict',
+      label: 'Install district',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressInstallCity',
+      source: 'AddressInstallCity',
+      payloadKey: 'addressInstallCity',
+      label: 'Install city',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressInstallState',
+      source: 'AddressInstallState',
+      payloadKey: 'addressInstallState',
+      label: 'Install state',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressInstallZip',
+      source: 'AddressInstallZip',
+      payloadKey: 'addressInstallZip',
+      label: 'Install ZIP',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'addressInstallCountry',
+      source: 'AddressInstallCountry',
+      payloadKey: 'addressInstallCountry',
+      label: 'Install country',
+      tab: 'address',
+      span: 1,
+    },
+    { key: 'lat', source: 'Lat', payloadKey: 'lat', label: 'Latitude', type: 'number', tab: 'address', span: 1 },
+    { key: 'lng', source: 'Lng', payloadKey: 'lng', label: 'Longitude', type: 'number', tab: 'address', span: 1 },
+    { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 5 },
+  ],
+};
 
-  billingSameAsMain = false;
-  installSameAsMain = false;
+type ComplexRecord = {
+  ComplexUUID: string;
+  Name: string;
+  City?: string | null;
+  State?: string | null;
+};
 
-  private readonly customersResource = resource({
-    params: () => this.appliedFilters(),
-    defaultValue: [] as Customer[],
-    loader: ({ params }) => this.fetchCustomers(params),
+type DueDayRecord = {
+  ErpFinInvDueDayUUID: string;
+  Name: string;
+  DueDay?: number | null;
+  BillingDay?: number | null;
+};
+
+@Component({
+  selector: 'app-erp-customer',
+  standalone: true,
+  imports: ERP_DIRECTORY_CRUD_IMPORTS,
+  templateUrl: '../shared/directory-crud/directory-crud-page.html',
+  styleUrls: ['../shared/directory-crud/directory-crud-page.scss'],
+})
+export class ErpCustomerPage extends DirectoryCrudPageBase<DirectoryRecord> {
+  private readonly complexesResource = resource({
+    defaultValue: [] as ComplexRecord[],
+    loader: async () => {
+      const response = await this.api.get('erp/complexes?status=active&limit=500');
+      return ((response as { data?: { items?: ComplexRecord[] } })?.data?.items ?? []) as ComplexRecord[];
+    },
+  });
+  private readonly dueDaysResource = resource({
+    defaultValue: [] as DueDayRecord[],
+    loader: async () => {
+      const response = await this.api.get('erp/financial/invoicing/duedays?status=active&limit=500');
+      return ((response as { data?: { items?: DueDayRecord[] } })?.data?.items ?? []) as DueDayRecord[];
+    },
   });
 
-  readonly sortedRows = computed(() => this.sortRows(this.customers()));
-  readonly visibleRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-  readonly allVisibleSelected = computed(() => {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  });
-  readonly someVisibleSelected = computed(() => {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
-  });
-  readonly loading = computed(() => this.customersResource.isLoading() || this.mutating());
-  readonly complexSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
-    this.lookupVersion();
-    return [
-      { value: '', label: 'None' },
-      ...this.complexes.map((complex) => ({
-        value: complex.ComplexUUID,
-        label: complex.Name,
-        description: [complex.City, complex.State].filter(Boolean).join(' / '),
-        searchText: [complex.Name, complex.City, complex.State, complex.Zip, complex.ComplexUUID]
-          .filter(Boolean)
-          .join(' '),
-      })),
-    ];
-  });
-  readonly dueDaySelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
-    this.lookupVersion();
-    return [
-      { value: '', label: 'None' },
-      ...this.dueDays.map((item) => ({
-        value: item.ErpFinInvDueDayUUID,
-        label: `${item.Name} - Due ${item.DueDay} / Bill ${item.BillingDay}`,
-        description: item.ClosedMonth ? 'Closed month' : 'Open month',
-        searchText: [item.Name, item.DueDay, item.BillingDay, item.ErpFinInvDueDayUUID]
-          .filter(Boolean)
-          .join(' '),
-      })),
-    ];
-  });
-  private readonly syncCustomers = effect(() => {
-    this.customers();
-    this.reconcileSelection();
-  });
+  private readonly complexOptions = computed<DirectoryOption[]>(() =>
+    this.complexesResource.value().map((item) => ({
+      value: item.ComplexUUID,
+      label: item.Name,
+      description: [item.City, item.State].filter(Boolean).join(' / '),
+      searchText: `${item.Name} ${item.City ?? ''} ${item.State ?? ''} ${item.ComplexUUID}`,
+    })),
+  );
+  private readonly dueDayOptions = computed<DirectoryOption[]>(() =>
+    this.dueDaysResource.value().map((item) => ({
+      value: item.ErpFinInvDueDayUUID,
+      label: item.Name,
+      description: [item.DueDay ? `Due ${item.DueDay}` : '', item.BillingDay ? `Billing ${item.BillingDay}` : '']
+        .filter(Boolean)
+        .join(' / '),
+      searchText: `${item.Name} ${item.DueDay ?? ''} ${item.BillingDay ?? ''} ${item.ErpFinInvDueDayUUID}`,
+    })),
+  );
 
-  private readonly reportCustomerLoadError = effect(() => {
-    const error = this.customersResource.error();
-    if (!error) return;
-    this.showError(error instanceof Error ? error.message : 'Failed to load customers.');
-  });
-
-  private readonly initializePage = (() => {
-    this.resetForm();
-    void this.fetchComplexes();
-    void this.fetchDueDays();
-    void this.fetchMapboxParameter();
-
-    return true;
-  })();
-
-
-
-  onSearchChange(value: string) {
-    this.searchInput.set(value);
+  constructor() {
+    super(CUSTOMER_CONFIG);
   }
 
-  applySearchFilters() {
-    const nextSearch = this.searchInput().trim();
-    const nextStatus = this.statusFilter();
-    this.search.set(nextSearch);
-    this.pageIndex.set(0);
-    const current = this.appliedFilters();
-    if (nextSearch === current.search && nextStatus === current.status) {
-      this.customersResource.reload();
-    } else {
-      this.appliedFilters.set({ search: nextSearch, status: nextStatus });
-    }
-  }
-
-  clearSearchFilters() {
-    this.searchInput.set('');
-    this.search.set('');
-    this.statusFilter.set('');
-    this.pageIndex.set(0);
-    const current = this.appliedFilters();
-    if (current.search || current.status) {
-      this.appliedFilters.set({ search: '', status: '' });
-    } else {
-      this.customersResource.reload();
-    }
-  }
-
-  refreshList() {
-    this.customersResource.reload();
-  }
-
-  setSort(sort: Sort) {
-    this.sortActive.set(sort.active || '');
-    this.sortDirection.set(sort.direction || '');
-    this.pageIndex.set(0);
-  }
-
-  setPage(page: PageEvent) {
-    this.pageIndex.set(page.pageIndex);
-    this.pageSize.set(page.pageSize);
-  }
-
-  private sortRows(rows: Customer[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-    return [...rows].sort((a, b) => this.compareValues(this.sortValue(a, active), this.sortValue(b, active), direction));
-  }
-
-  private sortValue(row: Customer, column: string) {
-    switch (column) {
-      case 'name':
-        return row.Name ?? "";
-      case 'complex':
-        return this.complexLabel(row.ComplexUUID);
-      case 'dueDay':
-        return this.dueDayLabel(row.DueDayUUID);
-      case 'type':
-        return row.Type ?? "";
-      case 'document':
-        return row.Document ?? "";
-      case 'email':
-        return row.Email ?? "";
-      case 'status':
-        return row.Status ?? 0;
-      default:
-        return '';
-    }
-  }
-
-  private compareValues(a: string | number, b: string | number, direction: SortDirection) {
-    const modifier = direction === 'asc' ? 1 : -1;
-    if (typeof a === 'number' && typeof b === 'number') return (a - b) * modifier;
-    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * modifier;
-  }
-
-  private matchesLocalFilters(row: Customer) {
-    const filters = this.appliedFilters();
-    if (filters.status && String((row as any).Status ?? '') !== filters.status) return false;
-    const search = filters.search.trim().toLowerCase();
-    if (!search) return true;
-    return [row.Name, row.Document, row.Email, row.Phone, this.complexLabel(row.ComplexUUID), this.dueDayLabel(row.DueDayUUID)]
-      .filter(Boolean)
-      .some((field) => String(field).toLowerCase().includes(search));
-  }
-
-  private normalizeRows(rows: Customer[]) {
-    return rows.filter((row) => this.matchesLocalFilters(row));
-  }
-  private async fetchCustomers(filters: CustomerFilters): Promise<Customer[]> {
-    const params = new URLSearchParams();
-    params.set('limit', String(this.listLimit));
-    if (filters.search) params.set('q', filters.search);
-    if (filters.status) params.set('status', filters.status);
-    const res = await this.api.get<any>(`erp/customers?${params.toString()}`);
-    return res?.data?.items ?? [];
-  }
-
-  private parseTableFilter(filter: string): CustomerFilters {
-    try {
-      const parsed = JSON.parse(filter || '{}') as Partial<CustomerFilters>;
-      return {
-        search: (parsed.search ?? '').trim().toLowerCase(),
-        status: parsed.status ?? '',
-      };
-    } catch {
-      return { search: filter.trim().toLowerCase(), status: '' };
-    }
-  }
-
-  statusLabel(status?: number | string | null) {
-    return this.statusValue(status) === '1' ? 'Active' : 'Inactive';
-  }
-
-  statusValue(status?: number | string | null) {
-    return String(status ?? '') === '1' || String(status ?? '').toLowerCase() === 'active'
-      ? '1'
-      : '0';
-  }
-
-  async fetchComplexes() {
-    try {
-      const res = await this.api.get<any>('erp/complexes');
-      const items = res?.data?.items ?? [];
-      this.complexes = items;
-      this.complexMap = new Map(items.map((item: ErpComplexOption) => [item.ComplexUUID, item]));
-      this.lookupVersion.update((value) => value + 1);
-    } catch (err) {
-      console.error('Failed to load complexes.', err);
-    }
-  }
-
-  async fetchDueDays() {
-    try {
-      const res = await this.api.get<any>('erp/financial/invoicing/duedays');
-      const items = (res?.data?.items ?? []).filter(
-        (item: DueDayOption) => item?.Status === 'active',
-      );
-      this.dueDays = items;
-      this.dueDayMap = new Map(items.map((item: DueDayOption) => [item.ErpFinInvDueDayUUID, item]));
-      this.lookupVersion.update((value) => value + 1);
-    } catch (err) {
-      console.error('Failed to load due days.', err);
-    }
-  }
-
-  startCreate() {
-    this.resetForm();
-    this.openCustomerDialog();
-  }
-
-  private resetForm() {
-    this.editingCustomer = null;
-    this.form.complexUUID = '';
-    this.form.dueDayUUID = '';
-    this.form.type = 'company';
-    this.form.name = '';
-    this.form.document = '';
-    this.form.email = '';
-    this.updateEmailError();
-    this.form.phone = '';
-    this.form.addressMainStreet = '';
-    this.form.addressMainNumber = '';
-    this.form.addressMainDistrict = '';
-    this.form.addressMainCity = '';
-    this.form.addressMainState = '';
-    this.form.addressMainZip = '';
-    this.form.addressMainCountry = '';
-    this.form.addressBillingStreet = '';
-    this.form.addressBillingNumber = '';
-    this.form.addressBillingDistrict = '';
-    this.form.addressBillingCity = '';
-    this.form.addressBillingState = '';
-    this.form.addressBillingZip = '';
-    this.form.addressBillingCountry = '';
-    this.form.addressInstallStreet = '';
-    this.form.addressInstallNumber = '';
-    this.form.addressInstallDistrict = '';
-    this.form.addressInstallCity = '';
-    this.form.addressInstallState = '';
-    this.form.addressInstallZip = '';
-    this.form.addressInstallCountry = '';
-    this.form.lat = null;
-    this.form.lng = null;
-    this.form.notes = '';
-    this.form.status = 1;
-    this.billingSameAsMain = false;
-    this.installSameAsMain = false;
-    this.mapVisible = false;
-    this.teardownMap();
-    this.updateMapMarker();
-  }
-
-  startEdit(customer: Customer) {
-    this.editingCustomer = customer;
-    this.form.complexUUID = customer.ComplexUUID ?? '';
-    this.form.dueDayUUID = customer.DueDayUUID ?? '';
-    this.form.type = customer.Type;
-    this.form.name = customer.Name ?? '';
-    this.form.document = customer.Document ?? '';
-    this.form.email = customer.Email ?? '';
-    this.updateEmailError();
-    this.form.phone = customer.Phone ?? '';
-    this.form.addressMainStreet = customer.AddressMainStreet ?? '';
-    this.form.addressMainNumber = customer.AddressMainNumber ?? '';
-    this.form.addressMainDistrict = customer.AddressMainDistrict ?? '';
-    this.form.addressMainCity = customer.AddressMainCity ?? '';
-    this.form.addressMainState = customer.AddressMainState ?? '';
-    this.form.addressMainZip = customer.AddressMainZip ?? '';
-    this.form.addressMainCountry = customer.AddressMainCountry ?? '';
-    this.form.addressBillingStreet = customer.AddressBillingStreet ?? '';
-    this.form.addressBillingNumber = customer.AddressBillingNumber ?? '';
-    this.form.addressBillingDistrict = customer.AddressBillingDistrict ?? '';
-    this.form.addressBillingCity = customer.AddressBillingCity ?? '';
-    this.form.addressBillingState = customer.AddressBillingState ?? '';
-    this.form.addressBillingZip = customer.AddressBillingZip ?? '';
-    this.form.addressBillingCountry = customer.AddressBillingCountry ?? '';
-    this.form.addressInstallStreet = customer.AddressInstallStreet ?? '';
-    this.form.addressInstallNumber = customer.AddressInstallNumber ?? '';
-    this.form.addressInstallDistrict = customer.AddressInstallDistrict ?? '';
-    this.form.addressInstallCity = customer.AddressInstallCity ?? '';
-    this.form.addressInstallState = customer.AddressInstallState ?? '';
-    this.form.addressInstallZip = customer.AddressInstallZip ?? '';
-    this.form.addressInstallCountry = customer.AddressInstallCountry ?? '';
-    this.form.lat = customer.Lat ?? null;
-    this.form.lng = customer.Lng ?? null;
-    this.form.notes = customer.Notes ?? '';
-    this.form.status = customer.Status ?? 1;
-    this.billingSameAsMain = false;
-    this.installSameAsMain = false;
-    this.mapVisible = false;
-    this.teardownMap();
-    this.updateMapMarker();
-    this.openCustomerDialog();
-  }
-
-  async saveCustomer(createAnother = false) {
-    if (this.saving) return;
-
-    if (!this.form.name.trim()) {
-      this.showWarning('Name is required.');
-      return;
-    }
-
-    this.updateEmailError();
-    if (this.emailError()) {
-      this.showWarning('Email is invalid.');
-      return;
-    }
-
-    if (this.form.phone && !/^\d{8,15}$/.test(this.form.phone)) {
-      this.showWarning('Phone must contain 8 to 15 digits.');
-      return;
-    }
-
-    this.saving = true;
-    this.error = '';
-
-    try {
-      const isCreateMode = !this.editingCustomer;
-      const payload = {
-        complexUUID: this.form.complexUUID || null,
-        dueDayUUID: this.form.dueDayUUID || null,
-        type: this.form.type,
-        name: this.form.name.trim(),
-        document: this.form.document?.trim() || null,
-        email: this.form.email?.trim() || null,
-        phone: this.form.phone?.trim() || null,
-        addressMainStreet: this.form.addressMainStreet?.trim() || null,
-        addressMainNumber: this.form.addressMainNumber?.trim() || null,
-        addressMainDistrict: this.form.addressMainDistrict?.trim() || null,
-        addressMainCity: this.form.addressMainCity?.trim() || null,
-        addressMainState: this.form.addressMainState?.trim() || null,
-        addressMainZip: this.form.addressMainZip?.trim() || null,
-        addressMainCountry: this.form.addressMainCountry?.trim() || null,
-        addressBillingStreet: this.form.addressBillingStreet?.trim() || null,
-        addressBillingNumber: this.form.addressBillingNumber?.trim() || null,
-        addressBillingDistrict: this.form.addressBillingDistrict?.trim() || null,
-        addressBillingCity: this.form.addressBillingCity?.trim() || null,
-        addressBillingState: this.form.addressBillingState?.trim() || null,
-        addressBillingZip: this.form.addressBillingZip?.trim() || null,
-        addressBillingCountry: this.form.addressBillingCountry?.trim() || null,
-        addressInstallStreet: this.form.addressInstallStreet?.trim() || null,
-        addressInstallNumber: this.form.addressInstallNumber?.trim() || null,
-        addressInstallDistrict: this.form.addressInstallDistrict?.trim() || null,
-        addressInstallCity: this.form.addressInstallCity?.trim() || null,
-        addressInstallState: this.form.addressInstallState?.trim() || null,
-        addressInstallZip: this.form.addressInstallZip?.trim() || null,
-        addressInstallCountry: this.form.addressInstallCountry?.trim() || null,
-        lat: this.form.lat ?? null,
-        lng: this.form.lng ?? null,
-        notes: this.form.notes?.trim() || null,
-        status: this.form.status,
-      };
-
-      if (this.editingCustomer) {
-        await this.api.put(`erp/customers/${this.editingCustomer.CustomerUUID}`, payload);
-        this.snack.success('Customer updated successfully.');
-      } else {
-        await this.api.post('erp/customers', payload);
-        this.snack.success('Customer created successfully.');
-      }
-
-      this.customersResource.reload();
-      if (createAnother && isCreateMode) {
-        this.resetForm();
-        this.openCustomerDialog();
-        return;
-      }
-      this.closeCustomerDialog();
-      this.resetForm();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to save customer.');
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  saveAndNewCustomer() {
-    void this.saveCustomer(true);
-  }
-
-  async searchMainPostalCode() {
-    await this.searchPostalCodeBySection('main');
-  }
-
-  async searchBillingPostalCode() {
-    if (this.billingSameAsMain) return;
-    await this.searchPostalCodeBySection('billing');
-  }
-
-  async searchInstallPostalCode() {
-    if (this.installSameAsMain) return;
-    await this.searchPostalCodeBySection('install');
-  }
-
-  cancelCustomerForm() {
-    this.closeCustomerDialog();
-    this.resetForm();
-  }
-
-  private openCustomerDialog() {
-    const dialog = this.customerFormDialog();
-    if (!dialog || this.customerDialogBinding) return;
-    this.error = '';
-    this.customerDialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'erp-customer-form-dialog', {
-      onEscape: () => this.closeCustomerDialog(),
-    });
-    bindDialogClosed(this.customerDialogBinding.ref, () => {
-      this.customerDialogBinding?.stop();
-      this.customerDialogBinding = null;
-    });
-  }
-
-  private closeCustomerDialog() {
-    if (!this.customerDialogBinding) return;
-    const binding = this.customerDialogBinding;
-    this.customerDialogBinding = null;
-    binding.stop();
-    binding.ref.close();
-  }
-
-  async deleteCustomer(customerUUID: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete customer',
-        message: 'Are you sure you want to delete this customer?',
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-    this.mutating.set(true);
-    this.error = '';
-    try {
-      await this.api.delete(`erp/customers/${customerUUID}`);
-      this.selectedCustomerUUIDs.update((current) => { const next = new Set(current); next.delete(customerUUID); return next; });
-      this.customersResource.reload();
-      this.snack.success('Customer deleted successfully.');
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete customer.');
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-
-  isSelected(customer: Customer) {
-    return this.selectedCustomerUUIDs().has(customer.CustomerUUID);
-  }
-
-  isAllVisibleSelected() {
-    return this.allVisibleSelected();
-  }
-
-  isSomeVisibleSelected() {
-    return this.someVisibleSelected();
-  }
-
-  toggleCustomerSelection(customer: Customer, checked: boolean) {
-    this.selectedCustomerUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) {
-        next.add(customer.CustomerUUID);
-      } else {
-        next.delete(customer.CustomerUUID);
-      }
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedCustomerUUIDs.update((current) => {
-      const next = new Set(current);
-      this.visibleRows().forEach((row) => {
-        if (checked) next.add(row.CustomerUUID);
-        else next.delete(row.CustomerUUID);
-      });
-      return next;
-    });
-  }
-
-  async removeSelectedCustomers() {
-    const ids = Array.from(this.selectedCustomerUUIDs());
-    if (!ids.length) return;
-
-    const labels = this.customers()
-      .filter((row) => this.selectedCustomerUUIDs().has(row.CustomerUUID))
-      .slice(0, 3)
-      .map((row) => row.Name)
-      .filter(Boolean);
-    const detail = labels.length
-      ? ` Selected: ${labels.join(', ')}${ids.length > 3 ? ', ...' : ''}`
-      : '';
-
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected customers',
-        message: `Are you sure you want to delete ${ids.length} selected customer(s)?${detail}`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.mutating.set(true);
-    this.error = '';
-    try {
-      const response = await this.api.delete<any>('erp/customers/bulk', { ids });
-      const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = new Set<string>(
-        (response?.data?.failed ?? []).map((item: any) => item.CustomerUUID),
-      );
-      this.selectedCustomerUUIDs.set(failed);
-      this.customersResource.reload();
-      if (failed.size) {
-        this.showError(`${failed.size} selected customer(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${deleted.size || ids.length} customer(s) deleted.`);
-      }
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete selected customers.');
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-  private reconcileSelection() {
-    const validIds = new Set(this.customers().map((row) => row.CustomerUUID));
-    this.selectedCustomerUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (validIds.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
-
-  onMainAddressChange() {
-    if (this.billingSameAsMain) {
-      this.copyMainToBilling();
-    }
-    if (this.installSameAsMain) {
-      this.copyMainToInstall();
-    }
-  }
-
-  onComplexChange(value: string) {
-    this.form.complexUUID = value ?? '';
-    if (!value) return;
-    const complex = this.complexMap.get(value);
-    if (!complex) return;
-    this.form.addressMainStreet = complex.Address ?? '';
-    this.form.addressMainNumber = '';
-    this.form.addressMainDistrict = '';
-    this.form.addressMainCity = complex.City ?? '';
-    this.form.addressMainState = complex.State ?? '';
-    this.form.addressMainZip = complex.Zip ?? '';
-    this.form.addressMainCountry = '';
-    this.onMainAddressChange();
-  }
-
-  complexLabel(uuid: string | null | undefined) {
-    if (!uuid) return '-';
-    return this.complexMap.get(uuid)?.Name ?? '-';
-  }
-
-  dueDayLabel(uuid: string | null | undefined) {
-    if (!uuid) return '-';
-    const item = this.dueDayMap.get(uuid);
-    if (!item) return '-';
-    const closedMonthLabel = item.ClosedMonth ? 'closed' : 'open';
-    return `${item.Name} - Due ${item.DueDay} / Bill ${item.BillingDay} (${closedMonthLabel})`;
-  }
-
-
-  toggleBillingSameAsMain(value: boolean) {
-    this.billingSameAsMain = value;
-    if (value) {
-      this.copyMainToBilling();
-    }
-  }
-
-  toggleInstallSameAsMain(value: boolean) {
-    this.installSameAsMain = value;
-    if (value) {
-      this.copyMainToInstall();
-    }
-  }
-
-  onLatLngChange() {
-    this.updateMapMarker();
-  }
-
-  async copyCoordinates() {
-    const latValue = typeof this.form.lat === 'number' ? this.form.lat : Number(this.form.lat);
-    const lngValue = typeof this.form.lng === 'number' ? this.form.lng : Number(this.form.lng);
-    if (!Number.isFinite(latValue) || !Number.isFinite(lngValue)) {
-      this.showWarning('Coordinates are required to copy.');
-      return;
-    }
-    const text = `${latValue.toFixed(6)}, ${lngValue.toFixed(6)}`;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (err) {
-      this.showError('Failed to copy coordinates.');
-    }
-  }
-
-  toggleMap() {
-    if (this.mapVisible) {
-      this.mapVisible = false;
-      this.teardownMap();
-      return;
-    }
-
-    this.mapVisible = true;
-    if (!this.hasValidCoordinates()) {
-      this.fallbackToBrasilia();
-    }
-    this.requestUserLocation();
-    queueMicrotask(() => void this.initMap());
-  }
-
-  updateEmailError() {
-    const value = this.form.email?.trim();
-    if (value && !this.isValidEmail(value)) {
-      this.emailError.set('Not a valid email');
-    } else {
-      this.emailError.set('');
-    }
-  }
-
-  private isValidEmail(value: string) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  }
-
-  private showError(message: string) {
-    this.error = '';
-    this.snack.error(message);
-  }
-
-  private showWarning(message: string) {
-    this.error = '';
-    this.snack.warning(message);
-  }
-
-  private async fetchMapboxParameter() {
-    const endpoints = [
-      'settings/parameters/resolve/MAPBOX_TOKEN',
-      'system/parameters/resolve/MAPBOX_TOKEN',
-    ];
-
-    this.mapboxToken = null;
-    for (const endpoint of endpoints) {
-      try {
-        const response = await this.api.get<any>(endpoint);
-        const row = Array.isArray(response)
-          ? response[0]
-          : Array.isArray(response?.data?.items)
-            ? response.data.items[0]
-            : null;
-        const token = typeof row?.SprValue === 'string' ? row.SprValue.trim() : '';
-        if (token) {
-          this.mapboxToken = token;
-          return;
-        }
-      } catch {
-        // Try next endpoint.
-      }
-    }
-  }
-
-  private async getMapboxToken(): Promise<string | null> {
-    if (this.mapboxToken && this.mapboxToken.trim()) {
-      return this.mapboxToken.trim();
-    }
-    await this.fetchMapboxParameter();
-    return this.mapboxToken && this.mapboxToken.trim() ? this.mapboxToken.trim() : null;
-  }
-
-  private async initMap() {
-    if (this.map) {
-      this.map.resize?.();
-      this.updateMapMarker();
-      if (!this.hasValidCoordinates()) {
-        this.fallbackToBrasilia();
-        this.updateMapMarker();
-        this.map.setCenter([this.form.lng as number, this.form.lat as number]);
-        this.map.setZoom(Math.max(this.map.getZoom?.() ?? 12, 12));
-      }
-      return;
-    }
-
-    const token = await this.getMapboxToken();
-    if (!token) {
-      this.showError('Mapbox token missing in system parameters (MAPBOX_TOKEN).');
-      return;
-    }
-    this.error = '';
-
-    const mapboxgl = (await import('mapbox-gl')).default;
-    mapboxgl.accessToken = token;
-    this.mapboxgl = mapboxgl;
-
-    const latValue = typeof this.form.lat === 'number' ? this.form.lat : Number(this.form.lat);
-    const lngValue = typeof this.form.lng === 'number' ? this.form.lng : Number(this.form.lng);
-    const defaultLat = Number.isFinite(latValue) ? latValue : -15.793889;
-    const defaultLng = Number.isFinite(lngValue) ? lngValue : -47.882778;
-
-    this.map = new mapboxgl.Map({
-      container: 'erp-customer-map',
-      style: MAP_STYLE_URLS.street,
-      center: [defaultLng, defaultLat],
-      zoom: 14,
-      attributionControl: false,
-    });
-
-    this.map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
-    this.map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
-    this.styleControl = new MapStyleControl({
-      getNextMode: () => (this.mapStyle === 'street' ? 'satellite' : 'street'),
-      onToggle: () => this.toggleMapStyle(),
-    });
-    this.map.addControl(this.styleControl, 'top-right');
-
-    this.map.on('click', (event: any) => {
-      const { lat, lng } = event.lngLat ?? {};
-      if (lat === undefined || lng === undefined) return;
-      this.form.lat = Number(lat.toFixed(6));
-      this.form.lng = Number(lng.toFixed(6));
-      this.updateMapMarker();
-    });
-
-    this.updateMapMarker();
-
-    this.scheduleMapResize();
-    this.map.on('style.load', () => this.scheduleMapResize());
-
-    if (!this.hasValidCoordinates()) {
-      this.requestUserLocation();
-    }
-  }
-
-  private toggleMapStyle() {
-    if (!this.map) return;
-    this.mapStyle = this.mapStyle === 'street' ? 'satellite' : 'street';
-    this.map.setStyle(MAP_STYLE_URLS[this.mapStyle], { diff: false });
-  }
-
-  private hasValidCoordinates() {
-    const latRaw = this.form.lat;
-    const lngRaw = this.form.lng;
-    if (latRaw === null || lngRaw === null) {
-      return false;
-    }
-    const latValue = typeof latRaw === 'number' ? latRaw : Number(latRaw);
-    const lngValue = typeof lngRaw === 'number' ? lngRaw : Number(lngRaw);
-    return Number.isFinite(latValue) && Number.isFinite(lngValue);
-  }
-
-  private requestUserLocation() {
-    if (!('geolocation' in navigator)) {
-      this.showWarning('Geolocation is not available in this browser.');
-      this.fallbackToBrasilia();
-      return;
-    }
-
-    if (!window.isSecureContext) {
-      this.showWarning('Geolocation requires HTTPS.');
-      this.fallbackToBrasilia();
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        this.form.lat = Number(latitude.toFixed(6));
-        this.form.lng = Number(longitude.toFixed(6));
-        this.updateMapMarker();
-        if (this.map) {
-          this.map.setCenter([this.form.lng, this.form.lat]);
-          this.map.setZoom(Math.max(this.map.getZoom?.() ?? 14, 14));
-        }
-        this.error = '';
-      },
-      (err) => {
-        if (err?.code === 1) {
-          this.showWarning('Location permission was denied.');
-        } else if (err?.code === 2) {
-          this.showError('Unable to determine location.');
-        } else if (err?.code === 3) {
-          this.showError('Location request timed out.');
-        } else {
-          this.showError('Failed to retrieve location.');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
-    );
-  }
-
-  private fallbackToBrasilia() {
-    const lat = -15.793889;
-    const lng = -47.882778;
-    this.form.lat = Number(lat.toFixed(6));
-    this.form.lng = Number(lng.toFixed(6));
-    this.updateMapMarker();
-    if (this.map) {
-      this.map.setCenter([this.form.lng, this.form.lat]);
-      this.map.setZoom(Math.max(this.map.getZoom?.() ?? 12, 12));
-    }
-  }
-
-  private scheduleMapResize() {
-    if (!this.map) return;
-    this.clearMapResizeTimers();
-    this.mapResizeTimers.push(
-      setTimeout(() => {
-        this.map?.resize?.();
-        this.updateMapMarker();
-      }, 0),
-    );
-    this.mapResizeTimers.push(
-      setTimeout(() => {
-        this.map?.resize?.();
-        this.updateMapMarker();
-      }, 200),
-    );
-  }
-
-  private clearMapResizeTimers() {
-    for (const timer of this.mapResizeTimers) {
-      clearTimeout(timer);
-    }
-    this.mapResizeTimers = [];
-  }
-
-  private updateMapMarker() {
-    if (!this.map || !this.mapboxgl) return;
-
-    const lat = this.form.lat;
-    const lng = this.form.lng;
-    if (lat === null || lng === null) {
-      if (this.mapMarker) {
-        this.mapMarker.remove();
-        this.mapMarker = null;
-      }
-      return;
-    }
-
-    const latValue = typeof lat === 'number' ? lat : Number(lat);
-    const lngValue = typeof lng === 'number' ? lng : Number(lng);
-
-    if (Number.isFinite(latValue) && Number.isFinite(lngValue)) {
-      const coords = [lngValue, latValue] as [number, number];
-      if (!this.mapMarker) {
-        const markerElement = document.createElement('div');
-        markerElement.className = 'map-pin';
-        markerElement.innerHTML = '<span class=\"map-pin-inner\"></span>';
-        this.mapMarker = new this.mapboxgl.Marker({ element: markerElement, draggable: true })
-          .setLngLat(coords)
-          .addTo(this.map);
-        this.mapMarker.on('dragend', () => {
-          const pos = this.mapMarker.getLngLat();
-          this.form.lat = Number(pos.lat.toFixed(6));
-          this.form.lng = Number(pos.lng.toFixed(6));
-        });
-      } else {
-        this.mapMarker.setLngLat(coords);
-      }
-      this.map.setCenter(coords);
-      this.map.setZoom(Math.max(this.map.getZoom?.() ?? 14, 14));
-    } else if (this.mapMarker) {
-      this.mapMarker.remove();
-      this.mapMarker = null;
-    }
-  }
-
-  private teardownMap() {
-    this.clearMapResizeTimers();
-    if (this.mapMarker) {
-      this.mapMarker.remove();
-    }
-    if (this.map) {
-      this.map.remove();
-    }
-    this.map = null;
-    this.mapMarker = null;
-  }
-
-  private copyMainToBilling() {
-    this.form.addressBillingStreet = this.form.addressMainStreet;
-    this.form.addressBillingNumber = this.form.addressMainNumber;
-    this.form.addressBillingDistrict = this.form.addressMainDistrict;
-    this.form.addressBillingCity = this.form.addressMainCity;
-    this.form.addressBillingState = this.form.addressMainState;
-    this.form.addressBillingZip = this.form.addressMainZip;
-    this.form.addressBillingCountry = this.form.addressMainCountry;
-  }
-
-  private copyMainToInstall() {
-    this.form.addressInstallStreet = this.form.addressMainStreet;
-    this.form.addressInstallNumber = this.form.addressMainNumber;
-    this.form.addressInstallDistrict = this.form.addressMainDistrict;
-    this.form.addressInstallCity = this.form.addressMainCity;
-    this.form.addressInstallState = this.form.addressMainState;
-    this.form.addressInstallZip = this.form.addressMainZip;
-    this.form.addressInstallCountry = this.form.addressMainCountry;
-  }
-
-  private async searchPostalCodeBySection(section: 'main' | 'billing' | 'install') {
-    const zipFieldMap = {
-      main: 'addressMainZip',
-      billing: 'addressBillingZip',
-      install: 'addressInstallZip',
-    } as const;
-    const streetFieldMap = {
-      main: 'addressMainStreet',
-      billing: 'addressBillingStreet',
-      install: 'addressInstallStreet',
-    } as const;
-    const districtFieldMap = {
-      main: 'addressMainDistrict',
-      billing: 'addressBillingDistrict',
-      install: 'addressInstallDistrict',
-    } as const;
-    const cityFieldMap = {
-      main: 'addressMainCity',
-      billing: 'addressBillingCity',
-      install: 'addressInstallCity',
-    } as const;
-    const stateFieldMap = {
-      main: 'addressMainState',
-      billing: 'addressBillingState',
-      install: 'addressInstallState',
-    } as const;
-
-    const zipKey = zipFieldMap[section];
-    const streetKey = streetFieldMap[section];
-    const districtKey = districtFieldMap[section];
-    const cityKey = cityFieldMap[section];
-    const stateKey = stateFieldMap[section];
-    const normalizedZip = (this.form[zipKey] ?? '').replace(/\D/g, '');
-
-    if (!normalizedZip) {
-      this.showWarning('Inform a postal code to search.');
-      return;
-    }
-
-    if (!/^\d{8}$/.test(normalizedZip)) {
-      this.showWarning('Invalid postal code. Provide 8 digits.');
-      return;
-    }
-
-    this.setSearchingPostalCode(section, true);
-    this.error = '';
-    this.form[zipKey] = normalizedZip;
-
-    try {
-      const res = await this.api.get<any>(`postal-codes/${normalizedZip}`);
-      const item = (res?.data?.item ?? {}) as PostalCodeLookupItem;
-      this.form[streetKey] = item.street ?? this.form[streetKey];
-      this.form[districtKey] = item.district ?? this.form[districtKey];
-      this.form[cityKey] = item.city ?? this.form[cityKey];
-      this.form[stateKey] = item.state ?? this.form[stateKey];
-      if (section === 'main') {
-        this.onMainAddressChange();
-      }
-      this.setSearchingPostalCode(section, false);
-      queueMicrotask(() => {
-        if (section === 'main') this.mainAddressNumberInput()?.nativeElement?.focus();
-        if (section === 'billing') this.billingAddressNumberInput()?.nativeElement?.focus();
-        if (section === 'install') this.installAddressNumberInput()?.nativeElement?.focus();
-      });
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to search postal code.');
-      this.setSearchingPostalCode(section, false);
-    }
-  }
-
-  private setSearchingPostalCode(section: 'main' | 'billing' | 'install', value: boolean) {
-    if (section === 'main') this.searchingMainPostalCode = value;
-    if (section === 'billing') this.searchingBillingPostalCode = value;
-    if (section === 'install') this.searchingInstallPostalCode = value;
+  protected override lookupOptions(key: string): readonly DirectoryOption[] {
+    if (key === 'complexUUID') return this.complexOptions();
+    if (key === 'dueDayUUID') return this.dueDayOptions();
+    return [];
   }
 }

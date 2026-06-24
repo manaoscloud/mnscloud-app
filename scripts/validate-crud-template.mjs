@@ -166,7 +166,10 @@ for (const file of tsFiles) {
   if (!content.includes('@Component')) continue;
   if (!content.includes('erp-page') && !htmlFiles.length) continue;
   const requiredTsRules = requiresFkSearchSelect ? [...tsRules, ...fkTsRules] : tsRules;
-  const missing = requiredTsRules.filter(([, pattern]) => !has(content, pattern)).map(([name]) => name);
+  const inheritedContent = `${content}\n${combinedTs}`;
+  const missing = requiredTsRules
+    .filter(([, pattern]) => !has(inheritedContent, pattern))
+    .map(([name]) => name);
   const forbidden = forbiddenTsRules
     .filter(([, pattern]) => has(content, pattern))
     .map(([name]) => name);

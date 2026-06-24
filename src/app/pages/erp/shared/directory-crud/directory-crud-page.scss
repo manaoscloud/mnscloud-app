@@ -1,0 +1,24 @@
+:host {
+  display: block;
+}
+
+.email-col,
+.phone-col,
+.document-col {
+  min-width: 160px;
+}
+
+.status-col {
+  width: 150px;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.record-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
