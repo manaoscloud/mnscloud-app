@@ -7,7 +7,7 @@
       </div>
 
       <div class="header-actions">
-        <app-refresh-button [loading]="loading" (refresh)="refreshList()" />
+        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
           <mat-icon>add</mat-icon>
           {{ 'New' | transloco }}
@@ -20,12 +20,12 @@
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          [placeholder]="'Name, email, document...' | transloco" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
+          [placeholder]="'Name, email, document...' | transloco" [value]="searchInput()" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [(value)]="statusFilter">
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
           <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
@@ -33,14 +33,14 @@
       </mat-form-field>
 
       <div class="filter-actions">
-        @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
+        @if (selectedCount()) {
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button
             mat-stroked-button
             color="warn"
             type="button"
             (click)="removeSelectedCustomers()"
-            [disabled]="loading"
+            [disabled]="loading()"
           >
             <mat-icon>delete</mat-icon>
             {{ 'Delete selected' | transloco }}
@@ -57,13 +57,20 @@
       </div>
     </div>
 
-    <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading">
-      @if (loading) {
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -170,9 +177,8 @@
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
             {{
-              loading
-                ? ('Loading customers...' | transloco)
-                : ('No customers found for' | transloco) + ' \"' + (search || ('all' | transloco)) + '\"'
+              loading() ? ('Loading customers...' | transloco)
+                : ('No customers found for' | transloco) + ' \"' + (search() || ('all' | transloco)) + '\"'
             }}
           </td>
         </tr>
@@ -181,7 +187,11 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
+      (page)="setPage($event)"
       showFirstLastButtons
       [attr.aria-label]="'Select page of' | transloco"
     />
@@ -261,32 +271,14 @@
           <div class="tab-content addresses-tab-content">
             <div class="form-subsection first-subsection">
               <div class="form-grid">
-                <mat-form-field appearance="outline" class="span-2">
-                  <mat-label>{{ 'Main Complex' | transloco }}</mat-label>
-                  <mat-select
-                    (selectionChange)="onComplexChange($event.value)"
-                    (openedChange)="onComplexOpened($event)" [value]="form.complexUUID" (selectionChange)="form.complexUUID = $event.value">
-                    <mat-option
-                      class="select-search-option"
-                      [value]="null"
-                      (click)="$event.stopPropagation()"
-                      (onSelectionChange)="$event.source.deselect()"
-                    >
-                      <mat-form-field appearance="outline" class="select-search-field">
-                        <input
-                          matInput
-                          (click)="$event.stopPropagation()"
-                          (keydown)="$event.stopPropagation()"
-                          placeholder="{{ 'Search complex' | transloco }}"
-                          autocomplete="off" [value]="complexSearch" (input)="complexSearch = $any($event.target).value" />
-                      </mat-form-field>
-                    </mat-option>
-                    <mat-option value="">{{ 'None' | transloco }}</mat-option>
-                    @for (complex of filteredComplexes; track complex.ComplexUUID) {
-                      <mat-option [value]="complex.ComplexUUID">{{ complex.Name }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <mns-search-select-field
+                  fieldClass="span-2"
+                  [label]="'Main Complex' | transloco"
+                  [value]="form.complexUUID"
+                  (valueChange)="onComplexChange($any($event))"
+                  [options]="complexSelectOptions()"
+                  [placeholder]="'Search complex'"
+                />
 
                 <mat-form-field appearance="outline">
                   <mat-label>{{ 'Main Zip' | transloco }}</mat-label>
@@ -557,34 +549,14 @@
         <mat-tab [label]="'Financial' | transloco">
           <div class="tab-content financial-tab-content">
             <div class="form-grid">
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Due day rule' | transloco }}</mat-label>
-                <mat-select (openedChange)="onDueDayOpened($event)" [value]="form.dueDayUUID" (selectionChange)="form.dueDayUUID = $event.value">
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="{{ 'Search due day rule' | transloco }}"
-                        autocomplete="off" [value]="dueDaySearch" (input)="dueDaySearch = $any($event.target).value" />
-                    </mat-form-field>
-                  </mat-option>
-                  <mat-option value="">{{ 'None' | transloco }}</mat-option>
-                  @for (item of filteredDueDays; track item.ErpFinInvDueDayUUID) {
-                    <mat-option [value]="item.ErpFinInvDueDayUUID">
-                      Due {{ item.DueDay }} / Bill {{ item.BillingDay }} ({{
-                        item.ClosedMonth ? 'closed' : 'open'
-                      }})
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                fieldClass="span-2"
+                [label]="'Due day rule' | transloco"
+                [value]="form.dueDayUUID"
+                (valueChange)="form.dueDayUUID = $any($event) || ''"
+                [options]="dueDaySelectOptions()"
+                [placeholder]="'Search due day rule'"
+              />
             </div>
           </div>
         </mat-tab>

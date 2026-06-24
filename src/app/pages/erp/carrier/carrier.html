@@ -7,7 +7,7 @@
       </div>
 
       <div class="header-actions">
-        <app-refresh-button [loading]="loading" (refresh)="refreshList()" />
+        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
           <mat-icon>add</mat-icon>
           {{ 'New' | transloco }}
@@ -20,26 +20,26 @@
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          [placeholder]="'Name, email, document...' | transloco" [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
+          [placeholder]="'Name, email, document...' | transloco" [value]="searchInput()" (input)="onSearchChange($any($event.target).value)" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [(value)]="statusFilter">
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
           <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
         </mat-select>
       </mat-form-field>
       <div class="filter-actions">
-        @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
+        @if (selectedCount()) {
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button
             mat-stroked-button
             color="warn"
             type="button"
             (click)="removeSelectedCarriers()"
-            [disabled]="loading"
+            [disabled]="loading()"
           >
             <mat-icon>delete</mat-icon>
             {{ 'Delete selected' | transloco }}
@@ -56,13 +56,20 @@
       </div>
     </div>
 
-    <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading">
-      @if (loading) {
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+      @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef class="select-col">
             <mat-checkbox
@@ -149,7 +156,7 @@
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
             {{
-              loading ? ('Loading carriers...' | transloco) : ('No carriers found for' | transloco) + ' "' + (search || ('all' | transloco)) + '"'
+              loading() ? ('Loading carriers...' | transloco) : ('No carriers found for' | transloco) + ' "' + (search() || ('all' | transloco)) + '"'
             }}
           </td>
         </tr>
@@ -158,7 +165,11 @@
 
     <mat-paginator
       class="mobile-paginator"
+      [length]="sortedRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
+      (page)="setPage($event)"
       showFirstLastButtons
       [attr.aria-label]="'Select page of' | transloco"
     />
@@ -166,7 +177,7 @@
 </section>
 
 <ng-template #carrierFormDialog>
-  <div class="carrier-dialog">
+  <div class="carrier-dialog crud-dialog">
     <div class="dialog-header">
       <div>
         <h2>{{ editingCarrier ? ('Edit carrier' | transloco) : ('New carrier' | transloco) }}</h2>

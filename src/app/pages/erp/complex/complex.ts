@@ -1,7 +1,7 @@
 import {
   Component,
+  computed,
   DestroyRef,
-  afterNextRender,
   ElementRef,
   effect,
   resource,
@@ -17,12 +17,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -35,7 +35,8 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 
 type ComplexStatus = 'active' | 'inactive';
 
@@ -100,45 +101,54 @@ export class ErpComplexPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 200;
 
-  complexes: ErpComplex[] = [];
-  dataSource = new MatTableDataSource<ErpComplex>([]);
+  readonly complexes = computed(() => this.normalizeRows(this.complexesResource.value()));
   displayedColumns: string[] = ['select', 'name', 'document', 'cityState', 'status', 'actions'];
-  private readonly appliedSearch = signal('');
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
+  private readonly appliedFilters = signal({ search: '', status: '' });
   private readonly complexesResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => this.appliedFilters(),
     defaultValue: [] as ErpComplex[],
     loader: ({ params }) => this.fetchComplexes(params),
   });
-  get loading() {
-    return this.complexesResource.isLoading();
-  }
+  readonly sortedRows = computed(() => this.sortRows(this.complexes()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
+  });
+  readonly loading = computed(() => this.complexesResource.isLoading());
   saving = false;
   searchingPostalCode = false;
   error = '';
-  search = '';
-  searchInput = '';
-  statusFilter = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly statusFilter = signal('');
   editingComplex: ErpComplex | null = null;
-  selectedComplexUUIDs = new Set<string>();
+  readonly selectedComplexUUIDs = signal<Set<string>>(new Set());
+  readonly selectedCount = computed(() => this.selectedComplexUUIDs().size);
   readonly emailError = signal('');
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly complexFormDialog = viewChild<TemplateRef<unknown>>('complexFormDialog');
   readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
-  private complexFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
+  private complexDialogBinding: CrudDialogBinding | null = null;
   private readonly syncComplexes = effect(() => {
-    this.complexes = this.complexesResource.value();
-    this.dataSource.data = [...this.complexes];
+    this.complexes();
     this.reconcileSelection();
-    this.applyFilter();
   });
   private readonly reportComplexesError = effect(() => {
     const error = this.complexesResource.error();
     if (error) {
       this.showError(this.extractErrorMessage(error, 'Failed to load complexes.'));
-      this.dataSource.data = [];
     }
   });
 
@@ -167,59 +177,37 @@ export class ErpComplexPage {
   constructor() {
     this.resetForm();
     this.destroyRef.onDestroy(() => {
-      this.stopDialogViewportObserver();
       this.closeComplexDialog();
     });
   }
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'document':
-          return data.Document ?? '';
-        case 'cityState':
-          return `${data.City ?? ''} ${data.State ?? ''}`.trim();
-        case 'status':
-          return data.Status ?? '';
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const parsed = this.parseTableFilter(filter);
-      const value = parsed.search;
-      if (parsed.status && data.Status !== parsed.status) return false;
-      if (!value) return true;
-      return [data.Name, data.Alias, data.Document, data.Email, data.Phone, data.City, data.State]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
+
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
-    this.search = nextSearch;
-    if (nextSearch === this.appliedSearch()) {
+    const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusFilter();
+    this.search.set(nextSearch);
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (nextSearch === current.search && nextStatus === current.status) {
       this.complexesResource.reload();
     } else {
-      this.appliedSearch.set(nextSearch);
+      this.appliedFilters.set({ search: nextSearch, status: nextStatus });
     }
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.statusFilter = '';
-    if (this.appliedSearch()) {
-      this.appliedSearch.set('');
+    this.searchInput.set('');
+    this.search.set('');
+    this.statusFilter.set('');
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (current.search || current.status) {
+      this.appliedFilters.set({ search: '', status: '' });
     } else {
       this.complexesResource.reload();
     }
@@ -229,21 +217,64 @@ export class ErpComplexPage {
     this.complexesResource.reload();
   }
 
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.search.trim().toLowerCase(),
-      status: this.statusFilter,
-    });
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent) {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
+  }
+
+  private sortRows(rows: ErpComplex[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    return [...rows].sort((a, b) => this.compareValues(this.sortValue(a, active), this.sortValue(b, active), direction));
+  }
+
+  private sortValue(row: ErpComplex, column: string) {
+    switch (column) {
+      case 'name':
+        return row.Name ?? "";
+      case 'document':
+        return row.Document ?? "";
+      case 'cityState':
+        return `${row.City ?? ""} ${row.State ?? ""}`;
+      case 'status':
+        return row.Status ?? 0;
+      default:
+        return '';
     }
   }
 
-  private async fetchComplexes(search: string) {
+  private compareValues(a: string | number, b: string | number, direction: SortDirection) {
+    const modifier = direction === 'asc' ? 1 : -1;
+    if (typeof a === 'number' && typeof b === 'number') return (a - b) * modifier;
+    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * modifier;
+  }
+
+  private matchesLocalFilters(row: ErpComplex) {
+    const filters = this.appliedFilters();
+    if (filters.status && String((row as any).Status ?? '') !== filters.status) return false;
+    const search = filters.search.trim().toLowerCase();
+    if (!search) return true;
+    return [row.Name, row.Document, row.City, row.State, row.Zip]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(search));
+  }
+
+  private normalizeRows(rows: ErpComplex[]) {
+    return rows.filter((row) => this.matchesLocalFilters(row));
+  }
+  private async fetchComplexes(filters: { search: string; status: string }) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (search) params.set('q', search);
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
     const res = await this.api.get<any>(`erp/complexes?${params.toString()}`);
     return res?.data?.items ?? [];
   }
@@ -406,7 +437,7 @@ export class ErpComplexPage {
     this.error = '';
     try {
       await this.api.delete(`erp/complexes/${complexUUID}`);
-      this.selectedComplexUUIDs.delete(complexUUID);
+      this.selectedComplexUUIDs.update((current) => { const next = new Set(current); next.delete(complexUUID); return next; });
       this.complexesResource.reload();
       this.snack.success('Complex deleted successfully.');
     } catch (err: any) {
@@ -446,50 +477,47 @@ export class ErpComplexPage {
     return city || state || '-';
   }
 
-  get selectedCount() {
-    return this.selectedComplexUUIDs.size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
-  isSelected(complex: ErpComplex) {
-    return this.selectedComplexUUIDs.has(complex.ComplexUUID);
+  isSelected(row: ErpComplex) {
+    return this.selectedComplexUUIDs().has(row.ComplexUUID);
   }
 
   isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+    return this.allVisibleSelected();
   }
 
   isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
+    return this.someVisibleSelected();
   }
 
-  toggleComplexSelection(complex: ErpComplex, checked: boolean) {
-    if (checked) {
-      this.selectedComplexUUIDs.add(complex.ComplexUUID);
-    } else {
-      this.selectedComplexUUIDs.delete(complex.ComplexUUID);
-    }
+  toggleComplexSelection(row: ErpComplex, checked: boolean) {
+    this.selectedComplexUUIDs.update((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(row.ComplexUUID);
+      } else {
+        next.delete(row.ComplexUUID);
+      }
+      return next;
+    });
   }
 
   toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleComplexSelection(row, checked));
+    this.selectedComplexUUIDs.update((current) => {
+      const next = new Set(current);
+      this.visibleRows().forEach((row) => {
+        if (checked) next.add(row.ComplexUUID);
+        else next.delete(row.ComplexUUID);
+      });
+      return next;
+    });
   }
 
   async removeSelectedComplexes() {
-    const ids = Array.from(this.selectedComplexUUIDs);
+    const ids = Array.from(this.selectedComplexUUIDs());
     if (!ids.length) return;
 
-    const labels = this.dataSource.data
-      .filter((row) => this.selectedComplexUUIDs.has(row.ComplexUUID))
+    const labels = this.complexes()
+      .filter((row) => this.selectedComplexUUIDs().has(row.ComplexUUID))
       .slice(0, 3)
       .map((row) => row.Name)
       .filter(Boolean);
@@ -516,10 +544,7 @@ export class ErpComplexPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.ComplexUUID),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.ComplexUUID));
-      this.complexes = this.complexes.filter((row) => !deleted.has(row.ComplexUUID));
-      this.selectedComplexUUIDs.clear();
-      failed.forEach((uuid) => this.selectedComplexUUIDs.add(uuid));
+      this.selectedComplexUUIDs.set(failed);
       this.complexesResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected complex record(s) could not be deleted.`);
@@ -568,116 +593,34 @@ export class ErpComplexPage {
   }
 
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => row.ComplexUUID));
-    Array.from(this.selectedComplexUUIDs).forEach((uuid) => {
-      if (!validIds.has(uuid)) this.selectedComplexUUIDs.delete(uuid);
+    const validIds = new Set(this.complexes().map((row) => row.ComplexUUID));
+    this.selectedComplexUUIDs.update((current) => {
+      const next = new Set<string>();
+      current.forEach((uuid) => {
+        if (validIds.has(uuid)) next.add(uuid);
+      });
+      return next;
     });
   }
 
   private openComplexDialog() {
-    const complexFormDialog = this.complexFormDialog();
-    if (!complexFormDialog || this.complexFormDialogRef) return;
+    const dialog = this.complexFormDialog();
+    if (!dialog || this.complexDialogBinding) return;
     this.error = '';
-    this.complexFormDialogRef = this.dialog.open(complexFormDialog, {
-      ...this.getComplexDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'erp-complex-form-dialog',
+    this.complexDialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'erp-complex-form-dialog', {
+      onEscape: () => this.closeComplexDialog(),
     });
-    bindDialogEscape(this.complexFormDialogRef, () => {
-      this.closeComplexDialog();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.complexFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.complexFormDialogRef = null;
+    bindDialogClosed(this.complexDialogBinding.ref, () => {
+      this.complexDialogBinding?.stop();
+      this.complexDialogBinding = null;
     });
   }
 
   private closeComplexDialog() {
-    if (!this.complexFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.complexFormDialogRef.close();
-    this.complexFormDialogRef = null;
-  }
-
-  private getComplexDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: 'calc(100vw - 24px)',
-        maxWidth: 'calc(100vw - 24px)',
-        height: 'calc(100dvh - 24px)',
-        maxHeight: 'calc(100dvh - 24px)',
-        position: {
-          left: '12px',
-          top: '12px',
-        },
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.complexFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateComplexDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateComplexDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateComplexDialogViewport() {
-    if (!this.complexFormDialogRef) return;
-    const config = this.getComplexDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const height =
-      typeof config.height === 'string'
-        ? config.height
-        : typeof config.maxHeight === 'string'
-          ? config.maxHeight
-          : '';
-    this.complexFormDialogRef.updateSize(width, height);
-    if (config.position) {
-      this.complexFormDialogRef.updatePosition(config.position);
-    } else {
-      this.complexFormDialogRef.updatePosition();
-    }
+    if (!this.complexDialogBinding) return;
+    const binding = this.complexDialogBinding;
+    this.complexDialogBinding = null;
+    binding.stop();
+    binding.ref.close();
   }
 }

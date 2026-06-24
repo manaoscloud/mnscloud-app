@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   DestroyRef,
   ElementRef,
   TemplateRef,
@@ -8,7 +9,6 @@ import {
   resource,
   signal,
   viewChild,
-  afterNextRender,
 } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
@@ -17,13 +17,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
@@ -33,9 +33,14 @@ import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
+import {
+  MnsSearchSelectFieldComponent,
+  type MnsSearchSelectFieldOption,
+} from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 
 type Customer = {
   CustomerUUID: string;
@@ -125,17 +130,18 @@ const SATELLITE_ICON = `
 class MapStyleControl {
   private container?: HTMLElement;
   private button?: HTMLButtonElement;
+  private readonly options: {
+    getNextMode: () => MapStyleMode;
+    onToggle: () => void;
+  };
   private readonly handleClick = () => {
     this.options.onToggle();
     this.update();
   };
 
-  constructor(
-    private readonly options: {
-      getNextMode: () => MapStyleMode;
-      onToggle: () => void;
-    },
-  ) {}
+  constructor(options: { getNextMode: () => MapStyleMode; onToggle: () => void }) {
+    this.options = options;
+  }
 
   onAdd() {
     this.container = document.createElement('div');
@@ -197,6 +203,7 @@ class MapStyleControl {
     TranslocoPipe,
     MatMenuModule,
     PhoneInputComponent,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './customer.html',
   styleUrls: ['./customer.scss'],
@@ -214,12 +221,11 @@ export class ErpCustomerPage {
   private styleControl?: MapStyleControl;
   private mapStyle: MapStyleMode = 'street';
   private mapResizeTimers: ReturnType<typeof setTimeout>[] = [];
-  customers: Customer[] = [];
   complexes: ErpComplexOption[] = [];
   complexMap = new Map<string, ErpComplexOption>();
   dueDays: DueDayOption[] = [];
   dueDayMap = new Map<string, DueDayOption>();
-  dataSource = new MatTableDataSource<Customer>([]);
+  readonly customers = computed(() => this.normalizeRows(this.customersResource.value()));
   displayedColumns: string[] = [
     'select',
     'name',
@@ -231,25 +237,27 @@ export class ErpCustomerPage {
     'status',
     'actions',
   ];
-  selectedCustomerUUIDs = new Set<string>();
+  readonly selectedCustomerUUIDs = signal<Set<string>>(new Set());
+  readonly selectedCount = computed(() => this.selectedCustomerUUIDs().size);
   saving = false;
   searchingMainPostalCode = false;
   searchingBillingPostalCode = false;
   searchingInstallPostalCode = false;
   error = '';
-  search = '';
-  searchInput = '';
-  statusFilter = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly statusFilter = signal('');
   editingCustomer: Customer | null = null;
   mapVisible = false;
-  private readonly customerFilters = signal<CustomerFilters>({ search: '', status: '' });
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
+  private readonly appliedFilters = signal<CustomerFilters>({ search: '', status: '' });
   private readonly mutating = signal(false);
   readonly emailError = signal('');
-  complexSearch = '';
-  dueDaySearch = '';
+  private readonly lookupVersion = signal(0);
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly customerFormDialog = viewChild<TemplateRef<unknown>>('customerFormDialog');
   readonly mainAddressNumberInput =
     viewChild<ElementRef<HTMLInputElement>>('mainAddressNumberInput');
@@ -259,8 +267,7 @@ export class ErpCustomerPage {
   readonly installAddressNumberInput = viewChild<ElementRef<HTMLInputElement>>(
     'installAddressNumberInput',
   );
-  private customerFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
+  private customerDialogBinding: CrudDialogBinding | null = null;
 
   form = {
     complexUUID: '',
@@ -301,24 +308,62 @@ export class ErpCustomerPage {
   installSameAsMain = false;
 
   private readonly customersResource = resource({
-    params: () => this.customerFilters(),
+    params: () => this.appliedFilters(),
     defaultValue: [] as Customer[],
     loader: ({ params }) => this.fetchCustomers(params),
   });
 
+  readonly sortedRows = computed(() => this.sortRows(this.customers()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
+  });
+  readonly loading = computed(() => this.customersResource.isLoading() || this.mutating());
+  readonly complexSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
+    this.lookupVersion();
+    return [
+      { value: '', label: 'None' },
+      ...this.complexes.map((complex) => ({
+        value: complex.ComplexUUID,
+        label: complex.Name,
+        description: [complex.City, complex.State].filter(Boolean).join(' / '),
+        searchText: [complex.Name, complex.City, complex.State, complex.Zip, complex.ComplexUUID]
+          .filter(Boolean)
+          .join(' '),
+      })),
+    ];
+  });
+  readonly dueDaySelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
+    this.lookupVersion();
+    return [
+      { value: '', label: 'None' },
+      ...this.dueDays.map((item) => ({
+        value: item.ErpFinInvDueDayUUID,
+        label: `${item.Name} - Due ${item.DueDay} / Bill ${item.BillingDay}`,
+        description: item.ClosedMonth ? 'Closed month' : 'Open month',
+        searchText: [item.Name, item.DueDay, item.BillingDay, item.ErpFinInvDueDayUUID]
+          .filter(Boolean)
+          .join(' '),
+      })),
+    ];
+  });
   private readonly syncCustomers = effect(() => {
-    const customers = this.customersResource.value();
-    this.customers = [...customers];
-    this.dataSource.data = [...customers];
+    this.customers();
     this.reconcileSelection();
-    this.applyFilter();
   });
 
   private readonly reportCustomerLoadError = effect(() => {
     const error = this.customersResource.error();
     if (!error) return;
     this.showError(error instanceof Error ? error.message : 'Failed to load customers.');
-    this.dataSource.data = [];
   });
 
   private readonly initializePage = (() => {
@@ -330,90 +375,105 @@ export class ErpCustomerPage {
     return true;
   })();
 
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'complex':
-          return this.complexLabel(data.ComplexUUID);
-        case 'dueDay':
-          return this.dueDayLabel(data.DueDayUUID);
-        case 'type':
-          return data.Type ?? '';
-        case 'document':
-          return data.Document ?? '';
-        case 'email':
-          return data.Email ?? '';
-        case 'status':
-          return data.Status ?? 0;
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const parsed = this.parseTableFilter(filter);
-      const value = parsed.search;
-      const matchesStatus = !parsed.status || this.statusValue(data.Status) === parsed.status;
-      if (!matchesStatus) return false;
-      if (!value) return true;
-      return [data.Name, data.Document, data.Email, data.Phone]
-        .filter(Boolean)
-        .concat([this.complexLabel(data.ComplexUUID), this.dueDayLabel(data.DueDayUUID)])
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
 
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.closeCustomerDialog();
-    this.clearMapResizeTimers();
-    if (this.map) {
-      this.map.remove();
-    }
-  });
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.customerFilters.set({ search: this.search, status: this.statusFilter });
-    this.applyFilter();
+    const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusFilter();
+    this.search.set(nextSearch);
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (nextSearch === current.search && nextStatus === current.status) {
+      this.customersResource.reload();
+    } else {
+      this.appliedFilters.set({ search: nextSearch, status: nextStatus });
+    }
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.statusFilter = '';
-    this.customerFilters.set({ search: '', status: '' });
-    this.applyFilter();
+    this.searchInput.set('');
+    this.search.set('');
+    this.statusFilter.set('');
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (current.search || current.status) {
+      this.appliedFilters.set({ search: '', status: '' });
+    } else {
+      this.customersResource.reload();
+    }
   }
 
   refreshList() {
     this.customersResource.reload();
   }
 
-  get loading() {
-    return this.customersResource.isLoading() || this.mutating();
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
   }
 
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.search.trim().toLowerCase(),
-      status: this.statusFilter,
-    });
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  setPage(page: PageEvent) {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
+  }
+
+  private sortRows(rows: Customer[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    return [...rows].sort((a, b) => this.compareValues(this.sortValue(a, active), this.sortValue(b, active), direction));
+  }
+
+  private sortValue(row: Customer, column: string) {
+    switch (column) {
+      case 'name':
+        return row.Name ?? "";
+      case 'complex':
+        return this.complexLabel(row.ComplexUUID);
+      case 'dueDay':
+        return this.dueDayLabel(row.DueDayUUID);
+      case 'type':
+        return row.Type ?? "";
+      case 'document':
+        return row.Document ?? "";
+      case 'email':
+        return row.Email ?? "";
+      case 'status':
+        return row.Status ?? 0;
+      default:
+        return '';
     }
   }
 
+  private compareValues(a: string | number, b: string | number, direction: SortDirection) {
+    const modifier = direction === 'asc' ? 1 : -1;
+    if (typeof a === 'number' && typeof b === 'number') return (a - b) * modifier;
+    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * modifier;
+  }
+
+  private matchesLocalFilters(row: Customer) {
+    const filters = this.appliedFilters();
+    if (filters.status && String((row as any).Status ?? '') !== filters.status) return false;
+    const search = filters.search.trim().toLowerCase();
+    if (!search) return true;
+    return [row.Name, row.Document, row.Email, row.Phone, this.complexLabel(row.ComplexUUID), this.dueDayLabel(row.DueDayUUID)]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(search));
+  }
+
+  private normalizeRows(rows: Customer[]) {
+    return rows.filter((row) => this.matchesLocalFilters(row));
+  }
   private async fetchCustomers(filters: CustomerFilters): Promise<Customer[]> {
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
     if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
     const res = await this.api.get<any>(`erp/customers?${params.toString()}`);
     return res?.data?.items ?? [];
   }
@@ -446,6 +506,7 @@ export class ErpCustomerPage {
       const items = res?.data?.items ?? [];
       this.complexes = items;
       this.complexMap = new Map(items.map((item: ErpComplexOption) => [item.ComplexUUID, item]));
+      this.lookupVersion.update((value) => value + 1);
     } catch (err) {
       console.error('Failed to load complexes.', err);
     }
@@ -459,6 +520,7 @@ export class ErpCustomerPage {
       );
       this.dueDays = items;
       this.dueDayMap = new Map(items.map((item: DueDayOption) => [item.ErpFinInvDueDayUUID, item]));
+      this.lookupVersion.update((value) => value + 1);
     } catch (err) {
       console.error('Failed to load due days.', err);
     }
@@ -660,117 +722,24 @@ export class ErpCustomerPage {
   }
 
   private openCustomerDialog() {
-    const customerFormDialog = this.customerFormDialog();
-    if (!customerFormDialog) return;
-    if (this.customerFormDialogRef) {
-      return;
-    }
+    const dialog = this.customerFormDialog();
+    if (!dialog || this.customerDialogBinding) return;
     this.error = '';
-    this.customerFormDialogRef = this.dialog.open(customerFormDialog, {
-      ...this.getCustomerDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'erp-customer-form-dialog',
+    this.customerDialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'erp-customer-form-dialog', {
+      onEscape: () => this.closeCustomerDialog(),
     });
-    bindDialogEscape(this.customerFormDialogRef, () => {
-      this.closeCustomerDialog();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.customerFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.customerFormDialogRef = null;
-      this.mapVisible = false;
-      this.teardownMap();
+    bindDialogClosed(this.customerDialogBinding.ref, () => {
+      this.customerDialogBinding?.stop();
+      this.customerDialogBinding = null;
     });
   }
 
   private closeCustomerDialog() {
-    if (!this.customerFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.customerFormDialogRef.close();
-    this.customerFormDialogRef = null;
-    this.mapVisible = false;
-    this.teardownMap();
-  }
-
-  private getCustomerDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: 'calc(100vw - 24px)',
-        maxWidth: 'calc(100vw - 24px)',
-        height: 'calc(100dvh - 24px)',
-        maxHeight: 'calc(100dvh - 24px)',
-        position: {
-          left: '12px',
-          top: '12px',
-        },
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.customerFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateCustomerDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateCustomerDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateCustomerDialogViewport() {
-    if (!this.customerFormDialogRef) return;
-    const config = this.getCustomerDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const height =
-      typeof config.height === 'string'
-        ? config.height
-        : typeof config.maxHeight === 'string'
-          ? config.maxHeight
-          : '';
-    this.customerFormDialogRef.updateSize(width, height);
-    if (config.position) {
-      this.customerFormDialogRef.updatePosition(config.position);
-    } else {
-      this.customerFormDialogRef.updatePosition();
-    }
+    if (!this.customerDialogBinding) return;
+    const binding = this.customerDialogBinding;
+    this.customerDialogBinding = null;
+    binding.stop();
+    binding.ref.close();
   }
 
   async deleteCustomer(customerUUID: string) {
@@ -789,7 +758,7 @@ export class ErpCustomerPage {
     this.error = '';
     try {
       await this.api.delete(`erp/customers/${customerUUID}`);
-      this.selectedCustomerUUIDs.delete(customerUUID);
+      this.selectedCustomerUUIDs.update((current) => { const next = new Set(current); next.delete(customerUUID); return next; });
       this.customersResource.reload();
       this.snack.success('Customer deleted successfully.');
     } catch (err: any) {
@@ -799,50 +768,48 @@ export class ErpCustomerPage {
     }
   }
 
-  get selectedCount() {
-    return this.selectedCustomerUUIDs.size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
 
   isSelected(customer: Customer) {
-    return this.selectedCustomerUUIDs.has(customer.CustomerUUID);
+    return this.selectedCustomerUUIDs().has(customer.CustomerUUID);
   }
 
   isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+    return this.allVisibleSelected();
   }
 
   isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
+    return this.someVisibleSelected();
   }
 
   toggleCustomerSelection(customer: Customer, checked: boolean) {
-    if (checked) {
-      this.selectedCustomerUUIDs.add(customer.CustomerUUID);
-    } else {
-      this.selectedCustomerUUIDs.delete(customer.CustomerUUID);
-    }
+    this.selectedCustomerUUIDs.update((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(customer.CustomerUUID);
+      } else {
+        next.delete(customer.CustomerUUID);
+      }
+      return next;
+    });
   }
 
   toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleCustomerSelection(row, checked));
+    this.selectedCustomerUUIDs.update((current) => {
+      const next = new Set(current);
+      this.visibleRows().forEach((row) => {
+        if (checked) next.add(row.CustomerUUID);
+        else next.delete(row.CustomerUUID);
+      });
+      return next;
+    });
   }
 
   async removeSelectedCustomers() {
-    const ids = Array.from(this.selectedCustomerUUIDs);
+    const ids = Array.from(this.selectedCustomerUUIDs());
     if (!ids.length) return;
 
-    const labels = this.dataSource.data
-      .filter((row) => this.selectedCustomerUUIDs.has(row.CustomerUUID))
+    const labels = this.customers()
+      .filter((row) => this.selectedCustomerUUIDs().has(row.CustomerUUID))
       .slice(0, 3)
       .map((row) => row.Name)
       .filter(Boolean);
@@ -870,10 +837,7 @@ export class ErpCustomerPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.CustomerUUID),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.CustomerUUID));
-      this.customers = this.customers.filter((row) => !deleted.has(row.CustomerUUID));
-      this.selectedCustomerUUIDs.clear();
-      failed.forEach((uuid) => this.selectedCustomerUUIDs.add(uuid));
+      this.selectedCustomerUUIDs.set(failed);
       this.customersResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected customer(s) could not be deleted.`);
@@ -888,9 +852,13 @@ export class ErpCustomerPage {
   }
 
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => row.CustomerUUID));
-    Array.from(this.selectedCustomerUUIDs).forEach((uuid) => {
-      if (!validIds.has(uuid)) this.selectedCustomerUUIDs.delete(uuid);
+    const validIds = new Set(this.customers().map((row) => row.CustomerUUID));
+    this.selectedCustomerUUIDs.update((current) => {
+      const next = new Set<string>();
+      current.forEach((uuid) => {
+        if (validIds.has(uuid)) next.add(uuid);
+      });
+      return next;
     });
   }
 
@@ -931,35 +899,6 @@ export class ErpCustomerPage {
     return `${item.Name} - Due ${item.DueDay} / Bill ${item.BillingDay} (${closedMonthLabel})`;
   }
 
-  onComplexOpened(opened: boolean) {
-    if (!opened) {
-      this.complexSearch = '';
-    }
-  }
-
-  get filteredComplexes() {
-    const value = this.complexSearch.trim().toLowerCase();
-    if (!value) return this.complexes;
-    return this.complexes.filter((complex) => (complex.Name ?? '').toLowerCase().includes(value));
-  }
-
-  onDueDayOpened(opened: boolean) {
-    if (!opened) {
-      this.dueDaySearch = '';
-    }
-  }
-
-  get filteredDueDays() {
-    const value = this.dueDaySearch.trim().toLowerCase();
-    if (!value) return this.dueDays;
-    return this.dueDays.filter(
-      (item) =>
-        (item.Name ?? '').toLowerCase().includes(value) ||
-        String(item.DueDay).includes(value) ||
-        String(item.BillingDay).includes(value) ||
-        (item.ClosedMonth ? 'closed' : 'open').includes(value),
-    );
-  }
 
   toggleBillingSameAsMain(value: boolean) {
     this.billingSameAsMain = value;

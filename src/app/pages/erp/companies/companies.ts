@@ -1,7 +1,7 @@
 import {
   Component,
+  computed,
   DestroyRef,
-  afterNextRender,
   effect,
   resource,
   TemplateRef,
@@ -16,12 +16,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -34,7 +34,8 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 
 type CompanyStatus = 'active' | 'inactive';
 
@@ -90,8 +91,7 @@ export class ErpCompaniesPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 200;
 
-  companies: Company[] = [];
-  dataSource = new MatTableDataSource<Company>([]);
+  readonly companies = computed(() => this.normalizeRows(this.companiesResource.value()));
   displayedColumns: string[] = [
     'select',
     'name',
@@ -101,40 +101,50 @@ export class ErpCompaniesPage {
     'status',
     'actions',
   ];
-  private readonly appliedSearch = signal('');
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
+  private readonly appliedFilters = signal({ search: '', status: '' });
   private readonly companiesResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => this.appliedFilters(),
     defaultValue: [] as Company[],
     loader: ({ params }) => this.fetchCompanies(params),
   });
-  get loading() {
-    return this.companiesResource.isLoading();
-  }
+  readonly sortedRows = computed(() => this.sortRows(this.companies()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
+  });
+  readonly loading = computed(() => this.companiesResource.isLoading());
   saving = false;
   error = '';
-  search = '';
-  searchInput = '';
-  statusFilter = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly statusFilter = signal('');
   editingCompany: Company | null = null;
-  selectedCompanyUUIDs = new Set<string>();
+  readonly selectedCompanyUUIDs = signal<Set<string>>(new Set());
+  readonly selectedCount = computed(() => this.selectedCompanyUUIDs().size);
   readonly emailError = signal('');
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly companyFormDialog = viewChild<TemplateRef<unknown>>('companyFormDialog');
-  private companyFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
+  private companyDialogBinding: CrudDialogBinding | null = null;
   private readonly syncCompanies = effect(() => {
-    this.companies = this.companiesResource.value();
-    this.dataSource.data = [...this.companies];
+    this.companies();
     this.reconcileSelection();
-    this.applyFilter();
   });
   private readonly reportCompaniesError = effect(() => {
     const error = this.companiesResource.error();
     if (error) {
       this.showError(this.extractErrorMessage(error, 'Failed to load companies.'));
-      this.dataSource.data = [];
     }
   });
 
@@ -163,61 +173,37 @@ export class ErpCompaniesPage {
   constructor() {
     this.resetForm();
     this.destroyRef.onDestroy(() => {
-      this.stopDialogViewportObserver();
       this.closeCompanyDialog();
     });
   }
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'document':
-          return data.Document ?? '';
-        case 'email':
-          return data.Email ?? '';
-        case 'phone':
-          return data.Phone ?? '';
-        case 'status':
-          return data.Status ?? '';
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const parsed = this.parseTableFilter(filter);
-      const value = parsed.search;
-      if (parsed.status && data.Status !== parsed.status) return false;
-      if (!value) return true;
-      return [data.Name, data.LegalName, data.Document, data.Email, data.Phone]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
+
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
-    this.search = nextSearch;
-    if (nextSearch === this.appliedSearch()) {
+    const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusFilter();
+    this.search.set(nextSearch);
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (nextSearch === current.search && nextStatus === current.status) {
       this.companiesResource.reload();
     } else {
-      this.appliedSearch.set(nextSearch);
+      this.appliedFilters.set({ search: nextSearch, status: nextStatus });
     }
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.statusFilter = '';
-    if (this.appliedSearch()) {
-      this.appliedSearch.set('');
+    this.searchInput.set('');
+    this.search.set('');
+    this.statusFilter.set('');
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (current.search || current.status) {
+      this.appliedFilters.set({ search: '', status: '' });
     } else {
       this.companiesResource.reload();
     }
@@ -227,21 +213,66 @@ export class ErpCompaniesPage {
     this.companiesResource.reload();
   }
 
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.search.trim().toLowerCase(),
-      status: this.statusFilter,
-    });
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent) {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
+  }
+
+  private sortRows(rows: Company[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    return [...rows].sort((a, b) => this.compareValues(this.sortValue(a, active), this.sortValue(b, active), direction));
+  }
+
+  private sortValue(row: Company, column: string) {
+    switch (column) {
+      case 'name':
+        return row.Name ?? "";
+      case 'document':
+        return row.Document ?? "";
+      case 'email':
+        return row.Email ?? "";
+      case 'phone':
+        return row.Phone ?? "";
+      case 'status':
+        return row.Status ?? "";
+      default:
+        return '';
     }
   }
 
-  private async fetchCompanies(search: string) {
+  private compareValues(a: string | number, b: string | number, direction: SortDirection) {
+    const modifier = direction === 'asc' ? 1 : -1;
+    if (typeof a === 'number' && typeof b === 'number') return (a - b) * modifier;
+    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * modifier;
+  }
+
+  private matchesLocalFilters(row: Company) {
+    const filters = this.appliedFilters();
+    if (filters.status && String((row as any).Status ?? '') !== filters.status) return false;
+    const search = filters.search.trim().toLowerCase();
+    if (!search) return true;
+    return [row.Name, row.LegalName, row.Document, row.Email, row.Phone]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(search));
+  }
+
+  private normalizeRows(rows: Company[]) {
+    return rows.filter((row) => this.matchesLocalFilters(row));
+  }
+  private async fetchCompanies(filters: { search: string; status: string }) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (search) params.set('q', search);
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
     const res = await this.api.get<any>(`erp/companies?${params.toString()}`);
     return res?.data?.items ?? [];
   }
@@ -355,7 +386,7 @@ export class ErpCompaniesPage {
     this.error = '';
     try {
       await this.api.delete(`erp/companies/${companyUUID}`);
-      this.selectedCompanyUUIDs.delete(companyUUID);
+      this.selectedCompanyUUIDs.update((current) => { const next = new Set(current); next.delete(companyUUID); return next; });
       this.companiesResource.reload();
       this.snack.success('Company deleted successfully.');
     } catch (err: any) {
@@ -384,50 +415,47 @@ export class ErpCompaniesPage {
     }
   }
 
-  get selectedCount() {
-    return this.selectedCompanyUUIDs.size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
-  isSelected(company: Company) {
-    return this.selectedCompanyUUIDs.has(company.CompanyUUID);
+  isSelected(row: Company) {
+    return this.selectedCompanyUUIDs().has(row.CompanyUUID);
   }
 
   isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+    return this.allVisibleSelected();
   }
 
   isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
+    return this.someVisibleSelected();
   }
 
-  toggleCompanySelection(company: Company, checked: boolean) {
-    if (checked) {
-      this.selectedCompanyUUIDs.add(company.CompanyUUID);
-    } else {
-      this.selectedCompanyUUIDs.delete(company.CompanyUUID);
-    }
+  toggleCompanySelection(row: Company, checked: boolean) {
+    this.selectedCompanyUUIDs.update((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(row.CompanyUUID);
+      } else {
+        next.delete(row.CompanyUUID);
+      }
+      return next;
+    });
   }
 
   toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleCompanySelection(row, checked));
+    this.selectedCompanyUUIDs.update((current) => {
+      const next = new Set(current);
+      this.visibleRows().forEach((row) => {
+        if (checked) next.add(row.CompanyUUID);
+        else next.delete(row.CompanyUUID);
+      });
+      return next;
+    });
   }
 
   async removeSelectedCompanies() {
-    const ids = Array.from(this.selectedCompanyUUIDs);
+    const ids = Array.from(this.selectedCompanyUUIDs());
     if (!ids.length) return;
 
-    const labels = this.dataSource.data
-      .filter((row) => this.selectedCompanyUUIDs.has(row.CompanyUUID))
+    const labels = this.companies()
+      .filter((row) => this.selectedCompanyUUIDs().has(row.CompanyUUID))
       .slice(0, 3)
       .map((row) => row.Name)
       .filter(Boolean);
@@ -454,10 +482,7 @@ export class ErpCompaniesPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.CompanyUUID),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.CompanyUUID));
-      this.companies = this.companies.filter((row) => !deleted.has(row.CompanyUUID));
-      this.selectedCompanyUUIDs.clear();
-      failed.forEach((uuid) => this.selectedCompanyUUIDs.add(uuid));
+      this.selectedCompanyUUIDs.set(failed);
       this.companiesResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected company record(s) could not be deleted.`);
@@ -522,116 +547,34 @@ export class ErpCompaniesPage {
   }
 
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => row.CompanyUUID));
-    Array.from(this.selectedCompanyUUIDs).forEach((uuid) => {
-      if (!validIds.has(uuid)) this.selectedCompanyUUIDs.delete(uuid);
+    const validIds = new Set(this.companies().map((row) => row.CompanyUUID));
+    this.selectedCompanyUUIDs.update((current) => {
+      const next = new Set<string>();
+      current.forEach((uuid) => {
+        if (validIds.has(uuid)) next.add(uuid);
+      });
+      return next;
     });
   }
 
   private openCompanyDialog() {
-    const companyFormDialog = this.companyFormDialog();
-    if (!companyFormDialog || this.companyFormDialogRef) return;
+    const dialog = this.companyFormDialog();
+    if (!dialog || this.companyDialogBinding) return;
     this.error = '';
-    this.companyFormDialogRef = this.dialog.open(companyFormDialog, {
-      ...this.getCompanyDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'erp-company-form-dialog',
+    this.companyDialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'erp-company-form-dialog', {
+      onEscape: () => this.closeCompanyDialog(),
     });
-    bindDialogEscape(this.companyFormDialogRef, () => {
-      this.closeCompanyDialog();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.companyFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.companyFormDialogRef = null;
+    bindDialogClosed(this.companyDialogBinding.ref, () => {
+      this.companyDialogBinding?.stop();
+      this.companyDialogBinding = null;
     });
   }
 
   private closeCompanyDialog() {
-    if (!this.companyFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.companyFormDialogRef.close();
-    this.companyFormDialogRef = null;
-  }
-
-  private getCompanyDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: 'calc(100vw - 24px)',
-        maxWidth: 'calc(100vw - 24px)',
-        height: 'calc(100dvh - 24px)',
-        maxHeight: 'calc(100dvh - 24px)',
-        position: {
-          left: '12px',
-          top: '12px',
-        },
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.companyFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateCompanyDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateCompanyDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateCompanyDialogViewport() {
-    if (!this.companyFormDialogRef) return;
-    const config = this.getCompanyDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const height =
-      typeof config.height === 'string'
-        ? config.height
-        : typeof config.maxHeight === 'string'
-          ? config.maxHeight
-          : '';
-    this.companyFormDialogRef.updateSize(width, height);
-    if (config.position) {
-      this.companyFormDialogRef.updatePosition(config.position);
-    } else {
-      this.companyFormDialogRef.updatePosition();
-    }
+    if (!this.companyDialogBinding) return;
+    const binding = this.companyDialogBinding;
+    this.companyDialogBinding = null;
+    binding.stop();
+    binding.ref.close();
   }
 }

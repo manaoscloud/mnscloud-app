@@ -1,7 +1,7 @@
 import {
   Component,
+  computed,
   DestroyRef,
-  afterNextRender,
   effect,
   ElementRef,
   resource,
@@ -17,12 +17,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -35,7 +35,8 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 
 type Supplier = {
   SupplierUUID: string;
@@ -95,45 +96,54 @@ export class ErpSupplierPage {
   private dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 200;
-  suppliers: Supplier[] = [];
-  dataSource = new MatTableDataSource<Supplier>([]);
+  readonly suppliers = computed(() => this.normalizeRows(this.suppliersResource.value()));
   displayedColumns: string[] = ['select', 'name', 'type', 'document', 'email', 'status', 'actions'];
-  private readonly appliedSearch = signal('');
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
+  private readonly appliedFilters = signal({ search: '', status: '' });
   private readonly suppliersResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => this.appliedFilters(),
     defaultValue: [] as Supplier[],
     loader: ({ params }) => this.fetchSuppliers(params),
   });
-  get loading() {
-    return this.suppliersResource.isLoading();
-  }
+  readonly sortedRows = computed(() => this.sortRows(this.suppliers()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
+  });
+  readonly loading = computed(() => this.suppliersResource.isLoading());
   saving = false;
   searchingPostalCode = false;
   error = '';
-  search = '';
-  searchInput = '';
-  statusFilter = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly statusFilter = signal('');
   editingSupplier: Supplier | null = null;
-  selectedSupplierUUIDs = new Set<string>();
+  readonly selectedSupplierUUIDs = signal<Set<string>>(new Set());
+  readonly selectedCount = computed(() => this.selectedSupplierUUIDs().size);
   readonly emailError = signal('');
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly supplierFormDialog = viewChild<TemplateRef<unknown>>('supplierFormDialog');
   readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
-  private supplierFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
+  private supplierDialogBinding: CrudDialogBinding | null = null;
   private readonly syncSuppliers = effect(() => {
-    this.suppliers = this.suppliersResource.value();
-    this.dataSource.data = [...this.suppliers];
+    this.suppliers();
     this.reconcileSelection();
-    this.applyFilter();
   });
   private readonly reportSuppliersError = effect(() => {
     const error = this.suppliersResource.error();
     if (error) {
       this.showError(this.extractErrorMessage(error, 'Failed to load suppliers.'));
-      this.dataSource.data = [];
     }
   });
 
@@ -157,61 +167,37 @@ export class ErpSupplierPage {
   constructor() {
     this.resetForm();
     this.destroyRef.onDestroy(() => {
-      this.stopDialogViewportObserver();
       this.closeSupplierDialog();
     });
   }
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'type':
-          return data.Type ?? '';
-        case 'document':
-          return data.Document ?? '';
-        case 'email':
-          return data.Email ?? '';
-        case 'status':
-          return data.Status ?? 0;
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const parsed = this.parseTableFilter(filter);
-      const value = parsed.search;
-      if (parsed.status && String(data.Status) !== parsed.status) return false;
-      if (!value) return true;
-      return [data.Name, data.Document, data.Email, data.Phone]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
+
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
-    this.search = nextSearch;
-    if (nextSearch === this.appliedSearch()) {
+    const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusFilter();
+    this.search.set(nextSearch);
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (nextSearch === current.search && nextStatus === current.status) {
       this.suppliersResource.reload();
     } else {
-      this.appliedSearch.set(nextSearch);
+      this.appliedFilters.set({ search: nextSearch, status: nextStatus });
     }
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.statusFilter = '';
-    if (this.appliedSearch()) {
-      this.appliedSearch.set('');
+    this.searchInput.set('');
+    this.search.set('');
+    this.statusFilter.set('');
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (current.search || current.status) {
+      this.appliedFilters.set({ search: '', status: '' });
     } else {
       this.suppliersResource.reload();
     }
@@ -221,37 +207,66 @@ export class ErpSupplierPage {
     this.suppliersResource.reload();
   }
 
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.search.trim().toLowerCase(),
-      status: this.statusFilter,
-    });
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent) {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
+  }
+
+  private sortRows(rows: Supplier[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    return [...rows].sort((a, b) => this.compareValues(this.sortValue(a, active), this.sortValue(b, active), direction));
+  }
+
+  private sortValue(row: Supplier, column: string) {
+    switch (column) {
+      case 'name':
+        return row.Name ?? "";
+      case 'type':
+        return row.Type ?? "";
+      case 'document':
+        return row.Document ?? "";
+      case 'email':
+        return row.Email ?? "";
+      case 'status':
+        return row.Status ?? 0;
+      default:
+        return '';
     }
   }
 
-  statusLabel(status?: number | string | null) {
-    return String(status ?? '') === '1' ? 'Active' : 'Inactive';
+  private compareValues(a: string | number, b: string | number, direction: SortDirection) {
+    const modifier = direction === 'asc' ? 1 : -1;
+    if (typeof a === 'number' && typeof b === 'number') return (a - b) * modifier;
+    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * modifier;
   }
 
-  private parseTableFilter(filter: string) {
-    try {
-      const parsed = JSON.parse(filter || '{}') as { search?: string; status?: string };
-      return {
-        search: (parsed.search ?? '').trim().toLowerCase(),
-        status: parsed.status ?? '',
-      };
-    } catch {
-      return { search: filter.trim().toLowerCase(), status: '' };
-    }
+  private matchesLocalFilters(row: Supplier) {
+    const filters = this.appliedFilters();
+    if (filters.status && String((row as any).Status ?? '') !== filters.status) return false;
+    const search = filters.search.trim().toLowerCase();
+    if (!search) return true;
+    return [row.Name, row.Document, row.Email, row.Phone]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(search));
   }
 
-  private async fetchSuppliers(search: string) {
+  private normalizeRows(rows: Supplier[]) {
+    return rows.filter((row) => this.matchesLocalFilters(row));
+  }
+  private async fetchSuppliers(filters: { search: string; status: string }) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (search) params.set('q', search);
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
     const res = await this.api.get<any>(`erp/suppliers?${params.toString()}`);
     return res?.data?.items ?? [];
   }
@@ -412,7 +427,7 @@ export class ErpSupplierPage {
     this.error = '';
     try {
       await this.api.delete(`erp/suppliers/${supplierUUID}`);
-      this.selectedSupplierUUIDs.delete(supplierUUID);
+      this.selectedSupplierUUIDs.update((current) => { const next = new Set(current); next.delete(supplierUUID); return next; });
       this.suppliersResource.reload();
       this.snack.success('Supplier deleted successfully.');
     } catch (err: any) {
@@ -425,50 +440,47 @@ export class ErpSupplierPage {
     this.resetForm();
   }
 
-  get selectedCount() {
-    return this.selectedSupplierUUIDs.size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
 
   isSelected(supplier: Supplier) {
-    return this.selectedSupplierUUIDs.has(supplier.SupplierUUID);
+    return this.selectedSupplierUUIDs().has(supplier.SupplierUUID);
   }
 
   isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+    return this.allVisibleSelected();
   }
 
   isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
+    return this.someVisibleSelected();
   }
 
   toggleSupplierSelection(supplier: Supplier, checked: boolean) {
-    if (checked) {
-      this.selectedSupplierUUIDs.add(supplier.SupplierUUID);
-    } else {
-      this.selectedSupplierUUIDs.delete(supplier.SupplierUUID);
-    }
+    this.selectedSupplierUUIDs.update((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(supplier.SupplierUUID);
+      } else {
+        next.delete(supplier.SupplierUUID);
+      }
+      return next;
+    });
   }
 
   toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleSupplierSelection(row, checked));
+    this.selectedSupplierUUIDs.update((current) => {
+      const next = new Set(current);
+      this.visibleRows().forEach((row) => {
+        if (checked) next.add(row.SupplierUUID);
+        else next.delete(row.SupplierUUID);
+      });
+      return next;
+    });
   }
-
   async removeSelectedSuppliers() {
-    const ids = Array.from(this.selectedSupplierUUIDs);
+    const ids = Array.from(this.selectedSupplierUUIDs());
     if (!ids.length) return;
 
-    const labels = this.dataSource.data
-      .filter((row) => this.selectedSupplierUUIDs.has(row.SupplierUUID))
+    const labels = this.suppliers()
+      .filter((row) => this.selectedSupplierUUIDs().has(row.SupplierUUID))
       .slice(0, 3)
       .map((row) => row.Name)
       .filter(Boolean);
@@ -495,10 +507,7 @@ export class ErpSupplierPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.SupplierUUID),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.SupplierUUID));
-      this.suppliers = this.suppliers.filter((row) => !deleted.has(row.SupplierUUID));
-      this.selectedSupplierUUIDs.clear();
-      failed.forEach((uuid) => this.selectedSupplierUUIDs.add(uuid));
+      this.selectedSupplierUUIDs.set(failed);
       this.suppliersResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected supplier record(s) could not be deleted.`);
@@ -510,10 +519,20 @@ export class ErpSupplierPage {
     }
   }
 
+  statusLabel(status?: number | string | null) {
+    return String(status ?? '') === '1' || String(status ?? '').toLowerCase() === 'active'
+      ? 'Active'
+      : 'Inactive';
+  }
+
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => row.SupplierUUID));
-    Array.from(this.selectedSupplierUUIDs).forEach((uuid) => {
-      if (!validIds.has(uuid)) this.selectedSupplierUUIDs.delete(uuid);
+    const validIds = new Set(this.suppliers().map((row) => row.SupplierUUID));
+    this.selectedSupplierUUIDs.update((current) => {
+      const next = new Set<string>();
+      current.forEach((uuid) => {
+        if (validIds.has(uuid)) next.add(uuid);
+      });
+      return next;
     });
   }
 
@@ -544,109 +563,23 @@ export class ErpSupplierPage {
   }
 
   private openSupplierDialog() {
-    const supplierFormDialog = this.supplierFormDialog();
-    if (!supplierFormDialog || this.supplierFormDialogRef) return;
+    const dialog = this.supplierFormDialog();
+    if (!dialog || this.supplierDialogBinding) return;
     this.error = '';
-    this.supplierFormDialogRef = this.dialog.open(supplierFormDialog, {
-      ...this.getSupplierDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'erp-supplier-form-dialog',
+    this.supplierDialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'erp-supplier-form-dialog', {
+      onEscape: () => this.closeSupplierDialog(),
     });
-    bindDialogEscape(this.supplierFormDialogRef, () => {
-      this.closeSupplierDialog();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.supplierFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.supplierFormDialogRef = null;
+    bindDialogClosed(this.supplierDialogBinding.ref, () => {
+      this.supplierDialogBinding?.stop();
+      this.supplierDialogBinding = null;
     });
   }
 
   private closeSupplierDialog() {
-    if (!this.supplierFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.supplierFormDialogRef.close();
-    this.supplierFormDialogRef = null;
-  }
-
-  private getSupplierDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: 'calc(100vw - 24px)',
-        maxWidth: 'calc(100vw - 24px)',
-        height: 'calc(100dvh - 24px)',
-        maxHeight: 'calc(100dvh - 24px)',
-        position: {
-          left: '12px',
-          top: '12px',
-        },
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.supplierFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateSupplierDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateSupplierDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateSupplierDialogViewport() {
-    if (!this.supplierFormDialogRef) return;
-    const config = this.getSupplierDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const height =
-      typeof config.height === 'string'
-        ? config.height
-        : typeof config.maxHeight === 'string'
-          ? config.maxHeight
-          : '';
-    this.supplierFormDialogRef.updateSize(width, height);
-    if (config.position) {
-      this.supplierFormDialogRef.updatePosition(config.position);
-    } else {
-      this.supplierFormDialogRef.updatePosition();
-    }
+    if (!this.supplierDialogBinding) return;
+    const binding = this.supplierDialogBinding;
+    this.supplierDialogBinding = null;
+    binding.stop();
+    binding.ref.close();
   }
 }

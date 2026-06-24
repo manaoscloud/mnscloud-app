@@ -1,7 +1,7 @@
 import {
   Component,
+  computed,
   DestroyRef,
-  afterNextRender,
   effect,
   ElementRef,
   resource,
@@ -17,12 +17,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -34,7 +34,8 @@ import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/
 import { PhoneInputComponent } from '../../../shared/phone-input/phone-input.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 
 type Carrier = {
   CarrierUUID: string;
@@ -94,45 +95,54 @@ export class ErpCarrierPage {
   private dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly listLimit = 200;
-  carriers: Carrier[] = [];
-  dataSource = new MatTableDataSource<Carrier>([]);
+  readonly carriers = computed(() => this.normalizeRows(this.carriersResource.value()));
   displayedColumns: string[] = ['select', 'name', 'type', 'document', 'email', 'status', 'actions'];
-  private readonly appliedSearch = signal('');
+  readonly sortActive = signal('');
+  readonly sortDirection = signal<SortDirection>('');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(5);
+  private readonly appliedFilters = signal({ search: '', status: '' });
   private readonly carriersResource = resource({
-    params: () => this.appliedSearch(),
+    params: () => this.appliedFilters(),
     defaultValue: [] as Carrier[],
     loader: ({ params }) => this.fetchCarriers(params),
   });
-  get loading() {
-    return this.carriersResource.isLoading();
-  }
+  readonly sortedRows = computed(() => this.sortRows(this.carriers()));
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
+  });
+  readonly loading = computed(() => this.carriersResource.isLoading());
   saving = false;
   searchingPostalCode = false;
   error = '';
-  search = '';
-  searchInput = '';
-  statusFilter = '';
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly statusFilter = signal('');
   editingCarrier: Carrier | null = null;
-  selectedCarrierUUIDs = new Set<string>();
+  readonly selectedCarrierUUIDs = signal<Set<string>>(new Set());
+  readonly selectedCount = computed(() => this.selectedCarrierUUIDs().size);
   readonly emailError = signal('');
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
   readonly carrierFormDialog = viewChild<TemplateRef<unknown>>('carrierFormDialog');
   readonly addressNumberInput = viewChild<ElementRef<HTMLInputElement>>('addressNumberInput');
-  private carrierFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
+  private carrierDialogBinding: CrudDialogBinding | null = null;
   private readonly syncCarriers = effect(() => {
-    this.carriers = this.carriersResource.value();
-    this.dataSource.data = [...this.carriers];
+    this.carriers();
     this.reconcileSelection();
-    this.applyFilter();
   });
   private readonly reportCarriersError = effect(() => {
     const error = this.carriersResource.error();
     if (error) {
       this.showError(this.extractErrorMessage(error, 'Failed to load carriers.'));
-      this.dataSource.data = [];
     }
   });
 
@@ -156,61 +166,37 @@ export class ErpCarrierPage {
   constructor() {
     this.resetForm();
     this.destroyRef.onDestroy(() => {
-      this.stopDialogViewportObserver();
       this.closeCarrierDialog();
     });
   }
 
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.Name ?? '';
-        case 'type':
-          return data.Type ?? '';
-        case 'document':
-          return data.Document ?? '';
-        case 'email':
-          return data.Email ?? '';
-        case 'status':
-          return data.Status ?? 0;
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const parsed = this.parseTableFilter(filter);
-      const value = parsed.search;
-      if (parsed.status && String(data.Status) !== parsed.status) return false;
-      if (!value) return true;
-      return [data.Name, data.Document, data.Email, data.Phone]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
+
 
   onSearchChange(value: string) {
-    this.searchInput = value;
+    this.searchInput.set(value);
   }
 
   applySearchFilters() {
-    const nextSearch = this.searchInput.trim();
-    this.search = nextSearch;
-    if (nextSearch === this.appliedSearch()) {
+    const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusFilter();
+    this.search.set(nextSearch);
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (nextSearch === current.search && nextStatus === current.status) {
       this.carriersResource.reload();
     } else {
-      this.appliedSearch.set(nextSearch);
+      this.appliedFilters.set({ search: nextSearch, status: nextStatus });
     }
   }
 
   clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.statusFilter = '';
-    if (this.appliedSearch()) {
-      this.appliedSearch.set('');
+    this.searchInput.set('');
+    this.search.set('');
+    this.statusFilter.set('');
+    this.pageIndex.set(0);
+    const current = this.appliedFilters();
+    if (current.search || current.status) {
+      this.appliedFilters.set({ search: '', status: '' });
     } else {
       this.carriersResource.reload();
     }
@@ -220,37 +206,66 @@ export class ErpCarrierPage {
     this.carriersResource.reload();
   }
 
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.search.trim().toLowerCase(),
-      status: this.statusFilter,
-    });
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
+    this.pageIndex.set(0);
+  }
+
+  setPage(page: PageEvent) {
+    this.pageIndex.set(page.pageIndex);
+    this.pageSize.set(page.pageSize);
+  }
+
+  private sortRows(rows: Carrier[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    return [...rows].sort((a, b) => this.compareValues(this.sortValue(a, active), this.sortValue(b, active), direction));
+  }
+
+  private sortValue(row: Carrier, column: string) {
+    switch (column) {
+      case 'name':
+        return row.Name ?? "";
+      case 'type':
+        return row.Type ?? "";
+      case 'document':
+        return row.Document ?? "";
+      case 'email':
+        return row.Email ?? "";
+      case 'status':
+        return row.Status ?? 0;
+      default:
+        return '';
     }
   }
 
-  statusLabel(status?: number | string | null) {
-    return String(status ?? '') === '1' ? 'Active' : 'Inactive';
+  private compareValues(a: string | number, b: string | number, direction: SortDirection) {
+    const modifier = direction === 'asc' ? 1 : -1;
+    if (typeof a === 'number' && typeof b === 'number') return (a - b) * modifier;
+    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * modifier;
   }
 
-  private parseTableFilter(filter: string) {
-    try {
-      const parsed = JSON.parse(filter || '{}') as { search?: string; status?: string };
-      return {
-        search: (parsed.search ?? '').trim().toLowerCase(),
-        status: parsed.status ?? '',
-      };
-    } catch {
-      return { search: filter.trim().toLowerCase(), status: '' };
-    }
+  private matchesLocalFilters(row: Carrier) {
+    const filters = this.appliedFilters();
+    if (filters.status && String((row as any).Status ?? '') !== filters.status) return false;
+    const search = filters.search.trim().toLowerCase();
+    if (!search) return true;
+    return [row.Name, row.Document, row.Email, row.Phone]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(search));
   }
 
-  private async fetchCarriers(search: string) {
+  private normalizeRows(rows: Carrier[]) {
+    return rows.filter((row) => this.matchesLocalFilters(row));
+  }
+  private async fetchCarriers(filters: { search: string; status: string }) {
     this.error = '';
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
-    if (search) params.set('q', search);
+    if (filters.search) params.set('q', filters.search);
+    if (filters.status) params.set('status', filters.status);
     const res = await this.api.get<any>(`erp/carriers?${params.toString()}`);
     return res?.data?.items ?? [];
   }
@@ -411,7 +426,7 @@ export class ErpCarrierPage {
     this.error = '';
     try {
       await this.api.delete(`erp/carriers/${carrierUUID}`);
-      this.selectedCarrierUUIDs.delete(carrierUUID);
+      this.selectedCarrierUUIDs.update((current) => { const next = new Set(current); next.delete(carrierUUID); return next; });
       this.carriersResource.reload();
       this.snack.success('Carrier deleted successfully.');
     } catch (err: any) {
@@ -424,50 +439,47 @@ export class ErpCarrierPage {
     this.resetForm();
   }
 
-  get selectedCount() {
-    return this.selectedCarrierUUIDs.size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
 
   isSelected(carrier: Carrier) {
-    return this.selectedCarrierUUIDs.has(carrier.CarrierUUID);
+    return this.selectedCarrierUUIDs().has(carrier.CarrierUUID);
   }
 
   isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
+    return this.allVisibleSelected();
   }
 
   isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
+    return this.someVisibleSelected();
   }
 
   toggleCarrierSelection(carrier: Carrier, checked: boolean) {
-    if (checked) {
-      this.selectedCarrierUUIDs.add(carrier.CarrierUUID);
-    } else {
-      this.selectedCarrierUUIDs.delete(carrier.CarrierUUID);
-    }
+    this.selectedCarrierUUIDs.update((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(carrier.CarrierUUID);
+      } else {
+        next.delete(carrier.CarrierUUID);
+      }
+      return next;
+    });
   }
 
   toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleCarrierSelection(row, checked));
+    this.selectedCarrierUUIDs.update((current) => {
+      const next = new Set(current);
+      this.visibleRows().forEach((row) => {
+        if (checked) next.add(row.CarrierUUID);
+        else next.delete(row.CarrierUUID);
+      });
+      return next;
+    });
   }
-
   async removeSelectedCarriers() {
-    const ids = Array.from(this.selectedCarrierUUIDs);
+    const ids = Array.from(this.selectedCarrierUUIDs());
     if (!ids.length) return;
 
-    const labels = this.dataSource.data
-      .filter((row) => this.selectedCarrierUUIDs.has(row.CarrierUUID))
+    const labels = this.carriers()
+      .filter((row) => this.selectedCarrierUUIDs().has(row.CarrierUUID))
       .slice(0, 3)
       .map((row) => row.Name)
       .filter(Boolean);
@@ -494,10 +506,7 @@ export class ErpCarrierPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.CarrierUUID),
       );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.CarrierUUID));
-      this.carriers = this.carriers.filter((row) => !deleted.has(row.CarrierUUID));
-      this.selectedCarrierUUIDs.clear();
-      failed.forEach((uuid) => this.selectedCarrierUUIDs.add(uuid));
+      this.selectedCarrierUUIDs.set(failed);
       this.carriersResource.reload();
       if (failed.size) {
         this.showError(`${failed.size} selected carrier record(s) could not be deleted.`);
@@ -509,10 +518,20 @@ export class ErpCarrierPage {
     }
   }
 
+  statusLabel(status?: number | string | null) {
+    return String(status ?? '') === '1' || String(status ?? '').toLowerCase() === 'active'
+      ? 'Active'
+      : 'Inactive';
+  }
+
   private reconcileSelection() {
-    const validIds = new Set(this.dataSource.data.map((row) => row.CarrierUUID));
-    Array.from(this.selectedCarrierUUIDs).forEach((uuid) => {
-      if (!validIds.has(uuid)) this.selectedCarrierUUIDs.delete(uuid);
+    const validIds = new Set(this.carriers().map((row) => row.CarrierUUID));
+    this.selectedCarrierUUIDs.update((current) => {
+      const next = new Set<string>();
+      current.forEach((uuid) => {
+        if (validIds.has(uuid)) next.add(uuid);
+      });
+      return next;
     });
   }
 
@@ -547,109 +566,23 @@ export class ErpCarrierPage {
   }
 
   private openCarrierDialog() {
-    const carrierFormDialog = this.carrierFormDialog();
-    if (!carrierFormDialog || this.carrierFormDialogRef) return;
+    const dialog = this.carrierFormDialog();
+    if (!dialog || this.carrierDialogBinding) return;
     this.error = '';
-    this.carrierFormDialogRef = this.dialog.open(carrierFormDialog, {
-      ...this.getCarrierDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'erp-carrier-form-dialog',
+    this.carrierDialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'erp-carrier-form-dialog', {
+      onEscape: () => this.closeCarrierDialog(),
     });
-    bindDialogEscape(this.carrierFormDialogRef, () => {
-      this.closeCarrierDialog();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.carrierFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.carrierFormDialogRef = null;
+    bindDialogClosed(this.carrierDialogBinding.ref, () => {
+      this.carrierDialogBinding?.stop();
+      this.carrierDialogBinding = null;
     });
   }
 
   private closeCarrierDialog() {
-    if (!this.carrierFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.carrierFormDialogRef.close();
-    this.carrierFormDialogRef = null;
-  }
-
-  private getCarrierDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: 'calc(100vw - 24px)',
-        maxWidth: 'calc(100vw - 24px)',
-        height: 'calc(100dvh - 24px)',
-        maxHeight: 'calc(100dvh - 24px)',
-        position: {
-          left: '12px',
-          top: '12px',
-        },
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.carrierFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateCarrierDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateCarrierDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateCarrierDialogViewport() {
-    if (!this.carrierFormDialogRef) return;
-    const config = this.getCarrierDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const height =
-      typeof config.height === 'string'
-        ? config.height
-        : typeof config.maxHeight === 'string'
-          ? config.maxHeight
-          : '';
-    this.carrierFormDialogRef.updateSize(width, height);
-    if (config.position) {
-      this.carrierFormDialogRef.updatePosition(config.position);
-    } else {
-      this.carrierFormDialogRef.updatePosition();
-    }
+    if (!this.carrierDialogBinding) return;
+    const binding = this.carrierDialogBinding;
+    this.carrierDialogBinding = null;
+    binding.stop();
+    binding.ref.close();
   }
 }
