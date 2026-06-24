@@ -16,7 +16,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
@@ -25,7 +25,7 @@
         />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Type' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.type">
           @for (option of typeOptions; track option) {
@@ -34,7 +34,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [formField]="filterForm.status">
           @for (option of statusOptions; track option) {

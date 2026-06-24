@@ -127,6 +127,7 @@ type AgentFormModel = {
 type MonitoringAgentsSnapshot = {
   agents: MonitoringAgent[];
   runtimeProducts: RuntimeProductFleet[];
+  agentsError?: string | null;
   runtimeProductsError?: string | null;
 };
 
@@ -139,6 +140,7 @@ const EMPTY_AGENT_FILTERS: AgentFilters = {
 const EMPTY_AGENTS_SNAPSHOT: MonitoringAgentsSnapshot = {
   agents: [],
   runtimeProducts: [],
+  agentsError: null,
   runtimeProductsError: null,
 };
 
@@ -186,6 +188,7 @@ export class MonitoringAgentsPage {
 
   private dialogBinding: CrudDialogBinding | null = null;
   private tokenDialogBinding: CrudDialogBinding | null = null;
+  private lastAgentsError = '';
   private lastRuntimeProductsError = '';
 
   readonly saving = signal(false);
@@ -301,6 +304,14 @@ export class MonitoringAgentsPage {
     if (!this.loading()) {
       this.hasLoadedAgents.set(true);
       this.listRefreshRequested.set(false);
+    }
+
+    const agentsError = this.agentsSnapshot().agentsError ?? '';
+    if (agentsError && agentsError !== this.lastAgentsError) {
+      this.lastAgentsError = agentsError;
+      this.snack.error(agentsError);
+    } else if (!agentsError) {
+      this.lastAgentsError = '';
     }
 
     const runtimeProductsError = this.agentsSnapshot().runtimeProductsError ?? '';
@@ -820,16 +831,23 @@ export class MonitoringAgentsPage {
       this.api.get<any>('monitoring/agents/runtime-products'),
     ]);
 
-    if (agentsResult.status === 'rejected') throw agentsResult.reason;
+    const previous = untracked(() => this.agentsSnapshot());
 
     const runtimeProducts =
       runtimeProductsResult.status === 'fulfilled'
         ? (runtimeProductsResult.value?.data ?? [])
-        : this.runtimeProducts();
+        : previous.runtimeProducts;
 
     return {
-      agents: agentsResult.value?.data?.items ?? [],
+      agents:
+        agentsResult.status === 'fulfilled'
+          ? (agentsResult.value?.data?.items ?? [])
+          : previous.agents,
       runtimeProducts,
+      agentsError:
+        agentsResult.status === 'rejected'
+          ? this.errorMessage(agentsResult.reason, 'Failed to load agents.')
+          : null,
       runtimeProductsError:
         runtimeProductsResult.status === 'rejected'
           ? this.errorMessage(runtimeProductsResult.reason, 'Failed to load runtime products.')
