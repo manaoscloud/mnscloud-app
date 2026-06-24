@@ -2,32 +2,43 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ pageTitle() }}</h1>
-        <p>{{ pageSubtitle() }}</p>
+        <h1>{{ 'PABX Accounts' | transloco }}</h1>
+        <p>{{ 'Register tenant PABX accounts and default codecs.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" (click)="startCreate()" type="button">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Search accounts</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
           [value]="searchInput()"
           (input)="onSearchChange($any($event.target).value)"
-          placeholder="Name, server, domain, codecs, status..."
+          [placeholder]="'Name, server, domain, codecs, status...' | transloco"
         />
       </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($any($event.value))">
+          <mat-option value="">{{ 'All' | transloco }}</mat-option>
+          @for (option of statusOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
       <div class="filter-actions">
         @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} selected</span>
+          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
           <button
             mat-stroked-button
             color="warn"
@@ -36,7 +47,7 @@
             [disabled]="deletingSelected()"
           >
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applySearchFilters()">
@@ -70,7 +81,7 @@
               [checked]="isAllVisibleSelected()"
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
-              aria-label="Select visible PABX accounts"
+              [attr.aria-label]="'Select visible PABX accounts' | transloco"
             />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
@@ -83,7 +94,7 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="record-main">{{ row.VpaName }}</div>
             <div class="record-uuid">{{ row.VpaUUID }}</div>
@@ -91,17 +102,21 @@
         </ng-container>
 
         <ng-container matColumnDef="audioCodecs">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Audio codecs</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'Audio codecs' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row">{{ row.VpaDefaultAudioCodecs || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="videoCodecs">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Video codecs</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'Video codecs' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row">{{ row.VpaDefaultVideoCodecs || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="server">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Server</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Server' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="record-main">
               {{ serverLabel(row.VoipPabxServerVpsUUID || '', row.ServerName || null) }}
@@ -113,35 +128,39 @@
         </ng-container>
 
         <ng-container matColumnDef="customer">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Customer' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             {{ customerLabel(row.CustomerCusUUID || '', row.CustomerName || null) }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="domain">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Domain' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             {{ domainLabel(row.VoipDomainVdmUUID || '', row.DomainName || null) }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="dialPlan">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Dial Plan</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'Dial Plan' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row">
             {{ dialPlanLabel(row.VoipPabxDialPlanVdpUUID || '', row.DialPlanName || null) }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="blacklist">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Blacklist</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Blacklist' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             {{ blacklistLabel(row.VoipBlacklistVbkUUID || '', row.BlacklistName || null) }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Status' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -150,13 +169,15 @@
               [class.chip-success]="row.VpaIsActive === 1"
               [class.chip-skipped]="row.VpaIsActive !== 1"
             >
-              {{ row.VpaIsActive === 1 ? 'active' : 'inactive' }}
+              {{ (row.VpaIsActive === 1 ? 'Active' : 'Inactive') | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="default">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Default</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Default' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -165,20 +186,22 @@
               [class.chip-success]="row.VpaIsDefault === 1"
               [class.chip-skipped]="row.VpaIsDefault !== 1"
             >
-              {{ row.VpaIsDefault === 1 ? 'yes' : 'no' }}
+              {{ (row.VpaIsDefault === 1 ? 'Yes' : 'No') | transloco }}
             </mat-chip>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+            {{ 'Actions' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
                 mat-icon-button
                 (click)="startEdit(row)"
                 type="button"
-                matTooltip="Edit account"
+                [matTooltip]="'Edit account' | transloco"
               >
                 <mat-icon>edit</mat-icon>
               </button>
@@ -186,7 +209,7 @@
                 mat-icon-button
                 color="warn"
                 (click)="removeAccount(row)"
-                matTooltip="Delete account"
+                [matTooltip]="'Delete account' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -199,11 +222,7 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{
-              loading()
-                ? 'Loading accounts...'
-                : 'No accounts found for "' + (search || 'all') + '"'
-            }}
+            {{ (loading() ? 'Loading...' : 'No records found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -216,7 +235,6 @@
       [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-
       (page)="setPage($event)"
     />
   </mat-card>
@@ -226,17 +244,17 @@
   <div class="pabx-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit account' : 'New account' }}</h2>
+        <h2>{{ (editing() ? 'Edit account' : 'New account') | transloco }}</h2>
         <p>
           {{
             editing()
-              ? 'Update account behavior and default settings.'
-              : 'Add a PABX account linked to a server.'
+              ? ('Update account behavior and default settings.' | transloco)
+              : ('Add a PABX account linked to a server.' | transloco)
           }}
         </p>
       </div>
       @if (editing()) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -246,94 +264,98 @@
           <mat-tab [label]="'Record' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="form.isActive">
                   @for (option of statusOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Default</mat-label>
+                <mat-label>{{ 'Default' | transloco }}</mat-label>
                 <mat-select [formField]="form.isDefault">
                   @for (option of defaultOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Name</mat-label>
-                <input matInput [formField]="form.name" placeholder="Account name" />
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
+                <input
+                  matInput
+                  [formField]="form.name"
+                  [placeholder]="'Account name' | transloco"
+                />
               </mat-form-field>
 
               <mns-search-select-field
                 fieldClass="span-2"
                 [field]="form.serverUUID"
-                label="Server"
+                [label]="'Server' | transloco"
                 [options]="serverSelectOptions()"
-                placeholder="Search server"
-                emptyLabel="No servers found."
+                [placeholder]="'Search server' | transloco"
+                [emptyLabel]="'No servers found.' | transloco"
                 (selectionChange)="selectedServerUUID.set(($any($event) || '').toString())"
               />
 
               <mns-search-select-field
                 fieldClass="span-2"
                 [field]="form.customerUUID"
-                label="Customer"
+                [label]="'Customer' | transloco"
                 [options]="customerSelectOptions()"
-                placeholder="Search customer"
-                emptyLabel="No customers found."
+                [placeholder]="'Search customer' | transloco"
+                [emptyLabel]="'No customers found.' | transloco"
               />
 
               <mns-search-select-field
                 fieldClass="span-2"
                 [field]="form.domainUUID"
-                label="Domain"
+                [label]="'Domain' | transloco"
                 [options]="domainSelectOptions()"
-                placeholder="Search domain"
-                emptyLabel="No domains found."
+                [placeholder]="'Search domain' | transloco"
+                [emptyLabel]="'No domains found.' | transloco"
               />
 
               <mns-search-select-field
                 fieldClass="span-2"
                 [field]="form.dialPlanUUID"
-                label="Dial Plan"
+                [label]="'Dial Plan' | transloco"
                 [options]="dialPlanSelectOptions()"
-                placeholder="Search dial plan"
-                emptyLabel="No dial plans found."
+                [placeholder]="'Search dial plan' | transloco"
+                [emptyLabel]="'No dial plans found.' | transloco"
               />
             </div>
           </mat-tab>
 
-          <mat-tab label="Routing">
+          <mat-tab [label]="'Routing' | transloco">
             <div class="tab-content form-grid">
               <mns-search-select-field
                 fieldClass="span-2"
                 [field]="form.blacklistUUID"
-                label="Inbound blacklist"
+                [label]="'Inbound blacklist' | transloco"
                 [options]="blacklistSelectOptions()"
-                placeholder="Search blacklist"
-                emptyLabel="No blacklists found."
+                [placeholder]="'Search blacklist' | transloco"
+                [emptyLabel]="'No blacklists found.' | transloco"
               />
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Timezone</mat-label>
+                <mat-label>{{ 'Timezone' | transloco }}</mat-label>
                 <input
                   matInput
                   [formField]="form.timezone"
-                  placeholder="Tenant timezone"
+                  [placeholder]="'Tenant timezone' | transloco"
                   autocomplete="off"
                 />
               </mat-form-field>
             </div>
           </mat-tab>
 
-          <mat-tab label="Codecs">
+          <mat-tab [label]="'Codecs' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Default audio codecs</mat-label>
+                <mat-label>{{ 'Default audio codecs' | transloco }}</mat-label>
                 <mat-select [formField]="form.defaultAudioCodecs" multiple>
                   @for (codec of audioCodecOptions; track codec) {
                     <mat-option [value]="codec">{{ codec }}</mat-option>
@@ -342,7 +364,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Default video codecs</mat-label>
+                <mat-label>{{ 'Default video codecs' | transloco }}</mat-label>
                 <mat-select [formField]="form.defaultVideoCodecs" multiple>
                   @for (codec of videoCodecOptions; track codec) {
                     <mat-option [value]="codec">{{ codec }}</mat-option>
@@ -352,16 +374,16 @@
             </div>
           </mat-tab>
 
-          <mat-tab label="Recording">
+          <mat-tab [label]="'Recording' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Recording storage</mat-label>
+                <mat-label>{{ 'Recording storage' | transloco }}</mat-label>
                 <mat-select
                   [formField]="form.recordingStorageMode"
                   (selectionChange)="onRecordingStorageModeChange($event.value)"
                 >
                   @for (option of recordingStorageModeOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -370,31 +392,33 @@
                 <mns-search-select-field
                   fieldClass="span-3"
                   [field]="form.storageAccountUUID"
-                  label="Storage account"
+                  [label]="'Storage account' | transloco"
                   [options]="storageAccountSelectOptions()"
-                  placeholder="Search storage account"
-                  emptyLabel="No storage accounts found."
-                  (selectionChange)="selectedStorageAccountUUID.set(($any($event) || '').toString())"
+                  [placeholder]="'Search storage account' | transloco"
+                  [emptyLabel]="'No storage accounts found.' | transloco"
+                  (selectionChange)="
+                    selectedStorageAccountUUID.set(($any($event) || '').toString())
+                  "
                 />
               }
 
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Recording path</mat-label>
+                <mat-label>{{ 'Recording path' | transloco }}</mat-label>
                 <input matInput [value]="recordingPathPreview()" readonly />
               </mat-form-field>
             </div>
           </mat-tab>
 
-          <mat-tab label="Media Files">
+          <mat-tab [label]="'Media Files' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Media file storage</mat-label>
+                <mat-label>{{ 'Media file storage' | transloco }}</mat-label>
                 <mat-select
                   [formField]="form.mediaStorageMode"
                   (selectionChange)="onMediaStorageModeChange($event.value)"
                 >
                   @for (option of recordingStorageModeOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -403,19 +427,21 @@
                 <mns-search-select-field
                   fieldClass="span-2"
                   [field]="form.mediaStorageAccountUUID"
-                  label="Media storage account"
+                  [label]="'Media storage account' | transloco"
                   [options]="storageAccountSelectOptions()"
-                  placeholder="Search storage account"
-                  emptyLabel="No storage accounts found."
-                  (selectionChange)="selectedMediaStorageAccountUUID.set(($any($event) || '').toString())"
+                  [placeholder]="'Search storage account' | transloco"
+                  [emptyLabel]="'No storage accounts found.' | transloco"
+                  (selectionChange)="
+                    selectedMediaStorageAccountUUID.set(($any($event) || '').toString())
+                  "
                 />
               }
 
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Media delivery</mat-label>
+                <mat-label>{{ 'Media delivery' | transloco }}</mat-label>
                 <mat-select [formField]="form.mediaDeliveryMode">
                   @for (option of mediaDeliveryModeOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -431,12 +457,12 @@
           class="dialog-action-button save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="voipPabxForm"
+          type="button"
+          (click)="saveAccount()"
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -446,7 +472,7 @@
             type="button"
             [matMenuTriggerFor]="saveActionsMenu"
             [disabled]="!form().valid() || saving()"
-            matTooltip="More save actions"
+            [matTooltip]="'More save actions' | transloco"
           >
             <mat-icon>expand_more</mat-icon>
           </button>
@@ -466,7 +492,7 @@
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
 
@@ -477,7 +503,7 @@
           (click)="cancelEdit()"
           type="button"
         >
-          Cancel
+          {{ 'Cancel' | transloco }}
         </button>
       </div>
     </mat-dialog-actions>

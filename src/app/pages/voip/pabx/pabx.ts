@@ -97,6 +97,7 @@ type StorageAccountOption = {
 
 type PabxAccountFilters = {
   search: string;
+  status: '' | 0 | 1;
 };
 
 type PabxAccountFormModel = {
@@ -120,6 +121,7 @@ type PabxAccountFormModel = {
 
 const emptyPabxAccountFilters = (): PabxAccountFilters => ({
   search: '',
+  status: '',
 });
 
 @Component({
@@ -159,17 +161,19 @@ export class VoipPabxPage {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  readonly pageTitle = computed(() => 'PABX');
-  readonly pageSubtitle = computed(() => 'Register tenant PABX accounts and default codecs.');
-
   private readonly mutating = signal(false);
   readonly saving = signal(false);
   readonly deletingSelected = signal(false);
   readonly editing = signal<VoipPabxAccount | null>(null);
   readonly search = signal('');
   readonly searchInput = signal('');
-  readonly rows = computed(() => this.accountsResource.value());
-  readonly table = createSignalCrudTable<VoipPabxAccount>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly statusInput = signal<'' | 0 | 1>('');
+  readonly rows = computed(() =>
+    this.filterAccounts(this.accountsResource.value(), this.appliedFilters()),
+  );
+  readonly table = createSignalCrudTable<VoipPabxAccount>(this.rows, (row, column) =>
+    this.sortValue(row, column),
+  );
   readonly sortActive = this.table.sortActive;
   readonly sortDirection = this.table.sortDirection;
   readonly pageIndex = this.table.pageIndex;
@@ -327,6 +331,7 @@ export class VoipPabxPage {
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
     const nextFilters = emptyPabxAccountFilters();
     if (this.samePabxAccountFilters(nextFilters, this.appliedFilters())) {
@@ -511,7 +516,7 @@ export class VoipPabxPage {
       const failed = new Set<string>(
         (response?.data?.failed ?? []).map((item: any) => item.VpaUUID),
       );
-    this.rows();
+      this.rows();
       this.selectedAccountUUIDs.clear();
       failed.forEach((uuid) => this.selectedAccountUUIDs.add(uuid));
       if (failed.size) {
@@ -619,7 +624,11 @@ export class VoipPabxPage {
   }
 
   private applyFilter() {
-    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
+    this.table.setPage({
+      pageIndex: 0,
+      pageSize: this.pageSize(),
+      length: this.sortedRows().length,
+    });
   }
 
   private reconcileSelection() {
@@ -758,6 +767,7 @@ export class VoipPabxPage {
   private currentPabxAccountFilters(): PabxAccountFilters {
     return {
       search: this.searchInput().trim(),
+      status: this.statusInput(),
     };
   }
 
@@ -783,7 +793,15 @@ export class VoipPabxPage {
   }
 
   private samePabxAccountFilters(left: PabxAccountFilters, right: PabxAccountFilters) {
-    return left.search === right.search;
+    return left.search === right.search && left.status === right.status;
+  }
+
+  private filterAccounts(
+    rows: readonly VoipPabxAccount[],
+    filters: PabxAccountFilters,
+  ): VoipPabxAccount[] {
+    if (filters.status === '') return [...rows];
+    return rows.filter((row) => Number(row.VpaIsActive ?? 0) === filters.status);
   }
 
   private parseCodecs(value: string | null | undefined, fallback: string[]): string[] {

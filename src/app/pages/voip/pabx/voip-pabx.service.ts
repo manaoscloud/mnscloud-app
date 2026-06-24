@@ -111,6 +111,6 @@ export class VoipPabxService {
   }
 
   resolveDefault() {
-    return this.api.get<any>(`${this.basePath}/default`);
+    return this.api.get<any>(`${this.basePath()}/default`);
   }
 }
