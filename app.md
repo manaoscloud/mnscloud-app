@@ -514,6 +514,9 @@
   - keep the same `Save` command.
   - restore full rounded radius on `Save`.
   - on mobile, make `Save` full width like `Cancel`.
+  - on mobile, the two-column split belongs to `.save-split-action`, never to `.primary-actions`;
+    `.primary-actions` is only the full-width action group wrapper. This prevents the arrow segment
+    from wrapping below the main `Save` button.
 
 ## Install Command Dialog Baseline (Current)
 

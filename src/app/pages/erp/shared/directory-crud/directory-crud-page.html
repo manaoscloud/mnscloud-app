@@ -310,40 +310,42 @@
 
     <div class="form-actions crud-dialog-actions">
       <div class="secondary-actions">
-      <button mat-stroked-button type="button" (click)="closeDialog()">
-        {{ 'Cancel' | transloco }}
-      </button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div class="primary-actions">
-      <div class="save-split-action" [class.is-single-action]="false">
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          class="save-main-button"
-          [disabled]="saving()"
-          (click)="saveItem(false)"
-        >
-          <mat-icon>save</mat-icon>
-          {{ 'Save' | transloco }}
-        </button>
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          class="save-more-button"
-          [disabled]="saving()"
-          [matMenuTriggerFor]="saveMenu"
-        >
-          <mat-icon>expand_more</mat-icon>
-        </button>
-        <mat-menu #saveMenu="matMenu">
-          <button mat-menu-item type="button" (click)="saveItem(true)">
-            <mat-icon>add</mat-icon>
-            {{ 'Save/New' | transloco }}
+        <div class="save-split-action" [class.is-single-action]="!!editingRecord()">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="save-main-button"
+            [disabled]="saving()"
+            (click)="saveItem(false)"
+          >
+            <mat-icon>save</mat-icon>
+            {{ 'Save' | transloco }}
           </button>
-        </mat-menu>
-      </div>
+          @if (!editingRecord()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="save-more-button"
+              [disabled]="saving()"
+              [matMenuTriggerFor]="saveMenu"
+            >
+              <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-menu #saveMenu="matMenu" xPosition="before" yPosition="below">
+              <button mat-menu-item type="button" (click)="saveItem(true)">
+                <mat-icon>add</mat-icon>
+                {{ 'Save/New' | transloco }}
+              </button>
+            </mat-menu>
+          }
+        </div>
       </div>
     </div>
   </div>

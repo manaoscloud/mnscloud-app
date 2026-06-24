@@ -939,12 +939,17 @@ mat-chip.status-pill.is-inactive,
 }
 
 .crud-dialog .save-split-action {
+  display: grid !important;
   grid-template-columns: minmax(160px, auto) 44px;
+  width: auto;
+  min-width: 0;
   overflow: hidden;
   border-radius: 999px;
 
   .save-main-button {
     height: 40px;
+    min-width: 0 !important;
+    margin: 0 !important;
     border-radius: 999px 0 0 999px !important;
   }
 
@@ -954,6 +959,7 @@ mat-chip.status-pill.is-inactive,
     height: 40px;
     padding: 0 !important;
     margin-left: 0 !important;
+    margin-right: 0 !important;
     border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
     border-radius: 0 999px 999px 0 !important;
   }
@@ -1090,10 +1096,15 @@ mat-chip.status-pill.is-inactive,
   .crud-dialog .primary-actions {
     order: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 44px;
     grid-column: auto;
     grid-row: auto;
     width: 100%;
+  }
+
+  .crud-dialog .save-split-action {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    width: 100%;
+    max-width: 100%;
   }
 
   .crud-dialog .save-split-action.is-single-action {
