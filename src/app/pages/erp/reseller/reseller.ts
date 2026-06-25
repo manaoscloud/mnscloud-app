@@ -36,7 +36,6 @@ const RESELLER_CONFIG: DirectoryConfig = {
     status: 1,
     type: 'company',
     name: '',
-    alias: '',
     document: '',
     email: '',
     phone: '',
@@ -52,7 +51,6 @@ const RESELLER_CONFIG: DirectoryConfig = {
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'ResellerUUID' },
-    { id: 'alias', label: 'Alias', field: 'Alias' },
     { id: 'type', label: 'Type', field: 'Type' },
     { id: 'document', label: 'Document', field: 'Document', className: 'document-col' },
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
@@ -67,6 +65,7 @@ const RESELLER_CONFIG: DirectoryConfig = {
       type: 'status',
       span: 1,
     },
+    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     {
       key: 'type',
       source: 'Type',
@@ -74,9 +73,8 @@ const RESELLER_CONFIG: DirectoryConfig = {
       label: 'Type',
       type: 'select',
       options: TYPE_OPTIONS,
-      span: 1,
+      span: 2,
     },
-    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     {
       key: 'name',
       source: 'Name',
@@ -86,7 +84,6 @@ const RESELLER_CONFIG: DirectoryConfig = {
       span: 2,
       breakBefore: true,
     },
-    { key: 'alias', source: 'Alias', payloadKey: 'alias', label: 'Alias', span: 2 },
     { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
     {

@@ -231,10 +231,10 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
         `${rel} invalid: company Address fields must be Zip, Street, Number, District, Complement, City, State, Country`,
       );
     }
-  } else if (hasType && hasAlias) {
-    if (!startsWithSequence(keys, ['status', 'type', 'document', 'name', 'alias', 'email', 'phone'])) {
+  } else if (tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) {
+    if (!startsWithSequence(keys, ['status', 'document', 'type', 'name', 'email', 'phone'])) {
       errors.push(
-        `${rel} invalid: reseller Record fields must start Status, Type, Document, Name, Alias, Email, Phone`,
+        `${rel} invalid: reseller Record fields must start Status, Document, Type, Name, Email, Phone`,
       );
     }
   } else if (hasType) {
@@ -309,10 +309,16 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     if (hasType && key === 'name' && !/\bspan:\s*2/.test(block)) {
       errors.push(`${rel} invalid: partner Name field must use span-2`);
     }
-    if (hasType && !hasAlias && key === 'document' && !/\bspan:\s*2/.test(block)) {
+    if (
+      hasType &&
+      !hasAlias &&
+      !(tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) &&
+      key === 'document' &&
+      !/\bspan:\s*2/.test(block)
+    ) {
       errors.push(`${rel} invalid: partner Document field must use span-2`);
     }
-    if (hasType && hasAlias && key === 'document' && !/\bspan:\s*1/.test(block)) {
+    if ((tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) && key === 'document' && !/\bspan:\s*1/.test(block)) {
       errors.push(`${rel} invalid: reseller Document field must use span-1`);
     }
     if (hasAlias && key === 'name' && !/\bspan:\s*2/.test(block)) {
@@ -320,6 +326,13 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     }
     if (hasAlias && key === 'name' && !/\bbreakBefore:\s*true/.test(block)) {
       errors.push(`${rel} invalid: complex Name field must start a new row with breakBefore`);
+    }
+  }
+
+  if (tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) {
+    const typeBlock = fieldBlock(content, 'type');
+    if (!/\bspan:\s*2/.test(typeBlock)) {
+      errors.push(`${rel} invalid: reseller Type/Company field must use span-2`);
     }
   }
 
