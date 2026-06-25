@@ -61,8 +61,16 @@ const COMPLEX_CONFIG: DirectoryConfig = {
       span: 1,
     },
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
-    { key: 'alias', source: 'Alias', payloadKey: 'alias', label: 'Alias', span: 1 },
+    {
+      key: 'name',
+      source: 'Name',
+      payloadKey: 'name',
+      label: 'Name',
+      required: true,
+      span: 2,
+      breakBefore: true,
+    },
+    { key: 'alias', source: 'Alias', payloadKey: 'alias', label: 'Alias', span: 2 },
     { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
     {

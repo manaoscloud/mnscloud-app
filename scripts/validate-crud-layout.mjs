@@ -309,6 +309,16 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     if (hasAlias && key === 'name' && !/\bspan:\s*2/.test(block)) {
       errors.push(`${rel} invalid: complex Name field must use span-2`);
     }
+    if (hasAlias && key === 'name' && !/\bbreakBefore:\s*true/.test(block)) {
+      errors.push(`${rel} invalid: complex Name field must start a new row with breakBefore`);
+    }
+  }
+
+  if (hasAlias) {
+    const aliasBlock = fieldBlock(content, 'alias');
+    if (!/\bspan:\s*2/.test(aliasBlock)) {
+      errors.push(`${rel} invalid: complex Alias field must use span-2`);
+    }
   }
 
   return errors;
