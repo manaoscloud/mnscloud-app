@@ -84,8 +84,10 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
   fields: [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     { key: 'type', source: 'Type', payloadKey: 'type', label: 'Type', type: 'select', options: TYPE_OPTIONS, span: 1 },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
+    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 2 },
+    { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
+    { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
     {
       key: 'complexUUID',
       source: 'ComplexUUID',
@@ -104,8 +106,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       placeholder: 'Search due days',
       span: 1,
     },
-    { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
-    { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
     {
       key: 'addressMainStreet',
       source: 'AddressMainStreet',
@@ -300,7 +300,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
     },
     { key: 'lat', source: 'Lat', payloadKey: 'lat', label: 'Latitude', type: 'number', tab: 'address', span: 1 },
     { key: 'lng', source: 'Lng', payloadKey: 'lng', label: 'Longitude', type: 'number', tab: 'address', span: 1 },
-    { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 5 },
+    { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ],
 };
 

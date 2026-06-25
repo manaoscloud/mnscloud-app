@@ -187,7 +187,7 @@
                 <mns-search-select-field
                   [fieldClass]="fieldClass(field)"
                   [label]="(field.label | transloco) + (field.required ? '*' : '')"
-                  [placeholder]="field.placeholder ?? 'Search'"
+                  [placeholder]="(field.placeholder ?? 'Search') | transloco"
                   [options]="fieldOptions(field)"
                   [loading]="fieldLoading(field)"
                   [value]="fieldValue(field.key)"

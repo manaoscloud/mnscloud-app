@@ -332,6 +332,8 @@
   `select-search-option`, `select-search-field`, real-time filtering, option spacing, empty state,
   selected trigger labels, optional option descriptions, loading state, and clearing the search text
   when the panel closes.
+  Searchable-select labels and placeholders must be passed through Transloco by the consuming
+  template/config. Do not pass untranslated placeholder literals into shared select adapters.
 - Any free-text code field backed by a canonical DB/API registry, such as Billing Product Code, must
   use `mat-autocomplete` with API-provided suggestions and still preserve manual typing when the
   workflow intentionally creates a new registry entry.
