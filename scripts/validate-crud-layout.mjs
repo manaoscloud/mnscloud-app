@@ -231,6 +231,12 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
         `${rel} invalid: company Address fields must be Zip, Street, Number, District, Complement, City, State, Country`,
       );
     }
+  } else if (hasType && hasAlias) {
+    if (!startsWithSequence(keys, ['status', 'type', 'document', 'name', 'alias', 'email', 'phone'])) {
+      errors.push(
+        `${rel} invalid: reseller Record fields must start Status, Type, Document, Name, Alias, Email, Phone`,
+      );
+    }
   } else if (hasType) {
     if (!startsWithSequence(keys, ['status', 'type', 'name', 'document', 'email', 'phone'])) {
       errors.push(
@@ -303,8 +309,11 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     if (hasType && key === 'name' && !/\bspan:\s*2/.test(block)) {
       errors.push(`${rel} invalid: partner Name field must use span-2`);
     }
-    if (hasType && key === 'document' && !/\bspan:\s*2/.test(block)) {
+    if (hasType && !hasAlias && key === 'document' && !/\bspan:\s*2/.test(block)) {
       errors.push(`${rel} invalid: partner Document field must use span-2`);
+    }
+    if (hasType && hasAlias && key === 'document' && !/\bspan:\s*1/.test(block)) {
+      errors.push(`${rel} invalid: reseller Document field must use span-1`);
     }
     if (hasAlias && key === 'name' && !/\bspan:\s*2/.test(block)) {
       errors.push(`${rel} invalid: complex Name field must use span-2`);

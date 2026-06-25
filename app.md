@@ -717,9 +717,14 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - do not place notes fields in `Record`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
   - the notes field should normally use a full-row textarea (`mat-form-field.span-4`) inside that tab.
 - Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`):
-  - Record tab desktop row pattern for resources with `Type`:
+  - Record tab desktop row pattern for resources with `Type` and no `Alias/Nickname`:
     - row 1: `Status`, `Type`, `Name (span-2)`
     - row 2: `Document (span-2)`, `Email`, `Phone`
+  - Record tab desktop row pattern for resources with both `Type` and `Alias/Nickname`
+    (`reseller`):
+    - row 1: `Status`, `Type/Company selector`, `Document`
+    - row 2: `Name (span-2)`, `Alias/Nickname (span-2)`
+    - row 3: `Email`, `Phone`
   - Record tab desktop row pattern for resources without `Type`:
     - row 1: `Status`, `Document`
     - row 2: `Name (span-2)`, `Alias/Nickname (span-2)`
