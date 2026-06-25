@@ -84,6 +84,7 @@ const COMPANY_CONFIG: DirectoryConfig = {
       postalLookup: {
         streetKey: 'addressStreet',
         districtKey: 'addressDistrict',
+        complementKey: 'addressComplement',
         cityKey: 'addressCity',
         stateKey: 'addressState',
         countryKey: 'addressCountry',

@@ -85,6 +85,7 @@ export type DirectoryFieldType =
 export type DirectoryPostalCodeLookup = {
   streetKey?: string;
   districtKey?: string;
+  complementKey?: string;
   cityKey?: string;
   stateKey?: string;
   countryKey?: string;
@@ -411,6 +412,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
 
       this.assignPostalLookupValue(next, lookup.streetKey, item['street']);
       this.assignPostalLookupValue(next, lookup.districtKey, item['district']);
+      this.assignPostalLookupValue(next, lookup.complementKey, item['complement']);
       this.assignPostalLookupValue(next, lookup.cityKey, item['city']);
       this.assignPostalLookupValue(next, lookup.stateKey, item['state']);
       this.assignPostalLookupValue(next, lookup.countryKey, item['country']);

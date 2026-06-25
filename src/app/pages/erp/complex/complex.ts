@@ -37,6 +37,7 @@ const COMPLEX_CONFIG: DirectoryConfig = {
     street: '',
     number: '',
     district: '',
+    complement: '',
     city: '',
     state: '',
     zip: '',
@@ -74,6 +75,7 @@ const COMPLEX_CONFIG: DirectoryConfig = {
       postalLookup: {
         streetKey: 'street',
         districtKey: 'district',
+        complementKey: 'complement',
         cityKey: 'city',
         stateKey: 'state',
         countryKey: 'country',
@@ -101,6 +103,14 @@ const COMPLEX_CONFIG: DirectoryConfig = {
       source: 'District',
       payloadKey: 'district',
       label: 'District',
+      tab: 'address',
+      span: 1,
+    },
+    {
+      key: 'complement',
+      source: 'Complement',
+      payloadKey: 'complement',
+      label: 'Complement',
       tab: 'address',
       span: 1,
     },
@@ -143,9 +153,10 @@ export class ErpComplexPage extends DirectoryCrudPageBase<DirectoryRecord> {
     const street = String(payload['street'] ?? '').trim();
     const number = String(payload['number'] ?? '').trim();
     const district = String(payload['district'] ?? '').trim();
+    const complement = String(payload['complement'] ?? '').trim();
     return {
       ...payload,
-      address: [street, number, district].filter(Boolean).join(', ') || null,
+      address: [street, number, district, complement].filter(Boolean).join(', ') || null,
     };
   }
 }

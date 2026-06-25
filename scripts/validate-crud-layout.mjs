@@ -207,6 +207,7 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
   const hasType = keys.includes('type');
   const hasAlias = keys.includes('alias');
   const hasCompanyAddress = keys.includes('addressZip');
+  const hasCustomerAddresses = keys.includes('addressMainZip');
 
   if (hasCompanyAddress) {
     if (!startsWithSequence(keys, ['status', 'document', 'name', 'legalName', 'email', 'phone'])) {
@@ -244,12 +245,48 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     }
   }
 
-  if (!hasCompanyAddress && keys.includes('zip')) {
+  if (hasCustomerAddresses) {
+    const customerAddressGroups = [
+      ['Main', 'addressMain'],
+      ['Billing', 'addressBilling'],
+      ['Installation', 'addressInstall'],
+    ];
+
+    for (const [label, prefix] of customerAddressGroups) {
+      if (
+        !orderedSubsequence(keys, [
+          `${prefix}Zip`,
+          `${prefix}Street`,
+          `${prefix}Number`,
+          `${prefix}District`,
+          `${prefix}Complement`,
+          `${prefix}City`,
+          `${prefix}State`,
+          `${prefix}Country`,
+        ])
+      ) {
+        errors.push(
+          `${rel} invalid: customer ${label} Address fields must be Zip, Street, Number, District, Complement, City, State, Country`,
+        );
+      }
+    }
+  }
+
+  if (!hasCompanyAddress && !hasCustomerAddresses && keys.includes('zip')) {
     if (
-      !orderedSubsequence(keys, ['zip', 'street', 'number', 'district', 'city', 'state', 'country'])
+      !orderedSubsequence(keys, [
+        'zip',
+        'street',
+        'number',
+        'district',
+        'complement',
+        'city',
+        'state',
+        'country',
+      ])
     ) {
       errors.push(
-        `${rel} invalid: partner Address fields must be Zip, Street, Number, District, City, State, Country`,
+        `${rel} invalid: partner Address fields must be Zip, Street, Number, District, Complement, City, State, Country`,
       );
     }
   }

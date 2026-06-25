@@ -727,13 +727,21 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
     - `Notes (span-4, rows-4)`
   - Addresses tab desktop row pattern:
     - row 1: `Zip`, `Street`, `Number`, `District`
-    - row 2: optional complement/secondary address field when available, then `City`, `State`, `Country`
+    - row 2: `Complement`, `City`, `State`, `Country`
+  - Customer address groups (`Main`, `Billing`, `Installation`) must repeat the same order inside
+    the address tab:
+    - row 1: `<Group> Zip`, `<Group> Street`, `<Group> Number`, `<Group> District`
+    - row 2: `<Group> Complement`, `<Group> City`, `<Group> State`, `<Group> Country`
+  - ERP address forms must keep the same declared field order at every responsive breakpoint. The
+    responsive grid may collapse columns, but it must not reorder address fields differently on
+    desktop, tablet, or mobile.
 - CEP/Postal code UX baseline (mandatory when address has `Zip`):
   - `Zip` input must have a suffix search icon button (`matSuffix`) and also support `Enter` key.
   - shared CRUD forms must enable this through field config `postalLookup` instead of custom
     component-local postal lookup code.
   - trigger `GET postal-codes/:postalCode` through `ApiService`.
-  - on success, autofill `Street`, `District`, `City`, `State`.
+  - on success, autofill `Street`, `District`, `Complement` when returned by the provider,
+    `City`, `State`.
   - after autofill, focus `Number` field automatically.
 
 ## API Access
