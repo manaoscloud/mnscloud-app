@@ -208,6 +208,13 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
   const hasAlias = keys.includes('alias');
   const hasCompanyAddress = keys.includes('addressZip');
   const hasCustomerAddresses = keys.includes('addressMainZip');
+  const isTypeDocumentPartner =
+    tsFile.includes('/reseller/') ||
+    tsFile.includes('\\reseller\\') ||
+    tsFile.includes('/carrier/') ||
+    tsFile.includes('\\carrier\\') ||
+    tsFile.includes('/supplier/') ||
+    tsFile.includes('\\supplier\\');
 
   if (hasCompanyAddress) {
     if (!startsWithSequence(keys, ['status', 'document', 'name', 'legalName', 'email', 'phone'])) {
@@ -231,10 +238,10 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
         `${rel} invalid: company Address fields must be Zip, Street, Number, District, Complement, City, State, Country`,
       );
     }
-  } else if (tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) {
-    if (!startsWithSequence(keys, ['status', 'type', 'document', 'name', 'alias', 'email', 'phone'])) {
+  } else if (isTypeDocumentPartner) {
+    if (!startsWithSequence(keys, ['status', 'type', 'document', 'name', 'email', 'phone'])) {
       errors.push(
-        `${rel} invalid: reseller Record fields must start Status, Type, Document, Name, Alias, Email, Phone`,
+        `${rel} invalid: partner Record fields must start Status, Type/Company, Document, Name, Email, Phone`,
       );
     }
   } else if (hasType) {
@@ -312,14 +319,17 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     if (
       hasType &&
       !hasAlias &&
-      !(tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) &&
+      !isTypeDocumentPartner &&
       key === 'document' &&
       !/\bspan:\s*2/.test(block)
     ) {
       errors.push(`${rel} invalid: partner Document field must use span-2`);
     }
-    if ((tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) && key === 'document' && !/\bspan:\s*1/.test(block)) {
-      errors.push(`${rel} invalid: reseller Document field must use span-1`);
+    if (isTypeDocumentPartner && key === 'document' && !/\bspan:\s*1/.test(block)) {
+      errors.push(`${rel} invalid: partner Document field must use span-1`);
+    }
+    if (isTypeDocumentPartner && key === 'name' && !/\bbreakBefore:\s*true/.test(block)) {
+      errors.push(`${rel} invalid: partner Name field must start a new row with breakBefore`);
     }
     if (hasAlias && key === 'name' && !/\bspan:\s*2/.test(block)) {
       errors.push(`${rel} invalid: complex Name field must use span-2`);
@@ -329,10 +339,10 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     }
   }
 
-  if (tsFile.includes('/reseller/') || tsFile.includes('\\reseller\\')) {
+  if (isTypeDocumentPartner) {
     const typeBlock = fieldBlock(content, 'type');
     if (!/\bspan:\s*1/.test(typeBlock)) {
-      errors.push(`${rel} invalid: reseller Type/Company field must use span-1`);
+      errors.push(`${rel} invalid: partner Type/Company field must use span-1`);
     }
   }
 
