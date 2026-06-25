@@ -722,9 +722,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
     - row 1: `Status`, `Type/Company selector`, `Document`
     - row 2: `Name (span-2)`, `Email`, `Phone`
   - Record tab desktop row pattern for resources without `Type`:
-    - row 1: `Status`, `Document`
-    - row 2: `Name (span-2)`, `Alias/Nickname (span-2)`
-    - row 3: `Email`, `Phone`
+    - row 1: `Status`, `Document`, `Alias/Nickname`
+    - row 2: `Name (span-2)`, `Email`, `Phone`
   - Notes tab:
     - `Notes (span-4, rows-4)`
   - Addresses tab desktop row pattern:

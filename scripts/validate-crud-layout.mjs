@@ -251,9 +251,9 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
       );
     }
   } else if (hasAlias) {
-    if (!startsWithSequence(keys, ['status', 'document', 'name', 'alias', 'email', 'phone'])) {
+    if (!startsWithSequence(keys, ['status', 'document', 'alias', 'name', 'email', 'phone'])) {
       errors.push(
-        `${rel} invalid: complex Record fields must start Status, Document, Name, Alias, Email, Phone`,
+        `${rel} invalid: complex Record fields must start Status, Document, Alias, Name, Email, Phone`,
       );
     }
   }
@@ -348,8 +348,8 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
 
   if (hasAlias) {
     const aliasBlock = fieldBlock(content, 'alias');
-    if (!/\bspan:\s*2/.test(aliasBlock)) {
-      errors.push(`${rel} invalid: complex Alias field must use span-2`);
+    if (!/\bspan:\s*1/.test(aliasBlock)) {
+      errors.push(`${rel} invalid: complex Alias field must use span-1`);
     }
   }
 
