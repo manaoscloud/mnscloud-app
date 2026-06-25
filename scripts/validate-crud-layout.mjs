@@ -97,10 +97,7 @@ const forbiddenLocalScssRules = [
 ];
 
 const forbiddenHtmlRules = [
-  [
-    'native external dialog form submit',
-    /<button\b[^>]*\btype="submit"[^>]*\bform="[^"]+"/i,
-  ],
+  ['native external dialog form submit', /<button\b[^>]*\btype="submit"[^>]*\bform="[^"]+"/i],
 ];
 
 function filterGridBlocks(content) {
@@ -153,10 +150,7 @@ function hasStatusSurface(content) {
 
 function hasStatusFilter(block) {
   const fieldsOnly = withoutFilterActions(block);
-  return (
-    /(['"])Status\1\s*\|\s*transloco/.test(fieldsOnly) ||
-    />\s*Status\s*</i.test(fieldsOnly)
-  );
+  return /(['"])Status\1\s*\|\s*transloco/.test(fieldsOnly) || />\s*Status\s*</i.test(fieldsOnly);
 }
 
 function hasForbiddenFilterSpan(block) {
@@ -166,9 +160,7 @@ function hasForbiddenFilterSpan(block) {
 
 function hasImplicitFilterSpan(block) {
   const fieldsOnly = withoutFilterActions(block);
-  const fieldTags = [
-    ...fieldsOnly.matchAll(/<(mat-form-field|mns-[\w-]*field)\b([^>]*)>/g),
-  ];
+  const fieldTags = [...fieldsOnly.matchAll(/<(mat-form-field|mns-[\w-]*field)\b([^>]*)>/g)];
   return fieldTags.some(
     ([, , attrs]) =>
       !/\bclass="[^"]*\bspan-1\b[^"]*"/.test(attrs) &&
@@ -176,10 +168,120 @@ function hasImplicitFilterSpan(block) {
   );
 }
 
+function extractDirectoryFieldKeys(content) {
+  const fieldsBlock = content.match(/\bfields:\s*\[([\s\S]*?)\n\s*\],\n};/)?.[1] ?? '';
+  return [...fieldsBlock.matchAll(/\bkey:\s*'([^']+)'/g)].map(([, key]) => key);
+}
+
+function fieldBlock(content, key) {
+  const fieldsBlock = content.match(/\bfields:\s*\[([\s\S]*?)\n\s*\],\n};/)?.[1] ?? '';
+  const start = fieldsBlock.indexOf(`key: '${key}'`);
+  if (start < 0) return '';
+  const next = fieldsBlock.slice(start + 1).search(/\n\s*(?:\{|[a-zA-Z_][\w$]*\()/);
+  return next < 0 ? fieldsBlock.slice(start) : fieldsBlock.slice(start, start + next + 1);
+}
+
+function startsWithSequence(values, expected) {
+  return expected.every((value, index) => values[index] === value);
+}
+
+function orderedSubsequence(values, expected) {
+  let cursor = 0;
+  for (const value of values) {
+    if (value === expected[cursor]) cursor += 1;
+    if (cursor === expected.length) return true;
+  }
+  return false;
+}
+
+function validateDirectoryCrudFieldOrder(tsFile, content) {
+  if (!content.includes('DirectoryCrudPageBase') || !/\bendpoint:\s*'erp\//.test(content)) {
+    return [];
+  }
+
+  const rel = relative(root, tsFile);
+  const keys = extractDirectoryFieldKeys(content);
+  if (!keys.length) return [];
+
+  const errors = [];
+  const hasType = keys.includes('type');
+  const hasAlias = keys.includes('alias');
+  const hasCompanyAddress = keys.includes('addressZip');
+
+  if (hasCompanyAddress) {
+    if (!startsWithSequence(keys, ['status', 'document', 'name', 'legalName', 'email', 'phone'])) {
+      errors.push(
+        `${rel} invalid: company Record fields must start Status, Document, Name, Legal name, Email, Phone`,
+      );
+    }
+    if (
+      !orderedSubsequence(keys, [
+        'addressZip',
+        'addressStreet',
+        'addressNumber',
+        'addressDistrict',
+        'addressComplement',
+        'addressCity',
+        'addressState',
+        'addressCountry',
+      ])
+    ) {
+      errors.push(
+        `${rel} invalid: company Address fields must be Zip, Street, Number, District, Complement, City, State, Country`,
+      );
+    }
+  } else if (hasType) {
+    if (!startsWithSequence(keys, ['status', 'type', 'name', 'document', 'email', 'phone'])) {
+      errors.push(
+        `${rel} invalid: partner Record fields must start Status, Type, Name, Document, Email, Phone`,
+      );
+    }
+  } else if (hasAlias) {
+    if (!startsWithSequence(keys, ['status', 'document', 'name', 'alias', 'email', 'phone'])) {
+      errors.push(
+        `${rel} invalid: complex Record fields must start Status, Document, Name, Alias, Email, Phone`,
+      );
+    }
+  }
+
+  if (!hasCompanyAddress && keys.includes('zip')) {
+    if (
+      !orderedSubsequence(keys, ['zip', 'street', 'number', 'district', 'city', 'state', 'country'])
+    ) {
+      errors.push(
+        `${rel} invalid: partner Address fields must be Zip, Street, Number, District, City, State, Country`,
+      );
+    }
+  }
+
+  if (
+    keys.includes('notes') &&
+    !/\bkey:\s*'notes'[\s\S]*?\bspan:\s*4[\s\S]*?\brows:\s*4/.test(fieldBlock(content, 'notes'))
+  ) {
+    errors.push(`${rel} invalid: notes field must use span-4 and rows-4`);
+  }
+
+  for (const key of ['name', 'document']) {
+    const block = fieldBlock(content, key);
+    if (hasType && key === 'name' && !/\bspan:\s*2/.test(block)) {
+      errors.push(`${rel} invalid: partner Name field must use span-2`);
+    }
+    if (hasType && key === 'document' && !/\bspan:\s*2/.test(block)) {
+      errors.push(`${rel} invalid: partner Document field must use span-2`);
+    }
+    if (hasAlias && key === 'name' && !/\bspan:\s*2/.test(block)) {
+      errors.push(`${rel} invalid: complex Name field must use span-2`);
+    }
+  }
+
+  return errors;
+}
+
 function validateTarget(target) {
   const files = walk(relative(root, target));
   const htmlFiles = files.filter((file) => extname(file) === '.html');
   const scssFiles = files.filter((file) => extname(file) === '.scss');
+  const tsFiles = files.filter((file) => extname(file) === '.ts');
   const rootHtmlFiles = htmlFiles.filter((file) => read(file).includes('class="erp-page'));
   const errors = [];
 
@@ -212,9 +314,7 @@ function validateTarget(target) {
       }
       const missingSearch = blocks.some((block) => !hasSearchFilter(block));
       if (missingSearch) {
-        errors.push(
-          `${relative(root, htmlFile)} invalid: first filter control must be Search`,
-        );
+        errors.push(`${relative(root, htmlFile)} invalid: first filter control must be Search`);
       }
       if (hasStatusSurface(content) && blocks.some((block) => !hasStatusFilter(block))) {
         errors.push(
@@ -245,6 +345,10 @@ function validateTarget(target) {
     for (const [name, pattern] of forbiddenLocalScssRules) {
       if (pattern.test(content)) errors.push(`${relative(root, scssFile)} forbidden: ${name}`);
     }
+  }
+
+  for (const tsFile of tsFiles) {
+    errors.push(...validateDirectoryCrudFieldOrder(tsFile, read(tsFile)));
   }
 
   return errors;

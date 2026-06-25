@@ -268,8 +268,8 @@
     sorted-row `computed()`.
   - Derived sort examples: provider label, plan label, status label, account/domain label, formatted price, region name, size/bundle display, image display.
   - After `.table-wrapper`, render a real `<mat-paginator class="mobile-paginator"
-    [length]="sortedRows().length" [pageIndex]="pageIndex()" [pageSize]="pageSize()"
-    [pageSizeOptions]="[5, 10, 25, 100]" (page)="setPage($event)" showFirstLastButtons>`.
+[length]="sortedRows().length" [pageIndex]="pageIndex()" [pageSize]="pageSize()"
+[pageSizeOptions]="[5, 10, 25, 100]" (page)="setPage($event)" showFirstLastButtons>`.
   - Do not use an empty `.mobile-paginator` placeholder.
   - Sort/filter changes must reset `pageIndex` to `0`.
   - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
@@ -715,14 +715,17 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - do not place notes fields in `Record`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
   - the notes field should normally use a full-row textarea (`mat-form-field.span-4`) inside that tab.
 - Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`):
-  - Record tab desktop row pattern:
-    - row 1: `Type`, `Status`, `Name (span-2)`
+  - Record tab desktop row pattern for resources with `Type`:
+    - row 1: `Status`, `Type`, `Name (span-2)`
     - row 2: `Document (span-2)`, `Email`, `Phone`
+  - Record tab desktop row pattern for resources without `Type`:
+    - row 1: `Status`, `Document`, `Name (span-2)`
+    - row 2: remaining identity/contact fields in their declared order, then `Email`, `Phone`
   - Notes tab:
-    - `Notes (span-4)`
+    - `Notes (span-4, rows-4)`
   - Addresses tab desktop row pattern:
-    - row 1: `Zip`, `Country`, `City`, `State`
-    - row 2: `Street (span-2)`, `Number`, `District`
+    - row 1: `Zip`, `Street`, `Number`, `District`
+    - row 2: optional complement/secondary address field when available, then `City`, `State`, `Country`
 - CEP/Postal code UX baseline (mandatory when address has `Zip`):
   - `Zip` input must have a suffix search icon button (`matSuffix`) and also support `Enter` key.
   - shared CRUD forms must enable this through field config `postalLookup` instead of custom
