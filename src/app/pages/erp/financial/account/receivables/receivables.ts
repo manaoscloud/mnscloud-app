@@ -26,7 +26,7 @@ import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
@@ -97,6 +97,7 @@ export class FinancialReceivablesPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
+  private i18n = inject(TranslocoService);
 
   readonly receivableFormDialog = viewChild<TemplateRef<unknown>>('receivableFormDialog');
   private receivableFormDialogRef: MatDialogRef<unknown> | null = null;
@@ -284,9 +285,9 @@ export class FinancialReceivablesPage {
 
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete selected receivables',
-        message: `Delete ${ids.length} selected receivable(s)?`,
-        confirmLabel: 'Delete selected',
+        title: this.t('Delete selected receivables'),
+        message: this.t('Delete selected receivables confirmation', { count: ids.length }),
+        confirmLabel: this.t('Delete selected'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -307,14 +308,19 @@ export class FinancialReceivablesPage {
 
       if (result.failed.length) {
         this.snack.warning(
-          `${result.deleted.length} receivable(s) deleted. ${result.failed.length} failed.`,
+          this.t('Receivables bulk delete partial failure', {
+            deleted: result.deleted.length,
+            failed: result.failed.length,
+          }),
         );
       } else {
-        this.snack.success(`${result.deleted.length} receivable(s) deleted successfully.`);
+        this.snack.success(
+          this.t('Receivables bulk deleted successfully', { count: result.deleted.length }),
+        );
       }
       this.receivablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete selected receivables.');
+      this.showError(err?.message ?? this.t('Failed to delete selected receivables.'));
     } finally {
       this.deletingMany = false;
     }
@@ -331,7 +337,7 @@ export class FinancialReceivablesPage {
       }));
       this.customerMap = new Map(this.customers.map((customer) => [customer.value, customer]));
     } catch (err) {
-      console.error('Failed to load customers.', err);
+      console.error(this.t('Failed to load customers.'), err);
     }
   }
 
@@ -365,19 +371,19 @@ export class FinancialReceivablesPage {
 
   async saveReceivable(closeAfterSave = true) {
     if (!this.form.description.trim()) {
-      this.showWarning('Description is required.');
+      this.showWarning(this.t('Description is required.'));
       return;
     }
     if (!this.form.customerUUID) {
-      this.showWarning('Customer is required.');
+      this.showWarning(this.t('Customer is required.'));
       return;
     }
     if (!this.form.dueDate) {
-      this.showWarning('Due date is required.');
+      this.showWarning(this.t('Due date is required.'));
       return;
     }
     if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
-      this.showWarning('Amount must be greater than zero.');
+      this.showWarning(this.t('Amount must be greater than zero.'));
       return;
     }
 
@@ -398,12 +404,12 @@ export class FinancialReceivablesPage {
           `erp/financial/accounts/receivables/${this.editingReceivable.ErpFinAccReceivableUUID}`,
           payload,
         );
-        this.snack.success('Receivable updated successfully.');
+        this.snack.success(this.t('Receivable updated successfully.'));
         this.closeReceivableDialog();
         this.startCreate();
       } else {
         await this.api.post('erp/financial/accounts/receivables', payload);
-        this.snack.success('Receivable created successfully.');
+        this.snack.success(this.t('Receivable created successfully.'));
         if (closeAfterSave) {
           this.closeReceivableDialog();
           this.startCreate();
@@ -413,7 +419,7 @@ export class FinancialReceivablesPage {
       }
       this.receivablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to save receivable.');
+      this.showError(err?.message ?? this.t('Failed to save receivable.'));
     } finally {
       this.saving = false;
     }
@@ -432,9 +438,9 @@ export class FinancialReceivablesPage {
   async deleteReceivable(receivableUUID: string) {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete receivable',
-        message: 'Are you sure you want to delete this receivable?',
-        confirmLabel: 'Delete',
+        title: this.t('Delete receivable'),
+        message: this.t('Are you sure you want to delete this receivable?'),
+        confirmLabel: this.t('Delete'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -443,20 +449,20 @@ export class FinancialReceivablesPage {
     if (!confirmed) return;
     try {
       await this.api.delete(`erp/financial/accounts/receivables/${receivableUUID}`);
-      this.snack.success('Receivable deleted successfully.');
+      this.snack.success(this.t('Receivable deleted successfully.'));
       this.clearSelection();
       this.receivablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete receivable.');
+      this.showError(err?.message ?? this.t('Failed to delete receivable.'));
     }
   }
 
   async issueBoletoFromReceivable(receivable: ErpFinAccReceivable) {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Issue boleto',
-        message: 'Issue a boleto from this receivable now?',
-        confirmLabel: 'Issue boleto',
+        title: this.t('Issue boleto'),
+        message: this.t('Issue a boleto from this receivable now?'),
+        confirmLabel: this.t('Issue boleto'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -470,10 +476,10 @@ export class FinancialReceivablesPage {
         `erp/financial/accounts/receivables/${receivable.ErpFinAccReceivableUUID}/issue-boleto`,
         {},
       );
-      this.snack.success('Boleto issued successfully.');
+      this.snack.success(this.t('Boleto issued successfully.'));
       this.receivablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to issue boleto from receivable.');
+      this.showError(err?.message ?? this.t('Failed to issue boleto from receivable.'));
     } finally {
       this.issuingBoletoUUID = null;
     }
@@ -491,7 +497,9 @@ export class FinancialReceivablesPage {
   }
 
   statusLabel(status: ReceivableStatus) {
-    return status.toUpperCase();
+    return this.t(
+      this.statusOptions.find((option) => option.value === status)?.label ?? status,
+    ).toUpperCase();
   }
 
   statusChipClass(status: ReceivableStatus) {
@@ -636,5 +644,9 @@ export class FinancialReceivablesPage {
 
   private showWarning(message: string) {
     this.snack.warning(message);
+  }
+
+  private t(key: string, params?: Record<string, unknown>) {
+    return this.i18n.translate(key, params);
   }
 }

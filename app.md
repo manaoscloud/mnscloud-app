@@ -187,6 +187,11 @@
   - Manual translations belong in `public/i18n/<language>.json`. Transloco is the only runtime
     i18n layer; do not add component-local translation maps, generated auto dictionaries, custom
     translation pipes, or DOM translation fallbacks.
+  - This translation step is not a narrative checklist item only: every full CRUD refactor must run
+    `npm run check:crud:i18n -- <component-folder-or-html>` for each touched CRUD page. A refactor
+    is incomplete if visible labels, headings, placeholders, tooltips, aria labels, confirmations,
+    snackbar messages, or enum labels remain as raw template/component literals instead of going
+    through Transloco keys present in `en-US`, `pt-BR`, and `es-ES`.
   - If the refactor establishes or changes a reusable frontend behavior, document that behavior in
     this `app.md` baseline instead of creating product-specific docs for a single module.
   - Product/module docs are only for product semantics, operational contracts, or cross-repository
@@ -565,8 +570,10 @@
   - on `<=900`, span classes collapse to 1 column
 - Validation:
   - must pass `npm run check:crud -- <component-folder-or-html>` for every CRUD page touched
+  - must pass `npm run check:crud:i18n -- <component-folder-or-html>` for every CRUD page touched
   - must pass `npm run build`
-  - delivery must explicitly list each changed file and confirm checklist compliance
+  - delivery must explicitly list each changed file and confirm checklist compliance, including
+    translation coverage for all new/changed visible strings in `en-US`, `pt-BR`, and `es-ES`
 
 ## CRUD Template Validator
 
@@ -781,3 +788,5 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   `public/i18n/es-ES.json`
 - Angular templates must use the Transloco pipe (`| transloco`). Do not add custom translation
   pipes, generated auto dictionaries, or DOM translation observers.
+- CRUD TypeScript feedback/confirmation text must use `TranslocoService` (or the shared app i18n
+  service) and must be checked by `npm run check:crud:i18n -- <component-folder-or-html>`.

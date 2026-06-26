@@ -2,32 +2,32 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>Accounts Receivable</h1>
-        <p>Track incoming payments and outstanding customer invoices.</p>
+        <h1>{{ 'Accounts Receivable' | transloco }}</h1>
+        <p>{{ 'Track incoming payments and outstanding customer invoices.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" (click)="openCreateDialog()" type="button">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Search receivables</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
-          placeholder="Search receivables"
+          [placeholder]="'Search receivables' | transloco"
           [value]="searchInput()"
           (input)="searchInput.set($any($event.target).value)"
         />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           @for (status of statusFilterOptions; track status.value) {
             <mat-option [value]="status.value">{{ status.label }}</mat-option>
@@ -47,7 +47,7 @@
             [disabled]="deletingMany"
           >
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button (click)="applySearchFilters()" type="button">
@@ -82,20 +82,22 @@
               [checked]="allVisibleSelected()"
               [indeterminate]="someVisibleSelected()"
               (change)="toggleVisibleRows($event.checked)"
-              aria-label="Select visible receivables"
+              [attr.aria-label]="'Select visible receivables' | transloco"
             />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
             <mat-checkbox
               [checked]="isSelected(row)"
               (change)="toggleRow(row, $event.checked)"
-              aria-label="Select receivable"
+              [attr.aria-label]="'Select receivable' | transloco"
             />
           </td>
         </ng-container>
 
         <ng-container matColumnDef="description">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'Description' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row">
             <span class="record-main">{{ row.Description }}</span>
             <span class="record-uuid">{{ row.ErpFinAccReceivableUUID }}</span>
@@ -103,27 +105,31 @@
         </ng-container>
 
         <ng-container matColumnDef="customer">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Customer' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ customerLabel(row.CustomerUUID) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="docNumber">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Document</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Document' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.DocNumber || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="dueDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Due Date</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Due Date' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.DueDate }}</td>
         </ng-container>
 
         <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount-col">Amount</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount-col">
+            {{ 'Amount' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="amount-col">{{ formatAmount(row.Amount) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Status' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <span
               class="status-pill status-chip state-chip"
@@ -140,7 +146,9 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+            {{ 'Actions' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               <button
@@ -148,7 +156,7 @@
                 color="primary"
                 (click)="issueBoletoFromReceivable(row)"
                 type="button"
-                matTooltip="Issue boleto from receivable"
+                [matTooltip]="'Issue boleto from receivable' | transloco"
                 [disabled]="issuingBoletoUUID === row.ErpFinAccReceivableUUID"
               >
                 <mat-icon>receipt_long</mat-icon>
@@ -157,7 +165,7 @@
                 mat-icon-button
                 (click)="openEditDialog(row)"
                 type="button"
-                matTooltip="Edit receivable"
+                [matTooltip]="'Edit receivable' | transloco"
               >
                 <mat-icon>edit</mat-icon>
               </button>
@@ -166,7 +174,7 @@
                 color="warn"
                 (click)="deleteReceivable(row.ErpFinAccReceivableUUID)"
                 type="button"
-                matTooltip="Delete receivable"
+                [matTooltip]="'Delete receivable' | transloco"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -179,7 +187,11 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading ? 'Loading receivables...' : 'No receivables found.' }}
+            {{
+              loading
+                ? ('Loading receivables...' | transloco)
+                : ('No receivables found.' | transloco)
+            }}
           </td>
         </tr>
       </table>
@@ -193,7 +205,7 @@
       [pageSizeOptions]="[5, 10, 25, 100]"
       (page)="setPage($event)"
       showFirstLastButtons
-      aria-label="Select page of receivables"
+      [attr.aria-label]="'Select page of receivables' | transloco"
     />
   </mat-card>
 </section>
@@ -202,17 +214,19 @@
   <div class="crud-dialog receivable-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editingReceivable ? 'Edit receivable' : 'New receivable' }}</h2>
+        <h2>
+          {{ (editingReceivable ? 'Edit receivable' : 'New receivable') | transloco }}
+        </h2>
         <p>
           {{
             editingReceivable
-              ? 'Update receivable details and save changes.'
-              : 'Add a new customer receivable.'
+              ? ('Update receivable details and save changes.' | transloco)
+              : ('Add a new customer receivable.' | transloco)
           }}
         </p>
       </div>
       @if (editingReceivable) {
-        <span class="pill">Editing</span>
+        <span class="pill">{{ 'Editing' | transloco }}</span>
       }
     </div>
 
@@ -222,25 +236,25 @@
           <div class="tab-content">
             <div class="form-grid">
               <mns-search-select-field
-                label="Customer"
+                [label]="'Customer' | transloco"
                 fieldClass="span-1"
-                placeholder="Search customer"
+                [placeholder]="'Search customer' | transloco"
                 [options]="customers"
                 [value]="form.customerUUID"
                 (valueChange)="form.customerUUID = $any($event) || ''"
               />
 
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
-                    <mat-option [value]="status.value">{{ status.label }}</mat-option>
+                    <mat-option [value]="status.value">{{ status.label | transloco }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Description</mat-label>
+                <mat-label>{{ 'Description' | transloco }}</mat-label>
                 <input
                   matInput
                   [value]="form.description"
@@ -249,7 +263,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Document number</mat-label>
+                <mat-label>{{ 'Document number' | transloco }}</mat-label>
                 <input
                   matInput
                   [value]="form.docNumber"
@@ -258,7 +272,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Due date</mat-label>
+                <mat-label>{{ 'Due date' | transloco }}</mat-label>
                 <input
                   matInput
                   [matDatepicker]="dueDatePicker"
@@ -271,7 +285,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>Amount</mat-label>
+                <mat-label>{{ 'Amount' | transloco }}</mat-label>
                 <input
                   matInput
                   type="text"
@@ -287,11 +301,11 @@
           </div>
         </mat-tab>
 
-        <mat-tab label="Notes">
+        <mat-tab [label]="'Notes' | transloco">
           <div class="tab-content">
             <div class="form-grid">
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Notes</mat-label>
+                <mat-label>{{ 'Notes' | transloco }}</mat-label>
                 <textarea
                   matInput
                   rows="4"
@@ -307,7 +321,9 @@
 
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button (click)="cancelReceivableForm()" type="button">Cancel</button>
+        <button mat-stroked-button (click)="cancelReceivableForm()" type="button">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div class="primary-actions">
         <div class="save-split-action" [class.is-single-action]="editingReceivable">
@@ -320,7 +336,7 @@
             type="button"
           >
             <mat-icon>save</mat-icon>
-            Save
+            {{ 'Save' | transloco }}
           </button>
           @if (!editingReceivable) {
             <button
@@ -330,7 +346,7 @@
               [matMenuTriggerFor]="receivableSaveMenu"
               [disabled]="saving"
               type="button"
-              aria-label="More save actions"
+              [attr.aria-label]="'More save actions' | transloco"
             >
               <mat-icon>expand_more</mat-icon>
             </button>
@@ -340,7 +356,7 @@
       <mat-menu #receivableSaveMenu="matMenu" xPosition="before" yPosition="below">
         <button mat-menu-item type="button" (click)="saveAndNewReceivable()">
           <mat-icon>add</mat-icon>
-          Save/New
+          {{ 'Save/New' | transloco }}
         </button>
       </mat-menu>
     </mat-dialog-actions>

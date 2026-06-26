@@ -26,7 +26,7 @@ import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
@@ -112,6 +112,7 @@ export class FinancialPayablesPage {
   private api = inject(ApiService);
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
+  private i18n = inject(TranslocoService);
 
   readonly payableFormDialog = viewChild<TemplateRef<unknown>>('payableFormDialog');
   readonly payableSettleDialog = viewChild<TemplateRef<unknown>>('payableSettleDialog');
@@ -320,9 +321,9 @@ export class FinancialPayablesPage {
 
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete selected payables',
-        message: `Delete ${ids.length} selected payable(s)?`,
-        confirmLabel: 'Delete selected',
+        title: this.t('Delete selected payables'),
+        message: this.t('Delete selected payables confirmation', { count: ids.length }),
+        confirmLabel: this.t('Delete selected'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -340,14 +341,19 @@ export class FinancialPayablesPage {
       this.selectedIds.set(failedIds);
       if (result.failed.length) {
         this.snack.warning(
-          `${result.deleted.length} payable(s) deleted. ${result.failed.length} failed.`,
+          this.t('Payables bulk delete partial failure', {
+            deleted: result.deleted.length,
+            failed: result.failed.length,
+          }),
         );
       } else {
-        this.snack.success(`${result.deleted.length} payable(s) deleted successfully.`);
+        this.snack.success(
+          this.t('Payables bulk deleted successfully', { count: result.deleted.length }),
+        );
       }
       this.payablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete selected payables.');
+      this.showError(err?.message ?? this.t('Failed to delete selected payables.'));
     } finally {
       this.deletingMany = false;
     }
@@ -364,7 +370,7 @@ export class FinancialPayablesPage {
       }));
       this.supplierMap = new Map(this.suppliers.map((supplier) => [supplier.value, supplier]));
     } catch (err) {
-      console.error('Failed to load suppliers.', err);
+      console.error(this.t('Failed to load suppliers.'), err);
     }
   }
 
@@ -398,19 +404,19 @@ export class FinancialPayablesPage {
 
   async savePayable(closeAfterSave = true) {
     if (!this.form.description.trim()) {
-      this.showWarning('Description is required.');
+      this.showWarning(this.t('Description is required.'));
       return;
     }
     if (!this.form.supplierUUID) {
-      this.showWarning('Supplier is required.');
+      this.showWarning(this.t('Supplier is required.'));
       return;
     }
     if (!this.form.dueDate) {
-      this.showWarning('Due date is required.');
+      this.showWarning(this.t('Due date is required.'));
       return;
     }
     if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
-      this.showWarning('Amount must be greater than zero.');
+      this.showWarning(this.t('Amount must be greater than zero.'));
       return;
     }
 
@@ -431,12 +437,12 @@ export class FinancialPayablesPage {
           `erp/financial/accounts/payables/${this.editingPayable.ErpFinAccPayableUUID}`,
           payload,
         );
-        this.snack.success('Payable updated successfully.');
+        this.snack.success(this.t('Payable updated successfully.'));
         this.closePayableDialog();
         this.startCreate();
       } else {
         await this.api.post('erp/financial/accounts/payables', payload);
-        this.snack.success('Payable created successfully.');
+        this.snack.success(this.t('Payable created successfully.'));
         if (closeAfterSave) {
           this.closePayableDialog();
           this.startCreate();
@@ -446,7 +452,7 @@ export class FinancialPayablesPage {
       }
       this.payablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to save payable.');
+      this.showError(err?.message ?? this.t('Failed to save payable.'));
     } finally {
       this.saving = false;
     }
@@ -465,9 +471,9 @@ export class FinancialPayablesPage {
   async deletePayable(payableUUID: string) {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete payable',
-        message: 'Are you sure you want to delete this payable?',
-        confirmLabel: 'Delete',
+        title: this.t('Delete payable'),
+        message: this.t('Are you sure you want to delete this payable?'),
+        confirmLabel: this.t('Delete'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -476,11 +482,11 @@ export class FinancialPayablesPage {
     if (!confirmed) return;
     try {
       await this.api.delete(`erp/financial/accounts/payables/${payableUUID}`);
-      this.snack.success('Payable deleted successfully.');
+      this.snack.success(this.t('Payable deleted successfully.'));
       this.clearSelection();
       this.payablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete payable.');
+      this.showError(err?.message ?? this.t('Failed to delete payable.'));
     }
   }
 
@@ -499,9 +505,9 @@ export class FinancialPayablesPage {
   async reopenPayable(payable: ErpFinAccPayable) {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Reopen payable',
-        message: 'Do you want to reopen this payable and clear payment data?',
-        confirmLabel: 'Reopen',
+        title: this.t('Reopen payable'),
+        message: this.t('Do you want to reopen this payable and clear payment data?'),
+        confirmLabel: this.t('Reopen'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -513,24 +519,24 @@ export class FinancialPayablesPage {
         `erp/financial/accounts/payables/${payable.ErpFinAccPayableUUID}/reopen`,
         {},
       );
-      this.snack.success('Payable reopened successfully.');
+      this.snack.success(this.t('Payable reopened successfully.'));
       this.payablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to reopen payable.');
+      this.showError(err?.message ?? this.t('Failed to reopen payable.'));
     }
   }
 
   async saveSettle() {
     if (!this.selectedSettlePayable) return;
     if (!this.settleForm.paymentDate) {
-      this.showWarning('Payment date is required.');
+      this.showWarning(this.t('Payment date is required.'));
       return;
     }
     if (
       !Number.isFinite(Number(this.settleForm.paidAmount)) ||
       Number(this.settleForm.paidAmount) <= 0
     ) {
-      this.showWarning('Paid amount must be greater than zero.');
+      this.showWarning(this.t('Paid amount must be greater than zero.'));
       return;
     }
 
@@ -552,11 +558,11 @@ export class FinancialPayablesPage {
       }
 
       this.settleFiles = [];
-      this.snack.success('Payable settled successfully.');
+      this.snack.success(this.t('Payable settled successfully.'));
       await this.fetchSettleAttachments();
       this.payablesResource.reload();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to settle payable.');
+      this.showError(err?.message ?? this.t('Failed to settle payable.'));
     } finally {
       this.settling = false;
     }
@@ -579,9 +585,9 @@ export class FinancialPayablesPage {
     if (!this.selectedSettlePayable) return;
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete attachment',
-        message: 'Are you sure you want to delete this attachment?',
-        confirmLabel: 'Delete',
+        title: this.t('Delete attachment'),
+        message: this.t('Are you sure you want to delete this attachment?'),
+        confirmLabel: this.t('Delete'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -593,10 +599,10 @@ export class FinancialPayablesPage {
       await this.api.delete(
         `erp/financial/accounts/payables/${this.selectedSettlePayable.ErpFinAccPayableUUID}/attachments/${attachment.ErpFinAccPayableAttachmentUUID}`,
       );
-      this.snack.success('Attachment deleted successfully.');
+      this.snack.success(this.t('Attachment deleted successfully.'));
       await this.fetchSettleAttachments();
     } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete attachment.');
+      this.showError(err?.message ?? this.t('Failed to delete attachment.'));
     }
   }
 
@@ -612,7 +618,7 @@ export class FinancialPayablesPage {
       this.settleAttachments = res?.data?.items ?? [];
     } catch (err: any) {
       this.settleAttachments = [];
-      this.showError(err?.message ?? 'Failed to load attachments.');
+      this.showError(err?.message ?? this.t('Failed to load attachments.'));
     }
   }
 
@@ -628,7 +634,9 @@ export class FinancialPayablesPage {
   }
 
   statusLabel(status: PayableStatus) {
-    return status.toUpperCase();
+    return this.t(
+      this.statusOptions.find((option) => option.value === status)?.label ?? status,
+    ).toUpperCase();
   }
 
   statusChipClass(status: PayableStatus) {
@@ -802,5 +810,9 @@ export class FinancialPayablesPage {
 
   private showWarning(message: string) {
     this.snack.warning(message);
+  }
+
+  private t(key: string, params?: Record<string, unknown>) {
+    return this.i18n.translate(key, params);
   }
 }

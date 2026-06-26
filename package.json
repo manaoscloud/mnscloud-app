@@ -8,6 +8,7 @@
     "check:angular-baseline": "node scripts/check-angular-baseline.mjs",
     "check:angular-baseline:strict": "node scripts/check-angular-baseline.mjs --strict",
     "check:crud": "node scripts/validate-crud-template.mjs",
+    "check:crud:i18n": "node scripts/validate-crud-i18n.mjs",
     "check:crud:layout": "node scripts/validate-crud-layout.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
