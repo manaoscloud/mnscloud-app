@@ -267,77 +267,89 @@
                             {{ action.label | transloco }}
                           </mat-checkbox>
                         }
+                        @if (isAddressSectionCompact(section)) {
+                          <button mat-stroked-button color="primary" type="button" (click)="editAddressSection(section)">
+                            <mat-icon>edit</mat-icon>
+                            {{ 'Edit' | transloco }}
+                          </button>
+                        }
                       </div>
                     }
                   </div>
                 }
 
-                <div class="address-section-grid">
-                  @for (field of section.fields; track field.key) {
-                    @switch (field.type) {
-                      @case ('search-select') {
-                        <mns-search-select-field
-                          [fieldClass]="fieldClass(field)"
-                          [label]="(field.label | transloco) + (field.required ? '*' : '')"
-                          [placeholder]="(field.placeholder ?? 'Search') | transloco"
-                          [options]="fieldOptions(field)"
-                          [loading]="fieldLoading(field)"
-                          [value]="fieldValue(field.key)"
-                          (valueChange)="setFieldValue(field.key, $event)"
-                        />
-                      }
-                      @case ('select') {
-                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                          <mat-label>{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label>
-                          <mat-select
-                            [disabled]="isFieldDisabled(field)"
+                @if (isAddressSectionCompact(section)) {
+                  <div class="address-section-summary">
+                    {{ addressSectionSummary(section) | transloco }}
+                  </div>
+                } @else {
+                  <div class="address-section-grid">
+                    @for (field of section.fields; track field.key) {
+                      @switch (field.type) {
+                        @case ('search-select') {
+                          <mns-search-select-field
+                            [fieldClass]="fieldClass(field)"
+                            [label]="(field.label | transloco) + (field.required ? '*' : '')"
+                            [placeholder]="(field.placeholder ?? 'Search') | transloco"
+                            [options]="fieldOptions(field)"
+                            [loading]="fieldLoading(field)"
                             [value]="fieldValue(field.key)"
-                            (selectionChange)="setFieldValue(field.key, $event.value)"
-                          >
-                            @for (option of fieldOptions(field); track option.value) {
-                              <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
-                            }
-                          </mat-select>
-                        </mat-form-field>
-                      }
-                      @default {
-                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                          <mat-label>{{ field.label | transloco }}</mat-label>
-                          <input
-                            matInput
-                            [attr.data-field-key]="field.key"
-                            [disabled]="isFieldDisabled(field)"
-                            [value]="fieldValueString(field.key)"
-                            (input)="setFieldValue(field.key, $any($event.target).value)"
-                            (keydown.enter)="field.postalLookup ? searchPostalCode(field, $event) : null"
-                            autocomplete="off"
+                            (valueChange)="setFieldValue(field.key, $event)"
                           />
-                          @if (field.postalLookup) {
-                            <button
-                              mat-icon-button
-                              matSuffix
-                              type="button"
-                              [disabled]="isPostalLookupLoading(field) || isFieldDisabled(field)"
-                              [matTooltip]="'Search postal code' | transloco"
-                              (click)="searchPostalCode(field)"
+                        }
+                        @case ('select') {
+                          <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                            <mat-label>{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label>
+                            <mat-select
+                              [disabled]="isFieldDisabled(field)"
+                              [value]="fieldValue(field.key)"
+                              (selectionChange)="setFieldValue(field.key, $event.value)"
                             >
-                              @if (isPostalLookupLoading(field)) {
-                                <mat-progress-spinner
-                                  class="postal-code-spinner"
-                                  mode="indeterminate"
-                                  diameter="18"
-                                  strokeWidth="3"
-                                />
-                              } @else {
-                                <mat-icon>search</mat-icon>
+                              @for (option of fieldOptions(field); track option.value) {
+                                <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
                               }
-                            </button>
-                          }
-                        </mat-form-field>
+                            </mat-select>
+                          </mat-form-field>
+                        }
+                        @default {
+                          <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                            <mat-label>{{ field.label | transloco }}</mat-label>
+                            <input
+                              matInput
+                              [attr.data-field-key]="field.key"
+                              [disabled]="isFieldDisabled(field)"
+                              [value]="fieldValueString(field.key)"
+                              (input)="setFieldValue(field.key, $any($event.target).value)"
+                              (keydown.enter)="field.postalLookup ? searchPostalCode(field, $event) : null"
+                              autocomplete="off"
+                            />
+                            @if (field.postalLookup) {
+                              <button
+                                mat-icon-button
+                                matSuffix
+                                type="button"
+                                [disabled]="isPostalLookupLoading(field) || isFieldDisabled(field)"
+                                [matTooltip]="'Search postal code' | transloco"
+                                (click)="searchPostalCode(field)"
+                              >
+                                @if (isPostalLookupLoading(field)) {
+                                  <mat-progress-spinner
+                                    class="postal-code-spinner"
+                                    mode="indeterminate"
+                                    diameter="18"
+                                    strokeWidth="3"
+                                  />
+                                } @else {
+                                  <mat-icon>search</mat-icon>
+                                }
+                              </button>
+                            }
+                          </mat-form-field>
+                        }
                       }
                     }
-                  }
-                </div>
+                  </div>
+                }
               </section>
             }
           </div>

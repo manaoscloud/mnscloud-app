@@ -116,6 +116,8 @@ export type DirectoryCopyAction = {
   key: string;
   label: string;
   addressSection?: string;
+  defaultEnabled?: boolean;
+  summaryLabel?: string;
   fromPrefix: string;
   toPrefix: string;
   fields: readonly string[];
@@ -339,18 +341,23 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   startCreate(): void {
     this.editingRecord.set(null);
     this.formValues.set(this.emptyFormValues());
-    this.enabledCopyActions.set(new Set());
+    this.enabledCopyActions.set(this.defaultCopyActionKeys());
+    for (const action of this.addressCopyActions()) {
+      if (this.isCopyActionEnabled(action)) this.copyAddressValues(action);
+    }
     this.openDialog();
   }
 
   startEdit(row: T): void {
     this.editingRecord.set(row);
     this.formValues.set(this.formValuesFromRecord(row));
-    this.enabledCopyActions.set(new Set());
+    this.enabledCopyActions.set(this.inferredCopyActionKeys());
+    this.copyEnabledAddressValues();
     this.openDialog();
   }
 
   async saveItem(saveAndNew = false): Promise<void> {
+    this.copyEnabledAddressValues();
     const payload = this.augmentPayload(this.buildPayload());
     if (!this.validatePayload(payload)) return;
 
@@ -529,6 +536,30 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     );
   }
 
+  isAddressSectionCompact(section: DirectoryAddressSectionView): boolean {
+    return section.copyActions.some((action) => this.isCopyActionEnabled(action));
+  }
+
+  addressSectionSummary(section: DirectoryAddressSectionView): string {
+    const enabledAction = section.copyActions.find((action) => this.isCopyActionEnabled(action));
+    if (enabledAction) return enabledAction.summaryLabel ?? 'Same as main address';
+
+    const values = this.formValues();
+    const summaryParts = section.fields
+      .filter((field) => !field.postalLookup && field.type !== 'search-select')
+      .map((field) => String(values[field.key] ?? '').trim())
+      .filter(Boolean);
+    return summaryParts.slice(0, 4).join(', ') || '-';
+  }
+
+  editAddressSection(section: DirectoryAddressSectionView): void {
+    const next = new Set(this.enabledCopyActions());
+    for (const action of section.copyActions) {
+      next.delete(action.key);
+    }
+    this.enabledCopyActions.set(next);
+  }
+
   toggleCopyAction(action: DirectoryCopyAction, checked: boolean): void {
     const next = new Set(this.enabledCopyActions());
     if (checked) {
@@ -599,6 +630,24 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     }
   }
 
+  private defaultCopyActionKeys(): Set<string> {
+    return new Set(
+      this.addressCopyActions()
+        .filter((action) => action.defaultEnabled)
+        .map((action) => action.key),
+    );
+  }
+
+  private inferredCopyActionKeys(): Set<string> {
+    const next = new Set<string>();
+    for (const action of this.addressCopyActions()) {
+      if (this.copyActionTargetIsEmpty(action) || this.copyActionTargetMatchesSource(action)) {
+        next.add(action.key);
+      }
+    }
+    return next;
+  }
+
   private copyAddressValues(action: DirectoryCopyAction): void {
     const current = this.formValues();
     const next: DirectoryRecord = {};
@@ -606,6 +655,26 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
       next[`${action.toPrefix}${field}`] = current[`${action.fromPrefix}${field}`] ?? '';
     }
     this.formValues.update((values) => ({ ...values, ...next }));
+  }
+
+  private copyEnabledAddressValues(): void {
+    for (const action of this.addressCopyActions()) {
+      if (this.isCopyActionEnabled(action)) this.copyAddressValues(action);
+    }
+  }
+
+  private copyActionTargetIsEmpty(action: DirectoryCopyAction): boolean {
+    const current = this.formValues();
+    return action.fields.every((field) => !String(current[`${action.toPrefix}${field}`] ?? '').trim());
+  }
+
+  private copyActionTargetMatchesSource(action: DirectoryCopyAction): boolean {
+    const current = this.formValues();
+    return action.fields.every((field) => {
+      const source = String(current[`${action.fromPrefix}${field}`] ?? '').trim();
+      const target = String(current[`${action.toPrefix}${field}`] ?? '').trim();
+      return source === target;
+    });
   }
 
   private syncCopyActionsForSource(changedKey: string): void {
