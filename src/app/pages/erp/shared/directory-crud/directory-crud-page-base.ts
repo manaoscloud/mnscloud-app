@@ -98,16 +98,25 @@ export type DirectoryField = {
   source?: string;
   payloadKey?: string;
   type?: DirectoryFieldType;
-  tab?: 'record' | 'address' | 'notes';
+  tab?: 'record' | 'address' | 'financial' | 'notes';
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
   postalLookup?: DirectoryPostalCodeLookup;
   rows?: number;
   required?: boolean;
+  hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
   options?: readonly DirectoryOption[];
   loading?: () => boolean;
+};
+
+export type DirectoryCopyAction = {
+  key: string;
+  label: string;
+  fromPrefix: string;
+  toPrefix: string;
+  fields: readonly string[];
 };
 
 export type DirectoryColumn = {
@@ -145,6 +154,7 @@ export type DirectoryConfig = {
   statusMode: DirectoryStatusMode;
   activeValue: string | number;
   inactiveValue: string | number;
+  addressCopyActions?: readonly DirectoryCopyAction[];
 };
 
 type DirectoryFilters = {
@@ -178,6 +188,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   readonly postalLookupLoadingKey = signal<string | null>(null);
   readonly editingRecord = signal<T | null>(null);
   readonly formValues = signal<DirectoryRecord>({});
+  readonly enabledCopyActions = signal(new Set<string>());
 
   readonly itemsResource;
 
@@ -205,12 +216,17 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     return this.visibleRows().some((row) => selected.has(this.recordUUID(row)));
   });
   readonly recordFields = computed(() =>
-    this.config.fields.filter((field) => !field.tab || field.tab === 'record'),
+    this.config.fields.filter((field) => !field.hidden && (!field.tab || field.tab === 'record')),
   );
   readonly addressFields = computed(() =>
-    this.config.fields.filter((field) => field.tab === 'address'),
+    this.config.fields.filter((field) => !field.hidden && field.tab === 'address'),
   );
-  readonly notesFields = computed(() => this.config.fields.filter((field) => field.tab === 'notes'));
+  readonly financialFields = computed(() =>
+    this.config.fields.filter((field) => !field.hidden && field.tab === 'financial'),
+  );
+  readonly notesFields = computed(() =>
+    this.config.fields.filter((field) => !field.hidden && field.tab === 'notes'),
+  );
   readonly dialogTitle = computed(() =>
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
   );
@@ -293,12 +309,14 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   startCreate(): void {
     this.editingRecord.set(null);
     this.formValues.set(this.emptyFormValues());
+    this.enabledCopyActions.set(new Set());
     this.openDialog();
   }
 
   startEdit(row: T): void {
     this.editingRecord.set(row);
     this.formValues.set(this.formValuesFromRecord(row));
+    this.enabledCopyActions.set(new Set());
     this.openDialog();
   }
 
@@ -383,6 +401,9 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
 
   setFieldValue(key: string, value: unknown): void {
     this.formValues.update((current) => ({ ...current, [key]: value }));
+    this.onFieldValueChanged(key, value);
+    this.syncCopyActionsForSource(key);
+    this.clearCopyActionsForTarget(key);
   }
 
   async searchPostalCode(field: DirectoryField, event?: Event): Promise<void> {
@@ -418,6 +439,9 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
       this.assignPostalLookupValue(next, lookup.countryKey, item['country']);
 
       this.formValues.update((current) => ({ ...current, ...next }));
+      for (const key of Object.keys(next)) {
+        this.syncCopyActionsForSource(key);
+      }
       if (lookup.numberKey) {
         queueMicrotask(() => this.focusField(lookup.numberKey as string));
       }
@@ -457,6 +481,25 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
 
   fieldLoading(field: DirectoryField): boolean {
     return field.loading?.() ?? false;
+  }
+
+  addressCopyActions(): readonly DirectoryCopyAction[] {
+    return this.config.addressCopyActions ?? [];
+  }
+
+  isCopyActionEnabled(action: DirectoryCopyAction): boolean {
+    return this.enabledCopyActions().has(action.key);
+  }
+
+  toggleCopyAction(action: DirectoryCopyAction, checked: boolean): void {
+    const next = new Set(this.enabledCopyActions());
+    if (checked) {
+      next.add(action.key);
+      this.copyAddressValues(action);
+    } else {
+      next.delete(action.key);
+    }
+    this.enabledCopyActions.set(next);
   }
 
   statusOptions(): readonly DirectoryOption[] {
@@ -507,6 +550,45 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
 
   protected augmentPayload(payload: DirectoryRecord): DirectoryRecord {
     return payload;
+  }
+
+  protected onFieldValueChanged(_key: string, _value: unknown): void {}
+
+  protected patchFormValues(values: DirectoryRecord): void {
+    this.formValues.update((current) => ({ ...current, ...values }));
+    for (const key of Object.keys(values)) {
+      this.syncCopyActionsForSource(key);
+    }
+  }
+
+  private copyAddressValues(action: DirectoryCopyAction): void {
+    const current = this.formValues();
+    const next: DirectoryRecord = {};
+    for (const field of action.fields) {
+      next[`${action.toPrefix}${field}`] = current[`${action.fromPrefix}${field}`] ?? '';
+    }
+    this.formValues.update((values) => ({ ...values, ...next }));
+  }
+
+  private syncCopyActionsForSource(changedKey: string): void {
+    for (const action of this.addressCopyActions()) {
+      if (!this.isCopyActionEnabled(action)) continue;
+      const shouldCopy = action.fields.some((field) => `${action.fromPrefix}${field}` === changedKey);
+      if (shouldCopy) this.copyAddressValues(action);
+    }
+  }
+
+  private clearCopyActionsForTarget(changedKey: string): void {
+    const selected = this.enabledCopyActions();
+    if (!selected.size) return;
+
+    const next = new Set(selected);
+    for (const action of this.addressCopyActions()) {
+      if (!next.has(action.key)) continue;
+      const isTarget = action.fields.some((field) => `${action.toPrefix}${field}` === changedKey);
+      if (isTarget) next.delete(action.key);
+    }
+    if (next.size !== selected.size) this.enabledCopyActions.set(next);
   }
 
   private async fetchItems(filters: DirectoryFilters): Promise<T[]> {

@@ -87,8 +87,8 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
   fields: [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     { key: 'type', source: 'Type', payloadKey: 'type', label: 'Type', type: 'select', options: TYPE_OPTIONS, span: 1 },
+    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
-    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 2 },
     { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
     {
@@ -98,6 +98,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Complex',
       type: 'search-select',
       placeholder: 'Search complexes',
+      tab: 'address',
       span: 1,
     },
     {
@@ -107,13 +108,14 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Due day',
       type: 'search-select',
       placeholder: 'Search due days',
+      tab: 'financial',
       span: 1,
     },
     {
       key: 'addressMainZip',
       source: 'AddressMainZip',
       payloadKey: 'addressMainZip',
-      label: 'Main Zip',
+      label: 'Zip',
       tab: 'address',
       span: 1,
       postalLookup: {
@@ -130,7 +132,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       key: 'addressMainStreet',
       source: 'AddressMainStreet',
       payloadKey: 'addressMainStreet',
-      label: 'Main Street',
+      label: 'Street',
       tab: 'address',
       span: 1,
     },
@@ -138,7 +140,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       key: 'addressMainNumber',
       source: 'AddressMainNumber',
       payloadKey: 'addressMainNumber',
-      label: 'Main Number',
+      label: 'Number',
       tab: 'address',
       span: 1,
     },
@@ -146,7 +148,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       key: 'addressMainDistrict',
       source: 'AddressMainDistrict',
       payloadKey: 'addressMainDistrict',
-      label: 'Main District',
+      label: 'District',
       tab: 'address',
       span: 1,
     },
@@ -154,7 +156,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       key: 'addressMainComplement',
       source: 'AddressMainComplement',
       payloadKey: 'addressMainComplement',
-      label: 'Main Complement',
+      label: 'Complement',
       tab: 'address',
       span: 1,
     },
@@ -162,7 +164,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       key: 'addressMainCity',
       source: 'AddressMainCity',
       payloadKey: 'addressMainCity',
-      label: 'Main City',
+      label: 'City',
       tab: 'address',
       span: 1,
     },
@@ -170,7 +172,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       key: 'addressMainState',
       source: 'AddressMainState',
       payloadKey: 'addressMainState',
-      label: 'Main State',
+      label: 'State',
       tab: 'address',
       span: 1,
     },
@@ -178,7 +180,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       key: 'addressMainCountry',
       source: 'AddressMainCountry',
       payloadKey: 'addressMainCountry',
-      label: 'Main Country',
+      label: 'Country',
       tab: 'address',
       span: 1,
     },
@@ -189,6 +191,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Zip',
       tab: 'address',
       span: 1,
+      hidden: true,
       postalLookup: {
         streetKey: 'addressBillingStreet',
         districtKey: 'addressBillingDistrict',
@@ -206,6 +209,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Street',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressBillingNumber',
@@ -214,6 +218,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Number',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressBillingDistrict',
@@ -222,6 +227,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing District',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressBillingComplement',
@@ -230,6 +236,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Complement',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressBillingCity',
@@ -238,6 +245,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing City',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressBillingState',
@@ -246,6 +254,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing State',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressBillingCountry',
@@ -254,6 +263,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Country',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressInstallZip',
@@ -262,6 +272,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Zip',
       tab: 'address',
       span: 1,
+      hidden: true,
       postalLookup: {
         streetKey: 'addressInstallStreet',
         districtKey: 'addressInstallDistrict',
@@ -279,6 +290,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Street',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressInstallNumber',
@@ -287,6 +299,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Number',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressInstallDistrict',
@@ -295,6 +308,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation District',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressInstallComplement',
@@ -303,6 +317,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Complement',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressInstallCity',
@@ -311,6 +326,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation City',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressInstallState',
@@ -319,6 +335,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation State',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
     {
       key: 'addressInstallCountry',
@@ -327,18 +344,41 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Country',
       tab: 'address',
       span: 1,
+      hidden: true,
     },
-    { key: 'lat', source: 'Lat', payloadKey: 'lat', label: 'Latitude', type: 'number', tab: 'address', span: 1 },
-    { key: 'lng', source: 'Lng', payloadKey: 'lng', label: 'Longitude', type: 'number', tab: 'address', span: 1 },
+    { key: 'lat', source: 'Lat', payloadKey: 'lat', label: 'Latitude', type: 'number', tab: 'address', span: 1, hidden: true },
+    { key: 'lng', source: 'Lng', payloadKey: 'lng', label: 'Longitude', type: 'number', tab: 'address', span: 1, hidden: true },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+  ],
+  addressCopyActions: [
+    {
+      key: 'billingSameAsMain',
+      label: 'Billing same as main',
+      fromPrefix: 'addressMain',
+      toPrefix: 'addressBilling',
+      fields: ['Zip', 'Street', 'Number', 'District', 'Complement', 'City', 'State', 'Country'],
+    },
+    {
+      key: 'installationSameAsMain',
+      label: 'Installation same as main',
+      fromPrefix: 'addressMain',
+      toPrefix: 'addressInstall',
+      fields: ['Zip', 'Street', 'Number', 'District', 'Complement', 'City', 'State', 'Country'],
+    },
   ],
 };
 
 type ComplexRecord = {
   ComplexUUID: string;
   Name: string;
+  Street?: string | null;
+  Number?: string | null;
+  District?: string | null;
+  Complement?: string | null;
   City?: string | null;
   State?: string | null;
+  Zip?: string | null;
+  Country?: string | null;
 };
 
 type DueDayRecord = {
@@ -398,5 +438,25 @@ export class ErpCustomerPage extends DirectoryCrudPageBase<DirectoryRecord> {
     if (key === 'complexUUID') return this.complexOptions();
     if (key === 'dueDayUUID') return this.dueDayOptions();
     return [];
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'complexUUID') return;
+
+    const complex = this.complexesResource
+      .value()
+      .find((item) => item.ComplexUUID === String(value ?? ''));
+    if (!complex) return;
+
+    this.patchFormValues({
+      addressMainZip: complex.Zip ?? '',
+      addressMainStreet: complex.Street ?? '',
+      addressMainNumber: complex.Number ?? '',
+      addressMainDistrict: complex.District ?? '',
+      addressMainComplement: complex.Complement ?? '',
+      addressMainCity: complex.City ?? '',
+      addressMainState: complex.State ?? '',
+      addressMainCountry: complex.Country ?? '',
+    });
   }
 }

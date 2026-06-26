@@ -216,7 +216,13 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     tsFile.includes('/supplier/') ||
     tsFile.includes('\\supplier\\');
 
-  if (hasCompanyAddress) {
+  if (hasCustomerAddresses) {
+    if (!startsWithSequence(keys, ['status', 'type', 'document', 'name', 'email', 'phone'])) {
+      errors.push(
+        `${rel} invalid: customer Record fields must start Status, Type, Document, Name, Email, Phone`,
+      );
+    }
+  } else if (hasCompanyAddress) {
     if (!startsWithSequence(keys, ['status', 'document', 'name', 'legalName', 'email', 'phone'])) {
       errors.push(
         `${rel} invalid: company Record fields must start Status, Document, Name, Legal name, Email, Phone`,
@@ -319,11 +325,15 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     if (
       hasType &&
       !hasAlias &&
+      !hasCustomerAddresses &&
       !isTypeDocumentPartner &&
       key === 'document' &&
       !/\bspan:\s*2/.test(block)
     ) {
       errors.push(`${rel} invalid: partner Document field must use span-2`);
+    }
+    if (hasCustomerAddresses && key === 'document' && !/\bspan:\s*1/.test(block)) {
+      errors.push(`${rel} invalid: customer Document field must use span-1`);
     }
     if (isTypeDocumentPartner && key === 'document' && !/\bspan:\s*1/.test(block)) {
       errors.push(`${rel} invalid: partner Document field must use span-1`);
