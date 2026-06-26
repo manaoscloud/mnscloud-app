@@ -375,7 +375,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
   addressCopyActions: [
     {
       key: 'billingSameAsMain',
-      label: 'Billing same as main',
+      label: 'Same as main address option',
       addressSection: 'billing',
       defaultEnabled: true,
       summaryLabel: 'Same as main address',
@@ -385,7 +385,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
     },
     {
       key: 'installationSameAsMain',
-      label: 'Installation same as main',
+      label: 'Same as main address option',
       addressSection: 'installation',
       defaultEnabled: true,
       summaryLabel: 'Same as main address',
