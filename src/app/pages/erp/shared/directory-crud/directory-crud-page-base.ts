@@ -491,6 +491,14 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     return this.enabledCopyActions().has(action.key);
   }
 
+  isFieldDisabled(field: DirectoryField): boolean {
+    return this.addressCopyActions().some(
+      (action) =>
+        this.isCopyActionEnabled(action) &&
+        action.fields.some((fieldName) => `${action.toPrefix}${fieldName}` === field.key),
+    );
+  }
+
   toggleCopyAction(action: DirectoryCopyAction, checked: boolean): void {
     const next = new Set(this.enabledCopyActions());
     if (checked) {

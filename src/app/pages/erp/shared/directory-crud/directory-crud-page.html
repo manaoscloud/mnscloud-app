@@ -267,6 +267,7 @@
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label>{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label>
                     <mat-select
+                      [disabled]="isFieldDisabled(field)"
                       [value]="fieldValue(field.key)"
                       (selectionChange)="setFieldValue(field.key, $event.value)"
                     >
@@ -282,6 +283,7 @@
                     <input
                       matInput
                       [attr.data-field-key]="field.key"
+                      [disabled]="isFieldDisabled(field)"
                       [value]="fieldValueString(field.key)"
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                       (keydown.enter)="field.postalLookup ? searchPostalCode(field, $event) : null"
@@ -292,7 +294,7 @@
                         mat-icon-button
                         matSuffix
                         type="button"
-                        [disabled]="isPostalLookupLoading(field)"
+                        [disabled]="isPostalLookupLoading(field) || isFieldDisabled(field)"
                         [matTooltip]="'Search postal code' | transloco"
                         (click)="searchPostalCode(field)"
                       >

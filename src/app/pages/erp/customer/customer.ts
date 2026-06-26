@@ -199,7 +199,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Zip',
       tab: 'address',
       span: 1,
-      hidden: true,
       postalLookup: {
         streetKey: 'addressBillingStreet',
         districtKey: 'addressBillingDistrict',
@@ -217,7 +216,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Street',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressBillingNumber',
@@ -226,7 +224,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Number',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressBillingDistrict',
@@ -235,7 +232,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing District',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressBillingComplement',
@@ -244,7 +240,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Complement',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressBillingCity',
@@ -253,7 +248,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing City',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressBillingState',
@@ -262,7 +256,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing State',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressBillingCountry',
@@ -271,7 +264,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Billing Country',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressInstallZip',
@@ -280,7 +272,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Zip',
       tab: 'address',
       span: 1,
-      hidden: true,
       postalLookup: {
         streetKey: 'addressInstallStreet',
         districtKey: 'addressInstallDistrict',
@@ -298,7 +289,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Street',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressInstallNumber',
@@ -307,7 +297,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Number',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressInstallDistrict',
@@ -316,7 +305,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation District',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressInstallComplement',
@@ -325,7 +313,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Complement',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressInstallCity',
@@ -334,7 +321,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation City',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressInstallState',
@@ -343,7 +329,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation State',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     {
       key: 'addressInstallCountry',
@@ -352,7 +337,6 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       label: 'Installation Country',
       tab: 'address',
       span: 1,
-      hidden: true,
     },
     { key: 'lat', source: 'Lat', payloadKey: 'lat', label: 'Latitude', type: 'number', tab: 'address', span: 1, hidden: true },
     { key: 'lng', source: 'Lng', payloadKey: 'lng', label: 'Longitude', type: 'number', tab: 'address', span: 1, hidden: true },
