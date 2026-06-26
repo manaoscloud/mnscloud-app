@@ -8,12 +8,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -31,25 +30,25 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
-import {
-  bindDialogClosed,
-  bindDialogEscape,
-} from '../../../../../shared/dialog/dialog-events.util';
+import { SystemParameterService } from '../../../../../services/system-parameter.service';
+import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
+import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
-import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
-import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
-import { MnsSearchSelectFieldComponent } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import type { MnsSearchSelectFieldOption } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  type MnsSearchSelectFieldOption,
+} from '../../../../../shared/forms';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type PayableStatus = 'open' | 'paid' | 'overdue' | 'canceled';
-type PayablePaymentMethod = 'cash' | 'bank_transfer' | 'pix' | 'boleto' | 'card' | 'other';
+type PaymentMethod = 'pix' | 'bank_transfer' | 'cash' | 'boleto' | 'card' | 'other';
 
-type ErpFinAccPayable = {
+type Payable = {
   ErpFinAccPayableUUID: string;
   SupplierUUID: string;
   SupplierName?: string | null;
@@ -68,17 +67,11 @@ type ErpFinAccPayable = {
   Notes?: string | null;
 };
 
-type ErpFinAccPayableAttachment = {
-  ErpFinAccPayableAttachmentUUID: string;
-  ErpFinAccPayableUUID: string;
-  StorageKey: string;
-  Url: string;
-  FileName?: string | null;
-  FileSizeBytes?: number | null;
-};
+type SupplierOption = MnsSearchSelectFieldOption & { value: string };
 
-type SupplierOption = MnsSearchSelectFieldOption & {
-  value: string;
+type PayablesSnapshot = {
+  items: Payable[];
+  suppliers: SupplierOption[];
 };
 
 @Component({
@@ -112,26 +105,49 @@ type SupplierOption = MnsSearchSelectFieldOption & {
   styleUrls: ['./payables.scss'],
 })
 export class FinancialPayablesPage {
-  private api = inject(ApiService);
-  private snack = inject(SnackbarService);
-  private dialog = inject(MatDialog);
-  private i18n = inject(TranslocoService);
+  private readonly api = inject(ApiService);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(TranslocoService);
+  private readonly parameters = inject(SystemParameterService);
+  private readonly snack = inject(SnackbarService);
+  private readonly listLimit = 200;
 
   readonly payableFormDialog = viewChild<TemplateRef<unknown>>('payableFormDialog');
   readonly payableSettleDialog = viewChild<TemplateRef<unknown>>('payableSettleDialog');
-  private payableFormDialogRef: MatDialogRef<unknown> | null = null;
-  private payableSettleDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
+
+  private formDialogBinding: CrudDialogBinding | null = null;
   private settleDialogBinding: CrudDialogBinding | null = null;
 
-  readonly search = signal('');
   readonly searchInput = signal('');
-  readonly statusFilter = signal<PayableStatus | ''>('');
+  readonly statusInput = signal<PayableStatus | ''>('');
+  readonly search = signal('');
+  readonly status = signal<PayableStatus | ''>('');
   readonly sortActive = signal('dueDate');
   readonly sortDirection = signal<SortDirection>('asc');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
   readonly selectedIds = signal<Set<string>>(new Set());
+  readonly saving = signal(false);
+  readonly mutating = signal(false);
+  readonly editing = signal<Payable | null>(null);
+  readonly settlingPayable = signal<Payable | null>(null);
+
+  readonly statusOptions: { value: PayableStatus; label: string }[] = [
+    { value: 'open', label: 'Open' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'overdue', label: 'Overdue' },
+    { value: 'canceled', label: 'Canceled' },
+  ];
+  readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
+  readonly paymentMethodOptions: { value: PaymentMethod; label: string }[] = [
+    { value: 'pix', label: 'PIX' },
+    { value: 'bank_transfer', label: 'Bank transfer' },
+    { value: 'cash', label: 'Cash' },
+    { value: 'boleto', label: 'Boleto' },
+    { value: 'card', label: 'Card' },
+    { value: 'other', label: 'Other' },
+  ];
 
   readonly displayedColumns = [
     'select',
@@ -144,98 +160,34 @@ export class FinancialPayablesPage {
     'actions',
   ];
 
-  saving = false;
-  settling = false;
-  deletingMany = false;
-  editingPayable: ErpFinAccPayable | null = null;
-  selectedSettlePayable: ErpFinAccPayable | null = null;
-  readonly suppliers = signal<SupplierOption[]>([]);
-  readonly supplierMap = signal(new Map<string, SupplierOption>());
-  amountPrefix = '';
-  settleAttachments: ErpFinAccPayableAttachment[] = [];
-  settleFiles: File[] = [];
+  form = this.emptyForm();
+  settleForm = this.emptySettleForm();
 
-  readonly statusOptions: { value: PayableStatus; label: string }[] = [
-    { value: 'open', label: 'Open' },
-    { value: 'paid', label: 'Paid' },
-    { value: 'overdue', label: 'Overdue' },
-    { value: 'canceled', label: 'Canceled' },
-  ];
-  readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
-  readonly paymentMethodOptions: { value: PayablePaymentMethod; label: string }[] = [
-    { value: 'pix', label: 'PIX' },
-    { value: 'bank_transfer', label: 'Bank transfer' },
-    { value: 'cash', label: 'Cash' },
-    { value: 'boleto', label: 'Boleto' },
-    { value: 'card', label: 'Card' },
-    { value: 'other', label: 'Other' },
-  ];
+  readonly currencyResource = resource({
+    defaultValue: 'BRL',
+    loader: () => this.parameters.resolveDefaultCurrency('BRL'),
+  });
 
-  form = {
-    supplierUUID: '',
-    description: '',
-    docNumber: '',
-    dueDate: null as Date | null,
-    amount: 0,
-    status: 'open' as PayableStatus,
-    notes: '',
-  };
-
-  settleForm = {
-    paymentDate: null as Date | null,
-    paidAmount: 0,
-    paymentMethod: 'pix' as PayablePaymentMethod,
-    paymentReference: '',
-    paymentNotes: '',
-  };
-
-  private readonly payablesResource = resource({
-    defaultValue: [] as ErpFinAccPayable[],
-    loader: async () => {
-      const params = new URLSearchParams({ limit: '500', offset: '0' });
-      const q = this.search().trim();
-      const status = this.statusFilter();
-      if (q) params.set('q', q);
-      if (status) params.set('status', status);
-
-      const res = await this.api.get<{ data?: { items?: ErpFinAccPayable[] } }>(
-        `erp/financial/accounts/payables?${params.toString()}`,
-      );
-      return this.extractItems<ErpFinAccPayable>(res);
+  private readonly snapshotResource = resource({
+    params: () => ({ search: this.search(), status: this.status() }),
+    defaultValue: { items: [], suppliers: [] } as PayablesSnapshot,
+    loader: async ({ params }) => {
+      const [items, suppliers] = await Promise.all([
+        this.fetchPayables(params.search, params.status),
+        this.fetchSuppliers(),
+      ]);
+      return { items, suppliers: this.mergeSuppliers(suppliers, items) };
     },
   });
 
-  readonly filteredRows = computed(() => {
-    const q = this.search().trim().toLowerCase();
-    const status = this.statusFilter();
-    return this.payablesResource.value().filter((row) => {
-      if (status && row.Status !== status) return false;
-      if (!q) return true;
-      return [row.Description, row.DocNumber, this.supplierLabel(row)]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(q));
-    });
-  });
-
-  readonly sortedRows = computed(() => {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    const rows = [...this.filteredRows()];
-    if (!active || !direction) return rows;
-    return rows.sort((left, right) => {
-      const result = this.compareValues(
-        this.sortValue(left, active),
-        this.sortValue(right, active),
-      );
-      return direction === 'asc' ? result : -result;
-    });
-  });
-
+  readonly loading = computed(() => this.snapshotResource.isLoading() || this.mutating());
+  readonly rows = computed(() => this.snapshotResource.value().items);
+  readonly supplierOptions = computed(() => this.snapshotResource.value().suppliers);
+  readonly sortedRows = computed(() => this.sortRows(this.rows()));
   readonly visibleRows = computed(() => {
     const start = this.pageIndex() * this.pageSize();
     return this.sortedRows().slice(start, start + this.pageSize());
   });
-
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly allVisibleSelected = computed(() => {
     const rows = this.visibleRows();
@@ -249,43 +201,36 @@ export class FinancialPayablesPage {
     );
   });
 
-  get loading() {
-    return this.payablesResource.isLoading();
-  }
-
-  constructor() {
-    this.amountPrefix = this.getCurrencyAffixes().prefix;
-    this.startCreate();
-    void this.fetchSuppliers();
-    inject(DestroyRef).onDestroy(() => {
-      this.closePayableDialog();
-      this.closeSettleDialog();
-    });
-  }
+  private readonly cleanup = this.destroyRef.onDestroy(() => {
+    this.closeFormDialog();
+    this.closeSettleDialog();
+  });
 
   refreshList() {
-    this.payablesResource.reload();
+    this.snapshotResource.reload();
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
     this.pageIndex.set(0);
     this.clearSelection();
-    this.payablesResource.reload();
+    this.search.set(this.searchInput().trim());
+    this.status.set(this.statusInput());
+    this.snapshotResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
-    this.statusFilter.set('');
+    this.status.set('');
     this.pageIndex.set(0);
     this.clearSelection();
-    this.payablesResource.reload();
+    this.snapshotResource.reload();
   }
 
   setSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
     this.pageIndex.set(0);
   }
 
@@ -294,11 +239,11 @@ export class FinancialPayablesPage {
     this.pageSize.set(event.pageSize);
   }
 
-  isSelected(row: ErpFinAccPayable) {
+  isSelected(row: Payable) {
     return this.selectedIds().has(row.ErpFinAccPayableUUID);
   }
 
-  toggleRow(row: ErpFinAccPayable, checked: boolean) {
+  toggleRow(row: Payable, checked: boolean) {
     const next = new Set(this.selectedIds());
     if (checked) next.add(row.ErpFinAccPayableUUID);
     else next.delete(row.ErpFinAccPayableUUID);
@@ -314,378 +259,273 @@ export class FinancialPayablesPage {
     this.selectedIds.set(next);
   }
 
-  clearSelection() {
-    this.selectedIds.set(new Set());
-  }
-
-  async deleteManyPayables() {
-    const ids = [...this.selectedIds()];
-    if (!ids.length) return;
-
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Delete selected payables'),
-        message: this.t('Delete selected payables confirmation', { count: ids.length }),
-        confirmLabel: this.t('Delete selected'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.deletingMany = true;
-    try {
-      const response = await this.api.delete('erp/financial/accounts/payables/bulk', { ids });
-      const result = this.parseBulkDeleteResult(response, ids);
-      const failedIds = new Set<string>(
-        result.failed.map((item: { ErpFinAccPayableUUID: string }) => item.ErpFinAccPayableUUID),
-      );
-      this.selectedIds.set(failedIds);
-      if (result.failed.length) {
-        this.snack.warning(
-          this.t('Payables bulk delete partial failure', {
-            deleted: result.deleted.length,
-            failed: result.failed.length,
-          }),
-        );
-      } else {
-        this.snack.success(
-          this.t('Payables bulk deleted successfully', { count: result.deleted.length }),
-        );
-      }
-      this.payablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to delete selected payables.'));
-    } finally {
-      this.deletingMany = false;
-    }
-  }
-
-  async fetchSuppliers() {
-    try {
-      const items = await this.fetchPagedItems('erp/suppliers');
-      const suppliers: SupplierOption[] = items.flatMap((item: any) => {
-        const value = this.normalizeOptionValue(
-          item.SupplierUUID ?? item.supplierUUID ?? item.uuid ?? item.SupUUID,
-        );
-        const label = String(
-          item.Name ?? item.name ?? item.SupplierName ?? item.label ?? '',
-        ).trim();
-        if (!value || !label) return [];
-        return [
-          {
-            value,
-            label,
-            description: [item.Document ?? item.document, item.Email ?? item.email]
-              .filter(Boolean)
-              .join(' - '),
-            searchText: [item.Document ?? item.document, item.Email ?? item.email]
-              .filter(Boolean)
-              .join(' '),
-          } satisfies SupplierOption,
-        ];
-      });
-      this.suppliers.set(suppliers);
-      this.supplierMap.set(
-        new Map(suppliers.map((supplier: SupplierOption) => [supplier.value, supplier])),
-      );
-    } catch (err) {
-      console.error(this.t('Failed to load suppliers.'), err);
-    }
-  }
-
   startCreate() {
-    this.editingPayable = null;
-    this.form.supplierUUID = '';
-    this.form.description = '';
-    this.form.docNumber = '';
-    this.form.dueDate = null;
-    this.form.amount = 0;
-    this.form.status = 'open';
-    this.form.notes = '';
+    this.editing.set(null);
+    this.form = this.emptyForm();
+    this.openFormDialog();
   }
 
-  openCreateDialog() {
-    this.startCreate();
-    this.openPayableDialog();
+  startEdit(row: Payable) {
+    this.editing.set(row);
+    this.form = {
+      supplierUUID: row.SupplierUUID,
+      description: row.Description ?? '',
+      docNumber: row.DocNumber ?? '',
+      dueDate: this.parseDate(row.DueDate),
+      amount: Number(row.Amount ?? 0),
+      status: row.Status ?? 'open',
+      notes: row.Notes ?? '',
+    };
+    this.openFormDialog();
   }
 
-  openEditDialog(payable: ErpFinAccPayable) {
-    this.editingPayable = payable;
-    this.form.supplierUUID = payable.SupplierUUID ?? '';
-    this.form.description = payable.Description ?? '';
-    this.form.docNumber = payable.DocNumber ?? '';
-    this.form.dueDate = this.parseDateInput(payable.DueDate);
-    this.form.amount = payable.Amount ?? 0;
-    this.form.status = payable.Status ?? 'open';
-    this.form.notes = payable.Notes ?? '';
-    this.openPayableDialog();
+  cancelForm() {
+    this.closeFormDialog();
+    this.editing.set(null);
+    this.form = this.emptyForm();
   }
 
   async savePayable(closeAfterSave = true) {
-    if (!this.form.description.trim()) {
-      this.showWarning(this.t('Description is required.'));
-      return;
-    }
-    if (!this.form.supplierUUID) {
-      this.showWarning(this.t('Supplier is required.'));
-      return;
-    }
-    if (!this.form.dueDate) {
-      this.showWarning(this.t('Due date is required.'));
-      return;
-    }
-    if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
-      this.showWarning(this.t('Amount must be greater than zero.'));
-      return;
-    }
+    const payload = this.buildPayload();
+    if (!payload) return;
 
-    this.saving = true;
+    this.saving.set(true);
     try {
-      const payload = {
-        supplierUUID: this.form.supplierUUID,
-        description: this.form.description.trim(),
-        docNumber: this.form.docNumber?.trim() || null,
-        dueDate: this.formatDateInput(this.form.dueDate),
-        amount: Number(this.form.amount),
-        status: this.form.status,
-        notes: this.form.notes?.trim() || null,
-      };
-
-      if (this.editingPayable) {
+      const editing = this.editing();
+      if (editing) {
         await this.api.put(
-          `erp/financial/accounts/payables/${this.editingPayable.ErpFinAccPayableUUID}`,
+          `erp/financial/accounts/payables/${editing.ErpFinAccPayableUUID}`,
           payload,
         );
         this.snack.success(this.t('Payable updated successfully.'));
-        this.closePayableDialog();
-        this.startCreate();
       } else {
         await this.api.post('erp/financial/accounts/payables', payload);
         this.snack.success(this.t('Payable created successfully.'));
-        if (closeAfterSave) {
-          this.closePayableDialog();
-          this.startCreate();
-        } else {
-          this.startCreate();
-        }
       }
-      this.payablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to save payable.'));
+
+      this.snapshotResource.reload();
+      if (closeAfterSave || editing) this.cancelForm();
+      else this.form = this.emptyForm();
+    } catch (error) {
+      this.showError(error, 'Failed to save payable.');
     } finally {
-      this.saving = false;
+      this.saving.set(false);
     }
   }
 
   async saveAndNewPayable() {
-    if (this.editingPayable) return;
+    if (this.editing()) return;
     await this.savePayable(false);
   }
 
-  cancelPayableForm() {
-    this.closePayableDialog();
-    this.startCreate();
-  }
-
-  async deletePayable(payableUUID: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Delete payable'),
-        message: this.t('Are you sure you want to delete this payable?'),
-        confirmLabel: this.t('Delete'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
+  async deletePayable(row: Payable) {
+    const confirmed = await this.confirm(
+      'Delete payable',
+      'Are you sure you want to delete this payable?',
+      'Delete',
+    );
     if (!confirmed) return;
-    try {
-      await this.api.delete(`erp/financial/accounts/payables/${payableUUID}`);
+
+    await this.runMutation(async () => {
+      await this.api.delete(`erp/financial/accounts/payables/${row.ErpFinAccPayableUUID}`);
       this.snack.success(this.t('Payable deleted successfully.'));
       this.clearSelection();
-      this.payablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to delete payable.'));
-    }
+      this.snapshotResource.reload();
+    }, 'Failed to delete payable.');
   }
 
-  openSettleDialog(payable: ErpFinAccPayable) {
-    this.selectedSettlePayable = payable;
-    this.settleForm.paymentDate = this.parseDateInput(payable.PaymentDate ?? payable.DueDate);
-    this.settleForm.paidAmount = Number(payable.PaidAmount ?? payable.Amount ?? 0);
-    this.settleForm.paymentMethod = (payable.PaymentMethod as PayablePaymentMethod) || 'pix';
-    this.settleForm.paymentReference = payable.PaymentReference ?? '';
-    this.settleForm.paymentNotes = payable.PaymentNotes ?? '';
-    this.settleFiles = [];
-    void this.fetchSettleAttachments();
-    this.openSettleDialogInternal();
-  }
+  async deleteSelectedPayables() {
+    const ids = [...this.selectedIds()];
+    if (!ids.length) return;
 
-  async reopenPayable(payable: ErpFinAccPayable) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Reopen payable'),
-        message: this.t('Do you want to reopen this payable and clear payment data?'),
-        confirmLabel: this.t('Reopen'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-    try {
-      await this.api.post(
-        `erp/financial/accounts/payables/${payable.ErpFinAccPayableUUID}/reopen`,
-        {},
-      );
-      this.snack.success(this.t('Payable reopened successfully.'));
-      this.payablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to reopen payable.'));
-    }
-  }
-
-  async saveSettle() {
-    if (!this.selectedSettlePayable) return;
-    if (!this.settleForm.paymentDate) {
-      this.showWarning(this.t('Payment date is required.'));
-      return;
-    }
-    if (
-      !Number.isFinite(Number(this.settleForm.paidAmount)) ||
-      Number(this.settleForm.paidAmount) <= 0
-    ) {
-      this.showWarning(this.t('Paid amount must be greater than zero.'));
-      return;
-    }
-
-    this.settling = true;
-    const payableUUID = this.selectedSettlePayable.ErpFinAccPayableUUID;
-    try {
-      await this.api.post(`erp/financial/accounts/payables/${payableUUID}/settle`, {
-        paymentDate: this.formatDateInput(this.settleForm.paymentDate),
-        paidAmount: Number(this.settleForm.paidAmount),
-        paymentMethod: this.settleForm.paymentMethod || null,
-        paymentReference: this.settleForm.paymentReference?.trim() || null,
-        paymentNotes: this.settleForm.paymentNotes?.trim() || null,
-      });
-
-      for (const file of this.settleFiles) {
-        const formData = new FormData();
-        formData.append('file', file, file.name);
-        await this.api.post(`erp/financial/accounts/payables/${payableUUID}/attachments`, formData);
-      }
-
-      this.settleFiles = [];
-      this.snack.success(this.t('Payable settled successfully.'));
-      await this.fetchSettleAttachments();
-      this.payablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to settle payable.'));
-    } finally {
-      this.settling = false;
-    }
-  }
-
-  onSettleFilesSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    this.settleFiles = files.filter(
-      (file) => file.type.startsWith('image/') || file.type === 'application/pdf',
+    const confirmed = await this.confirm(
+      'Delete selected payables',
+      'Delete selected payables confirmation',
+      'Delete selected',
+      { count: ids.length },
     );
-    input.value = '';
-  }
-
-  removePendingSettleFile(index: number) {
-    this.settleFiles.splice(index, 1);
-  }
-
-  async deleteSettleAttachment(attachment: ErpFinAccPayableAttachment) {
-    if (!this.selectedSettlePayable) return;
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Delete attachment'),
-        message: this.t('Are you sure you want to delete this attachment?'),
-        confirmLabel: this.t('Delete'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    try {
-      await this.api.delete(
-        `erp/financial/accounts/payables/${this.selectedSettlePayable.ErpFinAccPayableUUID}/attachments/${attachment.ErpFinAccPayableAttachmentUUID}`,
+    await this.runMutation(async () => {
+      const response = await this.api.delete<any>('erp/financial/accounts/payables/bulk', { ids });
+      const failed = Array.isArray(response?.data?.failed) ? response.data.failed : [];
+      this.selectedIds.set(
+        new Set(failed.map((item: any) => String(item?.ErpFinAccPayableUUID ?? item?.id ?? ''))),
       );
-      this.snack.success(this.t('Attachment deleted successfully.'));
-      await this.fetchSettleAttachments();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to delete attachment.'));
-    }
+      this.snack.success(this.t('Payables bulk delete completed.'));
+      this.snapshotResource.reload();
+    }, 'Failed to delete selected payables.');
   }
 
-  async fetchSettleAttachments() {
-    if (!this.selectedSettlePayable) {
-      this.settleAttachments = [];
+  startSettle(row: Payable) {
+    this.settlingPayable.set(row);
+    this.settleForm = {
+      paymentDate: this.parseDate(row.PaymentDate ?? row.DueDate),
+      paidAmount: Number(row.PaidAmount ?? row.Amount ?? 0),
+      paymentMethod: (row.PaymentMethod as PaymentMethod) || 'pix',
+      paymentReference: row.PaymentReference ?? '',
+      paymentNotes: row.PaymentNotes ?? '',
+    };
+    this.openSettleDialog();
+  }
+
+  closePaymentDetails() {
+    this.closeSettleDialog();
+    this.settlingPayable.set(null);
+    this.settleForm = this.emptySettleForm();
+  }
+
+  async settlePayable() {
+    const payable = this.settlingPayable();
+    const paymentDate = this.settleForm.paymentDate;
+    if (!payable) return;
+    if (!paymentDate) {
+      this.snack.warning(this.t('Payment date is required.'));
       return;
     }
-    try {
-      const res = await this.api.get<any>(
-        `erp/financial/accounts/payables/${this.selectedSettlePayable.ErpFinAccPayableUUID}/attachments`,
-      );
-      this.settleAttachments = res?.data?.items ?? [];
-    } catch (err: any) {
-      this.settleAttachments = [];
-      this.showError(err?.message ?? this.t('Failed to load attachments.'));
+    if (this.toAmount(this.settleForm.paidAmount) <= 0) {
+      this.snack.warning(this.t('Paid amount must be greater than zero.'));
+      return;
     }
+
+    await this.runMutation(async () => {
+      await this.api.post(
+        `erp/financial/accounts/payables/${payable.ErpFinAccPayableUUID}/settle`,
+        {
+          paymentDate: this.formatDate(paymentDate),
+          paidAmount: this.toAmount(this.settleForm.paidAmount),
+          paymentMethod: this.settleForm.paymentMethod,
+          paymentReference: this.clean(this.settleForm.paymentReference),
+          paymentNotes: this.clean(this.settleForm.paymentNotes),
+        },
+      );
+      this.snack.success(this.t('Payable settled successfully.'));
+      this.closePaymentDetails();
+      this.snapshotResource.reload();
+    }, 'Failed to settle payable.');
   }
 
-  supplierLabel(rowOrUuid: ErpFinAccPayable | string | null | undefined) {
-    const uuid =
-      typeof rowOrUuid === 'string'
-        ? rowOrUuid
-        : this.normalizeOptionValue(rowOrUuid?.SupplierUUID);
-    const row = typeof rowOrUuid === 'string' ? null : rowOrUuid;
-    const directLabel = this.normalizeOptionValue(row?.SupplierName);
-    return (this.supplierMap().get(uuid)?.label ?? directLabel) || '-';
+  async reopenPayable(row: Payable) {
+    const confirmed = await this.confirm(
+      'Reopen payable',
+      'Do you want to reopen this payable and clear payment data?',
+      'Reopen',
+    );
+    if (!confirmed) return;
+
+    await this.runMutation(async () => {
+      await this.api.post(`erp/financial/accounts/payables/${row.ErpFinAccPayableUUID}/reopen`, {});
+      this.snack.success(this.t('Payable reopened successfully.'));
+      this.snapshotResource.reload();
+    }, 'Failed to reopen payable.');
   }
 
-  supplierValueChanged(value: string | number | boolean | null) {
-    this.form.supplierUUID = this.normalizeOptionValue(value);
-  }
-
-  formatAmount(value: number) {
-    return Number(value || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  supplierLabel(row: Payable) {
+    return this.clean(row.SupplierName) ?? row.SupplierUUID ?? '-';
   }
 
   statusLabel(status: PayableStatus) {
     return this.t(
-      this.statusOptions.find((option) => option.value === status)?.label ?? status,
+      this.statusOptions.find((item) => item.value === status)?.label ?? status,
     ).toUpperCase();
   }
 
-  statusChipClass(status: PayableStatus) {
-    const map: Record<PayableStatus, string> = {
-      open: 'chip-queued',
-      paid: 'chip-success',
-      overdue: 'chip-failed',
-      canceled: 'chip-skipped',
-    };
-    return map[status] ?? 'chip-queued';
+  amountLabel(value: number) {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: this.currencyResource.value(),
+    }).format(Number(value ?? 0));
+  }
+
+  dateLabel(value?: string | null) {
+    const date = this.parseDate(value);
+    return date ? new Intl.DateTimeFormat(undefined).format(date) : '-';
   }
 
   isStatusInactive(status: PayableStatus) {
     return status === 'canceled';
   }
 
-  private sortValue(row: ErpFinAccPayable, key: string): string | number {
-    switch (key) {
+  supplierChanged(value: string | number | boolean | null) {
+    this.form.supplierUUID = String(value ?? '').trim();
+  }
+
+  private async fetchPayables(search: string, status: PayableStatus | '') {
+    const params = new URLSearchParams({ limit: String(this.listLimit), offset: '0' });
+    if (search) params.set('q', search);
+    if (status) params.set('status', status);
+    return this.extractItems<Payable>(
+      await this.api.get<any>(`erp/financial/accounts/payables?${params.toString()}`),
+    );
+  }
+
+  private async fetchSuppliers() {
+    return this.fetchPaged('erp/suppliers', (item) => {
+      const value = String(item.SupplierUUID ?? item.supplierUUID ?? item.uuid ?? '').trim();
+      const label = String(item.Name ?? item.name ?? item.SupplierName ?? '').trim();
+      if (!value || !label) return null;
+      const description = [item.Document ?? item.document, item.Email ?? item.email]
+        .filter(Boolean)
+        .join(' - ');
+      return {
+        value,
+        label,
+        description,
+        searchText: `${label} ${description} ${value}`,
+      };
+    });
+  }
+
+  private mergeSuppliers(options: SupplierOption[], rows: Payable[]) {
+    const map = new Map(options.map((option) => [option.value, option]));
+    for (const row of rows) {
+      if (!row.SupplierUUID || map.has(row.SupplierUUID)) continue;
+      map.set(row.SupplierUUID, {
+        value: row.SupplierUUID,
+        label: this.supplierLabel(row),
+        description: [row.SupplierDocument, row.SupplierEmail].filter(Boolean).join(' - '),
+        searchText: `${this.supplierLabel(row)} ${row.SupplierDocument ?? ''} ${row.SupplierEmail ?? ''} ${
+          row.SupplierUUID
+        }`,
+      });
+    }
+    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  private async fetchPaged<T extends MnsSearchSelectFieldOption>(
+    endpoint: string,
+    mapItem: (item: any) => T | null,
+  ) {
+    const all: T[] = [];
+    for (let offset = 0; offset < 5000; offset += this.listLimit) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const response = await this.api.get<any>(
+        `${endpoint}${separator}limit=${this.listLimit}&offset=${offset}`,
+      );
+      const items = this.extractItems<any>(response);
+      all.push(
+        ...items.flatMap((item) => {
+          const mapped = mapItem(item);
+          return mapped ? [mapped] : [];
+        }),
+      );
+      if (items.length < this.listLimit) break;
+    }
+    return all;
+  }
+
+  private sortRows(rows: Payable[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    return [...rows].sort((a, b) => {
+      const result = this.compare(this.sortValue(a, active), this.sortValue(b, active));
+      return direction === 'asc' ? result : -result;
+    });
+  }
+
+  private sortValue(row: Payable, column: string) {
+    switch (column) {
       case 'description':
         return row.Description ?? '';
       case 'supplier':
@@ -697,19 +537,144 @@ export class FinancialPayablesPage {
       case 'amount':
         return Number(row.Amount ?? 0);
       case 'status':
-        return row.Status ?? '';
+        return this.statusLabel(row.Status);
       default:
         return '';
     }
   }
 
-  private compareValues(left: string | number, right: string | number) {
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+  private buildPayload() {
+    if (!this.form.supplierUUID) {
+      this.snack.warning(this.t('Supplier is required.'));
+      return null;
+    }
+    if (!this.form.description.trim()) {
+      this.snack.warning(this.t('Description is required.'));
+      return null;
+    }
+    if (!this.form.dueDate) {
+      this.snack.warning(this.t('Due date is required.'));
+      return null;
+    }
+    if (this.toAmount(this.form.amount) <= 0) {
+      this.snack.warning(this.t('Amount must be greater than zero.'));
+      return null;
+    }
+
+    return {
+      supplierUUID: this.form.supplierUUID,
+      description: this.form.description.trim(),
+      docNumber: this.clean(this.form.docNumber),
+      dueDate: this.formatDate(this.form.dueDate),
+      amount: this.toAmount(this.form.amount),
+      status: this.form.status,
+      notes: this.clean(this.form.notes),
+    };
   }
 
-  private normalizeOptionValue(value: unknown) {
-    return String(value ?? '').trim();
+  private emptyForm() {
+    return {
+      supplierUUID: '',
+      description: '',
+      docNumber: '',
+      dueDate: null as Date | null,
+      amount: 0,
+      status: 'open' as PayableStatus,
+      notes: '',
+    };
+  }
+
+  private emptySettleForm() {
+    return {
+      paymentDate: null as Date | null,
+      paidAmount: 0,
+      paymentMethod: 'pix' as PaymentMethod,
+      paymentReference: '',
+      paymentNotes: '',
+    };
+  }
+
+  private openFormDialog() {
+    const template = this.payableFormDialog();
+    if (!template || this.formDialogBinding) return;
+    this.formDialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      template,
+      'erp-payable-form-dialog',
+      {
+        onEscape: () => this.cancelForm(),
+      },
+    );
+    bindDialogClosed(this.formDialogBinding.ref, () => {
+      this.formDialogBinding?.stop();
+      this.formDialogBinding = null;
+    });
+  }
+
+  private closeFormDialog() {
+    if (!this.formDialogBinding) return;
+    const ref = this.formDialogBinding.ref;
+    this.formDialogBinding.stop();
+    this.formDialogBinding = null;
+    ref.close();
+  }
+
+  private openSettleDialog() {
+    const template = this.payableSettleDialog();
+    if (!template || this.settleDialogBinding) return;
+    this.settleDialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      template,
+      'erp-payable-form-dialog',
+      {
+        onEscape: () => this.closePaymentDetails(),
+      },
+    );
+    bindDialogClosed(this.settleDialogBinding.ref, () => {
+      this.settleDialogBinding?.stop();
+      this.settleDialogBinding = null;
+    });
+  }
+
+  private closeSettleDialog() {
+    if (!this.settleDialogBinding) return;
+    const ref = this.settleDialogBinding.ref;
+    this.settleDialogBinding.stop();
+    this.settleDialogBinding = null;
+    ref.close();
+  }
+
+  private async confirm(
+    title: string,
+    message: string,
+    confirmLabel: string,
+    params?: Record<string, unknown>,
+  ) {
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: {
+        title: this.t(title),
+        message: this.t(message, params),
+        confirmLabel: this.t(confirmLabel),
+      },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+    return !!(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private async runMutation(action: () => Promise<void>, fallbackMessage: string) {
+    this.mutating.set(true);
+    try {
+      await action();
+    } catch (error) {
+      this.showError(error, fallbackMessage);
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  private clearSelection() {
+    this.selectedIds.set(new Set());
   }
 
   private extractItems<T>(response: any): T[] {
@@ -719,156 +684,44 @@ export class FinancialPayablesPage {
     return [];
   }
 
-  private async fetchPagedItems(endpoint: string) {
-    const all: any[] = [];
-    const limit = 200;
-    let offset = 0;
-
-    for (let page = 0; page < 25; page++) {
-      const separator = endpoint.includes('?') ? '&' : '?';
-      const res = await this.api.get<any>(`${endpoint}${separator}limit=${limit}&offset=${offset}`);
-      const items = this.extractItems<any>(res);
-      all.push(...items);
-      if (items.length < limit) break;
-      offset += limit;
-    }
-
-    return all;
+  private compare(left: string | number, right: string | number) {
+    if (typeof left === 'number' && typeof right === 'number') return left - right;
+    return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
   }
 
-  private parseBulkDeleteResult(response: any, requestedIds: string[]) {
-    const data = response?.data ?? response ?? {};
-    const deleted = Array.isArray(data.deleted) ? data.deleted : requestedIds;
-    const failed = Array.isArray(data.failed) ? data.failed : [];
-    return {
-      deleted: deleted.filter((id: unknown): id is string => typeof id === 'string'),
-      failed: failed
-        .map((item: any) => ({
-          ErpFinAccPayableUUID: String(item?.ErpFinAccPayableUUID ?? item?.uuid ?? item?.id ?? ''),
-          message: String(item?.message ?? 'Failed to delete payable.'),
-        }))
-        .filter((item: { ErpFinAccPayableUUID: string }) => item.ErpFinAccPayableUUID),
-    };
-  }
-
-  private parseDateInput(value?: string | null) {
+  private parseDate(value?: string | null) {
     if (!value) return null;
-    const [datePart] = value.trim().split('T');
-    const [year, month, day] = datePart.split('-').map((part) => Number(part));
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day);
+    const [datePart] = value.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    return year && month && day ? new Date(year, month - 1, day) : null;
   }
 
-  private formatDateInput(value: Date | null) {
-    if (!value) return null;
+  private formatDate(value: Date) {
     const year = value.getFullYear();
     const month = String(value.getMonth() + 1).padStart(2, '0');
     const day = String(value.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
-  private getCurrencyAffixes() {
-    const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
-    const currency = this.getCurrencyFromLocale(locale);
-    const formatter = new Intl.NumberFormat(locale, { style: 'currency', currency });
-    const parts = formatter.formatToParts(1.1);
-    const currencyPart = parts.find((part) => part.type === 'currency')?.value ?? '$';
-    const integerIndex = parts.findIndex((part) => part.type === 'integer');
-    const currencyIndex = parts.findIndex((part) => part.type === 'currency');
-    const prefix =
-      currencyIndex > -1 && integerIndex > -1 && currencyIndex < integerIndex
-        ? currencyPart +
-          (parts[currencyIndex + 1]?.type === 'literal' ? parts[currencyIndex + 1].value : ' ')
-        : `${currencyPart} `;
-    return { prefix };
+  private toAmount(value: unknown) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const normalized = String(value ?? '')
+      .replace(/[^\d,.-]/g, '')
+      .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+      .replace(',', '.');
+    const amount = Number(normalized);
+    return Number.isFinite(amount) ? amount : 0;
   }
 
-  private getCurrencyFromLocale(locale: string) {
-    let region = '';
-    try {
-      region = new Intl.Locale(locale).region ?? '';
-    } catch {
-      region = '';
-    }
-    return (
-      {
-        BR: 'BRL',
-        US: 'USD',
-        PT: 'EUR',
-        ES: 'EUR',
-        GB: 'GBP',
-        MX: 'MXN',
-        AR: 'ARS',
-        CL: 'CLP',
-        CO: 'COP',
-        PE: 'PEN',
-        CA: 'CAD',
-      }[region] ?? 'USD'
+  private clean(value: unknown) {
+    const text = String(value ?? '').trim();
+    return text || null;
+  }
+
+  private showError(error: unknown, fallbackMessage: string) {
+    this.snack.error(
+      error instanceof Error && error.message ? error.message : this.t(fallbackMessage),
     );
-  }
-
-  private openPayableDialog() {
-    const payableFormDialog = this.payableFormDialog();
-    if (!payableFormDialog || this.payableFormDialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      payableFormDialog,
-      'erp-payable-form-dialog',
-    );
-    this.payableFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.payableFormDialogRef, () => this.cancelPayableForm());
-    bindDialogClosed(this.payableFormDialogRef, () => {
-      this.dialogBinding?.stop();
-      this.dialogBinding = null;
-      this.payableFormDialogRef = null;
-    });
-  }
-
-  private closePayableDialog() {
-    if (!this.payableFormDialogRef) return;
-    this.dialogBinding?.stop();
-    this.dialogBinding = null;
-    this.payableFormDialogRef.close();
-    this.payableFormDialogRef = null;
-  }
-
-  private openSettleDialogInternal() {
-    const payableSettleDialog = this.payableSettleDialog();
-    if (!payableSettleDialog || this.payableSettleDialogRef) return;
-    this.settleDialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      payableSettleDialog,
-      'erp-payable-form-dialog',
-    );
-    this.payableSettleDialogRef = this.settleDialogBinding.ref;
-    bindDialogEscape(this.payableSettleDialogRef, () => this.closeSettleDialog());
-    bindDialogClosed(this.payableSettleDialogRef, () => {
-      this.settleDialogBinding?.stop();
-      this.settleDialogBinding = null;
-      this.payableSettleDialogRef = null;
-      this.selectedSettlePayable = null;
-      this.settleAttachments = [];
-      this.settleFiles = [];
-    });
-  }
-
-  closeSettleDialog() {
-    if (!this.payableSettleDialogRef) return;
-    this.settleDialogBinding?.stop();
-    this.settleDialogBinding = null;
-    this.payableSettleDialogRef.close();
-    this.payableSettleDialogRef = null;
-    this.selectedSettlePayable = null;
-    this.settleAttachments = [];
-    this.settleFiles = [];
-  }
-
-  private showError(message: string) {
-    this.snack.error(message);
-  }
-
-  private showWarning(message: string) {
-    this.snack.warning(message);
   }
 
   private t(key: string, params?: Record<string, unknown>) {

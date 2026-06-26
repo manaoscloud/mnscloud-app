@@ -8,12 +8,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -31,24 +30,24 @@ import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
-import {
-  bindDialogClosed,
-  bindDialogEscape,
-} from '../../../../../shared/dialog/dialog-events.util';
+import { SystemParameterService } from '../../../../../services/system-parameter.service';
+import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
+import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
-import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
-import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
-import { MnsSearchSelectFieldComponent } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import type { MnsSearchSelectFieldOption } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  type MnsSearchSelectFieldOption,
+} from '../../../../../shared/forms';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type ReceivableStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 
-type ErpFinAccReceivable = {
+type Receivable = {
   ErpFinAccReceivableUUID: string;
   CustomerUUID: string;
   CustomerName?: string | null;
@@ -63,8 +62,11 @@ type ErpFinAccReceivable = {
   Notes?: string | null;
 };
 
-type CustomerOption = MnsSearchSelectFieldOption & {
-  value: string;
+type CustomerOption = MnsSearchSelectFieldOption & { value: string };
+
+type ReceivablesSnapshot = {
+  items: Receivable[];
+  customers: CustomerOption[];
 };
 
 @Component({
@@ -98,23 +100,38 @@ type CustomerOption = MnsSearchSelectFieldOption & {
   styleUrls: ['./receivables.scss'],
 })
 export class FinancialReceivablesPage {
-  private api = inject(ApiService);
-  private snack = inject(SnackbarService);
-  private dialog = inject(MatDialog);
-  private i18n = inject(TranslocoService);
+  private readonly api = inject(ApiService);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(TranslocoService);
+  private readonly parameters = inject(SystemParameterService);
+  private readonly snack = inject(SnackbarService);
+  private readonly listLimit = 200;
 
   readonly receivableFormDialog = viewChild<TemplateRef<unknown>>('receivableFormDialog');
-  private receivableFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
+  private formDialogBinding: CrudDialogBinding | null = null;
 
-  readonly search = signal('');
   readonly searchInput = signal('');
-  readonly statusFilter = signal<ReceivableStatus | ''>('');
+  readonly statusInput = signal<ReceivableStatus | ''>('');
+  readonly search = signal('');
+  readonly status = signal<ReceivableStatus | ''>('');
   readonly sortActive = signal('dueDate');
   readonly sortDirection = signal<SortDirection>('asc');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
   readonly selectedIds = signal<Set<string>>(new Set());
+  readonly saving = signal(false);
+  readonly mutating = signal(false);
+  readonly editing = signal<Receivable | null>(null);
+  readonly issuingBoletoUUID = signal<string | null>(null);
+
+  readonly statusOptions: { value: ReceivableStatus; label: string }[] = [
+    { value: 'open', label: 'Open' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'overdue', label: 'Overdue' },
+    { value: 'canceled', label: 'Canceled' },
+  ];
+  readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
 
   readonly displayedColumns = [
     'select',
@@ -127,81 +144,33 @@ export class FinancialReceivablesPage {
     'actions',
   ];
 
-  saving = false;
-  deletingMany = false;
-  issuingBoletoUUID: string | null = null;
-  editingReceivable: ErpFinAccReceivable | null = null;
-  readonly customers = signal<CustomerOption[]>([]);
-  readonly customerMap = signal(new Map<string, CustomerOption>());
-  amountPrefix = '';
+  form = this.emptyForm();
 
-  readonly statusOptions: { value: ReceivableStatus; label: string }[] = [
-    { value: 'open', label: 'Open' },
-    { value: 'paid', label: 'Paid' },
-    { value: 'overdue', label: 'Overdue' },
-    { value: 'canceled', label: 'Canceled' },
-  ];
+  readonly currencyResource = resource({
+    defaultValue: 'BRL',
+    loader: () => this.parameters.resolveDefaultCurrency('BRL'),
+  });
 
-  readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
-
-  form = {
-    customerUUID: '',
-    description: '',
-    docNumber: '',
-    dueDate: null as Date | null,
-    amount: 0,
-    status: 'open' as ReceivableStatus,
-    notes: '',
-  };
-
-  private readonly receivablesResource = resource({
-    defaultValue: [] as ErpFinAccReceivable[],
-    loader: async () => {
-      const params = new URLSearchParams({ limit: '500', offset: '0' });
-      const q = this.search().trim();
-      const status = this.statusFilter();
-      if (q) params.set('q', q);
-      if (status) params.set('status', status);
-
-      const res = await this.api.get<{ data?: { items?: ErpFinAccReceivable[] } }>(
-        `erp/financial/accounts/receivables?${params.toString()}`,
-      );
-      return this.extractItems<ErpFinAccReceivable>(res);
+  private readonly snapshotResource = resource({
+    params: () => ({ search: this.search(), status: this.status() }),
+    defaultValue: { items: [], customers: [] } as ReceivablesSnapshot,
+    loader: async ({ params }) => {
+      const [items, customers] = await Promise.all([
+        this.fetchReceivables(params.search, params.status),
+        this.fetchCustomers(),
+      ]);
+      return { items, customers: this.mergeCustomers(customers, items) };
     },
   });
 
-  readonly filteredRows = computed(() => {
-    const q = this.search().trim().toLowerCase();
-    const status = this.statusFilter();
-    return this.receivablesResource.value().filter((row) => {
-      if (status && row.Status !== status) return false;
-      if (!q) return true;
-      return [row.Description, row.DocNumber, this.customerLabel(row)]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(q));
-    });
-  });
-
-  readonly sortedRows = computed(() => {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    const rows = [...this.filteredRows()];
-    if (!active || !direction) return rows;
-
-    return rows.sort((left, right) => {
-      const result = this.compareValues(
-        this.sortValue(left, active),
-        this.sortValue(right, active),
-      );
-      return direction === 'asc' ? result : -result;
-    });
-  });
-
+  readonly loading = computed(() => this.snapshotResource.isLoading() || this.mutating());
+  readonly rows = computed(() => this.snapshotResource.value().items);
+  readonly customerOptions = computed(() => this.snapshotResource.value().customers);
+  readonly sortedRows = computed(() => this.sortRows(this.rows()));
   readonly visibleRows = computed(() => {
     const start = this.pageIndex() * this.pageSize();
     return this.sortedRows().slice(start, start + this.pageSize());
   });
-
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly allVisibleSelected = computed(() => {
     const rows = this.visibleRows();
@@ -217,40 +186,33 @@ export class FinancialReceivablesPage {
     );
   });
 
-  get loading() {
-    return this.receivablesResource.isLoading();
-  }
-
-  constructor() {
-    this.amountPrefix = this.getCurrencyAffixes().prefix;
-    this.startCreate();
-    void this.fetchCustomers();
-    inject(DestroyRef).onDestroy(() => this.closeReceivableDialog());
-  }
+  private readonly cleanup = this.destroyRef.onDestroy(() => this.closeFormDialog());
 
   refreshList() {
-    this.receivablesResource.reload();
+    this.snapshotResource.reload();
   }
 
   applySearchFilters() {
-    this.search.set(this.searchInput().trim());
     this.pageIndex.set(0);
     this.clearSelection();
-    this.receivablesResource.reload();
+    this.search.set(this.searchInput().trim());
+    this.status.set(this.statusInput());
+    this.snapshotResource.reload();
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
-    this.statusFilter.set('');
+    this.status.set('');
     this.pageIndex.set(0);
     this.clearSelection();
-    this.receivablesResource.reload();
+    this.snapshotResource.reload();
   }
 
   setSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
+    this.sortActive.set(sort.active || '');
+    this.sortDirection.set(sort.direction || '');
     this.pageIndex.set(0);
   }
 
@@ -259,11 +221,11 @@ export class FinancialReceivablesPage {
     this.pageSize.set(event.pageSize);
   }
 
-  isSelected(row: ErpFinAccReceivable) {
+  isSelected(row: Receivable) {
     return this.selectedIds().has(row.ErpFinAccReceivableUUID);
   }
 
-  toggleRow(row: ErpFinAccReceivable, checked: boolean) {
+  toggleRow(row: Receivable, checked: boolean) {
     const next = new Set(this.selectedIds());
     if (checked) next.add(row.ErpFinAccReceivableUUID);
     else next.delete(row.ErpFinAccReceivableUUID);
@@ -279,277 +241,232 @@ export class FinancialReceivablesPage {
     this.selectedIds.set(next);
   }
 
-  clearSelection() {
-    this.selectedIds.set(new Set());
-  }
-
-  async deleteManyReceivables() {
-    const ids = [...this.selectedIds()];
-    if (!ids.length) return;
-
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Delete selected receivables'),
-        message: this.t('Delete selected receivables confirmation', { count: ids.length }),
-        confirmLabel: this.t('Delete selected'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.deletingMany = true;
-    try {
-      const response = await this.api.delete('erp/financial/accounts/receivables/bulk', { ids });
-      const result = this.parseBulkDeleteResult(response, ids);
-      const failedIds = new Set<string>(
-        result.failed.map(
-          (item: { ErpFinAccReceivableUUID: string }) => item.ErpFinAccReceivableUUID,
-        ),
-      );
-      this.selectedIds.set(failedIds);
-
-      if (result.failed.length) {
-        this.snack.warning(
-          this.t('Receivables bulk delete partial failure', {
-            deleted: result.deleted.length,
-            failed: result.failed.length,
-          }),
-        );
-      } else {
-        this.snack.success(
-          this.t('Receivables bulk deleted successfully', { count: result.deleted.length }),
-        );
-      }
-      this.receivablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to delete selected receivables.'));
-    } finally {
-      this.deletingMany = false;
-    }
-  }
-
-  async fetchCustomers() {
-    try {
-      const items = await this.fetchPagedItems('erp/customers');
-      const customers: CustomerOption[] = items.flatMap((item: any) => {
-        const value = this.normalizeOptionValue(
-          item.CustomerUUID ?? item.customerUUID ?? item.uuid ?? item.CustomerCusUUID,
-        );
-        const label = String(
-          item.Name ?? item.name ?? item.CustomerName ?? item.label ?? '',
-        ).trim();
-        if (!value || !label) return [];
-        return [
-          {
-            value,
-            label,
-            description: [item.Document ?? item.document, item.Email ?? item.email]
-              .filter(Boolean)
-              .join(' - '),
-            searchText: [item.Document ?? item.document, item.Email ?? item.email]
-              .filter(Boolean)
-              .join(' '),
-          } satisfies CustomerOption,
-        ];
-      });
-      this.customers.set(customers);
-      this.customerMap.set(
-        new Map(customers.map((customer: CustomerOption) => [customer.value, customer])),
-      );
-    } catch (err) {
-      console.error(this.t('Failed to load customers.'), err);
-    }
-  }
-
   startCreate() {
-    this.editingReceivable = null;
-    this.form.customerUUID = '';
-    this.form.description = '';
-    this.form.docNumber = '';
-    this.form.dueDate = null;
-    this.form.amount = 0;
-    this.form.status = 'open';
-    this.form.notes = '';
+    this.editing.set(null);
+    this.form = this.emptyForm();
+    this.openFormDialog();
   }
 
-  openCreateDialog() {
-    this.startCreate();
-    this.openReceivableDialog();
+  startEdit(row: Receivable) {
+    this.editing.set(row);
+    this.form = {
+      customerUUID: row.CustomerUUID,
+      description: row.Description ?? '',
+      docNumber: row.DocNumber ?? '',
+      dueDate: this.parseDate(row.DueDate),
+      amount: Number(row.Amount ?? 0),
+      status: row.Status ?? 'open',
+      notes: row.Notes ?? '',
+    };
+    this.openFormDialog();
   }
 
-  openEditDialog(receivable: ErpFinAccReceivable) {
-    this.editingReceivable = receivable;
-    this.form.customerUUID = receivable.CustomerUUID ?? '';
-    this.form.description = receivable.Description ?? '';
-    this.form.docNumber = receivable.DocNumber ?? '';
-    this.form.dueDate = this.parseDateInput(receivable.DueDate);
-    this.form.amount = receivable.Amount ?? 0;
-    this.form.status = receivable.Status ?? 'open';
-    this.form.notes = receivable.Notes ?? '';
-    this.openReceivableDialog();
+  cancelForm() {
+    this.closeFormDialog();
+    this.editing.set(null);
+    this.form = this.emptyForm();
   }
 
   async saveReceivable(closeAfterSave = true) {
-    if (!this.form.description.trim()) {
-      this.showWarning(this.t('Description is required.'));
-      return;
-    }
-    if (!this.form.customerUUID) {
-      this.showWarning(this.t('Customer is required.'));
-      return;
-    }
-    if (!this.form.dueDate) {
-      this.showWarning(this.t('Due date is required.'));
-      return;
-    }
-    if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
-      this.showWarning(this.t('Amount must be greater than zero.'));
-      return;
-    }
+    const payload = this.buildPayload();
+    if (!payload) return;
 
-    this.saving = true;
+    this.saving.set(true);
     try {
-      const payload = {
-        customerUUID: this.form.customerUUID,
-        description: this.form.description.trim(),
-        docNumber: this.form.docNumber?.trim() || null,
-        dueDate: this.formatDateInput(this.form.dueDate),
-        amount: Number(this.form.amount),
-        status: this.form.status,
-        notes: this.form.notes?.trim() || null,
-      };
-
-      if (this.editingReceivable) {
+      const editing = this.editing();
+      if (editing) {
         await this.api.put(
-          `erp/financial/accounts/receivables/${this.editingReceivable.ErpFinAccReceivableUUID}`,
+          `erp/financial/accounts/receivables/${editing.ErpFinAccReceivableUUID}`,
           payload,
         );
         this.snack.success(this.t('Receivable updated successfully.'));
-        this.closeReceivableDialog();
-        this.startCreate();
       } else {
         await this.api.post('erp/financial/accounts/receivables', payload);
         this.snack.success(this.t('Receivable created successfully.'));
-        if (closeAfterSave) {
-          this.closeReceivableDialog();
-          this.startCreate();
-        } else {
-          this.startCreate();
-        }
       }
-      this.receivablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to save receivable.'));
+
+      this.snapshotResource.reload();
+      if (closeAfterSave || editing) this.cancelForm();
+      else this.form = this.emptyForm();
+    } catch (error) {
+      this.showError(error, 'Failed to save receivable.');
     } finally {
-      this.saving = false;
+      this.saving.set(false);
     }
   }
 
   async saveAndNewReceivable() {
-    if (this.editingReceivable) return;
+    if (this.editing()) return;
     await this.saveReceivable(false);
   }
 
-  cancelReceivableForm() {
-    this.closeReceivableDialog();
-    this.startCreate();
-  }
-
-  async deleteReceivable(receivableUUID: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Delete receivable'),
-        message: this.t('Are you sure you want to delete this receivable?'),
-        confirmLabel: this.t('Delete'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
+  async deleteReceivable(row: Receivable) {
+    const confirmed = await this.confirm(
+      'Delete receivable',
+      'Are you sure you want to delete this receivable?',
+      'Delete',
+    );
     if (!confirmed) return;
-    try {
-      await this.api.delete(`erp/financial/accounts/receivables/${receivableUUID}`);
+
+    await this.runMutation(async () => {
+      await this.api.delete(`erp/financial/accounts/receivables/${row.ErpFinAccReceivableUUID}`);
       this.snack.success(this.t('Receivable deleted successfully.'));
       this.clearSelection();
-      this.receivablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to delete receivable.'));
-    }
+      this.snapshotResource.reload();
+    }, 'Failed to delete receivable.');
   }
 
-  async issueBoletoFromReceivable(receivable: ErpFinAccReceivable) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Issue boleto'),
-        message: this.t('Issue a boleto from this receivable now?'),
-        confirmLabel: this.t('Issue boleto'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
+  async deleteSelectedReceivables() {
+    const ids = [...this.selectedIds()];
+    if (!ids.length) return;
+
+    const confirmed = await this.confirm(
+      'Delete selected receivables',
+      'Delete selected receivables confirmation',
+      'Delete selected',
+      { count: ids.length },
+    );
     if (!confirmed) return;
 
-    this.issuingBoletoUUID = receivable.ErpFinAccReceivableUUID;
-    try {
+    await this.runMutation(async () => {
+      const response = await this.api.delete<any>('erp/financial/accounts/receivables/bulk', {
+        ids,
+      });
+      const failed = Array.isArray(response?.data?.failed) ? response.data.failed : [];
+      this.selectedIds.set(
+        new Set(failed.map((item: any) => String(item?.ErpFinAccReceivableUUID ?? item?.id ?? ''))),
+      );
+      this.snack.success(this.t('Receivables bulk delete completed.'));
+      this.snapshotResource.reload();
+    }, 'Failed to delete selected receivables.');
+  }
+
+  async issueBoleto(row: Receivable) {
+    const confirmed = await this.confirm(
+      'Issue boleto',
+      'Issue a boleto from this receivable now?',
+      'Issue boleto',
+    );
+    if (!confirmed) return;
+
+    this.issuingBoletoUUID.set(row.ErpFinAccReceivableUUID);
+    await this.runMutation(async () => {
       await this.api.post(
-        `erp/financial/accounts/receivables/${receivable.ErpFinAccReceivableUUID}/issue-boleto`,
+        `erp/financial/accounts/receivables/${row.ErpFinAccReceivableUUID}/issue-boleto`,
         {},
       );
       this.snack.success(this.t('Boleto issued successfully.'));
-      this.receivablesResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? this.t('Failed to issue boleto from receivable.'));
-    } finally {
-      this.issuingBoletoUUID = null;
-    }
+      this.snapshotResource.reload();
+    }, 'Failed to issue boleto from receivable.');
+    this.issuingBoletoUUID.set(null);
   }
 
-  customerLabel(rowOrUuid: ErpFinAccReceivable | string | null | undefined) {
-    const uuid =
-      typeof rowOrUuid === 'string'
-        ? rowOrUuid
-        : this.normalizeOptionValue(rowOrUuid?.CustomerUUID);
-    const row = typeof rowOrUuid === 'string' ? null : rowOrUuid;
-    const directLabel = this.normalizeOptionValue(row?.CustomerName);
-    return (this.customerMap().get(uuid)?.label ?? directLabel) || '-';
-  }
-
-  customerValueChanged(value: string | number | boolean | null) {
-    this.form.customerUUID = this.normalizeOptionValue(value);
-  }
-
-  formatAmount(value: number) {
-    return Number(value || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  customerLabel(row: Receivable) {
+    return this.clean(row.CustomerName) ?? row.CustomerUUID ?? '-';
   }
 
   statusLabel(status: ReceivableStatus) {
     return this.t(
-      this.statusOptions.find((option) => option.value === status)?.label ?? status,
+      this.statusOptions.find((item) => item.value === status)?.label ?? status,
     ).toUpperCase();
   }
 
-  statusChipClass(status: ReceivableStatus) {
-    const map: Record<ReceivableStatus, string> = {
-      open: 'chip-queued',
-      paid: 'chip-success',
-      overdue: 'chip-failed',
-      canceled: 'chip-skipped',
-    };
-    return map[status] ?? 'chip-queued';
+  amountLabel(value: number) {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: this.currencyResource.value(),
+    }).format(Number(value ?? 0));
+  }
+
+  dateLabel(value?: string | null) {
+    const date = this.parseDate(value);
+    return date ? new Intl.DateTimeFormat(undefined).format(date) : '-';
   }
 
   isStatusInactive(status: ReceivableStatus) {
     return status === 'canceled';
   }
 
-  private sortValue(row: ErpFinAccReceivable, key: string): string | number {
-    switch (key) {
+  customerChanged(value: string | number | boolean | null) {
+    this.form.customerUUID = String(value ?? '').trim();
+  }
+
+  private async fetchReceivables(search: string, status: ReceivableStatus | '') {
+    const params = new URLSearchParams({ limit: String(this.listLimit), offset: '0' });
+    if (search) params.set('q', search);
+    if (status) params.set('status', status);
+    return this.extractItems<Receivable>(
+      await this.api.get<any>(`erp/financial/accounts/receivables?${params.toString()}`),
+    );
+  }
+
+  private async fetchCustomers() {
+    return this.fetchPaged('erp/customers', (item) => {
+      const value = String(item.CustomerUUID ?? item.customerUUID ?? item.uuid ?? '').trim();
+      const label = String(item.Name ?? item.name ?? item.CustomerName ?? '').trim();
+      if (!value || !label) return null;
+      const description = [item.Document ?? item.document, item.Email ?? item.email]
+        .filter(Boolean)
+        .join(' - ');
+      return {
+        value,
+        label,
+        description,
+        searchText: `${label} ${description} ${value}`,
+      };
+    });
+  }
+
+  private mergeCustomers(options: CustomerOption[], rows: Receivable[]) {
+    const map = new Map(options.map((option) => [option.value, option]));
+    for (const row of rows) {
+      if (!row.CustomerUUID || map.has(row.CustomerUUID)) continue;
+      map.set(row.CustomerUUID, {
+        value: row.CustomerUUID,
+        label: this.customerLabel(row),
+        description: [row.CustomerDocument, row.CustomerEmail].filter(Boolean).join(' - '),
+        searchText: `${this.customerLabel(row)} ${row.CustomerDocument ?? ''} ${row.CustomerEmail ?? ''} ${
+          row.CustomerUUID
+        }`,
+      });
+    }
+    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  private async fetchPaged<T extends MnsSearchSelectFieldOption>(
+    endpoint: string,
+    mapItem: (item: any) => T | null,
+  ) {
+    const all: T[] = [];
+    for (let offset = 0; offset < 5000; offset += this.listLimit) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const response = await this.api.get<any>(
+        `${endpoint}${separator}limit=${this.listLimit}&offset=${offset}`,
+      );
+      const items = this.extractItems<any>(response);
+      all.push(
+        ...items.flatMap((item) => {
+          const mapped = mapItem(item);
+          return mapped ? [mapped] : [];
+        }),
+      );
+      if (items.length < this.listLimit) break;
+    }
+    return all;
+  }
+
+  private sortRows(rows: Receivable[]) {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    if (!active || !direction) return rows;
+    return [...rows].sort((a, b) => {
+      const result = this.compare(this.sortValue(a, active), this.sortValue(b, active));
+      return direction === 'asc' ? result : -result;
+    });
+  }
+
+  private sortValue(row: Receivable, column: string) {
+    switch (column) {
       case 'description':
         return row.Description ?? '';
       case 'customer':
@@ -561,19 +478,109 @@ export class FinancialReceivablesPage {
       case 'amount':
         return Number(row.Amount ?? 0);
       case 'status':
-        return row.Status ?? '';
+        return this.statusLabel(row.Status);
       default:
         return '';
     }
   }
 
-  private compareValues(left: string | number, right: string | number) {
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+  private buildPayload() {
+    if (!this.form.customerUUID) {
+      this.snack.warning(this.t('Customer is required.'));
+      return null;
+    }
+    if (!this.form.description.trim()) {
+      this.snack.warning(this.t('Description is required.'));
+      return null;
+    }
+    if (!this.form.dueDate) {
+      this.snack.warning(this.t('Due date is required.'));
+      return null;
+    }
+    if (this.toAmount(this.form.amount) <= 0) {
+      this.snack.warning(this.t('Amount must be greater than zero.'));
+      return null;
+    }
+
+    return {
+      customerUUID: this.form.customerUUID,
+      description: this.form.description.trim(),
+      docNumber: this.clean(this.form.docNumber),
+      dueDate: this.formatDate(this.form.dueDate),
+      amount: this.toAmount(this.form.amount),
+      status: this.form.status,
+      notes: this.clean(this.form.notes),
+    };
   }
 
-  private normalizeOptionValue(value: unknown) {
-    return String(value ?? '').trim();
+  private emptyForm() {
+    return {
+      customerUUID: '',
+      description: '',
+      docNumber: '',
+      dueDate: null as Date | null,
+      amount: 0,
+      status: 'open' as ReceivableStatus,
+      notes: '',
+    };
+  }
+
+  private openFormDialog() {
+    const template = this.receivableFormDialog();
+    if (!template || this.formDialogBinding) return;
+    this.formDialogBinding = openCrudTemplateDialog(
+      this.dialog,
+      template,
+      'erp-receivable-form-dialog',
+      {
+        onEscape: () => this.cancelForm(),
+      },
+    );
+    bindDialogClosed(this.formDialogBinding.ref, () => {
+      this.formDialogBinding?.stop();
+      this.formDialogBinding = null;
+    });
+  }
+
+  private closeFormDialog() {
+    if (!this.formDialogBinding) return;
+    const ref = this.formDialogBinding.ref;
+    this.formDialogBinding.stop();
+    this.formDialogBinding = null;
+    ref.close();
+  }
+
+  private async confirm(
+    title: string,
+    message: string,
+    confirmLabel: string,
+    params?: Record<string, unknown>,
+  ) {
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: {
+        title: this.t(title),
+        message: this.t(message, params),
+        confirmLabel: this.t(confirmLabel),
+      },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+    return !!(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private async runMutation(action: () => Promise<void>, fallbackMessage: string) {
+    this.mutating.set(true);
+    try {
+      await action();
+    } catch (error) {
+      this.showError(error, fallbackMessage);
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  private clearSelection() {
+    this.selectedIds.set(new Set());
   }
 
   private extractItems<T>(response: any): T[] {
@@ -583,127 +590,44 @@ export class FinancialReceivablesPage {
     return [];
   }
 
-  private async fetchPagedItems(endpoint: string) {
-    const all: any[] = [];
-    const limit = 200;
-    let offset = 0;
-
-    for (let page = 0; page < 25; page++) {
-      const separator = endpoint.includes('?') ? '&' : '?';
-      const res = await this.api.get<any>(`${endpoint}${separator}limit=${limit}&offset=${offset}`);
-      const items = this.extractItems<any>(res);
-      all.push(...items);
-      if (items.length < limit) break;
-      offset += limit;
-    }
-
-    return all;
+  private compare(left: string | number, right: string | number) {
+    if (typeof left === 'number' && typeof right === 'number') return left - right;
+    return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
   }
 
-  private parseBulkDeleteResult(response: any, requestedIds: string[]) {
-    const data = response?.data ?? response ?? {};
-    const deleted = Array.isArray(data.deleted) ? data.deleted : requestedIds;
-    const failed = Array.isArray(data.failed) ? data.failed : [];
-    return {
-      deleted: deleted.filter((id: unknown): id is string => typeof id === 'string'),
-      failed: failed
-        .map((item: any) => ({
-          ErpFinAccReceivableUUID: String(
-            item?.ErpFinAccReceivableUUID ?? item?.uuid ?? item?.id ?? '',
-          ),
-          message: String(item?.message ?? 'Failed to delete receivable.'),
-        }))
-        .filter((item: { ErpFinAccReceivableUUID: string }) => item.ErpFinAccReceivableUUID),
-    };
-  }
-
-  private parseDateInput(value?: string | null) {
+  private parseDate(value?: string | null) {
     if (!value) return null;
-    const [datePart] = value.trim().split('T');
-    const [year, month, day] = datePart.split('-').map((part) => Number(part));
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day);
+    const [datePart] = value.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    return year && month && day ? new Date(year, month - 1, day) : null;
   }
 
-  private formatDateInput(value: Date | null) {
-    if (!value) return null;
+  private formatDate(value: Date) {
     const year = value.getFullYear();
     const month = String(value.getMonth() + 1).padStart(2, '0');
     const day = String(value.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
-  private getCurrencyAffixes() {
-    const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
-    const currency = this.getCurrencyFromLocale(locale);
-    const formatter = new Intl.NumberFormat(locale, { style: 'currency', currency });
-    const parts = formatter.formatToParts(1.1);
-    const currencyPart = parts.find((part) => part.type === 'currency')?.value ?? '$';
-    const integerIndex = parts.findIndex((part) => part.type === 'integer');
-    const currencyIndex = parts.findIndex((part) => part.type === 'currency');
-    const prefix =
-      currencyIndex > -1 && integerIndex > -1 && currencyIndex < integerIndex
-        ? currencyPart +
-          (parts[currencyIndex + 1]?.type === 'literal' ? parts[currencyIndex + 1].value : ' ')
-        : `${currencyPart} `;
-    return { prefix };
+  private toAmount(value: unknown) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const normalized = String(value ?? '')
+      .replace(/[^\d,.-]/g, '')
+      .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+      .replace(',', '.');
+    const amount = Number(normalized);
+    return Number.isFinite(amount) ? amount : 0;
   }
 
-  private getCurrencyFromLocale(locale: string) {
-    let region = '';
-    try {
-      region = new Intl.Locale(locale).region ?? '';
-    } catch {
-      region = '';
-    }
-    return (
-      {
-        BR: 'BRL',
-        US: 'USD',
-        PT: 'EUR',
-        ES: 'EUR',
-        GB: 'GBP',
-        MX: 'MXN',
-        AR: 'ARS',
-        CL: 'CLP',
-        CO: 'COP',
-        PE: 'PEN',
-        CA: 'CAD',
-      }[region] ?? 'USD'
+  private clean(value: unknown) {
+    const text = String(value ?? '').trim();
+    return text || null;
+  }
+
+  private showError(error: unknown, fallbackMessage: string) {
+    this.snack.error(
+      error instanceof Error && error.message ? error.message : this.t(fallbackMessage),
     );
-  }
-
-  private openReceivableDialog() {
-    const receivableFormDialog = this.receivableFormDialog();
-    if (!receivableFormDialog || this.receivableFormDialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      receivableFormDialog,
-      'erp-receivable-form-dialog',
-    );
-    this.receivableFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.receivableFormDialogRef, () => this.cancelReceivableForm());
-    bindDialogClosed(this.receivableFormDialogRef, () => {
-      this.dialogBinding?.stop();
-      this.dialogBinding = null;
-      this.receivableFormDialogRef = null;
-    });
-  }
-
-  private closeReceivableDialog() {
-    if (!this.receivableFormDialogRef) return;
-    this.dialogBinding?.stop();
-    this.dialogBinding = null;
-    this.receivableFormDialogRef.close();
-    this.receivableFormDialogRef = null;
-  }
-
-  private showError(message: string) {
-    this.snack.error(message);
-  }
-
-  private showWarning(message: string) {
-    this.snack.warning(message);
   }
 
   private t(key: string, params?: Record<string, unknown>) {
