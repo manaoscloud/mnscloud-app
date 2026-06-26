@@ -127,7 +127,7 @@ export class FinancialReceivablesPage {
   deletingMany = false;
   issuingBoletoUUID: string | null = null;
   editingReceivable: ErpFinAccReceivable | null = null;
-  customers: CustomerOption[] = [];
+  readonly customers = signal<CustomerOption[]>([]);
   customerMap = new Map<string, CustomerOption>();
   amountPrefix = '';
 
@@ -330,12 +330,31 @@ export class FinancialReceivablesPage {
     try {
       const res = await this.api.get<any>('erp/customers?limit=500&offset=0');
       const items = res?.data?.items ?? [];
-      this.customers = items.map((item: any) => ({
-        value: item.CustomerUUID,
-        label: item.Name,
-        searchText: [item.Document, item.Email].filter(Boolean).join(' '),
-      }));
-      this.customerMap = new Map(this.customers.map((customer) => [customer.value, customer]));
+      const customers: CustomerOption[] = items
+        .map((item: any) => {
+          const value = this.normalizeOptionValue(
+            item.CustomerUUID ?? item.customerUUID ?? item.uuid ?? item.CustomerCusUUID,
+          );
+          const label = String(
+            item.Name ?? item.name ?? item.CustomerName ?? item.label ?? '',
+          ).trim();
+          if (!value || !label) return null;
+          return {
+            value,
+            label,
+            description: [item.Document ?? item.document, item.Email ?? item.email]
+              .filter(Boolean)
+              .join(' - '),
+            searchText: [item.Document ?? item.document, item.Email ?? item.email]
+              .filter(Boolean)
+              .join(' '),
+          } satisfies CustomerOption;
+        })
+        .filter((item: CustomerOption | null): item is CustomerOption => !!item);
+      this.customers.set(customers);
+      this.customerMap = new Map(
+        customers.map((customer: CustomerOption) => [customer.value, customer]),
+      );
     } catch (err) {
       console.error(this.t('Failed to load customers.'), err);
     }
@@ -489,6 +508,10 @@ export class FinancialReceivablesPage {
     return this.customerMap.get(uuid)?.label ?? '-';
   }
 
+  customerValueChanged(value: string | number | boolean | null) {
+    this.form.customerUUID = this.normalizeOptionValue(value);
+  }
+
   formatAmount(value: number) {
     return Number(value || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -538,6 +561,10 @@ export class FinancialReceivablesPage {
   private compareValues(left: string | number, right: string | number) {
     if (typeof left === 'number' && typeof right === 'number') return left - right;
     return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+  }
+
+  private normalizeOptionValue(value: unknown) {
+    return String(value ?? '').trim();
   }
 
   private parseBulkDeleteResult(response: any, requestedIds: string[]) {

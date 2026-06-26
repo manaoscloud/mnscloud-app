@@ -146,7 +146,7 @@ export class FinancialPayablesPage {
   deletingMany = false;
   editingPayable: ErpFinAccPayable | null = null;
   selectedSettlePayable: ErpFinAccPayable | null = null;
-  suppliers: SupplierOption[] = [];
+  readonly suppliers = signal<SupplierOption[]>([]);
   supplierMap = new Map<string, SupplierOption>();
   amountPrefix = '';
   settleAttachments: ErpFinAccPayableAttachment[] = [];
@@ -363,12 +363,31 @@ export class FinancialPayablesPage {
     try {
       const res = await this.api.get<any>('erp/suppliers?limit=500&offset=0');
       const items = res?.data?.items ?? [];
-      this.suppliers = items.map((item: any) => ({
-        value: item.SupplierUUID,
-        label: item.Name,
-        searchText: [item.Document, item.Email].filter(Boolean).join(' '),
-      }));
-      this.supplierMap = new Map(this.suppliers.map((supplier) => [supplier.value, supplier]));
+      const suppliers: SupplierOption[] = items
+        .map((item: any) => {
+          const value = this.normalizeOptionValue(
+            item.SupplierUUID ?? item.supplierUUID ?? item.uuid ?? item.SupUUID,
+          );
+          const label = String(
+            item.Name ?? item.name ?? item.SupplierName ?? item.label ?? '',
+          ).trim();
+          if (!value || !label) return null;
+          return {
+            value,
+            label,
+            description: [item.Document ?? item.document, item.Email ?? item.email]
+              .filter(Boolean)
+              .join(' - '),
+            searchText: [item.Document ?? item.document, item.Email ?? item.email]
+              .filter(Boolean)
+              .join(' '),
+          } satisfies SupplierOption;
+        })
+        .filter((item: SupplierOption | null): item is SupplierOption => !!item);
+      this.suppliers.set(suppliers);
+      this.supplierMap = new Map(
+        suppliers.map((supplier: SupplierOption) => [supplier.value, supplier]),
+      );
     } catch (err) {
       console.error(this.t('Failed to load suppliers.'), err);
     }
@@ -626,6 +645,10 @@ export class FinancialPayablesPage {
     return this.supplierMap.get(uuid)?.label ?? '-';
   }
 
+  supplierValueChanged(value: string | number | boolean | null) {
+    this.form.supplierUUID = this.normalizeOptionValue(value);
+  }
+
   formatAmount(value: number) {
     return Number(value || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -675,6 +698,10 @@ export class FinancialPayablesPage {
   private compareValues(left: string | number, right: string | number) {
     if (typeof left === 'number' && typeof right === 'number') return left - right;
     return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+  }
+
+  private normalizeOptionValue(value: unknown) {
+    return String(value ?? '').trim();
   }
 
   private parseBulkDeleteResult(response: any, requestedIds: string[]) {

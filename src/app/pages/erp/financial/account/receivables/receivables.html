@@ -239,9 +239,9 @@
                 [label]="'Customer' | transloco"
                 fieldClass="span-1"
                 [placeholder]="'Search customer' | transloco"
-                [options]="customers"
+                [options]="customers()"
                 [value]="form.customerUUID"
-                (valueChange)="form.customerUUID = $any($event) || ''"
+                (valueChange)="customerValueChanged($event)"
               />
 
               <mat-form-field appearance="outline" class="span-1">

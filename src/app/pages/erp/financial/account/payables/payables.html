@@ -252,9 +252,9 @@
                 [label]="'Supplier' | transloco"
                 fieldClass="span-1"
                 [placeholder]="'Search supplier' | transloco"
-                [options]="suppliers"
+                [options]="suppliers()"
                 [value]="form.supplierUUID"
-                (valueChange)="form.supplierUUID = $any($event) || ''"
+                (valueChange)="supplierValueChanged($event)"
               />
 
               <mat-form-field appearance="outline" class="span-1">
