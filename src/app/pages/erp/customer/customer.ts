@@ -39,6 +39,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
     complexUUID: '',
     dueDayUUID: '',
     name: '',
+    legalName: '',
     document: '',
     email: '',
     phone: '',
@@ -89,6 +90,13 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
     { key: 'type', source: 'Type', payloadKey: 'type', label: 'Type', type: 'select', options: TYPE_OPTIONS, span: 1 },
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    {
+      key: 'legalName',
+      source: 'LegalName',
+      payloadKey: 'legalName',
+      label: 'Legal name',
+      span: 2,
+    },
     { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
     {

@@ -217,9 +217,19 @@ function validateDirectoryCrudFieldOrder(tsFile, content) {
     tsFile.includes('\\supplier\\');
 
   if (hasCustomerAddresses) {
-    if (!startsWithSequence(keys, ['status', 'type', 'document', 'name', 'email', 'phone'])) {
+    if (
+      !startsWithSequence(keys, [
+        'status',
+        'type',
+        'document',
+        'name',
+        'legalName',
+        'email',
+        'phone',
+      ])
+    ) {
       errors.push(
-        `${rel} invalid: customer Record fields must start Status, Type, Document, Name, Email, Phone`,
+        `${rel} invalid: customer Record fields must start Status, Type, Document, Name, Legal name, Email, Phone`,
       );
     }
   } else if (hasCompanyAddress) {
