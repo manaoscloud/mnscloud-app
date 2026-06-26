@@ -128,7 +128,7 @@ export class FinancialReceivablesPage {
   issuingBoletoUUID: string | null = null;
   editingReceivable: ErpFinAccReceivable | null = null;
   readonly customers = signal<CustomerOption[]>([]);
-  customerMap = new Map<string, CustomerOption>();
+  readonly customerMap = signal(new Map<string, CustomerOption>());
   amountPrefix = '';
 
   readonly statusOptions: { value: ReceivableStatus; label: string }[] = [
@@ -352,8 +352,8 @@ export class FinancialReceivablesPage {
         })
         .filter((item: CustomerOption | null): item is CustomerOption => !!item);
       this.customers.set(customers);
-      this.customerMap = new Map(
-        customers.map((customer: CustomerOption) => [customer.value, customer]),
+      this.customerMap.set(
+        new Map(customers.map((customer: CustomerOption) => [customer.value, customer])),
       );
     } catch (err) {
       console.error(this.t('Failed to load customers.'), err);
@@ -505,7 +505,7 @@ export class FinancialReceivablesPage {
   }
 
   customerLabel(uuid: string) {
-    return this.customerMap.get(uuid)?.label ?? '-';
+    return this.customerMap().get(uuid)?.label ?? '-';
   }
 
   customerValueChanged(value: string | number | boolean | null) {

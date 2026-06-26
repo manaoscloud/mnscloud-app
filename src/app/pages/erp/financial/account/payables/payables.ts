@@ -147,7 +147,7 @@ export class FinancialPayablesPage {
   editingPayable: ErpFinAccPayable | null = null;
   selectedSettlePayable: ErpFinAccPayable | null = null;
   readonly suppliers = signal<SupplierOption[]>([]);
-  supplierMap = new Map<string, SupplierOption>();
+  readonly supplierMap = signal(new Map<string, SupplierOption>());
   amountPrefix = '';
   settleAttachments: ErpFinAccPayableAttachment[] = [];
   settleFiles: File[] = [];
@@ -385,8 +385,8 @@ export class FinancialPayablesPage {
         })
         .filter((item: SupplierOption | null): item is SupplierOption => !!item);
       this.suppliers.set(suppliers);
-      this.supplierMap = new Map(
-        suppliers.map((supplier: SupplierOption) => [supplier.value, supplier]),
+      this.supplierMap.set(
+        new Map(suppliers.map((supplier: SupplierOption) => [supplier.value, supplier])),
       );
     } catch (err) {
       console.error(this.t('Failed to load suppliers.'), err);
@@ -642,7 +642,7 @@ export class FinancialPayablesPage {
   }
 
   supplierLabel(uuid: string) {
-    return this.supplierMap.get(uuid)?.label ?? '-';
+    return this.supplierMap().get(uuid)?.label ?? '-';
   }
 
   supplierValueChanged(value: string | number | boolean | null) {
