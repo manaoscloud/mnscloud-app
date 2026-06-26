@@ -30,14 +30,14 @@
         <mat-label>{{ 'Status' | transloco }}</mat-label>
         <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
           @for (status of statusFilterOptions; track status.value) {
-            <mat-option [value]="status.value">{{ status.label }}</mat-option>
+            <mat-option [value]="status.value">{{ status.label | transloco }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
         @if (selectedCount()) {
-          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
           <button
             mat-stroked-button
             color="warn"
@@ -106,7 +106,7 @@
 
         <ng-container matColumnDef="supplier">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Supplier' | transloco }}</th>
-          <td mat-cell *matCellDef="let row">{{ supplierLabel(row.SupplierUUID) }}</td>
+          <td mat-cell *matCellDef="let row">{{ supplierLabel(row) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="docNumber">

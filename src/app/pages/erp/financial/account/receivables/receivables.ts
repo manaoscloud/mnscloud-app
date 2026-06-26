@@ -51,6 +51,10 @@ type ReceivableStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 type ErpFinAccReceivable = {
   ErpFinAccReceivableUUID: string;
   CustomerUUID: string;
+  CustomerName?: string | null;
+  CustomerLegalName?: string | null;
+  CustomerDocument?: string | null;
+  CustomerEmail?: string | null;
   Description: string;
   DocNumber?: string | null;
   DueDate: string;
@@ -162,7 +166,7 @@ export class FinancialReceivablesPage {
       const res = await this.api.get<{ data?: { items?: ErpFinAccReceivable[] } }>(
         `erp/financial/accounts/receivables?${params.toString()}`,
       );
-      return res?.data?.items ?? [];
+      return this.extractItems<ErpFinAccReceivable>(res);
     },
   });
 
@@ -172,7 +176,7 @@ export class FinancialReceivablesPage {
     return this.receivablesResource.value().filter((row) => {
       if (status && row.Status !== status) return false;
       if (!q) return true;
-      return [row.Description, row.DocNumber, this.customerLabel(row.CustomerUUID)]
+      return [row.Description, row.DocNumber, this.customerLabel(row)]
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(q));
     });
@@ -328,18 +332,17 @@ export class FinancialReceivablesPage {
 
   async fetchCustomers() {
     try {
-      const res = await this.api.get<any>('erp/customers?limit=500&offset=0');
-      const items = res?.data?.items ?? [];
-      const customers: CustomerOption[] = items
-        .map((item: any) => {
-          const value = this.normalizeOptionValue(
-            item.CustomerUUID ?? item.customerUUID ?? item.uuid ?? item.CustomerCusUUID,
-          );
-          const label = String(
-            item.Name ?? item.name ?? item.CustomerName ?? item.label ?? '',
-          ).trim();
-          if (!value || !label) return null;
-          return {
+      const items = await this.fetchPagedItems('erp/customers');
+      const customers: CustomerOption[] = items.flatMap((item: any) => {
+        const value = this.normalizeOptionValue(
+          item.CustomerUUID ?? item.customerUUID ?? item.uuid ?? item.CustomerCusUUID,
+        );
+        const label = String(
+          item.Name ?? item.name ?? item.CustomerName ?? item.label ?? '',
+        ).trim();
+        if (!value || !label) return [];
+        return [
+          {
             value,
             label,
             description: [item.Document ?? item.document, item.Email ?? item.email]
@@ -348,9 +351,9 @@ export class FinancialReceivablesPage {
             searchText: [item.Document ?? item.document, item.Email ?? item.email]
               .filter(Boolean)
               .join(' '),
-          } satisfies CustomerOption;
-        })
-        .filter((item: CustomerOption | null): item is CustomerOption => !!item);
+          } satisfies CustomerOption,
+        ];
+      });
       this.customers.set(customers);
       this.customerMap.set(
         new Map(customers.map((customer: CustomerOption) => [customer.value, customer])),
@@ -504,8 +507,14 @@ export class FinancialReceivablesPage {
     }
   }
 
-  customerLabel(uuid: string) {
-    return this.customerMap().get(uuid)?.label ?? '-';
+  customerLabel(rowOrUuid: ErpFinAccReceivable | string | null | undefined) {
+    const uuid =
+      typeof rowOrUuid === 'string'
+        ? rowOrUuid
+        : this.normalizeOptionValue(rowOrUuid?.CustomerUUID);
+    const row = typeof rowOrUuid === 'string' ? null : rowOrUuid;
+    const directLabel = this.normalizeOptionValue(row?.CustomerName);
+    return (this.customerMap().get(uuid)?.label ?? directLabel) || '-';
   }
 
   customerValueChanged(value: string | number | boolean | null) {
@@ -544,7 +553,7 @@ export class FinancialReceivablesPage {
       case 'description':
         return row.Description ?? '';
       case 'customer':
-        return this.customerLabel(row.CustomerUUID);
+        return this.customerLabel(row);
       case 'docNumber':
         return row.DocNumber ?? '';
       case 'dueDate':
@@ -565,6 +574,30 @@ export class FinancialReceivablesPage {
 
   private normalizeOptionValue(value: unknown) {
     return String(value ?? '').trim();
+  }
+
+  private extractItems<T>(response: any): T[] {
+    if (Array.isArray(response?.data?.items)) return response.data.items;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response)) return response;
+    return [];
+  }
+
+  private async fetchPagedItems(endpoint: string) {
+    const all: any[] = [];
+    const limit = 200;
+    let offset = 0;
+
+    for (let page = 0; page < 25; page++) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const res = await this.api.get<any>(`${endpoint}${separator}limit=${limit}&offset=${offset}`);
+      const items = this.extractItems<any>(res);
+      all.push(...items);
+      if (items.length < limit) break;
+      offset += limit;
+    }
+
+    return all;
   }
 
   private parseBulkDeleteResult(response: any, requestedIds: string[]) {
