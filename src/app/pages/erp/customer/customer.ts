@@ -107,6 +107,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       type: 'search-select',
       placeholder: 'Search complexes',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -125,6 +126,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainZip',
       label: 'Zip',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
       postalLookup: {
         streetKey: 'addressMainStreet',
@@ -142,6 +144,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainStreet',
       label: 'Street',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -150,6 +153,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainNumber',
       label: 'Number',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -158,6 +162,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainDistrict',
       label: 'District',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -166,6 +171,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainComplement',
       label: 'Complement',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -174,6 +180,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainCity',
       label: 'City',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -182,6 +189,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainState',
       label: 'State',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -190,6 +198,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressMainCountry',
       label: 'Country',
       tab: 'address',
+      addressSection: 'main',
       span: 1,
     },
     {
@@ -198,6 +207,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingZip',
       label: 'Billing Zip',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
       postalLookup: {
         streetKey: 'addressBillingStreet',
@@ -215,6 +225,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingStreet',
       label: 'Billing Street',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
     },
     {
@@ -223,6 +234,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingNumber',
       label: 'Billing Number',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
     },
     {
@@ -231,6 +243,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingDistrict',
       label: 'Billing District',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
     },
     {
@@ -239,6 +252,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingComplement',
       label: 'Billing Complement',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
     },
     {
@@ -247,6 +261,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingCity',
       label: 'Billing City',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
     },
     {
@@ -255,6 +270,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingState',
       label: 'Billing State',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
     },
     {
@@ -263,6 +279,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressBillingCountry',
       label: 'Billing Country',
       tab: 'address',
+      addressSection: 'billing',
       span: 1,
     },
     {
@@ -271,6 +288,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallZip',
       label: 'Installation Zip',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
       postalLookup: {
         streetKey: 'addressInstallStreet',
@@ -288,6 +306,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallStreet',
       label: 'Installation Street',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
     },
     {
@@ -296,6 +315,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallNumber',
       label: 'Installation Number',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
     },
     {
@@ -304,6 +324,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallDistrict',
       label: 'Installation District',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
     },
     {
@@ -312,6 +333,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallComplement',
       label: 'Installation Complement',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
     },
     {
@@ -320,6 +342,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallCity',
       label: 'Installation City',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
     },
     {
@@ -328,6 +351,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallState',
       label: 'Installation State',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
     },
     {
@@ -336,16 +360,23 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       payloadKey: 'addressInstallCountry',
       label: 'Installation Country',
       tab: 'address',
+      addressSection: 'installation',
       span: 1,
     },
     { key: 'lat', source: 'Lat', payloadKey: 'lat', label: 'Latitude', type: 'number', tab: 'address', span: 1, hidden: true },
     { key: 'lng', source: 'Lng', payloadKey: 'lng', label: 'Longitude', type: 'number', tab: 'address', span: 1, hidden: true },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ],
+  addressSections: [
+    { key: 'main', label: 'Main Address' },
+    { key: 'billing', label: 'Billing Address' },
+    { key: 'installation', label: 'Installation Address' },
+  ],
   addressCopyActions: [
     {
       key: 'billingSameAsMain',
       label: 'Billing same as main',
+      addressSection: 'billing',
       fromPrefix: 'addressMain',
       toPrefix: 'addressBilling',
       fields: ['Zip', 'Street', 'Number', 'District', 'Complement', 'City', 'State', 'Country'],
@@ -353,6 +384,7 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
     {
       key: 'installationSameAsMain',
       label: 'Installation same as main',
+      addressSection: 'installation',
       fromPrefix: 'addressMain',
       toPrefix: 'addressInstall',
       fields: ['Zip', 'Street', 'Number', 'District', 'Complement', 'City', 'State', 'Country'],

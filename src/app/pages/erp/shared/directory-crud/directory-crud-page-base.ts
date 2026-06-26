@@ -99,6 +99,7 @@ export type DirectoryField = {
   payloadKey?: string;
   type?: DirectoryFieldType;
   tab?: 'record' | 'address' | 'financial' | 'notes';
+  addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
   postalLookup?: DirectoryPostalCodeLookup;
@@ -114,9 +115,20 @@ export type DirectoryField = {
 export type DirectoryCopyAction = {
   key: string;
   label: string;
+  addressSection?: string;
   fromPrefix: string;
   toPrefix: string;
   fields: readonly string[];
+};
+
+export type DirectoryAddressSection = {
+  key: string;
+  label: string;
+};
+
+export type DirectoryAddressSectionView = DirectoryAddressSection & {
+  fields: readonly DirectoryField[];
+  copyActions: readonly DirectoryCopyAction[];
 };
 
 export type DirectoryColumn = {
@@ -154,6 +166,7 @@ export type DirectoryConfig = {
   statusMode: DirectoryStatusMode;
   activeValue: string | number;
   inactiveValue: string | number;
+  addressSections?: readonly DirectoryAddressSection[];
   addressCopyActions?: readonly DirectoryCopyAction[];
 };
 
@@ -221,6 +234,23 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   readonly addressFields = computed(() =>
     this.config.fields.filter((field) => !field.hidden && field.tab === 'address'),
   );
+  readonly addressSections = computed<DirectoryAddressSectionView[]>(() => {
+    const fields = this.addressFields();
+    const copyActions = this.addressCopyActions();
+    const configuredSections = this.config.addressSections ?? [];
+
+    if (!configuredSections.length) {
+      return [{ key: 'address', label: '', fields, copyActions }];
+    }
+
+    return configuredSections
+      .map((section) => ({
+        ...section,
+        fields: fields.filter((field) => field.addressSection === section.key),
+        copyActions: copyActions.filter((action) => action.addressSection === section.key),
+      }))
+      .filter((section) => section.fields.length || section.copyActions.length);
+  });
   readonly financialFields = computed(() =>
     this.config.fields.filter((field) => !field.hidden && field.tab === 'financial'),
   );
