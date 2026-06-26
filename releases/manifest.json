@@ -2,15 +2,15 @@
   "product": "mnscloud-app",
   "channels": {
     "stable": {
-      "version": "0.1.334",
-      "ref": "v0.1.334",
-      "releasedAt": "2026-06-26T18:01:01Z",
+      "version": "0.1.335",
+      "ref": "v0.1.335",
+      "releasedAt": "2026-06-26T21:48:26Z",
       "minimumVersion": "0.1.0",
       "autoUpdate": false,
       "artifact": {
-        "name": "mnscloud-app-browser-v0.1.334.tar.gz",
-        "sha256": "79bcbb46cac9fdc90a130a594602599da46a738fa8a82c968336c75f0374d445",
-        "sizeBytes": 1459927,
+        "name": "mnscloud-app-browser-v0.1.335.tar.gz",
+        "sha256": "218c40909bbff2b8897344525214d805371470c2d0a85e56d0e492711463afe8",
+        "sizeBytes": 1461190,
         "contentType": "application/gzip"
       }
     },
