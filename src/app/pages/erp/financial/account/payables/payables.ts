@@ -1,38 +1,36 @@
 import {
   Component,
+  DestroyRef,
   TemplateRef,
-  effect,
+  computed,
   inject,
   resource,
+  signal,
   viewChild,
-  afterNextRender,
-  DestroyRef,
 } from '@angular/core';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, takeUntil } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
-import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
   bindDialogClosed,
   bindDialogEscape,
@@ -41,6 +39,12 @@ import {
   CrudDialogBinding,
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
+import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
+import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
+import { MnsSearchSelectFieldComponent } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import type { MnsSearchSelectFieldOption } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type PayableStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 type PayablePaymentMethod = 'cash' | 'bank_transfer' | 'pix' | 'boleto' | 'card' | 'other';
@@ -67,39 +71,39 @@ type ErpFinAccPayableAttachment = {
   StorageKey: string;
   Url: string;
   FileName?: string | null;
-  MimeType?: string | null;
   FileSizeBytes?: number | null;
-  DateCreated?: string | null;
 };
 
-type SupplierOption = {
+type SupplierOption = MnsSearchSelectFieldOption & {
   value: string;
-  label: string;
 };
 
 @Component({
   selector: 'app-financial-payables',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-    DateMaskDirective,
     CurrencyMaskDirective,
+    DateMaskDirective,
+    MnsSearchSelectFieldComponent,
+    RefreshButtonComponent,
+    TranslocoPipe,
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatDatepickerModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatMenuModule,
+    MatNativeDateModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatSortModule,
+    MatTableModule,
+    MatTabsModule,
+    MatTooltipModule,
   ],
   templateUrl: './payables.html',
   styleUrls: ['./payables.scss'],
@@ -109,19 +113,24 @@ export class FinancialPayablesPage {
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
 
-  private readonly payablesResource = resource({
-    defaultValue: [] as ErpFinAccPayable[],
-    loader: async () => {
-      const res = await this.api.get<{ data?: { items?: ErpFinAccPayable[] } }>(
-        'erp/financial/accounts/payables',
-      );
-      return res?.data?.items ?? [];
-    },
-  });
+  readonly payableFormDialog = viewChild<TemplateRef<unknown>>('payableFormDialog');
+  readonly payableSettleDialog = viewChild<TemplateRef<unknown>>('payableSettleDialog');
+  private payableFormDialogRef: MatDialogRef<unknown> | null = null;
+  private payableSettleDialogRef: MatDialogRef<unknown> | null = null;
+  private dialogBinding: CrudDialogBinding | null = null;
+  private settleDialogBinding: CrudDialogBinding | null = null;
 
-  payables: ErpFinAccPayable[] = [];
-  dataSource = new MatTableDataSource<ErpFinAccPayable>([]);
-  displayedColumns: string[] = [
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly statusFilter = signal<PayableStatus | ''>('');
+  readonly sortActive = signal('dueDate');
+  readonly sortDirection = signal<SortDirection>('asc');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(10);
+  readonly selectedIds = signal<Set<string>>(new Set());
+
+  readonly displayedColumns = [
+    'select',
     'description',
     'supplier',
     'docNumber',
@@ -130,37 +139,26 @@ export class FinancialPayablesPage {
     'status',
     'actions',
   ];
+
   saving = false;
   settling = false;
-  error = '';
-  search = '';
-  searchInput = '';
+  deletingMany = false;
   editingPayable: ErpFinAccPayable | null = null;
   selectedSettlePayable: ErpFinAccPayable | null = null;
-
   suppliers: SupplierOption[] = [];
   supplierMap = new Map<string, SupplierOption>();
-  supplierSearch = '';
   amountPrefix = '';
   settleAttachments: ErpFinAccPayableAttachment[] = [];
   settleFiles: File[] = [];
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly payableFormDialog = viewChild<TemplateRef<unknown>>('payableFormDialog');
-  readonly payableSettleDialog = viewChild<TemplateRef<unknown>>('payableSettleDialog');
-  private payableFormDialogRef: MatDialogRef<unknown> | null = null;
-  private payableSettleDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
-  private settleDialogBinding: CrudDialogBinding | null = null;
-
-  statusOptions: { value: PayableStatus; label: string }[] = [
+  readonly statusOptions: { value: PayableStatus; label: string }[] = [
     { value: 'open', label: 'Open' },
     { value: 'paid', label: 'Paid' },
     { value: 'overdue', label: 'Overdue' },
     { value: 'canceled', label: 'Canceled' },
   ];
-  paymentMethodOptions: { value: PayablePaymentMethod; label: string }[] = [
+  readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
+  readonly paymentMethodOptions: { value: PayablePaymentMethod; label: string }[] = [
     { value: 'pix', label: 'PIX' },
     { value: 'bank_transfer', label: 'Bank transfer' },
     { value: 'cash', label: 'Cash' },
@@ -178,6 +176,7 @@ export class FinancialPayablesPage {
     status: 'open' as PayableStatus,
     notes: '',
   };
+
   settleForm = {
     paymentDate: null as Date | null,
     paidAmount: 0,
@@ -186,104 +185,184 @@ export class FinancialPayablesPage {
     paymentNotes: '',
   };
 
+  private readonly payablesResource = resource({
+    defaultValue: [] as ErpFinAccPayable[],
+    loader: async () => {
+      const params = new URLSearchParams({ limit: '500', offset: '0' });
+      const q = this.search().trim();
+      const status = this.statusFilter();
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
+
+      const res = await this.api.get<{ data?: { items?: ErpFinAccPayable[] } }>(
+        `erp/financial/accounts/payables?${params.toString()}`,
+      );
+      return res?.data?.items ?? [];
+    },
+  });
+
+  readonly filteredRows = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    const status = this.statusFilter();
+    return this.payablesResource.value().filter((row) => {
+      if (status && row.Status !== status) return false;
+      if (!q) return true;
+      return [row.Description, row.DocNumber, this.supplierLabel(row.SupplierUUID)]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(q));
+    });
+  });
+
+  readonly sortedRows = computed(() => {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    const rows = [...this.filteredRows()];
+    if (!active || !direction) return rows;
+    return rows.sort((left, right) => {
+      const result = this.compareValues(
+        this.sortValue(left, active),
+        this.sortValue(right, active),
+      );
+      return direction === 'asc' ? result : -result;
+    });
+  });
+
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+
+  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return rows.length > 0 && rows.every((row) => this.selectedIds().has(row.ErpFinAccPayableUUID));
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return (
+      rows.some((row) => this.selectedIds().has(row.ErpFinAccPayableUUID)) &&
+      !this.allVisibleSelected()
+    );
+  });
+
   get loading() {
     return this.payablesResource.isLoading();
   }
 
-  private readonly syncPayables = effect(() => {
-    this.payables = this.payablesResource.value();
-    this.dataSource.data = [...this.payables];
-    this.applyFilter();
-  });
-
-  private readonly reportPayablesError = effect(() => {
-    const error = this.payablesResource.error();
-    if (error) {
-      this.showError(this.extractErrorMessage(error, 'Failed to load payables.'));
-      this.dataSource.data = [];
-    }
-  });
-
-  private readonly initializePage = (() => {
+  constructor() {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
     void this.fetchSuppliers();
-
-    return true;
-  })();
-
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.closePayableDialog();
-    this.closeSettleDialog();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'description':
-          return data.Description ?? '';
-        case 'supplier':
-          return this.supplierLabel(data.SupplierUUID) ?? '';
-        case 'docNumber':
-          return data.DocNumber ?? '';
-        case 'dueDate':
-          return data.DueDate ?? '';
-        case 'amount':
-          return data.Amount ?? 0;
-        case 'status':
-          return data.Status ?? '';
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      const supplier = this.supplierLabel(data.SupplierUUID);
-      return [data.Description, data.DocNumber, supplier]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
-
-  onSearchChange(value: string) {
-    this.searchInput = value;
-  }
-
-  applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.applyFilter();
-  }
-
-  clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.applyFilter();
+    inject(DestroyRef).onDestroy(() => {
+      this.closePayableDialog();
+      this.closeSettleDialog();
+    });
   }
 
   refreshList() {
     this.payablesResource.reload();
   }
 
-  applyFilter() {
-    const q = this.search.trim().toLowerCase();
-    this.dataSource.filter = q;
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  applySearchFilters() {
+    this.search.set(this.searchInput().trim());
+    this.pageIndex.set(0);
+    this.clearSelection();
+    this.payablesResource.reload();
+  }
+
+  clearSearchFilters() {
+    this.searchInput.set('');
+    this.search.set('');
+    this.statusFilter.set('');
+    this.pageIndex.set(0);
+    this.clearSelection();
+    this.payablesResource.reload();
+  }
+
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active);
+    this.sortDirection.set(sort.direction);
+    this.pageIndex.set(0);
+  }
+
+  setPage(event: PageEvent) {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
+  isSelected(row: ErpFinAccPayable) {
+    return this.selectedIds().has(row.ErpFinAccPayableUUID);
+  }
+
+  toggleRow(row: ErpFinAccPayable, checked: boolean) {
+    const next = new Set(this.selectedIds());
+    if (checked) next.add(row.ErpFinAccPayableUUID);
+    else next.delete(row.ErpFinAccPayableUUID);
+    this.selectedIds.set(next);
+  }
+
+  toggleVisibleRows(checked: boolean) {
+    const next = new Set(this.selectedIds());
+    for (const row of this.visibleRows()) {
+      if (checked) next.add(row.ErpFinAccPayableUUID);
+      else next.delete(row.ErpFinAccPayableUUID);
+    }
+    this.selectedIds.set(next);
+  }
+
+  clearSelection() {
+    this.selectedIds.set(new Set());
+  }
+
+  async deleteManyPayables() {
+    const ids = [...this.selectedIds()];
+    if (!ids.length) return;
+
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: {
+        title: 'Delete selected payables',
+        message: `Delete ${ids.length} selected payable(s)?`,
+        confirmLabel: 'Delete selected',
+      },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+    const confirmed = await firstValueFrom(ref.afterClosed());
+    if (!confirmed) return;
+
+    this.deletingMany = true;
+    try {
+      const response = await this.api.delete('erp/financial/accounts/payables/bulk', { ids });
+      const result = this.parseBulkDeleteResult(response, ids);
+      const failedIds = new Set<string>(
+        result.failed.map((item: { ErpFinAccPayableUUID: string }) => item.ErpFinAccPayableUUID),
+      );
+      this.selectedIds.set(failedIds);
+      if (result.failed.length) {
+        this.snack.warning(
+          `${result.deleted.length} payable(s) deleted. ${result.failed.length} failed.`,
+        );
+      } else {
+        this.snack.success(`${result.deleted.length} payable(s) deleted successfully.`);
+      }
+      this.payablesResource.reload();
+    } catch (err: any) {
+      this.showError(err?.message ?? 'Failed to delete selected payables.');
+    } finally {
+      this.deletingMany = false;
     }
   }
 
   async fetchSuppliers() {
     try {
-      const res = await this.api.get<any>('erp/suppliers');
+      const res = await this.api.get<any>('erp/suppliers?limit=500&offset=0');
       const items = res?.data?.items ?? [];
       this.suppliers = items.map((item: any) => ({
         value: item.SupplierUUID,
         label: item.Name,
+        searchText: [item.Document, item.Email].filter(Boolean).join(' '),
       }));
-      this.supplierMap = new Map(this.suppliers.map((s) => [s.value, s]));
+      this.supplierMap = new Map(this.suppliers.map((supplier) => [supplier.value, supplier]));
     } catch (err) {
       console.error('Failed to load suppliers.', err);
     }
@@ -305,7 +384,7 @@ export class FinancialPayablesPage {
     this.openPayableDialog();
   }
 
-  startEdit(payable: ErpFinAccPayable) {
+  openEditDialog(payable: ErpFinAccPayable) {
     this.editingPayable = payable;
     this.form.supplierUUID = payable.SupplierUUID ?? '';
     this.form.description = payable.Description ?? '';
@@ -314,10 +393,6 @@ export class FinancialPayablesPage {
     this.form.amount = payable.Amount ?? 0;
     this.form.status = payable.Status ?? 'open';
     this.form.notes = payable.Notes ?? '';
-  }
-
-  openEditDialog(payable: ErpFinAccPayable) {
-    this.startEdit(payable);
     this.openPayableDialog();
   }
 
@@ -326,25 +401,20 @@ export class FinancialPayablesPage {
       this.showWarning('Description is required.');
       return;
     }
-
     if (!this.form.supplierUUID) {
       this.showWarning('Supplier is required.');
       return;
     }
-
     if (!this.form.dueDate) {
       this.showWarning('Due date is required.');
       return;
     }
-
     if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
       this.showWarning('Amount must be greater than zero.');
       return;
     }
 
     this.saving = true;
-    this.error = '';
-
     try {
       const payload = {
         supplierUUID: this.form.supplierUUID,
@@ -371,7 +441,7 @@ export class FinancialPayablesPage {
           this.closePayableDialog();
           this.startCreate();
         } else {
-          this.resetCreateForm();
+          this.startCreate();
         }
       }
       this.payablesResource.reload();
@@ -382,14 +452,14 @@ export class FinancialPayablesPage {
     }
   }
 
-  cancelPayableForm() {
-    this.closePayableDialog();
-    this.startCreate();
-  }
-
   async saveAndNewPayable() {
     if (this.editingPayable) return;
     await this.savePayable(false);
+  }
+
+  cancelPayableForm() {
+    this.closePayableDialog();
+    this.startCreate();
   }
 
   async deletePayable(payableUUID: string) {
@@ -404,10 +474,10 @@ export class FinancialPayablesPage {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.error = '';
     try {
       await this.api.delete(`erp/financial/accounts/payables/${payableUUID}`);
       this.snack.success('Payable deleted successfully.');
+      this.clearSelection();
       this.payablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete payable.');
@@ -422,7 +492,6 @@ export class FinancialPayablesPage {
     this.settleForm.paymentReference = payable.PaymentReference ?? '';
     this.settleForm.paymentNotes = payable.PaymentNotes ?? '';
     this.settleFiles = [];
-    this.error = '';
     void this.fetchSettleAttachments();
     this.openSettleDialogInternal();
   }
@@ -439,7 +508,6 @@ export class FinancialPayablesPage {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.error = '';
     try {
       await this.api.post(
         `erp/financial/accounts/payables/${payable.ErpFinAccPayableUUID}/reopen`,
@@ -467,7 +535,6 @@ export class FinancialPayablesPage {
     }
 
     this.settling = true;
-    this.error = '';
     const payableUUID = this.selectedSettlePayable.ErpFinAccPayableUUID;
     try {
       await this.api.post(`erp/financial/accounts/payables/${payableUUID}/settle`, {
@@ -505,7 +572,6 @@ export class FinancialPayablesPage {
   }
 
   removePendingSettleFile(index: number) {
-    if (index < 0 || index >= this.settleFiles.length) return;
     this.settleFiles.splice(index, 1);
   }
 
@@ -554,20 +620,6 @@ export class FinancialPayablesPage {
     return this.supplierMap.get(uuid)?.label ?? '-';
   }
 
-  get filteredSuppliers() {
-    const value = this.supplierSearch.trim().toLowerCase();
-    if (!value) return this.suppliers;
-    return this.suppliers.filter((supplier) =>
-      (supplier.label ?? '').toLowerCase().includes(value),
-    );
-  }
-
-  onSupplierOpened(opened: boolean) {
-    if (opened) {
-      this.supplierSearch = '';
-    }
-  }
-
   formatAmount(value: number) {
     return Number(value || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -579,15 +631,62 @@ export class FinancialPayablesPage {
     return status.toUpperCase();
   }
 
+  statusChipClass(status: PayableStatus) {
+    const map: Record<PayableStatus, string> = {
+      open: 'chip-queued',
+      paid: 'chip-success',
+      overdue: 'chip-failed',
+      canceled: 'chip-skipped',
+    };
+    return map[status] ?? 'chip-queued';
+  }
+
   isStatusInactive(status: PayableStatus) {
     return status === 'canceled';
   }
 
+  private sortValue(row: ErpFinAccPayable, key: string): string | number {
+    switch (key) {
+      case 'description':
+        return row.Description ?? '';
+      case 'supplier':
+        return this.supplierLabel(row.SupplierUUID);
+      case 'docNumber':
+        return row.DocNumber ?? '';
+      case 'dueDate':
+        return row.DueDate ?? '';
+      case 'amount':
+        return Number(row.Amount ?? 0);
+      case 'status':
+        return row.Status ?? '';
+      default:
+        return '';
+    }
+  }
+
+  private compareValues(left: string | number, right: string | number) {
+    if (typeof left === 'number' && typeof right === 'number') return left - right;
+    return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+  }
+
+  private parseBulkDeleteResult(response: any, requestedIds: string[]) {
+    const data = response?.data ?? response ?? {};
+    const deleted = Array.isArray(data.deleted) ? data.deleted : requestedIds;
+    const failed = Array.isArray(data.failed) ? data.failed : [];
+    return {
+      deleted: deleted.filter((id: unknown): id is string => typeof id === 'string'),
+      failed: failed
+        .map((item: any) => ({
+          ErpFinAccPayableUUID: String(item?.ErpFinAccPayableUUID ?? item?.uuid ?? item?.id ?? ''),
+          message: String(item?.message ?? 'Failed to delete payable.'),
+        }))
+        .filter((item: { ErpFinAccPayableUUID: string }) => item.ErpFinAccPayableUUID),
+    };
+  }
+
   private parseDateInput(value?: string | null) {
     if (!value) return null;
-    const trimmed = value.trim();
-    const [datePart] = trimmed.split('T');
-    if (!datePart) return null;
+    const [datePart] = value.trim().split('T');
     const [year, month, day] = datePart.split('-').map((part) => Number(part));
     if (!year || !month || !day) return null;
     return new Date(year, month - 1, day);
@@ -609,16 +708,11 @@ export class FinancialPayablesPage {
     const currencyPart = parts.find((part) => part.type === 'currency')?.value ?? '$';
     const integerIndex = parts.findIndex((part) => part.type === 'integer');
     const currencyIndex = parts.findIndex((part) => part.type === 'currency');
-
-    let prefix = '';
-
-    if (currencyIndex > -1 && integerIndex > -1 && currencyIndex < integerIndex) {
-      const literal = parts[currencyIndex + 1];
-      prefix = currencyPart + (literal?.type === 'literal' ? literal.value : ' ');
-    } else {
-      prefix = `${currencyPart} `;
-    }
-
+    const prefix =
+      currencyIndex > -1 && integerIndex > -1 && currencyIndex < integerIndex
+        ? currencyPart +
+          (parts[currencyIndex + 1]?.type === 'literal' ? parts[currencyIndex + 1].value : ' ')
+        : `${currencyPart} `;
     return { prefix };
   }
 
@@ -629,57 +723,33 @@ export class FinancialPayablesPage {
     } catch {
       region = '';
     }
-    const map: Record<string, string> = {
-      BR: 'BRL',
-      US: 'USD',
-      PT: 'EUR',
-      ES: 'EUR',
-      FR: 'EUR',
-      DE: 'EUR',
-      IT: 'EUR',
-      NL: 'EUR',
-      BE: 'EUR',
-      IE: 'EUR',
-      AT: 'EUR',
-      FI: 'EUR',
-      GR: 'EUR',
-      LU: 'EUR',
-      LT: 'EUR',
-      LV: 'EUR',
-      EE: 'EUR',
-      SK: 'EUR',
-      SI: 'EUR',
-      CY: 'EUR',
-      MT: 'EUR',
-      GB: 'GBP',
-      MX: 'MXN',
-      AR: 'ARS',
-      CL: 'CLP',
-      CO: 'COP',
-      PE: 'PEN',
-      UY: 'UYU',
-      PY: 'PYG',
-      CA: 'CAD',
-      AU: 'AUD',
-      NZ: 'NZD',
-      JP: 'JPY',
-    };
-    return map[region] ?? 'USD';
+    return (
+      {
+        BR: 'BRL',
+        US: 'USD',
+        PT: 'EUR',
+        ES: 'EUR',
+        GB: 'GBP',
+        MX: 'MXN',
+        AR: 'ARS',
+        CL: 'CLP',
+        CO: 'COP',
+        PE: 'PEN',
+        CA: 'CAD',
+      }[region] ?? 'USD'
+    );
   }
 
   private openPayableDialog() {
     const payableFormDialog = this.payableFormDialog();
     if (!payableFormDialog || this.payableFormDialogRef) return;
-    this.error = '';
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
       payableFormDialog,
       'erp-payable-form-dialog',
     );
     this.payableFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.payableFormDialogRef, () => {
-      this.cancelPayableForm();
-    });
+    bindDialogEscape(this.payableFormDialogRef, () => this.cancelPayableForm());
     bindDialogClosed(this.payableFormDialogRef, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
@@ -704,9 +774,7 @@ export class FinancialPayablesPage {
       'erp-payable-form-dialog',
     );
     this.payableSettleDialogRef = this.settleDialogBinding.ref;
-    bindDialogEscape(this.payableSettleDialogRef, () => {
-      this.closeSettleDialog();
-    });
+    bindDialogEscape(this.payableSettleDialogRef, () => this.closeSettleDialog());
     bindDialogClosed(this.payableSettleDialogRef, () => {
       this.settleDialogBinding?.stop();
       this.settleDialogBinding = null;
@@ -728,33 +796,11 @@ export class FinancialPayablesPage {
     this.settleFiles = [];
   }
 
-  private resetCreateForm() {
-    this.editingPayable = null;
-    this.form.supplierUUID = '';
-    this.form.description = '';
-    this.form.docNumber = '';
-    this.form.dueDate = null;
-    this.form.amount = 0;
-    this.form.status = 'open';
-    this.form.notes = '';
-    this.error = '';
-  }
   private showError(message: string) {
-    this.error = '';
     this.snack.error(message);
   }
 
   private showWarning(message: string) {
-    this.error = '';
     this.snack.warning(message);
-  }
-
-  private extractErrorMessage(error: unknown, fallback: string) {
-    if (error && typeof error === 'object' && 'error' in error) {
-      const payload = (error as { error?: { error?: string; message?: string } }).error;
-      return payload?.error || payload?.message || fallback;
-    }
-    if (error instanceof Error) return error.message;
-    return fallback;
   }
 }

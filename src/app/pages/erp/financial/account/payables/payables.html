@@ -16,13 +16,40 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search payables</mat-label>
         <input
           matInput
-          placeholder="Description, supplier, document..." [value]="searchInput" (input)="onSearchChange($any($event.target).value)" />
+          placeholder="Search payables"
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
       </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+          @for (status of statusFilterOptions; track status.value) {
+            <mat-option [value]="status.value">{{ status.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
       <div class="filter-actions">
+        @if (selectedCount()) {
+          <span class="selection-count">{{ selectedCount() }} selected</span>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            class="context-action"
+            (click)="deleteManyPayables()"
+            [disabled]="deletingMany"
+          >
+            <mat-icon>delete</mat-icon>
+            Delete selected
+          </button>
+        }
         <button mat-stroked-button (click)="applySearchFilters()" type="button">
           <mat-icon>filter_alt</mat-icon>
           {{ 'Apply' | transloco }}
@@ -34,16 +61,45 @@
       </div>
     </div>
 
-    <div class="mat-elevation-z8 table-wrapper" [class.is-loading]="loading">
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading">
       @if (loading) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
           <mat-progress-spinner diameter="36" mode="indeterminate" />
         </div>
       }
-      <table mat-table [dataSource]="dataSource" matSort>
+
+      <table
+        mat-table
+        [dataSource]="visibleRows()"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="setSort($event)"
+      >
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="select-col">
+            <mat-checkbox
+              [checked]="allVisibleSelected()"
+              [indeterminate]="someVisibleSelected()"
+              (change)="toggleVisibleRows($event.checked)"
+              aria-label="Select visible payables"
+            />
+          </th>
+          <td mat-cell *matCellDef="let row" class="select-col">
+            <mat-checkbox
+              [checked]="isSelected(row)"
+              (change)="toggleRow(row, $event.checked)"
+              aria-label="Select payable"
+            />
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="description">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
-          <td mat-cell *matCellDef="let row">{{ row.Description }}</td>
+          <td mat-cell *matCellDef="let row">
+            <span class="record-main">{{ row.Description }}</span>
+            <span class="record-uuid">{{ row.ErpFinAccPayableUUID }}</span>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="supplier">
@@ -70,10 +126,13 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <span
-              class="status-pill"
+              class="status-pill status-chip state-chip"
+              [class.chip-success]="row.Status === 'paid'"
+              [class.chip-queued]="row.Status === 'open'"
+              [class.chip-failed]="row.Status === 'overdue'"
+              [class.chip-skipped]="row.Status === 'canceled'"
               [class.is-active]="!isStatusInactive(row.Status)"
               [class.is-inactive]="isStatusInactive(row.Status)"
-              [class.is-overdue]="row.Status === 'overdue'"
             >
               {{ statusLabel(row.Status) }}
             </span>
@@ -81,7 +140,7 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-col-cell">Actions</th>
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header">Actions</th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
               @if (row.Status === 'open' || row.Status === 'overdue') {
@@ -125,6 +184,7 @@
                 mat-icon-button
                 color="warn"
                 (click)="deletePayable(row.ErpFinAccPayableUUID)"
+                type="button"
                 matTooltip="Delete payable"
               >
                 <mat-icon>delete</mat-icon>
@@ -138,16 +198,19 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{
-              loading ? 'Loading payables...' : 'No payables found for "' + (search || 'all') + '"'
-            }}
+            {{ loading ? 'Loading payables...' : 'No payables found.' }}
           </td>
         </tr>
       </table>
     </div>
+
     <mat-paginator
       class="mobile-paginator"
+      [length]="filteredRows().length"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
       [pageSizeOptions]="[5, 10, 25, 100]"
+      (page)="setPage($event)"
       showFirstLastButtons
       aria-label="Select page of payables"
     />
@@ -177,32 +240,16 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Supplier</mat-label>
-                <mat-select
-                  (openedChange)="onSupplierOpened($event)" [value]="form.supplierUUID" (selectionChange)="form.supplierUUID = $event.value">
-                  <mat-option
-                    class="select-search-option"
-                    [value]="null"
-                    (click)="$event.stopPropagation()"
-                    (onSelectionChange)="$event.source.deselect()"
-                  >
-                    <mat-form-field appearance="outline" class="select-search-field">
-                      <input
-                        matInput
-                        (click)="$event.stopPropagation()"
-                        (keydown)="$event.stopPropagation()"
-                        placeholder="Search supplier"
-                        autocomplete="off" [value]="supplierSearch" (input)="supplierSearch = $any($event.target).value" />
-                    </mat-form-field>
-                  </mat-option>
-                  @for (supplier of filteredSuppliers; track supplier.value) {
-                    <mat-option [value]="supplier.value">{{ supplier.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                label="Supplier"
+                fieldClass="span-1"
+                placeholder="Search supplier"
+                [options]="suppliers"
+                [value]="form.supplierUUID"
+                (valueChange)="form.supplierUUID = $any($event) || ''"
+              />
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Status</mat-label>
                 <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
                   @for (status of statusOptions; track status.value) {
@@ -213,27 +260,44 @@
 
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Description</mat-label>
-                <input matInput [value]="form.description" (input)="form.description = $any($event.target).value" />
+                <input
+                  matInput
+                  [value]="form.description"
+                  (input)="form.description = $any($event.target).value"
+                />
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Document number</mat-label>
-                <input matInput [value]="form.docNumber" (input)="form.docNumber = $any($event.target).value" />
+                <input
+                  matInput
+                  [value]="form.docNumber"
+                  (input)="form.docNumber = $any($event.target).value"
+                />
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Due date</mat-label>
                 <input
                   matInput
                   [matDatepicker]="dueDatePicker"
-                  appDateMask [value]="form.dueDate" (input)="form.dueDate = $any($event.target).value" />
+                  appDateMask
+                  [value]="form.dueDate"
+                  (dateChange)="form.dueDate = $event.value"
+                />
                 <mat-datepicker-toggle matSuffix [for]="dueDatePicker" />
                 <mat-datepicker #dueDatePicker touchUi />
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>Amount</mat-label>
-                <input matInput type="text" appCurrencyMask [value]="form.amount" (input)="form.amount = $any($event.target).value" />
+                <input
+                  matInput
+                  type="text"
+                  appCurrencyMask
+                  [value]="form.amount"
+                  (input)="form.amount = $any($event.target).value"
+                />
                 @if (amountPrefix) {
                   <span matTextPrefix>{{ amountPrefix }}</span>
                 }
@@ -243,33 +307,61 @@
         </mat-tab>
 
         <mat-tab label="Notes">
-          <div class="tab-content notes-tab-content">
-            <mat-form-field appearance="outline" class="notes-field">
-              <mat-label>Notes</mat-label>
-              <textarea matInput rows="12" [value]="form.notes" (input)="form.notes = $any($event.target).value"></textarea>
-            </mat-form-field>
+          <div class="tab-content">
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>Notes</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  [value]="form.notes"
+                  (input)="form.notes = $any($event.target).value"
+                ></textarea>
+              </mat-form-field>
+            </div>
           </div>
         </mat-tab>
       </mat-tab-group>
     </mat-dialog-content>
 
     <mat-dialog-actions class="form-actions">
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="savePayable()"
-        [disabled]="saving"
-        type="button"
-      >
-        <mat-icon>save</mat-icon>
-        Save
-      </button>
-      @if (!editingPayable) {
-        <button mat-stroked-button (click)="saveAndNewPayable()" [disabled]="saving" type="button">
-          Save and new
+      <div class="secondary-actions">
+        <button mat-stroked-button (click)="cancelPayableForm()" type="button">Cancel</button>
+      </div>
+      <div class="primary-actions">
+        <div class="save-split-action" [class.is-single-action]="editingPayable">
+          <button
+            mat-flat-button
+            color="primary"
+            class="save-main-button"
+            (click)="savePayable()"
+            [disabled]="saving"
+            type="button"
+          >
+            <mat-icon>save</mat-icon>
+            Save
+          </button>
+          @if (!editingPayable) {
+            <button
+              mat-flat-button
+              color="primary"
+              class="save-more-button"
+              [matMenuTriggerFor]="payableSaveMenu"
+              [disabled]="saving"
+              type="button"
+              aria-label="More save actions"
+            >
+              <mat-icon>expand_more</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+      <mat-menu #payableSaveMenu="matMenu" xPosition="before" yPosition="below">
+        <button mat-menu-item type="button" (click)="saveAndNewPayable()">
+          <mat-icon>add</mat-icon>
+          Save/New
         </button>
-      }
-      <button mat-stroked-button (click)="cancelPayableForm()" type="button">Cancel</button>
+      </mat-menu>
     </mat-dialog-actions>
   </div>
 </ng-template>
@@ -289,41 +381,62 @@
     <mat-dialog-content class="dialog-content">
       <div class="tab-content">
         <div class="form-grid">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>Payment date</mat-label>
             <input
               matInput
               [matDatepicker]="paymentDatePicker"
-              appDateMask [value]="settleForm.paymentDate" (input)="settleForm.paymentDate = $any($event.target).value" />
+              appDateMask
+              [value]="settleForm.paymentDate"
+              (dateChange)="settleForm.paymentDate = $event.value"
+            />
             <mat-datepicker-toggle matSuffix [for]="paymentDatePicker" />
             <mat-datepicker #paymentDatePicker touchUi />
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>Paid amount</mat-label>
-            <input matInput type="text" appCurrencyMask [value]="settleForm.paidAmount" (input)="settleForm.paidAmount = $any($event.target).value" />
+            <input
+              matInput
+              type="text"
+              appCurrencyMask
+              [value]="settleForm.paidAmount"
+              (input)="settleForm.paidAmount = $any($event.target).value"
+            />
             @if (amountPrefix) {
               <span matTextPrefix>{{ amountPrefix }}</span>
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>Payment method</mat-label>
-            <mat-select [value]="settleForm.paymentMethod" (selectionChange)="settleForm.paymentMethod = $event.value">
+            <mat-select
+              [value]="settleForm.paymentMethod"
+              (selectionChange)="settleForm.paymentMethod = $event.value"
+            >
               @for (method of paymentMethodOptions; track method.value) {
                 <mat-option [value]="method.value">{{ method.label }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>Reference</mat-label>
-            <input matInput [value]="settleForm.paymentReference" (input)="settleForm.paymentReference = $any($event.target).value" />
+            <input
+              matInput
+              [value]="settleForm.paymentReference"
+              (input)="settleForm.paymentReference = $any($event.target).value"
+            />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-4">
             <mat-label>Payment notes</mat-label>
-            <input matInput [value]="settleForm.paymentNotes" (input)="settleForm.paymentNotes = $any($event.target).value" />
+            <textarea
+              matInput
+              rows="4"
+              [value]="settleForm.paymentNotes"
+              (input)="settleForm.paymentNotes = $any($event.target).value"
+            ></textarea>
           </mat-form-field>
         </div>
 
@@ -389,17 +502,22 @@
     </mat-dialog-content>
 
     <mat-dialog-actions class="form-actions">
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="saveSettle()"
-        [disabled]="settling"
-        type="button"
-      >
-        <mat-icon>save</mat-icon>
-        Save payment
-      </button>
-      <button mat-stroked-button (click)="closeSettleDialog()" type="button">Close</button>
+      <div class="secondary-actions">
+        <button mat-stroked-button (click)="closeSettleDialog()" type="button">Close</button>
+      </div>
+      <div class="primary-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          class="save-main-button"
+          (click)="saveSettle()"
+          [disabled]="settling"
+          type="button"
+        >
+          <mat-icon>save</mat-icon>
+          Save payment
+        </button>
+      </div>
     </mat-dialog-actions>
   </div>
 </ng-template>

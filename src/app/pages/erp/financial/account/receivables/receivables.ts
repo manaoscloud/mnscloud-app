@@ -1,38 +1,36 @@
 import {
   Component,
+  DestroyRef,
   TemplateRef,
-  effect,
+  computed,
   inject,
   resource,
+  signal,
   viewChild,
-  afterNextRender,
-  DestroyRef,
 } from '@angular/core';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, takeUntil } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
-import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
   bindDialogClosed,
   bindDialogEscape,
@@ -41,6 +39,12 @@ import {
   CrudDialogBinding,
   openCrudTemplateDialog,
 } from '../../../../../shared/dialog/crud-dialog.util';
+import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
+import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
+import { MnsSearchSelectFieldComponent } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import type { MnsSearchSelectFieldOption } from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
+import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type ReceivableStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 
@@ -55,34 +59,36 @@ type ErpFinAccReceivable = {
   Notes?: string | null;
 };
 
-type CustomerOption = {
+type CustomerOption = MnsSearchSelectFieldOption & {
   value: string;
-  label: string;
 };
 
 @Component({
   selector: 'app-financial-receivables',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-    DateMaskDirective,
     CurrencyMaskDirective,
+    DateMaskDirective,
+    MnsSearchSelectFieldComponent,
+    RefreshButtonComponent,
+    TranslocoPipe,
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatDatepickerModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatMenuModule,
+    MatNativeDateModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatSortModule,
+    MatTableModule,
+    MatTabsModule,
+    MatTooltipModule,
   ],
   templateUrl: './receivables.html',
   styleUrls: ['./receivables.scss'],
@@ -92,19 +98,21 @@ export class FinancialReceivablesPage {
   private snack = inject(SnackbarService);
   private dialog = inject(MatDialog);
 
-  private readonly receivablesResource = resource({
-    defaultValue: [] as ErpFinAccReceivable[],
-    loader: async () => {
-      const res = await this.api.get<{ data?: { items?: ErpFinAccReceivable[] } }>(
-        'erp/financial/accounts/receivables',
-      );
-      return res?.data?.items ?? [];
-    },
-  });
+  readonly receivableFormDialog = viewChild<TemplateRef<unknown>>('receivableFormDialog');
+  private receivableFormDialogRef: MatDialogRef<unknown> | null = null;
+  private dialogBinding: CrudDialogBinding | null = null;
 
-  receivables: ErpFinAccReceivable[] = [];
-  dataSource = new MatTableDataSource<ErpFinAccReceivable>([]);
-  displayedColumns: string[] = [
+  readonly search = signal('');
+  readonly searchInput = signal('');
+  readonly statusFilter = signal<ReceivableStatus | ''>('');
+  readonly sortActive = signal('dueDate');
+  readonly sortDirection = signal<SortDirection>('asc');
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(10);
+  readonly selectedIds = signal<Set<string>>(new Set());
+
+  readonly displayedColumns = [
+    'select',
     'description',
     'customer',
     'docNumber',
@@ -113,30 +121,23 @@ export class FinancialReceivablesPage {
     'status',
     'actions',
   ];
-  saving = false;
-  error = '';
-  search = '';
-  searchInput = '';
-  editingReceivable: ErpFinAccReceivable | null = null;
-  issuingBoletoUUID: string | null = null;
 
+  saving = false;
+  deletingMany = false;
+  issuingBoletoUUID: string | null = null;
+  editingReceivable: ErpFinAccReceivable | null = null;
   customers: CustomerOption[] = [];
   customerMap = new Map<string, CustomerOption>();
-  customerSearch = '';
   amountPrefix = '';
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly receivableFormDialog = viewChild<TemplateRef<unknown>>('receivableFormDialog');
-  private receivableFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
-
-  statusOptions: { value: ReceivableStatus; label: string }[] = [
+  readonly statusOptions: { value: ReceivableStatus; label: string }[] = [
     { value: 'open', label: 'Open' },
     { value: 'paid', label: 'Paid' },
     { value: 'overdue', label: 'Overdue' },
     { value: 'canceled', label: 'Canceled' },
   ];
+
+  readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
 
   form = {
     customerUUID: '',
@@ -148,103 +149,187 @@ export class FinancialReceivablesPage {
     notes: '',
   };
 
+  private readonly receivablesResource = resource({
+    defaultValue: [] as ErpFinAccReceivable[],
+    loader: async () => {
+      const params = new URLSearchParams({ limit: '500', offset: '0' });
+      const q = this.search().trim();
+      const status = this.statusFilter();
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
+
+      const res = await this.api.get<{ data?: { items?: ErpFinAccReceivable[] } }>(
+        `erp/financial/accounts/receivables?${params.toString()}`,
+      );
+      return res?.data?.items ?? [];
+    },
+  });
+
+  readonly filteredRows = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    const status = this.statusFilter();
+    return this.receivablesResource.value().filter((row) => {
+      if (status && row.Status !== status) return false;
+      if (!q) return true;
+      return [row.Description, row.DocNumber, this.customerLabel(row.CustomerUUID)]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(q));
+    });
+  });
+
+  readonly sortedRows = computed(() => {
+    const active = this.sortActive();
+    const direction = this.sortDirection();
+    const rows = [...this.filteredRows()];
+    if (!active || !direction) return rows;
+
+    return rows.sort((left, right) => {
+      const result = this.compareValues(
+        this.sortValue(left, active),
+        this.sortValue(right, active),
+      );
+      return direction === 'asc' ? result : -result;
+    });
+  });
+
+  readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.sortedRows().slice(start, start + this.pageSize());
+  });
+
+  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly allVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return (
+      rows.length > 0 && rows.every((row) => this.selectedIds().has(row.ErpFinAccReceivableUUID))
+    );
+  });
+  readonly someVisibleSelected = computed(() => {
+    const rows = this.visibleRows();
+    return (
+      rows.some((row) => this.selectedIds().has(row.ErpFinAccReceivableUUID)) &&
+      !this.allVisibleSelected()
+    );
+  });
+
   get loading() {
     return this.receivablesResource.isLoading();
   }
 
-  private readonly syncReceivables = effect(() => {
-    this.receivables = this.receivablesResource.value();
-    this.dataSource.data = [...this.receivables];
-    this.applyFilter();
-  });
-
-  private readonly reportReceivablesError = effect(() => {
-    const error = this.receivablesResource.error();
-    if (error) {
-      this.showError(this.extractErrorMessage(error, 'Failed to load receivables.'));
-      this.dataSource.data = [];
-    }
-  });
-
-  private readonly initializePage = (() => {
+  constructor() {
     this.amountPrefix = this.getCurrencyAffixes().prefix;
     this.startCreate();
     void this.fetchCustomers();
-
-    return true;
-  })();
-
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.closeReceivableDialog();
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'description':
-          return data.Description ?? '';
-        case 'customer':
-          return this.customerLabel(data.CustomerUUID) ?? '';
-        case 'docNumber':
-          return data.DocNumber ?? '';
-        case 'dueDate':
-          return data.DueDate ?? '';
-        case 'amount':
-          return data.Amount ?? 0;
-        case 'status':
-          return data.Status ?? '';
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      const customer = this.customerLabel(data.CustomerUUID);
-      return [data.Description, data.DocNumber, customer]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
-
-  onSearchChange(value: string) {
-    this.searchInput = value;
-  }
-
-  applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.applyFilter();
-  }
-
-  clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.applyFilter();
+    inject(DestroyRef).onDestroy(() => this.closeReceivableDialog());
   }
 
   refreshList() {
     this.receivablesResource.reload();
   }
 
-  applyFilter() {
-    const q = this.search.trim().toLowerCase();
-    this.dataSource.filter = q;
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  applySearchFilters() {
+    this.search.set(this.searchInput().trim());
+    this.pageIndex.set(0);
+    this.clearSelection();
+    this.receivablesResource.reload();
+  }
+
+  clearSearchFilters() {
+    this.searchInput.set('');
+    this.search.set('');
+    this.statusFilter.set('');
+    this.pageIndex.set(0);
+    this.clearSelection();
+    this.receivablesResource.reload();
+  }
+
+  setSort(sort: Sort) {
+    this.sortActive.set(sort.active);
+    this.sortDirection.set(sort.direction);
+    this.pageIndex.set(0);
+  }
+
+  setPage(event: PageEvent) {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
+  isSelected(row: ErpFinAccReceivable) {
+    return this.selectedIds().has(row.ErpFinAccReceivableUUID);
+  }
+
+  toggleRow(row: ErpFinAccReceivable, checked: boolean) {
+    const next = new Set(this.selectedIds());
+    if (checked) next.add(row.ErpFinAccReceivableUUID);
+    else next.delete(row.ErpFinAccReceivableUUID);
+    this.selectedIds.set(next);
+  }
+
+  toggleVisibleRows(checked: boolean) {
+    const next = new Set(this.selectedIds());
+    for (const row of this.visibleRows()) {
+      if (checked) next.add(row.ErpFinAccReceivableUUID);
+      else next.delete(row.ErpFinAccReceivableUUID);
+    }
+    this.selectedIds.set(next);
+  }
+
+  clearSelection() {
+    this.selectedIds.set(new Set());
+  }
+
+  async deleteManyReceivables() {
+    const ids = [...this.selectedIds()];
+    if (!ids.length) return;
+
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      data: {
+        title: 'Delete selected receivables',
+        message: `Delete ${ids.length} selected receivable(s)?`,
+        confirmLabel: 'Delete selected',
+      },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+    });
+    const confirmed = await firstValueFrom(ref.afterClosed());
+    if (!confirmed) return;
+
+    this.deletingMany = true;
+    try {
+      const response = await this.api.delete('erp/financial/accounts/receivables/bulk', { ids });
+      const result = this.parseBulkDeleteResult(response, ids);
+      const failedIds = new Set<string>(
+        result.failed.map(
+          (item: { ErpFinAccReceivableUUID: string }) => item.ErpFinAccReceivableUUID,
+        ),
+      );
+      this.selectedIds.set(failedIds);
+
+      if (result.failed.length) {
+        this.snack.warning(
+          `${result.deleted.length} receivable(s) deleted. ${result.failed.length} failed.`,
+        );
+      } else {
+        this.snack.success(`${result.deleted.length} receivable(s) deleted successfully.`);
+      }
+      this.receivablesResource.reload();
+    } catch (err: any) {
+      this.showError(err?.message ?? 'Failed to delete selected receivables.');
+    } finally {
+      this.deletingMany = false;
     }
   }
 
   async fetchCustomers() {
     try {
-      const res = await this.api.get<any>('erp/customers');
+      const res = await this.api.get<any>('erp/customers?limit=500&offset=0');
       const items = res?.data?.items ?? [];
       this.customers = items.map((item: any) => ({
         value: item.CustomerUUID,
         label: item.Name,
+        searchText: [item.Document, item.Email].filter(Boolean).join(' '),
       }));
-      this.customerMap = new Map(this.customers.map((c) => [c.value, c]));
+      this.customerMap = new Map(this.customers.map((customer) => [customer.value, customer]));
     } catch (err) {
       console.error('Failed to load customers.', err);
     }
@@ -266,7 +351,7 @@ export class FinancialReceivablesPage {
     this.openReceivableDialog();
   }
 
-  startEdit(receivable: ErpFinAccReceivable) {
+  openEditDialog(receivable: ErpFinAccReceivable) {
     this.editingReceivable = receivable;
     this.form.customerUUID = receivable.CustomerUUID ?? '';
     this.form.description = receivable.Description ?? '';
@@ -275,10 +360,6 @@ export class FinancialReceivablesPage {
     this.form.amount = receivable.Amount ?? 0;
     this.form.status = receivable.Status ?? 'open';
     this.form.notes = receivable.Notes ?? '';
-  }
-
-  openEditDialog(receivable: ErpFinAccReceivable) {
-    this.startEdit(receivable);
     this.openReceivableDialog();
   }
 
@@ -287,25 +368,20 @@ export class FinancialReceivablesPage {
       this.showWarning('Description is required.');
       return;
     }
-
     if (!this.form.customerUUID) {
       this.showWarning('Customer is required.');
       return;
     }
-
     if (!this.form.dueDate) {
       this.showWarning('Due date is required.');
       return;
     }
-
     if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
       this.showWarning('Amount must be greater than zero.');
       return;
     }
 
     this.saving = true;
-    this.error = '';
-
     try {
       const payload = {
         customerUUID: this.form.customerUUID,
@@ -332,7 +408,7 @@ export class FinancialReceivablesPage {
           this.closeReceivableDialog();
           this.startCreate();
         } else {
-          this.resetCreateForm();
+          this.startCreate();
         }
       }
       this.receivablesResource.reload();
@@ -343,14 +419,14 @@ export class FinancialReceivablesPage {
     }
   }
 
-  cancelReceivableForm() {
-    this.closeReceivableDialog();
-    this.startCreate();
-  }
-
   async saveAndNewReceivable() {
     if (this.editingReceivable) return;
     await this.saveReceivable(false);
+  }
+
+  cancelReceivableForm() {
+    this.closeReceivableDialog();
+    this.startCreate();
   }
 
   async deleteReceivable(receivableUUID: string) {
@@ -365,10 +441,10 @@ export class FinancialReceivablesPage {
     });
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
-    this.error = '';
     try {
       await this.api.delete(`erp/financial/accounts/receivables/${receivableUUID}`);
       this.snack.success('Receivable deleted successfully.');
+      this.clearSelection();
       this.receivablesResource.reload();
     } catch (err: any) {
       this.showError(err?.message ?? 'Failed to delete receivable.');
@@ -388,7 +464,6 @@ export class FinancialReceivablesPage {
     const confirmed = await firstValueFrom(ref.afterClosed());
     if (!confirmed) return;
 
-    this.error = '';
     this.issuingBoletoUUID = receivable.ErpFinAccReceivableUUID;
     try {
       await this.api.post(
@@ -408,20 +483,6 @@ export class FinancialReceivablesPage {
     return this.customerMap.get(uuid)?.label ?? '-';
   }
 
-  get filteredCustomers() {
-    const value = this.customerSearch.trim().toLowerCase();
-    if (!value) return this.customers;
-    return this.customers.filter((customer) =>
-      (customer.label ?? '').toLowerCase().includes(value),
-    );
-  }
-
-  onCustomerOpened(opened: boolean) {
-    if (opened) {
-      this.customerSearch = '';
-    }
-  }
-
   formatAmount(value: number) {
     return Number(value || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -433,15 +494,64 @@ export class FinancialReceivablesPage {
     return status.toUpperCase();
   }
 
+  statusChipClass(status: ReceivableStatus) {
+    const map: Record<ReceivableStatus, string> = {
+      open: 'chip-queued',
+      paid: 'chip-success',
+      overdue: 'chip-failed',
+      canceled: 'chip-skipped',
+    };
+    return map[status] ?? 'chip-queued';
+  }
+
   isStatusInactive(status: ReceivableStatus) {
     return status === 'canceled';
   }
 
+  private sortValue(row: ErpFinAccReceivable, key: string): string | number {
+    switch (key) {
+      case 'description':
+        return row.Description ?? '';
+      case 'customer':
+        return this.customerLabel(row.CustomerUUID);
+      case 'docNumber':
+        return row.DocNumber ?? '';
+      case 'dueDate':
+        return row.DueDate ?? '';
+      case 'amount':
+        return Number(row.Amount ?? 0);
+      case 'status':
+        return row.Status ?? '';
+      default:
+        return '';
+    }
+  }
+
+  private compareValues(left: string | number, right: string | number) {
+    if (typeof left === 'number' && typeof right === 'number') return left - right;
+    return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+  }
+
+  private parseBulkDeleteResult(response: any, requestedIds: string[]) {
+    const data = response?.data ?? response ?? {};
+    const deleted = Array.isArray(data.deleted) ? data.deleted : requestedIds;
+    const failed = Array.isArray(data.failed) ? data.failed : [];
+    return {
+      deleted: deleted.filter((id: unknown): id is string => typeof id === 'string'),
+      failed: failed
+        .map((item: any) => ({
+          ErpFinAccReceivableUUID: String(
+            item?.ErpFinAccReceivableUUID ?? item?.uuid ?? item?.id ?? '',
+          ),
+          message: String(item?.message ?? 'Failed to delete receivable.'),
+        }))
+        .filter((item: { ErpFinAccReceivableUUID: string }) => item.ErpFinAccReceivableUUID),
+    };
+  }
+
   private parseDateInput(value?: string | null) {
     if (!value) return null;
-    const trimmed = value.trim();
-    const [datePart] = trimmed.split('T');
-    if (!datePart) return null;
+    const [datePart] = value.trim().split('T');
     const [year, month, day] = datePart.split('-').map((part) => Number(part));
     if (!year || !month || !day) return null;
     return new Date(year, month - 1, day);
@@ -463,16 +573,11 @@ export class FinancialReceivablesPage {
     const currencyPart = parts.find((part) => part.type === 'currency')?.value ?? '$';
     const integerIndex = parts.findIndex((part) => part.type === 'integer');
     const currencyIndex = parts.findIndex((part) => part.type === 'currency');
-
-    let prefix = '';
-
-    if (currencyIndex > -1 && integerIndex > -1 && currencyIndex < integerIndex) {
-      const literal = parts[currencyIndex + 1];
-      prefix = currencyPart + (literal?.type === 'literal' ? literal.value : ' ');
-    } else {
-      prefix = `${currencyPart} `;
-    }
-
+    const prefix =
+      currencyIndex > -1 && integerIndex > -1 && currencyIndex < integerIndex
+        ? currencyPart +
+          (parts[currencyIndex + 1]?.type === 'literal' ? parts[currencyIndex + 1].value : ' ')
+        : `${currencyPart} `;
     return { prefix };
   }
 
@@ -483,57 +588,33 @@ export class FinancialReceivablesPage {
     } catch {
       region = '';
     }
-    const map: Record<string, string> = {
-      BR: 'BRL',
-      US: 'USD',
-      PT: 'EUR',
-      ES: 'EUR',
-      FR: 'EUR',
-      DE: 'EUR',
-      IT: 'EUR',
-      NL: 'EUR',
-      BE: 'EUR',
-      IE: 'EUR',
-      AT: 'EUR',
-      FI: 'EUR',
-      GR: 'EUR',
-      LU: 'EUR',
-      LT: 'EUR',
-      LV: 'EUR',
-      EE: 'EUR',
-      SK: 'EUR',
-      SI: 'EUR',
-      CY: 'EUR',
-      MT: 'EUR',
-      GB: 'GBP',
-      MX: 'MXN',
-      AR: 'ARS',
-      CL: 'CLP',
-      CO: 'COP',
-      PE: 'PEN',
-      UY: 'UYU',
-      PY: 'PYG',
-      CA: 'CAD',
-      AU: 'AUD',
-      NZ: 'NZD',
-      JP: 'JPY',
-    };
-    return map[region] ?? 'USD';
+    return (
+      {
+        BR: 'BRL',
+        US: 'USD',
+        PT: 'EUR',
+        ES: 'EUR',
+        GB: 'GBP',
+        MX: 'MXN',
+        AR: 'ARS',
+        CL: 'CLP',
+        CO: 'COP',
+        PE: 'PEN',
+        CA: 'CAD',
+      }[region] ?? 'USD'
+    );
   }
 
   private openReceivableDialog() {
     const receivableFormDialog = this.receivableFormDialog();
     if (!receivableFormDialog || this.receivableFormDialogRef) return;
-    this.error = '';
     this.dialogBinding = openCrudTemplateDialog(
       this.dialog,
       receivableFormDialog,
       'erp-receivable-form-dialog',
     );
     this.receivableFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.receivableFormDialogRef, () => {
-      this.cancelReceivableForm();
-    });
+    bindDialogEscape(this.receivableFormDialogRef, () => this.cancelReceivableForm());
     bindDialogClosed(this.receivableFormDialogRef, () => {
       this.dialogBinding?.stop();
       this.dialogBinding = null;
@@ -549,33 +630,11 @@ export class FinancialReceivablesPage {
     this.receivableFormDialogRef = null;
   }
 
-  private resetCreateForm() {
-    this.editingReceivable = null;
-    this.form.customerUUID = '';
-    this.form.description = '';
-    this.form.docNumber = '';
-    this.form.dueDate = null;
-    this.form.amount = 0;
-    this.form.status = 'open';
-    this.form.notes = '';
-    this.error = '';
-  }
   private showError(message: string) {
-    this.error = '';
     this.snack.error(message);
   }
 
   private showWarning(message: string) {
-    this.error = '';
     this.snack.warning(message);
-  }
-
-  private extractErrorMessage(error: unknown, fallback: string) {
-    if (error && typeof error === 'object' && 'error' in error) {
-      const payload = (error as { error?: { error?: string; message?: string } }).error;
-      return payload?.error || payload?.message || fallback;
-    }
-    if (error instanceof Error) return error.message;
-    return fallback;
   }
 }
