@@ -5,9 +5,13 @@ import { ApiService } from '../../../../services/api.service';
 export class VoipSoftswitchResourceUiService {
   private readonly api = inject(ApiService);
 
-  list(resource: string, params: { search?: string; limit?: number; offset?: number } = {}) {
+  list(
+    resource: string,
+    params: { search?: string; status?: string; limit?: number; offset?: number } = {},
+  ) {
     const query = new URLSearchParams();
     if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.status !== undefined && params.status !== '') query.set('status', params.status);
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();

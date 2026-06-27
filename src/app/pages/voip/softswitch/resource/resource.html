@@ -14,7 +14,7 @@
       </div>
     </header>
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
@@ -22,6 +22,14 @@
           placeholder="Search records"
           (input)="onSearchChange($any($event.target).value)"
         />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="onStatusChange($event.value)">
+          <mat-option value="">All</mat-option>
+          <mat-option value="1">Active</mat-option>
+          <mat-option value="0">Inactive</mat-option>
+        </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         @if (selectedCount) {
@@ -157,11 +165,7 @@
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
-            <form
-              id="softswitchResourceForm"
-              class="form-grid"
-              (ngSubmit)="submit()"
-            >
+            <form id="softswitchResourceForm" class="form-grid" (ngSubmit)="submit()">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Softswitch</mat-label>
                 <mat-select
@@ -221,8 +225,8 @@
           class="dialog-action-button save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="softswitchResourceForm"
+          type="button"
+          (click)="submit()"
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>save</mat-icon>

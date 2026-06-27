@@ -172,6 +172,7 @@ export class VoipSoftswitchResourcePage {
   readonly deletingSelected = signal(false);
   readonly editing = signal<ResourceRow | null>(null);
   private readonly appliedSearch = signal('');
+  private readonly appliedStatus = signal('');
   readonly selectedIds = new Set<string>();
   readonly displayedColumns = [
     'select',
@@ -185,18 +186,21 @@ export class VoipSoftswitchResourcePage {
   readonly dataSource = new MatTableDataSource<ResourceRow>([]);
   readonly search = signal('');
   readonly searchInput = signal('');
+  readonly statusInput = signal('');
   readonly accountSearch = signal('');
 
   private readonly itemsResource = resource({
     params: () => ({
       resource: this.resource(),
       search: this.appliedSearch(),
+      status: this.appliedStatus(),
       limit: this.listLimit,
     }),
     defaultValue: [] as ResourceRow[],
     loader: async ({ params }) => {
       const res = await this.api.list(params.resource, {
         search: params.search,
+        status: params.status,
         limit: params.limit,
       });
       return res?.data?.items ?? [];
@@ -266,15 +270,21 @@ export class VoipSoftswitchResourcePage {
   onSearchChange(value: string) {
     this.searchInput.set(value);
   }
+  onStatusChange(value: string) {
+    this.statusInput.set(value);
+  }
   applySearchFilters() {
     const search = this.searchInput().trim();
     this.search.set(search);
     this.appliedSearch.set(search);
+    this.appliedStatus.set(this.statusInput());
   }
   clearSearchFilters() {
     this.search.set('');
     this.searchInput.set('');
+    this.statusInput.set('');
     this.appliedSearch.set('');
+    this.appliedStatus.set('');
   }
   refreshList() {
     this.itemsResource.reload();
