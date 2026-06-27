@@ -80,7 +80,7 @@ type ReceivableFormModel = {
 
 type CustomerOption = MnsSearchSelectFieldOption & { value: string };
 
-type ReceivablesSnapshot = {
+type ReceivableSnapshot = {
   items: Receivable[];
   customers: CustomerOption[];
 };
@@ -130,9 +130,7 @@ export class FinancialReceivablesPage {
   private readonly listLimit = 200;
 
   readonly receivableFormDialog = viewChild<TemplateRef<unknown>>('receivableFormDialog');
-
   private formDialogBinding: CrudDialogBinding | null = null;
-  private readonly mutating = signal(false);
 
   readonly searchInput = signal('');
   readonly statusInput = signal<ReceivableStatus | ''>('');
@@ -144,6 +142,7 @@ export class FinancialReceivablesPage {
   readonly pageSize = signal(10);
   readonly selectedReceivableUUIDs = signal<Set<string>>(new Set());
   readonly saving = signal(false);
+  readonly mutating = signal(false);
   readonly editing = signal<Receivable | null>(null);
 
   readonly formModel = signal<ReceivableFormModel>(this.emptyFormModel());
@@ -161,7 +160,6 @@ export class FinancialReceivablesPage {
     { value: 'canceled', label: 'Canceled' },
   ];
   readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
-
   readonly displayedColumns = [
     'select',
     'description',
@@ -180,7 +178,7 @@ export class FinancialReceivablesPage {
 
   private readonly snapshotResource = resource({
     params: () => ({ search: this.search(), status: this.status() }),
-    defaultValue: { items: [], customers: [] } as ReceivablesSnapshot,
+    defaultValue: { items: [], customers: [] } as ReceivableSnapshot,
     loader: async ({ params }) => {
       const [items, customers] = await Promise.all([
         this.fetchReceivables(params.search, params.status),
@@ -307,7 +305,6 @@ export class FinancialReceivablesPage {
         await this.api.post('erp/financial/accounts/receivables', payload);
         this.snack.success(this.t('Receivable created successfully.'));
       }
-
       this.snapshotResource.reload();
       if (saveAndNew && createMode) {
         this.editing.set(null);
@@ -367,7 +364,6 @@ export class FinancialReceivablesPage {
       );
       this.selectedReceivableUUIDs.set(failed);
       this.snapshotResource.reload();
-
       if (failed.size) {
         this.snack.error(
           this.t('Receivables bulk delete partial failure', {
@@ -431,7 +427,7 @@ export class FinancialReceivablesPage {
   }
 
   statusLabel(status: ReceivableStatus) {
-    return this.t(this.statusOptions.find((item) => item.value === status)?.label ?? status);
+    return this.t(this.statusOptions.find((option) => option.value === status)?.label ?? status);
   }
 
   amountLabel(value: number) {
@@ -464,7 +460,6 @@ export class FinancialReceivablesPage {
       this.snack.warning(this.t('Amount must be greater than zero.'));
       return null;
     }
-
     return {
       customerUUID: value.customerUUID,
       description: value.description.trim(),

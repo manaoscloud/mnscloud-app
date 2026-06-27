@@ -314,34 +314,32 @@
         </button>
       </div>
 
-      <div class="primary-actions">
-        <div class="save-split-action" [class.is-single-action]="editing()">
+      <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
+        <button
+          mat-flat-button
+          color="primary"
+          class="dialog-action-button save-main-button"
+          type="button"
+          (click)="savePayable()"
+          [disabled]="!form().valid() || saving()"
+        >
+          <mat-icon>save</mat-icon>
+          {{ 'Save' | transloco }}
+        </button>
+        @if (!editing()) {
           <button
             mat-flat-button
             color="primary"
-            class="dialog-action-button save-main-button"
+            class="save-more-button"
             type="button"
-            (click)="savePayable()"
+            [matMenuTriggerFor]="payableSaveMenu"
             [disabled]="!form().valid() || saving()"
+            [attr.aria-label]="'More save actions' | transloco"
+            [matTooltip]="'More save actions' | transloco"
           >
-            <mat-icon>save</mat-icon>
-            {{ 'Save' | transloco }}
+            <mat-icon>expand_more</mat-icon>
           </button>
-          @if (!editing()) {
-            <button
-              mat-flat-button
-              color="primary"
-              class="save-more-button"
-              type="button"
-              [matMenuTriggerFor]="payableSaveMenu"
-              [disabled]="!form().valid() || saving()"
-              [attr.aria-label]="'More save actions' | transloco"
-              [matTooltip]="'More save actions' | transloco"
-            >
-              <mat-icon>expand_more</mat-icon>
-            </button>
-          }
-        </div>
+        }
       </div>
 
       <mat-menu #payableSaveMenu="matMenu" xPosition="before" yPosition="below">

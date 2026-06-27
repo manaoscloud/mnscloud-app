@@ -79,7 +79,7 @@ type PayableFormModel = {
 
 type SupplierOption = MnsSearchSelectFieldOption & { value: string };
 
-type PayablesSnapshot = {
+type PayableSnapshot = {
   items: Payable[];
   suppliers: SupplierOption[];
 };
@@ -129,9 +129,7 @@ export class FinancialPayablesPage {
   private readonly listLimit = 200;
 
   readonly payableFormDialog = viewChild<TemplateRef<unknown>>('payableFormDialog');
-
   private formDialogBinding: CrudDialogBinding | null = null;
-  private readonly mutating = signal(false);
 
   readonly searchInput = signal('');
   readonly statusInput = signal<PayableStatus | ''>('');
@@ -143,6 +141,7 @@ export class FinancialPayablesPage {
   readonly pageSize = signal(10);
   readonly selectedPayableUUIDs = signal<Set<string>>(new Set());
   readonly saving = signal(false);
+  readonly mutating = signal(false);
   readonly editing = signal<Payable | null>(null);
 
   readonly formModel = signal<PayableFormModel>(this.emptyFormModel());
@@ -160,7 +159,6 @@ export class FinancialPayablesPage {
     { value: 'canceled', label: 'Canceled' },
   ];
   readonly statusFilterOptions = [{ value: '', label: 'All' }, ...this.statusOptions];
-
   readonly displayedColumns = [
     'select',
     'description',
@@ -179,7 +177,7 @@ export class FinancialPayablesPage {
 
   private readonly snapshotResource = resource({
     params: () => ({ search: this.search(), status: this.status() }),
-    defaultValue: { items: [], suppliers: [] } as PayablesSnapshot,
+    defaultValue: { items: [], suppliers: [] } as PayableSnapshot,
     loader: async ({ params }) => {
       const [items, suppliers] = await Promise.all([
         this.fetchPayables(params.search, params.status),
@@ -306,7 +304,6 @@ export class FinancialPayablesPage {
         await this.api.post('erp/financial/accounts/payables', payload);
         this.snack.success(this.t('Payable created successfully.'));
       }
-
       this.snapshotResource.reload();
       if (saveAndNew && createMode) {
         this.editing.set(null);
@@ -364,7 +361,6 @@ export class FinancialPayablesPage {
       );
       this.selectedPayableUUIDs.set(failed);
       this.snapshotResource.reload();
-
       if (failed.size) {
         this.snack.error(
           this.t('Payables bulk delete partial failure', {
@@ -426,7 +422,7 @@ export class FinancialPayablesPage {
   }
 
   statusLabel(status: PayableStatus) {
-    return this.t(this.statusOptions.find((item) => item.value === status)?.label ?? status);
+    return this.t(this.statusOptions.find((option) => option.value === status)?.label ?? status);
   }
 
   amountLabel(value: number) {
@@ -459,7 +455,6 @@ export class FinancialPayablesPage {
       this.snack.warning(this.t('Amount must be greater than zero.'));
       return null;
     }
-
     return {
       supplierUUID: value.supplierUUID,
       description: value.description.trim(),
