@@ -29,6 +29,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
+import { DateTimeFormatService } from '../../../../../services/date-time-format.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SystemParameterService } from '../../../../../services/system-parameter.service';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
@@ -103,6 +104,7 @@ export class FinancialReceivablesPage {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dateTime = inject(DateTimeFormatService);
   private readonly i18n = inject(TranslocoService);
   private readonly parameters = inject(SystemParameterService);
   private readonly snack = inject(SnackbarService);
@@ -381,7 +383,7 @@ export class FinancialReceivablesPage {
 
   dateLabel(value?: string | null) {
     const date = this.parseDate(value);
-    return date ? new Intl.DateTimeFormat(undefined).format(date) : '-';
+    return date ? this.dateTime.formatDate(date) || '-' : '-';
   }
 
   isStatusInactive(status: ReceivableStatus) {

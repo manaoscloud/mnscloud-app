@@ -110,7 +110,10 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             {{ 'Supplier' | transloco }}
           </th>
-          <td mat-cell *matCellDef="let row">{{ supplierLabel(row) }}</td>
+          <td mat-cell *matCellDef="let row">
+            <span class="record-main">{{ supplierLabel(row) }}</span>
+            <span class="record-uuid">{{ row.SupplierUUID }}</span>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="docNumber">
