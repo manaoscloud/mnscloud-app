@@ -95,7 +95,7 @@ export class VoipSoftswitchPage {
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  readonly pageTitle = computed(() => 'Softswitch');
+  readonly pageTitle = computed(() => 'Softswitch Accounts');
   readonly pageSubtitle = computed(() =>
     this.isMaster()
       ? 'Configure default Softswitch APIs for all tenants.'
@@ -109,7 +109,11 @@ export class VoipSoftswitchPage {
 
   readonly search = signal('');
   readonly searchInput = signal('');
-  readonly appliedSearch = signal('');
+  readonly statusInput = signal<number | ''>('');
+  readonly appliedFilters = signal<{ search: string; status: number | '' }>({
+    search: '',
+    status: '',
+  });
   readonly selectedAccountUUIDs = new Set<string>();
   readonly displayedColumns = [
     'select',
@@ -163,13 +167,15 @@ export class VoipSoftswitchPage {
   private readonly accountsResource = resource({
     params: () => ({
       isMaster: this.isMaster(),
-      search: this.appliedSearch(),
+      search: this.appliedFilters().search,
+      status: this.appliedFilters().status,
       limit: this.listLimit,
     }),
     defaultValue: [] as VoipSoftswitchAccount[],
     loader: async ({ params }) => {
       const res = await this.api.list(params.isMaster, {
         search: params.search,
+        status: params.status === '' ? undefined : params.status,
         limit: params.limit,
       });
       return res?.data?.items ?? [];
@@ -248,13 +254,14 @@ export class VoipSoftswitchPage {
   applySearchFilters() {
     const search = this.searchInput().trim();
     this.search.set(search);
-    this.appliedSearch.set(search);
+    this.appliedFilters.set({ search, status: this.statusInput() });
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
+    this.statusInput.set('');
     this.search.set('');
-    this.appliedSearch.set('');
+    this.appliedFilters.set({ search: '', status: '' });
   }
 
   refresh() {

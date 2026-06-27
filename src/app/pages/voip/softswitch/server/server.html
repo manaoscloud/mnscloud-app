@@ -16,8 +16,8 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Search servers</mat-label>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
           placeholder="Name, hostname, IP"
@@ -25,6 +25,15 @@
           (input)="searchInput.set($any($event.target).value)"
           (keydown.enter)="applySearchFilters()"
         />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          <mat-option [value]="">{{ 'All' | transloco }}</mat-option>
+          <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
+        </mat-select>
       </mat-form-field>
 
       <div class="filter-actions">
@@ -131,6 +140,14 @@
           </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Generate install command"
+                (click)="generateInstallCommand(row)"
+              >
+                <mat-icon>terminal</mat-icon>
+              </button>
               <button
                 mat-icon-button
                 type="button"
@@ -260,9 +277,9 @@
           class="dialog-action-button save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="voipSoftswitchServerForm"
+          type="button"
           [disabled]="!form().valid() || saving()"
+          (click)="save()"
         >
           <mat-icon>save</mat-icon>
           Save
@@ -306,4 +323,15 @@
       </div>
     </mat-dialog-actions>
   </div>
+</ng-template>
+
+<ng-template #installCommandDialog>
+  <mns-install-command-dialog
+    [title]="'Softswitch install command'"
+    [description]="'Run this command on the Kamailio softswitch server.'"
+    [warning]="'This runtime token is shown only once. Generating a new command replaces the previous token for this Softswitch server.'"
+    [details]="installCommandDetails()"
+    [command]="installCommand()"
+    (copied)="notifyCommandCopied($event)"
+  />
 </ng-template>

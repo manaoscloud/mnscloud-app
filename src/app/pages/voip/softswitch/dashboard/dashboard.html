@@ -1,0 +1,100 @@
+<section class="erp-page softswitch-dashboard" animate.enter="app-fade-in">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'Softswitch Dashboard' | transloco }}</h1>
+        <p>{{ 'Operational health, accounts, subscribers, trunks and routing.' | transloco }}</p>
+      </div>
+
+      <div class="header-actions">
+        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+      </div>
+    </header>
+
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+        </div>
+      }
+
+      <div class="kpi-grid">
+        @for (item of kpis(); track item.label) {
+          <a class="kpi-tile" [routerLink]="item.route || null" [class.is-static]="!item.route">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label | transloco }}</span>
+            <strong>{{ item.value }}</strong>
+          </a>
+        }
+      </div>
+
+      <section class="dashboard-panel">
+        <h2>{{ 'Server Health' | transloco }}</h2>
+        <div class="table-wrapper mat-elevation-z8">
+          <table
+            mat-table
+            [dataSource]="serverTable.visibleRows()"
+            matSort
+            [matSortActive]="serverTable.sortActive()"
+            [matSortDirection]="serverTable.sortDirection()"
+            (matSortChange)="setServerSort($event)"
+          >
+            <ng-container matColumnDef="health">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-chip
+                  class="status-pill"
+                  [class.is-active]="row.health === 'online'"
+                  [class.is-inactive]="row.health !== 'online'"
+                >
+                  {{ healthLabel(row.health) | transloco }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="engine">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Engine' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.engine }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="hostname">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.hostname || '-' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="lastSeenAt">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Last Seen' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.lastSeenAt ? (row.lastSeenAt | mnsDateTime) : '-' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="serverColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: serverColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="serverColumns.length">
+                {{ 'No servers found.' | transloco }}
+              </td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          class="mobile-paginator"
+          [length]="serverTable.sortedRows().length"
+          [pageIndex]="serverTable.pageIndex()"
+          [pageSize]="serverTable.pageSize()"
+          [pageSizeOptions]="[5, 10, 25, 100]"
+          (page)="setServerPage($event)"
+          showFirstLastButtons
+        />
+      </section>
+    </div>
+  </mat-card>
+</section>

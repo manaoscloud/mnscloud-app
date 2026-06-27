@@ -11,6 +11,7 @@ export type VoipSoftswitchServerItem = {
   VsrPublicIP?: string | null;
   VsrPrivateIP?: string | null;
   VsrBaseUrl?: string | null;
+  VsrApiTokenHash?: never;
   VsrNotes?: string | null;
   VsrStatus: number;
   VsrLastSeenAt?: string | null;
@@ -27,9 +28,14 @@ export class VoipSoftswitchServerService {
     return isMaster ? 'system/voip/softswitch/servers' : 'voip/softswitch/servers';
   }
 
-  list(isMaster = false, params: { search?: string; limit?: number; offset?: number } = {}) {
+  list(
+    isMaster = false,
+    params: { search?: string; status?: number; limit?: number; offset?: number } = {},
+  ) {
     const query = new URLSearchParams();
     if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.status !== undefined && params.status !== null)
+      query.set('status', String(params.status));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();
@@ -54,5 +60,9 @@ export class VoipSoftswitchServerService {
 
   removeMany(ids: string[], isMaster = true) {
     return this.api.delete<any>(`${this.basePath(isMaster)}/bulk`, { ids });
+  }
+
+  generateInstallCommand(uuid: string, isMaster = true) {
+    return this.api.post<any>(`${this.basePath(isMaster)}/${uuid}/install-command`, {});
   }
 }

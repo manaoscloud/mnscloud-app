@@ -922,8 +922,16 @@ export const routes: Routes = [
               {
                 path: 'voip/softswitch',
                 loadComponent: () =>
+                  import('./pages/voip/softswitch/dashboard/dashboard').then(
+                    (m) => m.VoipSoftswitchDashboardPage,
+                  ),
+                title: 'VoIP • Softswitch Dashboard | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/accounts',
+                loadComponent: () =>
                   import('./pages/voip/softswitch/softswitch').then((m) => m.VoipSoftswitchPage),
-                title: 'VoIP • Softswitch | mnscloud',
+                title: 'VoIP • Softswitch • Accounts | mnscloud',
               },
               {
                 path: 'voip/softswitch/provider',
@@ -1240,8 +1248,17 @@ export const routes: Routes = [
               {
                 path: 'softswitch',
                 loadComponent: () =>
+                  import('./pages/voip/softswitch/dashboard/dashboard').then(
+                    (m) => m.VoipSoftswitchDashboardPage,
+                  ),
+                title: 'System Softswitch Dashboard | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'softswitch/accounts',
+                loadComponent: () =>
                   import('./pages/voip/softswitch/softswitch').then((m) => m.VoipSoftswitchPage),
-                title: 'System Softswitch | mnscloud',
+                title: 'System Softswitch Accounts | mnscloud',
                 data: { scope: 'master' },
               },
               {

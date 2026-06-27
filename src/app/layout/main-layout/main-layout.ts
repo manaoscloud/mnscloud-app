@@ -1285,6 +1285,13 @@ export class MainLayout {
           icon: 'router',
           children: [
             {
+              id: 'voip/softswitch/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/voip/softswitch',
+              masterRoute: '/system/softswitch',
+            },
+            {
               id: 'voip/softswitch/server',
               label: 'Servers',
               icon: 'dns',
@@ -1300,10 +1307,10 @@ export class MainLayout {
             },
             {
               id: 'voip/softswitch/account',
-              label: 'Softswitches',
+              label: 'Accounts',
               icon: 'router',
-              route: '/voip/softswitch',
-              masterRoute: '/system/softswitch',
+              route: '/voip/softswitch/accounts',
+              masterRoute: '/system/softswitch/accounts',
             },
             {
               id: 'voip/softswitch/subscriber',

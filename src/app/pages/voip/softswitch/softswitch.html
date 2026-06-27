@@ -16,7 +16,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
@@ -24,6 +24,14 @@
           placeholder="Search Softswitch accounts"
           (input)="onSearchChange($any($event.target).value)"
         />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($event.value)">
+          <mat-option [value]="">{{ 'All' | transloco }}</mat-option>
+          <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+          <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
+        </mat-select>
       </mat-form-field>
       <div class="filter-actions">
         @if (selectedCount) {
@@ -323,9 +331,9 @@
           class="dialog-action-button save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="softswitchForm"
+          type="button"
           [disabled]="!form().valid() || saving()"
+          (click)="submit()"
         >
           <mat-icon>save</mat-icon>
           Save
