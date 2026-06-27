@@ -246,9 +246,10 @@
                 fieldClass="span-1"
                 [placeholder]="'Search customer' | transloco"
                 [emptyLabel]="'No customers found.' | transloco"
-                [loading]="loading()"
+                [loading]="referenceLoading()"
                 [options]="customerOptions()"
                 [value]="form.customerUUID"
+                (openedChange)="customerOpened($event)"
                 (valueChange)="customerChanged($event)"
               />
 

@@ -164,6 +164,7 @@ export class FinancialReceivablesPage {
   });
 
   readonly loading = computed(() => this.snapshotResource.isLoading() || this.mutating());
+  readonly referenceLoading = computed(() => this.snapshotResource.isLoading());
   readonly rows = computed(() => this.snapshotResource.value().items);
   readonly customerOptions = computed(() => this.snapshotResource.value().customers);
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
@@ -389,6 +390,12 @@ export class FinancialReceivablesPage {
 
   customerChanged(value: string | number | boolean | null) {
     this.form.customerUUID = String(value ?? '').trim();
+  }
+
+  customerOpened(opened: boolean) {
+    if (opened && !this.customerOptions().length && !this.snapshotResource.isLoading()) {
+      this.snapshotResource.reload();
+    }
   }
 
   private async fetchReceivables(search: string, status: ReceivableStatus | '') {

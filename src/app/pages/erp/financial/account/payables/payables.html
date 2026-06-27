@@ -264,9 +264,10 @@
                 fieldClass="span-1"
                 [placeholder]="'Search supplier' | transloco"
                 [emptyLabel]="'No suppliers found.' | transloco"
-                [loading]="loading()"
+                [loading]="referenceLoading()"
                 [options]="supplierOptions()"
                 [value]="form.supplierUUID"
+                (openedChange)="supplierOpened($event)"
                 (valueChange)="supplierChanged($event)"
               />
 

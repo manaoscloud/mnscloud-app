@@ -118,6 +118,7 @@ export class MnsSearchSelectFieldComponent {
   readonly value = input<string | number | boolean | null>('');
   readonly valueChange = output<string | number | boolean | null>();
   readonly selectionChange = output<string | number | boolean | null>();
+  readonly openedChange = output<boolean>();
   readonly label = input.required<string>();
   readonly options = input.required<readonly MnsSearchSelectFieldOption[]>();
   readonly fieldClass = input('');
@@ -143,6 +144,7 @@ export class MnsSearchSelectFieldComponent {
   });
 
   handleOpenedChange(opened: boolean): void {
+    this.openedChange.emit(opened);
     if (!opened) this.search.set('');
   }
 

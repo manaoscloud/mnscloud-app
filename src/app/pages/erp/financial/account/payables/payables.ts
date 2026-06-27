@@ -181,6 +181,7 @@ export class FinancialPayablesPage {
   });
 
   readonly loading = computed(() => this.snapshotResource.isLoading() || this.mutating());
+  readonly referenceLoading = computed(() => this.snapshotResource.isLoading());
   readonly rows = computed(() => this.snapshotResource.value().items);
   readonly supplierOptions = computed(() => this.snapshotResource.value().suppliers);
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
@@ -448,6 +449,12 @@ export class FinancialPayablesPage {
 
   supplierChanged(value: string | number | boolean | null) {
     this.form.supplierUUID = String(value ?? '').trim();
+  }
+
+  supplierOpened(opened: boolean) {
+    if (opened && !this.supplierOptions().length && !this.snapshotResource.isLoading()) {
+      this.snapshotResource.reload();
+    }
   }
 
   private async fetchPayables(search: string, status: PayableStatus | '') {
