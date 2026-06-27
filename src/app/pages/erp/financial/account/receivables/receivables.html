@@ -1,4 +1,4 @@
-<section class="erp-page">
+<section class="erp-page" animate.enter="app-fade-in">
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
@@ -231,6 +231,7 @@
         <mat-tab [label]="'Record' | transloco">
           <form class="tab-content form-grid">
             <mns-search-select-field
+              class="span-1"
               [label]="'Customer' | transloco"
               [field]="form.customerUUID"
               fieldClass="span-1"
@@ -242,6 +243,7 @@
             />
 
             <mns-select-field
+              class="span-1"
               [label]="'Status' | transloco"
               [field]="form.status"
               [options]="statusOptions"
@@ -249,12 +251,14 @@
             />
 
             <mns-text-field
+              class="span-2"
               [label]="'Description' | transloco"
               [field]="form.description"
               fieldClass="span-2"
             />
 
             <mns-text-field
+              class="span-1"
               [label]="'Document number' | transloco"
               [field]="form.docNumber"
               fieldClass="span-1"
@@ -289,6 +293,7 @@
         <mat-tab [label]="'Notes' | transloco">
           <form class="tab-content form-grid">
             <mns-textarea-field
+              class="span-4"
               [label]="'Notes' | transloco"
               [field]="form.notes"
               fieldClass="span-4"
@@ -301,7 +306,12 @@
 
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="cancelForm()">
+        <button
+          class="dialog-action-button dialog-action-secondary"
+          mat-stroked-button
+          type="button"
+          (click)="cancelForm()"
+        >
           {{ 'Cancel' | transloco }}
         </button>
       </div>
@@ -311,7 +321,7 @@
           <button
             mat-flat-button
             color="primary"
-            class="save-main-button"
+            class="dialog-action-button save-main-button"
             type="button"
             (click)="saveReceivable()"
             [disabled]="!form().valid() || saving()"
