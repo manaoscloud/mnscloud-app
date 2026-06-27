@@ -3,21 +3,21 @@ import {
   DestroyRef,
   TemplateRef,
   computed,
+  effect,
   inject,
   resource,
   signal,
   viewChild,
 } from '@angular/core';
+import { FormField, form as createForm, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -33,7 +33,6 @@ import { DateTimeFormatService } from '../../../../../services/date-time-format.
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SystemParameterService } from '../../../../../services/system-parameter.service';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
-import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -42,6 +41,9 @@ import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.uti
 import {
   MnsSearchSelectFieldComponent,
   type MnsSearchSelectFieldOption,
+  MnsSelectFieldComponent,
+  MnsTextFieldComponent,
+  MnsTextareaFieldComponent,
 } from '../../../../../shared/forms';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
@@ -63,6 +65,16 @@ type Receivable = {
   Notes?: string | null;
 };
 
+type ReceivableFormModel = {
+  customerUUID: string;
+  status: ReceivableStatus;
+  description: string;
+  docNumber: string;
+  dueDate: string;
+  amount: number;
+  notes: string;
+};
+
 type CustomerOption = MnsSearchSelectFieldOption & { value: string };
 
 type ReceivablesSnapshot = {
@@ -75,20 +87,21 @@ type ReceivablesSnapshot = {
   standalone: true,
   imports: [
     CurrencyMaskDirective,
-    DateMaskDirective,
+    FormField,
     MnsSearchSelectFieldComponent,
+    MnsSelectFieldComponent,
+    MnsTextFieldComponent,
+    MnsTextareaFieldComponent,
     RefreshButtonComponent,
     TranslocoPipe,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
-    MatDatepickerModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatMenuModule,
-    MatNativeDateModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
@@ -102,16 +115,18 @@ type ReceivablesSnapshot = {
 })
 export class FinancialReceivablesPage {
   private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly dateTime = inject(DateTimeFormatService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslocoService);
   private readonly parameters = inject(SystemParameterService);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
 
   readonly receivableFormDialog = viewChild<TemplateRef<unknown>>('receivableFormDialog');
+
   private formDialogBinding: CrudDialogBinding | null = null;
+  private readonly mutating = signal(false);
 
   readonly searchInput = signal('');
   readonly statusInput = signal<ReceivableStatus | ''>('');
@@ -121,11 +136,17 @@ export class FinancialReceivablesPage {
   readonly sortDirection = signal<SortDirection>('asc');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
-  readonly selectedIds = signal<Set<string>>(new Set());
+  readonly selectedReceivableUUIDs = signal<Set<string>>(new Set());
   readonly saving = signal(false);
-  readonly mutating = signal(false);
   readonly editing = signal<Receivable | null>(null);
-  readonly issuingBoletoUUID = signal<string | null>(null);
+
+  readonly formModel = signal<ReceivableFormModel>(this.emptyFormModel());
+  readonly form = createForm(this.formModel, (schema) => {
+    required(schema.customerUUID);
+    required(schema.description);
+    required(schema.dueDate);
+    required(schema.amount);
+  });
 
   readonly statusOptions: { value: ReceivableStatus; label: string }[] = [
     { value: 'open', label: 'Open' },
@@ -145,8 +166,6 @@ export class FinancialReceivablesPage {
     'status',
     'actions',
   ];
-
-  form = this.emptyForm();
 
   readonly currencyResource = resource({
     defaultValue: 'BRL',
@@ -174,42 +193,56 @@ export class FinancialReceivablesPage {
     const start = this.pageIndex() * this.pageSize();
     return this.sortedRows().slice(start, start + this.pageSize());
   });
-  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly selectedCount = computed(() => this.selectedReceivableUUIDs().size);
   readonly allVisibleSelected = computed(() => {
     const rows = this.visibleRows();
-    return (
-      rows.length > 0 && rows.every((row) => this.selectedIds().has(row.ErpFinAccReceivableUUID))
-    );
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
   });
   readonly someVisibleSelected = computed(() => {
     const rows = this.visibleRows();
-    return (
-      rows.some((row) => this.selectedIds().has(row.ErpFinAccReceivableUUID)) &&
-      !this.allVisibleSelected()
-    );
+    return rows.some((row) => this.isSelected(row)) && !this.allVisibleSelected();
   });
 
   private readonly cleanup = this.destroyRef.onDestroy(() => this.closeFormDialog());
+
+  private readonly syncSelection = effect(() => {
+    this.rows();
+    queueMicrotask(() => this.reconcileSelection());
+  });
+
+  private readonly reportLoadError = effect(() => {
+    const error = this.snapshotResource.error();
+    if (!error) return;
+    this.snack.error(this.extractErrorMessage(error, this.t('Failed to load receivables.')));
+  });
 
   refreshList() {
     this.snapshotResource.reload();
   }
 
   applySearchFilters() {
+    const nextSearch = this.searchInput().trim();
+    const nextStatus = this.statusInput();
     this.pageIndex.set(0);
     this.clearSelection();
-    this.search.set(this.searchInput().trim());
-    this.status.set(this.statusInput());
-    this.snapshotResource.reload();
+    if (nextSearch === this.search() && nextStatus === this.status()) {
+      this.snapshotResource.reload();
+      return;
+    }
+    this.search.set(nextSearch);
+    this.status.set(nextStatus);
   }
 
   clearSearchFilters() {
     this.searchInput.set('');
     this.statusInput.set('');
-    this.search.set('');
-    this.status.set('');
     this.pageIndex.set(0);
     this.clearSelection();
+    if (this.search() || this.status()) {
+      this.search.set('');
+      this.status.set('');
+      return;
+    }
     this.snapshotResource.reload();
   }
 
@@ -224,56 +257,37 @@ export class FinancialReceivablesPage {
     this.pageSize.set(event.pageSize);
   }
 
-  isSelected(row: Receivable) {
-    return this.selectedIds().has(row.ErpFinAccReceivableUUID);
-  }
-
-  toggleRow(row: Receivable, checked: boolean) {
-    const next = new Set(this.selectedIds());
-    if (checked) next.add(row.ErpFinAccReceivableUUID);
-    else next.delete(row.ErpFinAccReceivableUUID);
-    this.selectedIds.set(next);
-  }
-
-  toggleVisibleRows(checked: boolean) {
-    const next = new Set(this.selectedIds());
-    for (const row of this.visibleRows()) {
-      if (checked) next.add(row.ErpFinAccReceivableUUID);
-      else next.delete(row.ErpFinAccReceivableUUID);
-    }
-    this.selectedIds.set(next);
-  }
-
   startCreate() {
     this.editing.set(null);
-    this.form = this.emptyForm();
+    this.formModel.set(this.emptyFormModel());
     this.openFormDialog();
   }
 
   startEdit(row: Receivable) {
     this.editing.set(row);
-    this.form = {
-      customerUUID: row.CustomerUUID,
+    this.formModel.set({
+      customerUUID: row.CustomerUUID ?? '',
+      status: row.Status ?? 'open',
       description: row.Description ?? '',
       docNumber: row.DocNumber ?? '',
-      dueDate: this.parseDate(row.DueDate),
+      dueDate: this.dateInputValue(row.DueDate),
       amount: Number(row.Amount ?? 0),
-      status: row.Status ?? 'open',
       notes: row.Notes ?? '',
-    };
+    });
     this.openFormDialog();
   }
 
   cancelForm() {
     this.closeFormDialog();
     this.editing.set(null);
-    this.form = this.emptyForm();
+    this.formModel.set(this.emptyFormModel());
   }
 
-  async saveReceivable(closeAfterSave = true) {
+  async saveReceivable(saveAndNew = false) {
     const payload = this.buildPayload();
     if (!payload) return;
 
+    const createMode = !this.editing();
     this.saving.set(true);
     try {
       const editing = this.editing();
@@ -289,18 +303,22 @@ export class FinancialReceivablesPage {
       }
 
       this.snapshotResource.reload();
-      if (closeAfterSave || editing) this.cancelForm();
-      else this.form = this.emptyForm();
+      if (saveAndNew && createMode) {
+        this.editing.set(null);
+        this.formModel.set(this.emptyFormModel());
+        return;
+      }
+      this.cancelForm();
     } catch (error) {
-      this.showError(error, 'Failed to save receivable.');
+      this.snack.error(this.extractErrorMessage(error, this.t('Failed to save receivable.')));
     } finally {
       this.saving.set(false);
     }
   }
 
-  async saveAndNewReceivable() {
+  saveAndNewReceivable() {
     if (this.editing()) return;
-    await this.saveReceivable(false);
+    void this.saveReceivable(true);
   }
 
   async deleteReceivable(row: Receivable) {
@@ -313,14 +331,14 @@ export class FinancialReceivablesPage {
 
     await this.runMutation(async () => {
       await this.api.delete(`erp/financial/accounts/receivables/${row.ErpFinAccReceivableUUID}`);
-      this.snack.success(this.t('Receivable deleted successfully.'));
       this.clearSelection();
       this.snapshotResource.reload();
+      this.snack.success(this.t('Receivable deleted successfully.'));
     }, 'Failed to delete receivable.');
   }
 
   async deleteSelectedReceivables() {
-    const ids = [...this.selectedIds()];
+    const ids = [...this.selectedReceivableUUIDs()];
     if (!ids.length) return;
 
     const confirmed = await this.confirm(
@@ -335,43 +353,68 @@ export class FinancialReceivablesPage {
       const response = await this.api.delete<any>('erp/financial/accounts/receivables/bulk', {
         ids,
       });
-      const failed = Array.isArray(response?.data?.failed) ? response.data.failed : [];
-      this.selectedIds.set(
-        new Set(failed.map((item: any) => String(item?.ErpFinAccReceivableUUID ?? item?.id ?? ''))),
+      const deleted = new Set<string>(response?.data?.deleted ?? []);
+      const failed = new Set<string>(
+        (response?.data?.failed ?? [])
+          .map((item: any) => this.extractBulkFailureUUID(item))
+          .filter((uuid: string | null): uuid is string => !!uuid),
       );
-      this.snack.success(this.t('Receivables bulk delete completed.'));
+      this.selectedReceivableUUIDs.set(failed);
       this.snapshotResource.reload();
+
+      if (failed.size) {
+        this.snack.error(
+          this.t('Receivables bulk delete partial failure', {
+            deleted: deleted.size,
+            failed: failed.size,
+          }),
+        );
+        return;
+      }
+      this.snack.success(
+        this.t('Receivables bulk deleted successfully', { count: deleted.size || ids.length }),
+      );
     }, 'Failed to delete selected receivables.');
   }
 
-  async issueBoleto(row: Receivable) {
-    const confirmed = await this.confirm(
-      'Issue boleto',
-      'Issue a boleto from this receivable now?',
-      'Issue boleto',
-    );
-    if (!confirmed) return;
+  isSelected(row: Receivable) {
+    return this.selectedReceivableUUIDs().has(row.ErpFinAccReceivableUUID);
+  }
 
-    this.issuingBoletoUUID.set(row.ErpFinAccReceivableUUID);
-    await this.runMutation(async () => {
-      await this.api.post(
-        `erp/financial/accounts/receivables/${row.ErpFinAccReceivableUUID}/issue-boleto`,
-        {},
-      );
-      this.snack.success(this.t('Boleto issued successfully.'));
+  toggleRow(row: Receivable, checked: boolean) {
+    this.selectedReceivableUUIDs.update((current) => {
+      const next = new Set(current);
+      if (checked) next.add(row.ErpFinAccReceivableUUID);
+      else next.delete(row.ErpFinAccReceivableUUID);
+      return next;
+    });
+  }
+
+  toggleVisibleRows(checked: boolean) {
+    this.selectedReceivableUUIDs.update((current) => {
+      const next = new Set(current);
+      for (const row of this.visibleRows()) {
+        if (checked) next.add(row.ErpFinAccReceivableUUID);
+        else next.delete(row.ErpFinAccReceivableUUID);
+      }
+      return next;
+    });
+  }
+
+  customerOpened(opened: boolean) {
+    if (opened && !this.customerOptions().length && !this.snapshotResource.isLoading()) {
       this.snapshotResource.reload();
-    }, 'Failed to issue boleto from receivable.');
-    this.issuingBoletoUUID.set(null);
+    }
   }
 
   customerLabel(row: Receivable) {
-    return this.clean(row.CustomerName) ?? row.CustomerUUID ?? '-';
+    return (
+      this.clean(row.CustomerName) ?? this.clean(row.CustomerLegalName) ?? row.CustomerUUID ?? '-'
+    );
   }
 
   statusLabel(status: ReceivableStatus) {
-    return this.t(
-      this.statusOptions.find((item) => item.value === status)?.label ?? status,
-    ).toUpperCase();
+    return this.t(this.statusOptions.find((item) => item.value === status)?.label ?? status);
   }
 
   amountLabel(value: number) {
@@ -386,18 +429,34 @@ export class FinancialReceivablesPage {
     return date ? this.dateTime.formatDate(date) || '-' : '-';
   }
 
-  isStatusInactive(status: ReceivableStatus) {
-    return status === 'canceled';
-  }
-
-  customerChanged(value: string | number | boolean | null) {
-    this.form.customerUUID = String(value ?? '').trim();
-  }
-
-  customerOpened(opened: boolean) {
-    if (opened && !this.customerOptions().length && !this.snapshotResource.isLoading()) {
-      this.snapshotResource.reload();
+  private buildPayload() {
+    const value = this.formModel();
+    if (!value.customerUUID) {
+      this.snack.warning(this.t('Customer is required.'));
+      return null;
     }
+    if (!value.description.trim()) {
+      this.snack.warning(this.t('Description is required.'));
+      return null;
+    }
+    if (!value.dueDate) {
+      this.snack.warning(this.t('Due date is required.'));
+      return null;
+    }
+    if (this.toAmount(value.amount) <= 0) {
+      this.snack.warning(this.t('Amount must be greater than zero.'));
+      return null;
+    }
+
+    return {
+      customerUUID: value.customerUUID,
+      description: value.description.trim(),
+      docNumber: this.clean(value.docNumber),
+      dueDate: value.dueDate,
+      amount: this.toAmount(value.amount),
+      status: value.status,
+      notes: this.clean(value.notes),
+    };
   }
 
   private async fetchReceivables(search: string, status: ReceivableStatus | '') {
@@ -417,12 +476,7 @@ export class FinancialReceivablesPage {
       const description = [item.Document ?? item.document, item.Email ?? item.email]
         .filter(Boolean)
         .join(' - ');
-      return {
-        value,
-        label,
-        description,
-        searchText: `${label} ${description} ${value}`,
-      };
+      return { value, label, description, searchText: `${label} ${description} ${value}` };
     });
   }
 
@@ -439,7 +493,7 @@ export class FinancialReceivablesPage {
         }`,
       });
     }
-    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+    return [...map.values()].sort((left, right) => left.label.localeCompare(right.label));
   }
 
   private async fetchPaged<T extends MnsSearchSelectFieldOption>(
@@ -453,12 +507,7 @@ export class FinancialReceivablesPage {
         `${endpoint}${separator}limit=${this.listLimit}&offset=${offset}`,
       );
       const items = this.extractItems<any>(response);
-      all.push(
-        ...items.flatMap((item) => {
-          const mapped = mapItem(item);
-          return mapped ? [mapped] : [];
-        }),
-      );
+      all.push(...items.flatMap((item) => (mapItem(item) ? [mapItem(item) as T] : [])));
       if (items.length < this.listLimit) break;
     }
     return all;
@@ -468,13 +517,13 @@ export class FinancialReceivablesPage {
     const active = this.sortActive();
     const direction = this.sortDirection();
     if (!active || !direction) return rows;
-    return [...rows].sort((a, b) => {
-      const result = this.compare(this.sortValue(a, active), this.sortValue(b, active));
+    return [...rows].sort((left, right) => {
+      const result = this.compare(this.sortValue(left, active), this.sortValue(right, active));
       return direction === 'asc' ? result : -result;
     });
   }
 
-  private sortValue(row: Receivable, column: string) {
+  private sortValue(row: Receivable, column: string): string | number {
     switch (column) {
       case 'description':
         return row.Description ?? '';
@@ -493,47 +542,6 @@ export class FinancialReceivablesPage {
     }
   }
 
-  private buildPayload() {
-    if (!this.form.customerUUID) {
-      this.snack.warning(this.t('Customer is required.'));
-      return null;
-    }
-    if (!this.form.description.trim()) {
-      this.snack.warning(this.t('Description is required.'));
-      return null;
-    }
-    if (!this.form.dueDate) {
-      this.snack.warning(this.t('Due date is required.'));
-      return null;
-    }
-    if (this.toAmount(this.form.amount) <= 0) {
-      this.snack.warning(this.t('Amount must be greater than zero.'));
-      return null;
-    }
-
-    return {
-      customerUUID: this.form.customerUUID,
-      description: this.form.description.trim(),
-      docNumber: this.clean(this.form.docNumber),
-      dueDate: this.formatDate(this.form.dueDate),
-      amount: this.toAmount(this.form.amount),
-      status: this.form.status,
-      notes: this.clean(this.form.notes),
-    };
-  }
-
-  private emptyForm() {
-    return {
-      customerUUID: '',
-      description: '',
-      docNumber: '',
-      dueDate: null as Date | null,
-      amount: 0,
-      status: 'open' as ReceivableStatus,
-      notes: '',
-    };
-  }
-
   private openFormDialog() {
     const template = this.receivableFormDialog();
     if (!template || this.formDialogBinding) return;
@@ -545,18 +553,21 @@ export class FinancialReceivablesPage {
         onEscape: () => this.cancelForm(),
       },
     );
-    bindDialogClosed(this.formDialogBinding.ref, () => {
-      this.formDialogBinding?.stop();
-      this.formDialogBinding = null;
-    });
+    bindDialogClosed(
+      this.formDialogBinding.ref,
+      () => {
+        this.formDialogBinding?.stop();
+        this.formDialogBinding = null;
+      },
+      this.destroyRef,
+    );
   }
 
   private closeFormDialog() {
     if (!this.formDialogBinding) return;
-    const ref = this.formDialogBinding.ref;
+    this.formDialogBinding.ref.close();
     this.formDialogBinding.stop();
     this.formDialogBinding = null;
-    ref.close();
   }
 
   private async confirm(
@@ -582,14 +593,37 @@ export class FinancialReceivablesPage {
     try {
       await action();
     } catch (error) {
-      this.showError(error, fallbackMessage);
+      this.snack.error(this.extractErrorMessage(error, this.t(fallbackMessage)));
     } finally {
       this.mutating.set(false);
     }
   }
 
+  private reconcileSelection() {
+    const available = new Set(this.rows().map((row) => row.ErpFinAccReceivableUUID));
+    this.selectedReceivableUUIDs.update((current) => {
+      const next = new Set<string>();
+      current.forEach((uuid) => {
+        if (available.has(uuid)) next.add(uuid);
+      });
+      return next;
+    });
+  }
+
   private clearSelection() {
-    this.selectedIds.set(new Set());
+    this.selectedReceivableUUIDs.set(new Set());
+  }
+
+  private emptyFormModel(): ReceivableFormModel {
+    return {
+      customerUUID: '',
+      status: 'open',
+      description: '',
+      docNumber: '',
+      dueDate: '',
+      amount: 0,
+      notes: '',
+    };
   }
 
   private extractItems<T>(response: any): T[] {
@@ -599,9 +633,24 @@ export class FinancialReceivablesPage {
     return [];
   }
 
+  private extractBulkFailureUUID(item: any): string | null {
+    if (!item || typeof item !== 'object') return null;
+    if (typeof item.ErpFinAccReceivableUUID === 'string') return item.ErpFinAccReceivableUUID;
+    if (typeof item.UUID === 'string') return item.UUID;
+    const uuidKey = Object.keys(item).find((key) => key.endsWith('UUID'));
+    return uuidKey && typeof item[uuidKey] === 'string' ? item[uuidKey] : null;
+  }
+
   private compare(left: string | number, right: string | number) {
     if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, { sensitivity: 'base' });
+    return String(left).localeCompare(String(right), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    });
+  }
+
+  private dateInputValue(value?: string | null) {
+    return value?.split('T')[0] ?? '';
   }
 
   private parseDate(value?: string | null) {
@@ -611,35 +660,21 @@ export class FinancialReceivablesPage {
     return year && month && day ? new Date(year, month - 1, day) : null;
   }
 
-  private formatDate(value: Date) {
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   private toAmount(value: unknown) {
-    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-    const normalized = String(value ?? '')
-      .replace(/[^\d,.-]/g, '')
-      .replace(/\.(?=\d{3}(?:\D|$))/g, '')
-      .replace(',', '.');
-    const amount = Number(normalized);
+    const amount = Number(value ?? 0);
     return Number.isFinite(amount) ? amount : 0;
   }
 
-  private clean(value: unknown) {
-    const text = String(value ?? '').trim();
-    return text || null;
-  }
-
-  private showError(error: unknown, fallbackMessage: string) {
-    this.snack.error(
-      error instanceof Error && error.message ? error.message : this.t(fallbackMessage),
-    );
+  private clean(value?: string | null) {
+    const cleanValue = String(value ?? '').trim();
+    return cleanValue || null;
   }
 
   private t(key: string, params?: Record<string, unknown>) {
     return this.i18n.translate(key, params);
+  }
+
+  private extractErrorMessage(error: any, fallback: string) {
+    return error?.error?.error || error?.error?.message || error?.message || fallback;
   }
 }

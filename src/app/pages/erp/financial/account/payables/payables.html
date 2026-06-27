@@ -44,7 +44,7 @@
             class="context-action"
             type="button"
             (click)="deleteSelectedPayables()"
-            [disabled]="mutating()"
+            [disabled]="loading()"
           >
             <mat-icon>delete</mat-icon>
             {{ 'Delete selected' | transloco }}
@@ -148,10 +148,10 @@
               [class.chip-queued]="row.Status === 'open'"
               [class.chip-failed]="row.Status === 'overdue'"
               [class.chip-skipped]="row.Status === 'canceled'"
-              [class.is-active]="!isStatusInactive(row.Status)"
-              [class.is-inactive]="isStatusInactive(row.Status)"
+              [class.is-active]="row.Status !== 'canceled'"
+              [class.is-inactive]="row.Status === 'canceled'"
             >
-              {{ statusLabel(row.Status) }}
+              {{ statusLabel(row.Status).toUpperCase() }}
             </span>
           </td>
         </ng-container>
@@ -162,36 +162,6 @@
           </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
-              @if (row.Status === 'open' || row.Status === 'overdue') {
-                <button
-                  mat-icon-button
-                  color="primary"
-                  type="button"
-                  (click)="startSettle(row)"
-                  [matTooltip]="'Settle payable' | transloco"
-                >
-                  <mat-icon>task_alt</mat-icon>
-                </button>
-              } @else if (row.Status === 'paid') {
-                <button
-                  mat-icon-button
-                  color="primary"
-                  type="button"
-                  (click)="startSettle(row)"
-                  [matTooltip]="'Payment details' | transloco"
-                >
-                  <mat-icon>receipt_long</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  type="button"
-                  (click)="reopenPayable(row)"
-                  [matTooltip]="'Reopen payable' | transloco"
-                >
-                  <mat-icon>undo</mat-icon>
-                </button>
-              }
-
               <button
                 mat-icon-button
                 type="button"
@@ -252,97 +222,69 @@
           }}
         </p>
       </div>
-      @if (editing()) {
-        <span class="pill">{{ 'Editing' | transloco }}</span>
-      }
     </div>
 
     <mat-dialog-content class="dialog-content">
       <mat-tab-group class="form-tabs">
         <mat-tab [label]="'Record' | transloco">
-          <div class="tab-content">
-            <div class="form-grid">
-              <mns-search-select-field
-                [label]="'Supplier' | transloco"
-                fieldClass="span-1"
-                [placeholder]="'Search supplier' | transloco"
-                [emptyLabel]="'No suppliers found.' | transloco"
-                [loading]="referenceLoading()"
-                [options]="supplierOptions()"
-                [value]="form.supplierUUID"
-                (openedChange)="supplierOpened($event)"
-                (valueChange)="supplierChanged($event)"
+          <form class="tab-content form-grid">
+            <mns-search-select-field
+              [label]="'Supplier' | transloco"
+              [field]="form.supplierUUID"
+              fieldClass="span-1"
+              [placeholder]="'Search supplier' | transloco"
+              [emptyLabel]="'No suppliers found.' | transloco"
+              [loading]="referenceLoading()"
+              [options]="supplierOptions()"
+              (openedChange)="supplierOpened($event)"
+            />
+
+            <mns-select-field
+              [label]="'Status' | transloco"
+              [field]="form.status"
+              [options]="statusOptions"
+              fieldClass="span-1"
+            />
+
+            <mns-text-field
+              [label]="'Description' | transloco"
+              [field]="form.description"
+              fieldClass="span-2"
+            />
+
+            <mns-text-field
+              [label]="'Document number' | transloco"
+              [field]="form.docNumber"
+              fieldClass="span-1"
+            />
+
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Due date' | transloco }}</mat-label>
+              <input matInput type="date" [formField]="form.dueDate" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Amount' | transloco }}</mat-label>
+              <input
+                matInput
+                type="text"
+                appCurrencyMask
+                [appCurrencyMaskCurrency]="currencyResource.value()"
+                [formField]="form.amount"
               />
-
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Status' | transloco }}</mat-label>
-                <mat-select [value]="form.status" (selectionChange)="form.status = $event.value">
-                  @for (status of statusOptions; track status.value) {
-                    <mat-option [value]="status.value">{{ status.label | transloco }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Description' | transloco }}</mat-label>
-                <input
-                  matInput
-                  [value]="form.description"
-                  (input)="form.description = $any($event.target).value"
-                />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Document number' | transloco }}</mat-label>
-                <input
-                  matInput
-                  [value]="form.docNumber"
-                  (input)="form.docNumber = $any($event.target).value"
-                />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Due date' | transloco }}</mat-label>
-                <input
-                  matInput
-                  [matDatepicker]="dueDatePicker"
-                  appDateMask
-                  [value]="form.dueDate"
-                  (dateChange)="form.dueDate = $event.value"
-                />
-                <mat-datepicker-toggle matSuffix [for]="dueDatePicker" />
-                <mat-datepicker #dueDatePicker touchUi />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Amount' | transloco }}</mat-label>
-                <input
-                  matInput
-                  type="text"
-                  appCurrencyMask
-                  [appCurrencyMaskCurrency]="currencyResource.value()"
-                  [value]="form.amount"
-                  (input)="form.amount = $any($event.target).value"
-                />
-              </mat-form-field>
-            </div>
-          </div>
+            </mat-form-field>
+          </form>
         </mat-tab>
 
         <mat-tab [label]="'Notes' | transloco">
-          <div class="tab-content">
-            <div class="form-grid">
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ 'Notes' | transloco }}</mat-label>
-                <textarea
-                  matInput
-                  rows="4"
-                  [value]="form.notes"
-                  (input)="form.notes = $any($event.target).value"
-                ></textarea>
-              </mat-form-field>
-            </div>
-          </div>
+          <form class="tab-content form-grid">
+            <mns-textarea-field
+              [label]="'Notes' | transloco"
+              [field]="form.notes"
+              fieldClass="span-4"
+              [rows]="4"
+            />
+          </form>
         </mat-tab>
       </mat-tab-group>
     </mat-dialog-content>
@@ -353,6 +295,7 @@
           {{ 'Cancel' | transloco }}
         </button>
       </div>
+
       <div class="primary-actions">
         <div class="save-split-action" [class.is-single-action]="editing()">
           <button
@@ -361,7 +304,7 @@
             class="save-main-button"
             type="button"
             (click)="savePayable()"
-            [disabled]="saving()"
+            [disabled]="!form().valid() || saving()"
           >
             <mat-icon>save</mat-icon>
             {{ 'Save' | transloco }}
@@ -373,115 +316,22 @@
               class="save-more-button"
               type="button"
               [matMenuTriggerFor]="payableSaveMenu"
-              [disabled]="saving()"
+              [disabled]="!form().valid() || saving()"
               [attr.aria-label]="'More save actions' | transloco"
+              [matTooltip]="'More save actions' | transloco"
             >
               <mat-icon>expand_more</mat-icon>
             </button>
           }
         </div>
       </div>
+
       <mat-menu #payableSaveMenu="matMenu" xPosition="before" yPosition="below">
         <button mat-menu-item type="button" (click)="saveAndNewPayable()">
           <mat-icon>add</mat-icon>
           {{ 'Save/New' | transloco }}
         </button>
       </mat-menu>
-    </mat-dialog-actions>
-  </div>
-</ng-template>
-
-<ng-template #payableSettleDialog>
-  <div class="crud-dialog payable-dialog">
-    <div class="dialog-header">
-      <div>
-        <h2>{{ 'Settle payable' | transloco }}</h2>
-        <p>{{ 'Record payment details for this payable.' | transloco }}</p>
-      </div>
-      <span class="pill">{{ 'Paid' | transloco }}</span>
-    </div>
-
-    <mat-dialog-content class="dialog-content">
-      <div class="tab-content">
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Payment date' | transloco }}</mat-label>
-            <input
-              matInput
-              [matDatepicker]="paymentDatePicker"
-              appDateMask
-              [value]="settleForm.paymentDate"
-              (dateChange)="settleForm.paymentDate = $event.value"
-            />
-            <mat-datepicker-toggle matSuffix [for]="paymentDatePicker" />
-            <mat-datepicker #paymentDatePicker touchUi />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Paid amount' | transloco }}</mat-label>
-            <input
-              matInput
-              type="text"
-              appCurrencyMask
-              [appCurrencyMaskCurrency]="currencyResource.value()"
-              [value]="settleForm.paidAmount"
-              (input)="settleForm.paidAmount = $any($event.target).value"
-            />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Payment method' | transloco }}</mat-label>
-            <mat-select
-              [value]="settleForm.paymentMethod"
-              (selectionChange)="settleForm.paymentMethod = $event.value"
-            >
-              @for (method of paymentMethodOptions; track method.value) {
-                <mat-option [value]="method.value">{{ method.label | transloco }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Reference' | transloco }}</mat-label>
-            <input
-              matInput
-              [value]="settleForm.paymentReference"
-              (input)="settleForm.paymentReference = $any($event.target).value"
-            />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="span-4">
-            <mat-label>{{ 'Payment notes' | transloco }}</mat-label>
-            <textarea
-              matInput
-              rows="4"
-              [value]="settleForm.paymentNotes"
-              (input)="settleForm.paymentNotes = $any($event.target).value"
-            ></textarea>
-          </mat-form-field>
-        </div>
-      </div>
-    </mat-dialog-content>
-
-    <mat-dialog-actions class="form-actions">
-      <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closePaymentDetails()">
-          {{ 'Close' | transloco }}
-        </button>
-      </div>
-      <div class="primary-actions">
-        <button
-          mat-flat-button
-          color="primary"
-          class="save-main-button"
-          type="button"
-          (click)="settlePayable()"
-          [disabled]="mutating()"
-        >
-          <mat-icon>save</mat-icon>
-          {{ 'Save payment' | transloco }}
-        </button>
-      </div>
     </mat-dialog-actions>
   </div>
 </ng-template>
