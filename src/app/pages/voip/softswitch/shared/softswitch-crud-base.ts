@@ -64,7 +64,7 @@ export abstract class SoftswitchCrudPageBase<
             row.Email,
           ]),
         ),
-        this.fetchPaged('voip/domains?status=1', (row) =>
+        this.fetchPaged('voip/pabx/domains?status=1', (row) =>
           option(row.VdmUUID ?? row.VoipDomainUUID ?? row.uuid, row.VdmName ?? row.Name, [
             row.VdmDomain,
             row.Domain,
