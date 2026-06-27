@@ -1,13 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudColumn,
   ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { SoftswitchCrudPageBase } from './shared/softswitch-crud-base';
+import { ApiService } from '../../../services/api.service';
 import { VoipSoftswitchAccount } from './softswitch.service';
 
 const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
@@ -121,9 +122,30 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipSoftswitchPage extends SoftswitchCrudPageBase<VoipSoftswitchAccount> {
+export class VoipSoftswitchPage extends ConfigurableCrudPageBase<VoipSoftswitchAccount> {
+  private readonly rawApi = inject(ApiService);
+
+  readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly domainOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly lookupLoading = signal(false);
+
   constructor() {
     super(ACCOUNT_CONFIG);
+    void this.loadLookups();
+  }
+
+  override fieldLoading(field: { key: string }): boolean {
+    return ['serverUUID', 'customerUUID', 'domainUUID'].includes(field.key)
+      ? this.lookupLoading()
+      : false;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'serverUUID') return this.serverOptions();
+    if (key === 'customerUUID') return this.customerOptions();
+    if (key === 'domainUUID') return this.domainOptions();
+    return [];
   }
 
   override columnText(row: VoipSoftswitchAccount, column: ConfigurableCrudColumn): string {
@@ -140,4 +162,76 @@ export class VoipSoftswitchPage extends SoftswitchCrudPageBase<VoipSoftswitchAcc
       credentials: {},
     };
   }
+
+  private async loadLookups(): Promise<void> {
+    this.lookupLoading.set(true);
+    try {
+      const [servers, customers, domains] = await Promise.all([
+        this.fetchPaged('voip/softswitch/servers?status=1', (row) =>
+          option(row.VsrUUID, row.VsrName, [row.VsrEngine, row.VsrHostname, row.VsrPublicIP]),
+        ),
+        this.fetchPaged('erp/customers?status=1', (row) =>
+          option(row.CustomerUUID ?? row.customerUUID, row.Name ?? row.CustomerName, [
+            row.Document,
+            row.Email,
+          ]),
+        ),
+        this.fetchPaged('voip/pabx/domains?status=1', (row) =>
+          option(row.VdmUUID ?? row.VoipDomainUUID ?? row.uuid, row.VdmName ?? row.Name, [
+            row.VdmDomain,
+            row.Domain,
+          ]),
+        ),
+      ]);
+      this.serverOptions.set(servers);
+      this.customerOptions.set(customers);
+      this.domainOptions.set(domains);
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+
+  private async fetchPaged(
+    endpoint: string,
+    mapItem: (row: any) => ConfigurableCrudOption | null,
+  ): Promise<ConfigurableCrudOption[]> {
+    const options: ConfigurableCrudOption[] = [];
+    for (let offset = 0; offset < 5000; offset += 500) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const response = await this.rawApi.get<any>(
+        `${endpoint}${separator}limit=500&offset=${offset}`,
+      );
+      const rows = extractItems(response);
+      options.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
+      if (rows.length < 500) break;
+    }
+    return options.sort((left, right) => left.label.localeCompare(right.label));
+  }
+}
+
+function extractItems(response: any): any[] {
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
+  const normalizedValue = String(value ?? '').trim();
+  const normalizedLabel = String(label ?? '').trim();
+  if (!normalizedValue || !normalizedLabel) return null;
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }

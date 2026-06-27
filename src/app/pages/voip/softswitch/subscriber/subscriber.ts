@@ -1,11 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { SoftswitchCrudPageBase } from '../shared/softswitch-crud-base';
+import { ApiService } from '../../../../services/api.service';
 import { VoipSoftswitchSubscriberItem } from './subscriber.service';
 
 const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
@@ -164,9 +166,23 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipSoftswitchSubscriberPage extends SoftswitchCrudPageBase<VoipSoftswitchSubscriberItem> {
+export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipSoftswitchSubscriberItem> {
+  private readonly rawApi = inject(ApiService);
+
+  readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly lookupLoading = signal(false);
+
   constructor() {
     super(SUBSCRIBER_CONFIG);
+    void this.loadLookups();
+  }
+
+  override fieldLoading(field: { key: string }): boolean {
+    return field.key === 'accountUUID' ? this.lookupLoading() : false;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    return key === 'accountUUID' ? this.accountOptions() : [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -179,4 +195,61 @@ export class VoipSoftswitchSubscriberPage extends SoftswitchCrudPageBase<VoipSof
       enabled: Number(payload['enabled']) === 1,
     };
   }
+
+  private async loadLookups(): Promise<void> {
+    this.lookupLoading.set(true);
+    try {
+      this.accountOptions.set(
+        await this.fetchPaged('voip/softswitch/accounts?status=1', (row) =>
+          option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]),
+        ),
+      );
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+
+  private async fetchPaged(
+    endpoint: string,
+    mapItem: (row: any) => ConfigurableCrudOption | null,
+  ): Promise<ConfigurableCrudOption[]> {
+    const options: ConfigurableCrudOption[] = [];
+    for (let offset = 0; offset < 5000; offset += 500) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const response = await this.rawApi.get<any>(
+        `${endpoint}${separator}limit=500&offset=${offset}`,
+      );
+      const rows = extractItems(response);
+      options.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
+      if (rows.length < 500) break;
+    }
+    return options.sort((left, right) => left.label.localeCompare(right.label));
+  }
+}
+
+function extractItems(response: any): any[] {
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
+  const normalizedValue = String(value ?? '').trim();
+  const normalizedLabel = String(label ?? '').trim();
+  if (!normalizedValue || !normalizedLabel) return null;
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }
