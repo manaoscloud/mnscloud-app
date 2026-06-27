@@ -9,8 +9,16 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server.service';
-import { SoftswitchInstallCommandDialogComponent } from './install-command-text-dialog';
 import { ApiService } from '../../../../services/api.service';
+import {
+  InstallCommandDialogComponent,
+  type InstallCommandDialogData,
+} from '../../../../shared/install-command-dialog/install-command-dialog';
+import {
+  openCrudTemplateDialog,
+  type CrudDialogBinding,
+} from '../../../../shared/dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 const ENGINE_OPTIONS = [
   { value: 'kamailio', label: 'Kamailio' },
@@ -87,9 +95,21 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     { key: 'name', source: 'VsrName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    { key: 'nodeUUID', source: 'VsrNodeUUID', payloadKey: 'nodeUUID', label: 'UUID do nó', span: 1 },
+    {
+      key: 'nodeUUID',
+      source: 'VsrNodeUUID',
+      payloadKey: 'nodeUUID',
+      label: 'UUID do nó',
+      span: 1,
+    },
     { key: 'hostname', source: 'VsrHostname', payloadKey: 'hostname', label: 'Hostname', span: 1 },
-    { key: 'publicIP', source: 'VsrPublicIP', payloadKey: 'publicIP', label: 'IP público', span: 1 },
+    {
+      key: 'publicIP',
+      source: 'VsrPublicIP',
+      payloadKey: 'publicIP',
+      label: 'IP público',
+      span: 1,
+    },
     {
       key: 'privateIP',
       source: 'VsrPrivateIP',
@@ -123,6 +143,7 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   private readonly rawApi = inject(ApiService);
   readonly mediaServerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
+  private installDialogBinding: CrudDialogBinding | null = null;
 
   constructor() {
     super(SERVER_CONFIG);
@@ -147,14 +168,47 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
         this.snack.warning('Install command was not returned.');
         return;
       }
-      this.dialog.open(SoftswitchInstallCommandDialogComponent, {
-        width: '720px',
-        maxWidth: 'calc(100vw - 24px)',
-        data: { command },
-      });
+      this.installDialogBinding?.ref.close();
+      this.installDialogBinding = openCrudTemplateDialog(
+        this.dialog,
+        InstallCommandDialogComponent,
+        'crud-form-dialog',
+        {
+          data: this.installCommandData(row, response?.data ?? {}, command),
+          onEscape: () => this.installDialogBinding?.ref.close(),
+        },
+      );
+      bindDialogClosed(
+        this.installDialogBinding.ref,
+        () => {
+          this.installDialogBinding?.stop();
+          this.installDialogBinding = null;
+        },
+        this.destroyRef,
+      );
     } catch (error) {
       this.snack.error((error as any)?.error?.error ?? 'Failed to generate install command.');
     }
+  }
+
+  private installCommandData(
+    row: VoipSoftswitchServerItem,
+    data: Record<string, unknown>,
+    command: string,
+  ): InstallCommandDialogData {
+    return {
+      title: 'Softswitch install command',
+      description: 'Run this command on the Kamailio or OpenSIPS Softswitch server.',
+      warning:
+        'This runtime token is shown only once. Generating a new command replaces the previous token for this Softswitch server.',
+      command,
+      details: [
+        { label: 'Server', value: row.VsrName },
+        { label: 'Engine', value: row.VsrEngine },
+        { label: 'Node UUID', value: data['nodeUUID'] ?? row.VsrNodeUUID, monospace: true },
+        { label: 'Media Server', value: row.MediaServerName },
+      ],
+    };
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {

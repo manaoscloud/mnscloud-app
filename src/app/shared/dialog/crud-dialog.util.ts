@@ -9,6 +9,7 @@ export type CrudDialogBinding = {
 };
 
 export type CrudDialogOptions = {
+  data?: unknown;
   onEscape?: () => void;
 };
 
@@ -67,6 +68,7 @@ export function openCrudTemplateDialog(
     autoFocus: false,
     restoreFocus: true,
     panelClass,
+    data: options.data,
   });
 
   let observer: ResizeObserver | null = null;

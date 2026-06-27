@@ -1,8 +1,8 @@
 <div class="install-command-dialog crud-dialog">
   <header class="dialog-header">
     <div>
-      <h2>{{ title() | transloco }}</h2>
-      <p>{{ description() | transloco }}</p>
+      <h2>{{ titleText() | transloco }}</h2>
+      <p>{{ descriptionText() | transloco }}</p>
     </div>
   </header>
 
@@ -10,7 +10,7 @@
     <div class="install-command-content">
       <section class="install-command-section">
         <h3>{{ 'Security' | transloco }}</h3>
-        <p class="token-warning">{{ warning() | transloco }}</p>
+        <p class="token-warning">{{ warningText() | transloco }}</p>
       </section>
 
       @if (visibleDetails().length) {
@@ -29,7 +29,7 @@
 
       <section class="install-command-section">
         <h3>{{ 'Command' | transloco }}</h3>
-        <pre class="install-command-shell"><code>{{ command() }}</code></pre>
+        <pre class="install-command-shell"><code>{{ commandText() }}</code></pre>
       </section>
     </div>
   </mat-dialog-content>
@@ -45,7 +45,7 @@
         mat-flat-button
         color="primary"
         type="button"
-        [cdkCopyToClipboard]="command()"
+        [cdkCopyToClipboard]="commandText()"
         (cdkCopyToClipboardCopied)="notifyCopied($event)"
       >
         <mat-icon>content_copy</mat-icon>
