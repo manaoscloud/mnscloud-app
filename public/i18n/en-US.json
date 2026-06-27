@@ -1557,6 +1557,8 @@
   "Softswitch Accounts": "Softswitch Accounts",
   "Softswitch Dashboard": "Softswitch Dashboard",
   "Softswitch Servers": "Softswitch Servers",
+  "Configure default Softswitch APIs for all tenants.": "Configure default Softswitch APIs for all tenants.",
+  "Manage the Softswitch selected for this tenant environment.": "Manage the Softswitch selected for this tenant environment.",
   "Some DID dashboard sections could not be loaded.": "Some DID dashboard sections could not be loaded.",
   "Some hosting dashboard sections could not be loaded.": "Some hosting dashboard sections could not be loaded.",
   "Some SMTP dashboard sections could not be loaded.": "Some SMTP dashboard sections could not be loaded.",

@@ -1557,6 +1557,8 @@
   "Softswitch Accounts": "Cuentas Softswitch",
   "Softswitch Dashboard": "Panel Softswitch",
   "Softswitch Servers": "Servidores Softswitch",
+  "Configure default Softswitch APIs for all tenants.": "Configura las APIs predeterminadas de Softswitch para todos los tenants.",
+  "Manage the Softswitch selected for this tenant environment.": "Gestiona el Softswitch seleccionado para este entorno tenant.",
   "Some DID dashboard sections could not be loaded.": "Algunas secciones del panel DID no se pudieron cargar.",
   "Some hosting dashboard sections could not be loaded.": "Algunas secciones del panel de hosting no se pudieron cargar.",
   "Some SMTP dashboard sections could not be loaded.": "Algunas secciones del panel SMTP no se pudieron cargar.",

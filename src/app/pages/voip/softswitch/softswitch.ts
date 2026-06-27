@@ -95,11 +95,11 @@ export class VoipSoftswitchPage {
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  readonly pageTitle = computed(() => 'Softswitch Accounts');
+  readonly pageTitle = computed(() => (this.isMaster() ? 'Softswitch Accounts' : 'Softswitch'));
   readonly pageSubtitle = computed(() =>
     this.isMaster()
       ? 'Configure default Softswitch APIs for all tenants.'
-      : 'Register API accounts for Softswitch providers.',
+      : 'Manage the Softswitch selected for this tenant environment.',
   );
 
   readonly saving = signal(false);

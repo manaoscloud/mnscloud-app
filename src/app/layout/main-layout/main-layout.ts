@@ -1307,10 +1307,17 @@ export class MainLayout {
             },
             {
               id: 'voip/softswitch/account',
-              label: 'Accounts',
+              label: 'Softswitch',
               icon: 'router',
               route: '/voip/softswitch/accounts',
+              scope: 'tenant',
+            },
+            {
+              id: 'voip/softswitch/system-account',
+              label: 'Accounts',
+              icon: 'router',
               masterRoute: '/system/softswitch/accounts',
+              scope: 'master',
             },
             {
               id: 'voip/softswitch/subscriber',
