@@ -483,7 +483,7 @@ export class VoipSoftswitchPage {
   private async fetchLookups() {
     try {
       const [servers, domains, customers] = await Promise.all([
-        this.serverApi.list(true, { limit: this.listLimit }),
+        this.serverApi.list(this.isMaster(), { limit: this.listLimit }),
         this.domainApi.list({ limit: this.listLimit }),
         this.rawApi.get<any>(`erp/customers?limit=${this.listLimit}`),
       ]);
