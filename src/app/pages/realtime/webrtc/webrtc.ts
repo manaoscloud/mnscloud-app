@@ -459,9 +459,9 @@ export class RealtimeWebRtcPage {
                 purpose: 'webrtc',
               })
             : key === 'mediaServers'
-              ? await this.api.listMediaServerOptions()
+              ? await this.api.listMediaServers({ status: 1, limit: 5000 })
               : this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
-                ? await this.api.listServerOptions()
+                ? await this.api.list('servers', { status: 1, limit: 5000 }, 'tenant')
                 : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
         const options = rows
@@ -470,14 +470,14 @@ export class RealtimeWebRtcPage {
               key === 'domains'
                 ? (row['RtdUUID'] ?? '')
                 : key === 'mediaServers'
-                  ? (row['value'] ?? row['RmsUUID'] ?? '')
+                  ? (row['RmsUUID'] ?? '')
                   : (row['RwsUUID'] ?? ''),
             ),
             label: String(
               key === 'domains'
                 ? (row['RtdName'] ?? row['DomainName'] ?? '')
                 : key === 'mediaServers'
-                  ? (row['label'] ?? row['RmsName'] ?? '')
+                  ? (row['RmsName'] ?? '')
                 : (row['RwsName'] ?? ''),
             ),
             description: String(

@@ -164,12 +164,14 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   private async loadMediaServers(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      const response = await this.rawApi.get<any>('system/realtime/media/server-options');
+      const response = await this.rawApi.get<any>(
+        'system/realtime/media/servers?status=1&limit=5000',
+      );
       const rows = extractItems(response);
       this.mediaServerOptions.set(
         rows
           .map((row) =>
-            option(row.value ?? row.RmsUUID ?? row.uuid, row.label ?? row.RmsName ?? row.name, [
+            option(row.RmsUUID ?? row.uuid, row.RmsName ?? row.name, [
               row.hostname ?? row.RmsHostname,
               row.controlIP ?? row.RmsControlIP,
               row.RmsEngine ?? row.engine,

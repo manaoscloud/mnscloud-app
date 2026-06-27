@@ -13,8 +13,7 @@ export class RealtimeTurnService {
 
   private resourcePath(resource: TurnResource, scope: TurnScope = 'master') {
     if (scope === 'master') return `${this.systemBasePath}/${resource}`;
-    if (resource === 'domains') return `${this.tenantBasePath}/domains`;
-    throw new Error('TURN/STUN servers are available only from the system scope.');
+    return `${this.tenantBasePath}/${resource}`;
   }
 
   list(
@@ -55,11 +54,6 @@ export class RealtimeTurnService {
   provisionDomain(uuid: string, scope: TurnScope = 'master') {
     const basePath = scope === 'master' ? this.systemBasePath : this.tenantBasePath;
     return this.api.post<any>(`${basePath}/domains/${uuid}/provision`, {});
-  }
-
-  listServerOptions(scope: TurnScope = 'master') {
-    const basePath = scope === 'master' ? this.systemBasePath : this.tenantBasePath;
-    return this.api.get<any>(`${basePath}/server-options`);
   }
 
   listRealtimeDomains(

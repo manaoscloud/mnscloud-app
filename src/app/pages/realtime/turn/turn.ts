@@ -389,7 +389,7 @@ export class RealtimeTurnPage {
   private readonly loadServerOptions = effect(() => {
     if (!this.isDomains()) return;
     this.api
-      .listServerOptions(this.scope())
+      .list('servers', { status: 1, limit: 5000 }, this.scope())
       .then((response) => this.serverOptions.set(response?.data?.items ?? []))
       .catch(() => this.serverOptions.set([]));
   });

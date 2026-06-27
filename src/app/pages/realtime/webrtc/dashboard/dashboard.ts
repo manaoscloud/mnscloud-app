@@ -368,7 +368,7 @@ export class RealtimeWebRtcDashboardPage {
       const [serverResponse, domainResponse] = await Promise.allSettled([
         master
           ? this.webrtcApi.list('servers', { limit: this.listLimit }, 'master')
-          : this.webrtcApi.listServerOptions(),
+          : this.webrtcApi.list('servers', { status: 1, limit: this.listLimit }, 'tenant'),
         this.webrtcApi.list(
           'domains',
           { limit: this.listLimit },
