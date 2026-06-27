@@ -13,6 +13,8 @@ import { FormField, form as createForm, required } from '@angular/forms/signals'
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,6 +35,7 @@ import { DateTimeFormatService } from '../../../../../services/date-time-format.
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SystemParameterService } from '../../../../../services/system-parameter.service';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
+import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -87,6 +90,7 @@ type ReceivablesSnapshot = {
   standalone: true,
   imports: [
     CurrencyMaskDirective,
+    DateMaskDirective,
     FormField,
     MnsSearchSelectFieldComponent,
     MnsSelectFieldComponent,
@@ -97,11 +101,13 @@ type ReceivablesSnapshot = {
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
+    MatDatepickerModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatMenuModule,
+    MatNativeDateModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
@@ -407,6 +413,17 @@ export class FinancialReceivablesPage {
     }
   }
 
+  datePickerValue(value: string) {
+    return this.parseDate(value);
+  }
+
+  updateDueDate(value: Date | null) {
+    this.formModel.update((current) => ({
+      ...current,
+      dueDate: value ? this.formatDate(value) : '',
+    }));
+  }
+
   customerLabel(row: Receivable) {
     return (
       this.clean(row.CustomerName) ?? this.clean(row.CustomerLegalName) ?? row.CustomerUUID ?? '-'
@@ -651,6 +668,13 @@ export class FinancialReceivablesPage {
 
   private dateInputValue(value?: string | null) {
     return value?.split('T')[0] ?? '';
+  }
+
+  private formatDate(value: Date) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private parseDate(value?: string | null) {

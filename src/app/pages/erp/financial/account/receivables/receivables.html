@@ -262,7 +262,15 @@
 
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Due date' | transloco }}</mat-label>
-              <input matInput type="date" [formField]="form.dueDate" />
+              <input
+                matInput
+                [matDatepicker]="dueDatePicker"
+                appDateMask
+                [value]="datePickerValue(formModel().dueDate)"
+                (dateChange)="updateDueDate($event.value)"
+              />
+              <mat-datepicker-toggle matSuffix [for]="dueDatePicker" />
+              <mat-datepicker #dueDatePicker touchUi />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-1">
