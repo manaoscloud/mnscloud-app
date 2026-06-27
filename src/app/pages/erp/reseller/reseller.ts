@@ -1,18 +1,18 @@
 import { Component } from '@angular/core';
 
 import {
-  ErpCrudConfig,
-  ErpCrudPageBase,
-  ErpCrudRecord,
-  ERP_CRUD_IMPORTS,
-} from '../shared/generic-crud/erp-crud-page-base';
+  ConfigurableCrudConfig,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 const TYPE_OPTIONS = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
 ];
 
-const RESELLER_CONFIG: ErpCrudConfig = {
+const RESELLER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/resellers',
   uuidField: 'ResellerUUID',
   pageTitle: 'Resellers',
@@ -161,11 +161,11 @@ const RESELLER_CONFIG: ErpCrudConfig = {
 @Component({
   selector: 'app-erp-reseller',
   standalone: true,
-  imports: ERP_CRUD_IMPORTS,
-  templateUrl: '../shared/generic-crud/erp-crud-page.html',
-  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpResellerPage extends ErpCrudPageBase<ErpCrudRecord> {
+export class ErpResellerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(RESELLER_CONFIG);
   }

@@ -287,7 +287,8 @@
   - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
 - ERP generic CRUDs:
   - Simple ERP resources such as customers, companies, suppliers, resellers, carriers, and
-    complexes must use the shared generic base in `src/app/pages/erp/shared/generic-crud/`.
+    complexes must use the standard shared CRUD component contract in
+    `src/app/shared/crud/configurable-crud/`.
   - Create/edit must open through the generic `crud-form-dialog` panel class and the shared
     `.crud-dialog` template surface. Do not add resource-specific overlay panel classes or
     resource-specific dialog shell classes for normal CRUD forms.

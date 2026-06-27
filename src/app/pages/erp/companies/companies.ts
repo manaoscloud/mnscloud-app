@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 
 import {
-  ErpCrudConfig,
-  ErpCrudPageBase,
-  ErpCrudRecord,
-  ERP_CRUD_IMPORTS,
-} from '../shared/generic-crud/erp-crud-page-base';
+  ConfigurableCrudConfig,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const COMPANY_CONFIG: ErpCrudConfig = {
+const COMPANY_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/companies',
   uuidField: 'CompanyUUID',
   pageTitle: 'Companies',
@@ -176,11 +176,11 @@ const COMPANY_CONFIG: ErpCrudConfig = {
 @Component({
   selector: 'app-erp-companies',
   standalone: true,
-  imports: ERP_CRUD_IMPORTS,
-  templateUrl: '../shared/generic-crud/erp-crud-page.html',
-  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpCompaniesPage extends ErpCrudPageBase<ErpCrudRecord> {
+export class ErpCompaniesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(COMPANY_CONFIG);
   }

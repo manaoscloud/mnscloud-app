@@ -1,19 +1,19 @@
 import { Component, computed, resource } from '@angular/core';
 
 import {
-  ErpCrudConfig,
-  ErpCrudPageBase,
-  ErpCrudOption,
-  ErpCrudRecord,
-  ERP_CRUD_IMPORTS,
-} from '../shared/generic-crud/erp-crud-page-base';
+  ConfigurableCrudConfig,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudOption,
+  ConfigurableCrudRecord,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const TYPE_OPTIONS: readonly ErpCrudOption[] = [
+const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
 ];
 
-const CUSTOMER_CONFIG: ErpCrudConfig = {
+const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/customers',
   uuidField: 'CustomerUUID',
   pageTitle: 'Customers',
@@ -461,11 +461,11 @@ type DueDayRecord = {
 @Component({
   selector: 'app-erp-customer',
   standalone: true,
-  imports: ERP_CRUD_IMPORTS,
-  templateUrl: '../shared/generic-crud/erp-crud-page.html',
-  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpCustomerPage extends ErpCrudPageBase<ErpCrudRecord> {
+export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly complexesResource = resource({
     defaultValue: [] as ComplexRecord[],
     loader: async () => {
@@ -485,7 +485,7 @@ export class ErpCustomerPage extends ErpCrudPageBase<ErpCrudRecord> {
     },
   });
 
-  private readonly complexOptions = computed<ErpCrudOption[]>(() =>
+  private readonly complexOptions = computed<ConfigurableCrudOption[]>(() =>
     this.complexesResource.value().map((item) => ({
       value: item.ComplexUUID,
       label: item.Name,
@@ -493,7 +493,7 @@ export class ErpCustomerPage extends ErpCrudPageBase<ErpCrudRecord> {
       searchText: `${item.Name} ${item.City ?? ''} ${item.State ?? ''} ${item.ComplexUUID}`,
     })),
   );
-  private readonly dueDayOptions = computed<ErpCrudOption[]>(() =>
+  private readonly dueDayOptions = computed<ConfigurableCrudOption[]>(() =>
     this.dueDaysResource.value().map((item) => ({
       value: item.ErpFinInvDueDayUUID,
       label: item.Name,
@@ -511,7 +511,7 @@ export class ErpCustomerPage extends ErpCrudPageBase<ErpCrudRecord> {
     super(CUSTOMER_CONFIG);
   }
 
-  protected override lookupOptions(key: string): readonly ErpCrudOption[] {
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'complexUUID') return this.complexOptions();
     if (key === 'dueDayUUID') return this.dueDayOptions();
     return [];

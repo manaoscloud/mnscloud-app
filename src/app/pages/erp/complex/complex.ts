@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 
 import {
-  ErpCrudConfig,
-  ErpCrudPageBase,
-  ErpCrudRecord,
-  ERP_CRUD_IMPORTS,
-} from '../shared/generic-crud/erp-crud-page-base';
+  ConfigurableCrudConfig,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const COMPLEX_CONFIG: ErpCrudConfig = {
+const COMPLEX_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/complexes',
   uuidField: 'ComplexUUID',
   pageTitle: 'Complexes',
@@ -148,16 +148,16 @@ const COMPLEX_CONFIG: ErpCrudConfig = {
 @Component({
   selector: 'app-erp-complex',
   standalone: true,
-  imports: ERP_CRUD_IMPORTS,
-  templateUrl: '../shared/generic-crud/erp-crud-page.html',
-  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpComplexPage extends ErpCrudPageBase<ErpCrudRecord> {
+export class ErpComplexPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(COMPLEX_CONFIG);
   }
 
-  protected override augmentPayload(payload: ErpCrudRecord): ErpCrudRecord {
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const street = String(payload['street'] ?? '').trim();
     const number = String(payload['number'] ?? '').trim();
     const district = String(payload['district'] ?? '').trim();

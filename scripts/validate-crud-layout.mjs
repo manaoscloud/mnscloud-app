@@ -168,7 +168,7 @@ function hasImplicitFilterSpan(block) {
   );
 }
 
-function extractErpCrudFieldKeys(content) {
+function extractConfigurableCrudFieldKeys(content) {
   const fieldsBlock = content.match(/\bfields:\s*\[([\s\S]*?)\n\s*\],\n};/)?.[1] ?? '';
   return [...fieldsBlock.matchAll(/\bkey:\s*'([^']+)'/g)].map(([, key]) => key);
 }
@@ -194,13 +194,13 @@ function orderedSubsequence(values, expected) {
   return false;
 }
 
-function validateErpCrudFieldOrder(tsFile, content) {
-  if (!content.includes('ErpCrudPageBase') || !/\bendpoint:\s*'erp\//.test(content)) {
+function validateConfigurableCrudFieldOrder(tsFile, content) {
+  if (!content.includes('ConfigurableCrudPageBase') || !/\bendpoint:\s*'erp\//.test(content)) {
     return [];
   }
 
   const rel = relative(root, tsFile);
-  const keys = extractErpCrudFieldKeys(content);
+  const keys = extractConfigurableCrudFieldKeys(content);
   if (!keys.length) return [];
 
   const errors = [];
@@ -447,7 +447,7 @@ function validateTarget(target) {
   }
 
   for (const tsFile of tsFiles) {
-    errors.push(...validateErpCrudFieldOrder(tsFile, read(tsFile)));
+    errors.push(...validateConfigurableCrudFieldOrder(tsFile, read(tsFile)));
   }
 
   return errors;

@@ -32,21 +32,18 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { TranslocoPipe } from '@jsverse/transloco';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import {
-  CrudDialogBinding,
-  openCrudTemplateDialog,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { ApiService } from '../../../services/api.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../dialog/dialog-events.util';
 import {
   MnsSearchSelectFieldComponent,
   MnsSearchSelectFieldOption,
-} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+} from '../../forms/mns-search-select-field/mns-search-select-field';
+import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
+import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
 
-export const ERP_CRUD_IMPORTS = [
+export const CONFIGURABLE_CRUD_IMPORTS = [
   RefreshButtonComponent,
   MatButtonModule,
   MatCardModule,
@@ -68,17 +65,17 @@ export const ERP_CRUD_IMPORTS = [
   TranslocoPipe,
 ];
 
-export type ErpCrudRecord = Record<string, unknown>;
+export type ConfigurableCrudRecord = Record<string, unknown>;
 
-export type ErpCrudOption = MnsSearchSelectFieldOption & {
+export type ConfigurableCrudOption = MnsSearchSelectFieldOption & {
   value: string | number | boolean | null;
   label: string;
 };
 
-export type ErpCrudFieldType =
+export type ConfigurableCrudFieldType =
   'text' | 'email' | 'number' | 'phone' | 'select' | 'search-select' | 'status' | 'textarea';
 
-export type ErpCrudPostalCodeLookup = {
+export type ConfigurableCrudPostalCodeLookup = {
   streetKey?: string;
   districtKey?: string;
   complementKey?: string;
@@ -88,27 +85,27 @@ export type ErpCrudPostalCodeLookup = {
   numberKey?: string;
 };
 
-export type ErpCrudField = {
+export type ConfigurableCrudField = {
   key: string;
   label: string;
   source?: string;
   payloadKey?: string;
-  type?: ErpCrudFieldType;
+  type?: ConfigurableCrudFieldType;
   tab?: 'record' | 'address' | 'financial' | 'notes';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
-  postalLookup?: ErpCrudPostalCodeLookup;
+  postalLookup?: ConfigurableCrudPostalCodeLookup;
   rows?: number;
   required?: boolean;
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
-  options?: readonly ErpCrudOption[];
+  options?: readonly ConfigurableCrudOption[];
   loading?: () => boolean;
 };
 
-export type ErpCrudCopyAction = {
+export type ConfigurableCrudCopyAction = {
   key: string;
   label: string;
   addressSection?: string;
@@ -119,17 +116,17 @@ export type ErpCrudCopyAction = {
   fields: readonly string[];
 };
 
-export type ErpCrudAddressSection = {
+export type ConfigurableCrudAddressSection = {
   key: string;
   label: string;
 };
 
-export type ErpCrudAddressSectionView = ErpCrudAddressSection & {
-  fields: readonly ErpCrudField[];
-  copyActions: readonly ErpCrudCopyAction[];
+export type ConfigurableCrudAddressSectionView = ConfigurableCrudAddressSection & {
+  fields: readonly ConfigurableCrudField[];
+  copyActions: readonly ConfigurableCrudCopyAction[];
 };
 
-export type ErpCrudColumn = {
+export type ConfigurableCrudColumn = {
   id: string;
   label: string;
   field?: string;
@@ -139,9 +136,9 @@ export type ErpCrudColumn = {
   className?: string;
 };
 
-export type ErpCrudStatusMode = 'number' | 'string';
+export type ConfigurableCrudStatusMode = 'number' | 'string';
 
-export type ErpCrudConfig = {
+export type ConfigurableCrudConfig = {
   endpoint: string;
   uuidField: string;
   pageTitle: string;
@@ -158,37 +155,37 @@ export type ErpCrudConfig = {
   savedMessage: string;
   deletedMessage: string;
   deleteFailedMessage: string;
-  fields: readonly ErpCrudField[];
-  columns: readonly ErpCrudColumn[];
-  initialValues: ErpCrudRecord;
-  statusMode: ErpCrudStatusMode;
+  fields: readonly ConfigurableCrudField[];
+  columns: readonly ConfigurableCrudColumn[];
+  initialValues: ConfigurableCrudRecord;
+  statusMode: ConfigurableCrudStatusMode;
   activeValue: string | number;
   inactiveValue: string | number;
-  addressSections?: readonly ErpCrudAddressSection[];
-  addressCopyActions?: readonly ErpCrudCopyAction[];
+  addressSections?: readonly ConfigurableCrudAddressSection[];
+  addressCopyActions?: readonly ConfigurableCrudCopyAction[];
 };
 
-type ErpCrudFilters = {
+type ConfigurableCrudFilters = {
   search: string;
   status: '' | string | number;
 };
 
 @Directive()
-export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
+export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord> {
   protected readonly api = inject(ApiService);
   protected readonly snack = inject(SnackbarService);
   protected readonly dialog = inject(MatDialog);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly listLimit = 500;
-  protected readonly config: ErpCrudConfig;
+  protected readonly config: ConfigurableCrudConfig;
 
   readonly formDialog = viewChild<TemplateRef<unknown>>('crudFormDialog');
   protected dialogBinding: CrudDialogBinding | null = null;
 
   readonly search = signal('');
   readonly status = signal<'' | string | number>('');
-  readonly appliedFilters = signal<ErpCrudFilters>({ search: '', status: '' });
+  readonly appliedFilters = signal<ConfigurableCrudFilters>({ search: '', status: '' });
   readonly selectedUUIDs = signal(new Set<string>());
   readonly sortActive = signal('');
   readonly sortDirection = signal<SortDirection>('');
@@ -198,7 +195,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
   readonly mutating = signal(false);
   readonly postalLookupLoadingKey = signal<string | null>(null);
   readonly editingRecord = signal<T | null>(null);
-  readonly formValues = signal<ErpCrudRecord>({});
+  readonly formValues = signal<ConfigurableCrudRecord>({});
   readonly enabledCopyActions = signal(new Set<string>());
 
   readonly itemsResource;
@@ -232,7 +229,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
   readonly addressFields = computed(() =>
     this.config.fields.filter((field) => !field.hidden && field.tab === 'address'),
   );
-  readonly addressSections = computed<ErpCrudAddressSectionView[]>(() => {
+  readonly addressSections = computed<ConfigurableCrudAddressSectionView[]>(() => {
     const fields = this.addressFields();
     const copyActions = this.addressCopyActions();
     const configuredSections = this.config.addressSections ?? [];
@@ -259,7 +256,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
   );
 
-  protected constructor(config: ErpCrudConfig) {
+  protected constructor(config: ConfigurableCrudConfig) {
     this.config = config;
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
@@ -439,7 +436,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     this.clearCopyActionsForTarget(key);
   }
 
-  async searchPostalCode(field: ErpCrudField, event?: Event): Promise<void> {
+  async searchPostalCode(field: ConfigurableCrudField, event?: Event): Promise<void> {
     event?.preventDefault();
     if (!field.postalLookup || this.postalLookupLoadingKey()) return;
 
@@ -457,12 +454,12 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     this.setFieldValue(field.key, normalizedZip);
 
     try {
-      const response = await this.api.get<{ data?: { item?: ErpCrudRecord } }>(
+      const response = await this.api.get<{ data?: { item?: ConfigurableCrudRecord } }>(
         `postal-codes/${normalizedZip}`,
       );
       const item = response?.data?.item ?? {};
       const lookup = field.postalLookup;
-      const next: ErpCrudRecord = { [field.key]: normalizedZip };
+      const next: ConfigurableCrudRecord = { [field.key]: normalizedZip };
 
       this.assignPostalLookupValue(next, lookup.streetKey, item['street']);
       this.assignPostalLookupValue(next, lookup.districtKey, item['district']);
@@ -485,18 +482,18 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     }
   }
 
-  isPostalLookupLoading(field: ErpCrudField): boolean {
+  isPostalLookupLoading(field: ConfigurableCrudField): boolean {
     return this.postalLookupLoadingKey() === field.key;
   }
 
-  fieldClass(field: ErpCrudField): string {
+  fieldClass(field: ConfigurableCrudField): string {
     return [`span-${field.span ?? 1}`, field.breakBefore ? 'break-before' : '']
       .filter(Boolean)
       .join(' ');
   }
 
   protected assignPostalLookupValue(
-    target: ErpCrudRecord,
+    target: ConfigurableCrudRecord,
     key: string | undefined,
     value: unknown,
   ): void {
@@ -508,23 +505,23 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     this.host.nativeElement.querySelector<HTMLInputElement>(`[data-field-key="${key}"]`)?.focus();
   }
 
-  fieldOptions(field: ErpCrudField): readonly ErpCrudOption[] {
+  fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
     return field.options ?? this.lookupOptions(field.key);
   }
 
-  fieldLoading(field: ErpCrudField): boolean {
+  fieldLoading(field: ConfigurableCrudField): boolean {
     return field.loading?.() ?? false;
   }
 
-  addressCopyActions(): readonly ErpCrudCopyAction[] {
+  addressCopyActions(): readonly ConfigurableCrudCopyAction[] {
     return this.config.addressCopyActions ?? [];
   }
 
-  isCopyActionEnabled(action: ErpCrudCopyAction): boolean {
+  isCopyActionEnabled(action: ConfigurableCrudCopyAction): boolean {
     return this.enabledCopyActions().has(action.key);
   }
 
-  isFieldDisabled(field: ErpCrudField): boolean {
+  isFieldDisabled(field: ConfigurableCrudField): boolean {
     return this.addressCopyActions().some(
       (action) =>
         this.isCopyActionEnabled(action) &&
@@ -532,11 +529,11 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     );
   }
 
-  isAddressSectionCompact(section: ErpCrudAddressSectionView): boolean {
+  isAddressSectionCompact(section: ConfigurableCrudAddressSectionView): boolean {
     return section.copyActions.some((action) => this.isCopyActionEnabled(action));
   }
 
-  addressSectionSummary(section: ErpCrudAddressSectionView): string {
+  addressSectionSummary(section: ConfigurableCrudAddressSectionView): string {
     const enabledAction = section.copyActions.find((action) => this.isCopyActionEnabled(action));
     if (enabledAction) return enabledAction.summaryLabel ?? 'Same as main address';
 
@@ -548,7 +545,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     return summaryParts.slice(0, 4).join(', ') || '-';
   }
 
-  editAddressSection(section: ErpCrudAddressSectionView): void {
+  editAddressSection(section: ConfigurableCrudAddressSectionView): void {
     const next = new Set(this.enabledCopyActions());
     for (const action of section.copyActions) {
       next.delete(action.key);
@@ -556,7 +553,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     this.enabledCopyActions.set(next);
   }
 
-  toggleCopyAction(action: ErpCrudCopyAction, checked: boolean): void {
+  toggleCopyAction(action: ConfigurableCrudCopyAction, checked: boolean): void {
     const next = new Set(this.enabledCopyActions());
     if (checked) {
       next.add(action.key);
@@ -567,7 +564,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     this.enabledCopyActions.set(next);
   }
 
-  statusOptions(): readonly ErpCrudOption[] {
+  statusOptions(): readonly ConfigurableCrudOption[] {
     return [
       { value: this.config.activeValue, label: 'Active' },
       { value: this.config.inactiveValue, label: 'Inactive' },
@@ -586,7 +583,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     return String(row[this.config.uuidField] ?? '');
   }
 
-  columnMain(row: T, column: ErpCrudColumn): string {
+  columnMain(row: T, column: ConfigurableCrudColumn): string {
     if (column.lookupKey && column.uuidField) {
       return this.lookupLabel(column.lookupKey, row[column.uuidField]) || '-';
     }
@@ -594,17 +591,17 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     return this.displayValue(row[field]);
   }
 
-  columnUUID(row: T, column: ErpCrudColumn): string {
+  columnUUID(row: T, column: ConfigurableCrudColumn): string {
     if (column.uuidField) return this.displayValue(row[column.uuidField]);
     return column.kind === 'identity' ? this.recordUUID(row) : '';
   }
 
-  columnText(row: T, column: ErpCrudColumn): string {
+  columnText(row: T, column: ConfigurableCrudColumn): string {
     const field = column.field ?? column.id;
     return this.displayValue(row[field]);
   }
 
-  protected lookupOptions(_key: string): readonly ErpCrudOption[] {
+  protected lookupOptions(_key: string): readonly ConfigurableCrudOption[] {
     return [];
   }
 
@@ -615,13 +612,13 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     return option?.label ?? '';
   }
 
-  protected augmentPayload(payload: ErpCrudRecord): ErpCrudRecord {
+  protected augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return payload;
   }
 
   protected onFieldValueChanged(_key: string, _value: unknown): void {}
 
-  protected patchFormValues(values: ErpCrudRecord): void {
+  protected patchFormValues(values: ConfigurableCrudRecord): void {
     this.formValues.update((current) => ({ ...current, ...values }));
     for (const key of Object.keys(values)) {
       this.syncCopyActionsForSource(key);
@@ -646,9 +643,9 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     return next;
   }
 
-  private copyAddressValues(action: ErpCrudCopyAction): void {
+  private copyAddressValues(action: ConfigurableCrudCopyAction): void {
     const current = this.formValues();
-    const next: ErpCrudRecord = {};
+    const next: ConfigurableCrudRecord = {};
     for (const field of action.fields) {
       next[`${action.toPrefix}${field}`] = current[`${action.fromPrefix}${field}`] ?? '';
     }
@@ -661,14 +658,14 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     }
   }
 
-  private copyActionTargetIsEmpty(action: ErpCrudCopyAction): boolean {
+  private copyActionTargetIsEmpty(action: ConfigurableCrudCopyAction): boolean {
     const current = this.formValues();
     return action.fields.every(
       (field) => !String(current[`${action.toPrefix}${field}`] ?? '').trim(),
     );
   }
 
-  private copyActionTargetMatchesSource(action: ErpCrudCopyAction): boolean {
+  private copyActionTargetMatchesSource(action: ConfigurableCrudCopyAction): boolean {
     const current = this.formValues();
     return action.fields.every((field) => {
       const source = String(current[`${action.fromPrefix}${field}`] ?? '').trim();
@@ -700,7 +697,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     if (next.size !== selected.size) this.enabledCopyActions.set(next);
   }
 
-  private async fetchItems(filters: ErpCrudFilters): Promise<T[]> {
+  private async fetchItems(filters: ConfigurableCrudFilters): Promise<T[]> {
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
     params.set('offset', '0');
@@ -734,7 +731,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     });
   }
 
-  private sortValue(row: T, column?: ErpCrudColumn): string {
+  private sortValue(row: T, column?: ConfigurableCrudColumn): string {
     if (!column) return '';
     if (column.kind === 'related') return this.columnMain(row, column).toLowerCase();
     const field = column.field ?? column.id;
@@ -763,12 +760,12 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     );
   }
 
-  private emptyFormValues(): ErpCrudRecord {
+  private emptyFormValues(): ConfigurableCrudRecord {
     return { ...this.config.initialValues };
   }
 
-  private formValuesFromRecord(row: T): ErpCrudRecord {
-    const next: ErpCrudRecord = {};
+  private formValuesFromRecord(row: T): ConfigurableCrudRecord {
+    const next: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
       next[field.key] =
         row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
@@ -776,9 +773,9 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     return next;
   }
 
-  private buildPayload(): ErpCrudRecord {
+  private buildPayload(): ConfigurableCrudRecord {
     const values = this.formValues();
-    const payload: ErpCrudRecord = {};
+    const payload: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
       const key = field.payloadKey ?? field.key;
       let value = values[field.key];
@@ -789,7 +786,7 @@ export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
     return payload;
   }
 
-  private validatePayload(payload: ErpCrudRecord): boolean {
+  private validatePayload(payload: ConfigurableCrudRecord): boolean {
     for (const field of this.config.fields) {
       if (!field.required) continue;
       const value = payload[field.payloadKey ?? field.key];
