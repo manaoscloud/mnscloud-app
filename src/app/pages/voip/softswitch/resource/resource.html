@@ -197,6 +197,16 @@
                 <mat-label>{{ meta().secondary }}</mat-label>
                 <input matInput [formField]="form.secondary" />
               </mat-form-field>
+              @if (resource() === 'trunks') {
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>Trusted CIDRs</mat-label>
+                  <input
+                    matInput
+                    [formField]="form.trustedCidrs"
+                    placeholder="203.0.113.10/32, 198.51.100.0/24"
+                  />
+                </mat-form-field>
+              }
               <div class="toggle-row">
                 <mat-slide-toggle [formField]="form.status">Active</mat-slide-toggle>
               </div>

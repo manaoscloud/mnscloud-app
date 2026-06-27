@@ -292,6 +292,7 @@ export class VoipSoftswitchResourcePage {
       name: String(item.name ?? ''),
       primary: String(this.primaryValue(item) ?? ''),
       secondary: String(this.secondaryValue(item) ?? ''),
+      trustedCidrs: String(item['trustedCidrs'] ?? ''),
       status: item.status === 1 || item.status === 'answered',
     });
     this.openDialog();
@@ -426,6 +427,9 @@ export class VoipSoftswitchResourcePage {
     };
     payload[meta.primaryKey] = value.primary;
     payload[meta.secondaryKey] = value.secondary;
+    if (this.resource() === 'trunks') {
+      payload['trustedCidrs'] = value.trustedCidrs;
+    }
     if (this.resource() === 'cdrs') {
       payload['calleeNumber'] = value.primary;
       payload['callStatus'] = value.secondary || 'failed';
@@ -439,6 +443,7 @@ export class VoipSoftswitchResourcePage {
       name: '',
       primary: '',
       secondary: String(meta.defaults[meta.secondaryKey] ?? ''),
+      trustedCidrs: '',
       status: true,
     });
     this.editing.set(null);
@@ -490,6 +495,7 @@ export class VoipSoftswitchResourcePage {
       name: '',
       primary: '',
       secondary: String(meta.defaults[meta.secondaryKey] ?? ''),
+      trustedCidrs: '',
       status: true,
     };
   }
