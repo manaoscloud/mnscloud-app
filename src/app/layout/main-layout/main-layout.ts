@@ -1300,12 +1300,6 @@ export class MainLayout {
               roles: ['MASTER'],
             },
             {
-              id: 'voip/softswitch/provider',
-              label: 'Providers',
-              icon: 'hub',
-              route: '/voip/softswitch/provider',
-            },
-            {
               id: 'voip/softswitch/account',
               label: 'Softswitch',
               icon: 'router',

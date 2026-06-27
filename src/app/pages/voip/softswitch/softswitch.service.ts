@@ -5,15 +5,12 @@ export type VoipSoftswitchAccount = {
   VssUUID: string;
   VssID: string;
   VssName: string;
-  VoipSoftswitchProviderVspUUID: string;
   VoipSoftswitchServerVsrUUID?: string | null;
   VoipDomainVdmUUID?: string | null;
   CustomerCusUUID?: string | null;
   VssConfig?: unknown;
   VssIsActive: number;
   VssIsDefault: number;
-  ProviderName?: string | null;
-  ProviderEngine?: string | null;
   ServerName?: string | null;
   ServerHostname?: string | null;
   DomainName?: string | null;
@@ -45,7 +42,6 @@ export class VoipSoftswitchAccountService {
   create(
     payload: {
       name: string;
-      providerUUID: string;
       serverUUID: string;
       domainUUID: string;
       customerUUID: string;
@@ -63,7 +59,6 @@ export class VoipSoftswitchAccountService {
     uuid: string,
     payload: {
       name?: string;
-      providerUUID?: string;
       serverUUID?: string | null;
       domainUUID?: string | null;
       customerUUID?: string | null;

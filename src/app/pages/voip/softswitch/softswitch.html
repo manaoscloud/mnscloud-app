@@ -88,11 +88,6 @@
           <td mat-cell *matCellDef="let row">{{ row.VssName }}</td>
         </ng-container>
 
-        <ng-container matColumnDef="provider">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Provider</th>
-          <td mat-cell *matCellDef="let row">{{ providerLabel(row) }}</td>
-        </ng-container>
-
         <ng-container matColumnDef="customer">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
           <td mat-cell *matCellDef="let row">{{ row.CustomerName || '-' }}</td>
@@ -184,7 +179,7 @@
         <p>
           {{
             editing()
-              ? 'Update provider credentials and defaults.'
+              ? 'Update Softswitch settings and defaults.'
               : 'Add API credentials for a Softswitch.'
           }}
         </p>
@@ -202,30 +197,6 @@
               <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
                 <input matInput [formField]="form.name" placeholder="Account name" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Provider</mat-label>
-                <mat-select
-                  [formField]="form.providerUUID"
-                  (openedChange)="clearSelectSearch('provider', $event)"
-                >
-                  <mat-option class="select-search-option">
-                    <input
-                      matInput
-                      class="select-search-field"
-                      placeholder="Search providers"
-                      [value]="providerSearch()"
-                      (input)="setSelectSearch('provider', $any($event.target).value)"
-                      (click)="$event.stopPropagation()"
-                    />
-                  </mat-option>
-                  @for (option of filteredProviders(); track option) {
-                    <mat-option [value]="option.VspUUID">
-                      {{ option.VspName }}
-                    </mat-option>
-                  }
-                </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">

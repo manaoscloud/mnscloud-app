@@ -40,10 +40,6 @@ import { ApiService } from '../../../services/api.service';
 import { VoipDomainItem, VoipDomainService } from '../domain/domain.service';
 import { VoipSoftswitchAccountService, VoipSoftswitchAccount } from './softswitch.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import {
-  VoipSoftswitchProviderItem,
-  VoipSoftswitchProviderService,
-} from './provider/provider.service';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server/server.service';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
@@ -86,7 +82,6 @@ export class VoipSoftswitchPage {
   private readonly listLimit = 5000;
   private readonly api = inject(VoipSoftswitchAccountService);
   private readonly rawApi = inject(ApiService);
-  private readonly providerApi = inject(VoipSoftswitchProviderService);
   private readonly serverApi = inject(VoipSoftswitchServerService);
   private readonly domainApi = inject(VoipDomainService);
   private readonly route = inject(ActivatedRoute);
@@ -119,23 +114,17 @@ export class VoipSoftswitchPage {
     'customer',
     'domain',
     'server',
-    'provider',
     'status',
     'default',
     'actions',
   ];
   readonly dataSource = new MatTableDataSource<VoipSoftswitchAccount>([]);
-  readonly providerOptions = signal<VoipSoftswitchProviderItem[]>([]);
   readonly serverOptions = signal<VoipSoftswitchServerItem[]>([]);
   readonly domainOptions = signal<VoipDomainItem[]>([]);
   readonly customerOptions = signal<CustomerOption[]>([]);
-  readonly providerSearch = signal('');
   readonly serverSearch = signal('');
   readonly domainSearch = signal('');
   readonly customerSearch = signal('');
-  filteredProviders() {
-    return this.filterBy(this.providerOptions(), this.providerSearch(), 'VspName');
-  }
 
   filteredServers() {
     return this.filterBy(this.serverOptions(), this.serverSearch(), 'VsrName');
@@ -153,7 +142,6 @@ export class VoipSoftswitchPage {
   readonly form = createForm(this.formModel, (schema) => {
     required(schema.name);
     minLength(schema.name, 2);
-    required(schema.providerUUID);
     required(schema.serverUUID);
     required(schema.customerUUID);
     required(schema.domainUUID);
@@ -203,8 +191,6 @@ export class VoipSoftswitchPage {
       switch (sortHeaderId) {
         case 'name':
           return data.VssName ?? '';
-        case 'provider':
-          return this.providerLabel(data);
         case 'server':
           return this.serverLabel(data);
         case 'domain':
@@ -224,13 +210,11 @@ export class VoipSoftswitchPage {
       if (!value) return true;
       const statusLabel = data.VssIsActive === 1 ? 'active' : 'inactive';
       const defaultLabel = data.VssIsDefault === 1 ? 'default' : 'not default';
-      const providerLabel = this.providerLabel(data).toLowerCase();
       return [
         data.VssName,
         data.CustomerName,
         data.DomainName,
         this.serverLabel(data),
-        providerLabel,
         statusLabel,
         defaultLabel,
       ]
@@ -279,7 +263,6 @@ export class VoipSoftswitchPage {
     const value = this.formModel();
     const payload = {
       name: value.name,
-      providerUUID: value.providerUUID,
       serverUUID: value.serverUUID,
       customerUUID: value.customerUUID,
       domainUUID: value.domainUUID,
@@ -325,7 +308,6 @@ export class VoipSoftswitchPage {
     this.editing.set(item);
     this.formModel.set({
       name: item.VssName,
-      providerUUID: item.VoipSoftswitchProviderVspUUID,
       serverUUID: item.VoipSoftswitchServerVsrUUID ?? '',
       customerUUID: item.CustomerCusUUID ?? '',
       domainUUID: item.VoipDomainVdmUUID ?? '',
@@ -452,19 +434,15 @@ export class VoipSoftswitchPage {
     }
   }
 
-  providerLabel(item: VoipSoftswitchAccount) {
-    return item.ProviderName || item.ProviderEngine || '-';
-  }
-
   serverLabel(item: VoipSoftswitchAccount) {
     return item.ServerName || item.ServerHostname || '-';
   }
 
-  setSelectSearch(kind: 'provider' | 'server' | 'domain' | 'customer', value: string) {
+  setSelectSearch(kind: 'server' | 'domain' | 'customer', value: string) {
     this.selectSearchSignal(kind).set(value);
   }
 
-  clearSelectSearch(kind: 'provider' | 'server' | 'domain' | 'customer', opened: boolean) {
+  clearSelectSearch(kind: 'server' | 'domain' | 'customer', opened: boolean) {
     if (!opened) this.selectSearchSignal(kind).set('');
   }
 
@@ -504,13 +482,11 @@ export class VoipSoftswitchPage {
 
   private async fetchLookups() {
     try {
-      const [providers, servers, domains, customers] = await Promise.all([
-        this.providerApi.list(this.isMaster(), { limit: this.listLimit }),
+      const [servers, domains, customers] = await Promise.all([
         this.serverApi.list(true, { limit: this.listLimit }),
         this.domainApi.list({ limit: this.listLimit }),
         this.rawApi.get<any>(`erp/customers?limit=${this.listLimit}`),
       ]);
-      this.providerOptions.set(providers?.data?.items ?? []);
       this.serverOptions.set(servers?.data?.items ?? []);
       this.domainOptions.set(domains?.data?.items ?? []);
       this.customerOptions.set(customers?.data?.items ?? []);
@@ -537,7 +513,6 @@ export class VoipSoftswitchPage {
   private emptyFormModel() {
     return {
       name: '',
-      providerUUID: this.providerOptions()[0]?.VspUUID ?? '',
       serverUUID: this.serverOptions()[0]?.VsrUUID ?? '',
       customerUUID: this.customerOptions()[0]?.CustomerUUID ?? '',
       domainUUID: this.domainOptions()[0]?.VdmUUID ?? '',
@@ -549,10 +524,8 @@ export class VoipSoftswitchPage {
     };
   }
 
-  private selectSearchSignal(kind: 'provider' | 'server' | 'domain' | 'customer') {
+  private selectSearchSignal(kind: 'server' | 'domain' | 'customer') {
     switch (kind) {
-      case 'provider':
-        return this.providerSearch;
       case 'server':
         return this.serverSearch;
       case 'domain':
