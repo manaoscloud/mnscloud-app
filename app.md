@@ -285,10 +285,12 @@
   - Do not use an empty `.mobile-paginator` placeholder.
   - Sort/filter changes must reset `pageIndex` to `0`.
   - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
-- ERP directory CRUDs:
-  - Simple directory-style ERP resources such as customers, companies, suppliers, resellers,
-    carriers, and complexes should use the shared base in
-    `src/app/pages/erp/shared/directory-crud/`.
+- ERP generic CRUDs:
+  - Simple ERP resources such as customers, companies, suppliers, resellers, carriers, and
+    complexes must use the shared generic base in `src/app/pages/erp/shared/generic-crud/`.
+  - Create/edit must open through the generic `crud-form-dialog` panel class and the shared
+    `.crud-dialog` template surface. Do not add resource-specific overlay panel classes or
+    resource-specific dialog shell classes for normal CRUD forms.
   - The resource component should only declare its endpoint, UUID field, columns, fields, labels,
     and optional lookup resources. Do not recreate page-local CRUD HTML/SCSS for these resources.
   - This keeps the app.md CRUD contract centralized: signal-first `resource()` lists,

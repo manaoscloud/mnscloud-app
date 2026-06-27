@@ -50,9 +50,7 @@ How to use:
 11. Update explicit sort helpers such as `sortValue(row, column)` whenever a displayed column uses
     a derived value, related-entity label, formatted value, or a field name different from the
     API/model field.
-12. Keep the real `<mat-paginator class="mobile-paginator" [length]="sortedRows().length"
-    [pageIndex]="pageIndex()" [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 25, 100]"
-    (page)="setPage($event)" showFirstLastButtons>` after `.table-wrapper`.
+12. Keep the real `<mat-paginator class="mobile-paginator" [length]="sortedRows().length" [pageIndex]="pageIndex()" [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 25, 100]" (page)="setPage($event)" showFirstLastButtons>` after `.table-wrapper`.
 13. Use `span.status-pill.status-chip.state-chip` for status values, with Activity Log palette classes such as `chip-success` and `chip-skipped`, plus `is-active`/`is-inactive` for boolean status.
 14. Keep list styling aligned with the ERP baseline by using the global hook classes only. Do not
     redefine `.erp-page`, `.erp-card`, `.erp-header`, `.header-actions`, `.filter-grid`, or
@@ -69,7 +67,9 @@ How to use:
 23. Whenever the form has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent annotation), keep it in a dedicated `mat-tab label="Notes"` with a full-row textarea; never mix notes into `Record`, `Config`, `Pricing`, or `Provision`.
 24. Keep the dialog visual contract aligned with this CRUD template and `app.md`: root padding `1.5rem 1.75rem 1.25rem`, compact tab content, sticky translucent `.form-actions` with `margin: auto 0 0`, internal horizontal padding, blur/shadow, desktop Cancel left and Save split right, mobile Save first and Cancel second.
 25. For currency defaults, resolve `DEFAULT_CURRENCY` through `SystemParameterService.resolveDefaultCurrency()`; tenant parameters must win and master parameters are the fallback. Do not hardcode `BRL`/`USD` as the source of truth for create/reset flows.
-26. Add the dialog `panelClass` to global overlay styles in `src/styles.scss` when the page uses a new panel class, so `.mat-mdc-dialog-surface`, content, and actions match the shared CRUD surface.
+26. Use the generic `crud-form-dialog` panel class for normal CRUD dialogs. Do not add a new
+    resource-specific panel class unless the resource has a documented non-standard dialog
+    behavior; in that exception, add the panel class to global overlay styles in `src/styles.scss`.
 27. Run the CRUD validators before finishing:
 
 ```bash

@@ -1,19 +1,19 @@
 import { Component, computed, resource } from '@angular/core';
 
 import {
-  DirectoryConfig,
-  DirectoryCrudPageBase,
-  DirectoryOption,
-  DirectoryRecord,
-  ERP_DIRECTORY_CRUD_IMPORTS,
-} from '../shared/directory-crud/directory-crud-page-base';
+  ErpCrudConfig,
+  ErpCrudPageBase,
+  ErpCrudOption,
+  ErpCrudRecord,
+  ERP_CRUD_IMPORTS,
+} from '../shared/generic-crud/erp-crud-page-base';
 
-const TYPE_OPTIONS: readonly DirectoryOption[] = [
+const TYPE_OPTIONS: readonly ErpCrudOption[] = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
 ];
 
-const CUSTOMER_CONFIG: DirectoryConfig = {
+const CUSTOMER_CONFIG: ErpCrudConfig = {
   endpoint: 'erp/customers',
   uuidField: 'CustomerUUID',
   pageTitle: 'Customers',
@@ -86,8 +86,23 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ],
   fields: [
-    { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'type', source: 'Type', payloadKey: 'type', label: 'Type', type: 'select', options: TYPE_OPTIONS, span: 1 },
+    {
+      key: 'status',
+      source: 'Status',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'type',
+      source: 'Type',
+      payloadKey: 'type',
+      label: 'Type',
+      type: 'select',
+      options: TYPE_OPTIONS,
+      span: 1,
+    },
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
     {
@@ -363,9 +378,36 @@ const CUSTOMER_CONFIG: DirectoryConfig = {
       addressSection: 'installation',
       span: 1,
     },
-    { key: 'lat', source: 'Lat', payloadKey: 'lat', label: 'Latitude', type: 'number', tab: 'address', span: 1, hidden: true },
-    { key: 'lng', source: 'Lng', payloadKey: 'lng', label: 'Longitude', type: 'number', tab: 'address', span: 1, hidden: true },
-    { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'lat',
+      source: 'Lat',
+      payloadKey: 'lat',
+      label: 'Latitude',
+      type: 'number',
+      tab: 'address',
+      span: 1,
+      hidden: true,
+    },
+    {
+      key: 'lng',
+      source: 'Lng',
+      payloadKey: 'lng',
+      label: 'Longitude',
+      type: 'number',
+      tab: 'address',
+      span: 1,
+      hidden: true,
+    },
+    {
+      key: 'notes',
+      source: 'Notes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
   addressSections: [
     { key: 'main', label: 'Main Address' },
@@ -419,27 +461,31 @@ type DueDayRecord = {
 @Component({
   selector: 'app-erp-customer',
   standalone: true,
-  imports: ERP_DIRECTORY_CRUD_IMPORTS,
-  templateUrl: '../shared/directory-crud/directory-crud-page.html',
-  styleUrls: ['../shared/directory-crud/directory-crud-page.scss'],
+  imports: ERP_CRUD_IMPORTS,
+  templateUrl: '../shared/generic-crud/erp-crud-page.html',
+  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
 })
-export class ErpCustomerPage extends DirectoryCrudPageBase<DirectoryRecord> {
+export class ErpCustomerPage extends ErpCrudPageBase<ErpCrudRecord> {
   private readonly complexesResource = resource({
     defaultValue: [] as ComplexRecord[],
     loader: async () => {
       const response = await this.api.get('erp/complexes?status=active&limit=500');
-      return ((response as { data?: { items?: ComplexRecord[] } })?.data?.items ?? []) as ComplexRecord[];
+      return ((response as { data?: { items?: ComplexRecord[] } })?.data?.items ??
+        []) as ComplexRecord[];
     },
   });
   private readonly dueDaysResource = resource({
     defaultValue: [] as DueDayRecord[],
     loader: async () => {
-      const response = await this.api.get('erp/financial/invoicing/duedays?status=active&limit=500');
-      return ((response as { data?: { items?: DueDayRecord[] } })?.data?.items ?? []) as DueDayRecord[];
+      const response = await this.api.get(
+        'erp/financial/invoicing/duedays?status=active&limit=500',
+      );
+      return ((response as { data?: { items?: DueDayRecord[] } })?.data?.items ??
+        []) as DueDayRecord[];
     },
   });
 
-  private readonly complexOptions = computed<DirectoryOption[]>(() =>
+  private readonly complexOptions = computed<ErpCrudOption[]>(() =>
     this.complexesResource.value().map((item) => ({
       value: item.ComplexUUID,
       label: item.Name,
@@ -447,11 +493,14 @@ export class ErpCustomerPage extends DirectoryCrudPageBase<DirectoryRecord> {
       searchText: `${item.Name} ${item.City ?? ''} ${item.State ?? ''} ${item.ComplexUUID}`,
     })),
   );
-  private readonly dueDayOptions = computed<DirectoryOption[]>(() =>
+  private readonly dueDayOptions = computed<ErpCrudOption[]>(() =>
     this.dueDaysResource.value().map((item) => ({
       value: item.ErpFinInvDueDayUUID,
       label: item.Name,
-      description: [item.DueDay ? `Due ${item.DueDay}` : '', item.BillingDay ? `Billing ${item.BillingDay}` : '']
+      description: [
+        item.DueDay ? `Due ${item.DueDay}` : '',
+        item.BillingDay ? `Billing ${item.BillingDay}` : '',
+      ]
         .filter(Boolean)
         .join(' / '),
       searchText: `${item.Name} ${item.DueDay ?? ''} ${item.BillingDay ?? ''} ${item.ErpFinInvDueDayUUID}`,
@@ -462,7 +511,7 @@ export class ErpCustomerPage extends DirectoryCrudPageBase<DirectoryRecord> {
     super(CUSTOMER_CONFIG);
   }
 
-  protected override lookupOptions(key: string): readonly DirectoryOption[] {
+  protected override lookupOptions(key: string): readonly ErpCrudOption[] {
     if (key === 'complexUUID') return this.complexOptions();
     if (key === 'dueDayUUID') return this.dueDayOptions();
     return [];

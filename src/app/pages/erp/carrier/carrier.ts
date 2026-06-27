@@ -1,18 +1,18 @@
 import { Component } from '@angular/core';
 
 import {
-  DirectoryConfig,
-  DirectoryCrudPageBase,
-  DirectoryRecord,
-  ERP_DIRECTORY_CRUD_IMPORTS,
-} from '../shared/directory-crud/directory-crud-page-base';
+  ErpCrudConfig,
+  ErpCrudPageBase,
+  ErpCrudRecord,
+  ERP_CRUD_IMPORTS,
+} from '../shared/generic-crud/erp-crud-page-base';
 
 const TYPE_OPTIONS = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
 ];
 
-const CARRIER_CONFIG: DirectoryConfig = {
+const CARRIER_CONFIG: ErpCrudConfig = {
   endpoint: 'erp/carriers',
   uuidField: 'CarrierUUID',
   pageTitle: 'Carriers',
@@ -161,11 +161,11 @@ const CARRIER_CONFIG: DirectoryConfig = {
 @Component({
   selector: 'app-erp-carrier',
   standalone: true,
-  imports: ERP_DIRECTORY_CRUD_IMPORTS,
-  templateUrl: '../shared/directory-crud/directory-crud-page.html',
-  styleUrls: ['../shared/directory-crud/directory-crud-page.scss'],
+  imports: ERP_CRUD_IMPORTS,
+  templateUrl: '../shared/generic-crud/erp-crud-page.html',
+  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
 })
-export class ErpCarrierPage extends DirectoryCrudPageBase<DirectoryRecord> {
+export class ErpCarrierPage extends ErpCrudPageBase<ErpCrudRecord> {
   constructor() {
     super(CARRIER_CONFIG);
   }

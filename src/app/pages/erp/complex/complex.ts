@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 
 import {
-  DirectoryConfig,
-  DirectoryCrudPageBase,
-  DirectoryRecord,
-  ERP_DIRECTORY_CRUD_IMPORTS,
-} from '../shared/directory-crud/directory-crud-page-base';
+  ErpCrudConfig,
+  ErpCrudPageBase,
+  ErpCrudRecord,
+  ERP_CRUD_IMPORTS,
+} from '../shared/generic-crud/erp-crud-page-base';
 
-const COMPLEX_CONFIG: DirectoryConfig = {
+const COMPLEX_CONFIG: ErpCrudConfig = {
   endpoint: 'erp/complexes',
   uuidField: 'ComplexUUID',
   pageTitle: 'Complexes',
@@ -148,16 +148,16 @@ const COMPLEX_CONFIG: DirectoryConfig = {
 @Component({
   selector: 'app-erp-complex',
   standalone: true,
-  imports: ERP_DIRECTORY_CRUD_IMPORTS,
-  templateUrl: '../shared/directory-crud/directory-crud-page.html',
-  styleUrls: ['../shared/directory-crud/directory-crud-page.scss'],
+  imports: ERP_CRUD_IMPORTS,
+  templateUrl: '../shared/generic-crud/erp-crud-page.html',
+  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
 })
-export class ErpComplexPage extends DirectoryCrudPageBase<DirectoryRecord> {
+export class ErpComplexPage extends ErpCrudPageBase<ErpCrudRecord> {
   constructor() {
     super(COMPLEX_CONFIG);
   }
 
-  protected override augmentPayload(payload: DirectoryRecord): DirectoryRecord {
+  protected override augmentPayload(payload: ErpCrudRecord): ErpCrudRecord {
     const street = String(payload['street'] ?? '').trim();
     const number = String(payload['number'] ?? '').trim();
     const district = String(payload['district'] ?? '').trim();

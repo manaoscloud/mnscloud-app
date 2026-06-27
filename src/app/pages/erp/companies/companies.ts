@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 
 import {
-  DirectoryConfig,
-  DirectoryCrudPageBase,
-  DirectoryRecord,
-  ERP_DIRECTORY_CRUD_IMPORTS,
-} from '../shared/directory-crud/directory-crud-page-base';
+  ErpCrudConfig,
+  ErpCrudPageBase,
+  ErpCrudRecord,
+  ERP_CRUD_IMPORTS,
+} from '../shared/generic-crud/erp-crud-page-base';
 
-const COMPANY_CONFIG: DirectoryConfig = {
+const COMPANY_CONFIG: ErpCrudConfig = {
   endpoint: 'erp/companies',
   uuidField: 'CompanyUUID',
   pageTitle: 'Companies',
@@ -52,7 +52,14 @@ const COMPANY_CONFIG: DirectoryConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ],
   fields: [
-    { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'status',
+      source: 'Status',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     {
       key: 'name',
@@ -63,7 +70,13 @@ const COMPANY_CONFIG: DirectoryConfig = {
       span: 2,
       breakBefore: true,
     },
-    { key: 'legalName', source: 'LegalName', payloadKey: 'legalName', label: 'Legal name', span: 2 },
+    {
+      key: 'legalName',
+      source: 'LegalName',
+      payloadKey: 'legalName',
+      label: 'Legal name',
+      span: 2,
+    },
     {
       key: 'email',
       source: 'Email',
@@ -163,11 +176,11 @@ const COMPANY_CONFIG: DirectoryConfig = {
 @Component({
   selector: 'app-erp-companies',
   standalone: true,
-  imports: ERP_DIRECTORY_CRUD_IMPORTS,
-  templateUrl: '../shared/directory-crud/directory-crud-page.html',
-  styleUrls: ['../shared/directory-crud/directory-crud-page.scss'],
+  imports: ERP_CRUD_IMPORTS,
+  templateUrl: '../shared/generic-crud/erp-crud-page.html',
+  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
 })
-export class ErpCompaniesPage extends DirectoryCrudPageBase<DirectoryRecord> {
+export class ErpCompaniesPage extends ErpCrudPageBase<ErpCrudRecord> {
   constructor() {
     super(COMPANY_CONFIG);
   }

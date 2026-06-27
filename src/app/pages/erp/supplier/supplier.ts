@@ -1,18 +1,18 @@
 import { Component } from '@angular/core';
 
 import {
-  DirectoryConfig,
-  DirectoryCrudPageBase,
-  DirectoryRecord,
-  ERP_DIRECTORY_CRUD_IMPORTS,
-} from '../shared/directory-crud/directory-crud-page-base';
+  ErpCrudConfig,
+  ErpCrudPageBase,
+  ErpCrudRecord,
+  ERP_CRUD_IMPORTS,
+} from '../shared/generic-crud/erp-crud-page-base';
 
 const TYPE_OPTIONS = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
 ];
 
-const SUPPLIER_CONFIG: DirectoryConfig = {
+const SUPPLIER_CONFIG: ErpCrudConfig = {
   endpoint: 'erp/suppliers',
   uuidField: 'SupplierUUID',
   pageTitle: 'Suppliers',
@@ -161,11 +161,11 @@ const SUPPLIER_CONFIG: DirectoryConfig = {
 @Component({
   selector: 'app-erp-supplier',
   standalone: true,
-  imports: ERP_DIRECTORY_CRUD_IMPORTS,
-  templateUrl: '../shared/directory-crud/directory-crud-page.html',
-  styleUrls: ['../shared/directory-crud/directory-crud-page.scss'],
+  imports: ERP_CRUD_IMPORTS,
+  templateUrl: '../shared/generic-crud/erp-crud-page.html',
+  styleUrls: ['../shared/generic-crud/erp-crud-page.scss'],
 })
-export class ErpSupplierPage extends DirectoryCrudPageBase<DirectoryRecord> {
+export class ErpSupplierPage extends ErpCrudPageBase<ErpCrudRecord> {
   constructor() {
     super(SUPPLIER_CONFIG);
   }

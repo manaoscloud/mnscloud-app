@@ -34,7 +34,10 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../../shared/dialog/crud-dialog.util';
+import {
+  CrudDialogBinding,
+  openCrudTemplateDialog,
+} from '../../../../shared/dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 import {
   MnsSearchSelectFieldComponent,
@@ -43,7 +46,7 @@ import {
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
-export const ERP_DIRECTORY_CRUD_IMPORTS = [
+export const ERP_CRUD_IMPORTS = [
   RefreshButtonComponent,
   MatButtonModule,
   MatCardModule,
@@ -65,24 +68,17 @@ export const ERP_DIRECTORY_CRUD_IMPORTS = [
   TranslocoPipe,
 ];
 
-export type DirectoryRecord = Record<string, unknown>;
+export type ErpCrudRecord = Record<string, unknown>;
 
-export type DirectoryOption = MnsSearchSelectFieldOption & {
+export type ErpCrudOption = MnsSearchSelectFieldOption & {
   value: string | number | boolean | null;
   label: string;
 };
 
-export type DirectoryFieldType =
-  | 'text'
-  | 'email'
-  | 'number'
-  | 'phone'
-  | 'select'
-  | 'search-select'
-  | 'status'
-  | 'textarea';
+export type ErpCrudFieldType =
+  'text' | 'email' | 'number' | 'phone' | 'select' | 'search-select' | 'status' | 'textarea';
 
-export type DirectoryPostalCodeLookup = {
+export type ErpCrudPostalCodeLookup = {
   streetKey?: string;
   districtKey?: string;
   complementKey?: string;
@@ -92,27 +88,27 @@ export type DirectoryPostalCodeLookup = {
   numberKey?: string;
 };
 
-export type DirectoryField = {
+export type ErpCrudField = {
   key: string;
   label: string;
   source?: string;
   payloadKey?: string;
-  type?: DirectoryFieldType;
+  type?: ErpCrudFieldType;
   tab?: 'record' | 'address' | 'financial' | 'notes';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
-  postalLookup?: DirectoryPostalCodeLookup;
+  postalLookup?: ErpCrudPostalCodeLookup;
   rows?: number;
   required?: boolean;
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
-  options?: readonly DirectoryOption[];
+  options?: readonly ErpCrudOption[];
   loading?: () => boolean;
 };
 
-export type DirectoryCopyAction = {
+export type ErpCrudCopyAction = {
   key: string;
   label: string;
   addressSection?: string;
@@ -123,17 +119,17 @@ export type DirectoryCopyAction = {
   fields: readonly string[];
 };
 
-export type DirectoryAddressSection = {
+export type ErpCrudAddressSection = {
   key: string;
   label: string;
 };
 
-export type DirectoryAddressSectionView = DirectoryAddressSection & {
-  fields: readonly DirectoryField[];
-  copyActions: readonly DirectoryCopyAction[];
+export type ErpCrudAddressSectionView = ErpCrudAddressSection & {
+  fields: readonly ErpCrudField[];
+  copyActions: readonly ErpCrudCopyAction[];
 };
 
-export type DirectoryColumn = {
+export type ErpCrudColumn = {
   id: string;
   label: string;
   field?: string;
@@ -143,9 +139,9 @@ export type DirectoryColumn = {
   className?: string;
 };
 
-export type DirectoryStatusMode = 'number' | 'string';
+export type ErpCrudStatusMode = 'number' | 'string';
 
-export type DirectoryConfig = {
+export type ErpCrudConfig = {
   endpoint: string;
   uuidField: string;
   pageTitle: string;
@@ -162,37 +158,37 @@ export type DirectoryConfig = {
   savedMessage: string;
   deletedMessage: string;
   deleteFailedMessage: string;
-  fields: readonly DirectoryField[];
-  columns: readonly DirectoryColumn[];
-  initialValues: DirectoryRecord;
-  statusMode: DirectoryStatusMode;
+  fields: readonly ErpCrudField[];
+  columns: readonly ErpCrudColumn[];
+  initialValues: ErpCrudRecord;
+  statusMode: ErpCrudStatusMode;
   activeValue: string | number;
   inactiveValue: string | number;
-  addressSections?: readonly DirectoryAddressSection[];
-  addressCopyActions?: readonly DirectoryCopyAction[];
+  addressSections?: readonly ErpCrudAddressSection[];
+  addressCopyActions?: readonly ErpCrudCopyAction[];
 };
 
-type DirectoryFilters = {
+type ErpCrudFilters = {
   search: string;
   status: '' | string | number;
 };
 
 @Directive()
-export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
+export abstract class ErpCrudPageBase<T extends ErpCrudRecord> {
   protected readonly api = inject(ApiService);
   protected readonly snack = inject(SnackbarService);
   protected readonly dialog = inject(MatDialog);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly listLimit = 500;
-  protected readonly config: DirectoryConfig;
+  protected readonly config: ErpCrudConfig;
 
-  readonly formDialog = viewChild<TemplateRef<unknown>>('directoryFormDialog');
+  readonly formDialog = viewChild<TemplateRef<unknown>>('crudFormDialog');
   protected dialogBinding: CrudDialogBinding | null = null;
 
   readonly search = signal('');
   readonly status = signal<'' | string | number>('');
-  readonly appliedFilters = signal<DirectoryFilters>({ search: '', status: '' });
+  readonly appliedFilters = signal<ErpCrudFilters>({ search: '', status: '' });
   readonly selectedUUIDs = signal(new Set<string>());
   readonly sortActive = signal('');
   readonly sortDirection = signal<SortDirection>('');
@@ -202,7 +198,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   readonly mutating = signal(false);
   readonly postalLookupLoadingKey = signal<string | null>(null);
   readonly editingRecord = signal<T | null>(null);
-  readonly formValues = signal<DirectoryRecord>({});
+  readonly formValues = signal<ErpCrudRecord>({});
   readonly enabledCopyActions = signal(new Set<string>());
 
   readonly itemsResource;
@@ -236,7 +232,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   readonly addressFields = computed(() =>
     this.config.fields.filter((field) => !field.hidden && field.tab === 'address'),
   );
-  readonly addressSections = computed<DirectoryAddressSectionView[]>(() => {
+  readonly addressSections = computed<ErpCrudAddressSectionView[]>(() => {
     const fields = this.addressFields();
     const copyActions = this.addressCopyActions();
     const configuredSections = this.config.addressSections ?? [];
@@ -263,7 +259,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
   );
 
-  protected constructor(config: DirectoryConfig) {
+  protected constructor(config: ErpCrudConfig) {
     this.config = config;
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
@@ -443,7 +439,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     this.clearCopyActionsForTarget(key);
   }
 
-  async searchPostalCode(field: DirectoryField, event?: Event): Promise<void> {
+  async searchPostalCode(field: ErpCrudField, event?: Event): Promise<void> {
     event?.preventDefault();
     if (!field.postalLookup || this.postalLookupLoadingKey()) return;
 
@@ -461,12 +457,12 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     this.setFieldValue(field.key, normalizedZip);
 
     try {
-      const response = await this.api.get<{ data?: { item?: DirectoryRecord } }>(
+      const response = await this.api.get<{ data?: { item?: ErpCrudRecord } }>(
         `postal-codes/${normalizedZip}`,
       );
       const item = response?.data?.item ?? {};
       const lookup = field.postalLookup;
-      const next: DirectoryRecord = { [field.key]: normalizedZip };
+      const next: ErpCrudRecord = { [field.key]: normalizedZip };
 
       this.assignPostalLookupValue(next, lookup.streetKey, item['street']);
       this.assignPostalLookupValue(next, lookup.districtKey, item['district']);
@@ -489,18 +485,18 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     }
   }
 
-  isPostalLookupLoading(field: DirectoryField): boolean {
+  isPostalLookupLoading(field: ErpCrudField): boolean {
     return this.postalLookupLoadingKey() === field.key;
   }
 
-  fieldClass(field: DirectoryField): string {
+  fieldClass(field: ErpCrudField): string {
     return [`span-${field.span ?? 1}`, field.breakBefore ? 'break-before' : '']
       .filter(Boolean)
       .join(' ');
   }
 
   protected assignPostalLookupValue(
-    target: DirectoryRecord,
+    target: ErpCrudRecord,
     key: string | undefined,
     value: unknown,
   ): void {
@@ -512,23 +508,23 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     this.host.nativeElement.querySelector<HTMLInputElement>(`[data-field-key="${key}"]`)?.focus();
   }
 
-  fieldOptions(field: DirectoryField): readonly DirectoryOption[] {
+  fieldOptions(field: ErpCrudField): readonly ErpCrudOption[] {
     return field.options ?? this.lookupOptions(field.key);
   }
 
-  fieldLoading(field: DirectoryField): boolean {
+  fieldLoading(field: ErpCrudField): boolean {
     return field.loading?.() ?? false;
   }
 
-  addressCopyActions(): readonly DirectoryCopyAction[] {
+  addressCopyActions(): readonly ErpCrudCopyAction[] {
     return this.config.addressCopyActions ?? [];
   }
 
-  isCopyActionEnabled(action: DirectoryCopyAction): boolean {
+  isCopyActionEnabled(action: ErpCrudCopyAction): boolean {
     return this.enabledCopyActions().has(action.key);
   }
 
-  isFieldDisabled(field: DirectoryField): boolean {
+  isFieldDisabled(field: ErpCrudField): boolean {
     return this.addressCopyActions().some(
       (action) =>
         this.isCopyActionEnabled(action) &&
@@ -536,11 +532,11 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     );
   }
 
-  isAddressSectionCompact(section: DirectoryAddressSectionView): boolean {
+  isAddressSectionCompact(section: ErpCrudAddressSectionView): boolean {
     return section.copyActions.some((action) => this.isCopyActionEnabled(action));
   }
 
-  addressSectionSummary(section: DirectoryAddressSectionView): string {
+  addressSectionSummary(section: ErpCrudAddressSectionView): string {
     const enabledAction = section.copyActions.find((action) => this.isCopyActionEnabled(action));
     if (enabledAction) return enabledAction.summaryLabel ?? 'Same as main address';
 
@@ -552,7 +548,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     return summaryParts.slice(0, 4).join(', ') || '-';
   }
 
-  editAddressSection(section: DirectoryAddressSectionView): void {
+  editAddressSection(section: ErpCrudAddressSectionView): void {
     const next = new Set(this.enabledCopyActions());
     for (const action of section.copyActions) {
       next.delete(action.key);
@@ -560,7 +556,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     this.enabledCopyActions.set(next);
   }
 
-  toggleCopyAction(action: DirectoryCopyAction, checked: boolean): void {
+  toggleCopyAction(action: ErpCrudCopyAction, checked: boolean): void {
     const next = new Set(this.enabledCopyActions());
     if (checked) {
       next.add(action.key);
@@ -571,7 +567,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     this.enabledCopyActions.set(next);
   }
 
-  statusOptions(): readonly DirectoryOption[] {
+  statusOptions(): readonly ErpCrudOption[] {
     return [
       { value: this.config.activeValue, label: 'Active' },
       { value: this.config.inactiveValue, label: 'Inactive' },
@@ -590,7 +586,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     return String(row[this.config.uuidField] ?? '');
   }
 
-  columnMain(row: T, column: DirectoryColumn): string {
+  columnMain(row: T, column: ErpCrudColumn): string {
     if (column.lookupKey && column.uuidField) {
       return this.lookupLabel(column.lookupKey, row[column.uuidField]) || '-';
     }
@@ -598,32 +594,34 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     return this.displayValue(row[field]);
   }
 
-  columnUUID(row: T, column: DirectoryColumn): string {
+  columnUUID(row: T, column: ErpCrudColumn): string {
     if (column.uuidField) return this.displayValue(row[column.uuidField]);
     return column.kind === 'identity' ? this.recordUUID(row) : '';
   }
 
-  columnText(row: T, column: DirectoryColumn): string {
+  columnText(row: T, column: ErpCrudColumn): string {
     const field = column.field ?? column.id;
     return this.displayValue(row[field]);
   }
 
-  protected lookupOptions(_key: string): readonly DirectoryOption[] {
+  protected lookupOptions(_key: string): readonly ErpCrudOption[] {
     return [];
   }
 
   protected lookupLabel(key: string, value: unknown): string {
-    const option = this.lookupOptions(key).find((item) => String(item.value ?? '') === String(value ?? ''));
+    const option = this.lookupOptions(key).find(
+      (item) => String(item.value ?? '') === String(value ?? ''),
+    );
     return option?.label ?? '';
   }
 
-  protected augmentPayload(payload: DirectoryRecord): DirectoryRecord {
+  protected augmentPayload(payload: ErpCrudRecord): ErpCrudRecord {
     return payload;
   }
 
   protected onFieldValueChanged(_key: string, _value: unknown): void {}
 
-  protected patchFormValues(values: DirectoryRecord): void {
+  protected patchFormValues(values: ErpCrudRecord): void {
     this.formValues.update((current) => ({ ...current, ...values }));
     for (const key of Object.keys(values)) {
       this.syncCopyActionsForSource(key);
@@ -648,9 +646,9 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     return next;
   }
 
-  private copyAddressValues(action: DirectoryCopyAction): void {
+  private copyAddressValues(action: ErpCrudCopyAction): void {
     const current = this.formValues();
-    const next: DirectoryRecord = {};
+    const next: ErpCrudRecord = {};
     for (const field of action.fields) {
       next[`${action.toPrefix}${field}`] = current[`${action.fromPrefix}${field}`] ?? '';
     }
@@ -663,12 +661,14 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     }
   }
 
-  private copyActionTargetIsEmpty(action: DirectoryCopyAction): boolean {
+  private copyActionTargetIsEmpty(action: ErpCrudCopyAction): boolean {
     const current = this.formValues();
-    return action.fields.every((field) => !String(current[`${action.toPrefix}${field}`] ?? '').trim());
+    return action.fields.every(
+      (field) => !String(current[`${action.toPrefix}${field}`] ?? '').trim(),
+    );
   }
 
-  private copyActionTargetMatchesSource(action: DirectoryCopyAction): boolean {
+  private copyActionTargetMatchesSource(action: ErpCrudCopyAction): boolean {
     const current = this.formValues();
     return action.fields.every((field) => {
       const source = String(current[`${action.fromPrefix}${field}`] ?? '').trim();
@@ -680,7 +680,9 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
   private syncCopyActionsForSource(changedKey: string): void {
     for (const action of this.addressCopyActions()) {
       if (!this.isCopyActionEnabled(action)) continue;
-      const shouldCopy = action.fields.some((field) => `${action.fromPrefix}${field}` === changedKey);
+      const shouldCopy = action.fields.some(
+        (field) => `${action.fromPrefix}${field}` === changedKey,
+      );
       if (shouldCopy) this.copyAddressValues(action);
     }
   }
@@ -698,7 +700,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     if (next.size !== selected.size) this.enabledCopyActions.set(next);
   }
 
-  private async fetchItems(filters: DirectoryFilters): Promise<T[]> {
+  private async fetchItems(filters: ErpCrudFilters): Promise<T[]> {
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
     params.set('offset', '0');
@@ -732,7 +734,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     });
   }
 
-  private sortValue(row: T, column?: DirectoryColumn): string {
+  private sortValue(row: T, column?: ErpCrudColumn): string {
     if (!column) return '';
     if (column.kind === 'related') return this.columnMain(row, column).toLowerCase();
     const field = column.field ?? column.id;
@@ -748,33 +750,35 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     const dialog = this.formDialog();
     if (!dialog) return;
 
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      dialog,
-      'erp-directory-crud-form-dialog',
-      { onEscape: () => this.closeDialog() },
+    this.dialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'crud-form-dialog', {
+      onEscape: () => this.closeDialog(),
+    });
+    bindDialogClosed(
+      this.dialogBinding.ref,
+      () => {
+        this.dialogBinding?.stop();
+        this.dialogBinding = null;
+      },
+      this.destroyRef,
     );
-    bindDialogClosed(this.dialogBinding.ref, () => {
-      this.dialogBinding?.stop();
-      this.dialogBinding = null;
-    }, this.destroyRef);
   }
 
-  private emptyFormValues(): DirectoryRecord {
+  private emptyFormValues(): ErpCrudRecord {
     return { ...this.config.initialValues };
   }
 
-  private formValuesFromRecord(row: T): DirectoryRecord {
-    const next: DirectoryRecord = {};
+  private formValuesFromRecord(row: T): ErpCrudRecord {
+    const next: ErpCrudRecord = {};
     for (const field of this.config.fields) {
-      next[field.key] = row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
+      next[field.key] =
+        row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
     }
     return next;
   }
 
-  private buildPayload(): DirectoryRecord {
+  private buildPayload(): ErpCrudRecord {
     const values = this.formValues();
-    const payload: DirectoryRecord = {};
+    const payload: ErpCrudRecord = {};
     for (const field of this.config.fields) {
       const key = field.payloadKey ?? field.key;
       let value = values[field.key];
@@ -785,7 +789,7 @@ export abstract class DirectoryCrudPageBase<T extends DirectoryRecord> {
     return payload;
   }
 
-  private validatePayload(payload: DirectoryRecord): boolean {
+  private validatePayload(payload: ErpCrudRecord): boolean {
     for (const field of this.config.fields) {
       if (!field.required) continue;
       const value = payload[field.payloadKey ?? field.key];

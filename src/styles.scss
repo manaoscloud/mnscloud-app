@@ -1916,56 +1916,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   }
 }
 
-/* =========================================================
-   10) ERP CUSTOMER DIALOG (GLOBAL OVERLAY ALIGNMENT)
-========================================================= */
-
-.cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-surface {
-  border-radius: 1.2rem;
-  border: 1px solid var(--mat-sys-color-outline-variant);
-  background: var(--mat-sys-color-surface-container-high);
-  color: var(--mat-sys-color-on-surface);
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-surface {
-  border-radius: 1.2rem;
-  border: 1px solid var(--mat-sys-color-outline-variant);
-  background: var(--mat-sys-color-surface-container-high);
-  color: var(--mat-sys-color-on-surface);
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-content {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-content {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-actions {
-  margin: 0 !important;
-  padding: 0.65rem 1.25rem 0.55rem !important;
-  min-height: 0;
-  width: 100%;
-  box-sizing: border-box;
-  align-items: center !important;
-  justify-content: flex-end !important;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-actions {
-  margin: 0 !important;
-  padding: 0.65rem 1.25rem 0.55rem !important;
-  min-height: 0;
-  width: 100%;
-  box-sizing: border-box;
-  align-items: center !important;
-  justify-content: flex-end !important;
-}
-
 .cdk-overlay-pane.voip-domain-form-dialog .mat-mdc-dialog-surface {
   border-radius: 1.2rem;
   border: 1px solid var(--mat-sys-color-outline-variant);
@@ -2450,250 +2400,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   align-items: center !important;
   justify-content: flex-end !important;
 }
-
-.cdk-overlay-pane.erp-customer-form-dialog .dialog-content {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .dialog-content {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .form-tabs {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .form-tabs .mat-mdc-tab-header {
-  position: sticky;
-  top: 0;
-  z-index: 4;
-  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .form-tabs {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .form-tabs .mat-mdc-tab-header {
-  position: sticky;
-  top: 0;
-  z-index: 4;
-  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
-/* Customer dialog compact form density (desktop) */
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-grid {
-  gap: 0.4rem !important;
-  margin-bottom: 0.2rem !important;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .company-dialog .form-grid {
-  gap: 0.4rem !important;
-  margin-bottom: 0.2rem !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .tab-content {
-  padding: 0.72rem 0 0 !important;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .company-dialog .tab-content {
-  padding: 0.72rem 0 0 !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-subsection {
-  margin-top: 0.45rem !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-subsection.first-subsection {
-  margin-top: 0 !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .subsection-header {
-  margin-bottom: 0.15rem !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .subsection-header.checkbox-only {
-  justify-content: flex-start !important;
-  min-height: 40px;
-  margin-top: 0;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .checkbox-grid {
-  margin-bottom: 0.2rem !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .subsection-checkbox {
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin: 0;
-  padding-left: 0;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .location-actions {
-  height: var(--form-icon-button) !important;
-  align-self: start !important;
-  margin: 0 !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .location-actions button {
-  width: var(--form-icon-button) !important;
-  height: var(--form-icon-button) !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .location-spacer {
-  height: var(--form-icon-button) !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-header {
-  margin-bottom: 0.4rem !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .form-actions {
-  padding-top: 0.6rem !important;
-  padding-bottom: 0.6rem !important;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .company-dialog .form-actions {
-  padding-top: 0.6rem !important;
-  padding-bottom: 0.6rem !important;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog mat-form-field,
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field {
-  margin-bottom: 0 !important;
-  --mat-form-field-container-height: 40px;
-  --mat-form-field-container-vertical-padding: 8px;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .company-dialog mat-form-field,
-.cdk-overlay-pane.erp-company-form-dialog .company-dialog .mat-mdc-form-field {
-  margin-bottom: 0 !important;
-  --mat-form-field-container-height: 40px;
-  --mat-form-field-container-vertical-padding: 8px;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mdc-text-field--outlined {
-  --mdc-outlined-text-field-container-height: 40px;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .company-dialog .mdc-text-field--outlined {
-  --mdc-outlined-text-field-container-height: 40px;
-}
-
-.cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field-infix {
-  min-height: 40px !important;
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
-
-.cdk-overlay-pane.erp-company-form-dialog .company-dialog .mat-mdc-form-field-infix {
-  min-height: 40px !important;
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog mat-form-field,
-.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field,
-.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog mat-form-field,
-.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field,
-.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog mat-form-field,
-.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field,
-.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog mat-form-field,
-.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field {
-  margin-bottom: 0 !important;
-  --mat-form-field-container-height: 40px;
-  --mat-form-field-container-vertical-padding: 8px;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mdc-text-field--outlined,
-.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mdc-text-field--outlined,
-.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mdc-text-field--outlined,
-.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mdc-text-field--outlined {
-  --mdc-outlined-text-field-container-height: 40px;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field-infix,
-.cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field-infix,
-.cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field-infix,
-.cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field-infix {
-  min-height: 40px !important;
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-surface,
-.cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-surface,
-.cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-surface,
-.cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-surface {
-  border-radius: 1.2rem;
-  border: 1px solid var(--mat-sys-color-outline-variant);
-  background: var(--mat-sys-color-surface-container-high);
-  color: var(--mat-sys-color-on-surface);
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-content,
-.cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-content,
-.cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-content,
-.cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-content {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-actions,
-.cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-actions,
-.cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-actions,
-.cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-actions {
-  margin: 0 !important;
-  padding: 0.65rem 1.25rem 0.55rem !important;
-  min-height: 0;
-  width: 100%;
-  box-sizing: border-box;
-  align-items: center !important;
-  justify-content: flex-end !important;
-}
-
-/* Global CRUD footer spacing: symmetric top/bottom and centered controls */
-.cdk-overlay-pane.erp-customer-form-dialog .form-actions,
-.cdk-overlay-pane.erp-company-form-dialog .form-actions,
-.cdk-overlay-pane.erp-supplier-form-dialog .form-actions,
-.cdk-overlay-pane.erp-reseller-form-dialog .form-actions,
-.cdk-overlay-pane.erp-carrier-form-dialog .form-actions,
-.cdk-overlay-pane.erp-complex-form-dialog .form-actions,
 .cdk-overlay-pane.isp-pop-form-dialog .form-actions,
 .cdk-overlay-pane.isp-nas-form-dialog .form-actions,
 .cdk-overlay-pane.isp-olt-form-dialog .form-actions,
@@ -2709,66 +2415,7 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   align-items: center !important;
 }
 
-.cdk-overlay-pane.erp-supplier-form-dialog .dialog-content,
-.cdk-overlay-pane.erp-reseller-form-dialog .dialog-content,
-.cdk-overlay-pane.erp-carrier-form-dialog .dialog-content,
-.cdk-overlay-pane.erp-complex-form-dialog .dialog-content {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .form-tabs,
-.cdk-overlay-pane.erp-reseller-form-dialog .form-tabs,
-.cdk-overlay-pane.erp-carrier-form-dialog .form-tabs,
-.cdk-overlay-pane.erp-complex-form-dialog .form-tabs {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .form-tabs .mat-mdc-tab-header,
-.cdk-overlay-pane.erp-reseller-form-dialog .form-tabs .mat-mdc-tab-header,
-.cdk-overlay-pane.erp-carrier-form-dialog .form-tabs .mat-mdc-tab-header,
-.cdk-overlay-pane.erp-complex-form-dialog .form-tabs .mat-mdc-tab-header {
-  position: sticky;
-  top: 0;
-  z-index: 4;
-  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.cdk-overlay-pane.erp-supplier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
-.cdk-overlay-pane.erp-reseller-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
-.cdk-overlay-pane.erp-carrier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
-.cdk-overlay-pane.erp-complex-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
 @media (max-width: 900px) {
-  .cdk-overlay-pane.erp-customer-form-dialog {
-    width: calc(100vw - 24px) !important;
-    max-width: calc(100vw - 24px) !important;
-    margin: 0 !important;
-  }
-
-  .cdk-overlay-pane.erp-company-form-dialog,
-  .cdk-overlay-pane.erp-supplier-form-dialog,
-  .cdk-overlay-pane.erp-reseller-form-dialog,
-  .cdk-overlay-pane.erp-carrier-form-dialog,
-  .cdk-overlay-pane.erp-complex-form-dialog {
-    width: calc(100vw - 24px) !important;
-    max-width: calc(100vw - 24px) !important;
-    margin: 0 !important;
-  }
-
   .cdk-overlay-pane.isp-pop-form-dialog,
   .cdk-overlay-pane.isp-nas-form-dialog,
   .cdk-overlay-pane.isp-olt-form-dialog,
@@ -2784,20 +2431,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     margin: 0 !important;
   }
 
-  .cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-container {
-    height: calc(100dvh - 24px);
-    max-height: calc(100dvh - 24px);
-  }
-
-  .cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-container,
-  .cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-container,
-  .cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-container,
-  .cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-container,
-  .cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-container {
-    height: calc(100dvh - 24px);
-    max-height: calc(100dvh - 24px);
-  }
-
   .cdk-overlay-pane.isp-pop-form-dialog .mat-mdc-dialog-container,
   .cdk-overlay-pane.isp-nas-form-dialog .mat-mdc-dialog-container,
   .cdk-overlay-pane.isp-olt-form-dialog .mat-mdc-dialog-container,
@@ -2809,50 +2442,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   .cdk-overlay-pane.isp-geomap-asset-form-dialog .mat-mdc-dialog-container,
   .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .mat-mdc-dialog-container {
     max-height: 100dvh;
-  }
-
-  .cdk-overlay-pane.erp-company-form-dialog .company-dialog {
-    height: calc(100dvh - 24px);
-    min-height: calc(100dvh - 24px);
-    display: flex;
-    flex-direction: column;
-  }
-
-  .cdk-overlay-pane.erp-company-form-dialog .dialog-content,
-  .cdk-overlay-pane.erp-company-form-dialog .form-tabs {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .cdk-overlay-pane.erp-company-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .cdk-overlay-pane.erp-company-form-dialog .form-actions {
-    margin-top: 0 !important;
-  }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog {
-    height: calc(100dvh - 24px);
-    min-height: calc(100dvh - 24px);
-    display: flex;
-    flex-direction: column;
-  }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog,
-  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog,
-  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog,
-  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog {
-    height: calc(100dvh - 24px);
-    min-height: calc(100dvh - 24px);
-    display: flex;
-    flex-direction: column;
   }
 
   .cdk-overlay-pane.isp-pop-form-dialog .crud-dialog,
@@ -2870,77 +2459,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     display: flex;
     flex-direction: column;
   }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .dialog-content,
-  .cdk-overlay-pane.erp-customer-form-dialog .form-tabs {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .form-tabs .mat-mdc-tab-body-wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog mat-form-field,
-  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field {
-    margin-bottom: 0 !important;
-    --mat-form-field-container-height: 48px;
-    --mat-form-field-container-vertical-padding: 12px;
-  }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mdc-text-field--outlined {
-    --mdc-outlined-text-field-container-height: 48px;
-  }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .customer-dialog .mat-mdc-form-field-infix {
-    min-height: 48px !important;
-    padding-top: 12px !important;
-    padding-bottom: 12px !important;
-  }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog mat-form-field,
-  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field,
-  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog mat-form-field,
-  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field,
-  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog mat-form-field,
-  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field,
-  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog mat-form-field,
-  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field {
-    margin-bottom: 0 !important;
-    --mat-form-field-container-height: 48px;
-    --mat-form-field-container-vertical-padding: 12px;
-  }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mdc-text-field--outlined,
-  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mdc-text-field--outlined,
-  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mdc-text-field--outlined,
-  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mdc-text-field--outlined {
-    --mdc-outlined-text-field-container-height: 48px;
-  }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .supplier-dialog .mat-mdc-form-field-infix,
-  .cdk-overlay-pane.erp-reseller-form-dialog .reseller-dialog .mat-mdc-form-field-infix,
-  .cdk-overlay-pane.erp-carrier-form-dialog .carrier-dialog .mat-mdc-form-field-infix,
-  .cdk-overlay-pane.erp-complex-form-dialog .complex-dialog .mat-mdc-form-field-infix {
-    min-height: 48px !important;
-    padding-top: 12px !important;
-    padding-bottom: 12px !important;
-  }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .dialog-content,
-  .cdk-overlay-pane.erp-supplier-form-dialog .form-tabs,
-  .cdk-overlay-pane.erp-reseller-form-dialog .dialog-content,
-  .cdk-overlay-pane.erp-reseller-form-dialog .form-tabs,
-  .cdk-overlay-pane.erp-carrier-form-dialog .dialog-content,
-  .cdk-overlay-pane.erp-carrier-form-dialog .form-tabs,
-  .cdk-overlay-pane.erp-complex-form-dialog .dialog-content,
-  .cdk-overlay-pane.erp-complex-form-dialog .form-tabs,
   .cdk-overlay-pane.isp-pop-form-dialog .dialog-content,
   .cdk-overlay-pane.isp-pop-form-dialog .form-tabs,
   .cdk-overlay-pane.isp-nas-form-dialog .dialog-content,
@@ -2967,11 +2485,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     min-height: 0;
     overflow: hidden;
   }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
-  .cdk-overlay-pane.erp-reseller-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
-  .cdk-overlay-pane.erp-carrier-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
-  .cdk-overlay-pane.erp-complex-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
   .cdk-overlay-pane.isp-pop-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
   .cdk-overlay-pane.isp-nas-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
   .cdk-overlay-pane.isp-olt-form-dialog .form-tabs .mat-mdc-tab-body-wrapper,
@@ -2987,15 +2500,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .form-actions {
-    margin-top: 0 !important;
-  }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .form-actions,
-  .cdk-overlay-pane.erp-reseller-form-dialog .form-actions,
-  .cdk-overlay-pane.erp-carrier-form-dialog .form-actions,
-  .cdk-overlay-pane.erp-complex-form-dialog .form-actions,
   .cdk-overlay-pane.isp-pop-form-dialog .form-actions,
   .cdk-overlay-pane.isp-nas-form-dialog .form-actions,
   .cdk-overlay-pane.isp-olt-form-dialog .form-actions,
@@ -3008,19 +2512,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   .cdk-overlay-pane.isp-geomap-asset-type-form-dialog .form-actions {
     margin-top: 0 !important;
   }
-
-  .cdk-overlay-pane.erp-customer-form-dialog .mat-mdc-dialog-actions {
-    padding: 0.6rem 1rem 0.6rem !important;
-  }
-
-  .cdk-overlay-pane.erp-company-form-dialog .mat-mdc-dialog-actions {
-    padding: 0.6rem 1rem 0.6rem !important;
-  }
-
-  .cdk-overlay-pane.erp-supplier-form-dialog .mat-mdc-dialog-actions,
-  .cdk-overlay-pane.erp-reseller-form-dialog .mat-mdc-dialog-actions,
-  .cdk-overlay-pane.erp-carrier-form-dialog .mat-mdc-dialog-actions,
-  .cdk-overlay-pane.erp-complex-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.isp-pop-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.isp-nas-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.isp-olt-form-dialog .mat-mdc-dialog-actions,
