@@ -1295,8 +1295,8 @@ export class MainLayout {
               id: 'voip/softswitch/server',
               label: 'Servers',
               icon: 'dns',
-              route: '/voip/softswitch/server',
               masterRoute: '/system/softswitch/server',
+              scope: 'master',
               roles: ['MASTER'],
             },
             {

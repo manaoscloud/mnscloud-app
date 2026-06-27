@@ -18,6 +18,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -34,6 +35,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { DateMaskDirective } from '../../date-mask/date-mask.directive';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../dialog/dialog-events.util';
 import {
@@ -49,6 +51,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatCardModule,
   MatCheckboxModule,
   MatChipsModule,
+  MatDatepickerModule,
   MatDialogModule,
   MatFormFieldModule,
   MatIconModule,
@@ -63,6 +66,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatTooltipModule,
   MnsSearchSelectFieldComponent,
   TranslocoPipe,
+  DateMaskDirective,
 ];
 
 export type ConfigurableCrudRecord = Record<string, unknown>;
@@ -73,7 +77,15 @@ export type ConfigurableCrudOption = MnsSearchSelectFieldOption & {
 };
 
 export type ConfigurableCrudFieldType =
-  'text' | 'email' | 'number' | 'phone' | 'select' | 'search-select' | 'status' | 'textarea';
+  | 'text'
+  | 'email'
+  | 'number'
+  | 'phone'
+  | 'date'
+  | 'select'
+  | 'search-select'
+  | 'status'
+  | 'textarea';
 
 export type ConfigurableCrudPostalCodeLookup = {
   streetKey?: string;
@@ -136,6 +148,13 @@ export type ConfigurableCrudColumn = {
   className?: string;
 };
 
+export type ConfigurableCrudRowAction = {
+  key: string;
+  label: string;
+  icon: string;
+  tooltip?: string;
+};
+
 export type ConfigurableCrudStatusMode = 'number' | 'string';
 
 export type ConfigurableCrudConfig = {
@@ -163,6 +182,7 @@ export type ConfigurableCrudConfig = {
   inactiveValue: string | number;
   addressSections?: readonly ConfigurableCrudAddressSection[];
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
+  rowActions?: readonly ConfigurableCrudRowAction[];
 };
 
 type ConfigurableCrudFilters = {
@@ -392,6 +412,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       this.mutating.set(false);
     }
   }
+
+  rowActions(_row: T): readonly ConfigurableCrudRowAction[] {
+    return this.config.rowActions ?? [];
+  }
+
+  handleRowAction(_action: ConfigurableCrudRowAction, _row: T): void | Promise<void> {}
 
   async deleteSelectedItems(): Promise<void> {
     const ids = [...this.selectedUUIDs()];

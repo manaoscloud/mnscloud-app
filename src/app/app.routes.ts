@@ -947,15 +947,44 @@ export const routes: Routes = [
                   import('./pages/voip/softswitch/did/did').then((m) => m.VoipSoftswitchDidPage),
                 title: 'VoIP • Softswitch • DID | mnscloud',
               },
-              ...(['trunks', 'routes', 'policies', 'rates', 'cdrs'] as const).map((resource) => ({
-                path: `voip/softswitch/${resource}`,
+              {
+                path: 'voip/softswitch/trunks',
                 loadComponent: () =>
-                  import('./pages/voip/softswitch/resource/resource').then(
-                    (m) => m.VoipSoftswitchResourcePage,
+                  import('./pages/voip/softswitch/trunk/trunk').then(
+                    (m) => m.VoipSoftswitchTrunkPage,
                   ),
-                title: `VoIP • Softswitch • ${resource} | mnscloud`,
-                data: { resource },
-              })),
+                title: 'VoIP • Softswitch • Trunks | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/routes',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/route/route').then(
+                    (m) => m.VoipSoftswitchRoutePage,
+                  ),
+                title: 'VoIP • Softswitch • Routes | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/policies',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/policy/policy').then(
+                    (m) => m.VoipSoftswitchPolicyPage,
+                  ),
+                title: 'VoIP • Softswitch • Policies | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/rates',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/rate/rate').then((m) => m.VoipSoftswitchRatePage),
+                title: 'VoIP • Softswitch • Rates | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/cdrs',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/cdr-billing/cdr-billing').then(
+                    (m) => m.VoipSoftswitchCdrBillingPage,
+                  ),
+                title: 'VoIP • Softswitch • CDR/Billing | mnscloud',
+              },
               {
                 path: 'voip/pabx',
                 loadComponent: () =>

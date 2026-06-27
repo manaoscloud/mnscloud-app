@@ -1,428 +1,182 @@
-import {
-  Component,
-  effect,
-  resource,
-  TemplateRef,
-  inject,
-  signal,
-  viewChild,
-  afterNextRender,
-  DestroyRef,
-} from '@angular/core';
+import { Component } from '@angular/core';
 
-import { FormField, form as createForm, min, required } from '@angular/forms/signals';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, takeUntil } from 'rxjs';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import {
-  CrudDialogBinding,
-  openCrudTemplateDialog,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { VoipSoftswitchAccount, VoipSoftswitchAccountService } from '../softswitch.service';
-import {
-  VoipSoftswitchSubscriberItem,
-  VoipSoftswitchSubscriberService,
-} from './subscriber.service';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+  ConfigurableCrudConfig,
+  ConfigurableCrudRecord,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { SoftswitchCrudPageBase } from '../shared/softswitch-crud-base';
+import { VoipSoftswitchSubscriberItem } from './subscriber.service';
+
+const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'voip/softswitch/subscribers',
+  uuidField: 'VsuUUID',
+  pageTitle: 'Softswitch subscribers',
+  pageDescription: 'Manage SIP subscribers linked to tenant Softswitch accounts.',
+  createTitle: 'New subscriber',
+  editTitle: 'Edit subscriber',
+  dialogDescription: 'Maintain SIP credentials, caller ID and registration policy.',
+  searchPlaceholder: 'Search',
+  emptyLabel: 'No subscribers found.',
+  deleteTitle: 'Delete subscriber',
+  deleteMessage: 'Are you sure you want to delete this subscriber?',
+  deleteSelectedTitle: 'Delete selected subscribers',
+  deleteSelectedMessage: 'Delete {count} selected subscribers?',
+  savedMessage: 'Subscriber saved successfully.',
+  deletedMessage: 'Subscriber deleted successfully.',
+  deleteFailedMessage: 'Failed to delete subscriber.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  initialValues: {
+    accountUUID: '',
+    username: '',
+    password: '',
+    callerIdName: '',
+    callerIdNumber: '',
+    context: 'default',
+    maxContacts: 1,
+    maxConcurrentCalls: 1,
+    outboundCid: '',
+    codecs: '',
+    registerEnabled: 1,
+    recordCalls: 1,
+    enabled: 1,
+  },
+  columns: [
+    {
+      id: 'username',
+      label: 'Username',
+      kind: 'identity',
+      field: 'VsuUsername',
+      uuidField: 'VsuUUID',
+    },
+    { id: 'softswitch', label: 'Softswitch', field: 'SoftswitchName' },
+    { id: 'customer', label: 'Customer', field: 'CustomerName' },
+    { id: 'domain', label: 'Domain', field: 'DomainName' },
+    { id: 'callerId', label: 'Caller ID', field: 'VsuCallerIdNumber' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'VsuEnabled', className: 'status-col' },
+  ],
+  fields: [
+    {
+      key: 'accountUUID',
+      source: 'VoipSoftswitchAccountVssUUID',
+      payloadKey: 'accountUUID',
+      label: 'Softswitch',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'enabled',
+      source: 'VsuEnabled',
+      payloadKey: 'enabled',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'username',
+      source: 'VsuUsername',
+      payloadKey: 'username',
+      label: 'Username',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'password',
+      source: 'VsuPassword',
+      payloadKey: 'password',
+      label: 'Password',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'callerIdName',
+      source: 'VsuCallerIdName',
+      payloadKey: 'callerIdName',
+      label: 'Caller ID name',
+      span: 1,
+    },
+    {
+      key: 'callerIdNumber',
+      source: 'VsuCallerIdNumber',
+      payloadKey: 'callerIdNumber',
+      label: 'Caller ID number',
+      span: 1,
+    },
+    { key: 'context', source: 'VsuContext', payloadKey: 'context', label: 'Context', span: 1 },
+    {
+      key: 'maxContacts',
+      source: 'VsuMaxContacts',
+      payloadKey: 'maxContacts',
+      label: 'Max contacts',
+      type: 'number',
+      span: 1,
+    },
+    {
+      key: 'maxConcurrentCalls',
+      source: 'VsuMaxConcurrentCalls',
+      payloadKey: 'maxConcurrentCalls',
+      label: 'Max concurrent calls',
+      type: 'number',
+      span: 1,
+    },
+    {
+      key: 'outboundCid',
+      source: 'VsuOutboundCid',
+      payloadKey: 'outboundCid',
+      label: 'Outbound CID',
+      span: 1,
+    },
+    { key: 'codecs', source: 'VsuCodecs', payloadKey: 'codecs', label: 'Codecs', span: 1 },
+    {
+      key: 'registerEnabled',
+      source: 'VsuRegisterEnabled',
+      payloadKey: 'registerEnabled',
+      label: 'Registration',
+      type: 'select',
+      span: 1,
+      options: [
+        { value: 1, label: 'Enabled' },
+        { value: 0, label: 'Disabled' },
+      ],
+    },
+    {
+      key: 'recordCalls',
+      source: 'VsuRecordCalls',
+      payloadKey: 'recordCalls',
+      label: 'Record calls',
+      type: 'select',
+      span: 1,
+      options: [
+        { value: 1, label: 'Yes' },
+        { value: 0, label: 'No' },
+      ],
+    },
+  ],
+};
 
 @Component({
   selector: 'app-voip-softswitch-subscriber',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatCardModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatChipsModule,
-    MatSlideToggleModule,
-    MatTooltipModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatCheckboxModule,
-    MatMenuModule,
-  ],
-  templateUrl: './subscriber.html',
-  styleUrls: ['./subscriber.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipSoftswitchSubscriberPage {
-  private readonly listLimit = 5000;
-  private readonly api = inject(VoipSoftswitchSubscriberService);
-  private readonly accountApi = inject(VoipSoftswitchAccountService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-
-  readonly saving = signal(false);
-  readonly deletingSelected = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly editing = signal<VoipSoftswitchSubscriberItem | null>(null);
-  readonly accountOptions = signal<VoipSoftswitchAccount[]>([]);
-  readonly selectedSubscriberUUIDs = new Set<string>();
-  readonly displayedColumns = [
-    'select',
-    'username',
-    'softswitch',
-    'customer',
-    'domain',
-    'register',
-    'status',
-    'actions',
-  ];
-  readonly dataSource = new MatTableDataSource<VoipSoftswitchSubscriberItem>([]);
-  readonly appliedSearch = signal('');
-  readonly search = signal('');
-  readonly searchInput = signal('');
-  readonly accountSearch = signal('');
-
-  readonly formModel = signal(this.emptyFormModel());
-  readonly form = createForm(this.formModel, (schema) => {
-    required(schema.accountUUID);
-    required(schema.username);
-    required(schema.password);
-    required(schema.maxContacts);
-    min(schema.maxContacts, 1);
-    required(schema.maxConcurrentCalls);
-    min(schema.maxConcurrentCalls, 1);
-  });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly subscriberFormDialog = viewChild<TemplateRef<unknown>>('subscriberFormDialog');
-  private readonly subscribersResource = resource({
-    params: () => ({ search: this.appliedSearch(), limit: this.listLimit }),
-    defaultValue: [] as VoipSoftswitchSubscriberItem[],
-    loader: async ({ params }) => {
-      const res = await this.api.list(params);
-      return res?.data?.items ?? [];
-    },
-  });
-  readonly loading = this.subscribersResource.isLoading;
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
-  private readonly syncTableData = effect(() => {
-    this.dataSource.data = this.subscribersResource.value();
-    this.reconcileSelection();
-    this.dataSource.paginator?.firstPage();
-  });
-  private readonly reportLoadError = effect(() => {
-    const error = this.subscribersResource.error();
-    if (!error) return;
-    const message = this.errorMessage(error, 'Failed to load subscribers.');
-    this.error.set(message);
-    this.snack.error(message);
-  });
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, column) => {
-      switch (column) {
-        case 'username':
-          return data.VsuUsername ?? '';
-        case 'softswitch':
-          return data.SoftswitchName ?? '';
-        case 'customer':
-          return data.CustomerName ?? '';
-        case 'domain':
-          return data.DomainName ?? '';
-        case 'register':
-          return data.VsuRegisterEnabled ? 'yes' : 'no';
-        case 'status':
-          return data.VsuEnabled ? 'active' : 'inactive';
-        default:
-          return '';
-      }
-    };
-    void this.fetchLookups();
-  });
-
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.closeDialog();
-  });
-
-  onSearchChange(value: string) {
-    this.searchInput.set(value);
+export class VoipSoftswitchSubscriberPage extends SoftswitchCrudPageBase<VoipSoftswitchSubscriberItem> {
+  constructor() {
+    super(SUBSCRIBER_CONFIG);
   }
 
-  applySearchFilters() {
-    const search = this.searchInput().trim();
-    this.search.set(search);
-    this.appliedSearch.set(search);
-  }
-
-  clearSearchFilters() {
-    this.searchInput.set('');
-    this.search.set('');
-    this.appliedSearch.set('');
-  }
-
-  refreshList() {
-    this.subscribersResource.reload();
-  }
-
-  startCreate() {
-    this.resetForm();
-    this.openDialog();
-  }
-
-  editItem(item: VoipSoftswitchSubscriberItem) {
-    this.editing.set(item);
-    this.formModel.set({
-      accountUUID: item.VoipSoftswitchAccountVssUUID,
-      username: item.VsuUsername,
-      password: item.VsuPassword,
-      callerIdName: item.VsuCallerIdName ?? '',
-      callerIdNumber: item.VsuCallerIdNumber ?? '',
-      context: item.VsuContext ?? 'default',
-      maxContacts: item.VsuMaxContacts ?? 1,
-      maxConcurrentCalls: item.VsuMaxConcurrentCalls ?? 1,
-      outboundCid: item.VsuOutboundCid ?? '',
-      codecs: item.VsuCodecs ?? '',
-      registerEnabled: item.VsuRegisterEnabled === 1,
-      recordCalls: item.VsuRecordCalls === 1,
-      enabled: item.VsuEnabled === 1,
-    });
-    this.openDialog();
-  }
-
-  async submit(saveAndNew = false) {
-    if (!this.form().valid()) {
-      return;
-    }
-    const value = this.formModel();
-    const payload = { ...value };
-    this.saving.set(true);
-    this.error.set(null);
-    try {
-      if (this.editing()) await this.api.update(this.editing()!.VsuUUID, payload);
-      else await this.api.create(payload);
-      this.subscribersResource.reload();
-      if (saveAndNew && !this.editing()) {
-        this.resetForm();
-        return;
-      }
-      this.cancelEdit();
-    } catch (err: any) {
-      const message = err?.error?.error || err?.message || 'Failed to save subscriber.';
-      this.error.set(message);
-      this.snack.error(message);
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNew() {
-    void this.submit(true);
-  }
-
-  cancelEdit() {
-    this.resetForm();
-    this.closeDialog();
-  }
-
-  async removeItem(item: VoipSoftswitchSubscriberItem) {
-    const confirmed = await this.confirmDelete(
-      'Delete Subscriber',
-      `Delete "${item.VsuUsername}"?`,
-      'Delete',
-    );
-    if (!confirmed) return;
-    try {
-      await this.api.remove(item.VsuUUID);
-      this.subscribersResource.reload();
-    } catch (err: any) {
-      this.snack.error(err?.error?.error || err?.message || 'Failed to delete subscriber.');
-    }
-  }
-
-  get selectedCount() {
-    return this.selectedSubscriberUUIDs.size;
-  }
-
-  visibleRows() {
-    const rows = this.dataSource.filteredData.length
-      ? this.dataSource.filteredData
-      : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return rows;
-    return rows.slice(
-      paginator.pageIndex * paginator.pageSize,
-      paginator.pageIndex * paginator.pageSize + paginator.pageSize,
-    );
-  }
-
-  isSelected(item: VoipSoftswitchSubscriberItem) {
-    return this.selectedSubscriberUUIDs.has(item.VsuUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleSelection(item: VoipSoftswitchSubscriberItem, checked: boolean) {
-    if (checked) this.selectedSubscriberUUIDs.add(item.VsuUUID);
-    else this.selectedSubscriberUUIDs.delete(item.VsuUUID);
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleSelection(row, checked));
-  }
-
-  async removeSelected() {
-    const ids = Array.from(this.selectedSubscriberUUIDs);
-    if (!ids.length) return;
-    const confirmed = await this.confirmDelete(
-      'Delete Selected Subscribers',
-      `Delete ${ids.length} selected subscriber(s)?`,
-      'Delete selected',
-    );
-    if (!confirmed) return;
-    this.deletingSelected.set(true);
-    try {
-      const response = await this.api.removeMany(ids);
-      const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = new Set<string>(
-        (response?.data?.failed ?? []).map((item: any) => item.VsuUUID),
-      );
-      this.selectedSubscriberUUIDs.clear();
-      failed.forEach((uuid) => this.selectedSubscriberUUIDs.add(uuid));
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.VsuUUID));
-      if (failed.size)
-        this.error.set(`${failed.size} selected subscriber(s) could not be deleted.`);
-    } catch (err: any) {
-      this.snack.error(
-        err?.error?.error || err?.message || 'Failed to delete selected subscribers.',
-      );
-    } finally {
-      this.deletingSelected.set(false);
-    }
-  }
-
-  filteredAccounts() {
-    const value = this.accountSearch().trim().toLowerCase();
-    if (!value) return this.accountOptions();
-    return this.accountOptions().filter((item) =>
-      [item.VssName, item.CustomerName, item.DomainName].some((field) =>
-        String(field ?? '')
-          .toLowerCase()
-          .includes(value),
-      ),
-    );
-  }
-
-  setAccountSearch(value: string) {
-    this.accountSearch.set(value);
-  }
-
-  clearAccountSearch(opened: boolean) {
-    if (!opened) this.accountSearch.set('');
-  }
-
-  private resetForm() {
-    this.formModel.set(this.emptyFormModel());
-    this.editing.set(null);
-  }
-
-  private openDialog() {
-    const subscriberFormDialog = this.subscriberFormDialog();
-    if (!subscriberFormDialog || this.dialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      subscriberFormDialog,
-      'voip-softswitch-subscriber-form-dialog',
-      { onEscape: () => this.cancelEdit() },
-    );
-    this.dialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.dialogRef, () => {
-      this.cancelEdit();
-    });
-  }
-
-  private closeDialog() {
-    this.dialogBinding?.stop();
-    this.dialogBinding = null;
-    this.dialogRef?.close();
-    this.dialogRef = null;
-  }
-
-  private async fetchLookups() {
-    try {
-      const accounts = await this.accountApi.list(false, { limit: this.listLimit });
-      this.accountOptions.set(accounts?.data?.items ?? []);
-    } catch (err: any) {
-      this.snack.error(err?.error?.error || 'Failed to load Softswitch accounts.');
-    }
-  }
-
-  private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.VsuUUID));
-    Array.from(this.selectedSubscriberUUIDs).forEach((uuid) => {
-      if (!valid.has(uuid)) this.selectedSubscriberUUIDs.delete(uuid);
-    });
-  }
-
-  private errorMessage(error: unknown, fallback: string) {
-    const err = error as { error?: { error?: string }; message?: string };
-    return err?.error?.error || err?.message || fallback;
-  }
-
-  private async confirmDelete(title: string, message: string, confirmLabel: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: { title, message, confirmLabel },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    return Boolean(await firstValueFrom(ref.afterClosed()));
-  }
-
-  private emptyFormModel() {
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
-      accountUUID: this.accountOptions()[0]?.VssUUID ?? '',
-      username: '',
-      password: '',
-      callerIdName: '',
-      callerIdNumber: '',
-      context: 'default',
-      maxContacts: 1,
-      maxConcurrentCalls: 1,
-      outboundCid: '',
-      codecs: '',
-      registerEnabled: true,
-      recordCalls: true,
-      enabled: true,
+      ...payload,
+      maxContacts: Number(payload['maxContacts'] ?? 1),
+      maxConcurrentCalls: Number(payload['maxConcurrentCalls'] ?? 1),
+      registerEnabled: Number(payload['registerEnabled']) === 1,
+      recordCalls: Number(payload['recordCalls']) === 1,
+      enabled: Number(payload['enabled']) === 1,
     };
   }
 }

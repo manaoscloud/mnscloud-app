@@ -1,10 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
-import { VoipSoftswitchAccountService } from '../softswitch.service';
+import { ApiService } from '../../../../services/api.service';
 import { VoipSoftswitchServerService } from '../server/server.service';
-import { VoipSoftswitchSubscriberService } from '../subscriber/subscriber.service';
-import { VoipSoftswitchDidService } from '../did/did.service';
-import { VoipSoftswitchResourceUiService } from '../resource/resource.service';
 
 export type SoftswitchDashboardServer = {
   uuid: string;
@@ -48,16 +45,13 @@ const EMPTY_SNAPSHOT: SoftswitchDashboardSnapshot = {
 
 @Injectable({ providedIn: 'root' })
 export class VoipSoftswitchDashboardService {
-  private readonly accounts = inject(VoipSoftswitchAccountService);
+  private readonly api = inject(ApiService);
   private readonly servers = inject(VoipSoftswitchServerService);
-  private readonly subscribers = inject(VoipSoftswitchSubscriberService);
-  private readonly dids = inject(VoipSoftswitchDidService);
-  private readonly resources = inject(VoipSoftswitchResourceUiService);
   private readonly listLimit = 5000;
 
   async get(isMaster = false): Promise<SoftswitchDashboardSnapshot> {
     const [accounts, servers] = await Promise.all([
-      this.safeItems(this.accounts.list(isMaster, { limit: this.listLimit })),
+      isMaster ? [] : this.safeEndpointItems('voip/softswitch/accounts'),
       this.safeItems(this.servers.list(isMaster, { limit: this.listLimit })),
     ]);
 
@@ -70,11 +64,11 @@ export class VoipSoftswitchDashboardService {
           cdrs: [],
         }
       : {
-          subscribers: await this.safeItems(this.subscribers.list({ limit: this.listLimit })),
-          dids: await this.safeItems(this.dids.list({ limit: this.listLimit })),
-          trunks: await this.safeItems(this.resources.list('trunks', { limit: this.listLimit })),
-          routes: await this.safeItems(this.resources.list('routes', { limit: this.listLimit })),
-          cdrs: await this.safeItems(this.resources.list('cdrs', { limit: this.listLimit })),
+          subscribers: await this.safeEndpointItems('voip/softswitch/subscribers'),
+          dids: await this.safeEndpointItems('voip/softswitch/dids'),
+          trunks: await this.safeEndpointItems('voip/softswitch/trunks'),
+          routes: await this.safeEndpointItems('voip/softswitch/routes'),
+          cdrs: await this.safeEndpointItems('voip/softswitch/cdrs'),
         };
 
     return {
@@ -103,6 +97,10 @@ export class VoipSoftswitchDashboardService {
     } catch {
       return [];
     }
+  }
+
+  private safeEndpointItems(endpoint: string) {
+    return this.safeItems(this.api.get<any>(`${endpoint}?limit=${this.listLimit}&offset=0`));
   }
 
   private serverRow(server: any): SoftswitchDashboardServer {

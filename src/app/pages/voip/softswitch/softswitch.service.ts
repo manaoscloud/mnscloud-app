@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+
 import { ApiService } from '../../../services/api.service';
 
 export type VoipSoftswitchAccount = {
@@ -18,69 +19,15 @@ export type VoipSoftswitchAccount = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class VoipSoftswitchAccountService {
+export class VoipSoftswitchAccountLookupService {
   private readonly api = inject(ApiService);
 
-  private basePath(isMaster: boolean) {
-    return isMaster ? 'system/voip/softswitch/accounts' : 'voip/softswitch/accounts';
-  }
-
-  list(
-    isMaster = false,
-    params: { search?: string; status?: number; limit?: number; offset?: number } = {},
-  ) {
+  listActive(params: { search?: string; limit?: number; offset?: number } = {}) {
     const query = new URLSearchParams();
+    query.set('status', '1');
+    query.set('limit', String(params.limit ?? 500));
+    query.set('offset', String(params.offset ?? 0));
     if (params.search?.trim()) query.set('search', params.search.trim());
-    if (params.status !== undefined && params.status !== null)
-      query.set('status', String(params.status));
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
-    const suffix = query.toString();
-    return this.api.get<any>(`${this.basePath(isMaster)}${suffix ? `?${suffix}` : ''}`);
-  }
-
-  create(
-    payload: {
-      name: string;
-      serverUUID: string;
-      domainUUID: string;
-      customerUUID: string;
-      config?: Record<string, unknown> | null;
-      credentials?: Record<string, unknown> | null;
-      isActive?: boolean;
-      isDefault?: boolean;
-    },
-    isMaster = false,
-  ) {
-    return this.api.post<any>(this.basePath(isMaster), payload);
-  }
-
-  update(
-    uuid: string,
-    payload: {
-      name?: string;
-      serverUUID?: string | null;
-      domainUUID?: string | null;
-      customerUUID?: string | null;
-      config?: Record<string, unknown> | null;
-      credentials?: Record<string, unknown> | null;
-      isActive?: boolean;
-      isDefault?: boolean;
-    },
-    isMaster = false,
-  ) {
-    return this.api.put<any>(`${this.basePath(isMaster)}/${uuid}`, payload);
-  }
-
-  remove(uuid: string, isMaster = false) {
-    return this.api.delete<any>(`${this.basePath(isMaster)}/${uuid}`);
-  }
-
-  removeMany(ids: string[], isMaster = false) {
-    return this.api.delete<any>(`${this.basePath(isMaster)}/bulk`, { ids });
-  }
-
-  resolveDefault(isMaster = false) {
-    return this.api.get<any>(`${this.basePath(isMaster)}/default`);
+    return this.api.get<any>(`voip/softswitch/accounts?${query.toString()}`);
   }
 }
