@@ -483,6 +483,8 @@
 
 - Use a stable `mat-dialog-actions.form-actions` footer for every CRUD dialog.
 - Use the repository CRUD template (`templates/crud`) as the concrete baseline for CRUD dialogs:
+  - create/edit dialogs must be opened with `openCrudTemplateDialog(..., 'crud-form-dialog')` by default
+  - dialog template root must be `<div class="crud-dialog">`; do not add resource-specific root classes such as `<thing>-dialog` for normal CRUD layout
   - dialog root uses `width: 100%`, `max-width: 100%`, `max-height: min(92vh, 1100px)`, desktop `height: 100%`, and padding `1.5rem 1.75rem 1.25rem`
   - dialog surface uses the global CRUD surface: outline border, `1.2rem` radius, `surface-container-high` background, and hidden overflow
   - `.dialog-content` uses `position: relative`, flex column layout, `flex: 1 1 auto`, `min-height: 0`, `max-height: min(82vh, 980px)`, `overflow: hidden`, and zero Material margin/padding
@@ -493,6 +495,7 @@
   - `.form-actions` uses `margin: auto 0 0`, `padding: 0.85rem 0.75rem 0.75rem`, translucent surface background, `backdrop-filter: blur(8px)`, top border, and top shadow
   - mobile dialog pane/root uses a 12px viewport inset from `openCrudTemplateDialog`, dialog root padding `1rem 1rem 0.25rem`, `height: 100%`, and `min-height: 0`; `.dialog-content` removes max-height; `.form-tabs` removes bottom margin
   - CSS must not globally override `.cdk-overlay-pane` positioning for CRUD dialogs; positioning, width and height are owned by `openCrudTemplateDialog`
+  - resource-specific `panelClass` values and resource-specific dialog root classes are exceptions only for real custom surfaces/widgets; they must not be used for normal CRUD density, footer, viewport, field sizing, or responsive behavior
   - local panelClass overrides must not force edge-to-edge `100vw`/`100dvh` or replace the shared tab scroll behavior; update the global CRUD baseline when the standard needs to evolve
 - Footer actions:
   - `Cancel` is the secondary action.
@@ -665,6 +668,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - desktop config may include only `maxHeight`
   - `dialogRef.updateSize(width, height)` must receive `height` when present, otherwise fallback to `maxHeight`
   - missing this fallback is a blocker because it can collapse the dialog into a top overlay band
+- CRUD create/edit dialogs must use the generic `crud-form-dialog` panel class unless the component has a documented, resource-specific surface requirement.
+- A resource-specific panel class or dialog root class is considered layout drift when it only repeats generic CRUD surface, density, footer, tab scrolling, or mobile viewport rules.
 - CRUD-specific features must be derived from the resource requirements:
   - tabs only when the form has distinct groups of fields
   - searchable selects only for FK-like dynamic data
@@ -681,6 +686,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - The reusable CRUD visual baseline is global and must live in `src/styles.scss`.
 - New/refactored CRUD components must use the baseline classes instead of duplicating the common layout SCSS locally.
 - Component SCSS should be limited to resource-specific details such as unusual column widths, custom visual widgets, or domain-specific helper classes.
+- Normal CRUD dialogs must rely on `crud-form-dialog` + `.crud-dialog`; do not create `.cdk-overlay-pane.<resource>-form-dialog` or `.<resource>-dialog` selectors for shared dialog behavior.
 - Layout classes styled globally across CRUD pages:
   - `.erp-page`, `.erp-card`, `.filter-grid`, `.form-grid`, `.table-wrapper`, `.mobile-paginator`
 - Shared global CRUD classes also include:
