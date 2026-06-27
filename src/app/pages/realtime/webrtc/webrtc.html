@@ -304,11 +304,8 @@
   <mns-install-command-dialog
     [title]="'WebRTC install command'"
     [description]="'Run this command on the Kamailio WebRTC edge server.'"
-    [warning]="
-      'This runtime token is shown only once. Generating a new command replaces the previous token for this WebRTC server.'
-    "
+    [warning]="'This runtime token is shown only once. Generating a new command replaces the previous token for this WebRTC server.'"
     [details]="installCommandDetails()"
     [command]="installCommand()"
-    (copied)="notifyCommandCopied($event)"
   />
 </ng-template>

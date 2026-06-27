@@ -341,9 +341,7 @@ export class RealtimeTurnPage {
     const fromRealtimeDomain = this.isDomains();
     return this.domainOptions()
       .map((domain: TurnRecord) => {
-        const value = fromRealtimeDomain
-          ? domain['RtdUUID']
-          : domain['RealtimeDomainRtdUUID'];
+        const value = fromRealtimeDomain ? domain['RtdUUID'] : domain['RealtimeDomainRtdUUID'];
         const label = domain['RtdName'] || domain['DomainName'] || value;
         const server = domain['RtsName'] || domain['ServerName'] || '';
         return {
@@ -676,19 +674,17 @@ export class RealtimeTurnPage {
     ].join(' && ');
   }
 
-  notifyCommandCopied(copied: boolean): void {
-    copied
-      ? this.snack.success('Install command copied.')
-      : this.snack.error('Failed to copy install command.');
-  }
-
   installCommandDetails(): Array<{ label: string; value: unknown; monospace?: boolean }> {
     const token = this.generatedInstall();
     const source = this.generatedInstallSource();
     return [
       { label: 'API base', value: window.location.origin, monospace: true },
       { label: 'Node UUID', value: token?.['nodeUUID'], monospace: true },
-      { label: 'Realm', value: token?.['realm'] || source?.['RtdName'] || source?.['DomainName'], monospace: true },
+      {
+        label: 'Realm',
+        value: token?.['realm'] || source?.['RtdName'] || source?.['DomainName'],
+        monospace: true,
+      },
       { label: 'Runtime', value: 'mnscloud-turn', monospace: true },
     ];
   }
@@ -804,9 +800,11 @@ export class RealtimeTurnPage {
     const direction = this.sortDirection();
     if (!active || !direction) return rows;
     const multiplier = direction === 'asc' ? 1 : -1;
-    return [...rows].sort((left, right) =>
-      String(this.cell(left, active) ?? '').localeCompare(String(this.cell(right, active) ?? '')) *
-      multiplier,
+    return [...rows].sort(
+      (left, right) =>
+        String(this.cell(left, active) ?? '').localeCompare(
+          String(this.cell(right, active) ?? ''),
+        ) * multiplier,
     );
   }
 

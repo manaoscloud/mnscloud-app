@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { SnackbarService } from '../../services/snackbar.service';
 
 export type InstallCommandDetail = {
   label: string;
@@ -30,6 +31,7 @@ export class InstallCommandDialogComponent {
   private readonly data = inject<InstallCommandDialogData | null>(MAT_DIALOG_DATA, {
     optional: true,
   });
+  private readonly snack = inject(SnackbarService);
 
   readonly titleInput = input<string | null>(null, { alias: 'title' });
   readonly descriptionInput = input<string | null>(null, { alias: 'description' });
@@ -52,6 +54,9 @@ export class InstallCommandDialogComponent {
   );
 
   notifyCopied(copied: boolean): void {
+    copied
+      ? this.snack.success('Install command copied.')
+      : this.snack.error('Failed to copy install command.');
     this.copied.emit(copied);
   }
 }

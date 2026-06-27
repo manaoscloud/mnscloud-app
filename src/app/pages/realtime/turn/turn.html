@@ -360,11 +360,8 @@
   <mns-install-command-dialog
     [title]="'TURN/STUN install command'"
     [description]="'Run this command on the TURN/STUN edge server.'"
-    [warning]="
-      'This runtime token is shown only once. Generating a new command replaces the previous token for this TURN/STUN server.'
-    "
+    [warning]="'This runtime token is shown only once. Generating a new command replaces the previous token for this TURN/STUN server.'"
     [details]="installCommandDetails()"
     [command]="installCommand()"
-    (copied)="notifyCommandCopied($event)"
   />
 </ng-template>

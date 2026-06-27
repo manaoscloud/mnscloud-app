@@ -97,7 +97,9 @@ export class VoipPabxServerPage {
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
   readonly rows = computed(() => this.serversResource.value());
-  readonly table = createSignalCrudTable<VoipPabxServerItem>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly table = createSignalCrudTable<VoipPabxServerItem>(this.rows, (row, column) =>
+    this.sortValue(row, column),
+  );
   readonly sortActive = this.table.sortActive;
   readonly sortDirection = this.table.sortDirection;
   readonly pageIndex = this.table.pageIndex;
@@ -193,7 +195,11 @@ export class VoipPabxServerPage {
 
   applySearchFilters() {
     this.search.set(this.searchInput().trim());
-    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
+    this.table.setPage({
+      pageIndex: 0,
+      pageSize: this.pageSize(),
+      length: this.sortedRows().length,
+    });
     if (this.appliedSearch() === this.search() && this.appliedStatus() === this.statusInput()) {
       this.serversResource.reload();
     } else {
@@ -206,7 +212,11 @@ export class VoipPabxServerPage {
     this.searchInput.set('');
     this.statusInput.set('');
     this.search.set('');
-    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
+    this.table.setPage({
+      pageIndex: 0,
+      pageSize: this.pageSize(),
+      length: this.sortedRows().length,
+    });
     if (this.appliedSearch() === '' && this.appliedStatus() === '') {
       this.serversResource.reload();
     } else {
@@ -369,12 +379,6 @@ export class VoipPabxServerPage {
       installLine,
       postValidate,
     ].join(' && ');
-  }
-
-  notifyCommandCopied(copied: boolean) {
-    copied
-      ? this.snack.success('Install command copied.')
-      : this.snack.error('Failed to copy install command.');
   }
 
   installCommandDetails() {

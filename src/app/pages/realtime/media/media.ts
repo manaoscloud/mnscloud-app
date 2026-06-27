@@ -158,7 +158,9 @@ export class RealtimeMediaPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
-  private readonly routeData = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
+  private readonly routeData = toSignal(this.route.data, {
+    initialValue: this.route.snapshot.data,
+  });
 
   readonly resource = computed<MediaResource>(() => {
     const value = this.routeData()?.['resource'];
@@ -183,9 +185,7 @@ export class RealtimeMediaPage {
   readonly pageSize = signal(5);
   readonly formModel = signal<MediaFormModel>(this.defaultFormModel());
   readonly form = createForm(this.formModel);
-  readonly pageTitle = computed(() =>
-    this.isDomains() ? 'Media/RTP Domains' : 'Media Servers',
-  );
+  readonly pageTitle = computed(() => (this.isDomains() ? 'Media/RTP Domains' : 'Media Servers'));
   readonly pageSubtitle = computed(() =>
     this.isDomains()
       ? 'Assign realtime media domains to RTP/media relay operations.'
@@ -249,7 +249,11 @@ export class RealtimeMediaPage {
     defaultValue: [] as MediaRecord[],
     loader: async ({ params }) => {
       if (!params.enabled) return [];
-      const response = await this.api.listRealtimeDomains({ purpose: 'media', status: 1, limit: 5000 });
+      const response = await this.api.listRealtimeDomains({
+        purpose: 'media',
+        status: 1,
+        limit: 5000,
+      });
       return response?.data?.items ?? [];
     },
   });
@@ -511,7 +515,9 @@ export class RealtimeMediaPage {
       this.openInstallCommandDialog();
       if (showSuccess) this.snack.success('Media server install command generated.');
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to generate media server install command.'));
+      this.snack.error(
+        this.errorMessage(error, 'Failed to generate media server install command.'),
+      );
     }
   }
 
@@ -569,18 +575,16 @@ export class RealtimeMediaPage {
     ].join(' && ');
   }
 
-  notifyCommandCopied(copied: boolean): void {
-    copied
-      ? this.snack.success('Install command copied.')
-      : this.snack.error('Failed to copy install command.');
-  }
-
   installCommandDetails(): Array<{ label: string; value: unknown; monospace?: boolean }> {
     const token = this.generatedInstall();
     return [
       { label: 'API base', value: window.location.origin, monospace: true },
       { label: 'Node UUID', value: token?.['nodeUUID'], monospace: true },
-      { label: 'Control socket', value: `${token?.['controlIP'] ?? '127.0.0.1'}:${token?.['controlPort'] ?? 2223}`, monospace: true },
+      {
+        label: 'Control socket',
+        value: `${token?.['controlIP'] ?? '127.0.0.1'}:${token?.['controlPort'] ?? 2223}`,
+        monospace: true,
+      },
       { label: 'Runtime', value: 'mnscloud-media', monospace: true },
     ];
   }
@@ -603,7 +607,7 @@ export class RealtimeMediaPage {
   }
 
   uuid(row: MediaRecord): string {
-    return String(this.isDomains() ? row['RmdUUID'] ?? '' : row['RmsUUID'] ?? '');
+    return String(this.isDomains() ? (row['RmdUUID'] ?? '') : (row['RmsUUID'] ?? ''));
   }
 
   relatedUuid(row: MediaRecord, column: string): string {
@@ -617,13 +621,13 @@ export class RealtimeMediaPage {
   name(row: MediaRecord): string {
     return String(
       this.isDomains()
-        ? row['RtdName'] ?? row['DomainName'] ?? row['RmdID'] ?? ''
-        : row['RmsName'] ?? '',
+        ? (row['RtdName'] ?? row['DomainName'] ?? row['RmdID'] ?? '')
+        : (row['RmsName'] ?? ''),
     );
   }
 
   status(row: MediaRecord): boolean {
-    return Number(this.isDomains() ? row['RmdStatus'] ?? 0 : row['RmsStatus'] ?? 0) === 1;
+    return Number(this.isDomains() ? (row['RmdStatus'] ?? 0) : (row['RmsStatus'] ?? 0)) === 1;
   }
 
   cell(row: MediaRecord, column: string): string {
@@ -693,9 +697,11 @@ export class RealtimeMediaPage {
     const direction = this.sortDirection();
     if (!active || !direction) return rows;
     const multiplier = direction === 'asc' ? 1 : -1;
-    return [...rows].sort((left, right) =>
-      String(this.cell(left, active) ?? '').localeCompare(String(this.cell(right, active) ?? '')) *
-      multiplier,
+    return [...rows].sort(
+      (left, right) =>
+        String(this.cell(left, active) ?? '').localeCompare(
+          String(this.cell(right, active) ?? ''),
+        ) * multiplier,
     );
   }
 
@@ -724,7 +730,7 @@ export class RealtimeMediaPage {
     const base = this.defaultFormModel();
     return {
       ...base,
-      status: Number(this.isDomains() ? row['RmdStatus'] ?? 1 : row['RmsStatus'] ?? 1),
+      status: Number(this.isDomains() ? (row['RmdStatus'] ?? 1) : (row['RmsStatus'] ?? 1)),
       name: row['RmsName'] ?? '',
       engine: row['RmsEngine'] ?? 'rtpengine',
       mediaDomainUUID: row['RealtimeMediaDomainRmdUUID'] ?? '',

@@ -103,7 +103,16 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     uuid: 'RwsUUID',
     name: 'RwsName',
     status: 'RwsStatus',
-    columns: ['name', 'engine', 'hostname', 'publicDomain', 'mediaServer', 'publicIP', 'status', 'lastSeen'],
+    columns: [
+      'name',
+      'engine',
+      'hostname',
+      'publicDomain',
+      'mediaServer',
+      'publicIP',
+      'status',
+      'lastSeen',
+    ],
     fields: [
       {
         key: 'status',
@@ -460,7 +469,9 @@ export class RealtimeWebRtcPage {
               })
             : key === 'mediaServers'
               ? await this.api.listMediaServers({ status: 1, limit: 5000 })
-              : this.config().resource === 'domains' && key === 'servers' && this.scope() === 'tenant'
+              : this.config().resource === 'domains' &&
+                  key === 'servers' &&
+                  this.scope() === 'tenant'
                 ? await this.api.list('servers', { status: 1, limit: 5000 }, 'tenant')
                 : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
@@ -478,7 +489,7 @@ export class RealtimeWebRtcPage {
                 ? (row['RtdName'] ?? row['DomainName'] ?? '')
                 : key === 'mediaServers'
                   ? (row['RmsName'] ?? '')
-                : (row['RwsName'] ?? ''),
+                  : (row['RwsName'] ?? ''),
             ),
             description: String(
               key === 'domains'
@@ -769,11 +780,6 @@ export class RealtimeWebRtcPage {
       'sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/validate-kamailio-webrtc.sh',
     ].join(' && ');
   }
-  notifyCommandCopied(copied: boolean) {
-    copied
-      ? this.snack.success('Install command copied.')
-      : this.snack.error('Failed to copy install command.');
-  }
   installCommandDetails() {
     const data = this.generatedInstall();
     return [
@@ -847,9 +853,11 @@ export class RealtimeWebRtcPage {
     const direction = this.sortDirection();
     if (!active || !direction) return rows;
     const multiplier = direction === 'asc' ? 1 : -1;
-    return [...rows].sort((left, right) =>
-      String(this.cell(left, active) ?? '').localeCompare(String(this.cell(right, active) ?? '')) *
-      multiplier,
+    return [...rows].sort(
+      (left, right) =>
+        String(this.cell(left, active) ?? '').localeCompare(
+          String(this.cell(right, active) ?? ''),
+        ) * multiplier,
     );
   }
 

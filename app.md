@@ -552,6 +552,9 @@
 - Footer actions must follow the CRUD action contract: `Copy command` is the primary action,
   `Close` is secondary, desktop keeps secondary left and primary right, and mobile stacks both
   actions at equal full width with the primary action first.
+- The shared `InstallCommandDialogComponent` owns copy feedback: successful copy must show the
+  standard success snackbar and failed copy must show the standard error snackbar. Pages must not
+  wire page-local `(copied)` handlers just to show the same notification.
 - Pages must not define page-local `*-token-dialog`, fixed-width script modals, local clipboard
   markup, or local command-shell SCSS.
 - The API/DB remains the source of truth for generated enrollment/runtime tokens and command

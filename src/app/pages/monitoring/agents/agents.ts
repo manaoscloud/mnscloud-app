@@ -342,9 +342,7 @@ export class MonitoringAgentsPage {
     const modeLabel = product.mode === 'cluster' ? this.t('cluster') : this.t('runtime');
     const ok = await this.confirm(
       `${this.t('Update')} ${product.label}`,
-      `${this.t('Queue')} ${product.label} ${modeLabel} ${this.t(
-        'update to',
-      )} ${target}? ${this.t(
+      `${this.t('Queue')} ${product.label} ${modeLabel} ${this.t('update to')} ${target}? ${this.t(
         'The API will update every eligible online node for this product.',
       )}`,
       this.t('Queue update'),
@@ -596,7 +594,11 @@ export class MonitoringAgentsPage {
   openTokenDialog() {
     const tokenDialog = this.tokenDialog();
     if (!tokenDialog || this.tokenDialogBinding) return;
-    const binding = openCrudTemplateDialog(this.dialog, tokenDialog, 'install-command-dialog-panel');
+    const binding = openCrudTemplateDialog(
+      this.dialog,
+      tokenDialog,
+      'install-command-dialog-panel',
+    );
     this.tokenDialogBinding = binding;
     bindDialogClosed(binding.ref, () => {
       binding.stop();
@@ -632,12 +634,6 @@ export class MonitoringAgentsPage {
 
   private shellQuote(value: string) {
     return `'${value.replace(/'/g, `'\\''`)}'`;
-  }
-
-  notifyCommandCopied(copied: boolean) {
-    copied
-      ? this.snack.success(this.t('Install command copied.'))
-      : this.snack.error(this.t('Failed to copy install command.'));
   }
 
   isSelected(row: MonitoringAgent) {
