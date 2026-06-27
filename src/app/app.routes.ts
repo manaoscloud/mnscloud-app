@@ -1255,13 +1255,6 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
-                path: 'softswitch/accounts',
-                loadComponent: () =>
-                  import('./pages/voip/softswitch/softswitch').then((m) => m.VoipSoftswitchPage),
-                title: 'System Softswitch Accounts | mnscloud',
-                data: { scope: 'master' },
-              },
-              {
                 path: 'softswitch/server',
                 loadComponent: () =>
                   import('./pages/voip/softswitch/server/server').then(

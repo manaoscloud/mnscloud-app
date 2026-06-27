@@ -95,11 +95,9 @@ export class VoipSoftswitchPage {
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  readonly pageTitle = computed(() => (this.isMaster() ? 'Softswitch Accounts' : 'Softswitch'));
-  readonly pageSubtitle = computed(() =>
-    this.isMaster()
-      ? 'Configure default Softswitch APIs for all tenants.'
-      : 'Manage the Softswitch selected for this tenant environment.',
+  readonly pageTitle = computed(() => 'Softswitch');
+  readonly pageSubtitle = computed(
+    () => 'Manage the Softswitch selected for this tenant environment.',
   );
 
   readonly saving = signal(false);
@@ -193,7 +191,7 @@ export class VoipSoftswitchPage {
   private readonly reportLoadError = effect(() => {
     const error = this.accountsResource.error();
     if (!error) return;
-    const message = this.messageFromError(error, 'Failed to load accounts.');
+    const message = this.messageFromError(error, 'Failed to load Softswitch records.');
     this.error.set(message);
     this.snack.error(message);
   });
@@ -348,7 +346,7 @@ export class VoipSoftswitchPage {
   async removeAccount(item: VoipSoftswitchAccount) {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete Softswitch Account',
+        title: 'Delete Softswitch',
         message: `Are you sure you want to delete "${item.VssName}"?`,
         confirmLabel: 'Delete',
       },
@@ -415,8 +413,8 @@ export class VoipSoftswitchPage {
 
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete Selected Softswitch Accounts',
-        message: `Are you sure you want to delete ${ids.length} selected Softswitch account(s)?`,
+        title: 'Delete Selected Softswitch Records',
+        message: `Are you sure you want to delete ${ids.length} selected Softswitch record(s)?`,
         confirmLabel: 'Delete selected',
       },
       panelClass: 'slow-confirm-dialog',
@@ -438,7 +436,7 @@ export class VoipSoftswitchPage {
       this.selectedAccountUUIDs.clear();
       failed.forEach((uuid) => this.selectedAccountUUIDs.add(uuid));
       if (failed.size) {
-        this.error.set(`${failed.size} selected Softswitch account(s) could not be deleted.`);
+        this.error.set(`${failed.size} selected Softswitch record(s) could not be deleted.`);
       }
       this.accountsResource.reload();
     } catch (err: any) {

@@ -72,7 +72,7 @@ export class VoipSoftswitchDashboardPage {
         label: 'Accounts active',
         value: this.ratio(data?.activeAccounts, data?.accounts),
         icon: 'router',
-        route: this.isMaster() ? '/system/softswitch/accounts' : '/voip/softswitch/accounts',
+        route: this.isMaster() ? null : '/voip/softswitch/accounts',
       },
       {
         label: 'Subscribers active',

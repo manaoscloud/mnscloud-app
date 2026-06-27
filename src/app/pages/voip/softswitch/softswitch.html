@@ -21,7 +21,7 @@
         <input
           matInput
           [value]="searchInput()"
-          placeholder="Search Softswitch accounts"
+          placeholder="Search Softswitch"
           (input)="onSearchChange($any($event.target).value)"
         />
       </mat-form-field>
@@ -71,7 +71,7 @@
               [checked]="isAllVisibleSelected()"
               [indeterminate]="isSomeVisibleSelected()"
               (change)="toggleVisibleSelection($event.checked)"
-              aria-label="Select visible Softswitch accounts"
+              aria-label="Select visible Softswitch records"
             />
           </th>
           <td mat-cell *matCellDef="let row" class="select-col">
@@ -180,7 +180,7 @@
   <div class="softswitch-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit Softswitch Account' : 'New Softswitch Account' }}</h2>
+        <h2>{{ editing() ? 'Edit Softswitch' : 'New Softswitch' }}</h2>
         <p>
           {{
             editing()
