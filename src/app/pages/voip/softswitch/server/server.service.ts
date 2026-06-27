@@ -8,6 +8,9 @@ export type VoipSoftswitchServerItem = {
   VsrNodeUUID?: string | null;
   VsrName: string;
   VsrEngine: string;
+  RealtimeMediaServerRmsUUID?: string | null;
+  MediaServerName?: string | null;
+  RtpengineSocket?: string | null;
   VsrHostname?: string | null;
   VsrPublicIP?: string | null;
   VsrPrivateIP?: string | null;

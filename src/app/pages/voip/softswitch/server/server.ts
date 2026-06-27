@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
@@ -9,6 +10,7 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server.service';
 import { SoftswitchInstallCommandDialogComponent } from './install-command-text-dialog';
+import { ApiService } from '../../../../services/api.service';
 
 const ENGINE_OPTIONS = [
   { value: 'kamailio', label: 'Kamailio' },
@@ -40,6 +42,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     name: '',
     nodeUUID: '',
     engine: 'kamailio',
+    mediaServerUUID: '',
     hostname: '',
     publicIP: '',
     privateIP: '',
@@ -53,6 +56,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     { id: 'publicIP', label: 'Public IP', field: 'VsrPublicIP' },
     { id: 'privateIP', label: 'Private IP', field: 'VsrPrivateIP' },
     { id: 'engine', label: 'Engine', field: 'VsrEngine' },
+    { id: 'media', label: 'Media', field: 'MediaServerName' },
     { id: 'status', label: 'Status', kind: 'status', field: 'VsrStatus', className: 'status-col' },
   ],
   fields: [
@@ -75,6 +79,14 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     { key: 'name', source: 'VsrName', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    {
+      key: 'mediaServerUUID',
+      source: 'RealtimeMediaServerRmsUUID',
+      payloadKey: 'mediaServerUUID',
+      label: 'Media Server',
+      type: 'search-select',
+      span: 2,
+    },
     { key: 'nodeUUID', source: 'VsrNodeUUID', payloadKey: 'nodeUUID', label: 'Node UUID', span: 2 },
     { key: 'hostname', source: 'VsrHostname', payloadKey: 'hostname', label: 'Hostname', span: 2 },
     { key: 'publicIP', source: 'VsrPublicIP', payloadKey: 'publicIP', label: 'Public IP', span: 1 },
@@ -108,9 +120,22 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
 })
 export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSoftswitchServerItem> {
   private readonly serverApi = inject(VoipSoftswitchServerService);
+  private readonly rawApi = inject(ApiService);
+  readonly mediaServerOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly lookupLoading = signal(false);
 
   constructor() {
     super(SERVER_CONFIG);
+    void this.loadMediaServers();
+  }
+
+  override fieldLoading(field: { key: string }): boolean {
+    return field.key === 'mediaServerUUID' ? this.lookupLoading() : false;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'mediaServerUUID') return this.mediaServerOptions();
+    return [];
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipSoftswitchServerItem) {
@@ -135,4 +160,51 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return { ...payload, status: Number(payload['status']) };
   }
+
+  private async loadMediaServers(): Promise<void> {
+    this.lookupLoading.set(true);
+    try {
+      const response = await this.rawApi.get<any>('system/realtime/media/server-options');
+      const rows = extractItems(response);
+      this.mediaServerOptions.set(
+        rows
+          .map((row) =>
+            option(row.RmsUUID ?? row.uuid, row.RmsName ?? row.name, [
+              row.RmsEngine ?? row.engine,
+              row.RtpengineSocket ?? row.rtpengineSocket,
+            ]),
+          )
+          .filter(Boolean) as ConfigurableCrudOption[],
+      );
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+}
+
+function extractItems(response: any): any[] {
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
+  const normalizedValue = String(value ?? '').trim();
+  const normalizedLabel = String(label ?? '').trim();
+  if (!normalizedValue || !normalizedLabel) return null;
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }
