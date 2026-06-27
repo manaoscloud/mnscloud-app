@@ -552,14 +552,9 @@ export class FinancialPayablesPage {
   private openFormDialog() {
     const template = this.payableFormDialog();
     if (!template || this.formDialogBinding) return;
-    this.formDialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      template,
-      'erp-payable-form-dialog',
-      {
-        onEscape: () => this.cancelForm(),
-      },
-    );
+    this.formDialogBinding = openCrudTemplateDialog(this.dialog, template, 'crud-form-dialog', {
+      onEscape: () => this.cancelForm(),
+    });
     bindDialogClosed(
       this.formDialogBinding.ref,
       () => {
