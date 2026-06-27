@@ -840,7 +840,7 @@ mat-chip.status-pill.is-inactive,
   width: 100%;
   max-width: 100%;
   max-height: min(92vh, 1100px);
-  padding: 1.5rem 1.75rem 1.25rem;
+  padding: 1.35rem 1.5rem 0.85rem;
 }
 
 .crud-dialog .dialog-header {
@@ -865,6 +865,9 @@ mat-chip.status-pill.is-inactive,
 }
 
 .crud-dialog .dialog-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   max-height: min(82vh, 980px);
@@ -876,20 +879,49 @@ mat-chip.status-pill.is-inactive,
 .crud-dialog .form-tabs {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.crud-dialog .form-tabs .mat-mdc-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.crud-dialog .form-tabs .mat-mdc-tab-body-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.crud-dialog .form-tabs .mat-mdc-tab-body-content {
+  overflow: visible;
 }
 
 .crud-dialog .tab-content {
-  padding: 0.65rem 0 0.25rem;
+  padding: 0.72rem 0 0;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem 0.75rem;
-  margin-bottom: 0.35rem;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.crud-dialog .form-grid > *,
+.crud-dialog mat-form-field,
+.crud-dialog .mat-mdc-form-field {
+  min-width: 0;
+  width: 100%;
 }
 
 .form-grid .span-2,
@@ -1063,7 +1095,7 @@ mat-chip.status-pill.is-inactive,
     width: 100%;
     height: 100%;
     min-height: 0;
-    padding: 1rem 1rem 0.25rem;
+    padding: 0.9rem 0.9rem 0.25rem;
   }
 
   .crud-dialog .dialog-content {
@@ -4760,5 +4792,62 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     )
     .mat-mdc-dialog-actions {
     padding: 0.6rem 0 !important;
+  }
+}
+
+/* Canonical CRUD dialog structure: keep dialog density and mobile behavior consistent. */
+.cdk-overlay-pane:has(.crud-dialog) {
+  margin: 0 !important;
+}
+
+.cdk-overlay-pane:has(.crud-dialog) .mat-mdc-dialog-surface {
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 1.2rem;
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cdk-overlay-pane:has(.crud-dialog) .mat-mdc-dialog-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cdk-overlay-pane:has(.crud-dialog) .crud-dialog mat-form-field,
+.cdk-overlay-pane:has(.crud-dialog) .crud-dialog .mat-mdc-form-field {
+  margin-bottom: 0 !important;
+  --mat-form-field-container-height: var(--form-control-height) !important;
+  --mat-form-field-container-vertical-padding: 8px !important;
+}
+
+.cdk-overlay-pane:has(.crud-dialog) .crud-dialog .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-height: var(--form-control-height) !important;
+}
+
+.cdk-overlay-pane:has(.crud-dialog) .crud-dialog .mat-mdc-form-field-infix {
+  min-height: var(--form-control-height) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+@media (max-width: 900px) {
+  .cdk-overlay-pane:has(.crud-dialog) {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin: 0 !important;
+  }
+
+  .cdk-overlay-pane:has(.crud-dialog) .mat-mdc-dialog-container {
+    height: calc(100dvh - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+  }
+
+  .cdk-overlay-pane:has(.crud-dialog) .crud-dialog {
+    height: calc(100dvh - 24px) !important;
+    min-height: calc(100dvh - 24px) !important;
+  }
+
+  .cdk-overlay-pane:has(.crud-dialog) .form-actions {
+    margin-top: 0 !important;
   }
 }

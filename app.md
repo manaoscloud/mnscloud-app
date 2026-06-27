@@ -483,12 +483,16 @@
 
 - Use a stable `mat-dialog-actions.form-actions` footer for every CRUD dialog.
 - Use the repository CRUD template (`templates/crud`) as the concrete baseline for CRUD dialogs:
-  - dialog root uses `width: 100%`, `max-width: 100%`, `max-height: min(92vh, 1100px)`, desktop `height: 100%`, and padding `1.5rem 1.75rem 1.25rem`
-  - `.dialog-content` uses `flex: 1 1 auto`, `min-height: 0`, `max-height: min(82vh, 980px)`, `overflow: hidden`, and zero Material margin/padding
-  - `.form-tabs` is a flex column with `height: 100%`, `min-height: 0`, and `margin-bottom: 1.25rem`
-  - `.tab-content` starts compactly with `padding: 0.65rem 0 0.25rem`
+  - dialog root uses `width: 100%`, `max-width: 100%`, `max-height: min(92vh, 1100px)`, desktop `height: 100%`, and padding `1.35rem 1.5rem 0.85rem`
+  - dialog surface uses the global CRUD surface: outline border, `1.2rem` radius, `surface-container-high` background, and hidden overflow
+  - `.dialog-content` uses `position: relative`, flex column layout, `flex: 1 1 auto`, `min-height: 0`, `max-height: min(82vh, 980px)`, `overflow: hidden`, and zero Material margin/padding
+  - `.form-tabs` is a flex column with `height: 100%`, `flex: 1 1 auto`, `min-height: 0`, `overflow: hidden`, and `margin-bottom: 0.75rem`
+  - tab headers stay sticky inside the dialog content, and the tab body wrapper owns vertical scroll with `overflow: auto`
+  - `.tab-content` starts compactly with `padding: 0.72rem 0 0`
+  - `.form-grid` uses compact density: `gap: 0.4rem` and `margin-bottom: 0.2rem`; every field/control inside the grid must be `min-width: 0` and fill its grid track
   - `.form-actions` uses `margin: auto 0 0`, `padding: 0.85rem 0.75rem 0.75rem`, translucent surface background, `backdrop-filter: blur(8px)`, top border, and top shadow
-  - mobile dialog root uses `padding: 1rem 1rem 0.25rem`, `height: 100%`, and `min-height: 0`; `.dialog-content` removes max-height; `.form-tabs` removes bottom margin
+  - mobile dialog pane/root uses a 12px viewport inset (`calc(100vw - 24px)` and `calc(100dvh - 24px)`), dialog root padding `0.9rem 0.9rem 0.25rem`, `height: 100%`, and `min-height: 0`; `.dialog-content` removes max-height; `.form-tabs` removes bottom margin
+  - local panelClass overrides must not increase mobile field density, force `100vw`, or replace the shared tab scroll behavior; update the global CRUD baseline when the standard needs to evolve
 - Footer actions:
   - `Cancel` is the secondary action.
   - `Save` is the primary action.
@@ -666,7 +670,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - shared inputs such as phone fields should use existing shared components when available
   - maps, copy flows, and auxiliary sections are optional resource features, not global CRUD requirements
 - Visual validation must confirm that the dialog opens as a dialog overlay with visible content, not as an inline form or collapsed top band.
-- Visual validation must confirm footer actions have visible horizontal margin from the dialog edges on desktop and mobile.
+- Visual validation must confirm the dialog content fills the available horizontal space without large empty gutters while still preserving visible horizontal margin from the dialog edges on desktop and mobile.
 - Visual validation must confirm responsive field layouts preserve the same declaration order inside
   each tab across every breakpoint and device; only the column span/count changes.
 
@@ -723,8 +727,11 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   `breakBefore` must collapse with the same responsive span rules as normal fields, so it never
   changes the declared field order or leaks a wider span into smaller breakpoints.
 - Dialog form density/layout standard (mandatory):
-  - vertical spacing: prefer compact form rows (`.form-grid { gap: 0.5rem 0.75rem; margin-bottom: 0.35rem; }`)
-  - tab content top spacing: keep compact (`.tab-content { padding-top: 0.65rem; }`)
+  - vertical spacing: use compact form rows (`.form-grid { gap: 0.4rem; margin-bottom: 0.2rem; }`)
+  - tab content top spacing: keep compact (`.tab-content { padding-top: 0.72rem; }`)
+  - form fields and custom field components must fill their grid track and keep `min-width: 0`
+  - tab content must scroll inside the tab body wrapper, not by expanding the dialog past its viewport
+  - mobile CRUD dialogs keep a 12px viewport inset instead of forcing edge-to-edge `100vw`
   - avoid `Name` or `Street` full-width by default when 4-column grid is available; use `span-2` unless business context requires full row.
 - Notes/anotações rule:
   - whenever a CRUD dialog has a notes/anotações field (`notes`, `Notes`, `*Notes`, config notes, or equivalent free-text annotation), render it in its own `mat-tab label="Notes"`.
