@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
+import { SessionUiCleanupService } from './session-ui-cleanup.service';
 import {
   normalizeEnvironmentUUID,
   readStoredEnvironmentUUID,
@@ -70,6 +71,7 @@ function normalizeAppRole(value: unknown): AppRole | undefined {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly router = inject(Router);
+  private readonly sessionUiCleanup = inject(SessionUiCleanupService);
 
   private _loggedIn = signal<boolean>(this.readInitialState());
   readonly isLoggedIn = this._loggedIn.asReadonly();
@@ -122,6 +124,8 @@ export class AuthService {
   // LOGOUT
   // ---------------------------------------------------------
   logout() {
+    this.sessionUiCleanup.closeSessionUi();
+
     removeAuthValue(JWT_KEY);
     removeAuthValue(USER_KEY);
     removeAuthValue(AUTH_STATE);

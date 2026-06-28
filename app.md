@@ -181,6 +181,16 @@
 - Optional future fields belong in `BrandingConfig` or explicit nullable ThemeDomain columns; do not move runtime branding into `.env`.
 - Do not reintroduce legacy `UrlName`/`Title` frontend model fields; use `Domain` and `PageTitle`.
 
+## Session Expiration UI
+
+- When a user session expires or logout is executed, the app must leave only the unauthenticated
+  route visible. Close all open dialogs, menus, popovers, select panels, and CDK/Material overlays
+  before navigating to `/signin`.
+- Session cleanup is global behavior and belongs in the auth/session flow. Do not make individual
+  CRUD pages responsible for closing their own dialogs on 401 responses.
+- Sensitive one-time artifacts shown in dialogs, such as install commands and runtime tokens, must
+  never remain visible behind the sign-in screen after a 401 redirect.
+
 ## ERP CRUD Baseline (Current)
 
 - Baseline page structure:

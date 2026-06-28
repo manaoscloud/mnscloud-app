@@ -42,8 +42,8 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
 
       // Sessão expirada / não autorizado
       if (error.status === 401) {
-        snack.error('Your session has expired. Please sign in again.');
         auth.expireSession();
+        snack.error('Your session has expired. Please sign in again.');
         return throwError(() => error);
       }
 
