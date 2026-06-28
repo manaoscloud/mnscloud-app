@@ -185,6 +185,14 @@ export type ConfigurableCrudConfig = {
   rowActions?: readonly ConfigurableCrudRowAction[];
 };
 
+export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
+  mode: 'create' | 'update';
+  saveAndNew: boolean;
+  payload: ConfigurableCrudRecord;
+  response: unknown;
+  record: T | null;
+};
+
 type ConfigurableCrudFilters = {
   search: string;
   status: '' | string | number;
@@ -377,10 +385,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.saving.set(true);
     try {
       const current = this.editingRecord();
+      let response: unknown;
       if (current) {
-        await this.api.put(`${this.config.endpoint}/${this.recordUUID(current)}`, payload);
+        response = await this.api.put(
+          `${this.config.endpoint}/${this.recordUUID(current)}`,
+          payload,
+        );
       } else {
-        await this.api.post(this.config.endpoint, payload);
+        response = await this.api.post(this.config.endpoint, payload);
       }
       this.snack.success(this.config.savedMessage);
       this.itemsResource.reload();
@@ -390,6 +402,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       } else {
         this.closeDialog();
       }
+      await this.afterSave({
+        mode: current ? 'update' : 'create',
+        saveAndNew,
+        payload,
+        response,
+        record: current,
+      });
     } catch (error) {
       this.snack.error(this.errorMessage(error));
     } finally {
@@ -418,6 +437,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   handleRowAction(_action: ConfigurableCrudRowAction, _row: T): void | Promise<void> {}
+
+  protected afterSave(_context: ConfigurableCrudSaveContext<T>): void | Promise<void> {}
 
   async deleteSelectedItems(): Promise<void> {
     const ids = [...this.selectedUUIDs()];
@@ -824,12 +845,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return true;
   }
 
-  private async confirm(title: string, message: string): Promise<boolean> {
+  protected async confirmAction(
+    title: string,
+    message: string,
+    confirmLabel = 'Confirm',
+  ): Promise<boolean> {
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       width: '420px',
-      data: { title, message, confirmLabel: 'Delete' },
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+      data: { title, message, confirmLabel },
     });
     return Boolean(await firstValueFrom(ref.afterClosed()));
+  }
+
+  private async confirm(title: string, message: string): Promise<boolean> {
+    return this.confirmAction(title, message, 'Delete');
   }
 
   private errorMessage(error: unknown): string {

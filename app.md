@@ -569,6 +569,19 @@
   markup, or local command-shell SCSS.
 - The API/DB remains the source of truth for generated enrollment/runtime tokens and command
   payloads. The frontend only renders command context and the copy action.
+- Resources that generate installation, enrollment, runtime, or provisioning commands must treat
+  command generation as part of the lifecycle:
+  - after a successful create, close the create/edit dialog and immediately open the generated
+    command dialog when the API returns the created UUID/item;
+  - the first command shown immediately after create does not need an extra confirmation because the
+    user is already in the creation flow;
+  - row actions that generate a new command for an existing record must open
+    `SlowConfirmDialogComponent` before calling the API, because the previous runtime token or
+    enrollment secret will be replaced;
+  - the confirmation text must explicitly say that the previous token/secret will be replaced and
+    the target runtime may need to be reinstalled or reconfigured with the new command.
+- Generic CRUD pages that need this lifecycle must use a generic post-save hook/configuration point
+  instead of local inline-form overlays or page-specific command markup.
 - Visible labels, warnings, context fields, and copy/close actions must be present in every runtime
   Transloco dictionary.
 

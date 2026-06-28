@@ -6,6 +6,7 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
+  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server.service';
@@ -161,6 +162,31 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipSoftswitchServerItem) {
     if (action.key !== 'install-command') return;
+    const confirmed = await this.confirmAction(
+      'Generate install command',
+      `Generate a new install command for "${row.VsrName}"? The previous Softswitch runtime token will be replaced.`,
+      'Generate command',
+    );
+    if (!confirmed) return;
+    await this.generateInstallCommand(row, true);
+  }
+
+  protected override async afterSave(
+    context: ConfigurableCrudSaveContext<VoipSoftswitchServerItem>,
+  ): Promise<void> {
+    if (context.mode !== 'create' || context.saveAndNew) return;
+    const created = this.createdItemFromResponse(context.response);
+    if (!created?.VsrUUID) {
+      this.snack.warning('Softswitch server saved, but install command could not be generated.');
+      return;
+    }
+    await this.generateInstallCommand(created, false);
+  }
+
+  private async generateInstallCommand(
+    row: VoipSoftswitchServerItem,
+    showSuccess: boolean,
+  ): Promise<void> {
     try {
       const response = await this.serverApi.generateInstallCommand(row.VsrUUID);
       const command = String(response?.data?.command ?? response?.data?.item?.command ?? '');
@@ -186,6 +212,7 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
         },
         this.destroyRef,
       );
+      if (showSuccess) this.snack.success('Softswitch install command generated.');
     } catch (error) {
       this.snack.error((error as any)?.error?.error ?? 'Failed to generate install command.');
     }
@@ -209,6 +236,13 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
         { label: 'Media Server', value: row.MediaServerName },
       ],
     };
+  }
+
+  private createdItemFromResponse(response: unknown): VoipSoftswitchServerItem | null {
+    if (!response || typeof response !== 'object') return null;
+    const data = (response as { data?: { item?: unknown } }).data;
+    const item = data?.item;
+    return item && typeof item === 'object' ? (item as VoipSoftswitchServerItem) : null;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
