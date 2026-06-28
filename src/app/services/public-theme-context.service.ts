@@ -23,6 +23,7 @@ type PublicThemeContextResponse = {
 export class PublicThemeContextService {
   private readonly document = inject(DOCUMENT);
   private readonly fallbackTitle = 'mnscloud';
+  private readonly loadTimeoutMs = 2500;
 
   readonly context = signal<PublicThemeRuntimeContext | null>(null);
 
@@ -33,9 +34,13 @@ export class PublicThemeContextService {
   async load(): Promise<void> {
     if (typeof window === 'undefined') return;
 
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), this.loadTimeoutMs);
+
     try {
       const res = await fetch(resolveApiUrl('public/theme/context'), {
         headers: { Accept: 'application/json' },
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error(`theme context failed: ${res.status}`);
       const response = (await res.json()) as PublicThemeContextResponse;
@@ -44,6 +49,8 @@ export class PublicThemeContextService {
       this.apply(context);
     } catch {
       this.apply(null);
+    } finally {
+      window.clearTimeout(timeout);
     }
   }
 

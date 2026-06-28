@@ -34,7 +34,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(routes),
-    provideAppInitializer(() => inject(PublicThemeContextService).load()),
+    provideAppInitializer(() => {
+      void inject(PublicThemeContextService).load();
+    }),
     provideAppInitializer(() =>
       firstValueFrom(inject(TranslocoService).load(inject(AppI18nService).language())),
     ),
