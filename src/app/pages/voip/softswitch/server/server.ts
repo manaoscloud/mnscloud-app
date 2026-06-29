@@ -26,6 +26,30 @@ const ENGINE_OPTIONS = [
   { value: 'opensips', label: 'OpenSIPS' },
 ];
 
+const CODEC_MODE_OPTIONS = [
+  { value: 'passthrough', label: 'Pass-through' },
+  { value: 'filter', label: 'Filtrar' },
+  { value: 'prefer', label: 'Preferir' },
+  { value: 'transcode', label: 'Transcodificar' },
+];
+
+const CODEC_OPTIONS = [
+  { value: 'PCMU', label: 'PCMU' },
+  { value: 'PCMA', label: 'PCMA' },
+  { value: 'G729', label: 'G729' },
+  { value: 'G722', label: 'G722' },
+  { value: 'OPUS', label: 'OPUS' },
+  { value: 'GSM', label: 'GSM' },
+  { value: 'AMR', label: 'AMR' },
+  { value: 'AMR-WB', label: 'AMR-WB' },
+  { value: 'ILBC', label: 'ILBC' },
+  { value: 'SPEEX', label: 'SPEEX' },
+  { value: 'TELEPHONE-EVENT', label: 'TELEPHONE-EVENT' },
+];
+
+const DEFAULT_ALLOWED_CODECS = ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'];
+const DEFAULT_PREFERRED_CODECS = ['PCMU', 'PCMA'];
+
 const SERVER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/voip/softswitch/servers',
   uuidField: 'VsrUUID',
@@ -56,6 +80,10 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     publicIP: '',
     privateIP: '',
     baseUrl: '',
+    codecMode: 'passthrough',
+    allowedCodecs: DEFAULT_ALLOWED_CODECS,
+    preferredCodecs: DEFAULT_PREFERRED_CODECS,
+    transcodeCodecs: [],
     notes: '',
     status: 1,
   },
@@ -120,6 +148,42 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     },
     { key: 'baseUrl', source: 'VsrBaseUrl', payloadKey: 'baseUrl', label: 'URL base', span: 1 },
     {
+      key: 'codecMode',
+      source: 'VsrCodecMode',
+      payloadKey: 'codecMode',
+      label: 'Modo codec',
+      type: 'select',
+      options: CODEC_MODE_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'allowedCodecs',
+      source: 'VsrAllowedCodecs',
+      payloadKey: 'allowedCodecs',
+      label: 'Codecs permitidos',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'preferredCodecs',
+      source: 'VsrPreferredCodecs',
+      payloadKey: 'preferredCodecs',
+      label: 'Codecs preferenciais',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'transcodeCodecs',
+      source: 'VsrTranscodeCodecs',
+      payloadKey: 'transcodeCodecs',
+      label: 'Codecs transcode',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      span: 1,
+    },
+    {
       key: 'notes',
       source: 'VsrNotes',
       payloadKey: 'notes',
@@ -158,6 +222,46 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'mediaServerUUID') return this.mediaServerOptions();
     return [];
+  }
+
+  override startEdit(row: VoipSoftswitchServerItem): void {
+    super.startEdit(row);
+    this.patchFormValues({
+      allowedCodecs: this.codecList(row.VsrAllowedCodecs, DEFAULT_ALLOWED_CODECS),
+      preferredCodecs: this.codecList(row.VsrPreferredCodecs, DEFAULT_PREFERRED_CODECS),
+      transcodeCodecs: this.codecList(row.VsrTranscodeCodecs, []),
+    });
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return {
+      ...payload,
+      status: Number(payload['status']),
+      allowedCodecs: this.codecCsv(payload['allowedCodecs']),
+      preferredCodecs: this.codecCsv(payload['preferredCodecs']),
+      transcodeCodecs: this.codecCsv(payload['transcodeCodecs']),
+    };
+  }
+
+  private codecList(value: unknown, fallback: readonly string[]): string[] {
+    const text = Array.isArray(value) ? value.join(',') : String(value ?? '');
+    const items = text
+      .split(/[,\s]+/)
+      .map((item) => item.trim().toUpperCase())
+      .filter(Boolean);
+    return items.length ? [...new Set(items)] : [...fallback];
+  }
+
+  private codecCsv(value: unknown): string | null {
+    const items = Array.isArray(value)
+      ? value
+      : String(value ?? '')
+          .split(/[,\s]+/)
+          .filter(Boolean);
+    const codecs = [
+      ...new Set(items.map((item) => String(item).trim().toUpperCase()).filter(Boolean)),
+    ];
+    return codecs.length ? codecs.join(',') : null;
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipSoftswitchServerItem) {
@@ -243,10 +347,6 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
     const data = (response as { data?: { item?: unknown } }).data;
     const item = data?.item;
     return item && typeof item === 'object' ? (item as VoipSoftswitchServerItem) : null;
-  }
-
-  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, status: Number(payload['status']) };
   }
 
   private async loadMediaServers(): Promise<void> {

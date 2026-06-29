@@ -909,13 +909,6 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
-                path: 'voip/sbc/policy',
-                loadComponent: () =>
-                  import('./pages/voip/sbc/policy/policy').then((m) => m.VoipSbcPolicyPage),
-                title: 'VoIP • SBC • Policy | mnscloud',
-                data: { scope: 'tenant', context: 'voip' },
-              },
-              {
                 path: 'realtime/webrtc',
                 loadComponent: () =>
                   import('./pages/realtime/webrtc/dashboard/dashboard').then(
@@ -982,14 +975,6 @@ export const routes: Routes = [
                     (m) => m.VoipSoftswitchRoutePage,
                   ),
                 title: 'VoIP • Softswitch • Routes | mnscloud',
-              },
-              {
-                path: 'voip/softswitch/policies',
-                loadComponent: () =>
-                  import('./pages/voip/softswitch/policy/policy').then(
-                    (m) => m.VoipSoftswitchPolicyPage,
-                  ),
-                title: 'VoIP • Softswitch • Policies | mnscloud',
               },
               {
                 path: 'voip/softswitch/rates',

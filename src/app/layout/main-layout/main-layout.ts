@@ -1283,7 +1283,6 @@ export class MainLayout {
               route: '/voip/sbc/trunk',
             },
             { id: 'voip/sbc/route', label: 'Routes', icon: 'alt_route', route: '/voip/sbc/route' },
-            { id: 'voip/sbc/policy', label: 'Policies', icon: 'policy', route: '/voip/sbc/policy' },
           ],
         },
         {
@@ -1336,12 +1335,6 @@ export class MainLayout {
               label: 'Routes',
               icon: 'alt_route',
               route: '/voip/softswitch/routes',
-            },
-            {
-              id: 'voip/softswitch/policies',
-              label: 'Policies',
-              icon: 'policy',
-              route: '/voip/softswitch/policies',
             },
             {
               id: 'voip/softswitch/rates',

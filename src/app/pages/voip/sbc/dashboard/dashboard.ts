@@ -34,7 +34,6 @@ type SbcSnapshot = {
   servers: any[];
   trunks: any[];
   routes: any[];
-  policies: any[];
 };
 
 const EMPTY_SNAPSHOT: SbcSnapshot = {
@@ -42,7 +41,6 @@ const EMPTY_SNAPSHOT: SbcSnapshot = {
   servers: [],
   trunks: [],
   routes: [],
-  policies: [],
 };
 
 @Component({
@@ -90,7 +88,6 @@ export class VoipSbcDashboardPage {
       this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus', 'server'),
       this.metric('trunks', 'Trunks', 'settings_ethernet', snapshot.trunks, 'VstStatus', 'trunk'),
       this.metric('routes', 'Routes', 'alt_route', snapshot.routes, 'VbrStatus', 'route'),
-      this.metric('policies', 'Policies', 'policy', snapshot.policies, 'VpoStatus', 'policy'),
     ];
   });
   readonly actions = computed<SbcAction[]>(() => {
@@ -127,13 +124,6 @@ export class VoipSbcDashboardPage {
             icon: 'alt_route',
             route: `${this.baseRoute()}/route`,
           },
-          {
-            key: 'policy',
-            label: 'Policies',
-            description: 'Apply traffic, security and routing policies.',
-            icon: 'policy',
-            route: `${this.baseRoute()}/policy`,
-          },
         ];
   });
 
@@ -144,7 +134,7 @@ export class VoipSbcDashboardPage {
   private async loadSnapshot(): Promise<SbcSnapshot> {
     try {
       const master = this.route.snapshot.data['scope'] === 'master';
-      const [accounts, servers, trunks, routes, policies] = await Promise.all([
+      const [accounts, servers, trunks, routes] = await Promise.all([
         master
           ? Promise.resolve([])
           : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
@@ -155,11 +145,8 @@ export class VoipSbcDashboardPage {
         master
           ? Promise.resolve([])
           : this.fetchItems(`${this.endpointPrefix}/routes?limit=500&offset=0`),
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/policies?limit=500&offset=0`),
       ]);
-      return { accounts, servers, trunks, routes, policies };
+      return { accounts, servers, trunks, routes };
     } catch (error) {
       this.snack.error('Failed to load SBC dashboard.');
       throw error;
