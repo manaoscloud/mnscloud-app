@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -18,6 +18,15 @@ type SbcMetric = {
   icon: string;
   total: number;
   active: number;
+  route: string | null;
+};
+
+type SbcAction = {
+  key: string;
+  label: string;
+  description: string;
+  icon: string;
+  route: string | null;
 };
 
 type SbcSnapshot = {
@@ -45,6 +54,7 @@ const EMPTY_SNAPSHOT: SbcSnapshot = {
     MatIconModule,
     MatProgressSpinnerModule,
     RefreshButtonComponent,
+    RouterLink,
     TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
@@ -63,15 +73,61 @@ export class VoipSbcDashboardPage {
 
   readonly snapshot = computed(() => this.snapshotResource.value() ?? EMPTY_SNAPSHOT);
   readonly loading = computed(() => this.snapshotResource.isLoading());
+  readonly baseRoute = computed(() =>
+    this.route.snapshot.data['scope'] === 'master' ? '/system/sbc' : '/voip/sbc',
+  );
   readonly metrics = computed<SbcMetric[]>(() => {
     const snapshot = this.snapshot();
     return [
-      this.metric('providers', 'Providers', 'hub', snapshot.providers, 'VbpStatus'),
-      this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus'),
-      this.metric('trunks', 'Trunks', 'settings_ethernet', snapshot.trunks, 'VstStatus'),
-      this.metric('routes', 'Routes', 'alt_route', snapshot.routes, 'VbrStatus'),
-      this.metric('policies', 'Policies', 'policy', snapshot.policies, 'VpoStatus'),
+      this.metric('providers', 'Providers', 'hub', snapshot.providers, 'VbpStatus', 'provider'),
+      this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus', 'server'),
+      this.metric('trunks', 'Trunks', 'settings_ethernet', snapshot.trunks, 'VstStatus', 'trunk'),
+      this.metric('routes', 'Routes', 'alt_route', snapshot.routes, 'VbrStatus', 'route'),
+      this.metric('policies', 'Policies', 'policy', snapshot.policies, 'VpoStatus', 'policy'),
     ];
+  });
+  readonly actions = computed<SbcAction[]>(() => {
+    const master = this.route.snapshot.data['scope'] === 'master';
+    return master
+      ? [
+          {
+            key: 'server',
+            label: 'Servers',
+            description: 'Register authorized SBC runtime nodes.',
+            icon: 'dns',
+            route: `${this.baseRoute()}/server`,
+          },
+        ]
+      : [
+          {
+            key: 'provider',
+            label: 'Providers',
+            description: 'Define provider profiles consumed by trunks.',
+            icon: 'hub',
+            route: `${this.baseRoute()}/provider`,
+          },
+          {
+            key: 'trunk',
+            label: 'Trunks',
+            description: 'Connect providers to SBC servers and transports.',
+            icon: 'settings_ethernet',
+            route: `${this.baseRoute()}/trunk`,
+          },
+          {
+            key: 'route',
+            label: 'Routes',
+            description: 'Route prefixes and destination patterns.',
+            icon: 'alt_route',
+            route: `${this.baseRoute()}/route`,
+          },
+          {
+            key: 'policy',
+            label: 'Policies',
+            description: 'Apply traffic, security and routing policies.',
+            icon: 'policy',
+            route: `${this.baseRoute()}/policy`,
+          },
+        ];
   });
 
   refresh(): void {
@@ -105,13 +161,17 @@ export class VoipSbcDashboardPage {
     icon: string,
     rows: any[],
     statusField: string,
+    routeSegment: string,
   ): SbcMetric {
+    const master = this.route.snapshot.data['scope'] === 'master';
+    const route = master && routeSegment !== 'server' ? null : `${this.baseRoute()}/${routeSegment}`;
     return {
       key,
       label,
       icon,
       total: rows.length,
       active: rows.filter((row) => Number(row?.[statusField]) === 1).length,
+      route,
     };
   }
 }

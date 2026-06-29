@@ -1,6 +1,6 @@
-<section class="erp-page sbc-dashboard">
+<section class="erp-page sbc-dashboard" animate.enter="app-fade-in">
   <mat-card class="erp-card">
-    <div class="erp-header">
+    <header class="erp-header">
       <div>
         <h1>{{ 'SBC dashboard' | transloco }}</h1>
         <p>{{ 'Monitor SBC providers, servers, trunks, routes and policies.' | transloco }}</p>
@@ -8,25 +8,47 @@
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refresh()" />
       </div>
-    </div>
+    </header>
 
-    @if (loading()) {
-      <div class="dashboard-loading">
-        <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
-      </div>
-    } @else {
-      <div class="metric-grid">
+    <div class="dashboard-content" [class.is-loading]="loading()">
+      @if (loading()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
+        </div>
+      }
+
+      <div class="kpi-grid">
         @for (metric of metrics(); track metric.key) {
-          <article class="metric-card">
+          <a class="kpi-tile" [routerLink]="metric.route" [class.is-static]="!metric.route">
             <mat-icon>{{ metric.icon }}</mat-icon>
-            <div>
-              <span>{{ metric.label | transloco }}</span>
-              <strong>{{ metric.total }}</strong>
-              <small>{{ metric.active }} {{ 'Active' | transloco }}</small>
-            </div>
-          </article>
+            <span>{{ metric.label | transloco }}</span>
+            <strong>{{ metric.total }}</strong>
+            <small>{{ metric.active }} {{ 'Active' | transloco }}</small>
+          </a>
         }
       </div>
-    }
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'SBC operations' | transloco }}</h2>
+            <p>{{ 'Use these shortcuts to keep the SBC topology complete.' | transloco }}</p>
+          </div>
+        </div>
+
+        <div class="action-grid">
+          @for (action of actions(); track action.key) {
+            <a class="action-tile" [routerLink]="action.route">
+              <mat-icon>{{ action.icon }}</mat-icon>
+              <div>
+                <strong>{{ action.label | transloco }}</strong>
+                <span>{{ action.description | transloco }}</span>
+              </div>
+              <mat-icon>chevron_right</mat-icon>
+            </a>
+          }
+        </div>
+      </section>
+    </div>
   </mat-card>
 </section>
