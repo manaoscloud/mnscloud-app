@@ -1,11 +1,23 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  InstallCommandDialogComponent,
+  type InstallCommandDialogData,
+} from '../../../../shared/install-command-dialog/install-command-dialog';
+import {
+  openCrudTemplateDialog,
+  type CrudDialogBinding,
+} from '../../../../shared/dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { VoipSbcServerItem, VoipSbcServerService } from './server.service';
 
 const ENGINE_OPTIONS = [
   { value: 'opensips', label: 'OpenSIPS' },
@@ -32,6 +44,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
+  rowActions: [{ key: 'install-command', label: 'Install command', icon: 'terminal' }],
   initialValues: {
     status: 1,
     engine: 'opensips',
@@ -114,8 +127,95 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipSbcServerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerItem> {
+  private readonly serverApi = inject(VoipSbcServerService);
+  private installDialogBinding: CrudDialogBinding | null = null;
+
   constructor() {
     super(SERVER_CONFIG);
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipSbcServerItem) {
+    if (action.key !== 'install-command') return;
+    const confirmed = await this.confirmAction(
+      'Generate install command',
+      `Generate a new install command for "${row.VbsName}"? The previous SBC runtime token will be replaced.`,
+      'Generate command',
+    );
+    if (!confirmed) return;
+    await this.generateInstallCommand(row, true);
+  }
+
+  protected override async afterSave(
+    context: ConfigurableCrudSaveContext<VoipSbcServerItem>,
+  ): Promise<void> {
+    if (context.mode !== 'create' || context.saveAndNew) return;
+    const created = this.createdItemFromResponse(context.response);
+    if (!created?.VbsUUID) {
+      this.snack.warning('SBC server saved, but install command could not be generated.');
+      return;
+    }
+    await this.generateInstallCommand(created, false);
+  }
+
+  private async generateInstallCommand(
+    row: VoipSbcServerItem,
+    showSuccess: boolean,
+  ): Promise<void> {
+    try {
+      const response = await this.serverApi.generateInstallCommand(row.VbsUUID);
+      const command = String(response?.data?.command ?? response?.data?.item?.command ?? '');
+      if (!command) {
+        this.snack.warning('Install command was not returned.');
+        return;
+      }
+      this.installDialogBinding?.ref.close();
+      this.installDialogBinding = openCrudTemplateDialog(
+        this.dialog,
+        InstallCommandDialogComponent,
+        'crud-form-dialog',
+        {
+          data: this.installCommandData(row, response?.data ?? {}, command),
+          onEscape: () => this.installDialogBinding?.ref.close(),
+        },
+      );
+      bindDialogClosed(
+        this.installDialogBinding.ref,
+        () => {
+          this.installDialogBinding?.stop();
+          this.installDialogBinding = null;
+        },
+        this.destroyRef,
+      );
+      if (showSuccess) this.snack.success('SBC install command generated.');
+    } catch (error) {
+      this.snack.error((error as any)?.error?.error ?? 'Failed to generate install command.');
+    }
+  }
+
+  private installCommandData(
+    row: VoipSbcServerItem,
+    data: Record<string, unknown>,
+    command: string,
+  ): InstallCommandDialogData {
+    return {
+      title: 'SBC install command',
+      description: 'Run this command on the OpenSIPS SBC server.',
+      warning:
+        'This runtime token is shown only once. Generating a new command replaces the previous token for this SBC server.',
+      command,
+      details: [
+        { label: 'Server', value: row.VbsName },
+        { label: 'Engine', value: row.VbsEngine },
+        { label: 'Node UUID', value: data['nodeUUID'] ?? row.VbsNodeUUID, monospace: true },
+      ],
+    };
+  }
+
+  private createdItemFromResponse(response: unknown): VoipSbcServerItem | null {
+    if (!response || typeof response !== 'object') return null;
+    const data = (response as { data?: { item?: unknown } }).data;
+    const item = data?.item;
+    return item && typeof item === 'object' ? (item as VoipSbcServerItem) : null;
   }
 }
