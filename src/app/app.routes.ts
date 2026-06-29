@@ -875,26 +875,46 @@ export const routes: Routes = [
               },
               {
                 path: 'voip/sbc',
-                redirectTo: 'voip/sbc/provider',
+                redirectTo: 'voip/sbc/dashboard',
                 pathMatch: 'full',
               },
-              ...(['provider', 'server', 'trunk', 'route', 'policy'].map((section) => ({
-                path: `voip/sbc/${section}`,
-                loadComponent: () => import('./pages/voip/sbc/sbc').then((m) => m.VoipSbcPage),
-                title: `VoIP • SBC • ${section} | mnscloud`,
-                data: {
-                  resource:
-                    section === 'provider'
-                      ? 'providers'
-                      : section === 'server'
-                        ? 'servers'
-                        : section === 'trunk'
-                          ? 'trunks'
-                          : section === 'route'
-                            ? 'routes'
-                            : 'policies',
-                },
-              })) as any),
+              {
+                path: 'voip/sbc/dashboard',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/dashboard/dashboard').then(
+                    (m) => m.VoipSbcDashboardPage,
+                  ),
+                title: 'VoIP • SBC Dashboard | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
+                path: 'voip/sbc/provider',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/provider/provider').then((m) => m.VoipSbcProviderPage),
+                title: 'VoIP • SBC • Provider | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
+                path: 'voip/sbc/trunk',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/trunk/trunk').then((m) => m.VoipSbcTrunkPage),
+                title: 'VoIP • SBC • Trunk | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
+                path: 'voip/sbc/route',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/route/route').then((m) => m.VoipSbcRoutePage),
+                title: 'VoIP • SBC • Route | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
+                path: 'voip/sbc/policy',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/policy/policy').then((m) => m.VoipSbcPolicyPage),
+                title: 'VoIP • SBC • Policy | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
               {
                 path: 'realtime/webrtc',
                 loadComponent: () =>
@@ -1286,15 +1306,25 @@ export const routes: Routes = [
               },
               {
                 path: 'sbc',
-                redirectTo: 'sbc/server',
+                redirectTo: 'sbc/dashboard',
                 pathMatch: 'full',
               },
-              ...(['server'].map((section) => ({
-                path: `sbc/${section}`,
-                loadComponent: () => import('./pages/voip/sbc/sbc').then((m) => m.VoipSbcPage),
-                title: `System SBC • ${section} | mnscloud`,
-                data: { scope: 'master', resource: 'servers' },
-              })) as any),
+              {
+                path: 'sbc/dashboard',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/dashboard/dashboard').then(
+                    (m) => m.VoipSbcDashboardPage,
+                  ),
+                title: 'System SBC Dashboard | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
+                path: 'sbc/server',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/server/server').then((m) => m.VoipSbcServerPage),
+                title: 'System SBC Server | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
               {
                 path: 'voip/domain',
                 loadComponent: () =>

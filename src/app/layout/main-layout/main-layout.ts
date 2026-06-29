@@ -1256,11 +1256,18 @@ export class MainLayout {
           icon: 'settings_input_component',
           children: [
             {
+              id: 'voip/sbc/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/voip/sbc/dashboard',
+              masterRoute: '/system/sbc/dashboard',
+            },
+            {
               id: 'voip/sbc/server',
               label: 'Servers',
               icon: 'dns',
-              route: '/voip/sbc/server',
               masterRoute: '/system/sbc/server',
+              scope: 'master',
               roles: ['MASTER'],
             },
             {

@@ -102,6 +102,7 @@ export type ConfigurableCrudField = {
   label: string;
   source?: string;
   payloadKey?: string;
+  format?: 'json';
   type?: ConfigurableCrudFieldType;
   tab?: 'record' | 'address' | 'financial' | 'notes';
   addressSection?: string;
@@ -814,8 +815,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   private formValuesFromRecord(row: T): ConfigurableCrudRecord {
     const next: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
-      next[field.key] =
-        row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
+      const value = row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
+      next[field.key] = field.format === 'json' ? this.formatJsonValue(value) : value;
     }
     return next;
   }
@@ -826,11 +827,41 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     for (const field of this.config.fields) {
       const key = field.payloadKey ?? field.key;
       let value = values[field.key];
+      if (field.format === 'json') value = this.parseJsonValue(value);
       if (typeof value === 'string') value = value.trim();
       if (value === '') value = null;
       payload[key] = value;
     }
     return payload;
+  }
+
+  private formatJsonValue(value: unknown): string {
+    if (value === null || value === undefined || value === '') return '';
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      try {
+        return JSON.stringify(JSON.parse(trimmed), null, 2);
+      } catch {
+        return trimmed;
+      }
+    }
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  }
+
+  private parseJsonValue(value: unknown): unknown {
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return trimmed;
+    }
   }
 
   private validatePayload(payload: ConfigurableCrudRecord): boolean {

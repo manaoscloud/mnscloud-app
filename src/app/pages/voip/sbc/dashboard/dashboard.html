@@ -1,0 +1,32 @@
+<section class="erp-page sbc-dashboard">
+  <mat-card class="erp-card">
+    <div class="erp-header">
+      <div>
+        <h1>{{ 'SBC dashboard' | transloco }}</h1>
+        <p>{{ 'Monitor SBC providers, servers, trunks, routes and policies.' | transloco }}</p>
+      </div>
+      <div class="header-actions">
+        <app-refresh-button [loading]="loading()" (refresh)="refresh()" />
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="dashboard-loading">
+        <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
+      </div>
+    } @else {
+      <div class="metric-grid">
+        @for (metric of metrics(); track metric.key) {
+          <article class="metric-card">
+            <mat-icon>{{ metric.icon }}</mat-icon>
+            <div>
+              <span>{{ metric.label | transloco }}</span>
+              <strong>{{ metric.total }}</strong>
+              <small>{{ metric.active }} {{ 'Active' | transloco }}</small>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </mat-card>
+</section>
