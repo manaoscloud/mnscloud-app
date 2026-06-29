@@ -1228,7 +1228,7 @@ export class MainLayout {
             },
             {
               id: 'voip/did/operator',
-              label: 'Operators',
+              label: 'DID operators',
               icon: 'badge',
               route: '/voip/did/operator',
               masterRoute: '/system/did/operator',

@@ -22,11 +22,11 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
     uuidField: 'VddUUID',
     pageTitle: 'DID numbers',
     pageDescription: system
-      ? 'Manage global DID stock and operator assignment.'
+      ? 'Manage global DID stock and DID operator assignment.'
       : 'Manage DID numbers contracted by this tenant.',
     createTitle: 'New DID number',
     editTitle: 'Edit DID number',
-    dialogDescription: 'Maintain DID number identity and operator assignment.',
+    dialogDescription: 'Maintain DID number identity and DID operator assignment.',
     searchPlaceholder: 'Search',
     emptyLabel: 'No DID numbers found.',
     deleteTitle: 'Delete DID number',
@@ -53,7 +53,7 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
       { id: 'number', label: 'Number', kind: 'identity', field: 'VddNumber', uuidField: 'VddUUID' },
       {
         id: 'operator',
-        label: 'Operator',
+        label: 'DID operator',
         kind: 'related',
         uuidField: 'VoipDidOperatorVdoUUID',
         lookupKey: 'operatorUUID',
@@ -75,7 +75,7 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
         key: 'operatorUUID',
         source: 'VoipDidOperatorVdoUUID',
         payloadKey: 'operatorUUID',
-        label: 'Operator',
+        label: 'DID operator',
         type: 'search-select',
         required: true,
         span: 1,

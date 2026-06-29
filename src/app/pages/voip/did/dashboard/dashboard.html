@@ -58,7 +58,7 @@
         <section class="dashboard-panel">
           <div class="panel-header">
             <div>
-              <h2>{{ 'Operator Readiness' | transloco }}</h2>
+              <h2>{{ 'DID operator readiness' | transloco }}</h2>
               <p>
                 {{
                   'DID operators with inventory, availability, and assignment coverage.' | transloco
@@ -67,7 +67,7 @@
             </div>
             <a mat-stroked-button color="primary" [routerLink]="routeTo('operator')">
               <mat-icon>open_in_new</mat-icon>
-              {{ 'Operator' | transloco }}
+              {{ 'DID operator' | transloco }}
             </a>
           </div>
 
@@ -82,7 +82,7 @@
             >
               <ng-container matColumnDef="operator">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Operator' | transloco }}
+                  {{ 'DID operator' | transloco }}
                 </th>
                 <td mat-cell *matCellDef="let row">
                   <strong>{{ row.name }}</strong>

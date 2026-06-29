@@ -304,7 +304,7 @@ export class VoipDidDashboardPage {
       state: this.numberSummary().active > 0 ? 'good' : 'warn',
     },
     {
-      label: 'DID Operators',
+      label: 'DID operators',
       value: `${this.operatorSummary().active} / ${this.operatorSummary().total}`,
       detailValue: String(this.operatorRows().reduce((sum, row) => sum + row.issues, 0)),
       detailLabel: 'issues',
