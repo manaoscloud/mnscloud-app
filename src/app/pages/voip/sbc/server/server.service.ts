@@ -8,6 +8,9 @@ export type VoipSbcServerItem = {
   VbsNodeUUID?: string | null;
   VbsName: string;
   VbsEngine: string;
+  RealtimeMediaServerRmsUUID?: string | null;
+  MediaServerName?: string | null;
+  RtpengineSocket?: string | null;
   VbsHostname?: string | null;
   VbsPublicIP?: string | null;
   VbsPrivateIP?: string | null;

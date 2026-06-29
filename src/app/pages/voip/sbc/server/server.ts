@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
@@ -17,6 +18,7 @@ import {
   type CrudDialogBinding,
 } from '../../../../shared/dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { ApiService } from '../../../../services/api.service';
 import { VoipSbcServerItem, VoipSbcServerService } from './server.service';
 
 const ENGINE_OPTIONS = [
@@ -48,6 +50,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     status: 1,
     engine: 'opensips',
+    mediaServerUUID: '',
     name: '',
     nodeUUID: '',
     hostname: '',
@@ -59,6 +62,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'VbsName', uuidField: 'VbsUUID' },
     { id: 'engine', label: 'Engine', field: 'VbsEngine' },
+    { id: 'media', label: 'Media', field: 'MediaServerName' },
     { id: 'hostname', label: 'Hostname', field: 'VbsHostname' },
     { id: 'publicIP', label: 'Public IP', field: 'VbsPublicIP' },
     { id: 'privateIP', label: 'Private IP', field: 'VbsPrivateIP' },
@@ -81,6 +85,14 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       type: 'select',
       options: ENGINE_OPTIONS,
       required: true,
+      span: 1,
+    },
+    {
+      key: 'mediaServerUUID',
+      source: 'RealtimeMediaServerRmsUUID',
+      payloadKey: 'mediaServerUUID',
+      label: 'Servidor media',
+      type: 'search-select',
       span: 1,
     },
     { key: 'name', source: 'VbsName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
@@ -129,10 +141,23 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
 })
 export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerItem> {
   private readonly serverApi = inject(VoipSbcServerService);
+  private readonly rawApi = inject(ApiService);
+  readonly mediaServerOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly lookupLoading = signal(false);
   private installDialogBinding: CrudDialogBinding | null = null;
 
   constructor() {
     super(SERVER_CONFIG);
+    void this.loadMediaServers();
+  }
+
+  override fieldLoading(field: { key: string }): boolean {
+    return field.key === 'mediaServerUUID' ? this.lookupLoading() : false;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'mediaServerUUID') return this.mediaServerOptions();
+    return [];
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipSbcServerItem) {
@@ -208,6 +233,12 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
         { label: 'Server', value: row.VbsName },
         { label: 'Engine', value: row.VbsEngine },
         { label: 'Node UUID', value: data['nodeUUID'] ?? row.VbsNodeUUID, monospace: true },
+        { label: 'Media Server', value: row.MediaServerName },
+        {
+          label: 'RTP engine',
+          value: data['rtpengineSocket'] ?? row.RtpengineSocket,
+          monospace: true,
+        },
       ],
     };
   }
@@ -218,4 +249,55 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
     const item = data?.item;
     return item && typeof item === 'object' ? (item as VoipSbcServerItem) : null;
   }
+
+  private async loadMediaServers(): Promise<void> {
+    this.lookupLoading.set(true);
+    try {
+      const response = await this.rawApi.get<any>(
+        'system/realtime/media/servers?status=1&limit=5000',
+      );
+      const rows = extractItems(response);
+      this.mediaServerOptions.set(
+        rows
+          .map((row) =>
+            option(row.RmsUUID ?? row.uuid, row.RmsName ?? row.name, [
+              row.RmsHostname ?? row.hostname,
+              row.RmsControlIP ?? row.controlIP,
+              row.RmsEngine ?? row.engine,
+              row.RtpengineSocket ?? row.rtpengineSocket,
+            ]),
+          )
+          .filter(Boolean) as ConfigurableCrudOption[],
+      );
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+}
+
+function extractItems(response: any): any[] {
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
+  const normalizedValue = String(value ?? '').trim();
+  const normalizedLabel = String(label ?? '').trim();
+  if (!normalizedValue || !normalizedLabel) return null;
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }
