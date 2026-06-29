@@ -83,6 +83,7 @@ export type ConfigurableCrudFieldType =
   | 'phone'
   | 'date'
   | 'select'
+  | 'multi-select'
   | 'search-select'
   | 'status'
   | 'textarea';
@@ -475,6 +476,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   fieldValueString(key: string): string {
     const value = this.formValues()[key];
     return value === null || value === undefined ? '' : String(value);
+  }
+
+  fieldValueArray(key: string): readonly unknown[] {
+    const value = this.formValues()[key];
+    return Array.isArray(value) ? value : [];
   }
 
   setFieldValue(key: string, value: unknown): void {

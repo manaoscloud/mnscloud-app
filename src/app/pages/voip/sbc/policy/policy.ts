@@ -18,6 +18,30 @@ const POLICY_TYPE_OPTIONS = [
   { value: 'routing', label: 'Routing' },
 ];
 
+const CODEC_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'PCMU', label: 'PCMU' },
+  { value: 'PCMA', label: 'PCMA' },
+  { value: 'G729', label: 'G.729' },
+  { value: 'G722', label: 'G.722' },
+  { value: 'OPUS', label: 'Opus' },
+  { value: 'GSM', label: 'GSM' },
+  { value: 'AMR', label: 'AMR' },
+  { value: 'AMR-WB', label: 'AMR-WB' },
+  { value: 'ILBC', label: 'iLBC' },
+  { value: 'SPEEX', label: 'Speex' },
+  { value: 'TELEPHONE-EVENT', label: 'Telephone event' },
+];
+
+const CODEC_MODE_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'passthrough', label: 'Passthrough' },
+  { value: 'filter', label: 'Filter' },
+  { value: 'prefer', label: 'Prefer' },
+  { value: 'transcode', label: 'Transcode' },
+];
+
+const DEFAULT_ALLOWED_CODECS = ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'];
+const DEFAULT_PREFERRED_CODECS = ['PCMU', 'PCMA'];
+
 const POLICY_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/policies',
   uuidField: 'VpoUUID',
@@ -45,6 +69,10 @@ const POLICY_CONFIG: ConfigurableCrudConfig = {
     name: '',
     priority: 100,
     config: '',
+    codecMode: 'filter',
+    allowedCodecs: DEFAULT_ALLOWED_CODECS,
+    preferredCodecs: DEFAULT_PREFERRED_CODECS,
+    transcodeCodecs: [],
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'VpoName', uuidField: 'VpoUUID' },
@@ -97,6 +125,34 @@ const POLICY_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'codecMode',
+      label: 'Codec mode',
+      type: 'select',
+      span: 1,
+      options: CODEC_MODE_OPTIONS,
+    },
+    {
+      key: 'allowedCodecs',
+      label: 'Allowed codecs',
+      type: 'multi-select',
+      span: 2,
+      options: CODEC_OPTIONS,
+    },
+    {
+      key: 'preferredCodecs',
+      label: 'Preferred codecs',
+      type: 'multi-select',
+      span: 2,
+      options: CODEC_OPTIONS,
+    },
+    {
+      key: 'transcodeCodecs',
+      label: 'Transcode codecs',
+      type: 'multi-select',
+      span: 2,
+      options: CODEC_OPTIONS,
+    },
+    {
       key: 'config',
       source: 'VpoConfig',
       payloadKey: 'config',
@@ -138,11 +194,24 @@ export class VoipSbcPolicyPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return {
+    const next: ConfigurableCrudRecord = {
       ...payload,
       priority: Number(payload['priority'] || 0),
       status: Number(payload['status']),
     };
+    if (String(next['type'] ?? '') === 'codec') {
+      next['config'] = buildCodecConfig(next);
+    }
+    delete next['codecMode'];
+    delete next['allowedCodecs'];
+    delete next['preferredCodecs'];
+    delete next['transcodeCodecs'];
+    return next;
+  }
+
+  override startEdit(row: ConfigurableCrudRecord): void {
+    super.startEdit(row);
+    this.patchFormValues(codecFormValues(row['VpoConfig']));
   }
 
   private async loadLookups(): Promise<void> {
@@ -174,6 +243,50 @@ export class VoipSbcPolicyPage extends ConfigurableCrudPageBase<ConfigurableCrud
     }
     return options.sort((left, right) => left.label.localeCompare(right.label));
   }
+}
+
+function codecFormValues(value: unknown): ConfigurableCrudRecord {
+  const config = parseConfig(value);
+  return {
+    codecMode: stringValue(config['mode']) || 'filter',
+    allowedCodecs: codecArray(config['allowedCodecs'], DEFAULT_ALLOWED_CODECS),
+    preferredCodecs: codecArray(config['preferredCodecs'], DEFAULT_PREFERRED_CODECS),
+    transcodeCodecs: codecArray(config['transcodeCodecs'], []),
+  };
+}
+
+function buildCodecConfig(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+  return {
+    mode: stringValue(payload['codecMode']) || 'filter',
+    allowedCodecs: codecArray(payload['allowedCodecs'], []),
+    preferredCodecs: codecArray(payload['preferredCodecs'], []),
+    transcodeCodecs: codecArray(payload['transcodeCodecs'], []),
+  };
+}
+
+function parseConfig(value: unknown): ConfigurableCrudRecord {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as ConfigurableCrudRecord;
+  }
+  if (typeof value !== 'string') return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as ConfigurableCrudRecord)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function codecArray(value: unknown, fallback: readonly string[]): string[] {
+  const values = Array.isArray(value) ? value : fallback;
+  const allowed = new Set(CODEC_OPTIONS.map((option) => String(option.value)));
+  return [...new Set(values.map(stringValue).filter((codec) => codec && allowed.has(codec)))];
+}
+
+function stringValue(value: unknown): string {
+  return String(value ?? '').trim();
 }
 
 function extractItems(response: any): any[] {

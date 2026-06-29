@@ -253,6 +253,25 @@
                     </mat-select>
                   </mat-form-field>
                 }
+                @case ('multi-select') {
+                  <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                    <mat-label
+                      >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                    >
+                    <mat-select
+                      multiple
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (selectionChange)="setFieldValue(field.key, $event.value)"
+                    >
+                      @for (option of fieldOptions(field); track option.value) {
+                        <mat-option [value]="option.value">{{
+                          option.label | transloco
+                        }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                }
                 @default {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
@@ -395,6 +414,26 @@
                               </mat-select>
                             </mat-form-field>
                           }
+                          @case ('multi-select') {
+                            <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                              <mat-label
+                                >{{ field.label | transloco
+                                }}{{ field.required ? '*' : '' }}</mat-label
+                              >
+                              <mat-select
+                                multiple
+                                [disabled]="isFieldDisabled(field)"
+                                [value]="fieldValueArray(field.key)"
+                                (selectionChange)="setFieldValue(field.key, $event.value)"
+                              >
+                                @for (option of fieldOptions(field); track option.value) {
+                                  <mat-option [value]="option.value">{{
+                                    option.label | transloco
+                                  }}</mat-option>
+                                }
+                              </mat-select>
+                            </mat-form-field>
+                          }
                           @default {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label>{{ field.label | transloco }}</mat-label>
@@ -485,6 +524,24 @@
                       >
                       <mat-select
                         [value]="fieldValue(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @case ('multi-select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        multiple
+                        [value]="fieldValueArray(field.key)"
                         (selectionChange)="setFieldValue(field.key, $event.value)"
                       >
                         @for (option of fieldOptions(field); track option.value) {
