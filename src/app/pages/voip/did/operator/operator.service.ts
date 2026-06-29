@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+
 import { ApiService } from '../../../../services/api.service';
 
 export type VoipDidOperatorItem = {
@@ -21,10 +22,15 @@ export class VoipDidOperatorService {
     return system ? 'system/voip/did/operators' : 'voip/did/operators';
   }
 
-  list(params: { search?: string; status?: number; limit?: number; offset?: number } = {}, system = false) {
+  list(
+    params: { search?: string; status?: number; limit?: number; offset?: number } = {},
+    system = false,
+  ) {
     const query = new URLSearchParams();
     if (params.search?.trim()) query.set('search', params.search.trim());
-    if (params.status !== undefined && params.status !== null) query.set('status', String(params.status));
+    if (params.status !== undefined && params.status !== null) {
+      query.set('status', String(params.status));
+    }
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     const suffix = query.toString();

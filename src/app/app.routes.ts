@@ -851,6 +851,15 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'voip' },
                   },
                   {
+                    path: 'operator',
+                    loadComponent: () =>
+                      import('./pages/voip/did/operator/operator').then(
+                        (m) => m.VoipDidOperatorPage,
+                      ),
+                    title: 'VoIP • DID • Operator | mnscloud',
+                    data: { scope: 'tenant', context: 'voip' },
+                  },
+                  {
                     path: 'number',
                     loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
                     title: 'VoIP • DID Number | mnscloud',

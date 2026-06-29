@@ -379,7 +379,6 @@ export class VoipDidDashboardPage {
 
   routeTo(section: 'operator' | 'number' | 'external') {
     if (this.isMaster()) return ['/system/did', section];
-    if (section === 'operator') return ['/system/did/operator'];
     return ['/voip/did', section];
   }
 

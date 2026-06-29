@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+
 import { ApiService } from '../../../../services/api.service';
 
 export type VoipDidExternalItem = {
@@ -54,6 +55,7 @@ export class VoipDidExternalService {
   list(
     params: {
       search?: string;
+      status?: number;
       validationStatus?: string;
       billingStatus?: string;
       limit?: number;
@@ -63,6 +65,9 @@ export class VoipDidExternalService {
   ) {
     const query = new URLSearchParams();
     if (params.search?.trim()) query.set('search', params.search.trim());
+    if (params.status !== undefined && params.status !== null) {
+      query.set('status', String(params.status));
+    }
     if (params.validationStatus) query.set('validationStatus', params.validationStatus);
     if (params.billingStatus) query.set('billingStatus', params.billingStatus);
     if (params.limit) query.set('limit', String(params.limit));

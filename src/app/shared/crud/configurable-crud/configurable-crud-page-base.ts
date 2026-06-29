@@ -185,6 +185,10 @@ export type ConfigurableCrudConfig = {
   addressSections?: readonly ConfigurableCrudAddressSection[];
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
   rowActions?: readonly ConfigurableCrudRowAction[];
+  canCreate?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  bulkDelete?: boolean;
 };
 
 export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
@@ -231,9 +235,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly itemsResource;
 
   readonly displayedColumns = computed(() => [
-    'select',
+    ...(this.bulkDeleteEnabled() ? ['select'] : []),
     ...this.config.columns.map((column) => column.id),
-    'actions',
+    ...(this.hasRowActions() ? ['actions'] : []),
   ]);
   readonly rows = computed(() => this.normalizeRows(this.itemsResource.value() as T[]));
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
@@ -290,6 +294,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly dialogTitle = computed(() =>
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
+  );
+  readonly canCreate = computed(() => this.config.canCreate !== false);
+  readonly canEdit = computed(() => this.config.canEdit !== false);
+  readonly canDelete = computed(() => this.config.canDelete !== false);
+  readonly bulkDeleteEnabled = computed(() => this.canDelete() && this.config.bulkDelete !== false);
+  readonly hasRowActions = computed(
+    () => this.canEdit() || this.canDelete() || Boolean(this.config.rowActions?.length),
   );
 
   protected constructor(config: ConfigurableCrudConfig) {
@@ -368,6 +379,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   startCreate(): void {
+    if (!this.canCreate()) return;
     this.editingRecord.set(null);
     this.formValues.set(this.emptyFormValues());
     this.enabledCopyActions.set(this.defaultCopyActionKeys());
@@ -378,6 +390,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   startEdit(row: T): void {
+    if (!this.canEdit()) return;
     this.editingRecord.set(row);
     this.formValues.set(this.formValuesFromRecord(row));
     this.enabledCopyActions.set(this.inferredCopyActionKeys());
@@ -386,6 +399,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   async saveItem(saveAndNew = false): Promise<void> {
+    if (this.editingRecord() ? !this.canEdit() : !this.canCreate()) return;
     this.copyEnabledAddressValues();
     const payload = this.augmentPayload(this.buildPayload());
     if (!this.validatePayload(payload)) return;
@@ -425,6 +439,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   async deleteItem(row: T): Promise<void> {
+    if (!this.canDelete()) return;
     const confirmed = await this.confirm(this.config.deleteTitle, this.config.deleteMessage);
     if (!confirmed) return;
 
@@ -449,6 +464,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected afterSave(_context: ConfigurableCrudSaveContext<T>): void | Promise<void> {}
 
   async deleteSelectedItems(): Promise<void> {
+    if (!this.bulkDeleteEnabled()) return;
     const ids = [...this.selectedUUIDs()];
     if (!ids.length) return;
 
