@@ -29,7 +29,7 @@ function read(file) {
 }
 
 function changedFiles(base, head) {
-  const output = execFileSync('git', ['diff', '--name-only', `${base}...${head}`], {
+  const output = execFileSync('git', ['diff', '--name-only', '--diff-filter=ACMRT', `${base}...${head}`], {
     cwd: root,
     encoding: 'utf8',
   });
@@ -42,6 +42,7 @@ function changedFiles(base, head) {
 function nearestCrudRoot(file) {
   let current = dirname(resolve(root, file));
   while (current.startsWith(resolve(root, 'src/app/pages'))) {
+    if (!existsSync(current)) return null;
     const htmlFiles = readdirSync(current, { withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith('.html'))
       .map((entry) => join(current, entry.name));
@@ -65,6 +66,7 @@ function targetsFromArgs() {
   const roots = new Set();
   for (const file of changedFiles(base, head)) {
     if (!/^src\/app\/pages\/.*\.(html|scss|ts)$/.test(file)) continue;
+    if (file.endsWith('.service.ts')) continue;
     const rootDir = nearestCrudRoot(file);
     if (rootDir) roots.add(rootDir);
   }
