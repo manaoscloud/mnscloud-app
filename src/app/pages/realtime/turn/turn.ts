@@ -99,12 +99,8 @@ const CERTIFICATE_PROVIDER_OPTIONS = [
 
 const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
-  { key: 'name', label: 'Name', required: true },
   { key: 'realtimeDomainUUID', label: 'Primary Realm Domain', type: 'domain' },
-  { key: 'nodeUUID', label: 'Node UUID' },
-  { key: 'hostname', label: 'Hostname' },
-  { key: 'publicIP', label: 'Public IP' },
-  { key: 'privateIP', label: 'Private IP' },
+  { key: 'name', label: 'Name', required: true },
 ];
 
 const DOMAIN_RECORD_FIELDS: Field[] = [
@@ -126,6 +122,10 @@ const DOMAIN_RECORD_FIELDS: Field[] = [
 ];
 
 const NETWORK_FIELDS: Field[] = [
+  { key: 'nodeUUID', label: 'Node UUID' },
+  { key: 'hostname', label: 'Hostname' },
+  { key: 'publicIP', label: 'Public IP' },
+  { key: 'privateIP', label: 'Private IP' },
   { key: 'listeningIP', label: 'Listening IP' },
   { key: 'externalIP', label: 'External IP' },
   { key: 'listeningPort', label: 'Listening Port', type: 'number' },

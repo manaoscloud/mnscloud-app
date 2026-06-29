@@ -91,12 +91,8 @@ const ENGINE_OPTIONS = [
 const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
   { key: 'engine', label: 'Engine', type: 'select', options: ENGINE_OPTIONS },
-  { key: 'name', label: 'Name', required: true },
   { key: 'mediaDomainUUID', label: 'Media Domain', type: 'mediaDomain' },
-  { key: 'nodeUUID', label: 'Node UUID' },
-  { key: 'hostname', label: 'Hostname' },
-  { key: 'publicIP', label: 'Public IP' },
-  { key: 'privateIP', label: 'Private IP' },
+  { key: 'name', label: 'Name', required: true },
 ];
 
 const DOMAIN_RECORD_FIELDS: Field[] = [
@@ -109,6 +105,10 @@ const DOMAIN_NOTES_FIELDS: Field[] = [
 ];
 
 const NETWORK_FIELDS: Field[] = [
+  { key: 'nodeUUID', label: 'Node UUID' },
+  { key: 'hostname', label: 'Hostname' },
+  { key: 'publicIP', label: 'Public IP' },
+  { key: 'privateIP', label: 'Private IP' },
   { key: 'controlIP', label: 'Control IP' },
   { key: 'controlPort', label: 'Control Port', type: 'number' },
   { key: 'minMediaPort', label: 'Min Media Port', type: 'number' },

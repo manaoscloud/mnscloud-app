@@ -200,7 +200,7 @@
             class="form-grid tab-content"
             (submit)="submit(); $event.preventDefault()"
           >
-            @for (field of config().fields; track field.key) {
+            @for (field of recordFields(); track field.key) {
               @if (field.type !== 'textarea') {
                 @if (field.type === 'lookup' && field.lookup) {
                   <mns-search-select-field
@@ -237,18 +237,30 @@
             }
           </form>
         </mat-tab>
+        @if (hasNetworkFields()) {
+          <mat-tab [label]="'Network' | transloco">
+            <div class="form-grid tab-content">
+              @for (field of networkFields(); track field.key) {
+                <mns-text-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''"
+                  [type]="field.type === 'number' ? 'number' : 'text'"
+                />
+              }
+            </div>
+          </mat-tab>
+        }
         @if (hasTextareaFields()) {
           <mat-tab [label]="textareaTabLabel()">
             <div class="form-grid tab-content">
-              @for (field of config().fields; track field.key) {
-                @if (field.type === 'textarea') {
-                  <mns-textarea-field
-                    [field]="formField(field.key)"
-                    [label]="field.label | transloco"
-                    [fieldClass]="field.span || ''"
-                    [rows]="10"
-                  />
-                }
+              @for (field of textareaFields(); track field.key) {
+                <mns-textarea-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''"
+                  [rows]="10"
+                />
               }
             </div>
           </mat-tab>
@@ -264,8 +276,8 @@
           class="save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="webrtcForm"
+          type="button"
+          (click)="submit()"
           [disabled]="!isFormValid() || saving()"
         >
           <mat-icon>save</mat-icon>Save

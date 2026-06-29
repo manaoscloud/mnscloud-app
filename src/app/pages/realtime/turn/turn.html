@@ -319,8 +319,8 @@
           class="save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="turnForm"
+          type="button"
+          (click)="submit()"
           [disabled]="!isFormValid() || saving()"
         >
           <mat-icon>save</mat-icon>

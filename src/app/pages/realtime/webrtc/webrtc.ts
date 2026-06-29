@@ -59,6 +59,7 @@ type Field = {
   lookup?: LookupKey;
   required?: boolean;
   span?: string;
+  tab?: 'record' | 'network' | 'notes';
 };
 type SignalFormField = SignalField<any, any>;
 
@@ -143,14 +144,14 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         lookup: 'mediaServers',
         span: 'span-1',
       },
-      { key: 'nodeUUID', label: 'Node UUID' },
-      { key: 'hostname', label: 'Hostname' },
-      { key: 'publicIP', label: 'Public IP' },
-      { key: 'privateIP', label: 'Private IP' },
-      { key: 'baseUrl', label: 'Base URL' },
-      { key: 'version', label: 'Version' },
-      { key: 'configJson', label: 'Config JSON', type: 'textarea', span: 'span-4' },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4' },
+      { key: 'nodeUUID', label: 'Node UUID', tab: 'network' },
+      { key: 'hostname', label: 'Hostname', tab: 'network' },
+      { key: 'publicIP', label: 'Public IP', tab: 'network' },
+      { key: 'privateIP', label: 'Private IP', tab: 'network' },
+      { key: 'baseUrl', label: 'Base URL', tab: 'network' },
+      { key: 'version', label: 'Version', tab: 'network' },
+      { key: 'configJson', label: 'Config JSON', type: 'textarea', span: 'span-4', tab: 'notes' },
+      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
     ],
   },
   parameters: {
@@ -171,8 +172,8 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         options: ['string', 'number', 'boolean', 'json'],
       },
       { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
-      { key: 'valueJson', label: 'Value', type: 'textarea', span: 'span-4' },
-      { key: 'description', label: 'Description', type: 'textarea', span: 'span-4' },
+      { key: 'valueJson', label: 'Value', type: 'textarea', span: 'span-4', tab: 'notes' },
+      { key: 'description', label: 'Description', type: 'textarea', span: 'span-4', tab: 'notes' },
     ],
   },
   domains: {
@@ -213,7 +214,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         options: ['active', 'inactive'],
       },
       { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4' },
+      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
     ],
   },
 };
@@ -519,11 +520,23 @@ export class RealtimeWebRtcPage {
     if (key === 'mediaServers') return 'Search media servers';
     return 'Search servers';
   }
+  recordFields() {
+    return this.config().fields.filter((field) => !field.tab || field.tab === 'record');
+  }
+  networkFields() {
+    return this.config().fields.filter((field) => field.tab === 'network');
+  }
+  textareaFields() {
+    return this.config().fields.filter((field) => field.type === 'textarea');
+  }
+  hasNetworkFields() {
+    return this.networkFields().length > 0;
+  }
   hasTextareaFields() {
-    return this.config().fields.some((field) => field.type === 'textarea');
+    return this.textareaFields().length > 0;
   }
   textareaTabLabel() {
-    return this.config().fields.some((field) => field.key.toLowerCase().includes('notes'))
+    return this.textareaFields().some((field) => field.key.toLowerCase().includes('notes'))
       ? 'Notes'
       : 'Config';
   }
