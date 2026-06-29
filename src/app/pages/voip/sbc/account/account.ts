@@ -9,138 +9,122 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const POLICY_TYPE_OPTIONS = [
-  { value: 'acl', label: 'ACL' },
-  { value: 'rate_limit', label: 'Rate limit' },
-  { value: 'codec', label: 'Codec' },
-  { value: 'nat', label: 'NAT' },
-  { value: 'header', label: 'Header' },
-  { value: 'routing', label: 'Routing' },
+const YES_NO_OPTIONS = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
 ];
 
-const POLICY_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'voip/sbc/policies',
-  uuidField: 'VpoUUID',
-  pageTitle: 'SBC policies',
-  pageDescription: 'Manage SBC policy rules for tenant traffic.',
-  createTitle: 'New SBC policy',
-  editTitle: 'Edit SBC policy',
-  dialogDescription: 'Maintain policy type, priority and JSON configuration.',
+const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'voip/sbc/accounts',
+  uuidField: 'VsaUUID',
+  pageTitle: 'SBC',
+  pageDescription: 'Manage the tenant SBC assignment linked to authorized master servers.',
+  createTitle: 'New SBC',
+  editTitle: 'Edit SBC',
+  dialogDescription: 'Maintain tenant SBC identity and linked runtime server.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No SBC policies found.',
-  deleteTitle: 'Delete SBC policy',
-  deleteMessage: 'Are you sure you want to delete this SBC policy?',
-  deleteSelectedTitle: 'Delete selected SBC policies',
-  deleteSelectedMessage: 'Delete {count} selected SBC policies?',
-  savedMessage: 'SBC policy saved successfully.',
-  deletedMessage: 'SBC policy deleted successfully.',
-  deleteFailedMessage: 'Failed to delete SBC policy.',
+  emptyLabel: 'No SBC accounts found.',
+  deleteTitle: 'Delete SBC',
+  deleteMessage: 'Are you sure you want to delete this SBC?',
+  deleteSelectedTitle: 'Delete selected SBC accounts',
+  deleteSelectedMessage: 'Delete {count} selected SBC accounts?',
+  savedMessage: 'SBC saved successfully.',
+  deletedMessage: 'SBC deleted successfully.',
+  deleteFailedMessage: 'Failed to delete SBC.',
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
   initialValues: {
-    accountUUID: '',
     status: 1,
-    type: 'routing',
+    isDefault: 0,
+    serverUUID: '',
     name: '',
-    priority: 100,
-    config: '',
+    notes: '',
   },
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'VpoName', uuidField: 'VpoUUID' },
+    { id: 'name', label: 'Name', kind: 'identity', field: 'VsaName', uuidField: 'VsaUUID' },
     {
-      id: 'account',
-      label: 'SBC',
+      id: 'server',
+      label: 'Server',
       kind: 'related',
-      uuidField: 'VoipSbcAccountVsaUUID',
-      lookupKey: 'accountUUID',
+      uuidField: 'VoipSbcServerVbsUUID',
+      lookupKey: 'serverUUID',
     },
-    { id: 'server', label: 'Server', kind: 'text', field: 'ServerName' },
-    { id: 'type', label: 'Type', field: 'VpoType' },
-    { id: 'priority', label: 'Priority', field: 'VpoPriority' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'VpoStatus', className: 'status-col' },
+    { id: 'default', label: 'Default', field: 'VsaIsDefault' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'VsaStatus', className: 'status-col' },
   ],
   fields: [
     {
-      key: 'accountUUID',
-      source: 'VoipSbcAccountVsaUUID',
-      payloadKey: 'accountUUID',
-      label: 'SBC',
-      type: 'search-select',
-      required: true,
-      span: 1,
-    },
-    {
       key: 'status',
-      source: 'VpoStatus',
+      source: 'VsaStatus',
       payloadKey: 'status',
       label: 'Status',
       type: 'status',
       span: 1,
     },
     {
-      key: 'type',
-      source: 'VpoType',
-      payloadKey: 'type',
-      label: 'Type',
+      key: 'isDefault',
+      source: 'VsaIsDefault',
+      payloadKey: 'isDefault',
+      label: 'Default',
       type: 'select',
-      options: POLICY_TYPE_OPTIONS,
-      span: 1,
-    },
-    { key: 'name', source: 'VpoName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    {
-      key: 'priority',
-      source: 'VpoPriority',
-      payloadKey: 'priority',
-      label: 'Priority',
-      type: 'number',
+      options: YES_NO_OPTIONS,
       span: 1,
     },
     {
-      key: 'config',
-      source: 'VpoConfig',
-      payloadKey: 'config',
-      label: 'Config JSON',
+      key: 'serverUUID',
+      source: 'VoipSbcServerVbsUUID',
+      payloadKey: 'serverUUID',
+      label: 'Server',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    { key: 'name', source: 'VsaName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'notes',
+      source: 'VsaNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
       type: 'textarea',
       tab: 'notes',
       span: 4,
       rows: 4,
-      format: 'json',
     },
   ],
 };
 
 @Component({
-  selector: 'app-voip-sbc-policy',
+  selector: 'app-voip-sbc-account',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipSbcPolicyPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class VoipSbcAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
 
-  readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
   constructor() {
-    super(POLICY_CONFIG);
+    super(ACCOUNT_CONFIG);
     void this.loadLookups();
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return field.key === 'accountUUID' ? this.lookupLoading() : false;
+    return field.key === 'serverUUID' ? this.lookupLoading() : false;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'accountUUID') return this.accountOptions();
+    if (key === 'serverUUID') return this.serverOptions();
     return [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       ...payload,
-      priority: Number(payload['priority'] || 0),
+      isDefault: Number(payload['isDefault']) === 1,
       status: Number(payload['status']),
     };
   }
@@ -148,9 +132,9 @@ export class VoipSbcPolicyPage extends ConfigurableCrudPageBase<ConfigurableCrud
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      this.accountOptions.set(
-        await this.fetchPaged('voip/sbc/accounts?status=1', (row) =>
-          option(row.VsaUUID, row.VsaName, [row.ServerName, row.ServerEngine, row.ServerPublicIP]),
+      this.serverOptions.set(
+        await this.fetchPaged('voip/sbc/servers?status=1', (row) =>
+          option(row.VbsUUID, row.VbsName, [row.VbsEngine, row.VbsHostname, row.VbsPublicIP]),
         ),
       );
     } finally {

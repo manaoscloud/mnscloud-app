@@ -888,10 +888,10 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
-                path: 'voip/sbc/provider',
+                path: 'voip/sbc/account',
                 loadComponent: () =>
-                  import('./pages/voip/sbc/provider/provider').then((m) => m.VoipSbcProviderPage),
-                title: 'VoIP • SBC • Provider | mnscloud',
+                  import('./pages/voip/sbc/account/account').then((m) => m.VoipSbcAccountPage),
+                title: 'VoIP • SBC | mnscloud',
                 data: { scope: 'tenant', context: 'voip' },
               },
               {

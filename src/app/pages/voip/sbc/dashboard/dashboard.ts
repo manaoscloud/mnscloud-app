@@ -30,7 +30,7 @@ type SbcAction = {
 };
 
 type SbcSnapshot = {
-  providers: any[];
+  accounts: any[];
   servers: any[];
   trunks: any[];
   routes: any[];
@@ -38,7 +38,7 @@ type SbcSnapshot = {
 };
 
 const EMPTY_SNAPSHOT: SbcSnapshot = {
-  providers: [],
+  accounts: [],
   servers: [],
   trunks: [],
   routes: [],
@@ -79,7 +79,14 @@ export class VoipSbcDashboardPage {
   readonly metrics = computed<SbcMetric[]>(() => {
     const snapshot = this.snapshot();
     return [
-      this.metric('providers', 'Providers', 'hub', snapshot.providers, 'VbpStatus', 'provider'),
+      this.metric(
+        'accounts',
+        'SBC',
+        'settings_input_component',
+        snapshot.accounts,
+        'VsaStatus',
+        'account',
+      ),
       this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus', 'server'),
       this.metric('trunks', 'Trunks', 'settings_ethernet', snapshot.trunks, 'VstStatus', 'trunk'),
       this.metric('routes', 'Routes', 'alt_route', snapshot.routes, 'VbrStatus', 'route'),
@@ -100,16 +107,16 @@ export class VoipSbcDashboardPage {
         ]
       : [
           {
-            key: 'provider',
-            label: 'Providers',
-            description: 'Define provider profiles consumed by trunks.',
-            icon: 'hub',
-            route: `${this.baseRoute()}/provider`,
+            key: 'account',
+            label: 'SBC',
+            description: 'Select the authorized SBC server for this tenant.',
+            icon: 'settings_input_component',
+            route: `${this.baseRoute()}/account`,
           },
           {
             key: 'trunk',
             label: 'Trunks',
-            description: 'Connect providers to SBC servers and transports.',
+            description: 'Connect tenant SBC accounts to transports.',
             icon: 'settings_ethernet',
             route: `${this.baseRoute()}/trunk`,
           },
@@ -136,14 +143,23 @@ export class VoipSbcDashboardPage {
 
   private async loadSnapshot(): Promise<SbcSnapshot> {
     try {
-      const [providers, servers, trunks, routes, policies] = await Promise.all([
-        this.fetchItems(`${this.endpointPrefix}/providers?limit=500&offset=0`),
+      const master = this.route.snapshot.data['scope'] === 'master';
+      const [accounts, servers, trunks, routes, policies] = await Promise.all([
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
         this.fetchItems(`${this.endpointPrefix}/servers?limit=500&offset=0`),
-        this.fetchItems(`${this.endpointPrefix}/trunks?limit=500&offset=0`),
-        this.fetchItems(`${this.endpointPrefix}/routes?limit=500&offset=0`),
-        this.fetchItems(`${this.endpointPrefix}/policies?limit=500&offset=0`),
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/trunks?limit=500&offset=0`),
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/routes?limit=500&offset=0`),
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/policies?limit=500&offset=0`),
       ]);
-      return { providers, servers, trunks, routes, policies };
+      return { accounts, servers, trunks, routes, policies };
     } catch (error) {
       this.snack.error('Failed to load SBC dashboard.');
       throw error;
@@ -164,7 +180,8 @@ export class VoipSbcDashboardPage {
     routeSegment: string,
   ): SbcMetric {
     const master = this.route.snapshot.data['scope'] === 'master';
-    const route = master && routeSegment !== 'server' ? null : `${this.baseRoute()}/${routeSegment}`;
+    const route =
+      master && routeSegment !== 'server' ? null : `${this.baseRoute()}/${routeSegment}`;
     return {
       key,
       label,

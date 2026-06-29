@@ -141,7 +141,7 @@ export class VoipSbcRoutePage extends ConfigurableCrudPageBase<ConfigurableCrudR
     try {
       this.trunkOptions.set(
         await this.fetchPaged('voip/sbc/trunks?status=1', (row) =>
-          option(row.VstUUID, row.VstName, [row.ProviderName, row.VstHost]),
+          option(row.VstUUID, row.VstName, [row.AccountName, row.VstHost]),
         ),
       );
     } finally {

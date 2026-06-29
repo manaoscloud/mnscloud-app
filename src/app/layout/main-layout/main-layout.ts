@@ -1271,10 +1271,10 @@ export class MainLayout {
               roles: ['MASTER'],
             },
             {
-              id: 'voip/sbc/provider',
-              label: 'Providers',
-              icon: 'hub',
-              route: '/voip/sbc/provider',
+              id: 'voip/sbc/account',
+              label: 'SBC',
+              icon: 'settings_input_component',
+              route: '/voip/sbc/account',
             },
             {
               id: 'voip/sbc/trunk',

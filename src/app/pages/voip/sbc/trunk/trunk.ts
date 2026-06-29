@@ -30,7 +30,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/trunks',
   uuidField: 'VstUUID',
   pageTitle: 'SBC trunks',
-  pageDescription: 'Manage tenant SBC trunks and provider interconnects.',
+  pageDescription: 'Manage tenant SBC trunks and interconnects.',
   createTitle: 'New SBC trunk',
   editTitle: 'Edit SBC trunk',
   dialogDescription: 'Maintain trunk routing, transport and authentication data.',
@@ -47,8 +47,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
   activeValue: 1,
   inactiveValue: 0,
   initialValues: {
-    providerUUID: '',
-    serverUUID: '',
+    accountUUID: '',
     status: 1,
     name: '',
     direction: 'both',
@@ -64,18 +63,17 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'VstName', uuidField: 'VstUUID' },
     {
-      id: 'provider',
-      label: 'Provider',
+      id: 'account',
+      label: 'SBC',
       kind: 'related',
-      uuidField: 'VoipSbcProviderVbpUUID',
-      lookupKey: 'providerUUID',
+      uuidField: 'VoipSbcAccountVsaUUID',
+      lookupKey: 'accountUUID',
     },
     {
       id: 'server',
       label: 'Server',
-      kind: 'related',
-      uuidField: 'VoipSbcServerVbsUUID',
-      lookupKey: 'serverUUID',
+      kind: 'text',
+      field: 'ServerName',
     },
     { id: 'direction', label: 'Direction', field: 'VstDirection' },
     { id: 'host', label: 'Host', field: 'VstHost' },
@@ -84,19 +82,10 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
   ],
   fields: [
     {
-      key: 'providerUUID',
-      source: 'VoipSbcProviderVbpUUID',
-      payloadKey: 'providerUUID',
-      label: 'Provider',
-      type: 'search-select',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'serverUUID',
-      source: 'VoipSbcServerVbsUUID',
-      payloadKey: 'serverUUID',
-      label: 'Server',
+      key: 'accountUUID',
+      source: 'VoipSbcAccountVsaUUID',
+      payloadKey: 'accountUUID',
+      label: 'SBC',
       type: 'search-select',
       required: true,
       span: 1,
@@ -184,8 +173,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
 export class VoipSbcTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
 
-  readonly providerOptions = signal<ConfigurableCrudOption[]>([]);
-  readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
   constructor() {
@@ -194,12 +182,11 @@ export class VoipSbcTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudR
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return ['providerUUID', 'serverUUID'].includes(field.key) ? this.lookupLoading() : false;
+    return field.key === 'accountUUID' ? this.lookupLoading() : false;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'providerUUID') return this.providerOptions();
-    if (key === 'serverUUID') return this.serverOptions();
+    if (key === 'accountUUID') return this.accountOptions();
     return [];
   }
 
@@ -215,16 +202,11 @@ export class VoipSbcTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudR
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      const [providers, servers] = await Promise.all([
-        this.fetchPaged('voip/sbc/providers?status=1', (row) =>
-          option(row.VbpUUID, row.VbpName, [row.VbpEngine]),
+      this.accountOptions.set(
+        await this.fetchPaged('voip/sbc/accounts?status=1', (row) =>
+          option(row.VsaUUID, row.VsaName, [row.ServerName, row.ServerEngine, row.ServerPublicIP]),
         ),
-        this.fetchPaged('voip/sbc/servers?status=1', (row) =>
-          option(row.VbsUUID, row.VbsName, [row.VbsEngine, row.VbsHostname, row.VbsPublicIP]),
-        ),
-      ]);
-      this.providerOptions.set(providers);
-      this.serverOptions.set(servers);
+      );
     } finally {
       this.lookupLoading.set(false);
     }

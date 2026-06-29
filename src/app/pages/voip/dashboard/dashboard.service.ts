@@ -13,7 +13,7 @@ export type VoipDashboardSummary = {
   pabxExtensions?: number;
   pabxTrunks?: number;
   pabxQueues?: number;
-  sbcProviders?: number;
+  sbcAccounts?: number;
   sbcServers?: number;
   sbcOnline?: number;
   sbcTrunks?: number;
