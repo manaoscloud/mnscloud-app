@@ -17,6 +17,9 @@ function isSystemScope() {
 }
 
 function didConfig(system: boolean): ConfigurableCrudConfig {
+  const isRangeCreate = (values: ConfigurableCrudRecord) => values['createMode'] === 'range';
+  const isSingleCreate = (values: ConfigurableCrudRecord) => values['createMode'] !== 'range';
+
   return {
     endpoint: system ? 'system/voip/did/numbers' : 'voip/did/numbers',
     uuidField: 'VddUUID',
@@ -46,7 +49,9 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
     rowActions: system ? [] : [{ key: 'release', label: 'Release DID', icon: 'link_off' }],
     initialValues: {
       status: 1,
+      createMode: 'single',
       number: '',
+      didRange: '',
       operatorUUID: '',
     },
     columns: [
@@ -72,6 +77,19 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
         span: 1,
       },
       {
+        key: 'createMode',
+        payloadKey: 'createMode',
+        label: 'Create mode',
+        type: 'select',
+        options: [
+          { value: 'single', label: 'Unit' },
+          { value: 'range', label: 'Range' },
+        ],
+        hiddenWhen: ({ editing }) => editing || !system,
+        requiredWhen: ({ editing }) => !editing && system,
+        span: 1,
+      },
+      {
         key: 'operatorUUID',
         source: 'VoipDidOperatorVdoUUID',
         payloadKey: 'operatorUUID',
@@ -85,8 +103,19 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
         source: 'VddNumber',
         payloadKey: 'number',
         label: 'Number',
-        required: true,
+        hiddenWhen: ({ editing, values }) => !editing && system && isRangeCreate(values),
+        requiredWhen: ({ editing, values }) => editing || !system || isSingleCreate(values),
+        placeholder: '5511999999999',
         span: 1,
+      },
+      {
+        key: 'didRange',
+        payloadKey: 'didRange',
+        label: 'Number range',
+        hiddenWhen: ({ editing, values }) => editing || !system || isSingleCreate(values),
+        requiredWhen: ({ editing, values }) => !editing && system && isRangeCreate(values),
+        placeholder: '551140000000-551140000099',
+        span: 2,
       },
     ],
   };
@@ -141,12 +170,83 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     this.refreshList();
   }
 
+  override async saveItem(saveAndNew = false): Promise<void> {
+    if (!this.system || this.editingRecord() || this.formValues()['createMode'] !== 'range') {
+      await super.saveItem(saveAndNew);
+      return;
+    }
+
+    const values = this.formValues();
+    const operatorUUID = String(values['operatorUUID'] ?? '').trim();
+    const status = Number(values['status'] ?? 1);
+    const parsedRange = this.parseRange(String(values['didRange'] ?? ''));
+
+    if (!operatorUUID || !parsedRange) {
+      this.snack.warning('Required fields are missing.');
+      return;
+    }
+
+    if (parsedRange.total > 100) {
+      this.snack.warning('Number range exceeds max size of 100 DIDs per operation.');
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      const response = await this.didApi.bulkCreate(
+        {
+          rangeStart: parsedRange.start,
+          rangeEnd: parsedRange.end,
+          operatorUUID,
+          status,
+        },
+        true,
+      );
+      const skipped = response?.data?.skippedExisting ?? [];
+      const failed = response?.data?.failed ?? [];
+      this.refreshList();
+
+      if (skipped.length || failed.length) {
+        this.snack.warning(
+          response?.message ??
+            `Number range completed with ${skipped.length} skipped and ${failed.length} failed.`,
+        );
+        return;
+      }
+
+      this.snack.success('DID number range created successfully.');
+      if (saveAndNew) {
+        this.formValues.set({
+          ...this.config.initialValues,
+          createMode: 'range',
+          operatorUUID,
+          status,
+        });
+      } else {
+        this.closeDialog();
+      }
+    } catch (error) {
+      this.snack.error(this.didErrorMessage(error));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       ...payload,
       status: Number(payload['status']),
       number: String(payload['number'] ?? '').replace(/\D+/g, ''),
     };
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'createMode' || this.editingRecord()) return;
+    if (value === 'range') {
+      this.patchFormValues({ number: '' });
+    } else {
+      this.patchFormValues({ didRange: '' });
+    }
   }
 
   override columnText(row: VoipDidItem, column: ConfigurableCrudColumn): string {
@@ -167,6 +267,31 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     } finally {
       this.lookupLoading.set(false);
     }
+  }
+
+  private parseRange(value: string): { start: string; end: string; total: number } | null {
+    const match = value.match(/^\s*(\d{8,15})\s*-\s*(\d{8,15})\s*$/);
+    if (!match) return null;
+
+    const start = match[1];
+    const end = match[2];
+    if (start.length !== end.length) return null;
+
+    const startNumber = BigInt(start);
+    const endNumber = BigInt(end);
+    if (endNumber < startNumber) return null;
+
+    const total = Number(endNumber - startNumber + 1n);
+    if (!Number.isSafeInteger(total)) return null;
+    return { start, end, total };
+  }
+
+  private didErrorMessage(error: unknown): string {
+    if (error && typeof error === 'object') {
+      const maybe = error as { error?: { error?: string; message?: string }; message?: string };
+      return maybe.error?.error ?? maybe.error?.message ?? maybe.message ?? 'Failed to save DID.';
+    }
+    return 'Failed to save DID.';
   }
 }
 

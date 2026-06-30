@@ -2466,5 +2466,10 @@
   "DID operator readiness": "Preparación de operadoras DID",
   "Manage global DID stock and DID operator assignment.": "Administra el inventario global DID y la asignación de operadora DID.",
   "Maintain DID number identity and DID operator assignment.": "Mantén la identidad del número DID y la asignación de operadora DID.",
-  "DID menu operators": "Operadoras"
+  "DID menu operators": "Operadoras",
+  "Create mode": "Modo de creación",
+  "Number range": "Rango de números",
+  "Number range exceeds max size of 100 DIDs per operation.": "El rango de números supera el límite de 100 DIDs por operación.",
+  "DID number range created successfully.": "Rango de números DID creado correctamente.",
+  "Number range completed with {skipped} skipped and {failed} failed.": "Rango completado con {skipped} omitidos y {failed} con error."
 }

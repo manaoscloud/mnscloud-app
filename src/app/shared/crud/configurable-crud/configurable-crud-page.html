@@ -206,7 +206,7 @@
                 @case ('date') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                      >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <input
                       matInput
@@ -224,7 +224,7 @@
                 @case ('select') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                      >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
                       [value]="fieldValue(field.key)"
@@ -241,7 +241,7 @@
                 @case ('search-select') {
                   <mns-search-select-field
                     [fieldClass]="fieldClass(field)"
-                    [label]="(field.label | transloco) + (field.required ? '*' : '')"
+                    [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
                     [placeholder]="field.placeholder ?? 'Search' | transloco"
                     [options]="fieldOptions(field)"
                     [loading]="fieldLoading(field)"
@@ -252,7 +252,7 @@
                 @case ('status') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                      >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
                       [value]="fieldValue(field.key)"
@@ -269,7 +269,7 @@
                 @case ('multi-select') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                      >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
                       multiple
@@ -288,7 +288,7 @@
                 @default {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                      >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <input
                       matInput
@@ -381,7 +381,7 @@
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
                                 >{{ field.label | transloco
-                                }}{{ field.required ? '*' : '' }}</mat-label
+                                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <input
                                 matInput
@@ -400,7 +400,7 @@
                           @case ('search-select') {
                             <mns-search-select-field
                               [fieldClass]="fieldClass(field)"
-                              [label]="(field.label | transloco) + (field.required ? '*' : '')"
+                              [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
                               [placeholder]="field.placeholder ?? 'Search' | transloco"
                               [options]="fieldOptions(field)"
                               [loading]="fieldLoading(field)"
@@ -412,7 +412,7 @@
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
                                 >{{ field.label | transloco
-                                }}{{ field.required ? '*' : '' }}</mat-label
+                                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <mat-select
                                 [disabled]="isFieldDisabled(field)"
@@ -431,7 +431,7 @@
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
                                 >{{ field.label | transloco
-                                }}{{ field.required ? '*' : '' }}</mat-label
+                                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <mat-select
                                 multiple
@@ -504,7 +504,7 @@
                   @case ('date') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
                         matInput
@@ -522,7 +522,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (field.required ? '*' : '')"
+                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -533,7 +533,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
                         [value]="fieldValue(field.key)"
@@ -550,7 +550,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
                         multiple
@@ -568,7 +568,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
                         matInput
@@ -600,7 +600,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (field.required ? '*' : '')"
+                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -611,7 +611,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
                         [value]="fieldValue(field.key)"
@@ -628,7 +628,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
                         multiple
@@ -646,7 +646,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
                         matInput
@@ -672,7 +672,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
                         [value]="fieldValue(field.key)"
@@ -689,7 +689,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
                         multiple
@@ -707,7 +707,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ field.required ? '*' : '' }}</mat-label
+                        >{{ field.label | transloco }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
                         matInput

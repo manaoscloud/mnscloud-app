@@ -117,6 +117,13 @@ export type ConfigurableCrudField = {
   autocomplete?: string;
   options?: readonly ConfigurableCrudOption[];
   loading?: () => boolean;
+  hiddenWhen?: (context: ConfigurableCrudFieldContext) => boolean;
+  requiredWhen?: (context: ConfigurableCrudFieldContext) => boolean;
+};
+
+export type ConfigurableCrudFieldContext = {
+  editing: boolean;
+  values: ConfigurableCrudRecord;
 };
 
 export type ConfigurableCrudCopyAction = {
@@ -258,10 +265,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.visibleRows().some((row) => selected.has(this.recordUUID(row)));
   });
   readonly recordFields = computed(() =>
-    this.config.fields.filter((field) => !field.hidden && (!field.tab || field.tab === 'record')),
+    this.config.fields.filter(
+      (field) => this.isFieldVisible(field) && (!field.tab || field.tab === 'record'),
+    ),
   );
   readonly addressFields = computed(() =>
-    this.config.fields.filter((field) => !field.hidden && field.tab === 'address'),
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'address'),
   );
   readonly addressSections = computed<ConfigurableCrudAddressSectionView[]>(() => {
     const fields = this.addressFields();
@@ -281,16 +290,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       .filter((section) => section.fields.length || section.copyActions.length);
   });
   readonly financialFields = computed(() =>
-    this.config.fields.filter((field) => !field.hidden && field.tab === 'financial'),
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'financial'),
   );
   readonly networkFields = computed(() =>
-    this.config.fields.filter((field) => !field.hidden && field.tab === 'network'),
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'network'),
   );
   readonly codecFields = computed(() =>
-    this.config.fields.filter((field) => !field.hidden && field.tab === 'codecs'),
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'codecs'),
   );
   readonly notesFields = computed(() =>
-    this.config.fields.filter((field) => !field.hidden && field.tab === 'notes'),
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'notes'),
   );
   readonly dialogTitle = computed(() =>
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
@@ -605,6 +614,24 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     );
   }
 
+  isFieldVisible(field: ConfigurableCrudField): boolean {
+    if (field.hidden) return false;
+    return !field.hiddenWhen?.({
+      editing: Boolean(this.editingRecord()),
+      values: this.formValues(),
+    });
+  }
+
+  isFieldRequired(field: ConfigurableCrudField): boolean {
+    if (field.requiredWhen) {
+      return field.requiredWhen({
+        editing: Boolean(this.editingRecord()),
+        values: this.formValues(),
+      });
+    }
+    return Boolean(field.required);
+  }
+
   isAddressSectionCompact(section: ConfigurableCrudAddressSectionView): boolean {
     return section.copyActions.some((action) => this.isCopyActionEnabled(action));
   }
@@ -894,7 +921,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private validatePayload(payload: ConfigurableCrudRecord): boolean {
     for (const field of this.config.fields) {
-      if (!field.required) continue;
+      if (!this.isFieldVisible(field) || !this.isFieldRequired(field)) continue;
       const value = payload[field.payloadKey ?? field.key];
       if (value === null || value === undefined || value === '') {
         this.snack.warning('Required fields are missing.');

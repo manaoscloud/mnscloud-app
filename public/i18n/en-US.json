@@ -2466,5 +2466,10 @@
   "DID operator readiness": "DID carrier readiness",
   "Manage global DID stock and DID operator assignment.": "Manage global DID stock and DID carrier assignment.",
   "Maintain DID number identity and DID operator assignment.": "Maintain DID number identity and DID carrier assignment.",
-  "DID menu operators": "Carriers"
+  "DID menu operators": "Carriers",
+  "Create mode": "Create mode",
+  "Number range": "Number range",
+  "Number range exceeds max size of 100 DIDs per operation.": "Number range exceeds max size of 100 DIDs per operation.",
+  "DID number range created successfully.": "DID number range created successfully.",
+  "Number range completed with {skipped} skipped and {failed} failed.": "Number range completed with {skipped} skipped and {failed} failed."
 }
