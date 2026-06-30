@@ -34,6 +34,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../services/api.service';
+import { DateTimeFormatService } from '../../../services/date-time-format.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DateMaskDirective } from '../../date-mask/date-mask.directive';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
@@ -152,7 +153,7 @@ export type ConfigurableCrudColumn = {
   label: string;
   field?: string;
   uuidField?: string;
-  kind?: 'identity' | 'related' | 'status' | 'text';
+  kind?: 'identity' | 'related' | 'status' | 'text' | 'date' | 'datetime';
   lookupKey?: string;
   className?: string;
 };
@@ -216,6 +217,7 @@ type ConfigurableCrudFilters = {
 export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord> {
   protected readonly api = inject(ApiService);
   protected readonly snack = inject(SnackbarService);
+  protected readonly dateTime = inject(DateTimeFormatService);
   protected readonly dialog = inject(MatDialog);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -703,6 +705,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   columnText(row: T, column: ConfigurableCrudColumn): string {
     const field = column.field ?? column.id;
+    if (column.kind === 'date') return this.dateTime.formatDate(this.dateValue(row[field])) || '-';
+    if (column.kind === 'datetime' || this.isDateTimeColumn(column, row[field])) {
+      return this.dateTime.formatDateTime(this.dateValue(row[field])) || '-';
+    }
     return this.displayValue(row[field]);
   }
 
@@ -841,7 +847,40 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (!column) return '';
     if (column.kind === 'related') return this.columnMain(row, column).toLowerCase();
     const field = column.field ?? column.id;
+    if (
+      column.kind === 'date' ||
+      column.kind === 'datetime' ||
+      this.isDateTimeColumn(column, row[field])
+    ) {
+      return String(this.dateTime.toEpoch(this.dateValue(row[field]))).padStart(16, '0');
+    }
     return this.displayValue(row[field]).toLowerCase();
+  }
+
+  private dateValue(value: unknown): Date | string | number | null | undefined {
+    if (
+      value === null ||
+      value === undefined ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      value instanceof Date
+    ) {
+      return value;
+    }
+    return String(value);
+  }
+
+  private isDateTimeColumn(column: ConfigurableCrudColumn, value: unknown): boolean {
+    if (value === null || value === undefined || value === '') return false;
+    const name = `${column.id} ${column.field ?? ''}`.toLowerCase();
+    const looksLikeDateField =
+      name.includes('date') ||
+      name.endsWith(' at') ||
+      name.endsWith('at') ||
+      name.includes('createdat') ||
+      name.includes('updatedat');
+    if (!looksLikeDateField || typeof value !== 'string') return false;
+    return !Number.isNaN(new Date(value).getTime());
   }
 
   private displayValue(value: unknown): string {

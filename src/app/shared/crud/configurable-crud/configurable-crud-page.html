@@ -109,13 +109,13 @@
                   }
                 </div>
               } @else if (column.kind === 'status') {
-                <mat-chip
-                  class="status-pill status-chip chip-success"
+                <span
+                  class="status-pill status-chip state-chip chip-success"
                   [class.is-active]="isActiveStatus(row[column.field ?? column.id])"
                   [class.is-inactive]="!isActiveStatus(row[column.field ?? column.id])"
                 >
                   {{ statusLabel(row[column.field ?? column.id]) | transloco }}
-                </mat-chip>
+                </span>
               } @else {
                 {{ columnText(row, column) }}
               }

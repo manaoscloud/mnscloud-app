@@ -738,6 +738,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
     - `chip-skipped`: inactive/skipped/neutral states
   - boolean status must keep `is-active` and `is-inactive` bindings alongside the palette class for semantic compatibility
   - keep uppercase label and compact chip dimensions
+  - center the status text horizontally and vertically inside the chip
   - do not style column alignment using `::ng-deep .mat-column-status`; use local classes on `th/td` (example: `.status-col`) to avoid style leakage between pages
 - Form grid breakpoints in current baseline:
   - desktop: 4 columns

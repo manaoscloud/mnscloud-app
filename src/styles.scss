@@ -573,13 +573,26 @@ mat-card.erp-card,
   }
 }
 
+.record-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
 .record-main {
+  display: block;
+  max-width: 100%;
   color: var(--mat-sys-color-on-surface);
   font-weight: 600;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .record-uuid {
+  display: block;
+  max-width: 100%;
   margin-top: 0.2rem;
   color: var(--mat-sys-color-on-surface-variant);
   font-family: var(--mns-mono-font, 'Roboto Mono', monospace);
@@ -710,6 +723,7 @@ mat-card.erp-card,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   gap: 0.35rem;
   min-width: 92px;
   height: 26px;
@@ -722,6 +736,7 @@ mat-card.erp-card,
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -779,9 +794,14 @@ mat-chip.status-pill.is-inactive,
 .status-pill .mdc-evolution-chip__graphic,
 .status-pill .mdc-evolution-chip__text-label,
 .status-pill .mat-mdc-chip-action-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
   color: inherit !important;
   background: transparent !important;
   background-color: transparent !important;
+  text-align: center !important;
 }
 
 /* Status chip variant based on Activity Log palette.
@@ -799,6 +819,7 @@ mat-chip.status-pill.is-inactive,
   background: var(--activity-chip-bg);
   color: var(--activity-chip-color);
   letter-spacing: 0.02em;
+  text-align: center;
 }
 
 .status-pill.status-chip.chip-success,
