@@ -521,6 +521,75 @@ mat-card.erp-card,
   height: 100%;
 }
 
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-metric {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 96px;
+  padding: 1rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.75rem;
+  background: var(--mat-sys-color-surface-container);
+}
+
+.dashboard-metric mat-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--mat-sys-color-primary);
+  font-size: 28px;
+  line-height: 28px;
+}
+
+.dashboard-metric-label,
+.dashboard-metric-value,
+.dashboard-metric-hint {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-metric-label {
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dashboard-metric-value {
+  margin-top: 0.15rem;
+  color: var(--mat-sys-color-on-surface);
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.dashboard-metric-hint {
+  margin-top: 0.2rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
 .filter-actions button[color='warn'] {
   width: auto;
 }
@@ -1038,6 +1107,10 @@ mat-chip.status-pill.is-inactive,
 }
 
 @media (max-width: 1400px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+
   .form-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1049,6 +1122,10 @@ mat-chip.status-pill.is-inactive,
 }
 
 @media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
   .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1082,6 +1159,10 @@ mat-chip.status-pill.is-inactive,
   }
 
   .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
 

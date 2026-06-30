@@ -28,8 +28,8 @@ const EMPTY_TENANT_DASHBOARD: TenantBillingDashboard = {
   standalone: true,
   imports: [MatCardModule, MatIconModule, RefreshButtonComponent, TranslocoPipe],
   template: `
-    <section class="erp-page">
-      <mat-card class="erp-card">
+    <section class="erp-page dashboard-page">
+      <mat-card class="erp-card dashboard-shell">
         <div class="erp-header">
           <div>
             <h1>{{ 'Billing' | transloco }}</h1>
@@ -40,13 +40,13 @@ const EMPTY_TENANT_DASHBOARD: TenantBillingDashboard = {
           </div>
         </div>
 
-        <div class="summary-grid">
+        <div class="dashboard-grid">
           @for (item of summary(); track item.label) {
-            <div class="summary-card">
+            <div class="dashboard-metric">
               <mat-icon>{{ item.icon }}</mat-icon>
               <div>
-                <span>{{ item.label | transloco }}</span>
-                <strong>{{ item.value }}</strong>
+                <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+                <strong class="dashboard-metric-value">{{ item.value }}</strong>
               </div>
             </div>
           }
@@ -54,45 +54,6 @@ const EMPTY_TENANT_DASHBOARD: TenantBillingDashboard = {
       </mat-card>
     </section>
   `,
-  styles: [
-    `
-      .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-      }
-
-      .summary-card {
-        display: flex;
-        gap: 14px;
-        align-items: center;
-        min-height: 92px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 18px;
-      }
-
-      .summary-card mat-icon {
-        color: var(--tenant-primary-color);
-      }
-
-      .summary-card span,
-      .summary-card strong {
-        display: block;
-      }
-
-      .summary-card strong {
-        margin-top: 4px;
-        font-size: 28px;
-      }
-
-      @media (max-width: 900px) {
-        .summary-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    `,
-  ],
 })
 export class BillingTenantDashboardPage {
   private readonly billing = inject(BillingService);

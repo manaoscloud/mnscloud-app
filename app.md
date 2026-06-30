@@ -266,6 +266,20 @@
   - Operational feedback (`success`, `error`, `warning`, `info`) must use `SnackbarService` / app snackbar.
   - Do not render transient CRUD success/error/warning/info messages inline in pages, tables, dialogs, or form footers.
   - Inline state blocks are reserved for persistent empty/error states that require page-level action, not save/delete/load notifications.
+- Dashboard visual baseline:
+  - Dashboard pages must use `.erp-page.dashboard-page` and a compact `.erp-card.dashboard-shell`
+    for the page shell when a single summary section is enough.
+  - Metric summaries must use the global `.dashboard-grid` and `.dashboard-metric` classes, with
+    `.dashboard-metric-label`, `.dashboard-metric-value`, and optional `.dashboard-metric-hint`.
+  - Do not place small metrics as loose content inside one large empty panel. Each primary KPI must
+    be a compact repeated metric tile so the first viewport reads as organized information, not a
+    mostly empty card.
+  - Do not duplicate dashboard grid/tile SCSS inside page components. If the generic dashboard
+    layout needs improvement, update `src/styles.scss`.
+  - Dashboards may include tables, charts, maps, and operational panels below the summary grid, but
+    each section must have a clear purpose and avoid decorative nested cards.
+  - Dashboard refresh actions must use `RefreshButtonComponent` with local inline loading state and
+    must keep the previous snapshot visible while refreshing.
 - Table behavior:
   - Standard list pages use signal-first tables:
     `<table mat-table [dataSource]="visibleRows()" matSort ...>`.
@@ -720,6 +734,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `.erp-page`, `.erp-card`, `.filter-grid`, `.form-grid`, `.table-wrapper`, `.mobile-paginator`
 - Shared global CRUD classes also include:
   - `.erp-header`, `.header-actions`, `.filter-actions`, `.table-loading`, `.selection-count`, `.actions-col`, `.actions-col-cell`, `.status-col`, `.status-pill`, `.status-chip`, `.state-chip`, `.crud-dialog`, `.dialog-header`, `.dialog-content`, `.form-tabs`, `.tab-content`, `.form-actions`, `.primary-actions`, `.secondary-actions`, `.save-split-action`, `.span-2`, `.span-3`, `.span-4`
+- Shared global dashboard classes include:
+  - `.dashboard-page`, `.dashboard-shell`, `.dashboard-grid`, `.dashboard-metric`,
+    `.dashboard-metric-label`, `.dashboard-metric-value`, and `.dashboard-metric-hint`
 - Shared CRUD action button sizing:
   - `--crud-action-button-width` is the global fixed width for short header/filter action buttons.
   - `.header-actions button` and regular `.filter-actions button` use this width by default on desktop and mobile.
