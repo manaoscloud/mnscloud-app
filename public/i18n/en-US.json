@@ -2465,5 +2465,6 @@
   "DID operator": "DID carrier",
   "DID operator readiness": "DID carrier readiness",
   "Manage global DID stock and DID operator assignment.": "Manage global DID stock and DID carrier assignment.",
-  "Maintain DID number identity and DID operator assignment.": "Maintain DID number identity and DID carrier assignment."
+  "Maintain DID number identity and DID operator assignment.": "Maintain DID number identity and DID carrier assignment.",
+  "DID menu operators": "Carriers"
 }

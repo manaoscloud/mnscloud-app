@@ -2465,5 +2465,6 @@
   "DID operator": "Operadora DID",
   "DID operator readiness": "Preparación de operadoras DID",
   "Manage global DID stock and DID operator assignment.": "Administra el inventario global DID y la asignación de operadora DID.",
-  "Maintain DID number identity and DID operator assignment.": "Mantén la identidad del número DID y la asignación de operadora DID."
+  "Maintain DID number identity and DID operator assignment.": "Mantén la identidad del número DID y la asignación de operadora DID.",
+  "DID menu operators": "Operadoras"
 }
