@@ -196,6 +196,7 @@ export type ConfigurableCrudConfig = {
   canEdit?: boolean;
   canDelete?: boolean;
   bulkDelete?: boolean;
+  statusFilter?: boolean;
 };
 
 export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
@@ -308,6 +309,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly canEdit = computed(() => this.config.canEdit !== false);
   readonly canDelete = computed(() => this.config.canDelete !== false);
   readonly bulkDeleteEnabled = computed(() => this.canDelete() && this.config.bulkDelete !== false);
+  readonly statusFilterEnabled = computed(() => this.config.statusFilter !== false);
   readonly hasRowActions = computed(
     () => this.canEdit() || this.canDelete() || Boolean(this.config.rowActions?.length),
   );
@@ -805,7 +807,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     params.set('limit', String(this.listLimit));
     params.set('offset', '0');
     if (filters.search) params.set('search', filters.search);
-    if (filters.status !== '') params.set('status', String(filters.status));
+    if (this.statusFilterEnabled() && filters.status !== '')
+      params.set('status', String(filters.status));
 
     const response = await this.api.get(`${this.config.endpoint}?${params.toString()}`);
     const data = (response as { data?: unknown })?.data;
