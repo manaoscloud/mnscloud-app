@@ -2404,6 +2404,7 @@
   "UDP": "UDP",
   "TCP": "TCP",
   "TLS": "TLS",
+  "Authentication": "Autenticación",
   "Auth username": "Usuario de autenticación",
   "Auth password": "Contraseña de autenticación",
   "From domain": "Dominio de origen",

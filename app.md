@@ -715,6 +715,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - A resource-specific panel class or dialog root class is considered layout drift when it only repeats generic CRUD surface, density, footer, tab scrolling, or mobile viewport rules.
 - CRUD-specific features must be derived from the resource requirements:
   - tabs only when the form has distinct groups of fields
+  - authentication credentials and registration identity fields (`username`, `password`,
+    `from domain`, `register`, tokens, or equivalent) belong in an `Authentication` tab when they
+    would otherwise mix with routing, network, or record identity fields
   - searchable selects only for FK-like dynamic data
   - shared inputs such as phone fields should use existing shared components when available
   - maps, copy flows, and auxiliary sections are optional resource features, not global CRUD requirements

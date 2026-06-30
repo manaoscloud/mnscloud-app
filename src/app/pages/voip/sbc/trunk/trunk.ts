@@ -124,12 +124,14 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       source: 'VstAuthUsername',
       payloadKey: 'authUsername',
       label: 'Auth username',
+      tab: 'authentication',
       span: 1,
     },
     {
       key: 'authPassword',
       payloadKey: 'authPassword',
       label: 'Auth password',
+      tab: 'authentication',
       span: 1,
       autocomplete: 'new-password',
     },
@@ -138,6 +140,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       source: 'VstFromDomain',
       payloadKey: 'fromDomain',
       label: 'From domain',
+      tab: 'authentication',
       span: 1,
     },
     {
@@ -147,6 +150,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       label: 'Register',
       type: 'select',
       options: YES_NO_OPTIONS,
+      tab: 'authentication',
       span: 1,
     },
     {
