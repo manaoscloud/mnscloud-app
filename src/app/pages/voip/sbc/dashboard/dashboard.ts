@@ -32,15 +32,21 @@ type SbcAction = {
 type SbcSnapshot = {
   accounts: any[];
   servers: any[];
-  trunks: any[];
+  interfaces: any[];
+  peers: any[];
+  pipes: any[];
   routes: any[];
+  manipulations: any[];
 };
 
 const EMPTY_SNAPSHOT: SbcSnapshot = {
   accounts: [],
   servers: [],
-  trunks: [],
+  interfaces: [],
+  peers: [],
+  pipes: [],
   routes: [],
+  manipulations: [],
 };
 
 @Component({
@@ -86,8 +92,25 @@ export class VoipSbcDashboardPage {
         'account',
       ),
       this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus', 'server'),
-      this.metric('trunks', 'Trunks', 'settings_ethernet', snapshot.trunks, 'VstStatus', 'trunk'),
+      this.metric(
+        'interfaces',
+        'Interfaces',
+        'settings_input_component',
+        snapshot.interfaces,
+        'VsiStatus',
+        'interface',
+      ),
+      this.metric('peers', 'Peers', 'settings_ethernet', snapshot.peers, 'VspStatus', 'peer'),
+      this.metric('pipes', 'Pipes', 'schema', snapshot.pipes, 'VbpStatus', 'pipe'),
       this.metric('routes', 'Routes', 'alt_route', snapshot.routes, 'VbrStatus', 'route'),
+      this.metric(
+        'manipulations',
+        'Manipulations',
+        'transform',
+        snapshot.manipulations,
+        'VsmStatus',
+        'manipulation',
+      ),
     ];
   });
   readonly actions = computed<SbcAction[]>(() => {
@@ -111,11 +134,25 @@ export class VoipSbcDashboardPage {
             route: `${this.baseRoute()}/account`,
           },
           {
-            key: 'trunk',
-            label: 'Trunks',
-            description: 'Connect tenant SBC accounts to transports.',
+            key: 'interface',
+            label: 'Interfaces',
+            description: 'Configure SIP listening interfaces.',
+            icon: 'settings_input_component',
+            route: `${this.baseRoute()}/interface`,
+          },
+          {
+            key: 'peer',
+            label: 'Peers',
+            description: 'Configure destination SIP peers.',
             icon: 'settings_ethernet',
-            route: `${this.baseRoute()}/trunk`,
+            route: `${this.baseRoute()}/peer`,
+          },
+          {
+            key: 'pipe',
+            label: 'Pipes',
+            description: 'Bind input interfaces to output peers.',
+            icon: 'schema',
+            route: `${this.baseRoute()}/pipe`,
           },
           {
             key: 'route',
@@ -134,19 +171,29 @@ export class VoipSbcDashboardPage {
   private async loadSnapshot(): Promise<SbcSnapshot> {
     try {
       const master = this.route.snapshot.data['scope'] === 'master';
-      const [accounts, servers, trunks, routes] = await Promise.all([
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
-        this.fetchItems(`${this.endpointPrefix}/servers?limit=500&offset=0`),
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/trunks?limit=500&offset=0`),
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/routes?limit=500&offset=0`),
-      ]);
-      return { accounts, servers, trunks, routes };
+      const [accounts, servers, interfaces, peers, pipes, routes, manipulations] =
+        await Promise.all([
+          master
+            ? Promise.resolve([])
+            : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
+          this.fetchItems(`${this.endpointPrefix}/servers?limit=500&offset=0`),
+          master
+            ? Promise.resolve([])
+            : this.fetchItems(`${this.endpointPrefix}/interfaces?limit=500&offset=0`),
+          master
+            ? Promise.resolve([])
+            : this.fetchItems(`${this.endpointPrefix}/peers?limit=500&offset=0`),
+          master
+            ? Promise.resolve([])
+            : this.fetchItems(`${this.endpointPrefix}/pipes?limit=500&offset=0`),
+          master
+            ? Promise.resolve([])
+            : this.fetchItems(`${this.endpointPrefix}/routes?limit=500&offset=0`),
+          master
+            ? Promise.resolve([])
+            : this.fetchItems(`${this.endpointPrefix}/manipulations?limit=500&offset=0`),
+        ]);
+      return { accounts, servers, interfaces, peers, pipes, routes, manipulations };
     } catch (error) {
       this.snack.error('Failed to load SBC dashboard.');
       throw error;

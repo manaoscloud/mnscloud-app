@@ -904,10 +904,26 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
-                path: 'voip/sbc/trunk',
+                path: 'voip/sbc/interface',
                 loadComponent: () =>
-                  import('./pages/voip/sbc/trunk/trunk').then((m) => m.VoipSbcTrunkPage),
-                title: 'VoIP • SBC • Trunk | mnscloud',
+                  import('./pages/voip/sbc/interface/interface').then(
+                    (m) => m.VoipSbcInterfacePage,
+                  ),
+                title: 'VoIP • SBC • Interface | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
+                path: 'voip/sbc/peer',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/peer/peer').then((m) => m.VoipSbcPeerPage),
+                title: 'VoIP • SBC • Peer | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
+                path: 'voip/sbc/pipe',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/pipe/pipe').then((m) => m.VoipSbcPipePage),
+                title: 'VoIP • SBC • Pipe | mnscloud',
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
@@ -915,6 +931,15 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/voip/sbc/route/route').then((m) => m.VoipSbcRoutePage),
                 title: 'VoIP • SBC • Route | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
+                path: 'voip/sbc/manipulation',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/manipulation/manipulation').then(
+                    (m) => m.VoipSbcManipulationPage,
+                  ),
+                title: 'VoIP • SBC • Manipulation | mnscloud',
                 data: { scope: 'tenant', context: 'voip' },
               },
               {

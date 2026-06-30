@@ -1,0 +1,368 @@
+import { Component, inject, signal } from '@angular/core';
+
+import { ApiService } from '../../../../services/api.service';
+import {
+  ConfigurableCrudConfig,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+
+const MEDIA_MODE_OPTIONS = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'bypass', label: 'Bypass' },
+  { value: 'proxy', label: 'Proxy' },
+  { value: 'transcode', label: 'Transcode' },
+];
+
+const CODEC_MODE_OPTIONS = [
+  { value: 'passthrough', label: 'Pass-through' },
+  { value: 'filter', label: 'Filter' },
+  { value: 'prefer', label: 'Prefer' },
+  { value: 'transcode', label: 'Transcode' },
+];
+
+const CODEC_OPTIONS = [
+  'PCMU',
+  'PCMA',
+  'G729',
+  'G722',
+  'OPUS',
+  'GSM',
+  'AMR',
+  'AMR-WB',
+  'ILBC',
+  'SPEEX',
+].map((codec) => ({ value: codec, label: codec }));
+const YES_NO_OPTIONS = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const PIPE_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'voip/sbc/pipes',
+  uuidField: 'VbpUUID',
+  pageTitle: 'SBC pipes',
+  pageDescription: 'Manage Back-to-Back SIP pipes for SBC traffic.',
+  createTitle: 'New SBC pipe',
+  editTitle: 'Edit SBC pipe',
+  dialogDescription: 'Maintain input interface, output peer, media and codec behavior.',
+  searchPlaceholder: 'Search',
+  emptyLabel: 'No SBC pipes found.',
+  deleteTitle: 'Delete SBC pipe',
+  deleteMessage: 'Are you sure you want to delete this SBC pipe?',
+  deleteSelectedTitle: 'Delete selected SBC pipes',
+  deleteSelectedMessage: 'Delete {count} selected SBC pipes?',
+  savedMessage: 'SBC pipe saved successfully.',
+  deletedMessage: 'SBC pipe deleted successfully.',
+  deleteFailedMessage: 'Failed to delete SBC pipe.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  initialValues: {
+    status: 1,
+    accountUUID: '',
+    interfaceUUID: '',
+    peerUUID: '',
+    name: '',
+    mediaMode: 'normal',
+    codecMode: 'passthrough',
+    allowedCodecs: ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'],
+    preferredCodecs: ['PCMU', 'PCMA'],
+    transcodeCodecs: [],
+    enableCdr: 1,
+    enableHomer: 0,
+    fakeRing: 0,
+    sendCallerId: 1,
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'VbpName', uuidField: 'VbpUUID' },
+    {
+      id: 'sbc',
+      label: 'SBC',
+      kind: 'related',
+      uuidField: 'VoipSbcAccountVsaUUID',
+      lookupKey: 'accountUUID',
+    },
+    {
+      id: 'interface',
+      label: 'Interface',
+      kind: 'related',
+      uuidField: 'VoipSbcInterfaceVsiUUID',
+      lookupKey: 'interfaceUUID',
+    },
+    {
+      id: 'peer',
+      label: 'Peer',
+      kind: 'related',
+      uuidField: 'VoipSbcPeerVspUUID',
+      lookupKey: 'peerUUID',
+    },
+    { id: 'mediaMode', label: 'Media mode', field: 'VbpMediaMode' },
+    { id: 'codecMode', label: 'Codec mode', field: 'VbpCodecMode' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'VbpStatus', className: 'status-col' },
+  ],
+  fields: [
+    {
+      key: 'status',
+      source: 'VbpStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'accountUUID',
+      source: 'VoipSbcAccountVsaUUID',
+      payloadKey: 'accountUUID',
+      label: 'SBC',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'interfaceUUID',
+      source: 'VoipSbcInterfaceVsiUUID',
+      payloadKey: 'interfaceUUID',
+      label: 'Input interface',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'peerUUID',
+      source: 'VoipSbcPeerVspUUID',
+      payloadKey: 'peerUUID',
+      label: 'Output peer',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    { key: 'name', source: 'VbpName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'mediaMode',
+      source: 'VbpMediaMode',
+      payloadKey: 'mediaMode',
+      label: 'Media mode',
+      type: 'select',
+      options: MEDIA_MODE_OPTIONS,
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'enableCdr',
+      source: 'VbpEnableCdr',
+      payloadKey: 'enableCdr',
+      label: 'Enable CDR',
+      type: 'select',
+      options: YES_NO_OPTIONS,
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'enableHomer',
+      source: 'VbpEnableHomer',
+      payloadKey: 'enableHomer',
+      label: 'Enable Homer',
+      type: 'select',
+      options: YES_NO_OPTIONS,
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'fakeRing',
+      source: 'VbpFakeRing',
+      payloadKey: 'fakeRing',
+      label: 'Fake ring',
+      type: 'select',
+      options: YES_NO_OPTIONS,
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'sendCallerId',
+      source: 'VbpSendCallerId',
+      payloadKey: 'sendCallerId',
+      label: 'Send caller ID',
+      type: 'select',
+      options: YES_NO_OPTIONS,
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'codecMode',
+      source: 'VbpCodecMode',
+      payloadKey: 'codecMode',
+      label: 'Codec mode',
+      type: 'select',
+      options: CODEC_MODE_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
+      key: 'allowedCodecs',
+      source: 'VbpAllowedCodecs',
+      payloadKey: 'allowedCodecs',
+      label: 'Allowed codecs',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
+      key: 'preferredCodecs',
+      source: 'VbpPreferredCodecs',
+      payloadKey: 'preferredCodecs',
+      label: 'Preferred codecs',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
+      key: 'transcodeCodecs',
+      source: 'VbpTranscodeCodecs',
+      payloadKey: 'transcodeCodecs',
+      label: 'Transcode codecs',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+  ],
+};
+
+@Component({
+  selector: 'app-voip-sbc-pipe',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly rawApi = inject(ApiService);
+  readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly interfaceOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly peerOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly lookupLoading = signal(false);
+
+  constructor() {
+    super(PIPE_CONFIG);
+    void this.loadLookups();
+  }
+
+  override fieldLoading(field: { key: string }): boolean {
+    return ['accountUUID', 'interfaceUUID', 'peerUUID'].includes(field.key)
+      ? this.lookupLoading()
+      : false;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'accountUUID') return this.accountOptions();
+    if (key === 'interfaceUUID') return this.interfaceOptions();
+    if (key === 'peerUUID') return this.peerOptions();
+    return [];
+  }
+
+  override startEdit(row: ConfigurableCrudRecord): void {
+    super.startEdit(row);
+    this.patchFormValues({
+      allowedCodecs: csvToArray(row['VbpAllowedCodecs']),
+      preferredCodecs: csvToArray(row['VbpPreferredCodecs']),
+      transcodeCodecs: csvToArray(row['VbpTranscodeCodecs']),
+    });
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return {
+      ...payload,
+      allowedCodecs: arrayToCsv(payload['allowedCodecs']),
+      preferredCodecs: arrayToCsv(payload['preferredCodecs']),
+      transcodeCodecs: arrayToCsv(payload['transcodeCodecs']),
+      enableCdr: Number(payload['enableCdr']) === 1,
+      enableHomer: Number(payload['enableHomer']) === 1,
+      fakeRing: Number(payload['fakeRing']) === 1,
+      sendCallerId: Number(payload['sendCallerId']) === 1,
+      status: Number(payload['status']),
+    };
+  }
+
+  private async loadLookups(): Promise<void> {
+    this.lookupLoading.set(true);
+    try {
+      const [accounts, interfaces, peers] = await Promise.all([
+        fetchPaged(this.rawApi, 'voip/sbc/accounts?status=1', (row) =>
+          option(row.VsaUUID, row.VsaName, [row.ServerName, row.ServerEngine]),
+        ),
+        fetchPaged(this.rawApi, 'voip/sbc/interfaces?status=1', (row) =>
+          option(row.VsiUUID, row.VsiName, [row.AccountName, row.VsiIPAddress, row.VsiPort]),
+        ),
+        fetchPaged(this.rawApi, 'voip/sbc/peers?status=1', (row) =>
+          option(row.VspUUID, row.VspName, [row.AccountName, row.VspHost, row.VspPort]),
+        ),
+      ]);
+      this.accountOptions.set(accounts);
+      this.interfaceOptions.set(interfaces);
+      this.peerOptions.set(peers);
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+}
+
+async function fetchPaged(
+  api: ApiService,
+  endpoint: string,
+  mapItem: (row: any) => ConfigurableCrudOption | null,
+): Promise<ConfigurableCrudOption[]> {
+  const options: ConfigurableCrudOption[] = [];
+  for (let offset = 0; offset < 5000; offset += 500) {
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const response = await api.get<any>(`${endpoint}${separator}limit=500&offset=${offset}`);
+    const rows = extractItems(response);
+    options.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
+    if (rows.length < 500) break;
+  }
+  return options.sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function extractItems(response: any): any[] {
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
+  const normalizedValue = String(value ?? '').trim();
+  const normalizedLabel = String(label ?? '').trim();
+  if (!normalizedValue || !normalizedLabel) return null;
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
+}
+
+function csvToArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  return String(value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function arrayToCsv(value: unknown): string {
+  if (Array.isArray(value)) return value.map(String).join(',');
+  return String(value ?? '');
+}

@@ -1277,12 +1277,30 @@ export class MainLayout {
               route: '/voip/sbc/account',
             },
             {
-              id: 'voip/sbc/trunk',
-              label: 'Trunks',
+              id: 'voip/sbc/interface',
+              label: 'Interfaces',
+              icon: 'settings_input_component',
+              route: '/voip/sbc/interface',
+            },
+            {
+              id: 'voip/sbc/peer',
+              label: 'Peers',
               icon: 'settings_ethernet',
-              route: '/voip/sbc/trunk',
+              route: '/voip/sbc/peer',
+            },
+            {
+              id: 'voip/sbc/pipe',
+              label: 'Pipes',
+              icon: 'schema',
+              route: '/voip/sbc/pipe',
             },
             { id: 'voip/sbc/route', label: 'Routes', icon: 'alt_route', route: '/voip/sbc/route' },
+            {
+              id: 'voip/sbc/manipulation',
+              label: 'Manipulations',
+              icon: 'transform',
+              route: '/voip/sbc/manipulation',
+            },
           ],
         },
         {

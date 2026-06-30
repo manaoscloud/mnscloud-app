@@ -9,36 +9,63 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const ROUTE_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'voip/sbc/routes',
-  uuidField: 'VbrUUID',
-  pageTitle: 'SBC routes',
-  pageDescription: 'Manage route matching for SBC pipes.',
-  createTitle: 'New SBC route',
-  editTitle: 'Edit SBC route',
-  dialogDescription: 'Maintain source and destination matching rules for pipe selection.',
+const LEG_OPTIONS = [
+  { value: 'a', label: 'Leg A' },
+  { value: 'b', label: 'Leg B' },
+  { value: 'tfps', label: 'TFPS' },
+];
+
+const TARGET_OPTIONS = [
+  { value: 'from_user', label: 'From user' },
+  { value: 'from_domain', label: 'From domain' },
+  { value: 'to_user', label: 'To user' },
+  { value: 'to_domain', label: 'To domain' },
+  { value: 'ruri_user', label: 'R-URI user' },
+  { value: 'ruri_domain', label: 'R-URI domain' },
+  { value: 'header', label: 'Header' },
+];
+
+const OPERATION_OPTIONS = [
+  { value: 'set', label: 'Set' },
+  { value: 'prepend', label: 'Prepend' },
+  { value: 'append', label: 'Append' },
+  { value: 'strip', label: 'Strip' },
+  { value: 'regex', label: 'Regex' },
+];
+
+const MANIPULATION_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'voip/sbc/manipulations',
+  uuidField: 'VsmUUID',
+  pageTitle: 'SBC manipulations',
+  pageDescription: 'Manage SIP header and number manipulations for SBC pipes.',
+  createTitle: 'New SBC manipulation',
+  editTitle: 'Edit SBC manipulation',
+  dialogDescription: 'Maintain leg, target, operation and match rules for a pipe.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No SBC routes found.',
-  deleteTitle: 'Delete SBC route',
-  deleteMessage: 'Are you sure you want to delete this SBC route?',
-  deleteSelectedTitle: 'Delete selected SBC routes',
-  deleteSelectedMessage: 'Delete {count} selected SBC routes?',
-  savedMessage: 'SBC route saved successfully.',
-  deletedMessage: 'SBC route deleted successfully.',
-  deleteFailedMessage: 'Failed to delete SBC route.',
+  emptyLabel: 'No SBC manipulations found.',
+  deleteTitle: 'Delete SBC manipulation',
+  deleteMessage: 'Are you sure you want to delete this SBC manipulation?',
+  deleteSelectedTitle: 'Delete selected SBC manipulations',
+  deleteSelectedMessage: 'Delete {count} selected SBC manipulations?',
+  savedMessage: 'SBC manipulation saved successfully.',
+  deletedMessage: 'SBC manipulation deleted successfully.',
+  deleteFailedMessage: 'Failed to delete SBC manipulation.',
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
   initialValues: {
     status: 1,
     pipeUUID: '',
+    leg: 'a',
+    target: 'ruri_user',
+    operation: 'set',
     priority: 100,
     name: '',
-    sourcePattern: '',
-    destinationPattern: '',
+    matchPattern: '',
+    replacement: '',
   },
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'VbrName', uuidField: 'VbrUUID' },
+    { id: 'name', label: 'Name', kind: 'identity', field: 'VsmName', uuidField: 'VsmUUID' },
     {
       id: 'pipe',
       label: 'Pipe',
@@ -46,15 +73,16 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'VoipSbcPipeVbpUUID',
       lookupKey: 'pipeUUID',
     },
-    { id: 'sourcePattern', label: 'Source pattern', field: 'VbrSourcePattern' },
-    { id: 'destinationPattern', label: 'Destination pattern', field: 'VbrDestinationPattern' },
-    { id: 'priority', label: 'Priority', field: 'VbrPriority' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'VbrStatus', className: 'status-col' },
+    { id: 'leg', label: 'Leg', field: 'VsmLeg' },
+    { id: 'target', label: 'Target', field: 'VsmTarget' },
+    { id: 'operation', label: 'Operation', field: 'VsmOperation' },
+    { id: 'priority', label: 'Priority', field: 'VsmPriority' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'VsmStatus', className: 'status-col' },
   ],
   fields: [
     {
       key: 'status',
-      source: 'VbrStatus',
+      source: 'VsmStatus',
       payloadKey: 'status',
       label: 'Status',
       type: 'status',
@@ -70,45 +98,72 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'leg',
+      source: 'VsmLeg',
+      payloadKey: 'leg',
+      label: 'Leg',
+      type: 'select',
+      options: LEG_OPTIONS,
+      span: 1,
+    },
+    { key: 'name', source: 'VsmName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'target',
+      source: 'VsmTarget',
+      payloadKey: 'target',
+      label: 'Target',
+      type: 'select',
+      options: TARGET_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'operation',
+      source: 'VsmOperation',
+      payloadKey: 'operation',
+      label: 'Operation',
+      type: 'select',
+      options: OPERATION_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'matchPattern',
+      source: 'VsmMatchPattern',
+      payloadKey: 'matchPattern',
+      label: 'Match pattern',
+      span: 1,
+    },
+    {
+      key: 'replacement',
+      source: 'VsmReplacement',
+      payloadKey: 'replacement',
+      label: 'Replacement',
+      span: 1,
+    },
+    {
       key: 'priority',
-      source: 'VbrPriority',
+      source: 'VsmPriority',
       payloadKey: 'priority',
       label: 'Priority',
       type: 'number',
-      span: 1,
-    },
-    { key: 'name', source: 'VbrName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    {
-      key: 'sourcePattern',
-      source: 'VbrSourcePattern',
-      payloadKey: 'sourcePattern',
-      label: 'Source pattern',
-      span: 1,
-    },
-    {
-      key: 'destinationPattern',
-      source: 'VbrDestinationPattern',
-      payloadKey: 'destinationPattern',
-      label: 'Destination pattern',
       span: 1,
     },
   ],
 };
 
 @Component({
-  selector: 'app-voip-sbc-route',
+  selector: 'app-voip-sbc-manipulation',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipSbcRoutePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class VoipSbcManipulationPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
   readonly pipeOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
   constructor() {
-    super(ROUTE_CONFIG);
+    super(MANIPULATION_CONFIG);
     void this.loadLookups();
   }
 

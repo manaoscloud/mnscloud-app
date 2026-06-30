@@ -9,12 +9,6 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const DIRECTION_OPTIONS = [
-  { value: 'inbound', label: 'Inbound' },
-  { value: 'outbound', label: 'Outbound' },
-  { value: 'both', label: 'Both' },
-];
-
 const TRANSPORT_OPTIONS = [
   { value: 'udp', label: 'UDP' },
   { value: 'tcp', label: 'TCP' },
@@ -26,64 +20,61 @@ const YES_NO_OPTIONS = [
   { value: 0, label: 'No' },
 ];
 
-const TRUNK_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'voip/sbc/trunks',
-  uuidField: 'VstUUID',
-  pageTitle: 'SBC trunks',
-  pageDescription: 'Manage tenant SBC trunks and interconnects.',
-  createTitle: 'New SBC trunk',
-  editTitle: 'Edit SBC trunk',
-  dialogDescription: 'Maintain trunk routing, transport and authentication data.',
+const PEER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'voip/sbc/peers',
+  uuidField: 'VspUUID',
+  pageTitle: 'SBC peers',
+  pageDescription: 'Manage destination SIP peers for SBC pipes.',
+  createTitle: 'New SBC peer',
+  editTitle: 'Edit SBC peer',
+  dialogDescription: 'Maintain destination host, registration and authentication data.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No SBC trunks found.',
-  deleteTitle: 'Delete SBC trunk',
-  deleteMessage: 'Are you sure you want to delete this SBC trunk?',
-  deleteSelectedTitle: 'Delete selected SBC trunks',
-  deleteSelectedMessage: 'Delete {count} selected SBC trunks?',
-  savedMessage: 'SBC trunk saved successfully.',
-  deletedMessage: 'SBC trunk deleted successfully.',
-  deleteFailedMessage: 'Failed to delete SBC trunk.',
+  emptyLabel: 'No SBC peers found.',
+  deleteTitle: 'Delete SBC peer',
+  deleteMessage: 'Are you sure you want to delete this SBC peer?',
+  deleteSelectedTitle: 'Delete selected SBC peers',
+  deleteSelectedMessage: 'Delete {count} selected SBC peers?',
+  savedMessage: 'SBC peer saved successfully.',
+  deletedMessage: 'SBC peer deleted successfully.',
+  deleteFailedMessage: 'Failed to delete SBC peer.',
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
   initialValues: {
-    accountUUID: '',
     status: 1,
+    accountUUID: '',
     name: '',
-    direction: 'both',
     host: '',
     port: 5060,
     transport: 'udp',
     authUsername: '',
     authPassword: '',
     fromDomain: '',
+    outboundProxy: '',
+    failoverHost: '',
     registerEnabled: 0,
-    config: '',
+    maxConcurrentCalls: 0,
+    cpsLimit: 0,
   },
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'VstName', uuidField: 'VstUUID' },
+    { id: 'name', label: 'Name', kind: 'identity', field: 'VspName', uuidField: 'VspUUID' },
     {
-      id: 'account',
+      id: 'sbc',
       label: 'SBC',
       kind: 'related',
       uuidField: 'VoipSbcAccountVsaUUID',
       lookupKey: 'accountUUID',
     },
-    {
-      id: 'server',
-      label: 'Server',
-      kind: 'text',
-      field: 'ServerName',
-    },
-    { id: 'direction', label: 'Direction', field: 'VstDirection' },
-    { id: 'host', label: 'Host', field: 'VstHost' },
-    { id: 'transport', label: 'Transport', field: 'VstTransport' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'VstStatus', className: 'status-col' },
+    { id: 'host', label: 'Host', field: 'VspHost' },
+    { id: 'port', label: 'Port', field: 'VspPort' },
+    { id: 'transport', label: 'Transport', field: 'VspTransport' },
+    { id: 'register', label: 'Register', field: 'VspRegisterEnabled' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'VspStatus', className: 'status-col' },
   ],
   fields: [
     {
       key: 'status',
-      source: 'VstStatus',
+      source: 'VspStatus',
       payloadKey: 'status',
       label: 'Status',
       type: 'status',
@@ -98,19 +89,10 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 1,
     },
-    {
-      key: 'direction',
-      source: 'VstDirection',
-      payloadKey: 'direction',
-      label: 'Direction',
-      type: 'select',
-      options: DIRECTION_OPTIONS,
-      span: 1,
-    },
-    { key: 'name', source: 'VstName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    { key: 'name', source: 'VspName', payloadKey: 'name', label: 'Name', required: true, span: 2 },
     {
       key: 'authUsername',
-      source: 'VstAuthUsername',
+      source: 'VspAuthUsername',
       payloadKey: 'authUsername',
       label: 'Auth username',
       tab: 'authentication',
@@ -126,7 +108,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'host',
-      source: 'VstHost',
+      source: 'VspHost',
       payloadKey: 'host',
       label: 'Host',
       required: true,
@@ -135,7 +117,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'fromDomain',
-      source: 'VstFromDomain',
+      source: 'VspFromDomain',
       payloadKey: 'fromDomain',
       label: 'From domain',
       tab: 'authentication',
@@ -143,7 +125,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'port',
-      source: 'VstPort',
+      source: 'VspPort',
       payloadKey: 'port',
       label: 'Port',
       type: 'number',
@@ -152,7 +134,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'transport',
-      source: 'VstTransport',
+      source: 'VspTransport',
       payloadKey: 'transport',
       label: 'Transport',
       type: 'select',
@@ -162,7 +144,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'registerEnabled',
-      source: 'VstRegisterEnabled',
+      source: 'VspRegisterEnabled',
       payloadKey: 'registerEnabled',
       label: 'Register',
       type: 'select',
@@ -171,34 +153,56 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'config',
-      source: 'VstConfig',
-      payloadKey: 'config',
-      label: 'Config JSON',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-      format: 'json',
+      key: 'outboundProxy',
+      source: 'VspOutboundProxy',
+      payloadKey: 'outboundProxy',
+      label: 'Outbound proxy',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'failoverHost',
+      source: 'VspFailoverHost',
+      payloadKey: 'failoverHost',
+      label: 'Failover host',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'maxConcurrentCalls',
+      source: 'VspMaxConcurrentCalls',
+      payloadKey: 'maxConcurrentCalls',
+      label: 'Max concurrent calls',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'cpsLimit',
+      source: 'VspCpsLimit',
+      payloadKey: 'cpsLimit',
+      label: 'CPS limit',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
     },
   ],
 };
 
 @Component({
-  selector: 'app-voip-sbc-trunk',
+  selector: 'app-voip-sbc-peer',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipSbcTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
-
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
   constructor() {
-    super(TRUNK_CONFIG);
+    super(PEER_CONFIG);
     void this.loadLookups();
   }
 
@@ -207,8 +211,7 @@ export class VoipSbcTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudR
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'accountUUID') return this.accountOptions();
-    return [];
+    return key === 'accountUUID' ? this.accountOptions() : [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -216,6 +219,8 @@ export class VoipSbcTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudR
       ...payload,
       port: Number(payload['port'] || 0),
       registerEnabled: Number(payload['registerEnabled']) === 1,
+      maxConcurrentCalls: Number(payload['maxConcurrentCalls'] || 0),
+      cpsLimit: Number(payload['cpsLimit'] || 0),
       status: Number(payload['status']),
     };
   }
@@ -224,31 +229,30 @@ export class VoipSbcTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudR
     this.lookupLoading.set(true);
     try {
       this.accountOptions.set(
-        await this.fetchPaged('voip/sbc/accounts?status=1', (row) =>
-          option(row.VsaUUID, row.VsaName, [row.ServerName, row.ServerEngine, row.ServerPublicIP]),
+        await fetchPaged(this.rawApi, 'voip/sbc/accounts?status=1', (row) =>
+          option(row.VsaUUID, row.VsaName, [row.ServerName, row.ServerEngine]),
         ),
       );
     } finally {
       this.lookupLoading.set(false);
     }
   }
+}
 
-  private async fetchPaged(
-    endpoint: string,
-    mapItem: (row: any) => ConfigurableCrudOption | null,
-  ): Promise<ConfigurableCrudOption[]> {
-    const options: ConfigurableCrudOption[] = [];
-    for (let offset = 0; offset < 5000; offset += 500) {
-      const separator = endpoint.includes('?') ? '&' : '?';
-      const response = await this.rawApi.get<any>(
-        `${endpoint}${separator}limit=500&offset=${offset}`,
-      );
-      const rows = extractItems(response);
-      options.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
-      if (rows.length < 500) break;
-    }
-    return options.sort((left, right) => left.label.localeCompare(right.label));
+async function fetchPaged(
+  api: ApiService,
+  endpoint: string,
+  mapItem: (row: any) => ConfigurableCrudOption | null,
+): Promise<ConfigurableCrudOption[]> {
+  const options: ConfigurableCrudOption[] = [];
+  for (let offset = 0; offset < 5000; offset += 500) {
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const response = await api.get<any>(`${endpoint}${separator}limit=500&offset=${offset}`);
+    const rows = extractItems(response);
+    options.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
+    if (rows.length < 500) break;
   }
+  return options.sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function extractItems(response: any): any[] {

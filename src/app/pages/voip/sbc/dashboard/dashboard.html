@@ -3,7 +3,9 @@
     <header class="erp-header">
       <div>
         <h1>{{ 'SBC dashboard' | transloco }}</h1>
-        <p>{{ 'Monitor SBC accounts, servers, trunks and routes.' | transloco }}</p>
+        <p>
+          {{ 'Monitor SBC accounts, servers, interfaces, peers, pipes and routes.' | transloco }}
+        </p>
       </div>
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refresh()" />
