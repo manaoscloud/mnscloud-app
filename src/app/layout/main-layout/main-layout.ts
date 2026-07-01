@@ -1294,7 +1294,6 @@ export class MainLayout {
               icon: 'schema',
               route: '/voip/sbc/pipe',
             },
-            { id: 'voip/sbc/route', label: 'Routes', icon: 'alt_route', route: '/voip/sbc/route' },
             {
               id: 'voip/sbc/manipulation',
               label: 'Manipulations',

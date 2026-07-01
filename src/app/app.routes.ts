@@ -927,13 +927,6 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
-                path: 'voip/sbc/route',
-                loadComponent: () =>
-                  import('./pages/voip/sbc/route/route').then((m) => m.VoipSbcRoutePage),
-                title: 'VoIP • SBC • Route | mnscloud',
-                data: { scope: 'tenant', context: 'voip' },
-              },
-              {
                 path: 'voip/sbc/manipulation',
                 loadComponent: () =>
                   import('./pages/voip/sbc/manipulation/manipulation').then(

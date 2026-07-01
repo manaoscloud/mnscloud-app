@@ -35,7 +35,6 @@ type SbcSnapshot = {
   interfaces: any[];
   peers: any[];
   pipes: any[];
-  routes: any[];
   manipulations: any[];
 };
 
@@ -45,7 +44,6 @@ const EMPTY_SNAPSHOT: SbcSnapshot = {
   interfaces: [],
   peers: [],
   pipes: [],
-  routes: [],
   manipulations: [],
 };
 
@@ -102,7 +100,6 @@ export class VoipSbcDashboardPage {
       ),
       this.metric('peers', 'Peers', 'settings_ethernet', snapshot.peers, 'VspStatus', 'peer'),
       this.metric('pipes', 'Pipes', 'schema', snapshot.pipes, 'VbpStatus', 'pipe'),
-      this.metric('routes', 'Routes', 'alt_route', snapshot.routes, 'VbrStatus', 'route'),
       this.metric(
         'manipulations',
         'Manipulations',
@@ -154,13 +151,6 @@ export class VoipSbcDashboardPage {
             icon: 'schema',
             route: `${this.baseRoute()}/pipe`,
           },
-          {
-            key: 'route',
-            label: 'Routes',
-            description: 'Route prefixes and destination patterns.',
-            icon: 'alt_route',
-            route: `${this.baseRoute()}/route`,
-          },
         ];
   });
 
@@ -171,29 +161,25 @@ export class VoipSbcDashboardPage {
   private async loadSnapshot(): Promise<SbcSnapshot> {
     try {
       const master = this.route.snapshot.data['scope'] === 'master';
-      const [accounts, servers, interfaces, peers, pipes, routes, manipulations] =
-        await Promise.all([
-          master
-            ? Promise.resolve([])
-            : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
-          this.fetchItems(`${this.endpointPrefix}/servers?limit=500&offset=0`),
-          master
-            ? Promise.resolve([])
-            : this.fetchItems(`${this.endpointPrefix}/interfaces?limit=500&offset=0`),
-          master
-            ? Promise.resolve([])
-            : this.fetchItems(`${this.endpointPrefix}/peers?limit=500&offset=0`),
-          master
-            ? Promise.resolve([])
-            : this.fetchItems(`${this.endpointPrefix}/pipes?limit=500&offset=0`),
-          master
-            ? Promise.resolve([])
-            : this.fetchItems(`${this.endpointPrefix}/routes?limit=500&offset=0`),
-          master
-            ? Promise.resolve([])
-            : this.fetchItems(`${this.endpointPrefix}/manipulations?limit=500&offset=0`),
-        ]);
-      return { accounts, servers, interfaces, peers, pipes, routes, manipulations };
+      const [accounts, servers, interfaces, peers, pipes, manipulations] = await Promise.all([
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
+        this.fetchItems(`${this.endpointPrefix}/servers?limit=500&offset=0`),
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/interfaces?limit=500&offset=0`),
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/peers?limit=500&offset=0`),
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/pipes?limit=500&offset=0`),
+        master
+          ? Promise.resolve([])
+          : this.fetchItems(`${this.endpointPrefix}/manipulations?limit=500&offset=0`),
+      ]);
+      return { accounts, servers, interfaces, peers, pipes, manipulations };
     } catch (error) {
       this.snack.error('Failed to load SBC dashboard.');
       throw error;
