@@ -2046,6 +2046,18 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   padding: 0.85rem 0.75rem 0.75rem !important;
 }
 
+.cdk-overlay-pane.install-command-dialog-panel .mat-mdc-dialog-actions,
+.cdk-overlay-pane.install-command-dialog-panel .form-actions {
+  margin: auto 0 0 !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+.cdk-overlay-pane.install-command-dialog-panel .mat-mdc-dialog-content {
+  min-height: 0;
+  overflow-y: auto !important;
+}
+
 .cdk-overlay-pane:is(
     .hosting-vps-provider-dialog,
     .hosting-vps-plan-dialog,
