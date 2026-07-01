@@ -580,11 +580,10 @@
 - Footer actions must follow the CRUD action contract: `Copy command` is the primary action,
   `Close` is secondary, desktop keeps secondary left and primary right, and mobile stacks both
   actions at equal full width with the primary action first.
-- Install command footers must inherit the same `.crud-dialog .form-actions` spacing, margin,
-  and desktop/mobile action alignment used by CRUD form dialogs. Because the shell block is the
-  command dialog field surface, install command footers must not add horizontal action padding that
-  moves `Close` or `Copy command` inside the shell/content edge; keep only vertical spacing between
-  the shell block and actions.
+- Install command footers must inherit the same `.crud-dialog .form-actions` desktop/mobile action
+  alignment and horizontal button padding used by CRUD form dialogs. Because the shell block is the
+  command dialog field surface, keep the footer edge aligned with the shell/content edge while the
+  `Close` and `Copy command` buttons keep the standard CRUD action inset.
 - The command dialog body must own vertical scrolling with `overflow-y: auto` and keep the footer
   fixed at the bottom of the dialog when the viewport becomes short.
 - The shared `InstallCommandDialogComponent` owns copy feedback: successful copy must show the
