@@ -440,6 +440,10 @@
   - header (`.dialog-header`)
   - content (`.dialog-content`) with `MatTabGroup`
   - first tab label must be the translated `Record` key (`[label]="'Record' | transloco`) by default, because it contains the primary record fields. Do not use `Data`, `Date`, or `Details` for CRUD record tabs.
+  - the generic CRUD template supports optional semantic tabs `Network`, `Match`, `Authentication`,
+    `Codecs`, `Financial`, `Address`, and `Notes`; use `Match` for routing/selection criteria such
+    as source IP, destination pattern, DID/prefix, From/To pattern, auth username, domain, priority,
+    or equivalent match rules.
   - footer (`.form-actions`) with `Cancel`, `Save`, and create-only `Save/New` in the save split menu
   - footer must stay fixed at the bottom of dialog (`mat-dialog-actions` cannot move with content length)
 - Dialog form submission:
@@ -718,6 +722,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - authentication credentials and registration identity fields (`username`, `password`,
     `from domain`, `register`, tokens, or equivalent) belong in an `Authentication` tab when they
     would otherwise mix with routing, network, or record identity fields
+  - routing or selection criteria fields belong in a `Match` tab when they decide which rule,
+    destination, tenant, policy, or pipe applies; domain matching must be optional and must not be
+    the only supported routing criterion for telecom/SBC resources
   - searchable selects only for FK-like dynamic data
   - shared inputs such as phone fields should use existing shared components when available
   - maps, copy flows, and auxiliary sections are optional resource features, not global CRUD requirements

@@ -106,7 +106,15 @@ export type ConfigurableCrudField = {
   payloadKey?: string;
   format?: 'json';
   type?: ConfigurableCrudFieldType;
-  tab?: 'record' | 'address' | 'financial' | 'network' | 'authentication' | 'codecs' | 'notes';
+  tab?:
+    | 'record'
+    | 'address'
+    | 'financial'
+    | 'network'
+    | 'match'
+    | 'authentication'
+    | 'codecs'
+    | 'notes';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
@@ -297,6 +305,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly networkFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'network'),
+  );
+  readonly matchFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'match'),
   );
   readonly authenticationFields = computed(() =>
     this.config.fields.filter(

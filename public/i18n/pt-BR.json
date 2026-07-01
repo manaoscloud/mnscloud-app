@@ -2646,5 +2646,11 @@
   "Configure SIP listening interfaces.": "Configure interfaces SIP de escuta.",
   "Configure destination SIP peers.": "Configure peers SIP de destino.",
   "Bind input interfaces to output peers.": "Vincule interfaces de entrada aos peers de saída.",
-  "Monitor SBC accounts, servers, interfaces, peers, pipes and manipulations.": "Monitore contas SBC, servidores, interfaces, peers, pipes e manipulações."
+  "Monitor SBC accounts, servers, interfaces, peers, pipes and manipulations.": "Monitore contas SBC, servidores, interfaces, peers, pipes e manipulações.",
+  "Bidirectional": "Bidirecional",
+  "Match": "Critérios",
+  "Source port": "Porta de origem",
+  "Source transport": "Transporte de origem",
+  "From pattern": "Padrão From",
+  "To pattern": "Padrão To"
 }

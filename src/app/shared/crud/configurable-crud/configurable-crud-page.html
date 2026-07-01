@@ -677,6 +677,81 @@
           </mat-tab>
         }
 
+        @if (matchFields().length) {
+          <mat-tab [label]="'Match' | transloco">
+            <div class="tab-content form-grid">
+              @for (field of matchFields(); track field.key) {
+                @switch (field.type) {
+                  @case ('search-select') {
+                    <mns-search-select-field
+                      [fieldClass]="fieldClass(field)"
+                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [placeholder]="field.placeholder ?? 'Search' | transloco"
+                      [options]="fieldOptions(field)"
+                      [loading]="fieldLoading(field)"
+                      [value]="fieldValue(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
+                  @case ('select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        [value]="fieldValue(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @case ('multi-select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        multiple
+                        [value]="fieldValueArray(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @default {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <input
+                        matInput
+                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [autocomplete]="field.autocomplete ?? 'off'"
+                        [attr.data-field-key]="field.key"
+                        [value]="fieldValueString(field.key)"
+                        (input)="setFieldValue(field.key, $any($event.target).value)"
+                      />
+                    </mat-form-field>
+                  }
+                }
+              }
+            </div>
+          </mat-tab>
+        }
+
         @if (authenticationFields().length) {
           <mat-tab [label]="'Authentication' | transloco">
             <div class="tab-content form-grid">
