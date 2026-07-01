@@ -2052,8 +2052,8 @@ app-isp-geomap-assets .geomap-asset-popup-error {
 .cdk-overlay-pane:is(.crud-form-dialog, .install-command-dialog-panel)
   .install-command-dialog
   .form-actions {
-  margin: 1rem 0 0 !important;
-  padding: 1rem 0.75rem 0 !important;
+  margin: auto 0 0 !important;
+  padding: 0.85rem 0.75rem 0.75rem !important;
 }
 
 .cdk-overlay-pane.install-command-dialog-panel .mat-mdc-dialog-content {
