@@ -22,6 +22,19 @@ const CODEC_MODE_OPTIONS = [
   { value: 'prefer', label: 'Prefer' },
   { value: 'transcode', label: 'Transcode' },
 ];
+const SIGNALING_PROFILE_OPTIONS = [
+  { value: 'inherit', label: 'Inherit from peer' },
+  { value: 'sip', label: 'SIP' },
+  { value: 'sip_i', label: 'SIP-I' },
+  { value: 'sip_t', label: 'SIP-T' },
+];
+const ISUP_MODE_OPTIONS = [
+  { value: 'inherit', label: 'Inherit from peer' },
+  { value: 'passthrough', label: 'Pass-through' },
+  { value: 'generate', label: 'Generate' },
+  { value: 'strip', label: 'Strip' },
+  { value: 'interwork', label: 'Interwork' },
+];
 
 const CODEC_OPTIONS = [
   'PCMU',
@@ -88,6 +101,8 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     domain: '',
     priority: 100,
     mediaMode: 'normal',
+    signalingProfile: 'inherit',
+    isupMode: 'inherit',
     codecMode: 'passthrough',
     allowedCodecs: ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'],
     preferredCodecs: ['PCMU', 'PCMA'],
@@ -123,6 +138,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     { id: 'direction', label: 'Direction', field: 'VbpDirection' },
     { id: 'destination', label: 'Destination pattern', field: 'VbpDestinationPattern' },
     { id: 'mediaMode', label: 'Media mode', field: 'VbpMediaMode' },
+    { id: 'signalingProfile', label: 'Signaling', field: 'VbpSignalingProfile' },
     { id: 'codecMode', label: 'Codec mode', field: 'VbpCodecMode' },
     { id: 'status', label: 'Status', kind: 'status', field: 'VbpStatus', className: 'status-col' },
   ],
@@ -306,6 +322,27 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       options: CODEC_MODE_OPTIONS,
       tab: 'codecs',
       span: 1,
+    },
+    {
+      key: 'signalingProfile',
+      source: 'VbpSignalingProfile',
+      payloadKey: 'signalingProfile',
+      label: 'Signaling profile',
+      type: 'select',
+      options: SIGNALING_PROFILE_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
+      key: 'isupMode',
+      source: 'VbpIsupMode',
+      payloadKey: 'isupMode',
+      label: 'ISUP mode',
+      type: 'select',
+      options: ISUP_MODE_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+      hiddenWhen: ({ values }) => String(values['signalingProfile']) === 'sip',
     },
     {
       key: 'allowedCodecs',
