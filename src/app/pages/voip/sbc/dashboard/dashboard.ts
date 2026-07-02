@@ -80,6 +80,20 @@ export class VoipSbcDashboardPage {
   );
   readonly metrics = computed<SbcMetric[]>(() => {
     const snapshot = this.snapshot();
+    const master = this.route.snapshot.data['scope'] === 'master';
+    if (master) {
+      return [
+        this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus', 'server'),
+        this.metric(
+          'interfaces',
+          'Interfaces',
+          'settings_input_component',
+          snapshot.interfaces,
+          'VsiStatus',
+          'interface',
+        ),
+      ];
+    }
     return [
       this.metric(
         'accounts',
@@ -88,15 +102,6 @@ export class VoipSbcDashboardPage {
         snapshot.accounts,
         'VsaStatus',
         'account',
-      ),
-      this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus', 'server'),
-      this.metric(
-        'interfaces',
-        'Interfaces',
-        'settings_input_component',
-        snapshot.interfaces,
-        'VsiStatus',
-        'interface',
       ),
       this.metric('peers', 'Peers', 'settings_ethernet', snapshot.peers, 'VspStatus', 'peer'),
       this.metric('pipes', 'Pipes', 'schema', snapshot.pipes, 'VbpStatus', 'pipe'),
@@ -115,6 +120,13 @@ export class VoipSbcDashboardPage {
     return master
       ? [
           {
+            key: 'interface',
+            label: 'Interfaces',
+            description: 'Configure SIP listening interfaces.',
+            icon: 'settings_input_component',
+            route: `${this.baseRoute()}/interface`,
+          },
+          {
             key: 'server',
             label: 'Servers',
             description: 'Register authorized SBC runtime nodes.',
@@ -129,13 +141,6 @@ export class VoipSbcDashboardPage {
             description: 'Select the authorized SBC server for this tenant.',
             icon: 'settings_input_component',
             route: `${this.baseRoute()}/account`,
-          },
-          {
-            key: 'interface',
-            label: 'Interfaces',
-            description: 'Configure SIP listening interfaces.',
-            icon: 'settings_input_component',
-            route: `${this.baseRoute()}/interface`,
           },
           {
             key: 'peer',
@@ -167,8 +172,8 @@ export class VoipSbcDashboardPage {
           : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
         this.fetchItems(`${this.endpointPrefix}/servers?limit=500&offset=0`),
         master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/interfaces?limit=500&offset=0`),
+          ? this.fetchItems(`${this.endpointPrefix}/interfaces?limit=500&offset=0`)
+          : Promise.resolve([]),
         master
           ? Promise.resolve([])
           : this.fetchItems(`${this.endpointPrefix}/peers?limit=500&offset=0`),
@@ -201,7 +206,9 @@ export class VoipSbcDashboardPage {
   ): SbcMetric {
     const master = this.route.snapshot.data['scope'] === 'master';
     const route =
-      master && routeSegment !== 'server' ? null : `${this.baseRoute()}/${routeSegment}`;
+      master && !['server', 'interface'].includes(routeSegment)
+        ? null
+        : `${this.baseRoute()}/${routeSegment}`;
     return {
       key,
       label,

@@ -26,7 +26,7 @@ const YES_NO_OPTIONS = [
 ];
 
 const INTERFACE_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'voip/sbc/interfaces',
+  endpoint: 'system/voip/sbc/interfaces',
   uuidField: 'VsiUUID',
   pageTitle: 'SBC interfaces',
   pageDescription: 'Manage SIP listening interfaces for SBC accounts.',
@@ -47,7 +47,7 @@ const INTERFACE_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   initialValues: {
     status: 1,
-    accountUUID: '',
+    serverUUID: '',
     type: 'external',
     name: '',
     ipAddress: '',
@@ -60,10 +60,10 @@ const INTERFACE_CONFIG: ConfigurableCrudConfig = {
     { id: 'name', label: 'Name', kind: 'identity', field: 'VsiName', uuidField: 'VsiUUID' },
     {
       id: 'sbc',
-      label: 'SBC',
+      label: 'Server',
       kind: 'related',
-      uuidField: 'VoipSbcAccountVsaUUID',
-      lookupKey: 'accountUUID',
+      uuidField: 'VoipSbcServerVbsUUID',
+      lookupKey: 'serverUUID',
     },
     { id: 'type', label: 'Type', field: 'VsiType' },
     { id: 'address', label: 'Address', field: 'VsiIPAddress' },
@@ -81,10 +81,10 @@ const INTERFACE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'accountUUID',
-      source: 'VoipSbcAccountVsaUUID',
-      payloadKey: 'accountUUID',
-      label: 'SBC',
+      key: 'serverUUID',
+      source: 'VoipSbcServerVbsUUID',
+      payloadKey: 'serverUUID',
+      label: 'Server',
       type: 'search-select',
       required: true,
       span: 1,
@@ -159,7 +159,7 @@ const INTERFACE_CONFIG: ConfigurableCrudConfig = {
 })
 export class VoipSbcInterfacePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
-  readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
   constructor() {
@@ -168,11 +168,11 @@ export class VoipSbcInterfacePage extends ConfigurableCrudPageBase<ConfigurableC
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return field.key === 'accountUUID' ? this.lookupLoading() : false;
+    return field.key === 'serverUUID' ? this.lookupLoading() : false;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    return key === 'accountUUID' ? this.accountOptions() : [];
+    return key === 'serverUUID' ? this.serverOptions() : [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -188,9 +188,9 @@ export class VoipSbcInterfacePage extends ConfigurableCrudPageBase<ConfigurableC
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      this.accountOptions.set(
-        await fetchPaged(this.rawApi, 'voip/sbc/accounts?status=1', (row) =>
-          option(row.VsaUUID, row.VsaName, [row.ServerName, row.ServerEngine]),
+      this.serverOptions.set(
+        await fetchPaged(this.rawApi, 'system/voip/sbc/servers?status=1', (row) =>
+          option(row.VbsUUID, row.VbsName, [row.VbsEngine, row.VbsHostname]),
         ),
       );
     } finally {

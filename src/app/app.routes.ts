@@ -904,15 +904,6 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
-                path: 'voip/sbc/interface',
-                loadComponent: () =>
-                  import('./pages/voip/sbc/interface/interface').then(
-                    (m) => m.VoipSbcInterfacePage,
-                  ),
-                title: 'VoIP • SBC • Interface | mnscloud',
-                data: { scope: 'tenant', context: 'voip' },
-              },
-              {
                 path: 'voip/sbc/peer',
                 loadComponent: () =>
                   import('./pages/voip/sbc/peer/peer').then((m) => m.VoipSbcPeerPage),
@@ -1335,6 +1326,15 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/voip/sbc/server/server').then((m) => m.VoipSbcServerPage),
                 title: 'System SBC Server | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
+                path: 'sbc/interface',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/interface/interface').then(
+                    (m) => m.VoipSbcInterfacePage,
+                  ),
+                title: 'System SBC Interface | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {

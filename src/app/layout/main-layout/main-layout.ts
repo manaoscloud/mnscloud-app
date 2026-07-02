@@ -1280,7 +1280,9 @@ export class MainLayout {
               id: 'voip/sbc/interface',
               label: 'Interfaces',
               icon: 'settings_input_component',
-              route: '/voip/sbc/interface',
+              masterRoute: '/system/sbc/interface',
+              scope: 'master',
+              roles: ['MASTER'],
             },
             {
               id: 'voip/sbc/peer',
