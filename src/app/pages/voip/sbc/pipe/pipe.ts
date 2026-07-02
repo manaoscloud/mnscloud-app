@@ -67,33 +67,34 @@ const SOURCE_TRANSPORT_OPTIONS = [
 const PIPE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/pipes',
   uuidField: 'VbpUUID',
-  pageTitle: 'SBC forwarding',
-  pageDescription: 'Manage inbound-to-outbound SIP forwarding rules.',
-  createTitle: 'New SBC forwarding',
-  editTitle: 'Edit SBC forwarding',
-  dialogDescription: 'Maintain input interface, output peer, media and codec behavior.',
+  pageTitle: 'SBC pipes',
+  pageDescription: 'Manage tenant-aware SIP flows between input and output peers.',
+  createTitle: 'New SBC pipe',
+  editTitle: 'Edit SBC pipe',
+  dialogDescription: 'Maintain input peer, output peer, media and codec behavior.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No SBC forwarding rules found.',
-  deleteTitle: 'Delete SBC forwarding',
-  deleteMessage: 'Are you sure you want to delete this SBC forwarding rule?',
-  deleteSelectedTitle: 'Delete selected SBC forwarding rules',
-  deleteSelectedMessage: 'Delete {count} selected SBC forwarding rules?',
-  savedMessage: 'SBC forwarding saved successfully.',
-  deletedMessage: 'SBC forwarding deleted successfully.',
-  deleteFailedMessage: 'Failed to delete SBC forwarding.',
+  emptyLabel: 'No SBC pipes found.',
+  deleteTitle: 'Delete SBC pipe',
+  deleteMessage: 'Are you sure you want to delete this SBC pipe?',
+  deleteSelectedTitle: 'Delete selected SBC pipes',
+  deleteSelectedMessage: 'Delete {count} selected SBC pipes?',
+  savedMessage: 'SBC pipe saved successfully.',
+  deletedMessage: 'SBC pipe deleted successfully.',
+  deleteFailedMessage: 'Failed to delete SBC pipe.',
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
   tabLabels: {
     match: 'Input',
-    authentication: 'Destination',
+    authentication: 'Output',
     network: 'Media',
   },
   initialValues: {
     status: 1,
     accountUUID: '',
     interfaceUUID: '',
-    peerUUID: '',
+    inputPeerUUID: '',
+    outputPeerUUID: '',
     name: '',
     direction: 'bidirectional',
     sourceIP: '',
@@ -128,17 +129,24 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     },
     {
       id: 'interface',
-      label: 'Input',
+      label: 'Interface',
       kind: 'related',
       uuidField: 'VoipSbcInterfaceVsiUUID',
       lookupKey: 'interfaceUUID',
     },
     {
-      id: 'peer',
-      label: 'Destination',
+      id: 'inputPeer',
+      label: 'Input peer',
       kind: 'related',
-      uuidField: 'VoipSbcPeerVspUUID',
-      lookupKey: 'peerUUID',
+      uuidField: 'VoipSbcInputPeerVspUUID',
+      lookupKey: 'inputPeerUUID',
+    },
+    {
+      id: 'outputPeer',
+      label: 'Output peer',
+      kind: 'related',
+      uuidField: 'VoipSbcOutputPeerVspUUID',
+      lookupKey: 'outputPeerUUID',
     },
     { id: 'direction', label: 'Direction', field: 'VbpDirection' },
     { id: 'destination', label: 'Destination pattern', field: 'VbpDestinationPattern' },
@@ -176,10 +184,20 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'peerUUID',
-      source: 'VoipSbcPeerVspUUID',
-      payloadKey: 'peerUUID',
-      label: 'SIP destination',
+      key: 'inputPeerUUID',
+      source: 'VoipSbcInputPeerVspUUID',
+      payloadKey: 'inputPeerUUID',
+      label: 'Input peer',
+      type: 'search-select',
+      required: true,
+      tab: 'match',
+      span: 1,
+    },
+    {
+      key: 'outputPeerUUID',
+      source: 'VoipSbcOutputPeerVspUUID',
+      payloadKey: 'outputPeerUUID',
+      label: 'Output peer',
       type: 'search-select',
       required: true,
       tab: 'authentication',
@@ -404,7 +422,7 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return ['accountUUID', 'interfaceUUID', 'peerUUID'].includes(field.key)
+    return ['accountUUID', 'interfaceUUID', 'inputPeerUUID', 'outputPeerUUID'].includes(field.key)
       ? this.lookupLoading()
       : false;
   }
@@ -412,7 +430,8 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'accountUUID') return this.accountOptions();
     if (key === 'interfaceUUID') return this.interfaceOptions();
-    if (key === 'peerUUID') return this.peerOptions();
+    if (key === 'inputPeerUUID') return this.peerOptions();
+    if (key === 'outputPeerUUID') return this.peerOptions();
     return [];
   }
 

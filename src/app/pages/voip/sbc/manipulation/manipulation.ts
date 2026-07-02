@@ -37,10 +37,10 @@ const MANIPULATION_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/manipulations',
   uuidField: 'VsmUUID',
   pageTitle: 'SBC manipulations',
-  pageDescription: 'Manage SIP header and number manipulations for SBC forwarding.',
+  pageDescription: 'Manage SIP header and number manipulations for SBC pipes.',
   createTitle: 'New SBC manipulation',
   editTitle: 'Edit SBC manipulation',
-  dialogDescription: 'Maintain leg, target, operation and match rules for forwarding.',
+  dialogDescription: 'Maintain leg, target, operation and match rules for pipes.',
   searchPlaceholder: 'Search',
   emptyLabel: 'No SBC manipulations found.',
   deleteTitle: 'Delete SBC manipulation',
@@ -68,7 +68,7 @@ const MANIPULATION_CONFIG: ConfigurableCrudConfig = {
     { id: 'name', label: 'Name', kind: 'identity', field: 'VsmName', uuidField: 'VsmUUID' },
     {
       id: 'pipe',
-      label: 'Forwarding',
+      label: 'Pipe',
       kind: 'related',
       uuidField: 'VoipSbcPipeVbpUUID',
       lookupKey: 'pipeUUID',
@@ -92,7 +92,7 @@ const MANIPULATION_CONFIG: ConfigurableCrudConfig = {
       key: 'pipeUUID',
       source: 'VoipSbcPipeVbpUUID',
       payloadKey: 'pipeUUID',
-      label: 'Forwarding',
+      label: 'Pipe',
       type: 'search-select',
       required: true,
       span: 1,
@@ -188,7 +188,11 @@ export class VoipSbcManipulationPage extends ConfigurableCrudPageBase<Configurab
     try {
       this.pipeOptions.set(
         await fetchPaged(this.rawApi, 'voip/sbc/pipes?status=1', (row) =>
-          option(row.VbpUUID, row.VbpName, [row.InterfaceName, row.PeerName, row.PeerHost]),
+          option(row.VbpUUID, row.VbpName, [
+            row.InterfaceName,
+            row.InputPeerName,
+            row.OutputPeerName,
+          ]),
         ),
       );
     } finally {
