@@ -63,15 +63,16 @@ const SOURCE_TRANSPORT_OPTIONS = [
   { value: 'tcp', label: 'TCP' },
   { value: 'tls', label: 'TLS' },
 ];
+const TRANSPORT_OPTIONS = SOURCE_TRANSPORT_OPTIONS.filter((option) => option.value !== '');
 
 const PIPE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/pipes',
   uuidField: 'VbpUUID',
   pageTitle: 'SBC pipes',
-  pageDescription: 'Manage tenant-aware SIP flows between input and output peers.',
+  pageDescription: 'Manage tenant-aware SIP flows from input peer to output route.',
   createTitle: 'New SBC pipe',
   editTitle: 'Edit SBC pipe',
-  dialogDescription: 'Maintain input peer, output peer, media and codec behavior.',
+  dialogDescription: 'Maintain input peer, output route, media and codec behavior.',
   searchPlaceholder: 'Search',
   emptyLabel: 'No SBC pipes found.',
   deleteTitle: 'Delete SBC pipe',
@@ -85,8 +86,8 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
   activeValue: 1,
   inactiveValue: 0,
   tabLabels: {
-    match: 'Input',
-    authentication: 'Output',
+    match: 'Input route',
+    authentication: 'Output route',
     network: 'Media',
   },
   initialValues: {
@@ -94,7 +95,10 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     accountUUID: '',
     interfaceUUID: '',
     inputPeerUUID: '',
-    outputPeerUUID: '',
+    outputHost: '',
+    outputPort: 5060,
+    outputTransport: 'udp',
+    outputFailoverHost: '',
     name: '',
     direction: 'bidirectional',
     sourceIP: '',
@@ -141,13 +145,9 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'VoipSbcInputPeerVspUUID',
       lookupKey: 'inputPeerUUID',
     },
-    {
-      id: 'outputPeer',
-      label: 'Output peer',
-      kind: 'related',
-      uuidField: 'VoipSbcOutputPeerVspUUID',
-      lookupKey: 'outputPeerUUID',
-    },
+    { id: 'outputHost', label: 'Output host', field: 'VbpOutputHost' },
+    { id: 'outputPort', label: 'Output port', field: 'VbpOutputPort' },
+    { id: 'outputTransport', label: 'Output transport', field: 'VbpOutputTransport' },
     { id: 'direction', label: 'Direction', field: 'VbpDirection' },
     { id: 'destination', label: 'Destination pattern', field: 'VbpDestinationPattern' },
     { id: 'mediaMode', label: 'Media mode', field: 'VbpMediaMode' },
@@ -194,12 +194,38 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'outputPeerUUID',
-      source: 'VoipSbcOutputPeerVspUUID',
-      payloadKey: 'outputPeerUUID',
-      label: 'Output peer',
-      type: 'search-select',
+      key: 'outputHost',
+      source: 'VbpOutputHost',
+      payloadKey: 'outputHost',
+      label: 'Output host',
       required: true,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'outputPort',
+      source: 'VbpOutputPort',
+      payloadKey: 'outputPort',
+      label: 'Output port',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'outputTransport',
+      source: 'VbpOutputTransport',
+      payloadKey: 'outputTransport',
+      label: 'Output transport',
+      type: 'select',
+      options: TRANSPORT_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'outputFailoverHost',
+      source: 'VbpOutputFailoverHost',
+      payloadKey: 'outputFailoverHost',
+      label: 'Output failover host',
       tab: 'authentication',
       span: 1,
     },
@@ -422,7 +448,7 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return ['accountUUID', 'interfaceUUID', 'inputPeerUUID', 'outputPeerUUID'].includes(field.key)
+    return ['accountUUID', 'interfaceUUID', 'inputPeerUUID'].includes(field.key)
       ? this.lookupLoading()
       : false;
   }
@@ -431,7 +457,6 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     if (key === 'accountUUID') return this.accountOptions();
     if (key === 'interfaceUUID') return this.interfaceOptions();
     if (key === 'inputPeerUUID') return this.peerOptions();
-    if (key === 'outputPeerUUID') return this.peerOptions();
     return [];
   }
 
@@ -451,6 +476,7 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       preferredCodecs: arrayToCsv(payload['preferredCodecs']),
       transcodeCodecs: arrayToCsv(payload['transcodeCodecs']),
       sourcePort: Number(payload['sourcePort'] || 0) || null,
+      outputPort: Number(payload['outputPort'] || 5060),
       priority: Number(payload['priority'] || 100),
       enableCdr: Number(payload['enableCdr']) === 1,
       enableHomer: Number(payload['enableHomer']) === 1,
@@ -471,7 +497,7 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
           option(row.VsiUUID, row.VsiName, [row.AccountName, row.VsiIPAddress, row.VsiPort]),
         ),
         fetchPaged(this.rawApi, 'voip/sbc/peers?status=1', (row) =>
-          option(row.VspUUID, row.VspName, [row.AccountName, row.VspHost, row.VspPort]),
+          option(row.VspUUID, row.VspName, [row.AccountName, row.VspAuthMode]),
         ),
       ]);
       this.accountOptions.set(accounts);

@@ -191,7 +191,7 @@ export class VoipSbcManipulationPage extends ConfigurableCrudPageBase<Configurab
           option(row.VbpUUID, row.VbpName, [
             row.InterfaceName,
             row.InputPeerName,
-            row.OutputPeerName,
+            row.VbpOutputHost,
           ]),
         ),
       );
