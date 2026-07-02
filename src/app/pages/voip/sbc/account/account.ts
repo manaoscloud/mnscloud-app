@@ -50,7 +50,13 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'VoipSbcServerVbsUUID',
       lookupKey: 'serverUUID',
     },
-    { id: 'default', label: 'Default', field: 'VsaIsDefault' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'VsaIsDefault',
+      className: 'status-col',
+    },
     { id: 'status', label: 'Status', kind: 'status', field: 'VsaStatus', className: 'status-col' },
   ],
   fields: [

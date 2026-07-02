@@ -132,7 +132,13 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
     { id: 'host', label: 'Host', field: 'VspHost' },
     { id: 'port', label: 'Port', field: 'VspPort' },
     { id: 'transport', label: 'Transport', field: 'VspTransport' },
-    { id: 'register', label: 'Register', field: 'VspRegisterEnabled' },
+    {
+      id: 'register',
+      label: 'Register',
+      kind: 'boolean',
+      field: 'VspRegisterEnabled',
+      className: 'status-col',
+    },
     { id: 'status', label: 'Status', kind: 'status', field: 'VspStatus', className: 'status-col' },
   ],
   fields: [

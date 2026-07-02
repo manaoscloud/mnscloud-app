@@ -162,7 +162,7 @@ export type ConfigurableCrudColumn = {
   label: string;
   field?: string;
   uuidField?: string;
-  kind?: 'identity' | 'related' | 'status' | 'text' | 'date' | 'datetime';
+  kind?: 'identity' | 'related' | 'status' | 'boolean' | 'text' | 'date' | 'datetime';
   lookupKey?: string;
   className?: string;
 };
@@ -706,6 +706,19 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return String(value ?? '') === String(this.config.activeValue);
   }
 
+  booleanLabel(value: unknown): string {
+    return this.isTruthyValue(value) ? 'Yes' : 'No';
+  }
+
+  isTruthyValue(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    const normalized = String(value ?? '')
+      .trim()
+      .toLowerCase();
+    return ['1', 'true', 'yes', 'y', 'active', 'enabled', 'default'].includes(normalized);
+  }
+
   recordUUID(row: T): string {
     return String(row[this.config.uuidField] ?? '');
   }
@@ -725,6 +738,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   columnText(row: T, column: ConfigurableCrudColumn): string {
     const field = column.field ?? column.id;
+    if (column.kind === 'boolean') return this.booleanLabel(row[field]);
     if (column.kind === 'date') return this.dateTime.formatDate(this.dateValue(row[field])) || '-';
     if (column.kind === 'datetime' || this.isDateTimeColumn(column, row[field])) {
       return this.dateTime.formatDateTime(this.dateValue(row[field])) || '-';
@@ -867,6 +881,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (!column) return '';
     if (column.kind === 'related') return this.columnMain(row, column).toLowerCase();
     const field = column.field ?? column.id;
+    if (column.kind === 'boolean') return this.isTruthyValue(row[field]) ? '1' : '0';
     if (
       column.kind === 'date' ||
       column.kind === 'datetime' ||

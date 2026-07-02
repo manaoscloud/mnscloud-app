@@ -52,7 +52,13 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       field: 'VssIsActive',
       className: 'status-col',
     },
-    { id: 'default', label: 'Default', field: 'VssIsDefault' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'VssIsDefault',
+      className: 'status-col',
+    },
   ],
   fields: [
     {

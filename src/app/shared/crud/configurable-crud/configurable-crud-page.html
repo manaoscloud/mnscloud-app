@@ -116,6 +116,14 @@
                 >
                   {{ statusLabel(row[column.field ?? column.id]) | transloco }}
                 </span>
+              } @else if (column.kind === 'boolean') {
+                <span
+                  class="status-pill status-chip state-chip boolean-chip"
+                  [class.is-active]="isTruthyValue(row[column.field ?? column.id])"
+                  [class.is-inactive]="!isTruthyValue(row[column.field ?? column.id])"
+                >
+                  {{ booleanLabel(row[column.field ?? column.id]) | transloco }}
+                </span>
               } @else {
                 {{ columnText(row, column) }}
               }
