@@ -174,7 +174,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'maxConcurrentCalls',
       label: 'Max concurrent calls',
       type: 'number',
-      tab: 'authentication',
+      tab: 'limits',
       span: 1,
     },
     {
@@ -183,7 +183,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'cpsLimit',
       label: 'CPS limit',
       type: 'number',
-      tab: 'authentication',
+      tab: 'limits',
       span: 1,
     },
   ],

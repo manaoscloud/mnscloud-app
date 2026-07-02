@@ -113,6 +113,7 @@ export type ConfigurableCrudField = {
     | 'network'
     | 'match'
     | 'authentication'
+    | 'limits'
     | 'codecs'
     | 'notes';
   addressSection?: string;
@@ -313,6 +314,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.config.fields.filter(
       (field) => this.isFieldVisible(field) && field.tab === 'authentication',
     ),
+  );
+  readonly limitsFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'limits'),
   );
   readonly codecFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'codecs'),
