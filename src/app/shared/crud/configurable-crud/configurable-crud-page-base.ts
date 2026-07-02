@@ -111,6 +111,7 @@ export type ConfigurableCrudField = {
     | 'address'
     | 'financial'
     | 'network'
+    | 'monitoring'
     | 'match'
     | 'authentication'
     | 'limits'
@@ -207,6 +208,7 @@ export type ConfigurableCrudConfig = {
   canDelete?: boolean;
   bulkDelete?: boolean;
   statusFilter?: boolean;
+  tabLabels?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
 };
 
 export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
@@ -306,6 +308,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly networkFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'network'),
+  );
+  readonly monitoringFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'monitoring'),
   );
   readonly matchFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'match'),
@@ -599,6 +604,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return [`span-${field.span ?? 1}`, field.breakBefore ? 'break-before' : '']
       .filter(Boolean)
       .join(' ');
+  }
+
+  tabLabel(tab: NonNullable<ConfigurableCrudField['tab']>, fallback: string): string {
+    return this.config.tabLabels?.[tab] ?? fallback;
   }
 
   protected assignPostalLookupValue(

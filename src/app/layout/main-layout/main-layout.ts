@@ -1286,13 +1286,13 @@ export class MainLayout {
             },
             {
               id: 'voip/sbc/peer',
-              label: 'Peers',
+              label: 'SIP destinations',
               icon: 'settings_ethernet',
               route: '/voip/sbc/peer',
             },
             {
               id: 'voip/sbc/pipe',
-              label: 'Pipes',
+              label: 'Forwarding',
               icon: 'schema',
               route: '/voip/sbc/pipe',
             },

@@ -206,7 +206,7 @@
 
     <div class="dialog-content">
       <mat-tab-group class="form-tabs crud-tabs">
-        <mat-tab [label]="'Record' | transloco">
+        <mat-tab [label]="tabLabel('record', 'Record') | transloco">
           <div class="tab-content form-grid">
             @for (field of recordFields(); track field.key) {
               @switch (field.type) {
@@ -346,7 +346,7 @@
         </mat-tab>
 
         @if (addressFields().length) {
-          <mat-tab [label]="'Address' | transloco">
+          <mat-tab [label]="tabLabel('address', 'Address') | transloco">
             <div class="tab-content address-section-list">
               @for (section of addressSections(); track section.key) {
                 <section class="address-section">
@@ -511,7 +511,7 @@
         }
 
         @if (financialFields().length) {
-          <mat-tab [label]="'Financial' | transloco">
+          <mat-tab [label]="tabLabel('financial', 'Financial') | transloco">
             <div class="tab-content form-grid">
               @for (field of financialFields(); track field.key) {
                 @switch (field.type) {
@@ -627,7 +627,7 @@
         }
 
         @if (networkFields().length) {
-          <mat-tab [label]="'Network' | transloco">
+          <mat-tab [label]="tabLabel('network', 'Network') | transloco">
             <div class="tab-content form-grid">
               @for (field of networkFields(); track field.key) {
                 @switch (field.type) {
@@ -701,8 +701,83 @@
           </mat-tab>
         }
 
+        @if (monitoringFields().length) {
+          <mat-tab [label]="tabLabel('monitoring', 'Monitoring') | transloco">
+            <div class="tab-content form-grid">
+              @for (field of monitoringFields(); track field.key) {
+                @switch (field.type) {
+                  @case ('search-select') {
+                    <mns-search-select-field
+                      [fieldClass]="fieldClass(field)"
+                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [placeholder]="field.placeholder ?? 'Search' | transloco"
+                      [options]="fieldOptions(field)"
+                      [loading]="fieldLoading(field)"
+                      [value]="fieldValue(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
+                  @case ('select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        [value]="fieldValue(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @case ('multi-select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        multiple
+                        [value]="fieldValueArray(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @default {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <input
+                        matInput
+                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [autocomplete]="field.autocomplete ?? 'off'"
+                        [attr.data-field-key]="field.key"
+                        [value]="fieldValueString(field.key)"
+                        (input)="setFieldValue(field.key, $any($event.target).value)"
+                      />
+                    </mat-form-field>
+                  }
+                }
+              }
+            </div>
+          </mat-tab>
+        }
+
         @if (matchFields().length) {
-          <mat-tab [label]="'Match' | transloco">
+          <mat-tab [label]="tabLabel('match', 'Match') | transloco">
             <div class="tab-content form-grid">
               @for (field of matchFields(); track field.key) {
                 @switch (field.type) {
@@ -777,7 +852,7 @@
         }
 
         @if (authenticationFields().length) {
-          <mat-tab [label]="'Authentication' | transloco">
+          <mat-tab [label]="tabLabel('authentication', 'Authentication') | transloco">
             <div class="tab-content form-grid">
               @for (field of authenticationFields(); track field.key) {
                 @switch (field.type) {
@@ -852,7 +927,7 @@
         }
 
         @if (limitsFields().length) {
-          <mat-tab [label]="'Limits' | transloco">
+          <mat-tab [label]="tabLabel('limits', 'Limits') | transloco">
             <div class="tab-content form-grid">
               @for (field of limitsFields(); track field.key) {
                 @switch (field.type) {
@@ -927,7 +1002,7 @@
         }
 
         @if (codecFields().length) {
-          <mat-tab [label]="'Codecs' | transloco">
+          <mat-tab [label]="tabLabel('codecs', 'Codecs') | transloco">
             <div class="tab-content form-grid">
               @for (field of codecFields(); track field.key) {
                 @switch (field.type) {
@@ -991,7 +1066,7 @@
         }
 
         @if (notesFields().length) {
-          <mat-tab [label]="'Notes' | transloco">
+          <mat-tab [label]="tabLabel('notes', 'Notes') | transloco">
             <div class="tab-content form-grid">
               @for (field of notesFields(); track field.key) {
                 <mat-form-field appearance="outline" [class]="fieldClass(field)">
