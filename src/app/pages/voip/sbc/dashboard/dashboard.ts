@@ -159,7 +159,7 @@ export class VoipSbcDashboardPage {
           {
             key: 'pipe',
             label: 'Pipes',
-            description: 'Bind input peers to output SIP routes.',
+            description: 'Bind inbound peers to outbound SIP destinations.',
             icon: 'schema',
             route: `${this.baseRoute()}/pipe`,
           },
