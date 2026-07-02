@@ -86,7 +86,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   tabLabels: {
     match: 'Input',
-    authentication: 'Output',
+    authentication: 'Destination',
     network: 'Media',
   },
   initialValues: {
@@ -135,7 +135,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     },
     {
       id: 'peer',
-      label: 'Output',
+      label: 'Destination',
       kind: 'related',
       uuidField: 'VoipSbcPeerVspUUID',
       lookupKey: 'peerUUID',
@@ -179,7 +179,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       key: 'peerUUID',
       source: 'VoipSbcPeerVspUUID',
       payloadKey: 'peerUUID',
-      label: 'Output destination',
+      label: 'SIP destination',
       type: 'search-select',
       required: true,
       tab: 'authentication',
