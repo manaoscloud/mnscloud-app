@@ -194,6 +194,15 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       breakBefore: true,
     },
     {
+      key: 'authPassword',
+      payloadKey: 'authPassword',
+      label: 'Auth password',
+      tab: 'authentication',
+      span: 1,
+      autocomplete: 'new-password',
+      hiddenWhen: ({ values }) => !['register', 'ip_digest'].includes(String(values['authMode'])),
+    },
+    {
       key: 'fromDomain',
       source: 'VspFromDomain',
       payloadKey: 'fromDomain',
@@ -214,15 +223,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       placeholder:
         'One address per line. Example: 200.215.239.234, 200.215.239.0/24, 2804:8094::/48',
       hiddenWhen: ({ values }) => !['ip', 'ip_digest'].includes(String(values['authMode'])),
-    },
-    {
-      key: 'authPassword',
-      payloadKey: 'authPassword',
-      label: 'Auth password',
-      tab: 'authentication',
-      span: 1,
-      autocomplete: 'new-password',
-      hiddenWhen: ({ values }) => !['register', 'ip_digest'].includes(String(values['authMode'])),
     },
     {
       key: 'registrarHost',
