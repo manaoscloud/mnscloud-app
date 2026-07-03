@@ -183,6 +183,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       options: YES_NO_OPTIONS,
       tab: 'authentication',
       span: 1,
+      hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
     },
     {
       key: 'authUsername',
