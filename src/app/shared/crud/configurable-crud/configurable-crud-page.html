@@ -218,6 +218,7 @@
                     >
                     <input
                       matInput
+                      [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                       [matDatepicker]="recordDatePicker"
                       appDateMask
                       [autocomplete]="field.autocomplete ?? 'off'"
@@ -304,6 +305,7 @@
                     >
                     <input
                       matInput
+                      [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                       [type]="
                         field.type === 'number'
                           ? 'number'
@@ -397,6 +399,9 @@
                               >
                               <input
                                 matInput
+                                [placeholder]="
+                                  field.placeholder ? (field.placeholder | transloco) : ''
+                                "
                                 [matDatepicker]="addressDatePicker"
                                 appDateMask
                                 [disabled]="isFieldDisabled(field)"
@@ -466,6 +471,9 @@
                               <mat-label>{{ field.label | transloco }}</mat-label>
                               <input
                                 matInput
+                                [placeholder]="
+                                  field.placeholder ? (field.placeholder | transloco) : ''
+                                "
                                 [attr.data-field-key]="field.key"
                                 [disabled]="isFieldDisabled(field)"
                                 [value]="fieldValueString(field.key)"
@@ -523,6 +531,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [matDatepicker]="financialDatePicker"
                         appDateMask
                         [autocomplete]="field.autocomplete ?? 'off'"
@@ -590,6 +599,7 @@
                       >
                       <textarea
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [rows]="field.rows ?? 4"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
@@ -606,6 +616,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="
                           field.type === 'number'
                             ? 'number'
@@ -687,6 +698,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
@@ -762,6 +774,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
@@ -837,6 +850,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
@@ -912,6 +926,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
@@ -987,6 +1002,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
@@ -1051,6 +1067,7 @@
                       >
                       <input
                         matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
@@ -1073,6 +1090,7 @@
                   <mat-label>{{ field.label | transloco }}</mat-label>
                   <textarea
                     matInput
+                    [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                     [rows]="field.rows ?? 5"
                     [value]="fieldValueString(field.key)"
                     (input)="setFieldValue(field.key, $any($event.target).value)"

@@ -2667,6 +2667,8 @@
   "Peer type": "Peer type",
   "Destination type": "Destination type",
   "Allowed source addresses": "Allowed source addresses",
+  "Origin domain": "Origin domain",
+  "One address per line. Example: 200.215.239.234, 200.215.239.0/24, 2804:8094::/48": "One address per line. Example: 200.215.239.234, 200.215.239.0/24, 2804:8094::/48",
   "IP + Digest": "IP + Digest",
   "Anchor": "Anchor",
   "Brazil custom": "Brazil custom",
