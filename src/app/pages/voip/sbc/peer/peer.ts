@@ -191,6 +191,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       label: 'Username',
       tab: 'authentication',
       span: 1,
+      breakBefore: true,
     },
     {
       key: 'fromDomain',
@@ -251,6 +252,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       options: [{ value: '', label: 'Automatic' }, ...TRANSPORT_OPTIONS],
       tab: 'authentication',
       span: 1,
+      breakBefore: true,
       hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
     },
     {
@@ -288,6 +290,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       type: 'number',
       tab: 'authentication',
       span: 1,
+      breakBefore: true,
       hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
     },
     {
