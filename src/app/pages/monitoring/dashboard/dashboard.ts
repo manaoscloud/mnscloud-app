@@ -44,6 +44,9 @@ type RuntimeProductFleet = {
   label: string;
   latestVersion?: string | null;
   latestBuildRef?: string | null;
+  mode?: string | null;
+  strategy?: string | null;
+  batchSize?: number | null;
   nodeCount: number;
   currentCount: number;
   outdatedCount: number;

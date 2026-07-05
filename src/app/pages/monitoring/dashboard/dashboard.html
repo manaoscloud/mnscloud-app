@@ -128,7 +128,9 @@
                 <div>
                   <strong>{{ product.label }}</strong>
                   <small>
-                    {{ product.latestVersion || '-' }} · {{ shortBuildRef(product.latestBuildRef) }}
+                    {{ product.latestVersion || '-' }} · {{ shortBuildRef(product.latestBuildRef) }} ·
+                    {{ (product.strategy === 'rolling' ? 'Rolling' : product.strategy || 'Rolling') | transloco }}
+                    · {{ 'batch' | transloco }} {{ product.batchSize || 1 }}
                   </small>
                 </div>
                 <div class="runtime-counts">

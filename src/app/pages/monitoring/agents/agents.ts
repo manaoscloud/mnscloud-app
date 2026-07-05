@@ -88,6 +88,7 @@ type RuntimeProductFleet = {
   channel: string;
   mode: 'single' | 'cluster' | string;
   strategy: string;
+  batchSize?: number | null;
   canRequest: boolean;
   latestVersion?: string | null;
   latestBuildRef?: string | null;
@@ -343,7 +344,7 @@ export class MonitoringAgentsPage {
     const ok = await this.confirm(
       `${this.t('Update')} ${product.label}`,
       `${this.t('Queue')} ${product.label} ${modeLabel} ${this.t('update to')} ${target}? ${this.t(
-        'The API will update every eligible online node for this product.',
+        'The API will update the next eligible online batch for this product.',
       )}`,
       this.t('Queue update'),
     );
@@ -784,6 +785,12 @@ export class MonitoringAgentsPage {
 
   runtimeModeLabel(mode: string | null | undefined) {
     return mode === 'cluster' ? 'Cluster' : 'Single node';
+  }
+
+  runtimeRolloutLabel(product: RuntimeProductFleet) {
+    const strategy = product.strategy === 'rolling' ? this.t('Rolling') : product.strategy;
+    const batchSize = Number(product.batchSize ?? 1);
+    return `${strategy} · ${this.t('batch')} ${Number.isFinite(batchSize) && batchSize > 0 ? batchSize : 1}`;
   }
 
   runtimeProductClass(product: RuntimeProductFleet) {

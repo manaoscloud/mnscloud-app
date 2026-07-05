@@ -68,7 +68,8 @@
           <div>
             <strong>{{ product.label }}</strong>
             <small>
-              {{ runtimeModeLabel(product.mode) | transloco }} · {{ product.nodeCount }} node(s)
+              {{ runtimeModeLabel(product.mode) | transloco }} · {{ product.nodeCount }} node(s) ·
+              {{ runtimeRolloutLabel(product) }}
             </small>
           </div>
           <div class="runtime-product-version">
