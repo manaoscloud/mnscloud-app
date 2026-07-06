@@ -231,6 +231,10 @@ publish_artifact() {
   log "extracting browser artifact"
   tar -xzf "$artifact_path" -C "$extract_dir"
   validate_browser_assets "$extract_dir"
+  # Release artifacts are packaged with deterministic mtimes for reproducible
+  # checksums. Normalize the extracted files before rsync so the stale asset
+  # cleanup does not delete the freshly deployed hashed bundles.
+  find "$extract_dir" -type f -exec touch {} +
 
   log "deploying browser files to ${APP_WEB_ROOT}"
   install -d -m 0755 "${APP_WEB_ROOT}"
