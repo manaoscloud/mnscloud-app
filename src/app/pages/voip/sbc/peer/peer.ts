@@ -223,7 +223,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       rows: 4,
       placeholder:
         'One address per line. Example: 200.215.239.234, 200.215.239.0/24, 2804:8094::/48',
-      hiddenWhen: ({ values }) => !['ip', 'ip_digest'].includes(String(values['authMode'])),
+      hiddenWhen: ({ values }) => !['ip', 'ip_digest', 'register'].includes(String(values['authMode'])),
     },
     {
       key: 'registrarHost',

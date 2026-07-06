@@ -117,7 +117,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     allowedCodecs: ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'],
     preferredCodecs: ['PCMU', 'PCMA'],
     transcodeCodecs: [],
-    enableCdr: 1,
+    enableCdr: 0,
     enableHomer: 0,
     fakeRing: 0,
     sendCallerId: 1,
