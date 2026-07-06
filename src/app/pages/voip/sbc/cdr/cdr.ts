@@ -1,12 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudColumn,
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { ApiService } from '../../../../services/api.service';
 
 const CDR_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/cdrs',
@@ -33,6 +35,15 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
   canDelete: false,
   bulkDelete: false,
   statusFilter: false,
+  listFilters: [
+    {
+      key: 'peerUUID',
+      label: 'Input peer',
+      paramKey: 'peerUUID',
+      type: 'search-select',
+      span: 1,
+    },
+  ],
   initialValues: {},
   fields: [],
   columns: [
@@ -56,8 +67,17 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly rawApi = inject(ApiService);
+  readonly peerOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly lookupLoading = signal(false);
+
   constructor() {
     super(CDR_CONFIG);
+    void this.loadLookups();
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    return key === 'peerUUID' ? this.peerOptions() : [];
   }
 
   override statusLabel(value: unknown): string {
@@ -104,4 +124,60 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     if (value === null || value === undefined || value === '') return '-';
     return String(value);
   }
+
+  private async loadLookups(): Promise<void> {
+    this.lookupLoading.set(true);
+    try {
+      this.peerOptions.set(
+        await fetchPaged(this.rawApi, 'voip/sbc/peers?status=1', (row) =>
+          option(row.VspUUID, row.VspName, [row.AccountName, row.VspAuthMode]),
+        ),
+      );
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+}
+
+async function fetchPaged(
+  api: ApiService,
+  endpoint: string,
+  mapItem: (row: any) => ConfigurableCrudOption | null,
+): Promise<ConfigurableCrudOption[]> {
+  const options: ConfigurableCrudOption[] = [];
+  for (let offset = 0; offset < 5000; offset += 500) {
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const response = await api.get<any>(`${endpoint}${separator}limit=500&offset=${offset}`);
+    const rows = extractItems(response);
+    options.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
+    if (rows.length < 500) break;
+  }
+  return options.sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function extractItems(response: any): any[] {
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
+  const normalizedValue = String(value ?? '').trim();
+  const normalizedLabel = String(label ?? '').trim();
+  if (!normalizedValue || !normalizedLabel) return null;
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }

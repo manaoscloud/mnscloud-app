@@ -168,6 +168,19 @@ export type ConfigurableCrudColumn = {
   className?: string;
 };
 
+export type ConfigurableCrudListFilter = {
+  key: string;
+  label: string;
+  paramKey?: string;
+  type: 'select' | 'search-select';
+  span?: 1 | 2 | 3 | 4;
+  placeholder?: string;
+  emptyLabel?: string;
+  loading?: () => boolean;
+  options?: readonly ConfigurableCrudOption[];
+  translateOptions?: boolean;
+};
+
 export type ConfigurableCrudRowAction = {
   key: string;
   label: string;
@@ -202,6 +215,7 @@ export type ConfigurableCrudConfig = {
   inactiveValue: string | number;
   addressSections?: readonly ConfigurableCrudAddressSection[];
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
+  listFilters?: readonly ConfigurableCrudListFilter[];
   rowActions?: readonly ConfigurableCrudRowAction[];
   canCreate?: boolean;
   canEdit?: boolean;
@@ -222,6 +236,7 @@ export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
 type ConfigurableCrudFilters = {
   search: string;
   status: '' | string | number;
+  extra: Record<string, string | number | boolean | null>;
 };
 
 @Directive()
@@ -240,7 +255,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   readonly search = signal('');
   readonly status = signal<'' | string | number>('');
-  readonly appliedFilters = signal<ConfigurableCrudFilters>({ search: '', status: '' });
+  readonly listFilterValues = signal<Record<string, string | number | boolean | null>>({});
+  readonly appliedFilters = signal<ConfigurableCrudFilters>({ search: '', status: '', extra: {} });
   readonly selectedUUIDs = signal(new Set<string>());
   readonly sortActive = signal('');
   readonly sortDirection = signal<SortDirection>('');
@@ -340,6 +356,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly hasRowActions = computed(
     () => this.canEdit() || this.canDelete() || Boolean(this.config.rowActions?.length),
   );
+  readonly listFilters = computed(() => this.config.listFilters ?? []);
 
   protected constructor(config: ConfigurableCrudConfig) {
     this.config = config;
@@ -364,12 +381,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.appliedFilters.set({
       search: this.search().trim(),
       status: this.status(),
+      extra: { ...this.listFilterValues() },
     });
   }
 
   clearSearchFilters(): void {
     this.search.set('');
     this.status.set('');
+    this.listFilterValues.set({});
     this.applySearchFilters();
   }
 
@@ -627,6 +646,32 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return field.options ?? this.lookupOptions(field.key);
   }
 
+  listFilterOptions(filter: ConfigurableCrudListFilter): readonly ConfigurableCrudOption[] {
+    if (filter.type === 'search-select') {
+      return filter.options ?? this.lookupOptions(filter.key);
+    }
+    return [
+      { value: '', label: 'All' },
+      ...(filter.options ?? this.lookupOptions(filter.key)),
+    ];
+  }
+
+  listFilterValue(filter: ConfigurableCrudListFilter): string | number | boolean | null {
+    return this.listFilterValues()[filter.key] ?? '';
+  }
+
+  setListFilterValue(filter: ConfigurableCrudListFilter, value: string | number | boolean | null) {
+    this.listFilterValues.update((current) => ({ ...current, [filter.key]: value }));
+  }
+
+  listFilterClass(filter: ConfigurableCrudListFilter): string {
+    return `span-${filter.span ?? 1}`;
+  }
+
+  listFilterLoading(filter: ConfigurableCrudListFilter): boolean {
+    return filter.loading?.() ?? false;
+  }
+
   fieldLoading(field: ConfigurableCrudField): boolean {
     return field.loading?.() ?? false;
   }
@@ -858,6 +903,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (filters.search) params.set('search', filters.search);
     if (this.statusFilterEnabled() && filters.status !== '')
       params.set('status', String(filters.status));
+    for (const filter of this.listFilters()) {
+      const value = filters.extra[filter.key];
+      if (value === null || value === undefined || value === '') continue;
+      params.set(filter.paramKey ?? filter.key, String(value));
+    }
 
     const response = await this.api.get(`${this.config.endpoint}?${params.toString()}`);
     const data = (response as { data?: unknown })?.data;

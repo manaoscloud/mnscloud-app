@@ -39,6 +39,40 @@
         </mat-form-field>
       }
 
+      @for (filter of listFilters(); track filter.key) {
+        @if (filter.type === 'search-select') {
+          <mns-search-select-field
+            [label]="filter.label | transloco"
+            [value]="listFilterValue(filter)"
+            [options]="listFilterOptions(filter)"
+            [fieldClass]="listFilterClass(filter)"
+            [placeholder]="filter.placeholder ?? 'Search'"
+            [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
+            [loading]="listFilterLoading(filter)"
+            [translateOptions]="filter.translateOptions ?? false"
+            (selectionChange)="setListFilterValue(filter, $event)"
+          />
+        } @else {
+          <mat-form-field appearance="outline" [class]="listFilterClass(filter)">
+            <mat-label>{{ filter.label | transloco }}</mat-label>
+            <mat-select
+              [value]="listFilterValue(filter)"
+              (selectionChange)="setListFilterValue(filter, $event.value)"
+            >
+              @for (option of listFilterOptions(filter); track option.value) {
+                <mat-option [value]="option.value">
+                  @if (filter.translateOptions) {
+                    {{ option.label | transloco }}
+                  } @else {
+                    {{ option.label }}
+                  }
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      }
+
       <div class="filter-actions">
         <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
           <mat-icon>filter_alt</mat-icon>
