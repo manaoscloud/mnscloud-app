@@ -927,6 +927,13 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
+                path: 'voip/sbc/cdr',
+                loadComponent: () =>
+                  import('./pages/voip/sbc/cdr/cdr').then((m) => m.VoipSbcCdrPage),
+                title: 'VoIP • SBC • CDR | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
                 path: 'realtime/webrtc',
                 loadComponent: () =>
                   import('./pages/realtime/webrtc/dashboard/dashboard').then(

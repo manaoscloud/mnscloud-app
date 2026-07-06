@@ -67,6 +67,9 @@ Official business/UI glossary used by the app translation layer.
 | DID | DID | DID |
 | Softswitch | Softswitch | Softswitch |
 | SBC | SBC | SBC |
+| SBC CDR | CDR SBC | CDR SBC |
+| Call-ID | Call-ID | Call-ID |
+| Input peer | Peer de entrada | Peer de entrada |
 | PABX | PABX | PABX |
 | ISP | ISP | ISP |
 | POP (Point of Presence) | POP (Ponto de Presença) | POP (Punto de Presencia) |

@@ -1302,6 +1302,12 @@ export class MainLayout {
               icon: 'transform',
               route: '/voip/sbc/manipulation',
             },
+            {
+              id: 'voip/sbc/cdr',
+              label: 'CDR',
+              icon: 'receipt_long',
+              route: '/voip/sbc/cdr',
+            },
           ],
         },
         {
