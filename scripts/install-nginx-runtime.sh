@@ -205,7 +205,13 @@ validate_browser_assets() {
       printf '[mnscloud-app] ERROR: artifact references missing asset: %s\n' "$asset" >&2
       missing=1
     fi
-  done < <(grep -Eo '(main|polyfills|styles|chunk)-[A-Za-z0-9_-]+[.](js|css)' "$index_file" | sort -u)
+  done < <(
+    {
+      grep -Eo '(main|polyfills|styles|chunk)-[A-Za-z0-9_-]+[.](js|css)' "$index_file" || true
+      find "$root" -maxdepth 1 -type f -name '*.js' -print0 |
+        xargs -0 grep -hEo 'chunk-[A-Za-z0-9_-]+[.]js' 2>/dev/null || true
+    } | sort -u
+  )
 
   [[ "$missing" == "0" ]] || die "artifact asset validation failed"
 }
@@ -228,7 +234,12 @@ publish_artifact() {
 
   log "deploying browser files to ${APP_WEB_ROOT}"
   install -d -m 0755 "${APP_WEB_ROOT}"
-  rsync -a --delete "${extract_dir}/" "${APP_WEB_ROOT}/"
+  # Keep old hashed JS/CSS assets available for active browser sessions that loaded the
+  # previous index/main bundle before this update. Removing them immediately breaks lazy chunks.
+  rsync -a "${extract_dir}/" "${APP_WEB_ROOT}/"
+  find "${APP_WEB_ROOT}" -maxdepth 1 -type f \
+    \( -name 'main-*.js' -o -name 'polyfills-*.js' -o -name 'chunk-*.js' -o -name 'styles-*.css' \) \
+    -mtime +14 -delete
   # Browser artifacts are built deterministically and may carry normalized mtimes.
   # Runtime files should expose the deployment timestamp for operator validation.
   find "${APP_WEB_ROOT}" -type f -exec touch {} +
@@ -263,6 +274,16 @@ server {
     access_log off;
     default_type text/plain;
     return 200 "ok\\n";
+  }
+
+  location = /index.html {
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    try_files /index.html =404;
+  }
+
+  location = /env.js {
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    try_files /env.js =404;
   }
 
   location = /api {
