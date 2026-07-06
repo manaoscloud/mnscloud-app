@@ -20,6 +20,10 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import {
+  DataViewerTone,
+  openDataViewerDialog,
+} from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 type ActivityLog = {
   uuid: string;
@@ -108,7 +112,6 @@ export class MonitoringActivityLogsPage {
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
 
-  readonly selected = signal<ActivityLog | null>(null);
   readonly pageIndex = signal(0);
   readonly pageSize = signal(25);
   readonly sortActive = signal('');
@@ -222,13 +225,45 @@ export class MonitoringActivityLogsPage {
     this.dataSource.data = this.sortRows([...this.logsSnapshot().items]);
   }
 
-  openDetails(row: ActivityLog, template: any) {
-    this.selected.set(row);
-    this.dialog.open(template, {
-      width: '860px',
-      maxWidth: '96vw',
-      maxHeight: '88vh',
-      panelClass: 'activity-detail-dialog-panel',
+  openDetails(row: ActivityLog) {
+    openDataViewerDialog(this.dialog, {
+      title: row.action || 'Activity log',
+      description: row.message || 'No message available.',
+      status: {
+        label: 'Status',
+        value: row.status || '-',
+        tone: this.viewerTone(row.status || row.level),
+      },
+      details: [
+        { label: 'Created', value: this.formatDate(row.dateCreated) },
+        {
+          label: 'Environment',
+          value: row.environmentUUID || 'global',
+          monospace: true,
+          wide: true,
+        },
+        { label: 'Correlation ID', value: row.correlationID, monospace: true, wide: true },
+        { label: 'Job UUID', value: row.jobUUID, monospace: true, wide: true },
+        { label: 'Actor', value: this.actorLabel(row) },
+        { label: 'Source', value: row.source },
+        { label: 'Category', value: row.category },
+        { label: 'Resource', value: `${row.resourceType || '-'} / ${this.resourceLabel(row)}` },
+        { label: 'Host', value: row.hostname },
+        { label: 'Duration', value: this.formatDuration(row.durationMs) },
+        { label: 'Error', value: this.errorDetail(row) },
+        { label: 'Suggestion', value: row.suggestion, wide: true },
+      ],
+      sections: [
+        {
+          title: 'Record',
+          code: {
+            title: 'Record',
+            value: row.details ?? row,
+            format: 'json',
+            copy: true,
+          },
+        },
+      ],
     });
   }
 
@@ -240,11 +275,6 @@ export class MonitoringActivityLogsPage {
     if (value === null || value === undefined || !Number.isFinite(Number(value))) return '-';
     const ms = Number(value);
     return ms < 1000 ? `${ms.toFixed(0)} ms` : `${(ms / 1000).toFixed(2)} s`;
-  }
-
-  formatDetails(value: unknown) {
-    if (!value) return '-';
-    return JSON.stringify(value, null, 2);
   }
 
   actorLabel(row: ActivityLog) {
@@ -294,6 +324,27 @@ export class MonitoringActivityLogsPage {
   private errorMessage(error: unknown, fallback: string) {
     const value = error as { error?: { error?: string }; message?: string };
     return value?.error?.error || value?.message || fallback;
+  }
+
+  private viewerTone(value: string | null | undefined): DataViewerTone {
+    const normalized = String(value ?? '').toLowerCase();
+    if (['success', 'completed'].includes(normalized)) return 'success';
+    if (['failed', 'error', 'critical'].includes(normalized)) return 'danger';
+    if (['warn', 'warning', 'skipped'].includes(normalized)) return 'warning';
+    if (['running', 'processing', 'queued', 'pending', 'waiting', 'info'].includes(normalized)) {
+      return 'info';
+    }
+    return 'neutral';
+  }
+
+  private formatDate(value: string | null | undefined): string {
+    if (!value) return '-';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  }
+
+  private errorDetail(row: ActivityLog): string {
+    return [row.errorCode, row.errorMessage].filter(Boolean).join(' ') || '-';
   }
 
   private async loadActivityLogsSnapshot(

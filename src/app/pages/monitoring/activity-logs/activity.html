@@ -12,7 +12,7 @@
     </header>
 
     <div class="filter-grid">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Search</mat-label>
         <input
           matInput
@@ -22,13 +22,13 @@
       </mat-form-field>
 
       @if (isMaster) {
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" class="span-1">
           <mat-label>Environment UUID</mat-label>
           <input matInput [formField]="filterForm.environmentUUID" placeholder="UUID or global" />
         </mat-form-field>
       }
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Level</mat-label>
         <mat-select [formField]="filterForm.level">
           @for (option of levelOptions; track option) {
@@ -37,7 +37,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Status</mat-label>
         <mat-select [formField]="filterForm.status">
           @for (option of statusOptions; track option) {
@@ -46,7 +46,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Category</mat-label>
         <mat-select [formField]="filterForm.category">
           @for (option of categoryOptions; track option) {
@@ -55,7 +55,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>Correlation ID</mat-label>
         <input matInput [formField]="filterForm.correlationID" />
       </mat-form-field>
@@ -143,7 +143,7 @@
               <button
                 mat-icon-button
                 type="button"
-                (click)="openDetails(row, detailDialog)"
+                (click)="openDetails(row)"
                 aria-label="View activity log details"
                 matTooltip="View details"
               >
@@ -174,68 +174,3 @@
     />
   </mat-card>
 </section>
-
-<ng-template #detailDialog>
-  @if (selected(); as item) {
-    <div class="activity-detail-dialog">
-      <header class="dialog-header">
-        <div>
-          <h2>{{ item.action || 'Activity log' }}</h2>
-          <p>{{ item.message || 'No message available.' }}</p>
-        </div>
-        <span class="status-pill status-chip state-chip" [ngClass]="chipClass(item.status)">
-          {{ item.status || '-' }}
-        </span>
-      </header>
-
-      <mat-dialog-content class="dialog-content">
-        <dl class="detail-grid">
-          <dt>Created</dt>
-          <dd>{{ item.dateCreated ? (item.dateCreated | mnsDateTime: 'medium': 'medium') : '-' }}</dd>
-
-          <dt>Environment</dt>
-          <dd>{{ item.environmentUUID || 'global' }}</dd>
-
-          <dt>Correlation ID</dt>
-          <dd>{{ item.correlationID || '-' }}</dd>
-
-          <dt>Job UUID</dt>
-          <dd>{{ item.jobUUID || '-' }}</dd>
-
-          <dt>Actor</dt>
-          <dd>{{ actorLabel(item) }}</dd>
-
-          <dt>Source</dt>
-          <dd>{{ item.source || '-' }}</dd>
-
-          <dt>Resource</dt>
-          <dd>{{ item.resourceType || '-' }} / {{ resourceLabel(item) }}</dd>
-
-          <dt>Host</dt>
-          <dd>{{ item.hostname || '-' }}</dd>
-
-          <dt>Duration</dt>
-          <dd>{{ formatDuration(item.durationMs) }}</dd>
-
-          <dt>Error</dt>
-          <dd>{{ item.errorCode || '-' }} {{ item.errorMessage || '' }}</dd>
-
-          <dt>Suggestion</dt>
-          <dd>{{ item.suggestion || '-' }}</dd>
-        </dl>
-
-        <section class="details-json">
-          <h3>{{ 'Record' | transloco }}</h3>
-          <pre>{{ formatDetails(item.details) }}</pre>
-        </section>
-      </mat-dialog-content>
-
-      <mat-dialog-actions class="form-actions">
-        <div class="secondary-actions"></div>
-        <div class="primary-actions">
-          <button mat-stroked-button mat-dialog-close type="button">Close</button>
-        </div>
-      </mat-dialog-actions>
-    </div>
-  }
-</ng-template>

@@ -10,10 +10,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
-import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 const CDR_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/cdrs',
@@ -113,29 +110,84 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    return row['VscEvent'] ? CDR_CONFIG.rowActions ?? [] : [];
+    return row['VscEvent'] ? (CDR_CONFIG.rowActions ?? []) : [];
   }
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
     if (action.key !== 'view-invite') return;
-    this.dialog.open(SbcCdrInviteDetailDialogComponent, {
-      panelClass: 'crud-form-dialog',
-      data: {
-        callID: this.display(row['VscCallID']),
-        uuid: this.display(row['VscUUID']),
-        event: this.statusLabel(row['VscEvent']),
-        status: this.statusLabel(row['VscStatus']),
-        inputPeer: this.display(row['InputPeerName']),
-        pipe: this.display(row['PipeName']),
-        from: this.joinSipAddress(row['VscFromUser'], row['VscFromDomain']),
-        to: this.joinSipAddress(row['VscToUser'], row['VscToDomain']),
-        ruri: this.joinSipAddress(row['VscRuriUser'], row['VscRuriDomain']),
-        source: this.joinEndpoint(row['VscSourceIP'], row['VscSourcePort'], row['VscSourceTransport']),
-        local: this.joinEndpoint(row['VscLocalIP'], row['VscLocalPort'], ''),
-        output: this.joinEndpoint(row['VscOutputHost'], row['VscOutputPort'], row['VscOutputTransport']),
-        sipResponse: this.sipResponse(row),
-        payload: this.formatPayload(row['VscPayloadJson']),
-      } satisfies SbcCdrInviteDetailData,
+    openDataViewerDialog(this.dialog, {
+      title: 'INVITE details',
+      description: 'Inspect the full SBC CDR INVITE payload.',
+      status: {
+        label: 'Status',
+        value: this.statusLabel(row['VscStatus']),
+        tone: this.isActiveStatus(row['VscStatus']) ? 'success' : 'neutral',
+      },
+      details: [
+        { label: 'Call-ID', value: row['VscCallID'], monospace: true, wide: true },
+        { label: 'UUID', value: row['VscUUID'], monospace: true, wide: true },
+        { label: 'Event', value: this.statusLabel(row['VscEvent']) },
+        { label: 'Input peer', value: row['InputPeerName'] },
+        { label: 'Pipe', value: row['PipeName'] },
+        { label: 'SIP response', value: this.sipResponse(row) },
+      ],
+      sections: [
+        {
+          title: 'SIP',
+          details: [
+            {
+              label: 'SIP From',
+              value: this.joinSipAddress(row['VscFromUser'], row['VscFromDomain']),
+            },
+            { label: 'SIP To', value: this.joinSipAddress(row['VscToUser'], row['VscToDomain']) },
+            {
+              label: 'R-URI',
+              value: this.joinSipAddress(row['VscRuriUser'], row['VscRuriDomain']),
+            },
+            {
+              label: 'SIP destination',
+              value:
+                this.joinSipAddress(row['VscToUser'], row['VscToDomain'], false) ||
+                this.joinSipAddress(row['VscRuriUser'], row['VscRuriDomain'], false) ||
+                this.display(row['VscDestination']),
+            },
+          ],
+        },
+        {
+          title: 'Network',
+          details: [
+            {
+              label: 'Source IP',
+              value: this.joinEndpoint(
+                row['VscSourceIP'],
+                row['VscSourcePort'],
+                row['VscSourceTransport'],
+              ),
+            },
+            {
+              label: 'Local socket',
+              value: this.joinEndpoint(row['VscLocalIP'], row['VscLocalPort'], ''),
+            },
+            {
+              label: 'SIP output',
+              value: this.joinEndpoint(
+                row['VscOutputHost'],
+                row['VscOutputPort'],
+                row['VscOutputTransport'],
+              ),
+            },
+          ],
+        },
+        {
+          title: 'Full payload',
+          code: {
+            title: 'Full payload',
+            value: row['VscPayloadJson'],
+            format: 'json',
+            copy: true,
+          },
+        },
+      ],
     });
   }
 
@@ -154,7 +206,11 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       return this.joinEndpoint(row['VscSourceIP'], row['VscSourcePort'], row['VscSourceTransport']);
     }
     if (column.id === 'output') {
-      return this.joinEndpoint(row['VscOutputHost'], row['VscOutputPort'], row['VscOutputTransport']);
+      return this.joinEndpoint(
+        row['VscOutputHost'],
+        row['VscOutputPort'],
+        row['VscOutputTransport'],
+      );
     }
     return super.columnText(row, column);
   }
@@ -174,7 +230,9 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     const normalizedPort = this.display(port);
     const normalizedTransport = this.display(transport);
     const address = normalizedPort === '-' ? normalizedHost : `${normalizedHost}:${normalizedPort}`;
-    return normalizedTransport === '-' ? address : `${address}/${normalizedTransport.toUpperCase()}`;
+    return normalizedTransport === '-'
+      ? address
+      : `${address}/${normalizedTransport.toUpperCase()}`;
   }
 
   private sipResponse(row: ConfigurableCrudRecord): string {
@@ -182,16 +240,6 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     const reason = this.display(row['VscSipReason']);
     if (code === '-' && reason === '-') return '-';
     return [code === '-' ? '' : code, reason === '-' ? '' : reason].filter(Boolean).join(' ');
-  }
-
-  private formatPayload(value: unknown): string {
-    if (value === null || value === undefined || value === '') return '-';
-    if (typeof value !== 'string') return JSON.stringify(value, null, 2);
-    try {
-      return JSON.stringify(JSON.parse(value), null, 2);
-    } catch {
-      return value;
-    }
   }
 
   private display(value: unknown): string {
@@ -211,148 +259,6 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       this.lookupLoading.set(false);
     }
   }
-}
-
-type SbcCdrInviteDetailData = {
-  callID: string;
-  uuid: string;
-  event: string;
-  status: string;
-  inputPeer: string;
-  pipe: string;
-  from: string;
-  to: string;
-  ruri: string;
-  source: string;
-  local: string;
-  output: string;
-  sipResponse: string;
-  payload: string;
-};
-
-@Component({
-  selector: 'app-sbc-cdr-invite-detail-dialog',
-  standalone: true,
-  imports: [MatButtonModule, MatDialogModule, MatIconModule, TranslocoPipe],
-  template: `
-    <div class="cdr-detail-dialog">
-      <div class="dialog-header">
-        <div>
-          <h2>{{ 'INVITE details' | transloco }}</h2>
-          <p>{{ 'Inspect the full SBC CDR INVITE payload.' | transloco }}</p>
-        </div>
-      </div>
-
-      <mat-dialog-content class="dialog-content">
-        <section class="detail-grid">
-          @for (item of summaryItems; track item.label) {
-            <div class="detail-item">
-              <span>{{ item.label | transloco }}</span>
-              <strong>{{ item.value }}</strong>
-            </div>
-          }
-        </section>
-
-        <section class="payload-section">
-          <h3>{{ 'Full payload' | transloco }}</h3>
-          <pre>{{ data.payload }}</pre>
-        </section>
-      </mat-dialog-content>
-
-      <mat-dialog-actions align="end" class="form-actions">
-        <button mat-stroked-button color="primary" type="button" mat-dialog-close>
-          {{ 'Close' | transloco }}
-        </button>
-      </mat-dialog-actions>
-    </div>
-  `,
-  styles: [
-    `
-      .cdr-detail-dialog {
-        display: flex;
-        flex-direction: column;
-        min-height: min(720px, 80vh);
-      }
-
-      .dialog-content {
-        overflow: auto;
-      }
-
-      .detail-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.75rem;
-      }
-
-      .detail-item {
-        border: 1px solid var(--mat-sys-outline-variant);
-        border-radius: 8px;
-        padding: 0.75rem;
-        min-width: 0;
-      }
-
-      .detail-item span {
-        display: block;
-        font-size: 0.8rem;
-        opacity: 0.72;
-        margin-bottom: 0.5rem;
-      }
-
-      .detail-item strong {
-        display: block;
-        overflow-wrap: anywhere;
-      }
-
-      .payload-section {
-        margin-top: 1rem;
-      }
-
-      .payload-section h3 {
-        margin: 0 0 0.75rem;
-        font-size: 1rem;
-      }
-
-      .payload-section pre {
-        border: 1px solid var(--mat-sys-outline-variant);
-        border-radius: 8px;
-        margin: 0;
-        padding: 1rem;
-        overflow: auto;
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
-      }
-
-      @media (max-width: 1200px) {
-        .detail-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-
-      @media (max-width: 700px) {
-        .detail-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    `,
-  ],
-})
-class SbcCdrInviteDetailDialogComponent {
-  readonly data = inject<SbcCdrInviteDetailData>(MAT_DIALOG_DATA);
-  readonly summaryItems = [
-    { label: 'Call-ID', value: this.data.callID },
-    { label: 'Status', value: this.data.status },
-    { label: 'Event', value: this.data.event },
-    { label: 'Input peer', value: this.data.inputPeer },
-    { label: 'Pipe', value: this.data.pipe },
-    { label: 'SIP From', value: this.data.from },
-    { label: 'SIP To', value: this.data.to },
-    { label: 'R-URI', value: this.data.ruri },
-    { label: 'Source IP', value: this.data.source },
-    { label: 'Local socket', value: this.data.local },
-    { label: 'SIP output', value: this.data.output },
-    { label: 'SIP response', value: this.data.sipResponse },
-    { label: 'UUID', value: this.data.uuid },
-  ];
 }
 
 async function fetchPaged(

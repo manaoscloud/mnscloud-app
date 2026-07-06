@@ -1,0 +1,218 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.data-viewer-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.data-viewer-dialog .dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-viewer-content {
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+  padding-bottom: 0.25rem;
+}
+
+.data-viewer-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.data-viewer-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.data-viewer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.data-viewer-detail {
+  min-width: 0;
+  border: 1px solid var(--mns-border-subtle, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.data-viewer-detail.is-wide {
+  grid-column: span 2;
+}
+
+.data-viewer-detail dt {
+  margin: 0 0 0.35rem;
+  color: var(--mns-text-secondary, rgba(255, 255, 255, 0.68));
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.data-viewer-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.data-viewer-detail dd.monospace,
+.data-viewer-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}
+
+.data-viewer-detail dd.monospace {
+  font-size: 0.86rem;
+}
+
+.data-viewer-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.data-viewer-code-header span {
+  font-weight: 700;
+}
+
+.data-viewer-code {
+  max-height: min(42vh, 420px);
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--mns-border-subtle, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--mns-text-primary, rgba(255, 255, 255, 0.92));
+  font-size: 0.86rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.data-viewer-code.is-shell {
+  white-space: pre-wrap;
+}
+
+.data-viewer-status {
+  flex: 0 0 auto;
+  justify-content: center;
+  min-width: 112px;
+}
+
+.data-viewer-status.tone-success {
+  --activity-chip-bg: rgba(34, 197, 94, 0.2);
+  --activity-chip-border: #22c55e;
+  --activity-chip-color: #bbf7d0;
+}
+
+.data-viewer-status.tone-warning {
+  --activity-chip-bg: rgba(245, 158, 11, 0.2);
+  --activity-chip-border: #f59e0b;
+  --activity-chip-color: #fde68a;
+}
+
+.data-viewer-status.tone-danger {
+  --activity-chip-bg: rgba(239, 68, 68, 0.2);
+  --activity-chip-border: #ef4444;
+  --activity-chip-color: #fecaca;
+}
+
+.data-viewer-status.tone-info {
+  --activity-chip-bg: rgba(59, 130, 246, 0.2);
+  --activity-chip-border: #3b82f6;
+  --activity-chip-color: #bfdbfe;
+}
+
+.data-viewer-status.tone-neutral {
+  --activity-chip-bg: rgba(148, 163, 184, 0.14);
+  --activity-chip-border: #94a3b8;
+  --activity-chip-color: #e2e8f0;
+}
+
+.form-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.primary-actions,
+.secondary-actions {
+  display: flex;
+  min-width: 0;
+}
+
+.primary-actions {
+  justify-content: flex-end;
+}
+
+.secondary-actions {
+  justify-content: flex-start;
+}
+
+.form-actions button {
+  min-width: 136px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .data-viewer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .data-viewer-dialog .dialog-content {
+    max-height: none;
+  }
+
+  .data-viewer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .data-viewer-detail.is-wide {
+    grid-column: auto;
+  }
+
+  .data-viewer-code {
+    max-height: 42vh;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primary-actions {
+    order: 1;
+  }
+
+  .secondary-actions {
+    order: 2;
+  }
+
+  .primary-actions,
+  .secondary-actions,
+  .form-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+}

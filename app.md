@@ -608,6 +608,26 @@
 - Visible labels, warnings, context fields, and copy/close actions must be present in every runtime
   Transloco dictionary.
 
+## Read-Only Data Viewer Dialog Baseline (Current)
+
+- Any modal that renders read-only technical details, event payloads, JSON records, logs,
+  INVITE/CDR details, activity/audit details, runtime responses, or integration diagnostics must use
+  `DataViewerDialogComponent` from `src/app/shared/data-viewer-dialog`.
+- Data viewer dialogs must open through `openDataViewerDialog`, which delegates to
+  `openCrudTemplateDialog(..., 'crud-form-dialog')`, so viewport size, resize behavior, scrolling,
+  footer density, desktop alignment, and mobile behavior match CRUD dialogs.
+- Footer actions must follow the CRUD action contract: `Close` is secondary, desktop keeps it on the
+  left, and mobile renders it at full width using the shared `.form-actions` behavior.
+- Pages must pass structured `details`, `sections`, and optional `code` blocks to the viewer. Pages
+  must not define page-local `ng-template` detail modals, local `*-detail-dialog` wrappers, local
+  clipboard handlers, or resource-specific SCSS for read-only payload viewing.
+- Copy buttons are allowed only on explicitly safe code/payload blocks. The shared viewer owns copy
+  feedback with the standard success/error snackbar.
+- The caller remains responsible for authorization, tenant scope, and masking/redacting secrets
+  before passing data into the viewer. The viewer must not fetch privileged data by itself.
+- Visible labels, section names, copy/close actions, and snackbar messages must be present in every
+  Transloco dictionary.
+
 ## Definition Of Done (Refatoração Completa)
 
 - A task requested as `refatoração completa` is only accepted when ALL items below are met.

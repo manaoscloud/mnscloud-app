@@ -1,0 +1,87 @@
+<div class="data-viewer-dialog crud-dialog">
+  <header class="dialog-header">
+    <div>
+      <h2>{{ titleText() | transloco }}</h2>
+      @if (descriptionText()) {
+        <p>{{ descriptionText() | transloco }}</p>
+      }
+    </div>
+
+    @if (status(); as item) {
+      <span
+        class="status-pill status-chip state-chip data-viewer-status"
+        [class.tone-success]="statusTone(item) === 'success'"
+        [class.tone-warning]="statusTone(item) === 'warning'"
+        [class.tone-danger]="statusTone(item) === 'danger'"
+        [class.tone-info]="statusTone(item) === 'info'"
+        [class.tone-neutral]="statusTone(item) === 'neutral'"
+      >
+        {{ item.value | transloco }}
+      </span>
+    }
+  </header>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="data-viewer-content">
+      @if (details().length) {
+        <section class="data-viewer-section">
+          <div class="data-viewer-grid">
+            @for (detail of details(); track detail.label) {
+              <div class="data-viewer-detail" [class.is-wide]="detail.wide">
+                <dt>{{ detail.label | transloco }}</dt>
+                <dd [class.monospace]="detail.monospace">{{ detailValue(detail) }}</dd>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @for (section of sections(); track section.title) {
+        <section class="data-viewer-section">
+          <h3>{{ section.title | transloco }}</h3>
+
+          @if (section.details.length) {
+            <div class="data-viewer-grid">
+              @for (detail of section.details; track detail.label) {
+                <div class="data-viewer-detail" [class.is-wide]="detail.wide">
+                  <dt>{{ detail.label | transloco }}</dt>
+                  <dd [class.monospace]="detail.monospace">{{ detailValue(detail) }}</dd>
+                </div>
+              }
+            </div>
+          }
+
+          @if (section.code; as block) {
+            <div class="data-viewer-code-header">
+              <span>{{ block.title || section.title | transloco }}</span>
+              @if (block.copy) {
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  type="button"
+                  [cdkCopyToClipboard]="codeText(block)"
+                  (cdkCopyToClipboardCopied)="notifyCopied($event)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                  {{ 'Copy' | transloco }}
+                </button>
+              }
+            </div>
+            <pre class="data-viewer-code" [class.is-shell]="block.format === 'shell'"><code>{{
+              codeText(block)
+            }}</code></pre>
+          }
+        </section>
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" mat-dialog-close>
+        {{ closeLabel() | transloco }}
+      </button>
+    </div>
+    <div class="primary-actions"></div>
+  </mat-dialog-actions>
+</div>
