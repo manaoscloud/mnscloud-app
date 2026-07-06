@@ -51,11 +51,11 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
     { id: 'call', label: 'Call-ID', kind: 'identity', field: 'VscCallID', uuidField: 'VscUUID' },
     { id: 'peer', label: 'Input peer', field: 'InputPeerName' },
     { id: 'pipe', label: 'Pipe', field: 'PipeName' },
-    { id: 'source', label: 'Source' },
-    { id: 'destination', label: 'Destination', field: 'VscDestination' },
-    { id: 'output', label: 'Output' },
+    { id: 'from', label: 'SIP From' },
+    { id: 'destination', label: 'SIP destination' },
+    { id: 'source', label: 'Source IP' },
+    { id: 'output', label: 'SIP output' },
     { id: 'event', label: 'Event', kind: 'status', field: 'VscEvent', className: 'status-col' },
-    { id: 'sip', label: 'SIP' },
   ],
 };
 
@@ -96,19 +96,32 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
   }
 
   override columnText(row: ConfigurableCrudRecord, column: ConfigurableCrudColumn): string {
+    if (column.id === 'from') {
+      return this.joinSipAddress(row['VscFromUser'], row['VscFromDomain']);
+    }
+    if (column.id === 'destination') {
+      return (
+        this.joinSipAddress(row['VscToUser'], row['VscToDomain'], false) ||
+        this.joinSipAddress(row['VscRuriUser'], row['VscRuriDomain'], false) ||
+        this.display(row['VscDestination'])
+      );
+    }
     if (column.id === 'source') {
       return this.joinEndpoint(row['VscSourceIP'], row['VscSourcePort'], row['VscSourceTransport']);
     }
     if (column.id === 'output') {
       return this.joinEndpoint(row['VscOutputHost'], row['VscOutputPort'], row['VscOutputTransport']);
     }
-    if (column.id === 'sip') {
-      const code = this.display(row['VscSipCode']);
-      const reason = this.display(row['VscSipReason']);
-      if (code === '-' && reason === '-') return '-';
-      return [code === '-' ? '' : code, reason === '-' ? '' : reason].filter(Boolean).join(' ');
-    }
     return super.columnText(row, column);
+  }
+
+  private joinSipAddress(user: unknown, domain: unknown, fallbackDash = true): string {
+    const normalizedUser = this.display(user);
+    const normalizedDomain = this.display(domain);
+    if (normalizedUser === '-' && normalizedDomain === '-') return fallbackDash ? '-' : '';
+    if (normalizedUser === '-') return normalizedDomain;
+    if (normalizedDomain === '-') return normalizedUser;
+    return `${normalizedUser}@${normalizedDomain}`;
   }
 
   private joinEndpoint(host: unknown, port: unknown, transport: unknown): string {
