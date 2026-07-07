@@ -58,14 +58,14 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
   fields: [],
   columns: [
     { id: 'createdAt', label: 'Created at', field: 'VscDateCreated', kind: 'datetime' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'VscStatus', className: 'status-col' },
     { id: 'peer', label: 'Input peer', field: 'InputPeerName' },
     { id: 'pipe', label: 'Pipe', field: 'PipeName' },
     { id: 'from', label: 'SIP From' },
     { id: 'destination', label: 'SIP destination' },
     { id: 'source', label: 'Source IP' },
     { id: 'output', label: 'SIP output' },
-    { id: 'event', label: 'Event', kind: 'status', field: 'VscEvent', className: 'status-col' },
+    { id: 'sipResult', label: 'SIP result' },
+    { id: 'event', label: 'SIP event' },
   ],
 };
 
@@ -90,25 +90,6 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     return key === 'peerUUID' ? this.peerOptions() : [];
   }
 
-  override statusLabel(value: unknown): string {
-    if (String(value ?? '') === '1') return 'Active';
-    if (String(value ?? '') === '0') return 'Inactive';
-    const labels: Record<string, string> = {
-      invite: 'Invite',
-      reply: 'Reply',
-      bye: 'Bye',
-      failed: 'Failed',
-      unknown: 'Unknown',
-    };
-    return labels[String(value ?? '').toLowerCase()] ?? String(value ?? '-');
-  }
-
-  override isActiveStatus(value: unknown): boolean {
-    if (String(value ?? '') === '1') return true;
-    if (String(value ?? '') === '0') return false;
-    return ['invite', 'reply', 'bye'].includes(String(value ?? '').toLowerCase());
-  }
-
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     return row['VscEvent'] ? (CDR_CONFIG.rowActions ?? []) : [];
   }
@@ -119,14 +100,14 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       title: 'INVITE details',
       description: 'Inspect the full SBC CDR INVITE payload.',
       status: {
-        label: 'Status',
-        value: this.statusLabel(row['VscStatus']),
-        tone: this.isActiveStatus(row['VscStatus']) ? 'success' : 'neutral',
+        label: 'SIP result',
+        value: this.sipResult(row),
+        tone: this.sipResultTone(row),
       },
       details: [
         { label: 'Call-ID', value: row['VscCallID'], monospace: true, wide: true },
         { label: 'UUID', value: row['VscUUID'], monospace: true, wide: true },
-        { label: 'Event', value: this.statusLabel(row['VscEvent']) },
+        { label: 'SIP event', value: this.sipEventLabel(row['VscEvent']) },
         { label: 'Input peer', value: row['InputPeerName'] },
         { label: 'Pipe', value: row['PipeName'] },
         { label: 'SIP response', value: this.sipResponse(row) },
@@ -212,6 +193,12 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
         row['VscOutputTransport'],
       );
     }
+    if (column.id === 'sipResult') {
+      return this.sipResult(row);
+    }
+    if (column.id === 'event') {
+      return this.sipEventLabel(row['VscEvent']);
+    }
     return super.columnText(row, column);
   }
 
@@ -240,6 +227,33 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     const reason = this.display(row['VscSipReason']);
     if (code === '-' && reason === '-') return '-';
     return [code === '-' ? '' : code, reason === '-' ? '' : reason].filter(Boolean).join(' ');
+  }
+
+  private sipResult(row: ConfigurableCrudRecord): string {
+    const response = this.sipResponse(row);
+    if (response !== '-') return response;
+    return this.sipEventLabel(row['VscEvent']);
+  }
+
+  private sipResultTone(row: ConfigurableCrudRecord): 'success' | 'warning' | 'danger' | 'info' {
+    const code = Number(row['VscSipCode']);
+    if (Number.isFinite(code)) {
+      if (code >= 200 && code < 300) return 'success';
+      if (code >= 300 && code < 400) return 'warning';
+      if (code >= 400) return 'danger';
+    }
+    return String(row['VscEvent'] ?? '').toLowerCase() === 'failed' ? 'danger' : 'info';
+  }
+
+  private sipEventLabel(value: unknown): string {
+    const labels: Record<string, string> = {
+      invite: 'INVITE request',
+      reply: 'SIP reply',
+      bye: 'BYE request',
+      failed: 'Failed',
+      unknown: 'Unknown',
+    };
+    return labels[String(value ?? '').toLowerCase()] ?? this.display(value);
   }
 
   private display(value: unknown): string {
