@@ -623,6 +623,10 @@
   clipboard handlers, or resource-specific SCSS for read-only payload viewing.
 - Copy buttons are allowed only on explicitly safe code/payload blocks. The shared viewer owns copy
   feedback with the standard success/error snackbar.
+- JSON/code payloads that contain multiline strings such as `stdout`, `stderr`, logs, command
+  output, or script traces must be rendered with readable line breaks inside the shared viewer; do
+  not display escaped `\n` sequences as one long JSON string when the content is meant for human
+  troubleshooting.
 - The caller remains responsible for authorization, tenant scope, and masking/redacting secrets
   before passing data into the viewer. The viewer must not fetch privileged data by itself.
 - Visible labels, section names, copy/close actions, and snackbar messages must be present in every

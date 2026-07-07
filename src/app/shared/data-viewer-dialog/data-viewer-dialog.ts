@@ -108,18 +108,88 @@ export class DataViewerDialogComponent {
 
   private formatJson(value: unknown): string {
     if (value === null || value === undefined || value === '') return '-';
-    if (typeof value === 'string') {
-      try {
-        return JSON.stringify(JSON.parse(value), null, 2);
-      } catch {
-        return value;
-      }
-    }
     try {
-      return JSON.stringify(value, null, 2);
+      return this.formatReadableJson(this.parseJsonLike(value), 0);
     } catch {
       return String(value);
     }
+  }
+
+  private parseJsonLike(value: unknown): unknown {
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return this.normalizeLogText(value);
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return this.normalizeLogText(value);
+    }
+  }
+
+  private formatReadableJson(value: unknown, depth: number): string {
+    if (value === null) return 'null';
+    if (value === undefined) return '-';
+    if (typeof value === 'string') return this.formatReadableString(value, depth);
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (Array.isArray(value)) return this.formatReadableArray(value, depth);
+    if (typeof value === 'object') return this.formatReadableObject(value, depth);
+    return JSON.stringify(String(value));
+  }
+
+  private formatReadableArray(values: unknown[], depth: number): string {
+    if (!values.length) return '[]';
+    const indent = this.indent(depth);
+    const childIndent = this.indent(depth + 1);
+    return [
+      '[',
+      values
+        .map(
+          (value) =>
+            `${childIndent}${this.formatReadableJson(this.parseJsonLike(value), depth + 1)}`,
+        )
+        .join(',\n'),
+      `${indent}]`,
+    ].join('\n');
+  }
+
+  private formatReadableObject(value: object, depth: number): string {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (!entries.length) return '{}';
+    const indent = this.indent(depth);
+    const childIndent = this.indent(depth + 1);
+    return [
+      '{',
+      entries
+        .map(([key, item]) => {
+          const formatted = this.formatReadableJson(this.parseJsonLike(item), depth + 1);
+          return `${childIndent}${JSON.stringify(key)}: ${formatted}`;
+        })
+        .join(',\n'),
+      `${indent}}`,
+    ].join('\n');
+  }
+
+  private formatReadableString(value: string, depth: number): string {
+    const normalized = this.normalizeLogText(value);
+    if (!normalized.includes('\n')) return JSON.stringify(normalized);
+
+    const indent = this.indent(depth);
+    const childIndent = this.indent(depth + 1);
+    const lines = normalized.split('\n').map((line) => `${childIndent}${line}`);
+    return ['<<<', ...lines, `${indent}>>>`].join('\n');
+  }
+
+  private normalizeLogText(value: string): string {
+    return value
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '  ');
+  }
+
+  private indent(depth: number): string {
+    return '  '.repeat(depth);
   }
 }
 
