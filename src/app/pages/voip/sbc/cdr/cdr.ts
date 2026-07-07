@@ -174,14 +174,12 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
 
   override columnText(row: ConfigurableCrudRecord, column: ConfigurableCrudColumn): string {
     if (column.id === 'from') {
-      return this.joinSipAddress(row['VscFromUser'], row['VscFromDomain']);
+      return this.display(row['VscFromUser']);
     }
     if (column.id === 'destination') {
-      return (
-        this.joinSipAddress(row['VscToUser'], row['VscToDomain'], false) ||
-        this.joinSipAddress(row['VscRuriUser'], row['VscRuriDomain'], false) ||
-        this.display(row['VscDestination'])
-      );
+      return this.display(row['VscToUser']) !== '-'
+        ? this.display(row['VscToUser'])
+        : this.display(row['VscRuriUser']);
     }
     if (column.id === 'source') {
       return this.joinEndpoint(row['VscSourceIP'], row['VscSourcePort'], row['VscSourceTransport']);
