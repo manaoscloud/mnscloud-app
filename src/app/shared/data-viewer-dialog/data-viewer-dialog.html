@@ -54,18 +54,26 @@
           @if (section.code; as block) {
             <div class="data-viewer-code-header">
               <span>{{ block.title || section.title | transloco }}</span>
-              @if (block.copy) {
-                <button
-                  mat-stroked-button
-                  color="primary"
-                  type="button"
-                  [cdkCopyToClipboard]="codeText(block)"
-                  (cdkCopyToClipboardCopied)="notifyCopied($event)"
-                >
-                  <mat-icon>content_copy</mat-icon>
-                  {{ 'Copy' | transloco }}
-                </button>
-              }
+              <div class="data-viewer-code-actions">
+                @if (block.download; as download) {
+                  <button mat-stroked-button color="primary" type="button" (click)="downloadCode(block)">
+                    <mat-icon>download</mat-icon>
+                    {{ (download.label || 'Download') | transloco }}
+                  </button>
+                }
+                @if (block.copy) {
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    type="button"
+                    [cdkCopyToClipboard]="codeText(block)"
+                    (cdkCopyToClipboardCopied)="notifyCopied($event)"
+                  >
+                    <mat-icon>content_copy</mat-icon>
+                    {{ 'Copy' | transloco }}
+                  </button>
+                }
+              </div>
             </div>
             <pre class="data-viewer-code" [class.is-shell]="block.format === 'shell'"><code>{{
               codeText(block)

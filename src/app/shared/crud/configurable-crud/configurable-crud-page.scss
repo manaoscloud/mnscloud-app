@@ -164,6 +164,19 @@
   white-space: nowrap;
 }
 
+.actions-col-header,
+.actions-col-cell {
+  min-width: 96px;
+  text-align: left;
+}
+
+.actions-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+}
+
 .record-stack {
   display: flex;
   flex-direction: column;

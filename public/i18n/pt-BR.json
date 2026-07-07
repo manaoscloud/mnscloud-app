@@ -2770,5 +2770,13 @@
   "Source port": "Porta de origem",
   "Source transport": "Transporte de origem",
   "From pattern": "Padrão From",
-  "To pattern": "Padrão To"
+  "To pattern": "Padrão To",
+  "Download": "Baixar",
+  "Download SIP message": "Baixar mensagem SIP",
+  "Download JSON": "Baixar JSON",
+  "Data downloaded.": "Dados baixados.",
+  "Failed to download data.": "Falha ao baixar dados.",
+  "SIP message": "Mensagem SIP",
+  "Final SIP response": "Resposta SIP final",
+  "CANCEL request": "Requisição CANCEL"
 }

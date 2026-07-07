@@ -28,6 +28,11 @@ export type DataViewerCodeBlock = {
   value: unknown;
   format?: 'json' | 'text' | 'shell';
   copy?: boolean;
+  download?: {
+    filename: string;
+    label?: string;
+    mimeType?: string;
+  };
 };
 
 export type DataViewerSection = {
@@ -90,6 +95,27 @@ export class DataViewerDialogComponent {
 
   notifyCopied(copied: boolean): void {
     copied ? this.snack.success('Data copied.') : this.snack.error('Failed to copy data.');
+  }
+
+  downloadCode(block: DataViewerCodeBlock): void {
+    if (!block.download) return;
+    try {
+      const blob = new Blob([this.codeText(block)], {
+        type: block.download.mimeType ?? this.mimeTypeFor(block),
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = this.safeFilename(block.download.filename);
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      this.snack.success('Data downloaded.');
+    } catch {
+      this.snack.error('Failed to download data.');
+    }
   }
 
   private visibleDetails(details: readonly DataViewerDetail[]): DataViewerDetail[] {
@@ -190,6 +216,21 @@ export class DataViewerDialogComponent {
 
   private indent(depth: number): string {
     return '  '.repeat(depth);
+  }
+
+  private mimeTypeFor(block: DataViewerCodeBlock): string {
+    if (block.format === 'json') return 'application/json;charset=utf-8';
+    if (block.format === 'shell') return 'text/x-shellscript;charset=utf-8';
+    return 'text/plain;charset=utf-8';
+  }
+
+  private safeFilename(filename: string): string {
+    const normalized = filename
+      .trim()
+      .replace(/[^\w.\-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    return normalized || 'mnscloud-data.txt';
   }
 }
 

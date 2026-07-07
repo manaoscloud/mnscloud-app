@@ -109,7 +109,7 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
         { label: 'SIP event', value: this.sipEventLabel(row['VscEvent']) },
         { label: 'Input peer', value: row['InputPeerName'] },
         { label: 'Pipe', value: row['PipeName'] },
-        { label: 'SIP response', value: this.sipResponse(row) },
+        { label: 'Final SIP response', value: this.finalSipResponse(row) },
       ],
       sections: [
         {
@@ -159,12 +159,31 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
           ],
         },
         {
+          title: 'SIP message',
+          code: {
+            title: 'SIP message',
+            value: this.sipMessage(row),
+            format: 'text',
+            copy: true,
+            download: {
+              filename: `sbc-invite-${this.downloadToken(row)}.sip`,
+              label: 'Download SIP message',
+              mimeType: 'message/sip;charset=utf-8',
+            },
+          },
+        },
+        {
           title: 'Full payload',
           code: {
             title: 'Full payload',
             value: row['VscPayloadJson'],
             format: 'json',
             copy: true,
+            download: {
+              filename: `sbc-cdr-${this.downloadToken(row)}.json`,
+              label: 'Download JSON',
+              mimeType: 'application/json;charset=utf-8',
+            },
           },
         },
       ],
@@ -206,14 +225,29 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       : `${address}/${normalizedTransport.toUpperCase()}`;
   }
 
-  private sipResponse(row: ConfigurableCrudRecord): string {
-    const code = this.display(row['VscSipCode']);
-    const reason = this.display(row['VscSipReason']);
+  private finalSipResponse(row: ConfigurableCrudRecord): string {
+    const code = this.display(row['VscFinalSipCode'] ?? row['VscSipCode']);
+    const reason = this.display(row['VscFinalSipReason'] ?? row['VscSipReason']);
     if (code === '-' && reason === '-') return '-';
     return [code === '-' ? '' : code, reason === '-' ? '' : reason].filter(Boolean).join(' ');
   }
 
   private callStatus(row: ConfigurableCrudRecord): string {
+    const consolidated = String(row['VscCallStatus'] ?? '').toLowerCase();
+    const labels: Record<string, string> = {
+      answered: 'Call answered',
+      busy: 'Call busy',
+      canceled: 'Call canceled',
+      completed: 'Call completed',
+      failed: 'Call failed',
+      in_progress: 'Call in progress',
+      no_answer: 'Call no answer',
+      redirected: 'Call redirected',
+      rejected: 'Call rejected',
+      unknown: 'Unknown',
+    };
+    if (labels[consolidated]) return labels[consolidated];
+
     const code = Number(row['VscSipCode']);
     if (Number.isFinite(code)) {
       if (code >= 200 && code < 300) return 'Call answered';
@@ -248,10 +282,54 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       invite: 'INVITE request',
       reply: 'SIP reply',
       bye: 'BYE request',
+      cancel: 'CANCEL request',
       failed: 'Failed',
       unknown: 'Unknown',
     };
     return labels[String(value ?? '').toLowerCase()] ?? this.display(value);
+  }
+
+  private sipMessage(row: ConfigurableCrudRecord): string {
+    const destination =
+      this.joinSipAddress(row['VscRuriUser'], row['VscRuriDomain'], false) ||
+      this.joinSipAddress(row['VscToUser'], row['VscToDomain'], false) ||
+      this.display(row['VscDestination']);
+    const transport = this.display(row['VscSourceTransport']).toUpperCase();
+    const source = this.joinEndpoint(
+      row['VscSourceIP'],
+      row['VscSourcePort'],
+      row['VscSourceTransport'],
+    );
+    const output = this.joinEndpoint(
+      row['VscOutputHost'],
+      row['VscOutputPort'],
+      row['VscOutputTransport'],
+    );
+    const finalResponse = this.finalSipResponse(row);
+    return [
+      `INVITE sip:${destination === '-' ? '' : destination} SIP/2.0`,
+      `Call-ID: ${this.display(row['VscCallID'])}`,
+      `From: <sip:${this.joinSipAddress(row['VscFromUser'], row['VscFromDomain'], false)}>`,
+      `To: <sip:${this.joinSipAddress(row['VscToUser'], row['VscToDomain'], false)}>`,
+      `Request-URI: sip:${this.joinSipAddress(row['VscRuriUser'], row['VscRuriDomain'], false)}`,
+      `Source: ${source}`,
+      `Transport: ${transport === '-' ? '' : transport}`,
+      `Output: ${output}`,
+      `Input-Peer: ${this.display(row['InputPeerName'])}`,
+      `Pipe: ${this.display(row['PipeName'])}`,
+      `Call-Status: ${this.i18n.translate(this.callStatus(row))}`,
+      `Final-SIP-Response: ${finalResponse}`,
+      '',
+      '# This file is a reconstructed SIP summary from MNSCloud CDR metadata, not a raw packet capture.',
+    ].join('\n');
+  }
+
+  private downloadToken(row: ConfigurableCrudRecord): string {
+    return String(row['VscCallID'] || row['VscUUID'] || 'record')
+      .trim()
+      .replace(/[^\w.\-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
   }
 
   private display(value: unknown): string {
