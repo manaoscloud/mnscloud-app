@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 
 import {
   ConfigurableCrudColumn,
@@ -62,10 +63,7 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
     { id: 'pipe', label: 'Pipe', field: 'PipeName' },
     { id: 'from', label: 'SIP From' },
     { id: 'destination', label: 'SIP destination' },
-    { id: 'source', label: 'Source IP' },
-    { id: 'output', label: 'SIP output' },
-    { id: 'sipResult', label: 'SIP result' },
-    { id: 'event', label: 'SIP event' },
+    { id: 'callStatus', label: 'Call status' },
   ],
 };
 
@@ -78,6 +76,7 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
 })
 export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
+  private readonly i18n = inject(TranslocoService);
   readonly peerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
@@ -100,9 +99,9 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       title: 'INVITE details',
       description: 'Inspect the full SBC CDR INVITE payload.',
       status: {
-        label: 'SIP result',
-        value: this.sipResult(row),
-        tone: this.sipResultTone(row),
+        label: 'Call status',
+        value: this.callStatus(row),
+        tone: this.callStatusTone(row),
       },
       details: [
         { label: 'Call-ID', value: row['VscCallID'], monospace: true, wide: true },
@@ -181,21 +180,8 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
         ? this.display(row['VscToUser'])
         : this.display(row['VscRuriUser']);
     }
-    if (column.id === 'source') {
-      return this.joinEndpoint(row['VscSourceIP'], row['VscSourcePort'], row['VscSourceTransport']);
-    }
-    if (column.id === 'output') {
-      return this.joinEndpoint(
-        row['VscOutputHost'],
-        row['VscOutputPort'],
-        row['VscOutputTransport'],
-      );
-    }
-    if (column.id === 'sipResult') {
-      return this.sipResult(row);
-    }
-    if (column.id === 'event') {
-      return this.sipEventLabel(row['VscEvent']);
+    if (column.id === 'callStatus') {
+      return this.i18n.translate(this.callStatus(row));
     }
     return super.columnText(row, column);
   }
@@ -227,20 +213,34 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     return [code === '-' ? '' : code, reason === '-' ? '' : reason].filter(Boolean).join(' ');
   }
 
-  private sipResult(row: ConfigurableCrudRecord): string {
-    const response = this.sipResponse(row);
-    if (response !== '-') return response;
-    return this.sipEventLabel(row['VscEvent']);
-  }
-
-  private sipResultTone(row: ConfigurableCrudRecord): 'success' | 'warning' | 'danger' | 'info' {
+  private callStatus(row: ConfigurableCrudRecord): string {
     const code = Number(row['VscSipCode']);
     if (Number.isFinite(code)) {
-      if (code >= 200 && code < 300) return 'success';
-      if (code >= 300 && code < 400) return 'warning';
-      if (code >= 400) return 'danger';
+      if (code >= 200 && code < 300) return 'Call answered';
+      if (code === 486) return 'Call busy';
+      if (code === 487) return 'Call canceled';
+      if (code === 408 || code === 480) return 'Call no answer';
+      if (code === 401 || code === 403 || code === 407 || code === 603) return 'Call rejected';
+      if (code >= 500) return 'Call failed';
+      if (code >= 300 && code < 400) return 'Call redirected';
+      if (code >= 400) return 'Call rejected';
     }
-    return String(row['VscEvent'] ?? '').toLowerCase() === 'failed' ? 'danger' : 'info';
+
+    const event = String(row['VscEvent'] ?? '').toLowerCase();
+    if (event === 'bye') return 'Call completed';
+    if (event === 'failed') return 'Call failed';
+    if (event === 'invite') return 'Call in progress';
+    return 'Unknown';
+  }
+
+  private callStatusTone(row: ConfigurableCrudRecord): 'success' | 'warning' | 'danger' | 'info' {
+    const status = this.callStatus(row);
+    if (status === 'Call answered' || status === 'Call completed') return 'success';
+    if (status === 'Call in progress' || status === 'Call redirected') return 'info';
+    if (status === 'Call busy' || status === 'Call no answer' || status === 'Call canceled') {
+      return 'warning';
+    }
+    return 'danger';
   }
 
   private sipEventLabel(value: unknown): string {
