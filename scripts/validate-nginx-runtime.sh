@@ -19,6 +19,11 @@ fi
 
 if command -v curl >/dev/null 2>&1; then
   curl -fsS "$APP_HEALTH_URL" >/dev/null || die "app health check failed: $APP_HEALTH_URL"
+
+  i18n_url="${APP_HEALTH_URL%/health}/i18n/pt-BR.json"
+  i18n_headers="$(curl -fsSI "$i18n_url")" || die "translation catalog is unavailable: $i18n_url"
+  grep -qi '^cache-control:.*no-cache' <<<"$i18n_headers" ||
+    die "translation catalog must be served with revalidation: $i18n_url"
 fi
 
 [[ -f "${APP_WEB_ROOT}/index.html" ]] || die "index.html not found in ${APP_WEB_ROOT}"

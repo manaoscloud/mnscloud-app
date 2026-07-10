@@ -257,6 +257,8 @@ The installer:
 - extracts the verified browser artifact into `/var/www/mnscloud-app`;
 - writes runtime config to `/var/www/mnscloud-app/env.js`;
 - creates `/etc/nginx/conf.d/mnscloud-app.conf`;
+- serves `/i18n/*.json` with revalidation enabled, so a browser cannot retain translations from a
+  previous app release;
 - removes the official Nginx `default.conf` unless `DISABLE_DEFAULT_NGINX_CONF=0`;
 - validates and reloads Nginx.
 

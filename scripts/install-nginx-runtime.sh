@@ -290,6 +290,11 @@ server {
     try_files /env.js =404;
   }
 
+  location ^~ /i18n/ {
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    try_files \$uri =404;
+  }
+
   location = /api {
     return 404;
   }
