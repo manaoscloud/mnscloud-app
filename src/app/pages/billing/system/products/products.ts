@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
-  ConfigurableCrudColumn,
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -10,7 +9,6 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { BillingProduct, BillingService } from '../../shared/billing.service';
 import {
-  BILLING_SCOPE_OPTIONS,
   BILLING_STATUS_OPTIONS,
   BillingLookupState,
   YES_NO_OPTIONS,
@@ -21,12 +19,7 @@ import {
 const PRODUCT_PAYLOAD_KEYS = [
   'code',
   'name',
-  'module',
-  'billingScope',
   'description',
-  'entitlementPattern',
-  'requiresEntitlementCode',
-  'resourceType',
   'isPublic',
   'publicSlug',
   'publicName',
@@ -34,7 +27,6 @@ const PRODUCT_PAYLOAD_KEYS = [
   'publicDescription',
   'publicFeatures',
   'publicSortOrder',
-  'sortOrder',
   'status',
 ] as const;
 
@@ -42,10 +34,10 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/products',
   uuidField: 'BprUUID',
   pageTitle: 'Billing products',
-  pageDescription: 'Configure commercial products and entitlement metadata.',
+  pageDescription: 'Configure commercial products from official tenant-eligible definitions.',
   createTitle: 'New billing product',
   editTitle: 'Edit billing product',
-  dialogDescription: 'Maintain the official billing product definition.',
+  dialogDescription: 'Maintain commercial details. Access scope is defined by the official code.',
   searchPlaceholder: 'Search',
   emptyLabel: 'No billing products found.',
   deleteTitle: 'Delete billing product',
@@ -60,12 +52,7 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     code: '',
     name: '',
-    module: '',
-    billingScope: 'RESOURCE',
     description: '',
-    entitlementPattern: '',
-    requiresEntitlementCode: '',
-    resourceType: '',
     isPublic: 0,
     publicSlug: '',
     publicName: '',
@@ -73,7 +60,6 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
     publicDescription: '',
     publicFeatures: '',
     publicSortOrder: 1000,
-    sortOrder: 1000,
     status: 1,
   },
   columns: [
@@ -93,26 +79,9 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 1,
+      hiddenWhen: ({ editing }) => editing,
     },
     { key: 'status', source: 'BprStatus', payloadKey: 'status', label: 'Status', type: 'status' },
-    {
-      key: 'billingScope',
-      source: 'BprBillingScope',
-      payloadKey: 'billingScope',
-      label: 'Billing scope',
-      type: 'select',
-      options: BILLING_SCOPE_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'module',
-      source: 'BprModule',
-      payloadKey: 'module',
-      label: 'Module',
-      required: true,
-      span: 1,
-    },
     {
       key: 'name',
       source: 'BprName',
@@ -120,27 +89,6 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       label: 'Name',
       required: true,
       span: 2,
-    },
-    {
-      key: 'entitlementPattern',
-      source: 'BprEntitlementPattern',
-      payloadKey: 'entitlementPattern',
-      label: 'Entitlement pattern',
-      span: 2,
-    },
-    {
-      key: 'requiresEntitlementCode',
-      source: 'BprRequiresEntitlementCode',
-      payloadKey: 'requiresEntitlementCode',
-      label: 'Requires entitlement',
-      span: 1,
-    },
-    {
-      key: 'resourceType',
-      source: 'BprResourceType',
-      payloadKey: 'resourceType',
-      label: 'Resource type',
-      span: 1,
     },
     {
       key: 'isPublic',
@@ -156,14 +104,6 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       source: 'BprPublicSortOrder',
       payloadKey: 'publicSortOrder',
       label: 'Public sort order',
-      type: 'number',
-      span: 1,
-    },
-    {
-      key: 'sortOrder',
-      source: 'BpdSortOrder',
-      payloadKey: 'sortOrder',
-      label: 'Sort order',
       type: 'number',
       span: 1,
     },
@@ -247,7 +187,12 @@ export class BillingSystemProductsPage extends ConfigurableCrudPageBase<
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const next = cleanPayload(payload, PRODUCT_PAYLOAD_KEYS);
     next['publicSortOrder'] = numberOrNull(next['publicSortOrder']);
-    next['sortOrder'] = numberOrNull(next['sortOrder']);
     return next;
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'code' || this.editingRecord()) return;
+    const definition = this.lookups.productDefinition(value);
+    if (definition?.BpdName) this.patchFormValues({ name: definition.BpdName });
   }
 }

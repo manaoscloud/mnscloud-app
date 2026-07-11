@@ -90,10 +90,17 @@ export class BillingLookupState {
   }
 
   productDefinitionCodeOptions(): readonly ConfigurableCrudOption[] {
-    return this.definitions().map((definition) => ({
-      value: definition.BpdCode,
-      label: `${definition.BpdCode} - ${definition.BpdName}`,
-    }));
+    return this.definitions()
+      .filter((definition) => definition.BpdAudience !== 'MASTER')
+      .sort((left, right) => (left.BpdSortOrder ?? 0) - (right.BpdSortOrder ?? 0))
+      .map((definition) => ({
+        value: definition.BpdCode,
+        label: `${definition.BpdName} - ${definition.BpdCode}`,
+      }));
+  }
+
+  productDefinition(code: unknown): BillingProductDefinition | undefined {
+    return this.definitions().find((definition) => definition.BpdCode === code);
   }
 
   priceOptions(): readonly ConfigurableCrudOption[] {

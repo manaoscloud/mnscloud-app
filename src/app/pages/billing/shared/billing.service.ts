@@ -32,6 +32,7 @@ export interface BillingProductDefinition {
   BpdName: string;
   BpdModule: string;
   BpdBillingScope: 'MODULE' | 'RESOURCE' | 'USAGE';
+  BpdAudience?: 'TENANT' | 'MASTER' | 'BOTH';
   BpdDescription?: string | null;
   BpdEntitlementPattern?: string | null;
   BpdRequiresEntitlementCode?: string | null;
@@ -274,6 +275,15 @@ export class BillingService {
     if (status !== null) params.set('status', String(status));
     const response = await this.api.get<ApiListResponse<BillingProductDefinition>>(
       `system/billing/product-definitions${this.query(params)}`,
+    );
+    return response.data?.items ?? [];
+  }
+
+  async listModuleDefinitions(search = '') {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('search', search.trim());
+    const response = await this.api.get<ApiListResponse<BillingProductDefinition>>(
+      `system/billing/module-definitions${this.query(params)}`,
     );
     return response.data?.items ?? [];
   }
