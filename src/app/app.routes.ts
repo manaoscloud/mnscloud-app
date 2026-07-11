@@ -255,7 +255,8 @@ export const routes: Routes = [
                 path: 'erp/carrier',
                 loadComponent: () =>
                   import('./pages/erp/carrier/carrier').then((m) => m.ErpCarrierPage),
-                title: 'ERP • Carrier | mnscloud',
+                title: 'ERP • Carriers | mnscloud',
+                data: { breadcrumb: 'ERP Carriers' },
               },
               {
                 path: 'erp/supplier',

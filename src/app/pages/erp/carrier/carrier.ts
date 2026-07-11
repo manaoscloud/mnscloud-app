@@ -15,7 +15,7 @@ const TYPE_OPTIONS = [
 const CARRIER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/carriers',
   uuidField: 'CarrierUUID',
-  pageTitle: 'Carriers',
+  pageTitle: 'ERP Carriers',
   pageDescription: 'Manage carriers and logistics contact data.',
   createTitle: 'New carrier',
   editTitle: 'Edit carrier',

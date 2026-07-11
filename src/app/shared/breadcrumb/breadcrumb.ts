@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon'; // ✅ IMPORT NECESSÁRIO
+import { AppI18nService } from '../../services/app-i18n.service';
 
 interface Crumb {
   label: string;
@@ -18,6 +19,7 @@ interface Crumb {
 })
 export class BreadcrumbComponent {
   private router = inject(Router);
+  private readonly i18n = inject(AppI18nService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
 
   readonly crumbs = signal<Crumb[]>([]);
@@ -25,6 +27,7 @@ export class BreadcrumbComponent {
   constructor() {
     effect(() => {
       const event = this.navigationEvent();
+      this.i18n.language();
       if (event === null || event instanceof NavigationEnd) {
         this.buildBreadcrumbs();
       }
@@ -38,11 +41,16 @@ export class BreadcrumbComponent {
     const items: Crumb[] = [];
     let path = '';
 
-    for (const part of parts) {
+    const currentBreadcrumb = this.currentBreadcrumbKey();
+
+    for (const [index, part] of parts.entries()) {
       path += `/${part}`;
 
       items.push({
-        label: this.formatLabel(part),
+        label:
+          index === parts.length - 1 && currentBreadcrumb
+            ? this.i18n.t(currentBreadcrumb)
+            : this.formatLabel(part),
         url: path,
       });
     }
@@ -52,5 +60,17 @@ export class BreadcrumbComponent {
 
   private formatLabel(segment: string): string {
     return segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  private currentBreadcrumbKey(): string | null {
+    let snapshot = this.router.routerState.snapshot.root;
+    let breadcrumb = snapshot.data['breadcrumb'];
+
+    while (snapshot.firstChild) {
+      snapshot = snapshot.firstChild;
+      breadcrumb = snapshot.data['breadcrumb'] ?? breadcrumb;
+    }
+
+    return typeof breadcrumb === 'string' && breadcrumb.trim() ? breadcrumb : null;
   }
 }

@@ -981,7 +981,12 @@ export class MainLayout {
             { id: 'erp/companies', label: 'Companies', icon: 'apartment', route: '/erp/companies' },
             { id: 'erp/customer', label: 'Customers', icon: 'person', route: '/erp/customer' },
             { id: 'erp/supplier', label: 'Suppliers', icon: 'inventory_2', route: '/erp/supplier' },
-            { id: 'erp/carrier', label: 'Carriers', icon: 'local_shipping', route: '/erp/carrier' },
+            {
+              id: 'erp/carrier',
+              label: 'ERP Carriers',
+              icon: 'local_shipping',
+              route: '/erp/carrier',
+            },
             { id: 'erp/reseller', label: 'Resellers', icon: 'storefront', route: '/erp/reseller' },
             { id: 'erp/complex', label: 'Complexes', icon: 'location_city', route: '/erp/complex' },
           ],
