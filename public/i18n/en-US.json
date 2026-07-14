@@ -613,6 +613,7 @@
   "Failed to cancel invitation.": "Failed to cancel invitation.",
   "Failed to cancel subscription.": "Failed to cancel subscription.",
   "Failed to create subscription.": "Failed to create subscription.",
+  "Failed to create subscription.": "Failed to create subscription.",
   "Failed to create top-up request.": "Failed to create top-up request.",
   "Failed to delete network policy.": "Failed to delete network policy.",
   "Failed to delete package.": "Failed to delete package.",

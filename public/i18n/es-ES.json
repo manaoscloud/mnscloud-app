@@ -613,6 +613,7 @@
   "Failed to cancel invitation.": "Error al cancelar invitación.",
   "Failed to cancel subscription.": "No se pudo cancelar la suscripción.",
   "Failed to create subscription.": "No se pudo crear la suscripción.",
+  "Failed to create subscription.": "No se pudo crear la suscripción.",
   "Failed to create top-up request.": "No se pudo crear la solicitud de recarga.",
   "Failed to delete network policy.": "Error al eliminar política de red.",
   "Failed to delete package.": "No se pudo eliminar el paquete.",

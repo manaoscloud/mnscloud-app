@@ -99,7 +99,7 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
       this.snack.success('Subscription created.');
       this.refreshList();
     } catch (error) {
-      this.snack.error(this.errorMessage(error));
+      this.snack.error(error instanceof Error ? error.message : 'Failed to create subscription.');
     } finally {
       this.mutating.set(false);
     }
