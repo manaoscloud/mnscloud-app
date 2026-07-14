@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 
 export interface BillingProduct {
@@ -242,6 +242,7 @@ export interface BillingEntitlementGrant {
 
 export type BillingCatalogItem = BillingProduct &
   Omit<BillingPrice, 'BprCode' | 'BprName'> & {
+    SubscriptionStatus?: string | null;
     PromotionCode?: string | null;
     PromotionName?: string | null;
     PromotionDiscountType?: string | null;
@@ -258,6 +259,7 @@ interface ApiListResponse<T> {
 @Injectable({ providedIn: 'root' })
 export class BillingService {
   private readonly api = inject(ApiService);
+  readonly entitlementRevision = signal(0);
 
   async listProducts(search = '', status: number | null = null) {
     const params = new URLSearchParams();
@@ -608,11 +610,18 @@ export class BillingService {
       'billing/subscriptions',
       payload,
     );
-    return response.data?.item ?? null;
+    const item = response.data?.item ?? null;
+    this.invalidateEntitlements();
+    return item;
   }
 
   async cancelSubscription(uuid: string) {
     await this.api.delete(`billing/subscriptions/${uuid}`);
+    this.invalidateEntitlements();
+  }
+
+  invalidateEntitlements(): void {
+    this.entitlementRevision.update((revision) => revision + 1);
   }
 
   private query(params: URLSearchParams) {

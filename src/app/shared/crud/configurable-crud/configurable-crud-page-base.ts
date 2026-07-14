@@ -213,6 +213,8 @@ export type ConfigurableCrudConfig = {
   statusMode: ConfigurableCrudStatusMode;
   activeValue: string | number;
   inactiveValue: string | number;
+  statusOptions?: readonly ConfigurableCrudOption[];
+  activeStatusValues?: readonly (string | number)[];
   addressSections?: readonly ConfigurableCrudAddressSection[];
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
   listFilters?: readonly ConfigurableCrudListFilter[];
@@ -650,10 +652,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (filter.type === 'search-select') {
       return filter.options ?? this.lookupOptions(filter.key);
     }
-    return [
-      { value: '', label: 'All' },
-      ...(filter.options ?? this.lookupOptions(filter.key)),
-    ];
+    return [{ value: '', label: 'All' }, ...(filter.options ?? this.lookupOptions(filter.key))];
   }
 
   listFilterValue(filter: ConfigurableCrudListFilter): string | number | boolean | null {
@@ -746,18 +745,24 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   statusOptions(): readonly ConfigurableCrudOption[] {
-    return [
-      { value: this.config.activeValue, label: 'Active' },
-      { value: this.config.inactiveValue, label: 'Inactive' },
-    ];
+    return (
+      this.config.statusOptions ?? [
+        { value: this.config.activeValue, label: 'Active' },
+        { value: this.config.inactiveValue, label: 'Inactive' },
+      ]
+    );
   }
 
   statusLabel(value: unknown): string {
-    return this.isActiveStatus(value) ? 'Active' : 'Inactive';
+    const option = this.statusOptions().find(
+      (candidate) => String(candidate.value ?? '') === String(value ?? ''),
+    );
+    return option?.label ?? (this.isActiveStatus(value) ? 'Active' : 'Inactive');
   }
 
   isActiveStatus(value: unknown): boolean {
-    return String(value ?? '') === String(this.config.activeValue);
+    const activeValues = this.config.activeStatusValues ?? [this.config.activeValue];
+    return activeValues.some((activeValue) => String(value ?? '') === String(activeValue));
   }
 
   booleanLabel(value: unknown): string {

@@ -1,13 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { BillingCatalogItem } from '../../shared/billing.service';
-import { BILLING_STATUS_OPTIONS } from '../../shared/billing-crud';
+import { BillingCatalogItem, BillingService } from '../../shared/billing.service';
+import { BILLING_STRING_STATUS_OPTIONS } from '../../shared/billing-crud';
 
 const CATALOG_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'billing/catalog',
@@ -30,7 +31,13 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   canDelete: false,
   bulkDelete: false,
-  ...BILLING_STATUS_OPTIONS,
+  rowActions: [{ key: 'subscribe', label: 'Subscribe', icon: 'add_shopping_cart' }],
+  ...BILLING_STRING_STATUS_OPTIONS,
+  activeStatusValues: ['AVAILABLE', 'ACTIVE', 'PENDING_CANCEL'] as const,
+  statusOptions: [
+    { value: 'AVAILABLE', label: 'Available' },
+    ...BILLING_STRING_STATUS_OPTIONS.statusOptions,
+  ],
   initialValues: {},
   columns: [
     { id: 'product', label: 'Product', kind: 'identity', field: 'BprName', uuidField: 'BprUUID' },
@@ -39,7 +46,13 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
     { id: 'currency', label: 'Currency', field: 'BpcCurrency' },
     { id: 'unitPrice', label: 'Unit price', field: 'BpcUnitPrice' },
     { id: 'promotion', label: 'Promotion', field: 'PromotionName' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'BpcStatus', className: 'status-col' },
+    {
+      id: 'subscriptionStatus',
+      label: 'Subscription status',
+      kind: 'status',
+      field: 'SubscriptionStatus',
+      className: 'status-col',
+    },
   ],
   fields: [],
 };
@@ -53,7 +66,42 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
 export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
   BillingCatalogItem & ConfigurableCrudRecord
 > {
+  private readonly billing = inject(BillingService);
+
   constructor() {
     super(CATALOG_CONFIG);
+  }
+
+  override rowActions(
+    row: BillingCatalogItem & ConfigurableCrudRecord,
+  ): readonly ConfigurableCrudRowAction[] {
+    return row.BprBillingScope === 'MODULE' && row.SubscriptionStatus === 'AVAILABLE'
+      ? (CATALOG_CONFIG.rowActions ?? [])
+      : [];
+  }
+
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: BillingCatalogItem & ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key !== 'subscribe') return;
+
+    const confirmed = await this.confirmAction(
+      'Subscribe',
+      'Subscribe to this product?',
+      'Subscribe',
+    );
+    if (!confirmed) return;
+
+    this.mutating.set(true);
+    try {
+      await this.billing.createSubscription({ priceUUID: this.recordUUID(row) });
+      this.snack.success('Subscription created.');
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 }

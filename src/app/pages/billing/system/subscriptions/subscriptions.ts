@@ -91,7 +91,7 @@ export class BillingSystemSubscriptionsPage extends ConfigurableCrudPageBase<
   override rowActions(
     row: BillingSubscription & ConfigurableCrudRecord,
   ): readonly ConfigurableCrudRowAction[] {
-    if (row.BsuStatus === 'CANCELED') return [];
+    if (row.BsuStatus !== 'ACTIVE') return [];
     return SUBSCRIPTION_CONFIG.rowActions ?? [];
   }
 }

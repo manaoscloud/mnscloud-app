@@ -201,6 +201,13 @@ export class MainLayout {
       this.scheduleAutoExpandSections();
     });
 
+    effect(() => {
+      this.billing.entitlementRevision();
+      if (this.activeEnvironmentId()) {
+        void this.refreshCommercialEntitlements();
+      }
+    });
+
     // Responsividade
     if (typeof window !== 'undefined') {
       const compactStored = localStorage.getItem(MainLayout.LAYOUT_COMPACT_STORAGE_KEY) === '1';
@@ -234,7 +241,10 @@ export class MainLayout {
     // Auto expand menus
     effect(() => {
       const event = this.navigationEvent();
-      if (event instanceof NavigationEnd) this.scheduleAutoExpandSections();
+      if (event instanceof NavigationEnd) {
+        this.scheduleAutoExpandSections();
+        void this.refreshCommercialEntitlements();
+      }
     });
 
     this.destroyRef.onDestroy(() => this.clearCompactCloseTimer());

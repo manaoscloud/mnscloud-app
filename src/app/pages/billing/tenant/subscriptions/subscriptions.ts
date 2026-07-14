@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -7,7 +7,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { BillingSubscription } from '../../shared/billing.service';
+import { BillingService, BillingSubscription } from '../../shared/billing.service';
 import { BILLING_STRING_STATUS_OPTIONS } from '../../shared/billing-crud';
 
 const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
@@ -54,6 +54,8 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
 export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
   BillingSubscription & ConfigurableCrudRecord
 > {
+  private readonly billing = inject(BillingService);
+
   constructor() {
     super(SUBSCRIPTIONS_CONFIG);
   }
@@ -71,7 +73,7 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
     if (!confirmed) return;
     this.mutating.set(true);
     try {
-      await this.api.delete(`${SUBSCRIPTIONS_CONFIG.endpoint}/${this.recordUUID(row)}`);
+      await this.billing.cancelSubscription(this.recordUUID(row));
       this.snack.success('Subscription canceled successfully.');
       this.refreshList();
     } catch (error) {
@@ -84,7 +86,7 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
   override rowActions(
     row: BillingSubscription & ConfigurableCrudRecord,
   ): readonly ConfigurableCrudRowAction[] {
-    if (row.BsuStatus === 'CANCELED') return [];
+    if (row.BsuStatus !== 'ACTIVE') return [];
     return SUBSCRIPTIONS_CONFIG.rowActions ?? [];
   }
 }

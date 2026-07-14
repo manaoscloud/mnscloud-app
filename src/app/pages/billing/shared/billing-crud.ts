@@ -21,6 +21,14 @@ export const BILLING_STRING_STATUS_OPTIONS = {
   statusMode: 'string' as const,
   activeValue: 'ACTIVE',
   inactiveValue: 'CANCELED',
+  activeStatusValues: ['ACTIVE', 'PENDING_CANCEL'] as const,
+  statusOptions: [
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'PENDING_CANCEL', label: 'Pending cancellation' },
+    { value: 'PENDING_PAYMENT', label: 'Pending payment' },
+    { value: 'SUSPENDED', label: 'Suspended' },
+    { value: 'CANCELED', label: 'Canceled' },
+  ] as const,
 };
 
 export const BILLING_SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
