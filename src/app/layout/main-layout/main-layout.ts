@@ -2080,8 +2080,16 @@ export class MainLayout {
       label: 'Clinica',
       icon: 'local_hospital',
       entitlementCode: 'module.clinic.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
+      roles: ['MASTER', 'OWNER', 'ADMIN'],
       requiresEnvironment: true,
+      children: [
+        {
+          id: 'clinic/bradesco-siad',
+          label: 'Bradesco SIAD',
+          icon: 'description',
+          route: '/clinic/bradesco-siad',
+        },
+      ],
     },
 
     // ✅ Laboratory (tenant) — requer ambiente selecionado
