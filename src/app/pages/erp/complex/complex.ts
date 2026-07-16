@@ -2,10 +2,16 @@ import { Component } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+
+const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'company', label: 'Company' },
+  { value: 'person', label: 'Person' },
+];
 
 const COMPLEX_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/complexes',
@@ -29,7 +35,9 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 'inactive',
   initialValues: {
     status: 'active',
+    type: 'company',
     name: '',
+    legalDate: '',
     alias: '',
     document: '',
     email: '',
@@ -46,6 +54,7 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'ComplexUUID' },
+    { id: 'type', label: 'Type', field: 'Type' },
     { id: 'alias', label: 'Alias', field: 'Alias' },
     { id: 'document', label: 'Document', field: 'Document', className: 'document-col' },
     { id: 'city', label: 'City', field: 'City' },
@@ -60,7 +69,34 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
       type: 'status',
       span: 1,
     },
+    {
+      key: 'type',
+      source: 'Type',
+      payloadKey: 'type',
+      label: 'Type',
+      type: 'select',
+      options: TYPE_OPTIONS,
+      span: 1,
+    },
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
+    {
+      key: 'legalDate',
+      source: 'LegalDate',
+      payloadKey: 'legalDate',
+      label: 'Date of birth',
+      type: 'date',
+      span: 1,
+      hiddenWhen: ({ values }) => values['type'] !== 'person',
+    },
+    {
+      key: 'legalDate',
+      source: 'LegalDate',
+      payloadKey: 'legalDate',
+      label: 'Opening date',
+      type: 'date',
+      span: 1,
+      hiddenWhen: ({ values }) => values['type'] !== 'company',
+    },
     { key: 'alias', source: 'Alias', payloadKey: 'alias', label: 'Alias', span: 1 },
     {
       key: 'name',
