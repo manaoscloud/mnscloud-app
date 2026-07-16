@@ -424,14 +424,6 @@ export const routes: Routes = [
                 title: 'Sale • Product | mnscloud',
               },
               {
-                path: 'clinic/bradesco-siad',
-                loadComponent: () =>
-                  import('./pages/clinic/bradesco-siad/bradesco-siad').then(
-                    (m) => m.ClinicBradescoSiadPage,
-                  ),
-                title: 'Clinic • Bradesco SIAD | mnscloud',
-              },
-              {
                 path: 'sale/quotation',
                 loadComponent: () =>
                   import('./pages/sales/quotation/quotation').then((m) => m.SaleQuotationPage),
