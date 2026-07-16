@@ -107,6 +107,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     {
       key: 'legalDate',
+      renderKey: 'legalDate-person',
       source: 'LegalDate',
       payloadKey: 'legalDate',
       label: 'Date of birth',
@@ -116,6 +117,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'legalDate',
+      renderKey: 'legalDate-company',
       source: 'LegalDate',
       payloadKey: 'legalDate',
       label: 'Opening date',

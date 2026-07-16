@@ -202,7 +202,9 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
   }
 
   const rel = relative(root, tsFile);
-  const keys = extractConfigurableCrudFieldKeys(content);
+  // A conditional field may intentionally share a data key while using distinct render keys.
+  // Layout order is a data-contract check, so evaluate each data key once.
+  const keys = [...new Set(extractConfigurableCrudFieldKeys(content))];
   if (!keys.length) return [];
 
   const errors = [];
@@ -224,6 +226,7 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
         'status',
         'type',
         'document',
+        'legalDate',
         'name',
         'legalName',
         'email',
@@ -231,13 +234,23 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
       ])
     ) {
       errors.push(
-        `${rel} invalid: customer Record fields must start Status, Type, Document, Name, Legal name, Email, Phone`,
+        `${rel} invalid: customer Record fields must start Status, Type, Document, Legal date, Name, Legal name, Email, Phone`,
       );
     }
   } else if (hasCompanyAddress) {
-    if (!startsWithSequence(keys, ['status', 'document', 'name', 'legalName', 'email', 'phone'])) {
+    if (
+      !startsWithSequence(keys, [
+        'status',
+        'document',
+        'legalDate',
+        'name',
+        'legalName',
+        'email',
+        'phone',
+      ])
+    ) {
       errors.push(
-        `${rel} invalid: company Record fields must start Status, Document, Name, Legal name, Email, Phone`,
+        `${rel} invalid: company Record fields must start Status, Document, Legal date, Name, Legal name, Email, Phone`,
       );
     }
     if (
@@ -257,15 +270,36 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
       );
     }
   } else if (isTypeDocumentPartner) {
-    if (!startsWithSequence(keys, ['status', 'type', 'document', 'name', 'email', 'phone'])) {
+    if (
+      !startsWithSequence(keys, [
+        'status',
+        'type',
+        'document',
+        'legalDate',
+        'name',
+        'email',
+        'phone',
+      ])
+    ) {
       errors.push(
-        `${rel} invalid: partner Record fields must start Status, Type/Company, Document, Name, Email, Phone`,
+        `${rel} invalid: partner Record fields must start Status, Type/Company, Document, Legal date, Name, Email, Phone`,
       );
     }
   } else if (hasType) {
-    if (!startsWithSequence(keys, ['status', 'type', 'name', 'document', 'email', 'phone'])) {
+    if (
+      !startsWithSequence(keys, [
+        'status',
+        'type',
+        'document',
+        'legalDate',
+        'alias',
+        'name',
+        'email',
+        'phone',
+      ])
+    ) {
       errors.push(
-        `${rel} invalid: partner Record fields must start Status, Type, Name, Document, Email, Phone`,
+        `${rel} invalid: partner Record fields must start Status, Type, Document, Legal date, Alias, Name, Email, Phone`,
       );
     }
   } else if (hasAlias) {

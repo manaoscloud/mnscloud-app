@@ -101,6 +101,8 @@ export type ConfigurableCrudPostalCodeLookup = {
 
 export type ConfigurableCrudField = {
   key: string;
+  /** Unique identity for Angular rendering when fields intentionally share one data key. */
+  renderKey?: string;
   label: string;
   source?: string;
   payloadKey?: string;
