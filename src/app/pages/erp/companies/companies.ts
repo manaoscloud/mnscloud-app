@@ -31,6 +31,7 @@ const COMPANY_CONFIG: ConfigurableCrudConfig = {
     status: 'active',
     name: '',
     legalName: '',
+    legalDate: '',
     document: '',
     email: '',
     phone: '',
@@ -61,6 +62,14 @@ const COMPANY_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
+    {
+      key: 'legalDate',
+      source: 'LegalDate',
+      payloadKey: 'legalDate',
+      label: 'Opening date',
+      type: 'date',
+      span: 1,
+    },
     {
       key: 'name',
       source: 'Name',

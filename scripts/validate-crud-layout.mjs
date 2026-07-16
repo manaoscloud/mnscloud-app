@@ -388,8 +388,8 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
     if (hasAlias && key === 'name' && !/\bspan:\s*2/.test(block)) {
       errors.push(`${rel} invalid: complex Name field must use span-2`);
     }
-    if (hasAlias && key === 'name' && !/\bbreakBefore:\s*true/.test(block)) {
-      errors.push(`${rel} invalid: complex Name field must start a new row with breakBefore`);
+    if (hasAlias && key === 'name' && /\bbreakBefore:\s*true/.test(block)) {
+      errors.push(`${rel} invalid: complex Name field must share the Alias row`);
     }
   }
 
@@ -402,8 +402,11 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
 
   if (hasAlias) {
     const aliasBlock = fieldBlock(content, 'alias');
-    if (!/\bspan:\s*1/.test(aliasBlock)) {
-      errors.push(`${rel} invalid: complex Alias field must use span-1`);
+    if (!/\bspan:\s*2/.test(aliasBlock)) {
+      errors.push(`${rel} invalid: complex Alias field must use span-2`);
+    }
+    if (!/\bbreakBefore:\s*true/.test(aliasBlock)) {
+      errors.push(`${rel} invalid: complex Alias field must start a new row`);
     }
   }
 

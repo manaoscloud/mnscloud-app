@@ -89,7 +89,14 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
       type: 'date',
       span: 1,
     },
-    { key: 'alias', source: 'Alias', payloadKey: 'alias', label: 'Alias', span: 1 },
+    {
+      key: 'alias',
+      source: 'Alias',
+      payloadKey: 'alias',
+      label: 'Alias',
+      span: 2,
+      breakBefore: true,
+    },
     {
       key: 'name',
       source: 'Name',
@@ -97,7 +104,6 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
       label: 'Name',
       required: true,
       span: 2,
-      breakBefore: true,
     },
     { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
