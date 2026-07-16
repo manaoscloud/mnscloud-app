@@ -57,6 +57,17 @@ app-settings-parameters .parameters-form .mat-mdc-tab-body-content {
   min-height: 320px;
 }
 
+.integration-tabs,
+.siad-tabs {
+  min-height: 0;
+}
+
+.integration-secret-state {
+  margin: 0.25rem 0;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
 .empty-tab {
   color: var(--mat-sys-color-on-surface-variant);
   font-size: 0.95rem;

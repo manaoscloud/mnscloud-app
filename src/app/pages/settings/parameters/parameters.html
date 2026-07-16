@@ -23,17 +23,17 @@
           <mat-tab [label]="'Record' | transloco">
             <form class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Default Currency</mat-label>
+                <mat-label>{{ 'Default Currency' | transloco }}</mat-label>
                 <input
                   matInput
                   maxlength="3"
-                  placeholder="BRL" [value]="item().defaultCurrency" (input)="updateItem({ defaultCurrency: $any($event.target).value })" />
+                  [placeholder]="'BRL' | transloco" [value]="item().defaultCurrency" (input)="updateItem({ defaultCurrency: $any($event.target).value })" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Default Language</mat-label>
+                <mat-label>{{ 'Default Language' | transloco }}</mat-label>
                 <mat-select
-                  placeholder="pt-BR" [value]="item().defaultLanguage" (selectionChange)="updateItem({ defaultLanguage: $event.value })">
+                  [placeholder]="'pt-BR' | transloco" [value]="item().defaultLanguage" (selectionChange)="updateItem({ defaultLanguage: $event.value })">
                   @for (language of languageOptions; track language.code) {
                     <mat-option [value]="language.code">
                       {{ language.labelKey | transloco }}
@@ -43,7 +43,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Default Timezone</mat-label>
+                <mat-label>{{ 'Default Timezone' | transloco }}</mat-label>
                 <input
                   matInput
                   [placeholder]="defaultTimezonePlaceholder()" [value]="item().defaultTimezone" (input)="updateItem({ defaultTimezone: $any($event.target).value })" />
@@ -51,106 +51,135 @@
 
               <div class="toggle-grid span-4">
                 <mat-slide-toggle [checked]="item().defaultCurrencyIsActive" (change)="updateItem({ defaultCurrencyIsActive: $event.checked })">
-                  Default Currency Active
+                  {{ 'Default Currency Active' | transloco }}
                 </mat-slide-toggle>
 
                 <mat-slide-toggle [checked]="item().defaultLanguageIsActive" (change)="updateItem({ defaultLanguageIsActive: $event.checked })">
-                  Default Language Active
+                  {{ 'Default Language Active' | transloco }}
                 </mat-slide-toggle>
 
                 <mat-slide-toggle [checked]="item().defaultTimezoneIsActive" (change)="updateItem({ defaultTimezoneIsActive: $event.checked })">
-                  Default Timezone Active
+                  {{ 'Default Timezone Active' | transloco }}
                 </mat-slide-toggle>
               </div>
             </form>
           </mat-tab>
 
-          <mat-tab label="Integrations">
-            <form class="tab-content form-grid">
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Google Maps Embed API Key</mat-label>
+          <mat-tab [label]="'Integrations' | transloco">
+            <mat-tab-group class="nested-tabs integration-tabs">
+              <mat-tab [label]="'Google' | transloco">
+                <form class="tab-content form-grid">
+                  <mat-form-field appearance="outline" class="span-4">
+                    <mat-label>{{ 'Google Maps Embed API Key' | transloco }}</mat-label>
                 <input
                   matInput
                   [type]="showGoogleMapsEmbedApiKey() ? 'text' : 'password'"
-                  placeholder="Google Maps Street View embed API key" [value]="item().googleMapsEmbedApiKey" (input)="updateItem({ googleMapsEmbedApiKey: $any($event.target).value })" />
+                  [placeholder]="'Google Maps Street View embed API key' | transloco" [value]="item().googleMapsEmbedApiKey" (input)="updateItem({ googleMapsEmbedApiKey: $any($event.target).value })" />
                 <button
                   mat-icon-button
                   matSuffix
                   type="button"
                   [attr.aria-label]="
-                    showGoogleMapsEmbedApiKey() ? 'Hide Google Maps key' : 'Show Google Maps key'
+                    (showGoogleMapsEmbedApiKey() ? 'Hide Google Maps key' : 'Show Google Maps key') | transloco
                   "
                   (click)="showGoogleMapsEmbedApiKey.set(!showGoogleMapsEmbedApiKey())"
                 >
                   <mat-icon>{{
                     showGoogleMapsEmbedApiKey() ? 'visibility_off' : 'visibility'
                   }}</mat-icon>
-                </button>
-              </mat-form-field>
+                  </button>
+                  </mat-form-field>
 
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Mapbox Token</mat-label>
+                  <div class="toggle-grid span-4">
+                    <mat-slide-toggle [checked]="item().googleMapsEmbedApiKeyIsActive" (change)="updateItem({ googleMapsEmbedApiKeyIsActive: $event.checked })">
+                      {{ 'Google Maps Key Active' | transloco }}
+                    </mat-slide-toggle>
+                  </div>
+                </form>
+              </mat-tab>
+
+              <mat-tab [label]="'Mapbox' | transloco">
+                <form class="tab-content form-grid">
+                  <mat-form-field appearance="outline" class="span-4">
+                    <mat-label>{{ 'Mapbox Token' | transloco }}</mat-label>
                 <input
                   matInput
                   [type]="showMapboxToken() ? 'text' : 'password'"
-                  placeholder="Mapbox public token" [value]="item().mapboxToken" (input)="updateItem({ mapboxToken: $any($event.target).value })" />
+                  [placeholder]="'Mapbox public token' | transloco" [value]="item().mapboxToken" (input)="updateItem({ mapboxToken: $any($event.target).value })" />
                 <button
                   mat-icon-button
                   matSuffix
                   type="button"
-                  [attr.aria-label]="showMapboxToken() ? 'Hide Mapbox token' : 'Show Mapbox token'"
+                  [attr.aria-label]="(showMapboxToken() ? 'Hide Mapbox token' : 'Show Mapbox token') | transloco"
                   (click)="showMapboxToken.set(!showMapboxToken())"
                 >
                   <mat-icon>{{ showMapboxToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
-                </button>
-              </mat-form-field>
+                  </button>
+                  </mat-form-field>
+                  <div class="toggle-grid span-4">
+                    <mat-slide-toggle [checked]="item().mapboxTokenIsActive" (change)="updateItem({ mapboxTokenIsActive: $event.checked })">
+                      {{ 'Mapbox Token Active' | transloco }}
+                    </mat-slide-toggle>
+                  </div>
+                </form>
+              </mat-tab>
 
-              @if (isMaster()) {
+              @if (!isMaster()) {
+                <mat-tab [label]="'Bradesco' | transloco">
+                  <mat-tab-group class="nested-tabs siad-tabs">
+                    <mat-tab [label]="'SIAD' | transloco">
+                      <form class="tab-content form-grid">
+                        <mat-slide-toggle class="span-4" [checked]="siadItem().isActive" (change)="updateSiad({ isActive: $event.checked })">
+                          {{ 'SIAD Integration Active' | transloco }}
+                        </mat-slide-toggle>
+
+                        <mat-form-field appearance="outline" class="span-1">
+                          <mat-label>{{ 'SIAD Environment' | transloco }}</mat-label>
+                          <mat-select [value]="siadItem().environment" (selectionChange)="updateSiad({ environment: $event.value })">
+                            <mat-option value="dsv">{{ 'Development' | transloco }}</mat-option>
+                            <mat-option value="hml">{{ 'Homologation' | transloco }}</mat-option>
+                            <mat-option value="prd">{{ 'Production' | transloco }}</mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="span-1"><mat-label>{{ 'Origin' | transloco }}</mat-label><input matInput maxlength="20" [value]="siadItem().origin" (input)="updateSiad({ origin: $any($event.target).value })" /></mat-form-field>
+                        <mat-form-field appearance="outline" class="span-1"><mat-label>{{ 'Suborigin' | transloco }}</mat-label><input matInput maxlength="20" [value]="siadItem().suborigin" (input)="updateSiad({ suborigin: $any($event.target).value })" /></mat-form-field>
+                        <mat-form-field appearance="outline" class="span-1"><mat-label>{{ 'Referenced' | transloco }}</mat-label><input matInput maxlength="10" [value]="siadItem().referenciado" (input)="updateSiad({ referenciado: $any($event.target).value })" /></mat-form-field>
+
+                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Client ID' | transloco }}</mat-label><input matInput [value]="siadCredentials().clientId" [placeholder]="siadItem().credentialsConfigured ? ('Configured. Enter to replace.' | transloco) : ''" (input)="updateSiadCredentials({ clientId: $any($event.target).value })" /></mat-form-field>
+                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Client Secret' | transloco }}</mat-label><input matInput [type]="showSiadClientSecret() ? 'text' : 'password'" [value]="siadCredentials().clientSecret" (input)="updateSiadCredentials({ clientSecret: $any($event.target).value })" /><button mat-icon-button matSuffix type="button" [attr.aria-label]="'Toggle credential visibility' | transloco" (click)="showSiadClientSecret.set(!showSiadClientSecret())"><mat-icon>{{ showSiadClientSecret() ? 'visibility_off' : 'visibility' }}</mat-icon></button></mat-form-field>
+                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Certificate PEM' | transloco }}</mat-label><textarea matInput rows="4" [value]="siadCredentials().certificatePem" (input)="updateSiadCredentials({ certificatePem: $any($event.target).value })"></textarea></mat-form-field>
+                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Private Key PEM' | transloco }}</mat-label><textarea matInput rows="4" [value]="siadCredentials().privateKeyPem" (input)="updateSiadCredentials({ privateKeyPem: $any($event.target).value })"></textarea></mat-form-field>
+                        <p class="integration-secret-state span-4">{{ siadItem().credentialsConfigured ? ('SIAD Credentials Configured' | transloco) : ('SIAD Credentials Pending' | transloco) }}</p>
+                      </form>
+                    </mat-tab>
+                  </mat-tab-group>
+                </mat-tab>
+              }
+            </mat-tab-group>
+
+            @if (isMaster()) {
+              <form class="tab-content form-grid">
                 <mat-form-field appearance="outline" class="span-4">
-                  <mat-label>SignalWire Repo Token</mat-label>
-                  <input
-                    matInput
-                    [type]="showSignalWireRepoToken() ? 'text' : 'password'"
-                    placeholder="SignalWire repository token for FreeSWITCH packages" [value]="item().signalWireRepoToken" (input)="updateItem({ signalWireRepoToken: $any($event.target).value })" />
-                  <button
-                    mat-icon-button
-                    matSuffix
-                    type="button"
-                    [attr.aria-label]="
-                      showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token'
-                    "
-                    (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())"
-                  >
-                    <mat-icon>{{
-                      showSignalWireRepoToken() ? 'visibility_off' : 'visibility'
-                    }}</mat-icon>
+                  <mat-label>{{ 'SignalWire Repo Token' | transloco }}</mat-label>
+                  <input matInput [type]="showSignalWireRepoToken() ? 'text' : 'password'" [placeholder]="'SignalWire repository token for FreeSWITCH packages' | transloco" [value]="item().signalWireRepoToken" (input)="updateItem({ signalWireRepoToken: $any($event.target).value })" />
+                  <button mat-icon-button matSuffix type="button" [attr.aria-label]="(showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token') | transloco" (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())">
+                    <mat-icon>{{ showSignalWireRepoToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
                   </button>
                 </mat-form-field>
-              }
-
-              <div class="toggle-grid span-4">
-                <mat-slide-toggle [checked]="item().googleMapsEmbedApiKeyIsActive" (change)="updateItem({ googleMapsEmbedApiKeyIsActive: $event.checked })">
-                  Google Maps Key Active
-                </mat-slide-toggle>
-
-                <mat-slide-toggle [checked]="item().mapboxTokenIsActive" (change)="updateItem({ mapboxTokenIsActive: $event.checked })">
-                  Mapbox Token Active
-                </mat-slide-toggle>
-
-                @if (isMaster()) {
+                <div class="toggle-grid span-4">
                   <mat-slide-toggle [checked]="item().signalWireRepoTokenIsActive" (change)="updateItem({ signalWireRepoTokenIsActive: $event.checked })">
-                    SignalWire Repo Token Active
+                    {{ 'SignalWire Repo Token Active' | transloco }}
                   </mat-slide-toggle>
-                }
-              </div>
-            </form>
+                </div>
+              </form>
+            }
           </mat-tab>
 
           @if (isMaster()) {
-            <mat-tab label="Access">
+            <mat-tab [label]="'Access' | transloco">
               <form class="tab-content form-grid">
                 <mat-form-field appearance="outline">
-                  <mat-label>Trial Credit Amount</mat-label>
+                  <mat-label>{{ 'Trial Credit Amount' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -159,15 +188,15 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Trial Credit Currency</mat-label>
+                  <mat-label>{{ 'Trial Credit Currency' | transloco }}</mat-label>
                   <input
                     matInput
                     maxlength="3"
-                    placeholder="BRL" [value]="item().billingSignupTrialCurrency" (input)="updateItem({ billingSignupTrialCurrency: $any($event.target).value })" />
+                    [placeholder]="'BRL' | transloco" [value]="item().billingSignupTrialCurrency" (input)="updateItem({ billingSignupTrialCurrency: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Trial Expires Days</mat-label>
+                  <mat-label>{{ 'Trial Expires Days' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -176,7 +205,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Max Accounts per IP/Day</mat-label>
+                  <mat-label>{{ 'Max Accounts per IP/Day' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -185,7 +214,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Session Hours</mat-label>
+                  <mat-label>{{ 'Session Hours' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -194,7 +223,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Remember Me Hours</mat-label>
+                  <mat-label>{{ 'Remember Me Hours' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -203,33 +232,33 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Captcha Provider</mat-label>
+                  <mat-label>{{ 'Captcha Provider' | transloco }}</mat-label>
                   <mat-select [value]="item().signupCaptchaProvider" (selectionChange)="updateItem({ signupCaptchaProvider: $event.value })">
-                    <mat-option value="">None</mat-option>
-                    <mat-option value="turnstile">Cloudflare Turnstile</mat-option>
-                    <mat-option value="hcaptcha">hCaptcha</mat-option>
+                    <mat-option value="">{{ 'None' | transloco }}</mat-option>
+                    <mat-option value="turnstile">{{ 'Cloudflare Turnstile' | transloco }}</mat-option>
+                    <mat-option value="hcaptcha">{{ 'hCaptcha' | transloco }}</mat-option>
                   </mat-select>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-3">
-                  <mat-label>Captcha Site Key</mat-label>
+                  <mat-label>{{ 'Captcha Site Key' | transloco }}</mat-label>
                   <input
                     matInput
-                    placeholder="Public site key" [value]="item().signupCaptchaSiteKey" (input)="updateItem({ signupCaptchaSiteKey: $any($event.target).value })" />
+                    [placeholder]="'Public site key' | transloco" [value]="item().signupCaptchaSiteKey" (input)="updateItem({ signupCaptchaSiteKey: $any($event.target).value })" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-4">
-                  <mat-label>Captcha Secret</mat-label>
+                  <mat-label>{{ 'Captcha Secret' | transloco }}</mat-label>
                   <input
                     matInput
                     [type]="showSignupCaptchaSecret() ? 'text' : 'password'"
-                    placeholder="Private validation secret" [value]="item().signupCaptchaSecret" (input)="updateItem({ signupCaptchaSecret: $any($event.target).value })" />
+                    [placeholder]="'Private validation secret' | transloco" [value]="item().signupCaptchaSecret" (input)="updateItem({ signupCaptchaSecret: $any($event.target).value })" />
                   <button
                     mat-icon-button
                     matSuffix
                     type="button"
                     [attr.aria-label]="
-                      showSignupCaptchaSecret() ? 'Hide captcha secret' : 'Show captcha secret'
+                      (showSignupCaptchaSecret() ? 'Hide captcha secret' : 'Show captcha secret') | transloco
                     "
                     (click)="showSignupCaptchaSecret.set(!showSignupCaptchaSecret())"
                   >
@@ -241,54 +270,54 @@
 
                 <div class="toggle-grid span-4">
                   <mat-slide-toggle [checked]="item().billingSignupTrialEnabled" (change)="updateItem({ billingSignupTrialEnabled: $event.checked })">
-                    Trial Credit Active
+                    {{ 'Trial Credit Active' | transloco }}
                   </mat-slide-toggle>
 
                   <mat-slide-toggle [checked]="item().billingSignupTrialRequireEmailVerified" (change)="updateItem({ billingSignupTrialRequireEmailVerified: $event.checked })">
-                    Require Verified Email
+                    {{ 'Require Verified Email' | transloco }}
                   </mat-slide-toggle>
 
                   <mat-slide-toggle [checked]="item().signupCaptchaEnabled" (change)="updateItem({ signupCaptchaEnabled: $event.checked })">
-                    Signup Captcha Active
+                    {{ 'Signup Captcha Active' | transloco }}
                   </mat-slide-toggle>
 
                   <mat-slide-toggle [checked]="item().loginCaptchaEnabled" (change)="updateItem({ loginCaptchaEnabled: $event.checked })">
-                    Login Captcha Active
+                    {{ 'Login Captcha Active' | transloco }}
                   </mat-slide-toggle>
 
                   <mat-slide-toggle [checked]="item().authRememberMeEnabled" (change)="updateItem({ authRememberMeEnabled: $event.checked })">
-                    Remember Me Active
+                    {{ 'Remember Me Active' | transloco }}
                   </mat-slide-toggle>
                 </div>
               </form>
             </mat-tab>
           }
 
-          <mat-tab label="VoIP">
+          <mat-tab [label]="'VoIP' | transloco">
             <mat-tab-group class="nested-tabs">
-              <mat-tab label="SBC">
-                <div class="tab-content empty-tab">No SBC defaults configured yet.</div>
+              <mat-tab [label]="'SBC' | transloco">
+                <div class="tab-content empty-tab">{{ 'No SBC defaults configured yet.' | transloco }}</div>
               </mat-tab>
-              <mat-tab label="Softswitch">
-                <div class="tab-content empty-tab">No softswitch defaults configured yet.</div>
+              <mat-tab [label]="'Softswitch' | transloco">
+                <div class="tab-content empty-tab">{{ 'No softswitch defaults configured yet.' | transloco }}</div>
               </mat-tab>
-              <mat-tab label="PABX">
+              <mat-tab [label]="'PABX' | transloco">
                 <form class="tab-content form-grid">
                   <mat-form-field appearance="outline">
-                    <mat-label>Storage - Recording</mat-label>
+                    <mat-label>{{ 'Storage - Recording' | transloco }}</mat-label>
                     <mat-select
                       [placeholder]="voipPabxRecordingStoragePlaceholder()" [value]="item().voipPabxRecordingStorageMode" (selectionChange)="updateItem({ voipPabxRecordingStorageMode: $event.value })">
-                      <mat-option value="">Default</mat-option>
-                      <mat-option value="filesystem">Filesystem</mat-option>
-                      <mat-option value="storage">Storage</mat-option>
+                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                      <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
+                      <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
                     </mat-select>
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>Recording storage account</mat-label>
+                    <mat-label>{{ 'Recording storage account' | transloco }}</mat-label>
                     <mat-select
                       [disabled]="item().voipPabxRecordingStorageMode !== 'storage'" [value]="item().voipPabxRecordingStorageAccountUUID" (selectionChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })">
-                      <mat-option value="">Default storage account</mat-option>
+                      <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
                       @for (account of storageAccounts(); track account.HsaUUID) {
                         <mat-option [value]="account.HsaUUID">
                           {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
@@ -298,20 +327,20 @@
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
-                    <mat-label>Storage - Media File</mat-label>
+                    <mat-label>{{ 'Storage - Media File' | transloco }}</mat-label>
                     <mat-select
                       [placeholder]="voipPabxMediaStoragePlaceholder()" [value]="item().voipPabxMediaStorageMode" (selectionChange)="updateItem({ voipPabxMediaStorageMode: $event.value })">
-                      <mat-option value="">Default</mat-option>
-                      <mat-option value="filesystem">Filesystem</mat-option>
-                      <mat-option value="storage">Storage</mat-option>
+                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                      <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
+                      <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
                     </mat-select>
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>Media file storage account</mat-label>
+                    <mat-label>{{ 'Media file storage account' | transloco }}</mat-label>
                     <mat-select
                       [disabled]="item().voipPabxMediaStorageMode !== 'storage'" [value]="item().voipPabxMediaStorageAccountUUID" (selectionChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event.value })">
-                      <mat-option value="">Default storage account</mat-option>
+                      <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
                       @for (account of storageAccounts(); track account.HsaUUID) {
                         <mat-option [value]="account.HsaUUID">
                           {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
@@ -321,37 +350,37 @@
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
-                    <mat-label>Media File - Delivery Mode</mat-label>
+                    <mat-label>{{ 'Media File - Delivery Mode' | transloco }}</mat-label>
                     <mat-select
                       [placeholder]="voipPabxMediaDeliveryPlaceholder()" [value]="item().voipPabxMediaDeliveryMode" (selectionChange)="updateItem({ voipPabxMediaDeliveryMode: $event.value })">
-                      <mat-option value="">Default</mat-option>
-                      <mat-option value="online">Online</mat-option>
-                      <mat-option value="offline">Offline</mat-option>
+                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                      <mat-option value="online">{{ 'Online' | transloco }}</mat-option>
+                      <mat-option value="offline">{{ 'Offline' | transloco }}</mat-option>
                     </mat-select>
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
-                    <mat-label>Remote Command Executor</mat-label>
+                    <mat-label>{{ 'Remote Command Executor' | transloco }}</mat-label>
                     <mat-select
                       [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()" [value]="item().voipPabxRemoteCommandExecutor" (selectionChange)="updateItem({ voipPabxRemoteCommandExecutor: $event.value })">
-                      <mat-option value="">Default</mat-option>
-                      <mat-option value="agent">Agent</mat-option>
-                      <mat-option value="esl_ami">ESL/AMI</mat-option>
+                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                      <mat-option value="agent">{{ 'Agent' | transloco }}</mat-option>
+                      <mat-option value="esl_ami">{{ 'ESL/AMI' | transloco }}</mat-option>
                     </mat-select>
                   </mat-form-field>
 
                   <div class="toggle-grid span-4">
                     <mat-slide-toggle [checked]="item().voipPabxRecordingStorageIsActive" (change)="updateItem({ voipPabxRecordingStorageIsActive: $event.checked })">
-                      Recording Storage Active
+                      {{ 'Recording Storage Active' | transloco }}
                     </mat-slide-toggle>
                     <mat-slide-toggle [checked]="item().voipPabxMediaStorageIsActive" (change)="updateItem({ voipPabxMediaStorageIsActive: $event.checked })">
-                      Media Storage Active
+                      {{ 'Media Storage Active' | transloco }}
                     </mat-slide-toggle>
                     <mat-slide-toggle [checked]="item().voipPabxMediaDeliveryModeIsActive" (change)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event.checked })">
-                      Media Delivery Active
+                      {{ 'Media Delivery Active' | transloco }}
                     </mat-slide-toggle>
                     <mat-slide-toggle [checked]="item().voipPabxRemoteCommandExecutorIsActive" (change)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event.checked })">
-                      Remote Command Active
+                      {{ 'Remote Command Active' | transloco }}
                     </mat-slide-toggle>
                   </div>
                 </form>
@@ -370,7 +399,7 @@
             (click)="cancelChanges()"
             [disabled]="!hasChanges() || saving()"
           >
-            Cancel
+            {{ 'Cancel' | transloco }}
           </button>
         </div>
 
@@ -388,7 +417,7 @@
             } @else {
               <mat-icon>save</mat-icon>
             }
-            Save
+            {{ 'Save' | transloco }}
           </button>
         </div>
 

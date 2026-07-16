@@ -77,6 +77,32 @@ type ParametersSnapshot = {
   storageAccounts: StorageAccountItem[];
 };
 
+type BradescoSiadItem = {
+  environment: 'dsv' | 'hml' | 'prd';
+  origin: string;
+  suborigin: string;
+  referenciado: string;
+  isActive: boolean;
+  credentialsConfigured: boolean;
+  credentialsUpdatedAt: string | null;
+};
+
+type BradescoSiadCredentials = {
+  clientId: string;
+  clientSecret: string;
+  certificatePem: string;
+  privateKeyPem: string;
+};
+
+const DEFAULT_SIAD_ITEM: BradescoSiadItem = {
+  environment: 'dsv', origin: '', suborigin: '', referenciado: '', isActive: false,
+  credentialsConfigured: false, credentialsUpdatedAt: null,
+};
+
+const DEFAULT_SIAD_CREDENTIALS: BradescoSiadCredentials = {
+  clientId: '', clientSecret: '', certificatePem: '', privateKeyPem: '',
+};
+
 const DEFAULT_ITEM: SystemParametersItem = {
   sprUUID: null,
   googleMapsEmbedApiKey: '',
@@ -183,7 +209,13 @@ export class SettingsParametersPage {
     loader: ({ params }) => this.loadParametersSnapshot(params.endpoint, params.isMaster),
   });
 
-  readonly loading = computed(() => this.parametersResource.isLoading());
+  private readonly siadResource = resource({
+    params: () => this.isMaster() ? undefined : true,
+    defaultValue: { ...DEFAULT_SIAD_ITEM },
+    loader: () => this.loadSiad(),
+  });
+
+  readonly loading = computed(() => this.parametersResource.isLoading() || (!this.isMaster() && this.siadResource.isLoading()));
   readonly saving = signal(false);
   readonly feedback = signal<string | null>(null);
   readonly success = signal<string | null>(null);
@@ -195,8 +227,16 @@ export class SettingsParametersPage {
   readonly baselineItem = signal<SystemParametersItem>({ ...DEFAULT_ITEM });
   readonly storageAccounts = signal<StorageAccountItem[]>([]);
   readonly baselineSignature = signal('');
+  readonly siadItem = signal<BradescoSiadItem>({ ...DEFAULT_SIAD_ITEM });
+  readonly baselineSiad = signal<BradescoSiadItem>({ ...DEFAULT_SIAD_ITEM });
+  readonly siadCredentials = signal<BradescoSiadCredentials>({ ...DEFAULT_SIAD_CREDENTIALS });
+  readonly baselineSiadSignature = signal('');
+  readonly showSiadClientSecret = signal(false);
+  readonly showSiadPrivateKey = signal(false);
   readonly hasChanges = computed(
-    () => this.buildSignature(this.item()) !== this.baselineSignature(),
+    () => this.buildSignature(this.item()) !== this.baselineSignature()
+      || (!this.isMaster() && this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature())
+      || (!this.isMaster() && Object.values(this.siadCredentials()).some((value) => value.trim() !== '')),
   );
 
   constructor() {
@@ -210,6 +250,15 @@ export class SettingsParametersPage {
     });
 
     effect(() => {
+      if (this.isMaster()) return;
+      const item = this.siadResource.value();
+      this.siadItem.set(item);
+      this.baselineSiad.set({ ...item });
+      this.baselineSiadSignature.set(this.buildSiadSignature(item));
+      this.siadCredentials.set({ ...DEFAULT_SIAD_CREDENTIALS });
+    });
+
+    effect(() => {
       const error = this.parametersResource.error();
       if (!error) return;
       this.feedback.set(this.friendlyError(error, 'Failed to load parameters.'));
@@ -218,20 +267,38 @@ export class SettingsParametersPage {
       this.storageAccounts.set([]);
       this.baselineSignature.set(this.buildSignature(DEFAULT_ITEM));
     });
+
+    effect(() => {
+      if (this.isMaster()) return;
+      const error = this.siadResource.error();
+      if (!error) return;
+      this.feedback.set(this.friendlyError(error, 'Failed to load SIAD integration.'));
+    });
   }
 
   refreshItems() {
     this.feedback.set(null);
     this.success.set(null);
     this.parametersResource.reload();
+    if (!this.isMaster()) this.siadResource.reload();
   }
 
   updateItem(patch: Partial<SystemParametersItem>) {
     this.item.set({ ...this.item(), ...patch });
   }
 
+  updateSiad(patch: Partial<BradescoSiadItem>) {
+    this.siadItem.set({ ...this.siadItem(), ...patch });
+  }
+
+  updateSiadCredentials(patch: Partial<BradescoSiadCredentials>) {
+    this.siadCredentials.set({ ...this.siadCredentials(), ...patch });
+  }
+
   cancelChanges() {
     this.item.set({ ...this.baselineItem() });
+    this.siadItem.set({ ...this.baselineSiad() });
+    this.siadCredentials.set({ ...DEFAULT_SIAD_CREDENTIALS });
     this.feedback.set(null);
     this.success.set(null);
   }
@@ -244,16 +311,35 @@ export class SettingsParametersPage {
     this.success.set(null);
 
     try {
-      const payload = this.normalizeForSave(this.item());
-      const result = await this.api.put<any>(this.baseEndpoint(), { item: payload });
-      const savedItem = this.readItem(result);
-      this.item.set(savedItem);
-      this.baselineItem.set({ ...savedItem });
-      this.baselineSignature.set(this.buildSignature(savedItem));
-      this.success.set('Parameters saved successfully.');
-      if (savedItem.defaultLanguageIsActive && isAppLanguage(savedItem.defaultLanguage)) {
-        this.i18n.applyResolvedSystemLanguage(savedItem.defaultLanguage, true);
+      const parameterChanged = this.buildSignature(this.item()) !== this.baselineSignature();
+      if (parameterChanged) {
+        const payload = this.normalizeForSave(this.item());
+        const result = await this.api.put<any>(this.baseEndpoint(), { item: payload });
+        const savedItem = this.readItem(result);
+        this.item.set(savedItem);
+        this.baselineItem.set({ ...savedItem });
+        this.baselineSignature.set(this.buildSignature(savedItem));
+        if (savedItem.defaultLanguageIsActive && isAppLanguage(savedItem.defaultLanguage)) {
+          this.i18n.applyResolvedSystemLanguage(savedItem.defaultLanguage, true);
+        }
       }
+      if (!this.isMaster()) {
+        const siadChanged = this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature();
+        let savedSiad = this.siadItem();
+        if (siadChanged) {
+          const result = await this.api.put<any>('settings/integrations/bradesco/siad', this.siadItem());
+          savedSiad = this.readSiad(result);
+        }
+        if (Object.values(this.siadCredentials()).some((value) => value.trim() !== '')) {
+          const result = await this.api.put<any>('settings/integrations/bradesco/siad/credentials', this.siadCredentials());
+          savedSiad = this.readSiad(result);
+        }
+        this.siadItem.set(savedSiad);
+        this.baselineSiad.set({ ...savedSiad });
+        this.baselineSiadSignature.set(this.buildSiadSignature(savedSiad));
+        this.siadCredentials.set({ ...DEFAULT_SIAD_CREDENTIALS });
+      }
+      this.success.set('Parameters saved successfully.');
     } catch (error) {
       this.feedback.set(this.friendlyError(error, 'Failed to save parameters.'));
     } finally {
@@ -451,6 +537,26 @@ export class SettingsParametersPage {
       authSessionHours: value.authSessionHours,
       authRememberMeHours: value.authRememberMeHours,
     });
+  }
+
+  private buildSiadSignature(value: BradescoSiadItem): string {
+    return JSON.stringify({ environment: value.environment, origin: value.origin, suborigin: value.suborigin, referenciado: value.referenciado, isActive: value.isActive });
+  }
+
+  private async loadSiad(): Promise<BradescoSiadItem> {
+    return this.readSiad(await this.api.get<any>('settings/integrations/bradesco/siad'));
+  }
+
+  private readSiad(result: any): BradescoSiadItem {
+    const raw = result?.data?.item ?? result?.item ?? result ?? {};
+    const environment = String(raw?.environment ?? 'dsv').toLowerCase();
+    return {
+      environment: environment === 'hml' || environment === 'prd' ? environment : 'dsv',
+      origin: String(raw?.origin ?? ''), suborigin: String(raw?.suborigin ?? ''),
+      referenciado: String(raw?.referenciado ?? ''), isActive: raw?.isActive === true,
+      credentialsConfigured: raw?.credentialsConfigured === true,
+      credentialsUpdatedAt: raw?.credentialsUpdatedAt ? String(raw.credentialsUpdatedAt) : null,
+    };
   }
 
   private async loadParametersSnapshot(
