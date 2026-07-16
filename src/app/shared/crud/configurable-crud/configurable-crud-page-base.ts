@@ -17,6 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -52,6 +53,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatCardModule,
   MatCheckboxModule,
   MatChipsModule,
+  MatNativeDateModule,
   MatDatepickerModule,
   MatDialogModule,
   MatFormFieldModule,
