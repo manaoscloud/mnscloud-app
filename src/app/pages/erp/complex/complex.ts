@@ -81,23 +81,13 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
     { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
     {
       key: 'legalDate',
-      renderKey: 'legalDate-person',
-      source: 'LegalDate',
-      payloadKey: 'legalDate',
-      label: 'Date of birth',
-      type: 'date',
-      span: 1,
-      hiddenWhen: ({ values }) => values['type'] !== 'person',
-    },
-    {
-      key: 'legalDate',
-      renderKey: 'legalDate-company',
       source: 'LegalDate',
       payloadKey: 'legalDate',
       label: 'Opening date',
+      labelWhen: ({ values }) =>
+        String(values['type'] ?? '').toLowerCase() === 'person' ? 'Date of birth' : 'Opening date',
       type: 'date',
       span: 1,
-      hiddenWhen: ({ values }) => values['type'] !== 'company',
     },
     { key: 'alias', source: 'Alias', payloadKey: 'alias', label: 'Alias', span: 1 },
     {

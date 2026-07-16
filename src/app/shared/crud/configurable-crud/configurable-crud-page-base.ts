@@ -101,9 +101,8 @@ export type ConfigurableCrudPostalCodeLookup = {
 
 export type ConfigurableCrudField = {
   key: string;
-  /** Unique identity for Angular rendering when fields intentionally share one data key. */
-  renderKey?: string;
   label: string;
+  labelWhen?: (context: ConfigurableCrudFieldContext) => string;
   source?: string;
   payloadKey?: string;
   format?: 'json';
@@ -627,6 +626,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return [`span-${field.span ?? 1}`, field.breakBefore ? 'break-before' : '']
       .filter(Boolean)
       .join(' ');
+  }
+
+  fieldLabel(field: ConfigurableCrudField): string {
+    return (
+      field.labelWhen?.({
+        editing: Boolean(this.editingRecord()),
+        values: this.formValues(),
+      }) ?? field.label
+    );
   }
 
   tabLabel(tab: NonNullable<ConfigurableCrudField['tab']>, fallback: string): string {

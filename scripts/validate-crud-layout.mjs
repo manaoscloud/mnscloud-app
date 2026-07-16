@@ -202,9 +202,7 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
   }
 
   const rel = relative(root, tsFile);
-  // A conditional field may intentionally share a data key while using distinct render keys.
-  // Layout order is a data-contract check, so evaluate each data key once.
-  const keys = [...new Set(extractConfigurableCrudFieldKeys(content))];
+  const keys = extractConfigurableCrudFieldKeys(content);
   if (!keys.length) return [];
 
   const errors = [];
