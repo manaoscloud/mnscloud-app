@@ -14,6 +14,7 @@ import {
   effect,
   DestroyRef,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -203,9 +204,17 @@ export class MainLayout {
 
     effect(() => {
       this.billing.entitlementRevision();
-      if (this.activeEnvironmentId()) {
+      if (this.auth.isLoggedIn() && this.activeEnvironmentId()) {
         void this.refreshCommercialEntitlements();
       }
+    });
+
+    effect(() => {
+      if (this.auth.isLoggedIn()) return;
+      this.activeEnvironmentId.set(null);
+      this.environments.set([]);
+      this.commercialEntitlements.set([]);
+      this.closeCompactFlyouts();
     });
 
     // Responsividade
@@ -841,7 +850,7 @@ export class MainLayout {
   }
 
   private async refreshCommercialEntitlements() {
-    if (!this.activeEnvironmentId()) {
+    if (!this.auth.isLoggedIn() || this.isLoggingOut() || !this.activeEnvironmentId()) {
       this.commercialEntitlements.set([]);
       return;
     }
@@ -851,8 +860,17 @@ export class MainLayout {
     }
     try {
       const grants = await this.billing.listEntitlementGrants();
+      if (!this.auth.isLoggedIn() || this.isLoggingOut()) return;
       this.commercialEntitlements.set(grants.map((grant) => grant.entitlementCode).filter(Boolean));
     } catch (error) {
+      if (
+        !this.auth.isLoggedIn() ||
+        this.isLoggingOut() ||
+        (error instanceof HttpErrorResponse && error.status === 401)
+      ) {
+        this.commercialEntitlements.set([]);
+        return;
+      }
       console.error('❌ Failed to load commercial entitlements:', error);
       this.commercialEntitlements.set([]);
     }
@@ -886,6 +904,9 @@ export class MainLayout {
   async logout() {
     if (this.isLoggingOut()) return;
     this.isLoggingOut.set(true);
+    this.commercialEntitlements.set([]);
+    this.activeEnvironmentId.set(null);
+    this.environments.set([]);
     this.auth.logout();
     await new Promise((r) => setTimeout(r, 120));
     this.router.navigate(['/signin']);
