@@ -146,7 +146,7 @@ export class ClinicBradescoSiadGuidesPage extends ConfigurableCrudPageBase<Confi
     row: ConfigurableCrudRecord,
   ): Promise<void> {
     if (action.key !== 'dossier') return;
-    const guideUUID = String(row.uuid ?? '');
+    const guideUUID = String(row['uuid'] ?? '');
     if (!guideUUID) return;
     const ref = this.dossierDialog.open(ClinicBradescoSiadGuideDossierDialogComponent, {
       width: 'min(960px, calc(100vw - 1.5rem))',
