@@ -95,6 +95,16 @@ export class ApiService {
     );
   }
 
+  async getBlob(endpoint: string): Promise<Blob> {
+    this.assertEnvironment(endpoint);
+    return await firstValueFrom(
+      this.http.get(this.url(endpoint), {
+        headers: this.getHeaders(endpoint),
+        responseType: 'blob',
+      }),
+    );
+  }
+
   async post<T>(endpoint: string, body: any): Promise<T> {
     this.assertEnvironment(endpoint);
     const isFormData = body instanceof FormData;

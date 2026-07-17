@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { ClinicBradescoSiadGuideDossierDialogComponent } from './guide-dossier-dialog';
 
 const GUIDE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'clinic/bradesco/siad/guides',
@@ -28,10 +30,30 @@ const GUIDE_CONFIG: ConfigurableCrudConfig = {
     { key: 'protocol', label: 'Protocol', type: 'text', tab: 'record', span: 1, required: true }, { key: 'guideNumber', label: 'Guide number', type: 'text', tab: 'record', span: 1, required: true }, { key: 'insuredNumber', label: 'Insured number', type: 'text', tab: 'record', span: 1, required: true }, { key: 'eventDate', label: 'Event date', type: 'date', tab: 'record', span: 1, required: true },
     { key: 'batchNumber', label: 'Batch number', type: 'text', tab: 'record', span: 1 }, { key: 'password', label: 'Guide password', type: 'text', tab: 'record', span: 1 }, { key: 'installment', label: 'Installment', type: 'text', tab: 'record', span: 1 },
   ],
+  rowActions: [{ key: 'dossier', label: 'Dossier', icon: 'folder_open', tooltip: 'Documents and submission history' }],
   canCreate: true, canEdit: true, canDelete: false, bulkDelete: false,
 };
 
 @Component({ selector: 'app-clinic-bradesco-siad-guides', standalone: true, imports: CONFIGURABLE_CRUD_IMPORTS, templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html' })
 export class ClinicBradescoSiadGuidesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly dossierDialog = inject(MatDialog);
+
   constructor() { super(GUIDE_CONFIG); }
+
+  override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord): Promise<void> {
+    if (action.key !== 'dossier') return;
+    const guideUUID = String(row.uuid ?? '');
+    if (!guideUUID) return;
+    const ref = this.dossierDialog.open(ClinicBradescoSiadGuideDossierDialogComponent, {
+      width: 'min(960px, calc(100vw - 1.5rem))',
+      maxWidth: '99vw',
+      maxHeight: '95dvh',
+      autoFocus: false,
+      restoreFocus: true,
+      panelClass: 'crud-form-dialog',
+      data: { guideUUID },
+    });
+    await new Promise<void>((resolve) => ref.afterClosed().subscribe(() => resolve()));
+    this.refreshList();
+  }
 }
