@@ -38,6 +38,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     type: 'company',
     complexUUID: '',
     dueDayUUID: '',
+    bradescoInsuredNumber: '',
     name: '',
     legalName: '',
     legalDate: '',
@@ -86,6 +87,8 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ],
+  agreementSections: [{ key: 'bradesco', label: 'Bradesco' }],
+  tabLabels: { agreements: 'Agreements' },
   fields: [
     {
       key: 'status',
@@ -125,6 +128,15 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     },
     { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
+    {
+      key: 'bradescoInsuredNumber',
+      source: 'BradescoInsuredNumber',
+      payloadKey: 'bradescoInsuredNumber',
+      label: 'Insured number',
+      tab: 'agreements',
+      agreementSection: 'bradesco',
+      span: 1,
+    },
     {
       key: 'complexUUID',
       source: 'ComplexUUID',
