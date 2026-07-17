@@ -2104,6 +2104,11 @@ export class MainLayout {
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
+        { id: 'clinic/agreements', label: 'Clinic agreements', icon: 'health_and_safety', route: '/clinic/agreements' },
+        { id: 'clinic/agreement-plans', label: 'Agreement plans', icon: 'card_membership', route: '/clinic/agreement-plans' },
+        { id: 'clinic/procedures', label: 'Clinic procedures', icon: 'biotech', route: '/clinic/procedures' },
+        { id: 'clinic/coverages', label: 'Plan coverages', icon: 'fact_check', route: '/clinic/coverages' },
+        { id: 'clinic/customer-agreements', label: 'Customer agreements', icon: 'group', route: '/clinic/customer-agreements' },
         { id: 'clinic/bradesco-siad/guides', label: 'Guias Bradesco SIAD', icon: 'description', route: '/clinic/bradesco/siad/guides' },
       ],
     },

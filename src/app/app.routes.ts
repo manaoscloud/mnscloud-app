@@ -129,6 +129,36 @@ export const routes: Routes = [
                 title: 'Clinic • Bradesco SIAD Guides | mnscloud',
               },
               {
+                path: 'clinic/agreements',
+                loadComponent: () => import('./pages/clinic/agreements/catalog/catalog').then((m) => m.ClinicAgreementCatalogPage),
+                title: 'Clinic • Agreements | mnscloud',
+                data: { catalog: 'agreements' },
+              },
+              {
+                path: 'clinic/agreement-plans',
+                loadComponent: () => import('./pages/clinic/agreements/catalog/catalog').then((m) => m.ClinicAgreementCatalogPage),
+                title: 'Clinic • Agreement Plans | mnscloud',
+                data: { catalog: 'plans' },
+              },
+              {
+                path: 'clinic/procedures',
+                loadComponent: () => import('./pages/clinic/agreements/catalog/catalog').then((m) => m.ClinicAgreementCatalogPage),
+                title: 'Clinic • Procedures | mnscloud',
+                data: { catalog: 'procedures' },
+              },
+              {
+                path: 'clinic/coverages',
+                loadComponent: () => import('./pages/clinic/agreements/catalog/catalog').then((m) => m.ClinicAgreementCatalogPage),
+                title: 'Clinic • Plan Coverages | mnscloud',
+                data: { catalog: 'coverages' },
+              },
+              {
+                path: 'clinic/customer-agreements',
+                loadComponent: () => import('./pages/clinic/agreements/catalog/catalog').then((m) => m.ClinicAgreementCatalogPage),
+                title: 'Clinic • Customer Agreements | mnscloud',
+                data: { catalog: 'customer-agreements' },
+              },
+              {
                 path: 'monitoring',
                 loadComponent: () =>
                   import('./pages/monitoring/dashboard/dashboard').then(

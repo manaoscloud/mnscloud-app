@@ -119,10 +119,8 @@ export type ConfigurableCrudField = {
     | 'authentication'
     | 'limits'
     | 'codecs'
-    | 'agreements'
     | 'notes';
   addressSection?: string;
-  agreementSection?: string;
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
   postalLookup?: ConfigurableCrudPostalCodeLookup;
@@ -161,15 +159,6 @@ export type ConfigurableCrudAddressSection = {
 export type ConfigurableCrudAddressSectionView = ConfigurableCrudAddressSection & {
   fields: readonly ConfigurableCrudField[];
   copyActions: readonly ConfigurableCrudCopyAction[];
-};
-
-export type ConfigurableCrudAgreementSection = {
-  key: string;
-  label: string;
-};
-
-export type ConfigurableCrudAgreementSectionView = ConfigurableCrudAgreementSection & {
-  fields: readonly ConfigurableCrudField[];
 };
 
 export type ConfigurableCrudColumn = {
@@ -230,7 +219,6 @@ export type ConfigurableCrudConfig = {
   statusOptions?: readonly ConfigurableCrudOption[];
   activeStatusValues?: readonly (string | number)[];
   addressSections?: readonly ConfigurableCrudAddressSection[];
-  agreementSections?: readonly ConfigurableCrudAgreementSection[];
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
   listFilters?: readonly ConfigurableCrudListFilter[];
   rowActions?: readonly ConfigurableCrudRowAction[];
@@ -359,24 +347,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly codecFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'codecs'),
   );
-  readonly agreementFields = computed(() =>
-    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'agreements'),
-  );
-  readonly agreementSections = computed<ConfigurableCrudAgreementSectionView[]>(() => {
-    const fields = this.agreementFields();
-    const configuredSections = this.config.agreementSections ?? [];
-
-    if (!configuredSections.length) {
-      return [{ key: 'agreements', label: '', fields }];
-    }
-
-    return configuredSections
-      .map((section) => ({
-        ...section,
-        fields: fields.filter((field) => field.agreementSection === section.key),
-      }))
-      .filter((section) => section.fields.length);
-  });
   readonly notesFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'notes'),
   );
