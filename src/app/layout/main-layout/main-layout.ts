@@ -2103,6 +2103,9 @@ export class MainLayout {
       entitlementCode: 'module.clinic.*',
       roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
+      children: [
+        { id: 'clinic/bradesco-siad/guides', label: 'Guias Bradesco SIAD', icon: 'description', route: '/clinic/bradesco/siad/guides' },
+      ],
     },
 
     // ✅ Laboratory (tenant) — requer ambiente selecionado

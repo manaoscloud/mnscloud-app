@@ -124,6 +124,11 @@ export const routes: Routes = [
                 data: { scope: 'tenant' },
               },
               {
+                path: 'clinic/bradesco/siad/guides',
+                loadComponent: () => import('./pages/clinic/bradesco-siad/guides/guides').then((m) => m.ClinicBradescoSiadGuidesPage),
+                title: 'Clinic • Bradesco SIAD Guides | mnscloud',
+              },
+              {
                 path: 'monitoring',
                 loadComponent: () =>
                   import('./pages/monitoring/dashboard/dashboard').then(
