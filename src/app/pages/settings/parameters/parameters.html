@@ -129,10 +129,6 @@
                   <mat-tab-group class="nested-tabs siad-tabs">
                     <mat-tab [label]="'SIAD' | transloco">
                       <form class="tab-content form-grid">
-                        <mat-slide-toggle class="span-4" [checked]="siadItem().isActive" (change)="updateSiad({ isActive: $event.checked })">
-                          {{ 'SIAD Integration Active' | transloco }}
-                        </mat-slide-toggle>
-
                         <mat-form-field appearance="outline" class="span-1">
                           <mat-label>{{ 'SIAD Environment' | transloco }}</mat-label>
                           <mat-select [value]="siadItem().environment" (selectionChange)="updateSiad({ environment: $event.value })">
@@ -150,29 +146,34 @@
                         <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Certificate PEM' | transloco }}</mat-label><textarea matInput rows="4" [value]="siadCredentials().certificatePem" (input)="updateSiadCredentials({ certificatePem: $any($event.target).value })"></textarea></mat-form-field>
                         <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Private Key PEM' | transloco }}</mat-label><textarea matInput rows="4" [value]="siadCredentials().privateKeyPem" (input)="updateSiadCredentials({ privateKeyPem: $any($event.target).value })"></textarea></mat-form-field>
                         <p class="integration-secret-state span-4">{{ siadItem().credentialsConfigured ? ('SIAD Credentials Configured' | transloco) : ('SIAD Credentials Pending' | transloco) }}</p>
+                        <div class="toggle-grid span-4">
+                          <mat-slide-toggle [checked]="siadItem().isActive" (change)="updateSiad({ isActive: $event.checked })">
+                            {{ 'SIAD Integration Active' | transloco }}
+                          </mat-slide-toggle>
+                        </div>
                       </form>
                     </mat-tab>
                   </mat-tab-group>
                 </mat-tab>
+              } @else {
+                <mat-tab [label]="'SignalWire' | transloco">
+                  <form class="tab-content form-grid">
+                    <mat-form-field appearance="outline" class="span-4">
+                      <mat-label>{{ 'SignalWire Repo Token' | transloco }}</mat-label>
+                      <input matInput [type]="showSignalWireRepoToken() ? 'text' : 'password'" [placeholder]="'SignalWire repository token for FreeSWITCH packages' | transloco" [value]="item().signalWireRepoToken" (input)="updateItem({ signalWireRepoToken: $any($event.target).value })" />
+                      <button mat-icon-button matSuffix type="button" [attr.aria-label]="(showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token') | transloco" (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())">
+                        <mat-icon>{{ showSignalWireRepoToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                      </button>
+                    </mat-form-field>
+                    <div class="toggle-grid span-4">
+                      <mat-slide-toggle [checked]="item().signalWireRepoTokenIsActive" (change)="updateItem({ signalWireRepoTokenIsActive: $event.checked })">
+                        {{ 'SignalWire Repo Token Active' | transloco }}
+                      </mat-slide-toggle>
+                    </div>
+                  </form>
+                </mat-tab>
               }
             </mat-tab-group>
-
-            @if (isMaster()) {
-              <form class="tab-content form-grid">
-                <mat-form-field appearance="outline" class="span-4">
-                  <mat-label>{{ 'SignalWire Repo Token' | transloco }}</mat-label>
-                  <input matInput [type]="showSignalWireRepoToken() ? 'text' : 'password'" [placeholder]="'SignalWire repository token for FreeSWITCH packages' | transloco" [value]="item().signalWireRepoToken" (input)="updateItem({ signalWireRepoToken: $any($event.target).value })" />
-                  <button mat-icon-button matSuffix type="button" [attr.aria-label]="(showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token') | transloco" (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())">
-                    <mat-icon>{{ showSignalWireRepoToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
-                  </button>
-                </mat-form-field>
-                <div class="toggle-grid span-4">
-                  <mat-slide-toggle [checked]="item().signalWireRepoTokenIsActive" (change)="updateItem({ signalWireRepoTokenIsActive: $event.checked })">
-                    {{ 'SignalWire Repo Token Active' | transloco }}
-                  </mat-slide-toggle>
-                </div>
-              </form>
-            }
           </mat-tab>
 
           @if (isMaster()) {
