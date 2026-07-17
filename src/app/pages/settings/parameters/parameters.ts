@@ -19,6 +19,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
+import { lastValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
@@ -85,22 +86,25 @@ type BradescoSiadItem = {
   isActive: boolean;
   credentialsConfigured: boolean;
   credentialsUpdatedAt: string | null;
+  credential: {
+    certificateFilename: string;
+    certificateFingerprintSha256: string;
+    certificateNotAfter: string;
+  } | null;
 };
 
 type BradescoSiadCredentials = {
   clientId: string;
   clientSecret: string;
-  certificatePem: string;
-  privateKeyPem: string;
 };
 
 const DEFAULT_SIAD_ITEM: BradescoSiadItem = {
   environment: 'dsv', origin: '', suborigin: '', referenciado: '', isActive: false,
-  credentialsConfigured: false, credentialsUpdatedAt: null,
+  credentialsConfigured: false, credentialsUpdatedAt: null, credential: null,
 };
 
 const DEFAULT_SIAD_CREDENTIALS: BradescoSiadCredentials = {
-  clientId: '', clientSecret: '', certificatePem: '', privateKeyPem: '',
+  clientId: '', clientSecret: '',
 };
 
 const DEFAULT_ITEM: SystemParametersItem = {
@@ -230,6 +234,8 @@ export class SettingsParametersPage {
   readonly siadItem = signal<BradescoSiadItem>({ ...DEFAULT_SIAD_ITEM });
   readonly baselineSiad = signal<BradescoSiadItem>({ ...DEFAULT_SIAD_ITEM });
   readonly siadCredentials = signal<BradescoSiadCredentials>({ ...DEFAULT_SIAD_CREDENTIALS });
+  readonly siadCertificateFile = signal<File | null>(null);
+  readonly siadPrivateKeyFile = signal<File | null>(null);
   readonly baselineSiadSignature = signal('');
   readonly showSiadClientSecret = signal(false);
   readonly showSiadPrivateKey = signal(false);
@@ -295,10 +301,26 @@ export class SettingsParametersPage {
     this.siadCredentials.set({ ...this.siadCredentials(), ...patch });
   }
 
+  selectSiadCertificate(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.siadCertificateFile.set(file);
+    input.value = '';
+  }
+
+  selectSiadPrivateKey(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.siadPrivateKeyFile.set(file);
+    input.value = '';
+  }
+
   cancelChanges() {
     this.item.set({ ...this.baselineItem() });
     this.siadItem.set({ ...this.baselineSiad() });
     this.siadCredentials.set({ ...DEFAULT_SIAD_CREDENTIALS });
+    this.siadCertificateFile.set(null);
+    this.siadPrivateKeyFile.set(null);
     this.feedback.set(null);
     this.success.set(null);
   }
@@ -330,14 +352,29 @@ export class SettingsParametersPage {
           const result = await this.api.put<any>('settings/integrations/bradesco/siad', this.siadItem());
           savedSiad = this.readSiad(result);
         }
-        if (Object.values(this.siadCredentials()).some((value) => value.trim() !== '')) {
-          const result = await this.api.put<any>('settings/integrations/bradesco/siad/credentials', this.siadCredentials());
-          savedSiad = this.readSiad(result);
+        const certificate = this.siadCertificateFile();
+        const privateKey = this.siadPrivateKeyFile();
+        const hasCredentialInput = Object.values(this.siadCredentials()).some((value) => value.trim() !== '') || certificate || privateKey;
+        if (hasCredentialInput) {
+          if (!certificate || !privateKey) {
+            throw new Error('Select both the SIAD certificate and private key.');
+          }
+          const formData = new FormData();
+          formData.set('clientId', this.siadCredentials().clientId);
+          formData.set('clientSecret', this.siadCredentials().clientSecret);
+          formData.set('certificate', certificate, certificate.name);
+          formData.set('privateKey', privateKey, privateKey.name);
+          const progress = await lastValueFrom(
+            this.api.postFormWithProgress<any>('settings/integrations/bradesco/siad/credentials', formData),
+          );
+          savedSiad = this.readSiad(progress.response);
         }
         this.siadItem.set(savedSiad);
         this.baselineSiad.set({ ...savedSiad });
         this.baselineSiadSignature.set(this.buildSiadSignature(savedSiad));
         this.siadCredentials.set({ ...DEFAULT_SIAD_CREDENTIALS });
+        this.siadCertificateFile.set(null);
+        this.siadPrivateKeyFile.set(null);
       }
       this.success.set('Parameters saved successfully.');
     } catch (error) {
@@ -556,6 +593,13 @@ export class SettingsParametersPage {
       referenciado: String(raw?.referenciado ?? ''), isActive: raw?.isActive === true,
       credentialsConfigured: raw?.credentialsConfigured === true,
       credentialsUpdatedAt: raw?.credentialsUpdatedAt ? String(raw.credentialsUpdatedAt) : null,
+      credential: raw?.credential && typeof raw.credential === 'object'
+        ? {
+          certificateFilename: String(raw.credential.certificateFilename ?? ''),
+          certificateFingerprintSha256: String(raw.credential.certificateFingerprintSha256 ?? ''),
+          certificateNotAfter: String(raw.credential.certificateNotAfter ?? ''),
+        }
+        : null,
     };
   }
 

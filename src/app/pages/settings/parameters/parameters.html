@@ -143,9 +143,25 @@
 
                         <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Client ID' | transloco }}</mat-label><input matInput [value]="siadCredentials().clientId" [placeholder]="siadItem().credentialsConfigured ? ('Configured. Enter to replace.' | transloco) : ''" (input)="updateSiadCredentials({ clientId: $any($event.target).value })" /></mat-form-field>
                         <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Client Secret' | transloco }}</mat-label><input matInput [type]="showSiadClientSecret() ? 'text' : 'password'" [value]="siadCredentials().clientSecret" (input)="updateSiadCredentials({ clientSecret: $any($event.target).value })" /><button mat-icon-button matSuffix type="button" [attr.aria-label]="'Toggle credential visibility' | transloco" (click)="showSiadClientSecret.set(!showSiadClientSecret())"><mat-icon>{{ showSiadClientSecret() ? 'visibility_off' : 'visibility' }}</mat-icon></button></mat-form-field>
-                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Certificate PEM' | transloco }}</mat-label><textarea matInput rows="4" [value]="siadCredentials().certificatePem" (input)="updateSiadCredentials({ certificatePem: $any($event.target).value })"></textarea></mat-form-field>
-                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Private Key PEM' | transloco }}</mat-label><textarea matInput rows="4" [value]="siadCredentials().privateKeyPem" (input)="updateSiadCredentials({ privateKeyPem: $any($event.target).value })"></textarea></mat-form-field>
-                        <p class="integration-secret-state span-4">{{ siadItem().credentialsConfigured ? ('SIAD Credentials Configured' | transloco) : ('SIAD Credentials Pending' | transloco) }}</p>
+                        <input #siadCertificateInput type="file" hidden accept=".pem,.crt,.cer,application/x-pem-file" (change)="selectSiadCertificate($event)" />
+                        <input #siadPrivateKeyInput type="file" hidden accept=".pem,.key,application/x-pem-file" (change)="selectSiadPrivateKey($event)" />
+                        <mat-form-field appearance="outline" class="span-2">
+                          <mat-label>{{ 'mTLS Certificate' | transloco }}</mat-label>
+                          <input matInput readonly [value]="siadCertificateFile()?.name ?? siadItem().credential?.certificateFilename ?? ''" [placeholder]="'Select certificate file' | transloco" />
+                          <button mat-icon-button matSuffix type="button" [attr.aria-label]="'Select certificate file' | transloco" (click)="siadCertificateInput.click()"><mat-icon>upload_file</mat-icon></button>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="span-2">
+                          <mat-label>{{ 'mTLS Private Key' | transloco }}</mat-label>
+                          <input matInput readonly [value]="siadPrivateKeyFile()?.name ?? ''" [placeholder]="'Select private key file' | transloco" />
+                          <button mat-icon-button matSuffix type="button" [attr.aria-label]="'Select private key file' | transloco" (click)="siadPrivateKeyInput.click()"><mat-icon>upload_file</mat-icon></button>
+                        </mat-form-field>
+                        <p class="integration-secret-state span-4">
+                          @if (siadItem().credentialsConfigured && siadItem().credential) {
+                            {{ 'SIAD Credentials Configured' | transloco }} · {{ 'Certificate expires' | transloco }}: {{ siadItem().credential?.certificateNotAfter }}
+                          } @else {
+                            {{ 'SIAD Credentials Pending' | transloco }}
+                          }
+                        </p>
                         <div class="toggle-grid span-4">
                           <mat-slide-toggle [checked]="siadItem().isActive" (change)="updateSiad({ isActive: $event.checked })">
                             {{ 'SIAD Integration Active' | transloco }}
