@@ -2132,7 +2132,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     .voip-operator-form-dialog,
     .voip-sbc-form-dialog,
     .voip-softswitch-form-dialog,
-    .voip-pabx-form-dialog,
     .voip-pabx-provider-form-dialog,
     .voip-pabx-extension-form-dialog,
     .voip-pabx-routing-dialog,
@@ -2154,7 +2153,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     .voip-operator-form-dialog,
     .voip-sbc-form-dialog,
     .voip-softswitch-form-dialog,
-    .voip-pabx-form-dialog,
     .voip-pabx-provider-form-dialog,
     .voip-pabx-extension-form-dialog,
     .voip-pabx-routing-dialog,
@@ -2176,7 +2174,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     .voip-operator-form-dialog,
     .voip-sbc-form-dialog,
     .voip-softswitch-form-dialog,
-    .voip-pabx-form-dialog,
     .voip-pabx-provider-form-dialog,
     .voip-pabx-extension-form-dialog,
     .voip-pabx-routing-dialog,
@@ -2198,7 +2195,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     .voip-operator-form-dialog,
     .voip-sbc-form-dialog,
     .voip-softswitch-form-dialog,
-    .voip-pabx-form-dialog,
     .voip-pabx-provider-form-dialog,
     .voip-pabx-extension-form-dialog,
     .voip-pabx-routing-dialog,
@@ -2238,9 +2234,8 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   .cdk-overlay-pane.voip-did-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.voip-did-customer-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.voip-operator-form-dialog .mat-mdc-dialog-actions,
-  .cdk-overlay-pane  .cdk-overlay-pane.voip-sbc-form-dialog .mat-mdc-dialog-actions,
+  .cdk-overlay-pane .cdk-overlay-pane.voip-sbc-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.voip-softswitch-form-dialog .mat-mdc-dialog-actions,
-  .cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-actions,
@@ -2264,7 +2259,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
       .voip-operator-form-dialog,
       .voip-sbc-form-dialog,
       .voip-softswitch-form-dialog,
-      .voip-pabx-form-dialog,
       .voip-pabx-provider-form-dialog,
       .voip-pabx-extension-form-dialog,
       .voip-pabx-routing-dialog,
@@ -2286,7 +2280,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
       .voip-operator-form-dialog,
       .voip-sbc-form-dialog,
       .voip-softswitch-form-dialog,
-      .voip-pabx-form-dialog,
       .voip-pabx-provider-form-dialog,
       .voip-pabx-extension-form-dialog,
       .voip-pabx-routing-dialog,
@@ -2307,7 +2300,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
       .voip-operator-form-dialog,
       .voip-sbc-form-dialog,
       .voip-softswitch-form-dialog,
-      .voip-pabx-form-dialog,
       .voip-pabx-provider-form-dialog,
       .voip-pabx-extension-form-dialog,
       .voip-pabx-routing-dialog,
@@ -2330,9 +2322,8 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   .cdk-overlay-pane.voip-did-form-dialog .dialog-action-button,
   .cdk-overlay-pane.voip-did-customer-form-dialog .dialog-action-button,
   .cdk-overlay-pane.voip-operator-form-dialog .dialog-action-button,
-    .cdk-overlay-pane.voip-sbc-form-dialog .dialog-action-button,
+  .cdk-overlay-pane.voip-sbc-form-dialog .dialog-action-button,
   .cdk-overlay-pane.voip-softswitch-form-dialog .dialog-action-button,
-  .cdk-overlay-pane.voip-pabx-form-dialog .dialog-action-button,
   .cdk-overlay-pane.voip-pabx-provider-form-dialog .dialog-action-button,
   .cdk-overlay-pane.voip-pabx-extension-form-dialog .dialog-action-button,
   .cdk-overlay-pane.voip-pabx-routing-dialog .dialog-action-button,
@@ -2352,9 +2343,8 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   .cdk-overlay-pane.voip-did-form-dialog .dialog-action-primary,
   .cdk-overlay-pane.voip-did-customer-form-dialog .dialog-action-primary,
   .cdk-overlay-pane.voip-operator-form-dialog .dialog-action-primary,
-    .cdk-overlay-pane.voip-sbc-form-dialog .dialog-action-primary,
+  .cdk-overlay-pane.voip-sbc-form-dialog .dialog-action-primary,
   .cdk-overlay-pane.voip-softswitch-form-dialog .dialog-action-primary,
-  .cdk-overlay-pane.voip-pabx-form-dialog .dialog-action-primary,
   .cdk-overlay-pane.voip-pabx-provider-form-dialog .dialog-action-primary,
   .cdk-overlay-pane.voip-pabx-extension-form-dialog .dialog-action-primary,
   .cdk-overlay-pane.voip-pabx-routing-dialog .dialog-action-primary,
@@ -2373,12 +2363,10 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   .cdk-overlay-pane.voip-did-customer-form-dialog .primary-actions,
   .cdk-overlay-pane.voip-operator-form-dialog .secondary-actions,
   .cdk-overlay-pane.voip-operator-form-dialog .primary-actions,
-      .cdk-overlay-pane.voip-sbc-form-dialog .secondary-actions,
+  .cdk-overlay-pane.voip-sbc-form-dialog .secondary-actions,
   .cdk-overlay-pane.voip-sbc-form-dialog .primary-actions,
   .cdk-overlay-pane.voip-softswitch-form-dialog .secondary-actions,
   .cdk-overlay-pane.voip-softswitch-form-dialog .primary-actions,
-  .cdk-overlay-pane.voip-pabx-form-dialog .secondary-actions,
-  .cdk-overlay-pane.voip-pabx-form-dialog .primary-actions,
   .cdk-overlay-pane.voip-pabx-provider-form-dialog .secondary-actions,
   .cdk-overlay-pane.voip-pabx-provider-form-dialog .primary-actions,
   .cdk-overlay-pane.voip-pabx-extension-form-dialog .secondary-actions,
@@ -2471,7 +2459,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   justify-content: flex-end !important;
 }
 
-.cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-surface,
 .cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-surface,
 .cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-surface,
 .cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-surface {
@@ -2482,7 +2469,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   overflow: hidden;
 }
 
-.cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-content,
 .cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-content,
 .cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-content,
 .cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-content {
@@ -2490,7 +2476,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   padding: 0 !important;
 }
 
-.cdk-overlay-pane.voip-pabx-form-dialog .mat-mdc-dialog-actions,
 .cdk-overlay-pane.voip-pabx-provider-form-dialog .mat-mdc-dialog-actions,
 .cdk-overlay-pane.voip-pabx-extension-form-dialog .mat-mdc-dialog-actions,
 .cdk-overlay-pane.voip-pabx-routing-dialog .mat-mdc-dialog-actions {

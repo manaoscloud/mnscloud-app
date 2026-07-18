@@ -1091,7 +1091,8 @@ export const routes: Routes = [
               },
               {
                 path: 'voip/pabx/accounts',
-                loadComponent: () => import('./pages/voip/pabx/pabx').then((m) => m.VoipPabxPage),
+                loadComponent: () =>
+                  import('./pages/voip/pabx/account/account').then((m) => m.VoipPabxAccountPage),
                 title: 'VoIP • PABX • Accounts | mnscloud',
               },
               {
