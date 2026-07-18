@@ -37,6 +37,8 @@ const config: ConfigurableCrudConfig = {
   emptyLabel: 'No portability reasons found.',
   deleteTitle: 'Delete portability reason',
   deleteMessage: 'Delete this portability reason?',
+  deleteSelectedTitle: 'Delete selected portability reasons',
+  deleteSelectedMessage: 'Delete {count} selected portability reasons?',
   savedMessage: 'Portability reason saved successfully.',
   deletedMessage: 'Portability reason deleted successfully.',
   deleteFailedMessage: 'Failed to delete portability reason.',
