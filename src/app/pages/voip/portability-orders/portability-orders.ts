@@ -58,8 +58,13 @@ function config(): ConfigurableCrudConfig {
       direction: 'port_in',
       donorOperatorUUID: '',
       recipientOperatorUUID: '',
+      requestReasonUUID: '',
+      requestReasonDetail: '',
       numbers: '',
       protocol: '',
+      requestedAt: '',
+      requestedWindowStartAt: '',
+      requestedWindowEndAt: '',
       notes: '',
     },
     columns: [
@@ -78,6 +83,7 @@ function config(): ConfigurableCrudConfig {
         uuidField: 'CustomerCusUUID',
       },
       { id: 'direction', label: 'Direction', field: 'Direction' },
+      { id: 'reason', label: 'Reason', field: 'RequestReasonName' },
       { id: 'numbers', label: 'Numbers', field: 'ItemCount' },
       { id: 'firstNumber', label: 'First number', field: 'FirstNumber' },
       { id: 'requestedAt', label: 'Requested at', kind: 'datetime', field: 'RequestedAt' },
@@ -111,6 +117,23 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
+        key: 'requestReasonUUID',
+        label: 'Reason',
+        type: 'search-select',
+        required: true,
+        span: 1,
+      },
+      { key: 'protocol', label: 'Carrier protocol', span: 1 },
+      { key: 'requestedAt', label: 'Request date', type: 'date', span: 1 },
+      { key: 'requestedWindowStartAt', label: 'Requested window start', type: 'date', span: 1 },
+      { key: 'requestedWindowEndAt', label: 'Requested window end', type: 'date', span: 1 },
+      {
+        key: 'requestReasonDetail',
+        label: 'Reason details',
+        placeholder: 'Required when the selected reason is Other.',
+        span: 4,
+      },
+      {
         key: 'donorOperatorUUID',
         label: 'Donor operator',
         type: 'search-select',
@@ -133,7 +156,6 @@ function config(): ConfigurableCrudConfig {
         span: 4,
         rows: 4,
       },
-      { key: 'protocol', label: 'Carrier protocol', span: 2 },
       { key: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
     ],
   };
@@ -150,6 +172,7 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
   private readonly rawApi = inject(ApiService);
   readonly customers = signal<ConfigurableCrudOption[]>([]);
   readonly operators = signal<ConfigurableCrudOption[]>([]);
+  readonly reasons = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -159,14 +182,16 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
 
   override fieldLoading(field: { key: string }): boolean {
     return (
-      ['customerUUID', 'donorOperatorUUID', 'recipientOperatorUUID'].includes(field.key) &&
-      this.lookupsLoading()
+      ['customerUUID', 'donorOperatorUUID', 'recipientOperatorUUID', 'requestReasonUUID'].includes(
+        field.key,
+      ) && this.lookupsLoading()
     );
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'customerUUID') return this.customers();
     if (key === 'donorOperatorUUID' || key === 'recipientOperatorUUID') return this.operators();
+    if (key === 'requestReasonUUID') return this.reasons();
     return [];
   }
 
@@ -210,11 +235,29 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
     if (!confirmed) return;
 
     try {
-      await this.rawApi.post(`voip/portability-orders/${uuid}/transitions`, { action: action.key });
+      let payload: Record<string, unknown> = { action: action.key };
+      if (action.key === 'schedule') {
+        const response = await this.rawApi.get<any>(`voip/portability-orders/${uuid}`);
+        const order = response?.data ?? {};
+        if (!order.RequestedWindowStartAt || !order.RequestedWindowEndAt) {
+          this.snack.error(
+            'A requested scheduling window is required before scheduling the order.',
+          );
+          return;
+        }
+        payload = {
+          ...payload,
+          scheduledWindowStartAt: order.RequestedWindowStartAt,
+          scheduledWindowEndAt: order.RequestedWindowEndAt,
+        };
+      }
+      await this.rawApi.post(`voip/portability-orders/${uuid}/transitions`, payload);
       this.snack.success(`Portability order ${action.label.toLowerCase()} successfully.`);
       this.itemsResource.reload();
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to transition portability order.');
+      this.snack.error(
+        error instanceof Error ? error.message : 'Failed to transition portability order.',
+      );
     }
   }
 
@@ -239,17 +282,29 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
           { label: 'Donor operator', value: order.DonorOperatorName },
           { label: 'Recipient operator', value: order.RecipientOperatorName },
           { label: 'Carrier protocol', value: order.Protocol },
-          { label: 'Requested At', value: order.RequestedAt },
-          { label: 'Scheduled At', value: order.ScheduledAt },
+          { label: 'Request reason', value: order.RequestReasonName },
+          { label: 'Request reason details', value: order.RequestReasonDetail, wide: true },
+          { label: 'Outcome reason', value: order.OutcomeReasonName },
+          { label: 'Outcome reason details', value: order.OutcomeReasonDetail, wide: true },
+          { label: 'Requested at', value: order.RequestedAt },
+          { label: 'Requested window start', value: order.RequestedWindowStartAt },
+          { label: 'Requested window end', value: order.RequestedWindowEndAt },
+          { label: 'Scheduled at', value: order.ScheduledAt },
+          { label: 'Scheduled window start', value: order.ScheduledWindowStartAt },
+          { label: 'Scheduled window end', value: order.ScheduledWindowEndAt },
           { label: 'Confirmed At', value: order.ConfirmedAt },
           { label: 'Completed At', value: order.CompletedAt },
-          { label: 'Reason', value: order.Reason, wide: true },
           { label: 'Notes', value: order.Notes, wide: true },
         ],
         sections: [
           {
             title: 'Numbers',
-            code: { title: 'Numbers', value: items.map((item: any) => item.Number).join('\n'), format: 'text', copy: true },
+            code: {
+              title: 'Numbers',
+              value: items.map((item: any) => item.Number).join('\n'),
+              format: 'text',
+              copy: true,
+            },
           },
           {
             title: 'History',
@@ -258,19 +313,23 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
         ],
       });
     } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to load portability order details.');
+      this.snack.error(
+        error instanceof Error ? error.message : 'Failed to load portability order details.',
+      );
     }
   }
 
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [customers, operators] = await Promise.all([
+      const [customers, operators, reasons] = await Promise.all([
         fetchOptions(this.rawApi, 'erp/customers?status=1', 'CustomerUUID', 'Name'),
         fetchOptions(this.rawApi, 'voip/did/operators?status=1', 'VdoUUID', 'VdoName'),
+        fetchOptions(this.rawApi, 'voip/portability-reasons', 'VoipPortabilityReasonUUID', 'Name'),
       ]);
       this.customers.set(customers);
       this.operators.set(operators);
+      this.reasons.set(reasons);
     } finally {
       this.lookupsLoading.set(false);
     }
@@ -283,7 +342,9 @@ async function fetchOptions(
   id: string,
   label: string,
 ): Promise<ConfigurableCrudOption[]> {
-  const response = await api.get<any>(`${endpoint}&limit=500&offset=0`);
+  const response = await api.get<any>(
+    `${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=500&offset=0`,
+  );
   const rows = Array.isArray(response?.data?.items)
     ? response.data.items
     : Array.isArray(response?.data)
