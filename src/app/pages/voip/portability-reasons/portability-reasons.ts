@@ -68,14 +68,7 @@ const config: ConfigurableCrudConfig = {
       span: 1,
     },
     { key: 'code', source: 'VprCode', label: 'Code', required: true, span: 1 },
-    {
-      key: 'name',
-      source: 'VprName',
-      label: 'Name',
-      required: true,
-      textCase: 'uppercase',
-      span: 1,
-    },
+    { key: 'name', source: 'VprName', label: 'Name', required: true, span: 1 },
     {
       key: 'category',
       source: 'VprCategory',

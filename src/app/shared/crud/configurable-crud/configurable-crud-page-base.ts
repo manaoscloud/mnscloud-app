@@ -126,7 +126,6 @@ export type ConfigurableCrudField = {
   postalLookup?: ConfigurableCrudPostalCodeLookup;
   rows?: number;
   required?: boolean;
-  textCase?: 'uppercase';
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
@@ -570,13 +569,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   setFieldValue(key: string, value: unknown): void {
-    const field = this.config.fields.find((item) => item.key === key);
-    const normalized =
-      field?.textCase === 'uppercase' && typeof value === 'string'
-        ? value.toLocaleUpperCase()
-        : value;
-    this.formValues.update((current) => ({ ...current, [key]: normalized }));
-    this.onFieldValueChanged(key, normalized);
+    this.formValues.update((current) => ({ ...current, [key]: value }));
+    this.onFieldValueChanged(key, value);
     this.syncCopyActionsForSource(key);
     this.clearCopyActionsForTarget(key);
   }
