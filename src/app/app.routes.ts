@@ -1527,6 +1527,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'portability-reasons',
+                loadComponent: () =>
+                  import('./pages/voip/portability-reasons/portability-reasons').then(
+                    (m) => m.VoipPortabilityReasonsPage,
+                  ),
+                title: 'System VoIP • Portability Reasons | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'did/number',
                 loadComponent: () => import('./pages/voip/did/did').then((m) => m.VoipDidPage),
                 title: 'System DID Number | mnscloud',

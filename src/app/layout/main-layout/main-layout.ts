@@ -1252,6 +1252,14 @@ export class MainLayout {
           entitlementCode: 'module.voip.*',
         },
         {
+          id: 'voip/portability-reasons',
+          label: 'Portability reasons',
+          icon: 'format_list_bulleted',
+          route: '/system/voip/portability-reasons',
+          roles: ['MASTER'],
+          scope: 'master',
+        },
+        {
           id: 'voip/did',
           label: 'DID',
           icon: 'dialpad',
