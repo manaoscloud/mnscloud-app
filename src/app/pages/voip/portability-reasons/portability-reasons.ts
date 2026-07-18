@@ -20,10 +20,6 @@ const categories: ConfigurableCrudOption[] = [
   'operational',
   'other',
 ].map((value) => ({ value, label: value }));
-const yesNo: ConfigurableCrudOption[] = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
 const config: ConfigurableCrudConfig = {
   endpoint: 'voip/portability-reasons',
   uuidField: 'VprUUID',
@@ -52,7 +48,6 @@ const config: ConfigurableCrudConfig = {
     description: '',
     direction: 'both',
     category: 'other',
-    requiresDetail: 0,
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'VprName', uuidField: 'VprUUID' },
@@ -84,14 +79,6 @@ const config: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'requiresDetail',
-      source: 'VprRequiresDetail',
-      type: 'select',
-      label: 'Requires details',
-      options: yesNo,
-      span: 1,
-    },
-    {
       key: 'description',
       source: 'VprDescription',
       type: 'textarea',
@@ -116,7 +103,6 @@ export class VoipPortabilityReasonsPage extends ConfigurableCrudPageBase<Configu
     return {
       ...payload,
       status: Number(payload['status']),
-      requiresDetail: Number(payload['requiresDetail']),
     };
   }
 }
