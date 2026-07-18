@@ -1245,19 +1245,25 @@ export class MainLayout {
           scope: 'both',
         },
         {
-          id: 'voip/portability-orders',
+          id: 'voip/portability',
           label: 'Portabilities',
           icon: 'swap_horiz',
-          route: '/voip/portability-orders',
           entitlementCode: 'module.voip.*',
-        },
-        {
-          id: 'voip/portability-reasons',
-          label: 'Portability reasons',
-          icon: 'format_list_bulleted',
-          route: '/system/voip/portability-reasons',
-          roles: ['MASTER'],
-          scope: 'master',
+          children: [
+            {
+              id: 'voip/portability-orders',
+              label: 'Requests',
+              icon: 'assignment',
+              route: '/voip/portability-orders',
+            },
+            {
+              id: 'voip/portability-reasons',
+              label: 'Reasons',
+              icon: 'format_list_bulleted',
+              route: '/voip/portability-reasons',
+              roles: ['OWNER', 'ADMIN'],
+            },
+          ],
         },
         {
           id: 'voip/did',

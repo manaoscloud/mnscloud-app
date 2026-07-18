@@ -25,14 +25,13 @@ const yesNo: ConfigurableCrudOption[] = [
   { value: 0, label: 'No' },
 ];
 const config: ConfigurableCrudConfig = {
-  endpoint: 'system/voip/portability-reasons',
+  endpoint: 'voip/portability-reasons',
   uuidField: 'VprUUID',
   pageTitle: 'Portability reasons',
-  pageDescription: 'Manage the controlled reasons available to portability requests.',
+  pageDescription: 'Manage the reasons available to this tenant portability requests.',
   createTitle: 'New portability reason',
   editTitle: 'Edit portability reason',
-  dialogDescription:
-    'Maintain a global reason catalog. Tenants can only select active compatible reasons.',
+  dialogDescription: 'Maintain the reason catalog used by this tenant portability requests.',
   searchPlaceholder: 'Search',
   emptyLabel: 'No portability reasons found.',
   deleteTitle: 'Delete portability reason',
@@ -42,6 +41,7 @@ const config: ConfigurableCrudConfig = {
   savedMessage: 'Portability reason saved successfully.',
   deletedMessage: 'Portability reason deleted successfully.',
   deleteFailedMessage: 'Failed to delete portability reason.',
+  bulkDelete: false,
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,

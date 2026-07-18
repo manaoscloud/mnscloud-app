@@ -325,7 +325,12 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
       const [customers, operators, reasons] = await Promise.all([
         fetchOptions(this.rawApi, 'erp/customers?status=1', 'CustomerUUID', 'Name'),
         fetchOptions(this.rawApi, 'voip/did/operators?status=1', 'VdoUUID', 'VdoName'),
-        fetchOptions(this.rawApi, 'voip/portability-reasons', 'VoipPortabilityReasonUUID', 'Name'),
+        fetchOptions(
+          this.rawApi,
+          'voip/portability-reasons?view=options',
+          'VoipPortabilityReasonUUID',
+          'Name',
+        ),
       ]);
       this.customers.set(customers);
       this.operators.set(operators);

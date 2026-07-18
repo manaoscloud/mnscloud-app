@@ -940,6 +940,15 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
+                path: 'voip/portability-reasons',
+                loadComponent: () =>
+                  import('./pages/voip/portability-reasons/portability-reasons').then(
+                    (m) => m.VoipPortabilityReasonsPage,
+                  ),
+                title: 'VoIP • Portability Reasons | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
                 path: 'voip/sbc',
                 redirectTo: 'voip/sbc/dashboard',
                 pathMatch: 'full',
@@ -1524,15 +1533,6 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/voip/did/operator/operator').then((m) => m.VoipDidOperatorPage),
                 title: 'System DID Operator | mnscloud',
-                data: { scope: 'master' },
-              },
-              {
-                path: 'portability-reasons',
-                loadComponent: () =>
-                  import('./pages/voip/portability-reasons/portability-reasons').then(
-                    (m) => m.VoipPortabilityReasonsPage,
-                  ),
-                title: 'System VoIP • Portability Reasons | mnscloud',
                 data: { scope: 'master' },
               },
               {
