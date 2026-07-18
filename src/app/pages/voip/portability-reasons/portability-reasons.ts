@@ -20,6 +20,10 @@ const categories: ConfigurableCrudOption[] = [
   'operational',
   'other',
 ].map((value) => ({ value, label: value }));
+const yesNo: ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
 const config: ConfigurableCrudConfig = {
   endpoint: 'system/voip/portability-reasons',
   uuidField: 'VprUUID',
@@ -80,8 +84,9 @@ const config: ConfigurableCrudConfig = {
     {
       key: 'requiresDetail',
       source: 'VprRequiresDetail',
-      type: 'boolean',
+      type: 'select',
       label: 'Requires details',
+      options: yesNo,
       span: 1,
     },
     {
