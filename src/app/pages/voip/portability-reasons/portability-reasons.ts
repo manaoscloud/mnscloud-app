@@ -55,8 +55,8 @@ const config: ConfigurableCrudConfig = {
     requiresDetail: 0,
   },
   columns: [
-    { id: 'code', label: 'Code', field: 'VprCode' },
     { id: 'name', label: 'Name', kind: 'identity', field: 'VprName', uuidField: 'VprUUID' },
+    { id: 'code', label: 'Code', field: 'VprCode' },
     { id: 'direction', label: 'Direction', field: 'VprDirection' },
     { id: 'category', label: 'Category', field: 'VprCategory' },
     { id: 'status', label: 'Status', kind: 'status', field: 'VprStatus' },
