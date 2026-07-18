@@ -19,6 +19,9 @@ export type MnsSearchSelectFieldOption = {
 @Component({
   selector: 'mns-search-select-field',
   standalone: true,
+  host: {
+    '[class]': 'fieldClass()',
+  },
   imports: [
     FormField,
     MatFormFieldModule,
@@ -150,7 +153,12 @@ export type MnsSearchSelectFieldOption = {
   styles: [
     `
       :host {
-        display: contents;
+        display: block;
+        min-width: 0;
+      }
+
+      mat-form-field {
+        width: 100%;
       }
     `,
   ],
