@@ -1245,10 +1245,11 @@ export class MainLayout {
           scope: 'both',
         },
         {
-          id: 'voip/portability',
-          label: 'Portability',
+          id: 'voip/portability-orders',
+          label: 'Portability orders',
           icon: 'swap_horiz',
-          route: '/voip/portability',
+          route: '/voip/portability-orders',
+          entitlementCode: 'module.voip.*',
         },
         {
           id: 'voip/did',
@@ -2109,10 +2110,30 @@ export class MainLayout {
           label: 'Clinic registrations',
           icon: 'inventory_2',
           children: [
-            { id: 'clinic/agreements', label: 'Clinic agreements', icon: 'health_and_safety', route: '/clinic/agreements' },
-            { id: 'clinic/agreement-plans', label: 'Agreement plans', icon: 'card_membership', route: '/clinic/agreement-plans' },
-            { id: 'clinic/procedures', label: 'Clinic procedures', icon: 'biotech', route: '/clinic/procedures' },
-            { id: 'clinic/coverages', label: 'Plan coverages', icon: 'fact_check', route: '/clinic/coverages' },
+            {
+              id: 'clinic/agreements',
+              label: 'Clinic agreements',
+              icon: 'health_and_safety',
+              route: '/clinic/agreements',
+            },
+            {
+              id: 'clinic/agreement-plans',
+              label: 'Agreement plans',
+              icon: 'card_membership',
+              route: '/clinic/agreement-plans',
+            },
+            {
+              id: 'clinic/procedures',
+              label: 'Clinic procedures',
+              icon: 'biotech',
+              route: '/clinic/procedures',
+            },
+            {
+              id: 'clinic/coverages',
+              label: 'Plan coverages',
+              icon: 'fact_check',
+              route: '/clinic/coverages',
+            },
           ],
         },
         {
@@ -2120,8 +2141,18 @@ export class MainLayout {
           label: 'Clinic operations',
           icon: 'settings_suggest',
           children: [
-            { id: 'clinic/customer-agreements', label: 'Customer agreements', icon: 'group', route: '/clinic/customer-agreements' },
-            { id: 'clinic/bradesco-siad/guides', label: 'Guias Bradesco SIAD', icon: 'description', route: '/clinic/bradesco/siad/guides' },
+            {
+              id: 'clinic/customer-agreements',
+              label: 'Customer agreements',
+              icon: 'group',
+              route: '/clinic/customer-agreements',
+            },
+            {
+              id: 'clinic/bradesco-siad/guides',
+              label: 'Guias Bradesco SIAD',
+              icon: 'description',
+              route: '/clinic/bradesco/siad/guides',
+            },
           ],
         },
       ],
