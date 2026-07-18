@@ -239,6 +239,10 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
           { label: 'Donor operator', value: order.DonorOperatorName },
           { label: 'Recipient operator', value: order.RecipientOperatorName },
           { label: 'Carrier protocol', value: order.Protocol },
+          { label: 'Requested At', value: order.RequestedAt },
+          { label: 'Scheduled At', value: order.ScheduledAt },
+          { label: 'Confirmed At', value: order.ConfirmedAt },
+          { label: 'Completed At', value: order.CompletedAt },
           { label: 'Reason', value: order.Reason, wide: true },
           { label: 'Notes', value: order.Notes, wide: true },
         ],
@@ -262,7 +266,7 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
     this.lookupsLoading.set(true);
     try {
       const [customers, operators] = await Promise.all([
-        fetchOptions(this.rawApi, 'erp/customers?status=1', 'CusUUID', 'CusName'),
+        fetchOptions(this.rawApi, 'erp/customers?status=1', 'CustomerUUID', 'Name'),
         fetchOptions(this.rawApi, 'voip/did/operators?status=1', 'VdoUUID', 'VdoName'),
       ]);
       this.customers.set(customers);
