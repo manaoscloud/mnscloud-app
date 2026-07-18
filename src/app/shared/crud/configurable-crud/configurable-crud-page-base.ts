@@ -126,6 +126,7 @@ export type ConfigurableCrudField = {
   postalLookup?: ConfigurableCrudPostalCodeLookup;
   rows?: number;
   required?: boolean;
+  textCase?: 'uppercase';
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
@@ -479,6 +480,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         response = await this.api.post(this.config.endpoint, payload);
       }
       this.snack.success(this.config.savedMessage);
+      if (current) this.reflectSavedRecord(current, payload);
       this.itemsResource.reload();
       if (saveAndNew) {
         this.editingRecord.set(null);
@@ -568,8 +570,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   setFieldValue(key: string, value: unknown): void {
-    this.formValues.update((current) => ({ ...current, [key]: value }));
-    this.onFieldValueChanged(key, value);
+    const field = this.config.fields.find((item) => item.key === key);
+    const normalized =
+      field?.textCase === 'uppercase' && typeof value === 'string'
+        ? value.toLocaleUpperCase()
+        : value;
+    this.formValues.update((current) => ({ ...current, [key]: normalized }));
+    this.onFieldValueChanged(key, normalized);
     this.syncCopyActionsForSource(key);
     this.clearCopyActionsForTarget(key);
   }
@@ -1027,6 +1034,19 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       next[field.key] = field.format === 'json' ? this.formatJsonValue(value) : value;
     }
     return next;
+  }
+
+  private reflectSavedRecord(current: T, payload: ConfigurableCrudRecord): void {
+    const uuid = this.recordUUID(current);
+    const values: ConfigurableCrudRecord = {};
+    for (const field of this.config.fields) {
+      const payloadKey = field.payloadKey ?? field.key;
+      const source = field.source ?? field.key;
+      values[source] = payload[payloadKey] ?? null;
+    }
+    this.itemsResource.update((rows) =>
+      rows.map((row) => (this.recordUUID(row) === uuid ? ({ ...row, ...values } as T) : row)),
+    );
   }
 
   private buildPayload(): ConfigurableCrudRecord {
