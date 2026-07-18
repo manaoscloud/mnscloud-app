@@ -1197,6 +1197,7 @@
   "POP": "POP",
   "Port": "Port",
   "Portability": "Portability",
+  "Portabilities": "Portabilities",
   "Portability orders": "Portability orders",
   "Track tenant portability requests and their operational history.": "Track tenant portability requests and their operational history.",
   "New portability order": "New portability order",

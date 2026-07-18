@@ -1246,7 +1246,7 @@ export class MainLayout {
         },
         {
           id: 'voip/portability-orders',
-          label: 'Portability orders',
+          label: 'Portabilities',
           icon: 'swap_horiz',
           route: '/voip/portability-orders',
           entitlementCode: 'module.voip.*',
