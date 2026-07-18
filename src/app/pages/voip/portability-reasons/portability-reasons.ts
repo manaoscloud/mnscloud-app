@@ -63,8 +63,6 @@ const config: ConfigurableCrudConfig = {
   ],
   fields: [
     { key: 'status', source: 'VprStatus', type: 'status', label: 'Status', span: 1 },
-    { key: 'code', source: 'VprCode', label: 'Code', required: true, span: 1 },
-    { key: 'name', source: 'VprName', label: 'Name', required: true, span: 1 },
     {
       key: 'direction',
       source: 'VprDirection',
@@ -74,6 +72,8 @@ const config: ConfigurableCrudConfig = {
       required: true,
       span: 1,
     },
+    { key: 'code', source: 'VprCode', label: 'Code', required: true, span: 1 },
+    { key: 'name', source: 'VprName', label: 'Name', required: true, span: 1 },
     {
       key: 'category',
       source: 'VprCategory',
@@ -96,8 +96,8 @@ const config: ConfigurableCrudConfig = {
       source: 'VprDescription',
       type: 'textarea',
       label: 'Description',
-      span: 4,
-      rows: 3,
+      span: 1,
+      rows: 4,
     },
   ],
 };
