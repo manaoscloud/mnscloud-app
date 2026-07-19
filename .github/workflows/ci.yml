@@ -38,6 +38,10 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE="${{ github.event.pull_request.base.sha }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # A manual promotion validates the candidate commit. Earlier main commits
+            # were already validated by their own CI runs.
+            BASE="$(git rev-parse HEAD^)"
           else
             BASE="${{ github.event.before }}"
             if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
