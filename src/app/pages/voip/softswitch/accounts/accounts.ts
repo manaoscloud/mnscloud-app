@@ -191,19 +191,25 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
     try {
       const [servers, customers, domains] = await Promise.all([
         this.fetchPaged('voip/softswitch/servers?status=1', (row) =>
-          option(row.VsrUUID, row.VsrName, [row.VsrEngine, row.VsrHostname, row.VsrPublicIP]),
+          option(row['VsrUUID'], row['VsrName'], [
+            row['VsrEngine'],
+            row['VsrHostname'],
+            row['VsrPublicIP'],
+          ]),
         ),
         this.fetchPaged('erp/customers?status=1', (row) =>
           option(
-            row.CusUUID ?? row.CustomerCusUUID ?? row.CustomerUUID,
-            row.CusName ?? row.Name ?? row.CustomerName,
-            [row.CusDocument ?? row.Document, row.CusEmail ?? row.Email],
+            row['CusUUID'] ?? row['CustomerCusUUID'] ?? row['CustomerUUID'],
+            row['CusName'] ?? row['Name'] ?? row['CustomerName'],
+            [row['CusDocument'] ?? row['Document'], row['CusEmail'] ?? row['Email']],
           ),
         ),
         this.fetchPaged('voip/pabx/domains?status=1', (row) =>
-          option(row.VdmUUID ?? row.VoipDomainUUID ?? row.uuid, row.VdmName ?? row.Name, [
-            row.VdmDomain ?? row.Domain,
-          ]),
+          option(
+            row['VdmUUID'] ?? row['VoipDomainUUID'] ?? row['uuid'],
+            row['VdmName'] ?? row['Name'],
+            [row['VdmDomain'] ?? row['Domain']],
+          ),
         ),
       ]);
       this.serverOptions.set(servers);
@@ -234,7 +240,7 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
 
 function extractItems(response: unknown): ConfigurableCrudRecord[] {
   const value = response as { data?: { items?: unknown } | unknown; items?: unknown } | null;
-  if (Array.isArray(value?.data && (value.data as { items?: unknown }).items)) {
+  if (value?.data && Array.isArray((value.data as { items?: unknown }).items)) {
     return (value.data as { items: ConfigurableCrudRecord[] }).items;
   }
   if (Array.isArray(value?.data)) return value.data as ConfigurableCrudRecord[];
