@@ -3113,5 +3113,18 @@
   "Modo codec": "Modo de códec",
   "Codecs permitidos": "Códecs permitidos",
   "Codecs preferenciais": "Códecs preferidos",
-  "Codecs transcode": "Códecs para transcodificación"
+  "Codecs transcode": "Códecs para transcodificación",
+  "Softswitch accounts": "Cuentas Softswitch",
+  "Manage tenant Softswitch accounts and their runtime identity.": "Administre las cuentas Softswitch del tenant y su identidad de runtime.",
+  "New Softswitch account": "Nueva cuenta Softswitch",
+  "Edit Softswitch account": "Editar cuenta Softswitch",
+  "Maintain the tenant account identity used by the Softswitch runtime.": "Mantenga la identidad de la cuenta del tenant utilizada por el runtime Softswitch.",
+  "No Softswitch accounts found.": "No se encontraron cuentas Softswitch.",
+  "Delete Softswitch account": "Eliminar cuenta Softswitch",
+  "Delete this Softswitch account?": "¿Eliminar esta cuenta Softswitch?",
+  "Delete selected Softswitch accounts": "Eliminar cuentas Softswitch seleccionadas",
+  "Delete {count} selected Softswitch accounts?": "¿Eliminar {count} cuentas Softswitch seleccionadas?",
+  "Softswitch account saved successfully.": "Cuenta Softswitch guardada correctamente.",
+  "Softswitch account deleted successfully.": "Cuenta Softswitch eliminada correctamente.",
+  "Failed to delete Softswitch account.": "No se pudo eliminar la cuenta Softswitch."
 }

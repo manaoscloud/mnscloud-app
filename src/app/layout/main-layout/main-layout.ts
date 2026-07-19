@@ -1382,8 +1382,8 @@ export class MainLayout {
               roles: ['MASTER'],
             },
             {
-              id: 'voip/softswitch/account',
-              label: 'Softswitch',
+              id: 'voip/softswitch/accounts',
+              label: 'Accounts',
               icon: 'router',
               route: '/voip/softswitch/accounts',
               scope: 'tenant',

@@ -1034,8 +1034,10 @@ export const routes: Routes = [
               {
                 path: 'voip/softswitch/accounts',
                 loadComponent: () =>
-                  import('./pages/voip/softswitch/softswitch').then((m) => m.VoipSoftswitchPage),
-                title: 'VoIP • Softswitch | mnscloud',
+                  import('./pages/voip/softswitch/accounts/accounts').then(
+                    (m) => m.VoipSoftswitchAccountsPage,
+                  ),
+                title: 'VoIP • Softswitch • Accounts | mnscloud',
               },
               {
                 path: 'voip/softswitch/subscriber',
