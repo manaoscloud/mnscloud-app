@@ -66,8 +66,8 @@ jobs:
       - name: Build release candidate
         if: github.ref == 'refs/heads/main'
         run: |
-          bash scripts/prepare-release-candidate.sh --output .release-candidate --source-sha "$GITHUB_SHA"
-          bash scripts/release-app.sh --verify-promotion-artifact .release-candidate
+          bash scripts/prepare-release-candidate.sh --output release-candidate --source-sha "$GITHUB_SHA"
+          bash scripts/release-app.sh --verify-promotion-artifact release-candidate
       - name: Build
         if: github.ref != 'refs/heads/main'
         run: npm run build
@@ -82,5 +82,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: mnscloud-app-release-candidate
-          path: .release-candidate
+          path: release-candidate
           if-no-files-found: error
