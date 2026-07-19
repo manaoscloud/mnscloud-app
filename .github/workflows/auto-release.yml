@@ -100,7 +100,9 @@ jobs:
           stable = manifest['channels']['stable']
           artifact = stable['artifact']
           ref = stable['ref']
-          build_ref = stable.get('sourceSha') or subprocess.check_output(['git', 'rev-list', '-n', '1', ref], text=True).strip()
+          # Runtime inventory reports the immutable release checkout.  The cache must
+          # compare against that tag commit, never the source commit that built it.
+          build_ref = subprocess.check_output(['git', 'rev-list', '-n', '1', ref], text=True).strip()
           print(json.dumps({
               'product': 'mnscloud-app',
               'channel': 'stable',

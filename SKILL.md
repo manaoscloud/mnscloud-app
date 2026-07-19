@@ -78,6 +78,8 @@ Production App releases are created by the repository `Auto Release` GitHub Acti
 validated changes are committed and pushed to `main`. The workflow uses
 `scripts/release-app.sh` as the canonical release engine. Do not mark a new App version as available
 to operators until the matching release commit, Git tag, and GitHub Release exist on GitHub.
+The runtime release cache `buildRef` must be the commit resolved by that immutable release tag; it
+must not use the source SHA from `main`, because Agents report the installed release checkout.
 
 ## Contribution Governance
 
