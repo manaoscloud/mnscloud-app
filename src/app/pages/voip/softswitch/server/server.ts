@@ -54,7 +54,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/voip/softswitch/servers',
   uuidField: 'VsrUUID',
   pageTitle: 'Softswitch servers',
-  pageDescription: 'Manage authorized Kamailio and OpenSIPS Softswitch servers.',
+  pageDescription: 'Manage authorized Softswitch servers.',
   createTitle: 'New Softswitch server',
   editTitle: 'Edit Softswitch server',
   dialogDescription: 'Maintain runtime identity and connection metadata for the server.',
@@ -301,8 +301,7 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   ): Promise<void> {
     if (context.mode !== 'create' || context.saveAndNew) return;
     const created = this.createdItemFromResponse(context.response);
-    if (!created?.VsrUUID) {
-      this.snack.warning('Softswitch server saved, but install command could not be generated.');
+    if (!created?.VsrUUID || !this.hasKamailioInstaller(created)) {
       return;
     }
     await this.generateInstallCommand(created, false);
@@ -350,7 +349,7 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   ): InstallCommandDialogData {
     return {
       title: 'Softswitch install command',
-      description: 'Run this command on the Kamailio or OpenSIPS Softswitch server.',
+      description: 'Run this command on the Kamailio Softswitch server.',
       warning:
         'This runtime token is shown only once. Generating a new command replaces the previous token for this Softswitch server.',
       command,
@@ -368,6 +367,18 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
     const data = (response as { data?: { item?: unknown } }).data;
     const item = data?.item;
     return item && typeof item === 'object' ? (item as VoipSoftswitchServerItem) : null;
+  }
+
+  override rowActions(row: VoipSoftswitchServerItem): readonly ConfigurableCrudRowAction[] {
+    return this.hasKamailioInstaller(row) ? super.rowActions(row) : [];
+  }
+
+  private hasKamailioInstaller(row: VoipSoftswitchServerItem): boolean {
+    return (
+      String(row.VsrEngine ?? '')
+        .trim()
+        .toLowerCase() === 'kamailio'
+    );
   }
 
   private async loadMediaServers(): Promise<void> {
