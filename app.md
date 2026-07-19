@@ -132,6 +132,8 @@
   type it according to the app/system locale. Do not replace CRUD date fields with plain
   `type="date"` inputs unless the datepicker interaction is explicitly not available for that
   control and the exception is documented in the component.
+- Date-only inputs must serialize at the CRUD/API boundary as a validated `YYYY-MM-DD` value. Never
+  use timezone-based ISO timestamps for date-only data; locale formatting belongs only to the form.
 - Before finishing any Angular migration/refactor, run a residue check for:
   `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, `@Output(`, `@ViewChild`, `@ViewChildren`,
   `ChangeDetectionStrategy.Eager`, constructor dependency injection, `ngx-translate`,
