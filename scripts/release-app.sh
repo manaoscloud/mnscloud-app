@@ -102,16 +102,38 @@ if (stable?.version !== version || stable?.ref !== `v${version}` ||
   fi
 
   local release_branch="release/mnscloud-app-v${version}"
-  git switch -c "$release_branch"
-  git add -f VERSION package.json package-lock.json src/app/app-build-info.ts releases/manifest.json \
-    "releases/${artifact_name}" "releases/${artifact_name}.sha256"
-  git commit -m "Release mnscloud-app v${version}"
-  git tag -a "v${version}" -m "Release mnscloud-app v${version}"
-  git push origin "$release_branch"
-  git push origin "v${version}"
-  gh release create "v${version}" --repo manaoscloud/mnscloud-app --title "mnscloud-app v${version}" \
-    --generate-notes
-  gh release upload "v${version}" --repo manaoscloud/mnscloud-app --clobber \
+  local release_tag="v${version}"
+  if git ls-remote --exit-code --tags origin "refs/tags/${release_tag}" >/dev/null 2>&1; then
+    local existing_manifest existing_source existing_sha
+    existing_manifest="$(mktemp)"
+    git fetch --quiet origin "refs/tags/${release_tag}:refs/tags/${release_tag}"
+    git show "${release_tag}:releases/manifest.json" > "$existing_manifest"
+    readarray -t existing_release < <(deno eval '
+const stable = JSON.parse(await Deno.readTextFile(Deno.args[0])).channels?.stable;
+console.log(stable?.sourceSha ?? "");
+console.log(stable?.artifact?.sha256 ?? "");
+' "$existing_manifest")
+    rm -f "$existing_manifest"
+    existing_source="${existing_release[0]:-}"
+    existing_sha="${existing_release[1]:-}"
+    [[ "$existing_source" == "$source_sha" && "$existing_sha" == "$expected_sha" ]] || {
+      printf '[mnscloud-app] ERROR: existing release tag %s does not match this candidate\n' "$release_tag" >&2
+      exit 1
+    }
+  else
+    git switch -c "$release_branch"
+    git add -f VERSION package.json package-lock.json src/app/app-build-info.ts releases/manifest.json \
+      "releases/${artifact_name}" "releases/${artifact_name}.sha256"
+    git commit -m "Release mnscloud-app v${version}"
+    git tag -a "$release_tag" -m "Release mnscloud-app v${version}"
+    git push origin "$release_branch"
+    git push origin "$release_tag"
+  fi
+  if ! gh release view "$release_tag" --repo manaoscloud/mnscloud-app >/dev/null 2>&1; then
+    gh release create "$release_tag" --repo manaoscloud/mnscloud-app --title "mnscloud-app v${version}" \
+      --generate-notes
+  fi
+  gh release upload "$release_tag" --repo manaoscloud/mnscloud-app --clobber \
     "releases/${artifact_name}" "releases/${artifact_name}.sha256"
   printf '[mnscloud-app] promoted validated artifact for v%s\n' "$version"
 }
