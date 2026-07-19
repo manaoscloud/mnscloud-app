@@ -148,8 +148,10 @@ metadata with the control plane. `main` stays restricted to reviewed source chan
 Agents consume only that published stable artifact. This prevents a source commit from being offered
 as an update when it did not produce a validated browser bundle.
 
-The manual release workflow is an emergency path only. It requires an explicit version and rebuilds
-with the same release validation; normal releases must use CI artifact promotion.
+The manual release workflow is an emergency path only. It requires an explicit version, builds the
+same candidate payload and promotes it through the same immutable-release path; normal releases must
+use CI artifact promotion. Candidate numbering uses the highest published app tag as well as `VERSION`,
+so `main` never needs a release-metadata commit merely to advance a version.
 
 GitHub-driven deployment automation for the DB -> API -> App cascade is documented in
 `docs/deployment-automation.md`.

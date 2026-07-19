@@ -4,10 +4,11 @@ set -Eeuo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR=""
 SOURCE_SHA=""
+EXPLICIT_VERSION=""
 
 usage() {
   cat <<'EOF'
-Usage: bash scripts/prepare-release-candidate.sh --output <directory> --source-sha <sha>
+Usage: bash scripts/prepare-release-candidate.sh --output <directory> --source-sha <sha> [--version <version>]
 
 Builds the browser bundle once, packages it with the next semantic patch version and writes a
 promotion payload. The payload is the only artifact accepted by the release workflow.
@@ -18,6 +19,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --output) OUTPUT_DIR="${2:-}"; shift 2 ;;
     --source-sha) SOURCE_SHA="${2:-}"; shift 2 ;;
+    --version) EXPLICIT_VERSION="${2:-}"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) usage >&2; exit 2 ;;
   esac
@@ -29,13 +31,28 @@ done
 cd "$REPO_ROOT"
 
 current_version="$(tr -d '[:space:]' < VERSION)"
-IFS='.' read -r major minor patch_extra <<< "$current_version"
-patch="${patch_extra%%[-+]*}"
-[[ "$major" =~ ^[0-9]+$ && "$minor" =~ ^[0-9]+$ && "$patch" =~ ^[0-9]+$ ]] || {
-  echo "VERSION must be x.y.z; found ${current_version:-empty}" >&2
+latest_tag_version="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1 | sed 's/^v//')"
+
+if [[ -n "$EXPLICIT_VERSION" ]]; then
+  version="$EXPLICIT_VERSION"
+else
+  version="$(deno eval '
+const versions = Deno.args.filter(Boolean);
+const parse = (value) => {
+  const match = value.match(/^(\\d+)\\.(\\d+)\\.(\\d+)(?:[-+].*)?$/);
+  if (!match) throw new Error(`invalid semantic version: ${value}`);
+  return match.slice(1, 4).map(Number);
+};
+const highest = versions.map((value) => ({ value, parts: parse(value) })).sort((a, b) =>
+  b.parts[0] - a.parts[0] || b.parts[1] - a.parts[1] || b.parts[2] - a.parts[2],
+)[0];
+console.log(`${highest.parts[0]}.${highest.parts[1]}.${highest.parts[2] + 1}`);
+' "$current_version" "$latest_tag_version")"
+fi
+[[ "$version" =~ ^[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] || {
+  echo "version must be a semantic version; found ${version:-empty}" >&2
   exit 1
 }
-version="${major}.${minor}.$((patch + 1))"
 released_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 deno eval '
