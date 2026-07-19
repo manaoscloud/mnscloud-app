@@ -44,6 +44,15 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.8.1
+      - name: Setup Node.js
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install emergency release dependencies
+        if: github.event_name == 'workflow_dispatch'
+        run: npm ci
       - name: Download validated release candidate
         if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v7
@@ -56,16 +65,20 @@ jobs:
         run: |
           git config user.name 'mnscloud-release-bot'
           git config user.email 'actions@users.noreply.github.com'
-      - name: Promote CI artifact
-        if: github.event_name == 'workflow_run'
-        run: bash scripts/release-app.sh --promote-artifact "$RUNNER_TEMP/mnscloud-app-release-candidate"
-      - name: Emergency release
+      - name: Prepare emergency release candidate
         if: github.event_name == 'workflow_dispatch'
         run: |
-          set -euo pipefail
-          git clone --depth 1 https://github.com/manaoscloud/mnscloud-runtime-kit.git .mnscloud-runtime-kit
-          export MNSCLOUD_RUNTIME_KIT_DIR="$GITHUB_WORKSPACE/.mnscloud-runtime-kit"
-          bash scripts/release-app.sh --version '${{ inputs.version }}' --publish
+          bash scripts/prepare-release-candidate.sh \
+            --output "$RUNNER_TEMP/mnscloud-app-release-candidate" \
+            --source-sha "$GITHUB_SHA" \
+            --version '${{ inputs.version }}'
+          bash scripts/release-app.sh --verify-promotion-artifact "$RUNNER_TEMP/mnscloud-app-release-candidate"
+      - name: Promote validated artifact
+        if: github.event_name == 'workflow_run'
+        run: bash scripts/release-app.sh --promote-artifact "$RUNNER_TEMP/mnscloud-app-release-candidate"
+      - name: Promote emergency artifact
+        if: github.event_name == 'workflow_dispatch'
+        run: bash scripts/release-app.sh --promote-artifact "$RUNNER_TEMP/mnscloud-app-release-candidate"
       - name: Notify MNSCloud release cache
         env:
           MNSCLOUD_RELEASE_SYNC_URL: ${{ vars.MNSCLOUD_RELEASE_SYNC_URL || secrets.MNSCLOUD_RELEASE_SYNC_URL || '' }}
