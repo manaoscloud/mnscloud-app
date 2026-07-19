@@ -17,7 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -252,6 +252,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly dialog = inject(MatDialog);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly dateLocale = inject(MAT_DATE_LOCALE, { optional: true }) as string | null;
   protected readonly listLimit = 500;
   protected readonly config: ConfigurableCrudConfig;
 
@@ -560,6 +561,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   fieldValueString(key: string): string {
     const value = this.formValues()[key];
+    const field = this.config.fields.find((candidate) => candidate.key === key);
+    if (field?.type === 'date') return this.formatDateForInput(value);
     return value === null || value === undefined ? '' : String(value);
   }
 
@@ -1050,6 +1053,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       const key = field.payloadKey ?? field.key;
       let value = values[field.key];
       if (field.format === 'json') value = this.parseJsonValue(value);
+      if (field.type === 'date') {
+        const normalizedDate = this.normalizeDateForPayload(value);
+        if (normalizedDate !== undefined) value = normalizedDate;
+      }
       if (typeof value === 'string') value = value.trim();
       if (value === '') value = null;
       payload[key] = value;
@@ -1088,14 +1095,94 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private validatePayload(payload: ConfigurableCrudRecord): boolean {
     for (const field of this.config.fields) {
-      if (!this.isFieldVisible(field) || !this.isFieldRequired(field)) continue;
       const value = payload[field.payloadKey ?? field.key];
+      if (this.isFieldVisible(field) && field.type === 'date' && value !== null && value !== '') {
+        if (this.normalizeDateForPayload(value) === undefined) {
+          this.snack.warning('Invalid date. Use the system date format.');
+          return false;
+        }
+      }
+      if (!this.isFieldVisible(field) || !this.isFieldRequired(field)) continue;
       if (value === null || value === undefined || value === '') {
         this.snack.warning('Required fields are missing.');
         return false;
       }
     }
     return true;
+  }
+
+  private normalizeDateForPayload(value: unknown): string | null | undefined {
+    if (value === null || value === undefined || value === '') return null;
+
+    if (value instanceof Date) {
+      if (Number.isNaN(value.getTime())) return undefined;
+      return this.toIsoDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
+    }
+
+    if (typeof value !== 'string') return undefined;
+    const input = value.trim();
+    if (!input) return null;
+
+    const iso = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) return this.toIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+
+    const parts = input.match(/^(\d{1,4})\D+(\d{1,2})\D+(\d{1,4})$/);
+    if (!parts) return undefined;
+
+    const dateParts = this.datePartOrder();
+    const values = new Map(dateParts.map((part, index) => [part, Number(parts[index + 1])]));
+    const year = values.get('year');
+    const month = values.get('month');
+    const day = values.get('day');
+    if (!year || !month || !day) return undefined;
+    return this.toIsoDate(year, month, day);
+  }
+
+  private formatDateForInput(value: unknown): string {
+    if (value === null || value === undefined || value === '') return '';
+    if (value instanceof Date) {
+      if (Number.isNaN(value.getTime())) return '';
+      return this.formatLocalDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
+    }
+    if (typeof value !== 'string') return String(value);
+
+    const iso = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+    if (!iso) return value;
+    return this.formatLocalDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  }
+
+  private formatLocalDate(year: number, month: number, day: number): string {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return new Intl.DateTimeFormat(this.dateLocale ?? 'en-US', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(date);
+  }
+
+  private datePartOrder(): Array<'day' | 'month' | 'year'> {
+    const sample = new Date(Date.UTC(2001, 10, 22));
+    const parts = new Intl.DateTimeFormat(this.dateLocale ?? 'en-US', { timeZone: 'UTC' })
+      .formatToParts(sample)
+      .filter(
+        (part): part is Intl.DateTimeFormatPart & { type: 'day' | 'month' | 'year' } =>
+          part.type === 'day' || part.type === 'month' || part.type === 'year',
+      )
+      .map((part) => part.type);
+    return parts.length === 3 ? parts : ['month', 'day', 'year'];
+  }
+
+  private toIsoDate(year: number, month: number, day: number): string | undefined {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      return undefined;
+    }
+    return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   protected async confirmAction(
