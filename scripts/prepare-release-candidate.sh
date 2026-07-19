@@ -39,7 +39,7 @@ else
   version="$(deno eval '
 const versions = Deno.args.filter(Boolean);
 const parse = (value) => {
-  const match = value.match(/^(\\d+)\\.(\\d+)\\.(\\d+)(?:[-+].*)?$/);
+  const match = value.match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
   if (!match) throw new Error(`invalid semantic version: ${value}`);
   return match.slice(1, 4).map(Number);
 };
