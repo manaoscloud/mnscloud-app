@@ -142,8 +142,9 @@ the changed Angular baseline and every affected generic CRUD contract (template,
 translations), then builds a versioned release candidate with its checksum.
 
 The `Auto Release` workflow runs only after a successful CI on `main`. It verifies that the tested
-SHA is still the current `main`, promotes the exact candidate artifact produced by CI, publishes the
-GitHub Release and synchronizes the release metadata with the control plane. Runtime hosts and
+SHA is still the current `main`, promotes the exact candidate artifact produced by CI into an
+immutable versioned release branch and tag, publishes the GitHub Release and synchronizes the release
+metadata with the control plane. `main` stays restricted to reviewed source changes; runtime hosts and
 Agents consume only that published stable artifact. This prevents a source commit from being offered
 as an update when it did not produce a validated browser bundle.
 

@@ -39,7 +39,7 @@ version="${major}.${minor}.$((patch + 1))"
 released_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 deno eval '
-const [version, releasedAt] = Deno.args;
+const [version, releasedAt, sourceSha] = Deno.args;
 for (const file of ["VERSION"]) await Deno.writeTextFile(file, `${version}\n`);
 for (const file of ["package.json", "package-lock.json"]) {
   const data = JSON.parse(await Deno.readTextFile(file));
@@ -55,10 +55,11 @@ manifest.channels.stable = {
   version,
   ref: `v${version}`,
   releasedAt,
+  sourceSha,
 };
 delete manifest.channels.stable.artifact;
 await Deno.writeTextFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-' "$version" "$released_at"
+' "$version" "$released_at" "$SOURCE_SHA"
 
 deno run --allow-read --allow-write scripts/write-app-build-info.ts
 npm run build

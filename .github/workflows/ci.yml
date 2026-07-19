@@ -9,7 +9,7 @@ on:
       api_base_url:
         description: 'Optional API base URL for this build, for example https://api.example.com/api/v1'
         required: false
-      type: string
+        type: string
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}

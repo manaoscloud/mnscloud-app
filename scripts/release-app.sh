@@ -101,11 +101,13 @@ if (stable?.version !== version || stable?.ref !== `v${version}` ||
     return 0
   fi
 
+  local release_branch="release/mnscloud-app-v${version}"
+  git switch -c "$release_branch"
   git add -f VERSION package.json package-lock.json src/app/app-build-info.ts releases/manifest.json \
     "releases/${artifact_name}" "releases/${artifact_name}.sha256"
   git commit -m "Release mnscloud-app v${version}"
   git tag -a "v${version}" -m "Release mnscloud-app v${version}"
-  git push origin main
+  git push origin "$release_branch"
   git push origin "v${version}"
   gh release create "v${version}" --repo manaoscloud/mnscloud-app --title "mnscloud-app v${version}" \
     --generate-notes
