@@ -73,7 +73,7 @@ runtime/build input, not the permanent source of truth for any environment:
 
 ```js
 window.MNSCLOUD_APP_CONFIG = {
-  apiBaseUrl: "https://api.example.com/api/v1",
+  apiBaseUrl: 'https://api.example.com/api/v1',
 };
 ```
 
@@ -133,6 +133,22 @@ MNSCLOUD_API_BASE_URL=https://api.example.com/api/v1
 
 For one-off builds, run the `CI` workflow manually and fill the optional `api_base_url` input. The
 workflow uploads the generated browser bundle as the `mnscloud-app-browser` artifact.
+
+## Delivery Gate
+
+`main` is the validated integration branch. Changes must enter through a pull request with the
+`Angular app` check successful; direct pushes are not part of the delivery flow. The CI validates
+the changed Angular baseline and every affected generic CRUD contract (template, layout and PT/EN/ES
+translations), then builds a versioned release candidate with its checksum.
+
+The `Auto Release` workflow runs only after a successful CI on `main`. It verifies that the tested
+SHA is still the current `main`, promotes the exact candidate artifact produced by CI, publishes the
+GitHub Release and synchronizes the release metadata with the control plane. Runtime hosts and
+Agents consume only that published stable artifact. This prevents a source commit from being offered
+as an update when it did not produce a validated browser bundle.
+
+The manual release workflow is an emergency path only. It requires an explicit version and rebuilds
+with the same release validation; normal releases must use CI artifact promotion.
 
 GitHub-driven deployment automation for the DB -> API -> App cascade is documented in
 `docs/deployment-automation.md`.
