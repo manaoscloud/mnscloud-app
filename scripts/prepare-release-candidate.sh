@@ -31,7 +31,7 @@ done
 cd "$REPO_ROOT"
 
 current_version="$(tr -d '[:space:]' < VERSION)"
-latest_tag_version="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1 | sed 's/^v//')"
+latest_tag_version="$(git tag --list 'v[0-9]*' --sort=-v:refname | sed -n '1{s/^v//;p;}')"
 
 if [[ -n "$EXPLICIT_VERSION" ]]; then
   version="$EXPLICIT_VERSION"
