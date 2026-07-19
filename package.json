@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200 --poll 2000",
     "build": "ng build",
+    "verify:changed": "node scripts/verify-changed-app.mjs",
     "check:angular-baseline": "node scripts/check-angular-baseline.mjs",
     "check:angular-baseline:strict": "node scripts/check-angular-baseline.mjs --strict",
     "check:crud": "node scripts/validate-crud-template.mjs",

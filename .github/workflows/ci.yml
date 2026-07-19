@@ -9,7 +9,11 @@ on:
       api_base_url:
         description: 'Optional API base URL for this build, for example https://api.example.com/api/v1'
         required: false
-        type: string
+      type: string
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   app:
@@ -29,7 +33,7 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Validate changed CRUD layout
+      - name: Validate changed application contract
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -40,7 +44,7 @@ jobs:
               BASE="$(git rev-list --max-parents=0 HEAD)"
             fi
           fi
-          npm run check:crud:layout -- --changed "$BASE" HEAD
+          npm run verify:changed -- "$BASE" HEAD
       - name: Generate runtime config
         run: |
           node -e '
@@ -54,11 +58,24 @@ jobs:
           `;
             fs.writeFileSync("public/env.js", contents);
           '
+      - name: Build release candidate
+        if: github.ref == 'refs/heads/main'
+        run: |
+          bash scripts/prepare-release-candidate.sh --output .release-candidate --source-sha "$GITHUB_SHA"
+          bash scripts/release-app.sh --verify-promotion-artifact .release-candidate
       - name: Build
+        if: github.ref != 'refs/heads/main'
         run: npm run build
       - name: Upload browser build
         uses: actions/upload-artifact@v7
         with:
           name: mnscloud-app-browser
           path: dist/app/browser
+          if-no-files-found: error
+      - name: Upload release candidate
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mnscloud-app-release-candidate
+          path: .release-candidate
           if-no-files-found: error
