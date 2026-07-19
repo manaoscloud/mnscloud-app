@@ -58,6 +58,11 @@ jobs:
           `;
             fs.writeFileSync("public/env.js", contents);
           '
+      - name: Setup Deno for release metadata
+        if: github.ref == 'refs/heads/main'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.8.1
       - name: Build release candidate
         if: github.ref == 'refs/heads/main'
         run: |
