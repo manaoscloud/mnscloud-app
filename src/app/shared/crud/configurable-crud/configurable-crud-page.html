@@ -365,12 +365,17 @@
                             ? 'email'
                             : 'text'
                       "
+                      [appCurrencyMask]="field.type === 'currency'"
+                      [appCurrencyMaskCurrency]="currencyForField(field)"
                       [autocomplete]="field.autocomplete ?? 'off'"
                       [attr.data-field-key]="field.key"
                       [value]="fieldValueString(field.key)"
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                       (keydown.enter)="field.postalLookup ? searchPostalCode(field, $event) : null"
                     />
+                    @if (field.type === 'currency') {
+                      <span matTextPrefix>{{ currencyForField(field) }}</span>
+                    }
                     @if (field.postalLookup) {
                       <button
                         mat-icon-button
@@ -678,11 +683,16 @@
                               ? 'email'
                               : 'text'
                         "
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'currency') {
+                        <span matTextPrefix>{{ currencyForField(field) }}</span>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -754,11 +764,16 @@
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'currency') {
+                        <span matTextPrefix>{{ currencyForField(field) }}</span>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -830,11 +845,16 @@
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'currency') {
+                        <span matTextPrefix>{{ currencyForField(field) }}</span>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -906,11 +926,16 @@
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'currency') {
+                        <span matTextPrefix>{{ currencyForField(field) }}</span>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -982,11 +1007,16 @@
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'currency') {
+                        <span matTextPrefix>{{ currencyForField(field) }}</span>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -1058,11 +1088,16 @@
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'currency') {
+                        <span matTextPrefix>{{ currencyForField(field) }}</span>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -1123,11 +1158,16 @@
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="field.type === 'number' ? 'number' : 'text'"
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'currency') {
+                        <span matTextPrefix>{{ currencyForField(field) }}</span>
+                      }
                     </mat-form-field>
                   }
                 }

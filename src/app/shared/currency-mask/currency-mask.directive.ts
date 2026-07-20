@@ -5,12 +5,52 @@ import {
   OnChanges,
   Renderer2,
   SimpleChanges,
+  booleanAttribute,
   forwardRef,
   inject,
   input,
 } from '@angular/core';
 import { LOCALE_ID } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
+
+export function parseCurrencyAmount(value: unknown, locale: string): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+
+  const raw = String(value ?? '').replace(/[^\d,.-]/g, '');
+  if (!raw) return null;
+
+  const expectedDecimal = new Intl.NumberFormat(locale)
+    .formatToParts(1.1)
+    .find((part) => part.type === 'decimal')?.value ?? '.';
+  const commaIndex = raw.lastIndexOf(',');
+  const dotIndex = raw.lastIndexOf('.');
+  const separator =
+    commaIndex === -1 && dotIndex === -1
+      ? ''
+      : commaIndex !== -1 && dotIndex !== -1
+        ? commaIndex > dotIndex
+          ? ','
+          : '.'
+        : commaIndex !== -1
+          ? ','
+          : '.';
+
+  if (!separator) {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  const separatorIndex = raw.lastIndexOf(separator);
+  const fraction = raw.slice(separatorIndex + 1).replace(/\D/g, '');
+  const useAsDecimal =
+    fraction.length <= 2 && (separator === expectedDecimal || fraction.length > 0);
+  const integer = useAsDecimal
+    ? raw.slice(0, separatorIndex).replace(/[^\d-]/g, '')
+    : raw.replace(/[^\d-]/g, '');
+  const normalized = useAsDecimal ? `${integer || '0'}.${fraction}` : integer;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 @Directive({
   selector: '[appCurrencyMask]',
@@ -28,6 +68,7 @@ export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
   private renderer = inject(Renderer2);
   private locale = inject(LOCALE_ID, { optional: true }) as string | null;
 
+  readonly appCurrencyMask = input(false, { transform: booleanAttribute });
   readonly appCurrencyMaskCurrency = input<string | null>(null);
 
   private onChange: (value: number) => void = () => {};
@@ -37,13 +78,18 @@ export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
   private decimalSeparator = this.getDecimalSeparator();
   private fractionDigits = this.formatter.resolvedOptions().maximumFractionDigits ?? 2;
 
-  constructor() {
-    this.renderer.setAttribute(this.elementRef.nativeElement, 'inputmode', 'decimal');
-    this.renderer.setAttribute(this.elementRef.nativeElement, 'autocomplete', 'off');
-  }
-
   ngOnChanges(changes: SimpleChanges) {
-    if (!changes['appCurrencyMaskCurrency']) return;
+    if (changes['appCurrencyMask']) {
+      const input = this.elementRef.nativeElement;
+      if (this.appCurrencyMask()) {
+        this.renderer.setAttribute(input, 'inputmode', 'decimal');
+        this.renderer.setAttribute(input, 'autocomplete', 'off');
+      } else {
+        this.renderer.removeAttribute(input, 'inputmode');
+      }
+    }
+
+    if (!this.appCurrencyMask() || !changes['appCurrencyMaskCurrency']) return;
     this.refreshFormatConfig();
     const input = this.elementRef.nativeElement;
     const parsed = this.parseNumber(input.value);
@@ -75,6 +121,7 @@ export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
 
   @HostListener('input')
   onInput() {
+    if (!this.appCurrencyMask()) return;
     const input = this.elementRef.nativeElement;
     const cleaned = this.cleanInput(input.value);
     if (cleaned !== input.value) {
@@ -86,6 +133,7 @@ export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
 
   @HostListener('blur')
   onBlur() {
+    if (!this.appCurrencyMask()) return;
     const input = this.elementRef.nativeElement;
     const parsed = this.parseNumber(input.value);
     if (!Number.isFinite(parsed) || parsed === 0) {
@@ -119,9 +167,7 @@ export class CurrencyMaskDirective implements ControlValueAccessor, OnChanges {
   }
 
   private parseNumber(value: string) {
-    if (!value) return 0;
-    const cleaned = this.normalizeLocalizedInput(value).replace(this.decimalSeparator, '.');
-    return Number(cleaned);
+    return parseCurrencyAmount(value, this.resolveLocale()) ?? 0;
   }
 
   private normalizeLocalizedInput(value: string) {

@@ -54,7 +54,7 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'BpiStatus' },
   ],
   fields: [
-    { key: 'amount', label: 'Amount', type: 'number', span: 1, required: true },
+    { key: 'amount', label: 'Amount', type: 'currency', span: 1, required: true },
     { key: 'reference', label: 'Reference', type: 'text', span: 2 },
     { key: 'dueDate', label: 'Due date', type: 'date', span: 1 },
     {
