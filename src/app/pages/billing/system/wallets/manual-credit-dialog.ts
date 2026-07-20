@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatTabsModule } from '@angular/material/tabs';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -20,77 +21,85 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatTabsModule,
     TranslocoPipe,
   ],
   template: `
     <div class="crud-dialog">
-      <header class="dialog-header">
+      <div class="dialog-header">
         <div>
           <h2>{{ 'Manual credit' | transloco }}</h2>
           <p>{{ 'Apply an audited credit to this tenant wallet.' | transloco }}</p>
         </div>
-      </header>
+      </div>
 
-      <mat-dialog-content class="dialog-content">
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="span-2">
-            <mat-label>{{ 'Tenant' | transloco }}</mat-label>
-            <input matInput [value]="tenantLabel()" readonly />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Currency' | transloco }}</mat-label>
-            <input matInput [value]="currency()" readonly />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Amount' | transloco }}</mat-label>
-            <input
-              matInput
-              type="number"
-              min="0.01"
-              step="0.01"
-              [value]="amount()"
-              (input)="amount.set($any($event.target).value)"
-              required
-            />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="span-4">
-            <mat-label>{{ 'Reason' | transloco }}</mat-label>
-            <textarea
-              matInput
-              rows="4"
-              [value]="reason()"
-              (input)="reason.set($any($event.target).value)"
-            ></textarea>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="span-2">
-            <mat-label>{{ 'Reference' | transloco }}</mat-label>
-            <input
-              matInput
-              [value]="reference()"
-              (input)="reference.set($any($event.target).value)"
-            />
-          </mat-form-field>
-        </div>
-      </mat-dialog-content>
+      <div class="dialog-content">
+        <mat-tab-group class="form-tabs crud-tabs">
+          <mat-tab [label]="'Record' | transloco">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Tenant' | transloco }}</mat-label>
+                <input matInput [value]="tenantLabel()" readonly />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Currency' | transloco }}</mat-label>
+                <input matInput [value]="currency()" readonly />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Amount' | transloco }}*</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  [value]="amount()"
+                  (input)="amount.set($any($event.target).value)"
+                  required
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>{{ 'Reason' | transloco }}*</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  [value]="reason()"
+                  (input)="reason.set($any($event.target).value)"
+                ></textarea>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'Reference' | transloco }}</mat-label>
+                <input
+                  matInput
+                  [value]="reference()"
+                  (input)="reference.set($any($event.target).value)"
+                />
+              </mat-form-field>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
 
-      <mat-dialog-actions class="form-actions">
+      <div class="form-actions">
         <div class="secondary-actions">
           <button mat-stroked-button type="button" [disabled]="saving()" (click)="close()">
             {{ 'Cancel' | transloco }}
           </button>
         </div>
         <div class="primary-actions">
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="!valid() || saving()"
-            (click)="save()"
-          >
-            <mat-icon>add_card</mat-icon>{{ 'Manual credit' | transloco }}
-          </button>
+          <div class="save-split-action is-single-action">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="save-main-button"
+              [disabled]="!valid() || saving()"
+              (click)="save()"
+            >
+              <mat-icon>save</mat-icon>{{ 'Manual credit' | transloco }}
+            </button>
+          </div>
         </div>
-      </mat-dialog-actions>
+      </div>
     </div>
   `,
 })

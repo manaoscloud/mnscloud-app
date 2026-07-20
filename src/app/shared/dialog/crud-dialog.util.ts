@@ -56,36 +56,9 @@ function computeDialogLayout(): MatDialogConfig {
   };
 }
 
-export function openCrudTemplateDialog(
-  dialog: MatDialog,
-  template: any,
-  panelClass: string,
-  options: CrudDialogOptions = {},
-): CrudDialogBinding {
-  const initial = computeDialogLayout();
-  const ref = dialog.open(template, {
-    ...initial,
-    disableClose: true,
-    autoFocus: false,
-    restoreFocus: true,
-    panelClass,
-    data: options.data,
-  });
-
+function bindResponsiveCrudLayout(ref: MatDialogRef<unknown>): () => void {
   let observer: ResizeObserver | null = null;
   let rafId = 0;
-  const subscriptions = new Subscription();
-
-  subscriptions.add(
-    bindDialogEscape(ref, () => {
-      if (options.onEscape) {
-        options.onEscape();
-      } else {
-        ref.close();
-      }
-    }),
-  );
-
   const updateLayout = () => {
     const config = computeDialogLayout();
     const width = typeof config.width === 'string' ? config.width : '';
@@ -108,13 +81,48 @@ export function openCrudTemplateDialog(
     observer.observe(pageContent);
   }
 
+  return () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    observer?.disconnect();
+    observer = null;
+  };
+}
+
+export function openCrudTemplateDialog(
+  dialog: MatDialog,
+  template: any,
+  panelClass: string,
+  options: CrudDialogOptions = {},
+): CrudDialogBinding {
+  const initial = computeDialogLayout();
+  const ref = dialog.open(template, {
+    ...initial,
+    disableClose: true,
+    autoFocus: false,
+    restoreFocus: true,
+    panelClass,
+    data: options.data,
+  });
+
+  const subscriptions = new Subscription();
+
+  subscriptions.add(
+    bindDialogEscape(ref, () => {
+      if (options.onEscape) {
+        options.onEscape();
+      } else {
+        ref.close();
+      }
+    }),
+  );
+
+  const stopResponsiveLayout = bindResponsiveCrudLayout(ref);
+
   return {
     ref,
     stop: () => {
       subscriptions.unsubscribe();
-      if (rafId) cancelAnimationFrame(rafId);
-      observer?.disconnect();
-      observer = null;
+      stopResponsiveLayout();
     },
   };
 }
@@ -143,9 +151,13 @@ export function openCrudComponentDialog<T>(
       else ref.close();
     }),
   );
+  const stopResponsiveLayout = bindResponsiveCrudLayout(ref);
 
   return {
     ref,
-    stop: () => subscriptions.unsubscribe(),
+    stop: () => {
+      subscriptions.unsubscribe();
+      stopResponsiveLayout();
+    },
   };
 }
