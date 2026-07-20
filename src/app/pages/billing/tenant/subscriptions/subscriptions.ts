@@ -76,8 +76,8 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
       await this.billing.cancelSubscription(this.recordUUID(row));
       this.snack.success('Subscription canceled successfully.');
       this.refreshList();
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to cancel subscription.');
+    } catch {
+      // Preserve the explicit rejection returned by the API interceptor.
     } finally {
       this.mutating.set(false);
     }
