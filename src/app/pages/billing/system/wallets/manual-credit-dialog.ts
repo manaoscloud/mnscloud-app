@@ -8,6 +8,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
+import {
+  CurrencyMaskDirective,
+  parseCurrencyAmount,
+} from '../../../../shared/currency-mask/currency-mask.directive';
 import { BillingTenantLookupItem, BillingService } from '../../shared/billing.service';
 
 export type BillingManualCreditDialogData = BillingTenantLookupItem;
@@ -22,6 +26,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
     MatIconModule,
     MatInputModule,
     MatTabsModule,
+    CurrencyMaskDirective,
     TranslocoPipe,
   ],
   template: `
@@ -49,13 +54,14 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
                 <mat-label>{{ 'Amount' | transloco }}*</mat-label>
                 <input
                   matInput
-                  type="number"
-                  min="0.01"
-                  step="0.01"
+                  type="text"
+                  appCurrencyMask
+                  [appCurrencyMaskCurrency]="currency()"
                   [value]="amount()"
                   (input)="amount.set($any($event.target).value)"
                   required
                 />
+                <span matTextPrefix>{{ currency() }}</span>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Reason' | transloco }}*</mat-label>
@@ -115,7 +121,10 @@ export class BillingManualCreditDialogComponent {
   readonly saving = signal(false);
   readonly currency = computed(() => this.data.DefaultCurrency || 'BRL');
   readonly tenantLabel = computed(() => this.data.EnvironmentName || this.data.EnvironmentUUID);
-  readonly valid = computed(() => Number(this.amount()) > 0 && Boolean(this.reason().trim()));
+  readonly amountValue = computed(() =>
+    parseCurrencyAmount(this.amount(), this.currencyLocale()) ?? 0,
+  );
+  readonly valid = computed(() => this.amountValue() > 0 && Boolean(this.reason().trim()));
 
   close(): void {
     this.dialogRef.close(false);
@@ -127,7 +136,7 @@ export class BillingManualCreditDialogComponent {
     try {
       await this.billing.manualCredit({
         environmentUUID: this.data.EnvironmentUUID,
-        amount: Number(this.amount()),
+        amount: this.amountValue(),
         currency: this.currency(),
         reason: this.reason().trim(),
         reference: this.reference().trim() || null,
@@ -140,5 +149,13 @@ export class BillingManualCreditDialogComponent {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  private currencyLocale(): string {
+    return (
+      ({ BRL: 'pt-BR', EUR: 'de-DE', GBP: 'en-GB', USD: 'en-US' } as Record<string, string>)[
+        this.currency().toUpperCase()
+      ] ?? 'pt-BR'
+    );
   }
 }

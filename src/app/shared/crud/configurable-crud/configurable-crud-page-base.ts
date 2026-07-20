@@ -37,6 +37,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 import { DateTimeFormatService } from '../../../services/date-time-format.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { SystemParameterService } from '../../../services/system-parameter.service';
+import { CurrencyMaskDirective, parseCurrencyAmount } from '../../currency-mask/currency-mask.directive';
 import { DateMaskDirective } from '../../date-mask/date-mask.directive';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../dialog/dialog-events.util';
@@ -69,6 +71,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatTooltipModule,
   MnsSearchSelectFieldComponent,
   TranslocoPipe,
+  CurrencyMaskDirective,
   DateMaskDirective,
 ];
 
@@ -83,6 +86,7 @@ export type ConfigurableCrudFieldType =
   | 'text'
   | 'email'
   | 'number'
+  | 'currency'
   | 'phone'
   | 'date'
   | 'select'
@@ -129,6 +133,10 @@ export type ConfigurableCrudField = {
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
+  /** ISO 4217 code used when the record does not carry its own currency field. */
+  currencyCode?: string;
+  /** Key holding the ISO 4217 code for this monetary value. */
+  currencyKey?: string;
   options?: readonly ConfigurableCrudOption[];
   loading?: () => boolean;
   hiddenWhen?: (context: ConfigurableCrudFieldContext) => boolean;
@@ -249,6 +257,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly api = inject(ApiService);
   protected readonly snack = inject(SnackbarService);
   protected readonly dateTime = inject(DateTimeFormatService);
+  protected readonly parameters = inject(SystemParameterService);
   protected readonly dialog = inject(MatDialog);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -274,6 +283,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly editingRecord = signal<T | null>(null);
   readonly formValues = signal<ConfigurableCrudRecord>({});
   readonly enabledCopyActions = signal(new Set<string>());
+  readonly defaultCurrency = signal('BRL');
 
   readonly itemsResource;
 
@@ -366,6 +376,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   protected constructor(config: ConfigurableCrudConfig) {
     this.config = config;
+    void this.parameters
+      .resolveDefaultCurrency('BRL')
+      .then((currency) => this.defaultCurrency.set(currency));
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
       params: () => this.appliedFilters(),
@@ -564,6 +577,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const field = this.config.fields.find((candidate) => candidate.key === key);
     if (field?.type === 'date') return this.formatDateForInput(value);
     return value === null || value === undefined ? '' : String(value);
+  }
+
+  currencyForField(field: ConfigurableCrudField): string {
+    const fromRecord = field.currencyKey ? this.formValues()[field.currencyKey] : null;
+    const candidate = fromRecord ?? field.currencyCode ?? this.defaultCurrency();
+    const currency = String(candidate ?? '').trim().toUpperCase();
+    return /^[A-Z]{3}$/.test(currency) ? currency : this.defaultCurrency();
   }
 
   fieldValueArray(key: string): readonly unknown[] {
@@ -1057,11 +1077,28 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         const normalizedDate = this.normalizeDateForPayload(value);
         if (normalizedDate !== undefined) value = normalizedDate;
       }
+      if (field.type === 'currency') {
+        const normalizedCurrency = this.normalizeCurrencyForPayload(value, this.currencyForField(field));
+        if (normalizedCurrency !== undefined) value = normalizedCurrency;
+      }
       if (typeof value === 'string') value = value.trim();
       if (value === '') value = null;
       payload[key] = value;
     }
     return payload;
+  }
+
+  private normalizeCurrencyForPayload(value: unknown, currency: string): number | undefined {
+    if (value === null || value === undefined || value === '') return undefined;
+    return parseCurrencyAmount(value, this.currencyLocale(currency)) ?? undefined;
+  }
+
+  private currencyLocale(currency: string): string {
+    return (
+      ({ BRL: 'pt-BR', EUR: 'de-DE', GBP: 'en-GB', USD: 'en-US' } as Record<string, string>)[
+        currency
+      ] ?? this.dateTime.locale()
+    );
   }
 
   private formatJsonValue(value: unknown): string {
