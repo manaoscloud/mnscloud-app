@@ -374,7 +374,7 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
           this.fetchPaged('voip/pabx/dial-plans?status=1', (row) =>
             option(row.uuid ?? row.VdpUUID, row.name ?? row.VdpName, [row.code ?? row.VdpCode]),
           ),
-          this.fetchPaged('voip/blacklists?status=1', (row) =>
+          this.fetchPaged('voip/pabx/blacklists?status=1', (row) =>
             option(row.VbkUUID ?? row.uuid, row.VbkName ?? row.name),
           ),
           this.fetchPaged('hosting/storage/accounts?status=1', (row) =>
