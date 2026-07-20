@@ -38,7 +38,10 @@ import { ApiService } from '../../../services/api.service';
 import { DateTimeFormatService } from '../../../services/date-time-format.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
-import { CurrencyMaskDirective, parseCurrencyAmount } from '../../currency-mask/currency-mask.directive';
+import {
+  CurrencyMaskDirective,
+  parseCurrencyAmount,
+} from '../../currency-mask/currency-mask.directive';
 import { DateMaskDirective } from '../../date-mask/date-mask.directive';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../dialog/dialog-events.util';
@@ -582,8 +585,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   currencyForField(field: ConfigurableCrudField): string {
     const fromRecord = field.currencyKey ? this.formValues()[field.currencyKey] : null;
     const candidate = fromRecord ?? field.currencyCode ?? this.defaultCurrency();
-    const currency = String(candidate ?? '').trim().toUpperCase();
+    const currency = String(candidate ?? '')
+      .trim()
+      .toUpperCase();
     return /^[A-Z]{3}$/.test(currency) ? currency : this.defaultCurrency();
+  }
+
+  currencyLabelSuffix(field: ConfigurableCrudField): string {
+    return field.type === 'currency' ? ` (${this.currencyForField(field)})` : '';
   }
 
   fieldValueArray(key: string): readonly unknown[] {
@@ -1078,7 +1087,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         if (normalizedDate !== undefined) value = normalizedDate;
       }
       if (field.type === 'currency') {
-        const normalizedCurrency = this.normalizeCurrencyForPayload(value, this.currencyForField(field));
+        const normalizedCurrency = this.normalizeCurrencyForPayload(
+          value,
+          this.currencyForField(field),
+        );
         if (normalizedCurrency !== undefined) value = normalizedCurrency;
       }
       if (typeof value === 'string') value = value.trim();

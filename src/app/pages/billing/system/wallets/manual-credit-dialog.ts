@@ -51,7 +51,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
                 <input matInput [value]="currency()" readonly />
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Amount' | transloco }}*</mat-label>
+                <mat-label>{{ 'Amount' | transloco }} ({{ currency() }})*</mat-label>
                 <input
                   matInput
                   type="text"
@@ -61,7 +61,6 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
                   (input)="amount.set($any($event.target).value)"
                   required
                 />
-                <span matTextPrefix>{{ currency() }}</span>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Reason' | transloco }}*</mat-label>
@@ -121,8 +120,8 @@ export class BillingManualCreditDialogComponent {
   readonly saving = signal(false);
   readonly currency = computed(() => this.data.DefaultCurrency || 'BRL');
   readonly tenantLabel = computed(() => this.data.EnvironmentName || this.data.EnvironmentUUID);
-  readonly amountValue = computed(() =>
-    parseCurrencyAmount(this.amount(), this.currencyLocale()) ?? 0,
+  readonly amountValue = computed(
+    () => parseCurrencyAmount(this.amount(), this.currencyLocale()) ?? 0,
   );
   readonly valid = computed(() => this.amountValue() > 0 && Boolean(this.reason().trim()));
 
