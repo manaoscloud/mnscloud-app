@@ -98,8 +98,9 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
       await this.billing.createSubscription({ priceUUID: this.recordUUID(row) });
       this.snack.success('Subscription created.');
       this.refreshList();
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Failed to create subscription.');
+    } catch {
+      // The API interceptor already presents the server-side billing rejection.
+      // Do not overwrite it with a generic message here.
     } finally {
       this.mutating.set(false);
     }
