@@ -20,11 +20,11 @@ export function bindDialogEscape(
 
 export function bindDialogClosed(
   ref: MatDialogRef<unknown>,
-  onClosed: () => void,
+  onClosed: (result?: unknown) => void,
   destroyRef?: DestroyRef,
 ): Subscription {
   const events = destroyRef
     ? ref.afterClosed().pipe(takeUntilDestroyed(destroyRef))
     : ref.afterClosed();
-  return events.subscribe(() => onClosed());
+  return events.subscribe((result) => onClosed(result));
 }

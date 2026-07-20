@@ -971,6 +971,14 @@ export class MainLayout {
           masterRoute: '/system/billing/subscriptions',
         },
         {
+          id: 'billing/topups',
+          label: 'Top-ups',
+          icon: 'add_card',
+          route: '/billing/topups',
+          roles: ['OWNER', 'ADMIN', 'USER'],
+          requiresEnvironment: true,
+        },
+        {
           id: 'billing/ledger-wallets',
           label: 'Ledger',
           icon: 'receipt_long',

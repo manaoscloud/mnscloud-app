@@ -223,6 +223,14 @@ export const routes: Routes = [
                 title: 'Billing • Subscriptions | mnscloud',
               },
               {
+                path: 'billing/topups',
+                loadComponent: () =>
+                  import('./pages/billing/tenant/topups/topups').then(
+                    (m) => m.BillingTenantTopupsPage,
+                  ),
+                title: 'Billing • Top-ups | mnscloud',
+              },
+              {
                 path: 'billing/ledger',
                 loadComponent: () =>
                   import('./pages/billing/tenant/ledger/ledger').then(
