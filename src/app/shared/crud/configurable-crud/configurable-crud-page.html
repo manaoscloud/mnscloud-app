@@ -268,7 +268,7 @@
                 @case ('select') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco
+                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
@@ -297,7 +297,7 @@
                 @case ('status') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco
+                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
@@ -315,7 +315,7 @@
                 @case ('multi-select') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco
+                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
@@ -335,7 +335,7 @@
                 @case ('textarea') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco
+                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <textarea
@@ -352,7 +352,7 @@
                 @default {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco
+                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <input
@@ -373,9 +373,6 @@
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                       (keydown.enter)="field.postalLookup ? searchPostalCode(field, $event) : null"
                     />
-                    @if (field.type === 'currency') {
-                      <span matTextPrefix>{{ currencyForField(field) }}</span>
-                    }
                     @if (field.postalLookup) {
                       <button
                         mat-icon-button
@@ -451,7 +448,7 @@
                           @case ('date') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
-                                >{{ field.label | transloco
+                                >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                                 }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <input
@@ -488,7 +485,7 @@
                           @case ('select') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
-                                >{{ field.label | transloco
+                                >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                                 }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <mat-select
@@ -507,7 +504,7 @@
                           @case ('multi-select') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
-                                >{{ field.label | transloco
+                                >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                                 }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <mat-select
@@ -584,7 +581,7 @@
                   @case ('date') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -616,7 +613,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -634,7 +631,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -653,7 +650,7 @@
                   @case ('textarea') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <textarea
@@ -670,7 +667,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -690,9 +687,6 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (field.type === 'currency') {
-                        <span matTextPrefix>{{ currencyForField(field) }}</span>
-                      }
                     </mat-form-field>
                   }
                 }
@@ -720,7 +714,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -738,7 +732,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -757,7 +751,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -771,9 +765,6 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (field.type === 'currency') {
-                        <span matTextPrefix>{{ currencyForField(field) }}</span>
-                      }
                     </mat-form-field>
                   }
                 }
@@ -801,7 +792,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -819,7 +810,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -838,7 +829,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -852,9 +843,6 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (field.type === 'currency') {
-                        <span matTextPrefix>{{ currencyForField(field) }}</span>
-                      }
                     </mat-form-field>
                   }
                 }
@@ -882,7 +870,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -900,7 +888,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -919,7 +907,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -933,9 +921,6 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (field.type === 'currency') {
-                        <span matTextPrefix>{{ currencyForField(field) }}</span>
-                      }
                     </mat-form-field>
                   }
                 }
@@ -963,7 +948,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -981,7 +966,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1000,7 +985,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1014,9 +999,6 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (field.type === 'currency') {
-                        <span matTextPrefix>{{ currencyForField(field) }}</span>
-                      }
                     </mat-form-field>
                   }
                 }
@@ -1044,7 +1026,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1062,7 +1044,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1081,7 +1063,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1095,9 +1077,6 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (field.type === 'currency') {
-                        <span matTextPrefix>{{ currencyForField(field) }}</span>
-                      }
                     </mat-form-field>
                   }
                 }
@@ -1114,7 +1093,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1132,7 +1111,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1151,7 +1130,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1165,9 +1144,6 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (field.type === 'currency') {
-                        <span matTextPrefix>{{ currencyForField(field) }}</span>
-                      }
                     </mat-form-field>
                   }
                 }

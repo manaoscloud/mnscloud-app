@@ -411,13 +411,13 @@
 - Create forms with monetary fields must initialize their currency from the resolved `DEFAULT_CURRENCY`.
 - Existing record values still win in edit mode; the resolved default is only a fallback display/form value when the record has no currency.
 - All monetary inputs in the same commercial record must use the same resolved/default currency unless the business flow explicitly supports multiple currencies.
-- Numeric monetary fields should show the effective currency in the input itself, usually through
-  `matTextPrefix`, using the record currency or resolved `DEFAULT_CURRENCY`.
+- Numeric monetary fields should show the effective ISO currency in their label, using the record
+  currency or resolved `DEFAULT_CURRENCY`.
 - Editable monetary fields must use `type="text"` with the shared `appCurrencyMask` directive,
   not `type="number"`, so values such as `4.598,00` and `4,598.00` are accepted and converted to
   numeric payloads consistently.
 - In `ConfigurableCrudPageBase`, declare monetary values as `type: 'currency'`. The generic form
-  supplies `appCurrencyMask`, a visible ISO currency prefix, and numeric payload normalization.
+  supplies `appCurrencyMask`, a visible ISO currency label, and numeric payload normalization.
   Use `currencyKey` when the record has its own currency field; otherwise the shared default
   currency resolver is used.
 - CRUD forms that use the system default currency must not render a currency field unless the business flow explicitly allows per-record currency override.
