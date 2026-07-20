@@ -1,3 +1,4 @@
+import { ComponentType } from '@angular/cdk/portal';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
@@ -115,5 +116,36 @@ export function openCrudTemplateDialog(
       observer?.disconnect();
       observer = null;
     },
+  };
+}
+
+/** Opens an operation dialog with the same responsive geometry as CRUD forms. */
+export function openCrudComponentDialog<T>(
+  dialog: MatDialog,
+  component: ComponentType<T>,
+  panelClass: string,
+  options: CrudDialogOptions = {},
+): CrudDialogBinding {
+  const initial = computeDialogLayout();
+  const ref = dialog.open(component, {
+    ...initial,
+    disableClose: true,
+    autoFocus: false,
+    restoreFocus: true,
+    panelClass,
+    data: options.data,
+  });
+
+  const subscriptions = new Subscription();
+  subscriptions.add(
+    bindDialogEscape(ref, () => {
+      if (options.onEscape) options.onEscape();
+      else ref.close();
+    }),
+  );
+
+  return {
+    ref,
+    stop: () => subscriptions.unsubscribe(),
   };
 }

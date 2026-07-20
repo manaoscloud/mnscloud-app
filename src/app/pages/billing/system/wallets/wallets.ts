@@ -6,14 +6,17 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 import { BillingTenantLookupItem } from '../../shared/billing.service';
 import { BILLING_STATUS_OPTIONS } from '../../shared/billing-crud';
+import { BillingManualCreditDialogComponent } from './manual-credit-dialog';
 
 const WALLETS_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/tenants',
   uuidField: 'EnvironmentUUID',
-  pageTitle: 'Billing ledger',
-  pageDescription: 'Monitor tenant wallet summaries and billing ledger ownership.',
+  pageTitle: 'Billing wallets',
+  pageDescription: 'Monitor tenant wallets and apply audited manual credits.',
   createTitle: 'New wallet entry',
   editTitle: 'Edit wallet entry',
   dialogDescription: 'Maintain wallet entry.',
@@ -30,6 +33,7 @@ const WALLETS_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   canDelete: false,
   bulkDelete: false,
+  rowActions: [{ key: 'manual-credit', label: 'Manual credit', icon: 'add_card' }],
   ...BILLING_STATUS_OPTIONS,
   initialValues: {},
   columns: [
@@ -66,5 +70,26 @@ export class BillingSystemWalletsPage extends ConfigurableCrudPageBase<
 > {
   constructor() {
     super(WALLETS_CONFIG);
+  }
+
+  override handleRowAction(
+    action: { key: string },
+    row: BillingTenantLookupItem & ConfigurableCrudRecord,
+  ): void {
+    if (action.key !== 'manual-credit') return;
+    const binding = openCrudComponentDialog(
+      this.dialog,
+      BillingManualCreditDialogComponent,
+      'crud-form-dialog',
+      { data: row, onEscape: () => binding.ref.close() },
+    );
+    bindDialogClosed(
+      binding.ref,
+      (applied) => {
+        binding.stop();
+        if (applied) this.refreshList();
+      },
+      this.destroyRef,
+    );
   }
 }
