@@ -21,7 +21,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -106,7 +105,6 @@ type EmployeeFormModel = {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatNativeDateModule,
     MatMenuModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,

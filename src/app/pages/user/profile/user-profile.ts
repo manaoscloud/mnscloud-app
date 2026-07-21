@@ -16,7 +16,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
@@ -48,7 +47,6 @@ import { UserProfile } from '../../../models/user-profile.model';
     MatInputModule,
     MatIconModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatButtonModule,

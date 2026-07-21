@@ -1,11 +1,19 @@
 import {
   applyDateInputMask,
   dateInputPattern,
+  hasCompleteDateInput,
   parseDateInput,
   toDateOnly,
 } from './date-input-format';
 
 describe('date input format', () => {
+  it('keeps partial typed values editable while identifying completed dates', () => {
+    expect(hasCompleteDateInput('30/')).toBeFalse();
+    expect(hasCompleteDateInput('30/05/')).toBeFalse();
+    expect(hasCompleteDateInput('30/05/1990')).toBeTrue();
+    expect(hasCompleteDateInput('1990-05-30')).toBeTrue();
+  });
+
   it('uses the active locale order when masking a typed date', () => {
     expect(dateInputPattern('pt-BR').placeholder).toBe('DD/MM/YYYY');
     expect(applyDateInputMask('30051990', 'pt-BR')).toBe('30/05/1990');

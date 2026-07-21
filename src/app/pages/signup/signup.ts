@@ -21,7 +21,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 
 import { ApiService } from '../../services/api.service';
@@ -47,7 +46,6 @@ type SignupPolicy = {
     MatIconModule,
     MatProgressSpinnerModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     MatButtonModule,
     PhoneInputComponent,
     DateMaskDirective,

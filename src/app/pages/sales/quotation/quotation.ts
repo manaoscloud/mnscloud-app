@@ -23,7 +23,6 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -141,7 +140,6 @@ const emptyQuotationItemForm = (): QuotationItemFormModel => ({
     MatTableModule,
     MatTooltipModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     MatDialogModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
