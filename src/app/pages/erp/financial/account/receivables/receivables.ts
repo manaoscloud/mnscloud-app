@@ -35,6 +35,7 @@ import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SystemParameterService } from '../../../../../services/system-parameter.service';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
+import { MnsDateAdapterModule } from '../../../../../shared/date-mask/mns-date-adapter.module';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
@@ -90,6 +91,7 @@ type ReceivableSnapshot = {
   imports: [
     CurrencyMaskDirective,
     DateMaskDirective,
+    MnsDateAdapterModule,
     FormField,
     MnsSearchSelectFieldComponent,
     MnsSelectFieldComponent,

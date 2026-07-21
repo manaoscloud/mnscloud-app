@@ -31,6 +31,7 @@ import { ApiService } from '../../../../../services/api.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
+import { MnsDateAdapterModule } from '../../../../../shared/date-mask/mns-date-adapter.module';
 import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
@@ -86,6 +87,7 @@ type CustomerOption = {
     TranslocoPipe,
     MatSlideToggleModule,
     DateMaskDirective,
+    MnsDateAdapterModule,
     CurrencyMaskDirective,
   ],
   templateUrl: './boletos.html',

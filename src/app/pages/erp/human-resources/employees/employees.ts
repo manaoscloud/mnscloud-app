@@ -43,6 +43,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 import { DateMaskDirective } from '../../../../shared/date-mask/date-mask.directive';
+import { MnsDateAdapterModule } from '../../../../shared/date-mask/mns-date-adapter.module';
 import { parseDateInput, toDateOnly } from '../../../../shared/date-mask/date-input-format';
 
 type Employee = {
@@ -115,6 +116,7 @@ type EmployeeFormModel = {
     TranslocoPipe,
     MatTooltipModule,
     DateMaskDirective,
+    MnsDateAdapterModule,
   ],
   templateUrl: './employees.html',
   styleUrls: ['../shared/human-resources-crud.scss'],

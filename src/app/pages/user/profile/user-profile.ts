@@ -30,6 +30,7 @@ import { isSignedStorageUrl } from '../../../shared/storage/signed-url';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive';
+import { MnsDateAdapterModule } from '../../../shared/date-mask/mns-date-adapter.module';
 
 // Models
 import { UserProfile } from '../../../models/user-profile.model';
@@ -54,6 +55,7 @@ import { UserProfile } from '../../../models/user-profile.model';
     MatTabsModule,
     TranslocoPipe,
     DateMaskDirective,
+    MnsDateAdapterModule,
   ],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.scss'],
