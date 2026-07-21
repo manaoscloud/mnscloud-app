@@ -13,7 +13,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AppI18nService } from '../../../../services/app-i18n.service';
 import { DateMaskDirective } from '../../../../shared/date-mask/date-mask.directive';
@@ -33,7 +32,6 @@ import { PhoneInputComponent } from '../../../../shared/phone-input/phone-input.
     MatCardModule,
     MatProgressSpinnerModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     TranslocoPipe,
     DateMaskDirective,
     PhoneInputComponent,

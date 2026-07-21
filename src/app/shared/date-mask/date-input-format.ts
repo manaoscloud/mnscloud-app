@@ -83,6 +83,22 @@ export function parseDateInput(value: unknown, locale: string): Date | null {
   return createLocalDate(values.get('year'), values.get('month'), values.get('day'));
 }
 
+/**
+ * Material asks the adapter to parse on every keystroke. A partial typed value
+ * must remain editable; only a complete date-shaped value can be invalid.
+ */
+export function hasCompleteDateInput(value: unknown): boolean {
+  if (value instanceof Date) return !Number.isNaN(value.getTime());
+  if (typeof value !== 'string') return false;
+
+  const input = value.trim();
+  return (
+    /^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(input) ||
+    /^\d{8}$/.test(input) ||
+    /^\d{1,2}\D+\d{1,2}\D+\d{4}$/.test(input)
+  );
+}
+
 export function formatDateInput(value: Date, locale: string): string {
   if (Number.isNaN(value.getTime())) return '';
   return new Intl.DateTimeFormat(locale, {

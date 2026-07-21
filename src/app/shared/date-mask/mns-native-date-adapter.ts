@@ -2,7 +2,7 @@ import { Injectable, effect, inject } from '@angular/core';
 import { NativeDateAdapter } from '@angular/material/core';
 
 import { AppI18nService } from '../../services/app-i18n.service';
-import { parseDateInput } from './date-input-format';
+import { hasCompleteDateInput, parseDateInput } from './date-input-format';
 
 @Injectable()
 export class MnsNativeDateAdapter extends NativeDateAdapter {
@@ -16,7 +16,7 @@ export class MnsNativeDateAdapter extends NativeDateAdapter {
   override parse(value: unknown, parseFormat?: unknown): Date | null {
     if (value === null || value === undefined || value === '') return null;
     const parsed = parseDateInput(value, this.i18n.language());
-    return parsed ?? this.invalid();
+    return parsed ?? (hasCompleteDateInput(value) ? this.invalid() : null);
   }
 
   override deserialize(value: unknown): Date | null {

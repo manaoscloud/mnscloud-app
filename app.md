@@ -137,7 +137,9 @@
   control and the exception is documented in the component.
 - Date-only inputs must serialize at the CRUD/API boundary as a validated `YYYY-MM-DD` value. The
   shared adapter must reject calendar-invalid manual dates before save. Never use timezone-based ISO
-  timestamps for date-only data; locale formatting belongs only to the form.
+  timestamps for date-only data; locale formatting belongs only to the form. The adapter must keep
+  partial manual input editable while the user types and only mark a value invalid after it is a
+  complete date-shaped value that fails calendar validation.
 - Before finishing any Angular migration/refactor, run a residue check for:
   `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, `@Output(`, `@ViewChild`, `@ViewChildren`,
   `ChangeDetectionStrategy.Eager`, constructor dependency injection, `ngx-translate`,
