@@ -45,12 +45,10 @@ function config(): ConfigurableCrudConfig {
       enabled: 1,
       isDefault: 0,
       name: '',
-      code: '',
       description: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
-      { id: 'code', label: 'Code', field: 'code' },
       { id: 'isDefault', label: 'Default', kind: 'boolean', field: 'isDefault' },
       { id: 'status', label: 'Status', kind: 'status', field: 'enabled' },
     ],
@@ -65,7 +63,6 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       { key: 'name', source: 'name', label: 'Name', required: true, span: 1 },
-      { key: 'code', source: 'code', label: 'Code', required: true, span: 1 },
       {
         key: 'description',
         source: 'description',
