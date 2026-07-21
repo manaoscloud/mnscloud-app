@@ -17,7 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -35,6 +35,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { ApiService } from '../../../services/api.service';
+import { AppI18nService } from '../../../services/app-i18n.service';
 import { DateTimeFormatService } from '../../../services/date-time-format.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { SystemParameterService } from '../../../services/system-parameter.service';
@@ -43,6 +44,7 @@ import {
   parseCurrencyAmount,
 } from '../../currency-mask/currency-mask.directive';
 import { DateMaskDirective } from '../../date-mask/date-mask.directive';
+import { formatDateInput, toDateOnly } from '../../date-mask/date-input-format';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../dialog/dialog-events.util';
 import {
@@ -187,7 +189,8 @@ export type ConfigurableCrudListFilter = {
   label: string;
   paramKey?: string;
   type: 'select' | 'search-select';
-  span?: 1 | 2 | 3 | 4;
+  /** List filters follow the standard single-column grid contract. */
+  span?: 1;
   placeholder?: string;
   emptyLabel?: string;
   loading?: () => boolean;
@@ -275,7 +278,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly transloco = inject(TranslocoService);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  private readonly dateLocale = inject(MAT_DATE_LOCALE, { optional: true }) as string | null;
+  private readonly appI18n = inject(AppI18nService);
   protected readonly listLimit = 500;
   protected readonly config: ConfigurableCrudConfig;
 
@@ -723,10 +726,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   setListFilterValue(filter: ConfigurableCrudListFilter, value: string | number | boolean | null) {
     this.listFilterValues.update((current) => ({ ...current, [filter.key]: value }));
-  }
-
-  listFilterClass(filter: ConfigurableCrudListFilter): string {
-    return `span-${filter.span ?? 1}`;
   }
 
   listFilterLoading(filter: ConfigurableCrudListFilter): boolean {
@@ -1187,76 +1186,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private normalizeDateForPayload(value: unknown): string | null | undefined {
     if (value === null || value === undefined || value === '') return null;
-
-    if (value instanceof Date) {
-      if (Number.isNaN(value.getTime())) return undefined;
-      return this.toIsoDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
-    }
-
-    if (typeof value !== 'string') return undefined;
-    const input = value.trim();
-    if (!input) return null;
-
-    const iso = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (iso) return this.toIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
-
-    const parts = input.match(/^(\d{1,4})\D+(\d{1,2})\D+(\d{1,4})$/);
-    if (!parts) return undefined;
-
-    const dateParts = this.datePartOrder();
-    const values = new Map(dateParts.map((part, index) => [part, Number(parts[index + 1])]));
-    const year = values.get('year');
-    const month = values.get('month');
-    const day = values.get('day');
-    if (!year || !month || !day) return undefined;
-    return this.toIsoDate(year, month, day);
+    return toDateOnly(value, this.appI18n.language()) ?? undefined;
   }
 
   private formatDateForInput(value: unknown): string {
     if (value === null || value === undefined || value === '') return '';
     if (value instanceof Date) {
       if (Number.isNaN(value.getTime())) return '';
-      return this.formatLocalDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
+      return formatDateInput(value, this.appI18n.language());
     }
     if (typeof value !== 'string') return String(value);
 
     const iso = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
     if (!iso) return value;
-    return this.formatLocalDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
-  }
-
-  private formatLocalDate(year: number, month: number, day: number): string {
-    const date = new Date(Date.UTC(year, month - 1, day));
-    return new Intl.DateTimeFormat(this.dateLocale ?? 'en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      timeZone: 'UTC',
-    }).format(date);
-  }
-
-  private datePartOrder(): Array<'day' | 'month' | 'year'> {
-    const sample = new Date(Date.UTC(2001, 10, 22));
-    const parts = new Intl.DateTimeFormat(this.dateLocale ?? 'en-US', { timeZone: 'UTC' })
-      .formatToParts(sample)
-      .filter(
-        (part): part is Intl.DateTimeFormatPart & { type: 'day' | 'month' | 'year' } =>
-          part.type === 'day' || part.type === 'month' || part.type === 'year',
-      )
-      .map((part) => part.type);
-    return parts.length === 3 ? parts : ['month', 'day', 'year'];
-  }
-
-  private toIsoDate(year: number, month: number, day: number): string | undefined {
-    const date = new Date(Date.UTC(year, month - 1, day));
-    if (
-      date.getUTCFullYear() !== year ||
-      date.getUTCMonth() !== month - 1 ||
-      date.getUTCDate() !== day
-    ) {
-      return undefined;
-    }
-    return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const normalized = toDateOnly(value, this.appI18n.language());
+    if (!normalized) return value;
+    return formatDateInput(new Date(`${normalized}T00:00:00`), this.appI18n.language());
   }
 
   protected async confirmAction(

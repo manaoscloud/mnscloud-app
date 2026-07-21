@@ -33,10 +33,7 @@ function hasCrudTemplate(path) {
     const file = join(path, entry);
     if (!statSync(file).isFile() || !['.html', '.ts'].includes(extname(file))) return false;
     const source = readFileSync(file, 'utf8');
-    return (
-      source.includes('ConfigurableCrudPageBase') ||
-      (source.includes('crud-dialog') && source.includes('erp-page'))
-    );
+    return source.includes('ConfigurableCrudPageBase');
   });
 }
 

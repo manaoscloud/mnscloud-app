@@ -45,7 +45,7 @@
             [label]="filter.label | transloco"
             [value]="listFilterValue(filter)"
             [options]="listFilterOptions(filter)"
-            [fieldClass]="listFilterClass(filter)"
+            fieldClass="span-1"
             [placeholder]="filter.placeholder ?? 'Search'"
             [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
             [loading]="listFilterLoading(filter)"
@@ -53,7 +53,7 @@
             (selectionChange)="setListFilterValue(filter, $event)"
           />
         } @else {
-          <mat-form-field appearance="outline" [class]="listFilterClass(filter)">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ filter.label | transloco }}</mat-label>
             <mat-select
               [value]="listFilterValue(filter)"
