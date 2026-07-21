@@ -139,6 +139,10 @@
   `MnsDateAdapterModule`, never `MatNativeDateModule`. The shared module provides both the
   locale-aware `MnsNativeDateAdapter` and Material date formats to the component/dialog injector;
   this is required for `TemplateRef` forms opened through `MatDialog`.
+- In the shared CRUD template, a `MatDatepickerInput` value binding must always receive a `Date`
+  or `null`, never the locale-formatted text currently being typed. Keep incomplete manual input as
+  an internal draft and commit it only after a valid `dateInput` event or explicit save validation;
+  rebinding partial text makes Material deserialize it as invalid and clears the field.
 - Date-only inputs must serialize at the CRUD/API boundary as a validated `YYYY-MM-DD` value. The
   shared adapter must reject calendar-invalid manual dates before save. Never use timezone-based ISO
   timestamps for date-only data; locale formatting belongs only to the form. The adapter must keep
