@@ -1330,16 +1330,16 @@ export class MainLayout {
               roles: ['MASTER'],
             },
             {
-              id: 'voip/sbc/account',
-              label: 'SBC',
-              icon: 'settings_input_component',
-              route: '/voip/sbc/account',
-            },
-            {
               id: 'voip/sbc/domains',
               label: 'Domains',
               icon: 'language',
               route: '/voip/sbc/domains',
+            },
+            {
+              id: 'voip/sbc/account',
+              label: 'SBC',
+              icon: 'settings_input_component',
+              route: '/voip/sbc/account',
             },
             {
               id: 'voip/sbc/interface',
@@ -1396,17 +1396,17 @@ export class MainLayout {
               roles: ['MASTER'],
             },
             {
-              id: 'voip/softswitch/accounts',
-              label: 'Accounts',
-              icon: 'router',
-              route: '/voip/softswitch/accounts',
-              scope: 'tenant',
-            },
-            {
               id: 'voip/softswitch/domains',
               label: 'Domains',
               icon: 'language',
               route: '/voip/softswitch/domains',
+              scope: 'tenant',
+            },
+            {
+              id: 'voip/softswitch/accounts',
+              label: 'Accounts',
+              icon: 'router',
+              route: '/voip/softswitch/accounts',
               scope: 'tenant',
             },
             {
@@ -1468,16 +1468,16 @@ export class MainLayout {
               roles: ['MASTER'],
             },
             {
-              id: 'voip/pabx/registry',
-              label: 'PABXs',
-              icon: 'settings_phone',
-              route: '/voip/pabx/accounts',
-            },
-            {
               id: 'voip/pabx/domains',
               label: 'Domains',
               icon: 'language',
               route: '/voip/pabx/domains',
+            },
+            {
+              id: 'voip/pabx/registry',
+              label: 'PABXs',
+              icon: 'settings_phone',
+              route: '/voip/pabx/accounts',
             },
             {
               id: 'voip/pabx/trunks',
