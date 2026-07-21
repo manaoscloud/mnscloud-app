@@ -244,6 +244,8 @@ export type ConfigurableCrudConfig = {
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  /** Optional per-record deletion rule for resources with protected lifecycle states. */
+  canDeleteRow?: (row: ConfigurableCrudRecord) => boolean;
   bulkDelete?: boolean;
   statusFilter?: boolean;
   tabLabels?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
@@ -528,7 +530,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   async deleteItem(row: T): Promise<void> {
-    if (!this.canDelete()) return;
+    if (!this.canDeleteRow(row)) return;
     const confirmed = await this.confirm(this.config.deleteTitle, this.config.deleteMessage);
     if (!confirmed) return;
 
@@ -546,6 +548,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   rowActions(_row: T): readonly ConfigurableCrudRowAction[] {
     return this.config.rowActions ?? [];
+  }
+
+  canDeleteRow(row: T): boolean {
+    return this.canDelete() && (this.config.canDeleteRow?.(row) ?? true);
   }
 
   handleRowAction(_action: ConfigurableCrudRowAction, _row: T): void | Promise<void> {}
