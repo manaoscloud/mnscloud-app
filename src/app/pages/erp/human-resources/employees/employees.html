@@ -20,7 +20,10 @@
         <mat-label>Search</mat-label>
         <input
           matInput
-          placeholder="Name, email, phone, document, company, department or position" [value]="searchInput()" (input)="searchInput.set($any($event.target).value)" />
+          placeholder="Name, email, phone, document, company, department or position"
+          [value]="searchInput()"
+          (input)="searchInput.set($any($event.target).value)"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
@@ -35,7 +38,10 @@
       <mat-form-field appearance="outline">
         <mat-label>Company</mat-label>
         <mat-select
-          (openedChange)="onReferenceOpened($event, filterCompanySearch)" [value]="companyFilter()" (selectionChange)="companyFilter.set($event.value)">
+          (openedChange)="onReferenceOpened($event, filterCompanySearch)"
+          [value]="companyFilter()"
+          (selectionChange)="companyFilter.set($event.value)"
+        >
           <mat-option class="select-search-option">
             <mat-form-field appearance="outline" class="select-search-field">
               <mat-label>Search company</mat-label>
@@ -58,7 +64,10 @@
       <mat-form-field appearance="outline">
         <mat-label>Department</mat-label>
         <mat-select
-          (openedChange)="onReferenceOpened($event, filterDepartmentSearch)" [value]="departmentFilter()" (selectionChange)="departmentFilter.set($event.value)">
+          (openedChange)="onReferenceOpened($event, filterDepartmentSearch)"
+          [value]="departmentFilter()"
+          (selectionChange)="departmentFilter.set($event.value)"
+        >
           <mat-option class="select-search-option">
             <mat-form-field appearance="outline" class="select-search-field">
               <mat-label>Search department</mat-label>
@@ -81,7 +90,10 @@
       <mat-form-field appearance="outline">
         <mat-label>Position</mat-label>
         <mat-select
-          (openedChange)="onReferenceOpened($event, filterPositionSearch)" [value]="positionFilter()" (selectionChange)="positionFilter.set($event.value)">
+          (openedChange)="onReferenceOpened($event, filterPositionSearch)"
+          [value]="positionFilter()"
+          (selectionChange)="positionFilter.set($event.value)"
+        >
           <mat-option class="select-search-option">
             <mat-form-field appearance="outline" class="select-search-field">
               <mat-label>Search position</mat-label>
@@ -349,12 +361,26 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Hire date</mat-label>
-              <input matInput type="date" [formField]="form.hireDate" />
+              <input
+                matInput
+                [matDatepicker]="hireDatePicker"
+                [formField]="form.hireDate"
+                appDateMask
+              />
+              <mat-datepicker-toggle matSuffix [for]="hireDatePicker" />
+              <mat-datepicker #hireDatePicker touchUi />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Termination date</mat-label>
-              <input matInput type="date" [formField]="form.terminationDate" />
+              <input
+                matInput
+                [matDatepicker]="terminationDatePicker"
+                [formField]="form.terminationDate"
+                appDateMask
+              />
+              <mat-datepicker-toggle matSuffix [for]="terminationDatePicker" />
+              <mat-datepicker #terminationDatePicker touchUi />
             </mat-form-field>
           </form>
         </mat-tab>

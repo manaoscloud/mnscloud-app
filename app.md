@@ -127,13 +127,17 @@
   helpers, but visible output must follow the configured timezone.
 - Date inputs in CRUD forms must use Angular Material Datepicker with touch UI enabled
   (`<mat-datepicker #picker touchUi />`) and must also allow manual typing in the date format for
-  the effective system locale. Pair datepicker inputs with the shared `appDateMask` behavior, or a
-  future shared date-field adapter that wraps the same behavior, so users can either pick a date or
-  type it according to the app/system locale. Do not replace CRUD date fields with plain
+  the effective system locale. Pair datepicker inputs with the shared `appDateMask` behavior and
+  the application `MnsNativeDateAdapter`, so users can either pick a date or type it according to
+  the app/system locale. The effective locale resolves in this order: manually selected app
+  language, tenant `DEFAULT_LANGUAGE` while language mode is automatic, browser language, then
+  `en-US`. The adapter and mask must react to an effective language change; do not cache a locale
+  per component. Do not replace CRUD date fields with plain
   `type="date"` inputs unless the datepicker interaction is explicitly not available for that
   control and the exception is documented in the component.
-- Date-only inputs must serialize at the CRUD/API boundary as a validated `YYYY-MM-DD` value. Never
-  use timezone-based ISO timestamps for date-only data; locale formatting belongs only to the form.
+- Date-only inputs must serialize at the CRUD/API boundary as a validated `YYYY-MM-DD` value. The
+  shared adapter must reject calendar-invalid manual dates before save. Never use timezone-based ISO
+  timestamps for date-only data; locale formatting belongs only to the form.
 - Before finishing any Angular migration/refactor, run a residue check for:
   `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, `@Output(`, `@ViewChild`, `@ViewChildren`,
   `ChangeDetectionStrategy.Eager`, constructor dependency injection, `ngx-translate`,

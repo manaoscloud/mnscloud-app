@@ -17,9 +17,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -31,6 +33,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
+import { AppI18nService } from '../../../../services/app-i18n.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import {
   CrudDialogBinding,
@@ -40,6 +43,8 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { DateMaskDirective } from '../../../../shared/date-mask/date-mask.directive';
+import { parseDateInput, toDateOnly } from '../../../../shared/date-mask/date-input-format';
 
 type Employee = {
   EmployeeUUID: string;
@@ -80,8 +85,8 @@ type EmployeeFormModel = {
   companyUUID: string;
   departmentUUID: string;
   positionUUID: string;
-  hireDate: string;
-  terminationDate: string;
+  hireDate: Date | null;
+  terminationDate: Date | null;
   status: number;
   notes: string;
 };
@@ -97,9 +102,11 @@ type EmployeeFormModel = {
     MatCheckboxModule,
     MatChipsModule,
     MatDialogModule,
+    MatDatepickerModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatNativeDateModule,
     MatMenuModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
@@ -109,12 +116,14 @@ type EmployeeFormModel = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    DateMaskDirective,
   ],
   templateUrl: './employees.html',
   styleUrls: ['../shared/human-resources-crud.scss'],
 })
 export class ErpHumanResourcesEmployeesPage {
   private readonly api = inject(ApiService);
+  private readonly i18n = inject(AppI18nService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly listLimit = 200;
@@ -347,8 +356,8 @@ export class ErpHumanResourcesEmployeesPage {
       companyUUID: employee.CompanyUUID ?? '',
       departmentUUID: employee.DepartmentUUID ?? '',
       positionUUID: employee.PositionUUID ?? '',
-      hireDate: this.toDateInput(employee.HireDate),
-      terminationDate: this.toDateInput(employee.TerminationDate),
+      hireDate: this.toDate(employee.HireDate),
+      terminationDate: this.toDate(employee.TerminationDate),
       status: Number(employee.Status) || 1,
       notes: employee.Notes ?? '',
     });
@@ -366,8 +375,8 @@ export class ErpHumanResourcesEmployeesPage {
       companyUUID: value.companyUUID || null,
       departmentUUID: value.departmentUUID || null,
       positionUUID: value.positionUUID || null,
-      hireDate: value.hireDate || null,
-      terminationDate: value.terminationDate || null,
+      hireDate: toDateOnly(value.hireDate, this.i18n.language()) ?? null,
+      terminationDate: toDateOnly(value.terminationDate, this.i18n.language()) ?? null,
       status: value.status,
       notes: value.notes.trim() || null,
     };
@@ -558,8 +567,8 @@ export class ErpHumanResourcesEmployeesPage {
     this.dialogBinding = null;
   }
 
-  private toDateInput(value?: string | null) {
-    return value ? value.slice(0, 10) : '';
+  private toDate(value?: string | null): Date | null {
+    return parseDateInput(value, this.i18n.language());
   }
 
   private extractErrorMessage(err: any, fallback: string) {
@@ -586,8 +595,8 @@ export class ErpHumanResourcesEmployeesPage {
       companyUUID: '',
       departmentUUID: '',
       positionUUID: '',
-      hireDate: '',
-      terminationDate: '',
+      hireDate: null,
+      terminationDate: null,
       status: 1,
       notes: '',
     };
