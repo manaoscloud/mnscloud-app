@@ -18,7 +18,7 @@ type TenantAccessEntry = ConfigurableCrudRecord & {
   Name: string;
   Email: string;
   Role: 'ADMIN' | 'USER';
-  Status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
+  Status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'ACCEPTED' | 'CANCELED';
   DateCreated: string | null;
 };
 
@@ -54,6 +54,8 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
     { value: 'ACTIVE', label: 'Active' },
     { value: 'INACTIVE', label: 'Inactive' },
     { value: 'PENDING', label: 'Pending' },
+    { value: 'ACCEPTED', label: 'Accepted' },
+    { value: 'CANCELED', label: 'Canceled' },
   ],
   initialValues: { email: '', role: 'USER' },
   columns: [
@@ -154,17 +156,23 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
       Status: Number(member.Status ?? 0) === 1 ? ('ACTIVE' as const) : ('INACTIVE' as const),
       DateCreated: member.DateCreated ?? null,
     }));
-    const invites = (invitesResponse?.data?.invites ?? [])
-      .filter((invite: any) => Number(invite.UsiStatus ?? 0) === 0)
-      .map((invite: any) => ({
+    const invites = (invitesResponse?.data?.invites ?? []).map((invite: any) => {
+      const inviteStatus = Number(invite.UsiStatus ?? 0);
+      return {
         EntryUUID: String(invite.UsiUUID ?? ''),
         EntryType: 'INVITE' as const,
         Name: String(invite.UsiEmail ?? '-'),
         Email: String(invite.UsiEmail ?? ''),
         Role: String(invite.UsiRole ?? 'USER').toUpperCase() as 'ADMIN' | 'USER',
-        Status: 'PENDING' as const,
+        Status:
+          inviteStatus === 0
+            ? ('PENDING' as const)
+            : inviteStatus === 1
+              ? ('ACCEPTED' as const)
+              : ('CANCELED' as const),
         DateCreated: invite.UsiDateCreated ?? null,
-      }));
+      };
+    });
 
     const search = filters.search.trim().toLocaleLowerCase();
     return [...members, ...invites].filter((entry) => {
