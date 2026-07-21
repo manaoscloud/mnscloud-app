@@ -1245,11 +1245,11 @@ export class MainLayout {
           scope: 'both',
         },
         {
-          id: 'voip/domain',
+          id: 'voip/domains',
           label: 'Domains',
           icon: 'language',
-          route: '/voip/domain',
-          masterRoute: '/system/voip/domain',
+          route: '/voip/domains',
+          masterRoute: '/system/voip/domains',
           scope: 'both',
         },
         {
@@ -1336,6 +1336,12 @@ export class MainLayout {
               route: '/voip/sbc/account',
             },
             {
+              id: 'voip/sbc/domains',
+              label: 'Domains',
+              icon: 'language',
+              route: '/voip/sbc/domains',
+            },
+            {
               id: 'voip/sbc/interface',
               label: 'Interfaces',
               icon: 'settings_input_component',
@@ -1394,6 +1400,13 @@ export class MainLayout {
               label: 'Accounts',
               icon: 'router',
               route: '/voip/softswitch/accounts',
+              scope: 'tenant',
+            },
+            {
+              id: 'voip/softswitch/domains',
+              label: 'Domains',
+              icon: 'language',
+              route: '/voip/softswitch/domains',
               scope: 'tenant',
             },
             {
@@ -1459,6 +1472,12 @@ export class MainLayout {
               label: 'PABXs',
               icon: 'settings_phone',
               route: '/voip/pabx/accounts',
+            },
+            {
+              id: 'voip/pabx/domains',
+              label: 'Domains',
+              icon: 'language',
+              route: '/voip/pabx/domains',
             },
             {
               id: 'voip/pabx/trunks',

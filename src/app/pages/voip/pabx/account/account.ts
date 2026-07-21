@@ -67,7 +67,6 @@ function config(): ConfigurableCrudConfig {
       name: '',
       serverUUID: '',
       customerUUID: '',
-      domainUUID: '',
       dialPlanUUID: '',
       blacklistUUID: '',
       timezone: '',
@@ -94,13 +93,6 @@ function config(): ConfigurableCrudConfig {
         kind: 'related',
         uuidField: 'VoipPabxServerVpsUUID',
         lookupKey: 'serverUUID',
-      },
-      {
-        id: 'domain',
-        label: 'Domain',
-        kind: 'related',
-        uuidField: 'VoipDomainVdmUUID',
-        lookupKey: 'domainUUID',
       },
       {
         id: 'dialPlan',
@@ -152,15 +144,6 @@ function config(): ConfigurableCrudConfig {
         source: 'VoipPabxServerVpsUUID',
         payloadKey: 'serverUUID',
         label: 'Server',
-        type: 'search-select',
-        required: true,
-        span: 1,
-      },
-      {
-        key: 'domainUUID',
-        source: 'VoipDomainVdmUUID',
-        payloadKey: 'domainUUID',
-        label: 'Domain',
         type: 'search-select',
         required: true,
         span: 1,
@@ -277,7 +260,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   private readonly rawApi = inject(ApiService);
   readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
   readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
-  readonly domainOptions = signal<ConfigurableCrudOption[]>([]);
   readonly dialPlanOptions = signal<ConfigurableCrudOption[]>([]);
   readonly blacklistOptions = signal<ConfigurableCrudOption[]>([]);
   readonly storageAccountOptions = signal<ConfigurableCrudOption[]>([]);
@@ -301,7 +283,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
       [
         'serverUUID',
         'customerUUID',
-        'domainUUID',
         'dialPlanUUID',
         'blacklistUUID',
         'storageAccountUUID',
@@ -313,7 +294,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.serverOptions();
     if (key === 'customerUUID') return this.customerOptions();
-    if (key === 'domainUUID') return this.domainOptions();
     if (key === 'dialPlanUUID') return this.dialPlanOptions();
     if (key === 'blacklistUUID') return this.blacklistOptions();
     if (key === 'storageAccountUUID' || key === 'mediaStorageAccountUUID')
@@ -357,7 +337,7 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [servers, customers, domains, dialPlans, blacklists, storageAccounts] =
+      const [servers, customers, dialPlans, blacklists, storageAccounts] =
         await Promise.all([
           this.fetchPaged('voip/pabx/servers?status=1', (row) =>
             option(row.VpsUUID, row.VpsName, [row.VpsEngine, row.VpsHostname, row.VpsPublicIPv4]),
@@ -367,9 +347,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
               row.Document,
               row.Email,
             ]),
-          ),
-          this.fetchPaged('voip/pabx/domains?status=1', (row) =>
-            option(row.VdmUUID ?? row.uuid, row.VdmName ?? row.name),
           ),
           this.fetchPaged('voip/pabx/dial-plans?status=1', (row) =>
             option(row.uuid ?? row.VdpUUID, row.name ?? row.VdpName, [row.code ?? row.VdpCode]),
@@ -386,7 +363,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
         ]);
       this.serverOptions.set(servers);
       this.customerOptions.set(customers);
-      this.domainOptions.set(domains);
       this.dialPlanOptions.set(dialPlans);
       this.blacklistOptions.set(blacklists);
       this.storageAccountOptions.set(storageAccounts);

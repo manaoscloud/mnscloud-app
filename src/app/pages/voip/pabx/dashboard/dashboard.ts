@@ -316,7 +316,7 @@ export class VoipPabxDashboardPage {
     const [pabxResponse, serverResponse, domainResponse] = await Promise.allSettled([
       this.pabxApi.list({ limit: this.listLimit }, isMaster),
       this.serverApi.list(isMaster, { limit: this.listLimit }),
-      this.domainApi.list({ limit: this.listLimit }, isMaster ? 'master' : 'tenant'),
+      this.domainApi.list({ limit: this.listLimit, purpose: 'pabx' }, isMaster ? 'master' : 'tenant'),
     ]);
 
     return {
