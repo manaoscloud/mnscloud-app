@@ -89,6 +89,11 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   canEdit: false,
+  canDeleteRow: (row) => {
+    const entryType = String(row['EntryType'] ?? '').toUpperCase();
+    if (entryType === 'INVITE') return String(row['Status'] ?? '').toUpperCase() === 'PENDING';
+    return String(row['Role'] ?? '').toUpperCase() !== 'OWNER';
+  },
   // Revocation and invitation cancellation use distinct, stateful API endpoints.
   bulkDelete: false,
   rowActions: [{ key: 'resend', label: 'Resend invitation', icon: 'send' }],
