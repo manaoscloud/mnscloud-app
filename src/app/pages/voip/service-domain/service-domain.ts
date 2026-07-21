@@ -93,12 +93,14 @@ function config(service: Service): ConfigurableCrudConfig {
 
 abstract class VoipServiceDomainPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
+  private readonly service: Service;
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly domainOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
-  protected constructor(private readonly service: Service) {
+  protected constructor(service: Service) {
     super(config(service));
+    this.service = service;
     void this.loadLookups();
   }
 
