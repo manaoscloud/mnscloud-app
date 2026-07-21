@@ -3152,5 +3152,22 @@
   "Tenant access removed successfully.": "Tenant access removed successfully.",
   "Tenant invitation resent successfully.": "Tenant invitation resent successfully.",
   "Tenant invitation sent successfully.": "Tenant invitation sent successfully.",
-  "Tenant member or email": "Tenant member or email"
+  "Tenant member or email": "Tenant member or email",
+  "Accept Invitation": "Accept Invitation",
+  "Access granted successfully.": "Access granted successfully.",
+  "Continue": "Continue",
+  "Failed to accept invitation.": "Failed to accept invitation.",
+  "Failed to validate invitation.": "Failed to validate invitation.",
+  "Go to Dashboard": "Go to Dashboard",
+  "Invalid invitation token.": "Invalid invitation token.",
+  "Invalid or expired invitation link.": "Invalid or expired invitation link.",
+  "Invalid or expired invitation token.": "Invalid or expired invitation token.",
+  "Invitation sent to": "Invitation sent to",
+  "Please wait while we validate your invitation link.": "Please wait while we validate your invitation link.",
+  "Review the invitation details and continue when ready.": "Review the invitation details and continue when ready.",
+  "The invitation email has been sent. Ask the member to open it and accept the invitation.": "The invitation email has been sent. Ask the member to open it and accept the invitation.",
+  "this tenant": "this tenant",
+  "You are joining": "You are joining",
+  "your email": "your email",
+  "Your access was activated successfully.": "Your access was activated successfully."
 }

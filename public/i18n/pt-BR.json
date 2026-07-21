@@ -3152,5 +3152,22 @@
   "Tenant access removed successfully.": "Acesso ao ambiente removido com sucesso.",
   "Tenant invitation resent successfully.": "Convite do ambiente reenviado com sucesso.",
   "Tenant invitation sent successfully.": "Convite de acesso ao ambiente enviado com sucesso.",
-  "Tenant member or email": "Membro do ambiente ou e-mail"
+  "Tenant member or email": "Membro do ambiente ou e-mail",
+  "Accept Invitation": "Aceitar convite",
+  "Access granted successfully.": "Acesso concedido com sucesso.",
+  "Continue": "Continuar",
+  "Failed to accept invitation.": "Falha ao aceitar o convite.",
+  "Failed to validate invitation.": "Falha ao validar o convite.",
+  "Go to Dashboard": "Ir para o painel",
+  "Invalid invitation token.": "Token do convite inválido.",
+  "Invalid or expired invitation link.": "Link do convite inválido ou expirado.",
+  "Invalid or expired invitation token.": "Token do convite inválido ou expirado.",
+  "Invitation sent to": "Convite enviado para",
+  "Please wait while we validate your invitation link.": "Aguarde enquanto validamos o link do convite.",
+  "Review the invitation details and continue when ready.": "Revise os dados do convite e continue quando estiver pronto.",
+  "The invitation email has been sent. Ask the member to open it and accept the invitation.": "O e-mail de convite foi enviado. Peça ao membro para abri-lo e aceitar o convite.",
+  "this tenant": "este ambiente",
+  "You are joining": "Você vai participar de",
+  "your email": "seu e-mail",
+  "Your access was activated successfully.": "Seu acesso foi ativado com sucesso."
 }

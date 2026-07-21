@@ -3,8 +3,8 @@
     layout="page"
     type="empty"
     icon="hourglass_top"
-    title="Validating invitation..."
-    message="Please wait while we validate your invitation link."
+    [title]="'Validating invitation...' | transloco"
+    [message]="'Please wait while we validate your invitation link.' | transloco"
   />
 } @else {
   @if (error()) {
@@ -12,27 +12,31 @@
       layout="page"
       type="error"
       icon="link_off"
-      title="Invitation not available"
+      [title]="'Invitation not available' | transloco"
       [message]="error()!"
-      primaryLabel="Back to Sign In"
+      [primaryLabel]="'Back to Sign In' | transloco"
       [primaryAction]="goSignin"
-      secondaryLabel="Go to Dashboard"
+      [secondaryLabel]="'Go to Dashboard' | transloco"
       [secondaryAction]="goHome"
     />
   } @else {
     @if (invite(); as i) {
-      <div class="invite-container">
-        <h2>Invitation</h2>
-        <p>You were invited to join:</p>
-        <h3>{{ i.EnvironmentName }}</h3>
-        <p>
-          Email invited: <strong>{{ i.InviteEmail }}</strong>
-        </p>
-        <p>
-          Role: <strong>{{ i.InviteRole }}</strong>
-        </p>
-        <button class="btn-primary" (click)="goToAccept(i.token)">Continue</button>
-      </div>
+      <app-state-message
+        layout="page"
+        type="empty"
+        icon="mail"
+        [title]="'Invitation' | transloco"
+        [message]="'Review the invitation details and continue when ready.' | transloco"
+        [details]="[
+          { label: ('Environment' | transloco), value: i.EnvironmentName || '-' },
+          { label: ('Email' | transloco), value: i.InviteEmail || '-' },
+          { label: ('Access level' | transloco), value: i.InviteRole || '-' },
+        ]"
+        [primaryLabel]="'Continue' | transloco"
+        [primaryAction]="goToCurrentInvite"
+        [secondaryLabel]="'Back to Sign In' | transloco"
+        [secondaryAction]="goSignin"
+      />
     }
   }
 }

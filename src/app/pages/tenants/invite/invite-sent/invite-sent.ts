@@ -1,16 +1,16 @@
-import { Component } from '@angular/core';
-
-import { RouterModule } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { StateMessageComponent } from '../../../../shared/state-message/state-message';
 
 @Component({
   standalone: true,
   selector: 'app-invite-sent',
-  imports: [RouterModule],
+  imports: [StateMessageComponent, TranslocoPipe],
   templateUrl: './invite-sent.html',
-  styleUrls: ['./invite-sent.scss'],
 })
 export class InviteSentPage {
-  goToLogin() {
-    window.location.href = '/signin';
-  }
+  private readonly router = inject(Router);
+
+  goToLogin = () => this.router.navigate(['/signin']);
 }

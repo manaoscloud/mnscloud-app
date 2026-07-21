@@ -14,6 +14,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { AppI18nService } from '../../../../services/app-i18n.service';
+import { DateMaskDirective } from '../../../../shared/date-mask/date-mask.directive';
+import { PhoneInputComponent } from '../../../../shared/phone-input/phone-input.component';
 
 @Component({
   selector: 'invite-accept',
@@ -30,6 +34,9 @@ import { MatNativeDateModule } from '@angular/material/core';
     MatProgressSpinnerModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    TranslocoPipe,
+    DateMaskDirective,
+    PhoneInputComponent,
   ],
   templateUrl: './invite-accept.html',
   styleUrls: ['./invite-accept.scss'],
@@ -39,6 +46,7 @@ export class InviteAcceptPage {
   private router = inject(Router);
   private accessService = inject(TenantsService);
   private inviteSession = inject(InviteSessionService);
+  private i18n = inject(AppI18nService);
 
   token: string | null = null;
 
@@ -86,7 +94,7 @@ export class InviteAcceptPage {
     this.token = this.route.snapshot.queryParamMap.get('token');
 
     if (!this.token) {
-      this.error.set('Invalid invitation token.');
+      this.error.set(this.i18n.t('Invalid invitation token.'));
       this.loading.set(false);
       return;
     }
@@ -102,7 +110,7 @@ export class InviteAcceptPage {
       }
     } catch (err: any) {
       console.error('❌ validate invite error:', err);
-      this.error.set(err?.error?.message ?? 'Invalid or expired invitation token.');
+      this.error.set(err?.error?.message ?? this.i18n.t('Invalid or expired invitation token.'));
       this.loading.set(false);
       return;
     }
@@ -142,11 +150,15 @@ export class InviteAcceptPage {
   private async acceptWithUserUUID(userUUID: string) {
     try {
       const res = await this.accessService.acceptInvite(this.token as string, userUUID);
-      this.message.set(res?.message ?? res?.data?.message ?? 'Access granted successfully.');
+      this.message.set(
+        res?.message ?? res?.data?.message ?? this.i18n.t('Access granted successfully.'),
+      );
       this.inviteSession.clear();
     } catch (err: any) {
       console.error('❌ accept invite error:', err);
-      this.error.set(err?.error?.message ?? err?.message ?? 'Failed to accept invitation.');
+      this.error.set(
+        err?.error?.message ?? err?.message ?? this.i18n.t('Failed to accept invitation.'),
+      );
     }
   }
 
@@ -174,12 +186,16 @@ export class InviteAcceptPage {
         password: value.password,
       });
 
-      this.message.set(res?.message ?? res?.data?.message ?? 'Access granted successfully.');
+      this.message.set(
+        res?.message ?? res?.data?.message ?? this.i18n.t('Access granted successfully.'),
+      );
       this.inviteSession.clear();
       this.needsProfile.set(false);
     } catch (err: any) {
       console.error('❌ accept invite error:', err);
-      this.error.set(err?.error?.message ?? err?.message ?? 'Failed to accept invitation.');
+      this.error.set(
+        err?.error?.message ?? err?.message ?? this.i18n.t('Failed to accept invitation.'),
+      );
     } finally {
       this.submitting.set(false);
     }
