@@ -90,6 +90,7 @@ export type ConfigurableCrudOption = MnsSearchSelectFieldOption & {
 export type ConfigurableCrudFieldType =
   | 'text'
   | 'email'
+  | 'password'
   | 'number'
   | 'currency'
   | 'phone'
@@ -115,6 +116,8 @@ export type ConfigurableCrudField = {
   label: string;
   labelWhen?: (context: ConfigurableCrudFieldContext) => string;
   source?: string;
+  /** Maps a persisted value into the field value used by the generic form. */
+  fromRecord?: (value: unknown, row: ConfigurableCrudRecord) => unknown;
   payloadKey?: string;
   format?: 'json';
   type?: ConfigurableCrudFieldType;
@@ -611,6 +614,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const field = this.config.fields.find((candidate) => candidate.key === key);
     if (field?.type === 'date') return this.formatDateForInput(value);
     return value === null || value === undefined ? '' : String(value);
+  }
+
+  htmlInputType(field: ConfigurableCrudField): 'email' | 'number' | 'password' | 'text' {
+    if (field.type === 'number') return 'number';
+    if (field.type === 'email') return 'email';
+    if (field.type === 'password') return 'password';
+    return 'text';
   }
 
   /** Value binding for MatDatepickerInput must always be a Date or null, never typed text. */
@@ -1116,7 +1126,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const next: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
       const value = row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
-      next[field.key] = field.format === 'json' ? this.formatJsonValue(value) : value;
+      const formatted = field.format === 'json' ? this.formatJsonValue(value) : value;
+      next[field.key] = field.fromRecord ? field.fromRecord(formatted, row) : formatted;
     }
     return next;
   }
