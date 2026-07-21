@@ -49,7 +49,6 @@ function config(): ConfigurableCrudConfig {
       customerUUID: '',
       name: '',
       serverUUID: '',
-      domainUUID: '',
       notes: '',
     },
     columns: [
@@ -60,13 +59,6 @@ function config(): ConfigurableCrudConfig {
         kind: 'related',
         uuidField: 'CustomerCusUUID',
         lookupKey: 'customerUUID',
-      },
-      {
-        id: 'domain',
-        label: 'Domain',
-        kind: 'related',
-        uuidField: 'VoipDomainVdmUUID',
-        lookupKey: 'domainUUID',
       },
       {
         id: 'server',
@@ -123,15 +115,6 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
-        key: 'domainUUID',
-        source: 'VoipDomainVdmUUID',
-        payloadKey: 'domainUUID',
-        label: 'Domain',
-        type: 'search-select',
-        required: true,
-        span: 1,
-      },
-      {
         key: 'notes',
         source: 'VssNotes',
         payloadKey: 'notes',
@@ -157,7 +140,6 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
 
   readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
   readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
-  readonly domainOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -167,14 +149,13 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
     return (
-      ['serverUUID', 'customerUUID', 'domainUUID'].includes(field.key) && this.lookupsLoading()
+      ['serverUUID', 'customerUUID'].includes(field.key) && this.lookupsLoading()
     );
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.serverOptions();
     if (key === 'customerUUID') return this.customerOptions();
-    if (key === 'domainUUID') return this.domainOptions();
     return [];
   }
 
@@ -189,7 +170,7 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [servers, customers, domains] = await Promise.all([
+      const [servers, customers] = await Promise.all([
         this.fetchPaged('voip/softswitch/servers?status=1', (row) =>
           option(row['VsrUUID'], row['VsrName'], [
             row['VsrEngine'],
@@ -204,17 +185,9 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
             [row['CusDocument'] ?? row['Document'], row['CusEmail'] ?? row['Email']],
           ),
         ),
-        this.fetchPaged('voip/pabx/domains?status=1', (row) =>
-          option(
-            row['VdmUUID'] ?? row['VoipDomainUUID'] ?? row['uuid'],
-            row['VdmName'] ?? row['Name'],
-            [row['VdmDomain'] ?? row['Domain']],
-          ),
-        ),
       ]);
       this.serverOptions.set(servers);
       this.customerOptions.set(customers);
-      this.domainOptions.set(domains);
     } finally {
       this.lookupsLoading.set(false);
     }

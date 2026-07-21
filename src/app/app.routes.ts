@@ -892,10 +892,11 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
-                path: 'voip/domain',
+                path: 'voip/domains',
                 loadComponent: () =>
                   import('./pages/voip/domain/domain').then((m) => m.VoipDomainPage),
-                title: 'VoIP • Domain | mnscloud',
+                title: 'VoIP • Domains | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
               },
               {
                 path: 'voip/did',
@@ -978,6 +979,15 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'voip' },
               },
               {
+                path: 'voip/sbc/domains',
+                loadComponent: () =>
+                  import('./pages/voip/service-domain/service-domain').then(
+                    (m) => m.VoipSbcDomainPage,
+                  ),
+                title: 'VoIP • SBC • Domains | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
                 path: 'voip/sbc/peer',
                 loadComponent: () =>
                   import('./pages/voip/sbc/peer/peer').then((m) => m.VoipSbcPeerPage),
@@ -1048,6 +1058,15 @@ export const routes: Routes = [
                 title: 'VoIP • Softswitch • Accounts | mnscloud',
               },
               {
+                path: 'voip/softswitch/domains',
+                loadComponent: () =>
+                  import('./pages/voip/service-domain/service-domain').then(
+                    (m) => m.VoipSoftswitchDomainPage,
+                  ),
+                title: 'VoIP • Softswitch • Domains | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
+              },
+              {
                 path: 'voip/softswitch/subscriber',
                 loadComponent: () =>
                   import('./pages/voip/softswitch/subscriber/subscriber').then(
@@ -1104,6 +1123,15 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/voip/pabx/account/account').then((m) => m.VoipPabxAccountPage),
                 title: 'VoIP • PABX • Accounts | mnscloud',
+              },
+              {
+                path: 'voip/pabx/domains',
+                loadComponent: () =>
+                  import('./pages/voip/service-domain/service-domain').then(
+                    (m) => m.VoipPabxDomainPage,
+                  ),
+                title: 'VoIP • PABX • Domains | mnscloud',
+                data: { scope: 'tenant', context: 'voip' },
               },
               {
                 path: 'voip/pabx/extension',
@@ -1422,7 +1450,7 @@ export const routes: Routes = [
                 data: { scope: 'master', context: 'system' },
               },
               {
-                path: 'voip/domain',
+                path: 'voip/domains',
                 loadComponent: () =>
                   import('./pages/voip/domain/domain').then((m) => m.VoipDomainPage),
                 title: 'System VoIP Domain | mnscloud',
