@@ -4,6 +4,11 @@ import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
+export interface StateMessageDetail {
+  label: string;
+  value: string;
+}
+
 @Component({
   selector: 'app-state-message',
   standalone: true,
@@ -23,6 +28,7 @@ export class StateMessageComponent {
   readonly icon = input('info');
   readonly title = input('');
   readonly message = input('');
+  readonly details = input<readonly StateMessageDetail[]>([]);
 
   readonly primaryLabel = input<string>();
   readonly secondaryLabel = input<string>();

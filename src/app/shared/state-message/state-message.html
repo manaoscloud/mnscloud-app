@@ -12,6 +12,17 @@
       {{ message() }}
     </p>
 
+    @if (details().length) {
+      <dl class="state-details">
+        @for (detail of details(); track detail.label) {
+          <div class="state-detail">
+            <dt>{{ detail.label }}</dt>
+            <dd>{{ detail.value }}</dd>
+          </div>
+        }
+      </dl>
+    }
+
     @if (primaryLabel() || secondaryLabel()) {
       <div class="actions">
         @if (primaryLabel()) {

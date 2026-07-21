@@ -4,95 +4,126 @@
 
 /* Wrapper geral */
 .state-wrapper {
-    display: block;
+  display: block;
 
-    &.page {
-        display: grid;
-        place-items: center;
-        height: 100dvh;
-        padding: 1rem;
+  &.page {
+    display: grid;
+    place-items: center;
+    min-height: 100dvh;
+    padding: 1rem;
+    overflow-y: auto;
 
-        background: var(--mat-sys-color-surface);
-        color: var(--mat-sys-color-on-surface);
-    }
+    background: var(--mat-sys-color-surface);
+    color: var(--mat-sys-color-on-surface);
+  }
 }
 
 /* Caixa interna */
 .state-box {
-    width: 100%;
-    max-width: 420px;
-    padding: 2rem;
-    border-radius: 1.25rem;
-    text-align: center;
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  border-radius: 1.25rem;
+  text-align: center;
 
-    background: var(--mat-sys-color-surface-container-high);
-    border: 1px solid var(--mat-sys-color-outline-variant);
-    box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
+  background: var(--mat-sys-color-surface-container-high);
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  box-shadow: 0 4px 18px rgb(0 0 0 / 10%);
 
-    &.error {
-        border-left: 4px solid var(--mat-sys-color-error);
-    }
+  &.error {
+    border-left: 4px solid var(--mat-sys-color-error);
+  }
 
-    &.success {
-        border-left: 4px solid var(--mat-sys-color-primary);
-    }
+  &.success {
+    border-left: 4px solid var(--mat-sys-color-primary);
+  }
 }
 
 /* Ícone grande */
 .state-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 1rem;
-    border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
 
-    background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
-    color: var(--mat-sys-color-primary);
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
+  color: var(--mat-sys-color-primary);
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    mat-icon {
-        font-size: 32px !important;
-    }
+  mat-icon {
+    font-size: 32px !important;
+  }
 }
 
 .state-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin-bottom: 0.4rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
 }
 
 .state-message {
-    font-size: 0.95rem;
-    color: var(--mat-sys-color-on-surface-variant);
-    margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  margin-bottom: 1.5rem;
+}
+
+.state-details {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+  text-align: left;
+}
+
+.state-detail {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container) 80%, transparent);
+}
+
+.state-detail dt {
+  margin-bottom: 0.25rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.state-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--mat-sys-color-on-surface);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 /* Botões */
 .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
 
-    button {
-        min-width: 150px;
-        text-transform: none;
-        font-weight: 600;
-    }
+  button {
+    min-width: 150px;
+    text-transform: none;
+    font-weight: 600;
+  }
 }
 
 @media (max-width: 480px) {
-    .state-box {
-        padding: 1.5rem;
-    }
+  .state-box {
+    padding: 1.5rem;
+  }
 
-    .actions {
-        flex-direction: column;
+  .actions {
+    flex-direction: column;
 
-        button {
-            width: 100%;
-        }
+    button {
+      width: 100%;
     }
+  }
 }

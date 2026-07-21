@@ -1,23 +1,25 @@
 import { afterNextRender, Component, inject, signal } from '@angular/core';
 
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { TenantsService } from '../../tenants.service';
 import { StateMessageComponent } from '../../../../shared/state-message/state-message';
 import { InviteValidateData } from '../../../../models/invite-validate.model';
 import { InviteSessionService } from '../../../../services/invite-session.service';
+import { AppI18nService } from '../../../../services/app-i18n.service';
 
 @Component({
   selector: 'invite-validate',
   standalone: true,
-  imports: [RouterModule, StateMessageComponent],
+  imports: [StateMessageComponent, TranslocoPipe],
   templateUrl: './invite-validate.html',
-  styleUrls: ['./invite-validate.scss'],
 })
 export class InviteValidatePage {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private service = inject(TenantsService);
   private inviteSession = inject(InviteSessionService);
+  private i18n = inject(AppI18nService);
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -31,7 +33,7 @@ export class InviteValidatePage {
     const token = this.route.snapshot.queryParamMap.get('token');
 
     if (!token) {
-      this.error.set('Invalid invitation token.');
+      this.error.set(this.i18n.t('Invalid invitation token.'));
       this.loading.set(false);
       return;
     }
@@ -41,7 +43,7 @@ export class InviteValidatePage {
 
       const data = res?.data;
       if (!data || res.status !== 'success') {
-        this.error.set(res?.message ?? 'Invalid or expired invitation link.');
+        this.error.set(res?.message ?? this.i18n.t('Invalid or expired invitation link.'));
         this.loading.set(false);
         return;
       }
@@ -77,7 +79,7 @@ export class InviteValidatePage {
       });
     } catch (err) {
       console.error('❌ validate invite error:', err);
-      this.error.set('Failed to validate invitation.');
+      this.error.set(this.i18n.t('Failed to validate invitation.'));
     }
 
     this.loading.set(false);
@@ -88,6 +90,11 @@ export class InviteValidatePage {
       queryParams: { token },
     });
   }
+
+  goToCurrentInvite = () => {
+    const invite = this.invite();
+    if (invite) this.goToAccept(invite.token);
+  };
 
   // Usado pelo StateMessage (erro / navegação)
   goSignin = () => {

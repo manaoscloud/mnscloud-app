@@ -3152,5 +3152,22 @@
   "Tenant access removed successfully.": "Acceso al entorno eliminado correctamente.",
   "Tenant invitation resent successfully.": "Invitación del entorno reenviada correctamente.",
   "Tenant invitation sent successfully.": "Invitación de acceso al entorno enviada correctamente.",
-  "Tenant member or email": "Miembro del entorno o correo electrónico"
+  "Tenant member or email": "Miembro del entorno o correo electrónico",
+  "Accept Invitation": "Aceptar invitación",
+  "Access granted successfully.": "Acceso concedido correctamente.",
+  "Continue": "Continuar",
+  "Failed to accept invitation.": "No se pudo aceptar la invitación.",
+  "Failed to validate invitation.": "No se pudo validar la invitación.",
+  "Go to Dashboard": "Ir al panel",
+  "Invalid invitation token.": "Token de invitación no válido.",
+  "Invalid or expired invitation link.": "El enlace de invitación no es válido o ha caducado.",
+  "Invalid or expired invitation token.": "El token de invitación no es válido o ha caducado.",
+  "Invitation sent to": "Invitación enviada a",
+  "Please wait while we validate your invitation link.": "Espere mientras validamos el enlace de invitación.",
+  "Review the invitation details and continue when ready.": "Revise los datos de la invitación y continúe cuando esté listo.",
+  "The invitation email has been sent. Ask the member to open it and accept the invitation.": "El correo de invitación fue enviado. Pida al miembro que lo abra y acepte la invitación.",
+  "this tenant": "este entorno",
+  "You are joining": "Se unirá a",
+  "your email": "su correo electrónico",
+  "Your access was activated successfully.": "Su acceso fue activado correctamente."
 }
