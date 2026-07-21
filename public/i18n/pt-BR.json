@@ -3139,5 +3139,18 @@
   "Delete {count} selected Softswitch accounts?": "Excluir {count} contas Softswitch selecionadas?",
   "Softswitch account saved successfully.": "Conta Softswitch salva com sucesso.",
   "Softswitch account deleted successfully.": "Conta Softswitch excluída com sucesso.",
-  "Failed to delete Softswitch account.": "Falha ao excluir a conta Softswitch."
+  "Failed to delete Softswitch account.": "Falha ao excluir a conta Softswitch.",
+  "Administrator": "Administrador",
+  "Are you sure you want to remove this tenant access or cancel its invitation?": "Deseja remover este acesso ao ambiente ou cancelar o convite?",
+  "Failed to remove tenant access.": "Falha ao remover acesso ao ambiente.",
+  "Manage tenant members and pending invitations for this environment.": "Gerencie membros e convites pendentes deste ambiente.",
+  "No tenant members or pending invitations found.": "Nenhum membro ou convite pendente encontrado.",
+  "Remove selected tenant access entries": "Remover acessos selecionados do ambiente",
+  "Remove {count} selected tenant access entries?": "Remover {count} acessos selecionados do ambiente?",
+  "Remove tenant access": "Remover acesso ao ambiente",
+  "Resend invitation": "Reenviar convite",
+  "Tenant access removed successfully.": "Acesso ao ambiente removido com sucesso.",
+  "Tenant invitation resent successfully.": "Convite do ambiente reenviado com sucesso.",
+  "Tenant invitation sent successfully.": "Convite de acesso ao ambiente enviado com sucesso.",
+  "Tenant member or email": "Membro do ambiente ou e-mail"
 }

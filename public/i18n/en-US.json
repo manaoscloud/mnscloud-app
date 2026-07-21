@@ -3139,5 +3139,18 @@
   "Delete {count} selected Softswitch accounts?": "Delete {count} selected Softswitch accounts?",
   "Softswitch account saved successfully.": "Softswitch account saved successfully.",
   "Softswitch account deleted successfully.": "Softswitch account deleted successfully.",
-  "Failed to delete Softswitch account.": "Failed to delete Softswitch account."
+  "Failed to delete Softswitch account.": "Failed to delete Softswitch account.",
+  "Administrator": "Administrator",
+  "Are you sure you want to remove this tenant access or cancel its invitation?": "Are you sure you want to remove this tenant access or cancel its invitation?",
+  "Failed to remove tenant access.": "Failed to remove tenant access.",
+  "Manage tenant members and pending invitations for this environment.": "Manage tenant members and pending invitations for this environment.",
+  "No tenant members or pending invitations found.": "No tenant members or pending invitations found.",
+  "Remove selected tenant access entries": "Remove selected tenant access entries",
+  "Remove {count} selected tenant access entries?": "Remove {count} selected tenant access entries?",
+  "Remove tenant access": "Remove tenant access",
+  "Resend invitation": "Resend invitation",
+  "Tenant access removed successfully.": "Tenant access removed successfully.",
+  "Tenant invitation resent successfully.": "Tenant invitation resent successfully.",
+  "Tenant invitation sent successfully.": "Tenant invitation sent successfully.",
+  "Tenant member or email": "Tenant member or email"
 }
