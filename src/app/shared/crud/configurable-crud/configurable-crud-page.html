@@ -357,13 +357,7 @@
                     <input
                       matInput
                       [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                      [type]="
-                        field.type === 'number'
-                          ? 'number'
-                          : field.type === 'email'
-                            ? 'email'
-                            : 'text'
-                      "
+                      [type]="htmlInputType(field)"
                       [appCurrencyMask]="field.type === 'currency'"
                       [appCurrencyMaskCurrency]="currencyForField(field)"
                       [autocomplete]="field.autocomplete ?? 'off'"
@@ -754,7 +748,7 @@
                       <input
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [type]="htmlInputType(field)"
                         [appCurrencyMask]="field.type === 'currency'"
                         [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
@@ -832,7 +826,7 @@
                       <input
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [type]="htmlInputType(field)"
                         [appCurrencyMask]="field.type === 'currency'"
                         [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
@@ -910,7 +904,7 @@
                       <input
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [type]="htmlInputType(field)"
                         [appCurrencyMask]="field.type === 'currency'"
                         [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
@@ -988,7 +982,7 @@
                       <input
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [type]="htmlInputType(field)"
                         [appCurrencyMask]="field.type === 'currency'"
                         [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
@@ -1066,7 +1060,7 @@
                       <input
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [type]="htmlInputType(field)"
                         [appCurrencyMask]="field.type === 'currency'"
                         [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
@@ -1133,7 +1127,7 @@
                       <input
                         matInput
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        [type]="htmlInputType(field)"
                         [appCurrencyMask]="field.type === 'currency'"
                         [appCurrencyMaskCurrency]="currencyForField(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"

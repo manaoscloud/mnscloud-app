@@ -1190,15 +1190,23 @@ export const routes: Routes = [
                 title: 'VoIP • PABX • External | mnscloud',
                 data: { resource: 'external' },
               },
-              ...(['trunks', 'inbound-routes'] as const).map((resource) => ({
-                path: `voip/pabx/${resource}`,
+              {
+                path: 'voip/pabx/trunks',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/trunk/trunk').then(
+                    (m) => m.VoipPabxTrunkPage,
+                  ),
+                title: 'VoIP • PABX • Trunks | mnscloud',
+              },
+              {
+                path: 'voip/pabx/inbound-routes',
                 loadComponent: () =>
                   import('./pages/voip/pabx/trunk-route/trunk-route').then(
                     (m) => m.VoipPabxTrunkRoutePage,
                   ),
-                title: `VoIP • PABX • ${resource} | mnscloud`,
-                data: { resource },
-              })),
+                title: 'VoIP • PABX • Inbound Routes | mnscloud',
+                data: { resource: 'inbound-routes' },
+              },
               {
                 path: 'voip/pabx/group',
                 loadComponent: () =>
