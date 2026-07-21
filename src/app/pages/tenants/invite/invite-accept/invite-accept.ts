@@ -150,9 +150,7 @@ export class InviteAcceptPage {
   private async acceptWithUserUUID(userUUID: string) {
     try {
       const res = await this.accessService.acceptInvite(this.token as string, userUUID);
-      this.message.set(
-        res?.message ?? res?.data?.message ?? this.i18n.t('Access granted successfully.'),
-      );
+      this.message.set(this.resolveSuccessMessage(res?.message ?? res?.data?.message));
       this.inviteSession.clear();
     } catch (err: any) {
       console.error('❌ accept invite error:', err);
@@ -186,9 +184,7 @@ export class InviteAcceptPage {
         password: value.password,
       });
 
-      this.message.set(
-        res?.message ?? res?.data?.message ?? this.i18n.t('Access granted successfully.'),
-      );
+      this.message.set(this.resolveSuccessMessage(res?.message ?? res?.data?.message));
       this.inviteSession.clear();
       this.needsProfile.set(false);
     } catch (err: any) {
@@ -213,4 +209,12 @@ export class InviteAcceptPage {
   goHome = () => {
     this.router.navigate(['/dashboard']);
   };
+
+  private resolveSuccessMessage(message: unknown): string {
+    if (typeof message === 'string' && message.trim()) {
+      return this.i18n.t(message.trim());
+    }
+
+    return this.i18n.t('Access granted successfully.');
+  }
 }
