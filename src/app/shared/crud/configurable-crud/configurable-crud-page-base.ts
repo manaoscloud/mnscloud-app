@@ -301,6 +301,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly formValues = signal<ConfigurableCrudRecord>({});
   readonly enabledCopyActions = signal(new Set<string>());
   readonly defaultCurrency = signal('BRL');
+  /**
+   * Material owns the live text while a date is incomplete. Keeping that draft outside
+   * the form signal prevents Angular from writing an incomplete string back through
+   * MatDatepickerInput, which would deserialize it as invalid and clear the input.
+   */
+  private readonly dateDrafts = new Map<string, string>();
 
   readonly itemsResource;
 
@@ -473,6 +479,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   startCreate(): void {
     if (!this.canCreate()) return;
+    this.dateDrafts.clear();
     this.editingRecord.set(null);
     this.formValues.set(this.emptyFormValues());
     this.enabledCopyActions.set(this.defaultCopyActionKeys());
@@ -484,6 +491,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   startEdit(row: T): void {
     if (!this.canEdit()) return;
+    this.dateDrafts.clear();
     this.editingRecord.set(row);
     this.formValues.set(this.formValuesFromRecord(row));
     this.enabledCopyActions.set(this.inferredCopyActionKeys());
@@ -493,6 +501,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   async saveItem(saveAndNew = false): Promise<void> {
     if (this.editingRecord() ? !this.canEdit() : !this.canCreate()) return;
+    if (!this.commitDateDrafts()) return;
     this.copyEnabledAddressValues();
     const payload = this.augmentPayload(this.buildPayload());
     if (!this.validatePayload(payload)) return;
@@ -515,6 +524,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       if (saveAndNew) {
         this.editingRecord.set(null);
         this.formValues.set(this.emptyFormValues());
+        this.dateDrafts.clear();
       } else {
         this.closeDialog();
       }
@@ -586,6 +596,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   closeDialog(): void {
+    this.dateDrafts.clear();
     this.dialogBinding?.ref.close();
   }
 
@@ -600,6 +611,30 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const field = this.config.fields.find((candidate) => candidate.key === key);
     if (field?.type === 'date') return this.formatDateForInput(value);
     return value === null || value === undefined ? '' : String(value);
+  }
+
+  /** Value binding for MatDatepickerInput must always be a Date or null, never typed text. */
+  fieldDateValue(key: string): Date | null {
+    const normalized = this.normalizeDateForPayload(this.formValues()[key]);
+    if (!normalized) return null;
+
+    const [year, month, day] = normalized.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  onDateInput(key: string, event: { value: Date | null; targetElement: HTMLElement }): void {
+    const rawValue =
+      event.targetElement instanceof HTMLInputElement ? event.targetElement.value.trim() : '';
+
+    // A non-empty null value is an incomplete or invalid draft. Do not write it through
+    // the datepicker value accessor, otherwise Material clears the user's typed text.
+    if (event.value === null && rawValue) {
+      this.dateDrafts.set(key, rawValue);
+      return;
+    }
+
+    this.dateDrafts.delete(key);
+    this.setFieldValue(key, event.value);
   }
 
   currencyForField(field: ConfigurableCrudField): string {
@@ -1181,6 +1216,29 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         return false;
       }
     }
+    return true;
+  }
+
+  /**
+   * A partial date must not replace the current form value while the user is typing,
+   * because MatDatepickerInput only accepts Date values. Before saving, validate and
+   * commit any remaining locale-formatted drafts into the canonical date-only value.
+   */
+  private commitDateDrafts(): boolean {
+    if (this.dateDrafts.size === 0) return true;
+
+    const committed: ConfigurableCrudRecord = {};
+    for (const [key, draft] of this.dateDrafts) {
+      const normalized = this.normalizeDateForPayload(draft);
+      if (!normalized) {
+        this.snack.warning('Invalid date. Use the system date format.');
+        return false;
+      }
+      committed[key] = normalized;
+    }
+
+    this.formValues.update((values) => ({ ...values, ...committed }));
+    this.dateDrafts.clear();
     return true;
   }
 

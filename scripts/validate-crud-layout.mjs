@@ -29,10 +29,14 @@ function read(file) {
 }
 
 function changedFiles(base, head) {
-  const output = execFileSync('git', ['diff', '--name-only', '--diff-filter=ACMRT', `${base}...${head}`], {
-    cwd: root,
-    encoding: 'utf8',
-  });
+  const output = execFileSync(
+    'git',
+    ['diff', '--name-only', '--diff-filter=ACMRT', `${base}...${head}`],
+    {
+      cwd: root,
+      encoding: 'utf8',
+    },
+  );
   return output
     .split('\n')
     .map((line) => line.trim())
@@ -166,7 +170,8 @@ function hasImplicitFilterSpan(block) {
   return fieldTags.some(
     ([, , attrs]) =>
       !/\bclass="[^"]*\bspan-1\b[^"]*"/.test(attrs) &&
-      !/\bfieldClass="[^"]*\bspan-1\b[^"]*"/.test(attrs),
+      !/\bfieldClass="[^"]*\bspan-1\b[^"]*"/.test(attrs) &&
+      !/\[(?:class|fieldClass)\]="listFilterClass\(filter\)"/.test(attrs),
   );
 }
 

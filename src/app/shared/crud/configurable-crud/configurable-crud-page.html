@@ -257,9 +257,8 @@
                       appDateMask
                       [autocomplete]="field.autocomplete ?? 'off'"
                       [attr.data-field-key]="field.key"
-                      [value]="fieldValueString(field.key)"
-                      (input)="setFieldValue(field.key, $any($event.target).value)"
-                      (dateChange)="setFieldValue(field.key, $event.value)"
+                      [value]="fieldDateValue(field.key)"
+                      (dateInput)="onDateInput(field.key, $event)"
                     />
                     <mat-datepicker-toggle matSuffix [for]="recordDatePicker" />
                     <mat-datepicker #recordDatePicker touchUi />
@@ -460,9 +459,8 @@
                                 appDateMask
                                 [disabled]="isFieldDisabled(field)"
                                 [attr.data-field-key]="field.key"
-                                [value]="fieldValueString(field.key)"
-                                (input)="setFieldValue(field.key, $any($event.target).value)"
-                                (dateChange)="setFieldValue(field.key, $event.value)"
+                                [value]="fieldDateValue(field.key)"
+                                (dateInput)="onDateInput(field.key, $event)"
                                 autocomplete="off"
                               />
                               <mat-datepicker-toggle matSuffix [for]="addressDatePicker" />
@@ -591,9 +589,8 @@
                         appDateMask
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
-                        [value]="fieldValueString(field.key)"
-                        (input)="setFieldValue(field.key, $any($event.target).value)"
-                        (dateChange)="setFieldValue(field.key, $event.value)"
+                        [value]="fieldDateValue(field.key)"
+                        (dateInput)="onDateInput(field.key, $event)"
                       />
                       <mat-datepicker-toggle matSuffix [for]="financialDatePicker" />
                       <mat-datepicker #financialDatePicker touchUi />
