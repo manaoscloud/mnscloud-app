@@ -1,509 +1,176 @@
+import { Component, computed, inject } from '@angular/core';
 
 import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  afterNextRender,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormField, email, form as createForm, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom } from 'rxjs';
-
-import { SnackbarService } from '../../services/snackbar.service';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../shared/dialog/crud-dialog.util';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { SlowConfirmDialogComponent } from '../../shared/slow-confirm-dialog/slow-confirm-dialog';
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { TenantsService } from './tenants.service';
-import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../shared/dialog/dialog-events.util';
-import { MnsDateTimePipe } from '../../shared/date-time/date-time.pipe';
+import { TenantService } from '../../services/tenant.service';
 
-type TenantAccess = {
-  UscUUID?: string | null;
-  EnvironmentUUID?: string | null;
-  EnvironmentName?: string | null;
-  Role?: string | null;
-  Status?: number | null;
-  IsDefault?: number | null;
-  UscIsDefault?: number | null;
+type TenantAccessEntry = ConfigurableCrudRecord & {
+  EntryUUID: string;
+  EntryType: 'MEMBER' | 'INVITE';
+  Name: string;
+  Email: string;
+  Role: 'ADMIN' | 'USER';
+  Status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
+  DateCreated: string | null;
 };
 
-type TenantInvite = {
-  UsiUUID: string;
-  UsiEmail?: string | null;
-  UsiRole?: string | null;
-  UsiStatus?: number | null;
-  UsiDateCreated?: string | null;
-  UsiDateAccepted?: string | null;
-};
+const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'ADMIN', label: 'Administrator' },
+  { value: 'USER', label: 'User' },
+];
 
-type TenantsSnapshot = {
-  myTenants: TenantAccess[];
-  members: TenantAccess[];
-  invites: TenantInvite[];
-  currentEnvRole: string | null;
-  error: string | null;
-  invitesError: string | null;
-};
-
-type TenantFilterFormModel = {
-  search: string;
-  status: string;
-};
-
-type TenantInviteFormModel = {
-  email: string;
-  role: string;
+const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'user/access/members',
+  createEndpoint: 'user/access/invites',
+  deleteEndpoint: (row) => (row['EntryType'] === 'INVITE' ? 'user/access/invites' : 'user/access'),
+  uuidField: 'EntryUUID',
+  pageTitle: 'Tenants',
+  pageDescription: 'Manage tenant members and pending invitations for this environment.',
+  createTitle: 'Invite a Member',
+  editTitle: 'Edit tenant access',
+  dialogDescription: 'Send a tenant access invitation by email.',
+  searchPlaceholder: 'Tenant member or email',
+  emptyLabel: 'No tenant members or pending invitations found.',
+  deleteTitle: 'Remove tenant access',
+  deleteMessage: 'Are you sure you want to remove this tenant access or cancel its invitation?',
+  deleteSelectedTitle: 'Remove selected tenant access entries',
+  deleteSelectedMessage: 'Remove {count} selected tenant access entries?',
+  savedMessage: 'Tenant invitation sent successfully.',
+  deletedMessage: 'Tenant access removed successfully.',
+  deleteFailedMessage: 'Failed to remove tenant access.',
+  statusMode: 'string',
+  activeValue: 'ACTIVE',
+  inactiveValue: 'INACTIVE',
+  activeStatusValues: ['ACTIVE'],
+  statusOptions: [
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'INACTIVE', label: 'Inactive' },
+    { value: 'PENDING', label: 'Pending' },
+  ],
+  initialValues: { email: '', role: 'USER' },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'EntryUUID' },
+    { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
+    { id: 'role', label: 'Access level', field: 'Role', lookupKey: 'role' },
+    { id: 'createdAt', label: 'Created at', kind: 'datetime', field: 'DateCreated' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
+  ],
+  fields: [
+    {
+      key: 'email',
+      source: 'Email',
+      payloadKey: 'email',
+      label: 'E-mail',
+      type: 'email',
+      required: true,
+      span: 3,
+      autocomplete: 'email',
+    },
+    {
+      key: 'role',
+      source: 'Role',
+      payloadKey: 'role',
+      label: 'Access level',
+      type: 'select',
+      options: ROLE_OPTIONS,
+      required: true,
+      span: 1,
+    },
+  ],
+  canEdit: false,
+  // Revocation and invitation cancellation use distinct, stateful API endpoints.
+  bulkDelete: false,
+  rowActions: [{ key: 'resend', label: 'Resend invitation', icon: 'send' }],
 };
 
 @Component({
   selector: 'settings-tenants',
   standalone: true,
-  imports: [
-    MnsDateTimePipe,
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-  ],
-  templateUrl: './tenants.html',
-  styleUrl: './tenants.scss',
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class SettingsTenantsPage {
-  private readonly service = inject(TenantsService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly inviteDialog = viewChild<TemplateRef<unknown>>('inviteDialog');
-  readonly myTenantsPaginator = viewChild<MatPaginator>('myTenantsPaginator');
-  readonly membersPaginator = viewChild<MatPaginator>('membersPaginator');
-  readonly invitesPaginator = viewChild<MatPaginator>('invitesPaginator');
-  readonly myTenantsSort = viewChild<MatSort>('myTenantsSort');
-  readonly membersSort = viewChild<MatSort>('membersSort');
-  readonly invitesSort = viewChild<MatSort>('invitesSort');
-
-  private inviteDialogBinding: CrudDialogBinding | null = null;
-  private rawMyTenants: TenantAccess[] = [];
-  private rawMembers: TenantAccess[] = [];
-  private rawInvites: TenantInvite[] = [];
-
-  private readonly tenantsResource = resource({
-    defaultValue: {
-      myTenants: [],
-      members: [],
-      invites: [],
-      currentEnvRole: null,
-      error: null,
-      invitesError: null,
-    } as TenantsSnapshot,
-    loader: () => this.fetchTenantsSnapshot(),
-  });
-
-  readonly loading = computed(() => this.tenantsResource.isLoading());
-  readonly invitesLoading = computed(() => this.tenantsResource.isLoading());
-  readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly invitesError = signal<string | null>(null);
-  readonly currentEnvRole = signal<string | null>(null);
-
-  readonly canManageTenant = computed(() =>
-    ['OWNER', 'ADMIN'].includes(String(this.currentEnvRole() ?? '').toUpperCase()),
+export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEntry> {
+  private readonly tenantsService = inject(TenantsService);
+  private readonly tenantService = inject(TenantService);
+  private readonly canManageTenant = computed(() =>
+    ['OWNER', 'ADMIN'].includes(
+      String(this.tenantService.selectedTenant()?.Role ?? '').toUpperCase(),
+    ),
   );
 
-  readonly roles = ['ADMIN', 'USER'];
-  readonly statusOptions = ['', 'active', 'inactive', 'pending', 'accepted', 'canceled'];
-  readonly myTenantColumns = ['tenant', 'role', 'default', 'actions'];
-  readonly memberColumns = ['tenant', 'role', 'status', 'actions'];
-  readonly inviteColumns = ['email', 'role', 'status', 'createdAt', 'acceptedAt', 'actions'];
-
-  readonly myTenantsSource = new MatTableDataSource<TenantAccess>([]);
-  readonly membersSource = new MatTableDataSource<TenantAccess>([]);
-  readonly invitesSource = new MatTableDataSource<TenantInvite>([]);
-
-  readonly filterFormModel = signal<TenantFilterFormModel>({
-    search: '',
-    status: '',
-  });
-
-  readonly inviteFormModel = signal<TenantInviteFormModel>({
-    email: '',
-    role: 'USER',
-  });
-
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly inviteForm = createForm(this.inviteFormModel, (schema) => {
-    required(schema.email);
-    email(schema.email);
-    required(schema.role);
-  });
-
-  private readonly setupTables = afterNextRender(() => {
-    this.myTenantsSource.paginator = this.myTenantsPaginator() ?? null;
-    this.membersSource.paginator = this.membersPaginator() ?? null;
-    this.invitesSource.paginator = this.invitesPaginator() ?? null;
-    this.myTenantsSource.sort = this.myTenantsSort() ?? null;
-    this.membersSource.sort = this.membersSort() ?? null;
-    this.invitesSource.sort = this.invitesSort() ?? null;
-  });
+  override readonly canCreate = computed(() => this.canManageTenant());
+  override readonly canDelete = computed(() => this.canManageTenant());
 
   constructor() {
-    this.configureTables();
-    this.destroyRef.onDestroy(() => this.closeInviteDialog());
-    effect(() => {
-      const snapshot = this.tenantsResource.value();
-      if (!snapshot) return;
-      this.rawMyTenants = snapshot.myTenants;
-      this.rawMembers = snapshot.members;
-      this.rawInvites = snapshot.invites;
-      this.currentEnvRole.set(snapshot.currentEnvRole);
-      this.error.set(snapshot.error);
-      this.invitesError.set(snapshot.invitesError);
-      this.applyDataSources();
-    });
+    super(TENANT_ACCESS_CONFIG);
   }
 
-  refreshList() {
-    this.error.set(null);
-    this.invitesError.set(null);
-    this.tenantsResource.reload();
+  override rowActions(row: TenantAccessEntry) {
+    return row.EntryType === 'INVITE' && row.Status === 'PENDING'
+      ? (TENANT_ACCESS_CONFIG.rowActions ?? [])
+      : [];
   }
 
-  applyFilters() {
-    this.applyDataSources();
-    this.firstPage();
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({ search: '', status: '' });
-    this.applyFilters();
-  }
-
-  startCreate() {
-    if (!this.canManageTenant()) {
-      this.snack.warning('Only tenant owners and administrators can invite members.');
-      return;
-    }
-    this.inviteFormModel.set({ email: '', role: 'USER' });
-    this.openInviteDialog();
-  }
-
-  closeInviteDialog() {
-    if (!this.inviteDialogBinding) return;
-    this.inviteDialogBinding.ref.close();
-    this.inviteDialogBinding.stop();
-    this.inviteDialogBinding = null;
-  }
-
-  async sendInvite(keepOpen = false) {
-    if (!this.inviteForm().valid() || this.saving()) return;
-
-    this.saving.set(true);
-    const { email, role } = this.inviteFormModel();
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: TenantAccessEntry,
+  ): Promise<void> {
+    if (action.key !== 'resend' || row.EntryType !== 'INVITE' || row.Status !== 'PENDING') return;
 
     try {
-      await this.service.inviteUser({ email: email.trim().toLowerCase(), role });
-      this.snack.success('Invitation sent successfully.');
-      this.tenantsResource.reload();
-
-      if (keepOpen) {
-        this.inviteFormModel.set({ email: '', role: 'USER' });
-      } else {
-        this.closeInviteDialog();
-      }
+      await this.tenantsService.resendInvite(row.EntryUUID);
+      this.snack.success(this.t('Tenant invitation resent successfully.'));
+      this.refreshList();
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to send invitation.'));
-    } finally {
-      this.saving.set(false);
+      this.snack.error(this.t(this.errorMessage(error)));
     }
   }
 
-  async remove(access: TenantAccess) {
-    const uuid = access.UscUUID;
-    if (!uuid) return;
+  protected override async fetchItems(
+    filters: ConfigurableCrudFilters,
+  ): Promise<TenantAccessEntry[]> {
+    if (!this.canManageTenant()) return [];
 
-    const confirmed = await this.confirm({
-      title: 'Remove member access',
-      message: `Remove access for ${access.EnvironmentName || 'this tenant member'}?`,
-      confirmLabel: 'Remove',
-    });
-    if (!confirmed) return;
-
-    try {
-      await this.service.deleteAccess(uuid);
-      this.tenantsResource.reload();
-      this.snack.success('Tenant member removed successfully.');
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to remove access.'));
-    }
-  }
-
-  async cancelInvite(invite: TenantInvite) {
-    const confirmed = await this.confirm({
-      title: 'Cancel invitation',
-      message: `Cancel invitation for ${invite.UsiEmail || 'this email'}?`,
-      confirmLabel: 'Cancel invitation',
-    });
-    if (!confirmed) return;
-
-    try {
-      await this.service.cancelInvite(invite.UsiUUID);
-      this.tenantsResource.reload();
-      this.snack.success('Invitation canceled successfully.');
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to cancel invitation.'));
-    }
-  }
-
-  async resendInvite(invite: TenantInvite) {
-    try {
-      await this.service.resendInvite(invite.UsiUUID);
-      this.snack.success('Invitation resent successfully.');
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to resend invitation.'));
-    }
-  }
-
-  isDefaultAccess(item: TenantAccess): boolean {
-    return Number(item?.IsDefault ?? item?.UscIsDefault ?? 0) === 1;
-  }
-
-  async setDefaultAccess(item: TenantAccess) {
-    const environmentUUID = item.EnvironmentUUID;
-    if (!environmentUUID || this.isDefaultAccess(item)) return;
-
-    try {
-      await this.service.setDefaultAccess(environmentUUID);
-      this.rawMyTenants = this.rawMyTenants.map((tenant) => ({
-        ...tenant,
-        IsDefault: tenant.EnvironmentUUID === environmentUUID ? 1 : 0,
-      }));
-
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('mc_current_env', environmentUUID);
-      }
-
-      this.tenantsResource.reload();
-      this.snack.success('Default tenant updated successfully.');
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to set default tenant.'));
-    }
-  }
-
-  memberStatusLabel(item: TenantAccess) {
-    return Number(item.Status ?? 0) === 1 ? 'Active' : 'Inactive';
-  }
-
-  inviteStatusLabel(invite: TenantInvite) {
-    const status = Number(invite.UsiStatus ?? 0);
-    if (status === 1) return 'Accepted';
-    if (status === 2) return 'Canceled';
-    return 'Pending';
-  }
-
-  private async fetchTenantsSnapshot(): Promise<TenantsSnapshot> {
-    const [accessSnapshot, invitesSnapshot] = await Promise.all([
-      this.fetchAccessSnapshot(),
-      this.fetchInvitesSnapshot(),
+    const [membersResponse, invitesResponse] = await Promise.all([
+      this.tenantsService.getEnvironmentAccess(),
+      this.tenantsService.listInvites(),
     ]);
 
-    return {
-      myTenants: accessSnapshot.myTenants,
-      members: accessSnapshot.members,
-      invites: invitesSnapshot.invites,
-      currentEnvRole: accessSnapshot.currentEnvRole,
-      error: accessSnapshot.error,
-      invitesError: invitesSnapshot.invitesError,
-    };
-  }
+    const members = (membersResponse?.data?.members ?? []).map((member: any) => ({
+      EntryUUID: String(member.UscUUID ?? ''),
+      EntryType: 'MEMBER' as const,
+      Name: String(member.Name ?? member.Email ?? '-'),
+      Email: String(member.Email ?? ''),
+      Role: String(member.Role ?? 'USER').toUpperCase() as 'ADMIN' | 'USER',
+      Status: Number(member.Status ?? 0) === 1 ? ('ACTIVE' as const) : ('INACTIVE' as const),
+      DateCreated: member.DateCreated ?? null,
+    }));
+    const invites = (invitesResponse?.data?.invites ?? [])
+      .filter((invite: any) => Number(invite.UsiStatus ?? 0) === 0)
+      .map((invite: any) => ({
+        EntryUUID: String(invite.UsiUUID ?? ''),
+        EntryType: 'INVITE' as const,
+        Name: String(invite.UsiEmail ?? '-'),
+        Email: String(invite.UsiEmail ?? ''),
+        Role: String(invite.UsiRole ?? 'USER').toUpperCase() as 'ADMIN' | 'USER',
+        Status: 'PENDING' as const,
+        DateCreated: invite.UsiDateCreated ?? null,
+      }));
 
-  private async fetchAccessSnapshot(): Promise<{
-    myTenants: TenantAccess[];
-    members: TenantAccess[];
-    currentEnvRole: string | null;
-    error: string | null;
-  }> {
-    try {
-      const response = await this.service.getMyAccessList();
-      const myTenants = response?.data?.access ?? [];
-
-      const currentEnv =
-        typeof localStorage !== 'undefined' ? localStorage.getItem('mc_current_env') : null;
-      const currentRole =
-        myTenants.find((item: TenantAccess) => item.EnvironmentUUID === currentEnv)?.Role ?? null;
-
-      if (currentEnv && ['OWNER', 'ADMIN'].includes(String(currentRole ?? '').toUpperCase())) {
-        try {
-          const envResponse = await this.service.getEnvironmentAccess();
-          return {
-            myTenants,
-            members: envResponse?.data?.members ?? [],
-            currentEnvRole: currentRole,
-            error: null,
-          };
-        } catch (error) {
-          return {
-            myTenants,
-            members: myTenants,
-            currentEnvRole: currentRole,
-            error: this.errorMessage(error, 'Failed to load access list.'),
-          };
-        }
-      }
-
-      return {
-        myTenants,
-        members: myTenants,
-        currentEnvRole: currentRole,
-        error: null,
-      };
-    } catch (error) {
-      return {
-        myTenants: [],
-        members: [],
-        currentEnvRole: null,
-        error: this.errorMessage(error, 'Failed to load access list.'),
-      };
-    }
-  }
-
-  private async fetchInvitesSnapshot(): Promise<{
-    invites: TenantInvite[];
-    invitesError: string | null;
-  }> {
-    try {
-      const response = await this.service.listInvites();
-      return { invites: response?.data?.invites ?? [], invitesError: null };
-    } catch (error) {
-      const message = this.errorMessage(error, 'Failed to load invitations.');
-      if (message.toLowerCase().includes('permission')) {
-        return { invites: [], invitesError: null };
-      }
-      return { invites: [], invitesError: message };
-    }
-  }
-
-  private configureTables() {
-    this.myTenantsSource.sortingDataAccessor = (row, column) => this.accessSortValue(row, column);
-    this.membersSource.sortingDataAccessor = (row, column) => this.accessSortValue(row, column);
-    this.invitesSource.sortingDataAccessor = (row, column) => this.inviteSortValue(row, column);
-  }
-
-  private applyDataSources() {
-    const { search: rawSearch, status } = this.filterFormModel();
-    const search = rawSearch.trim().toLowerCase();
-
-    this.myTenantsSource.data = this.rawMyTenants.filter((item) =>
-      this.matchesAccessFilter(item, search, status),
-    );
-    this.membersSource.data = this.rawMembers.filter((item) =>
-      this.matchesAccessFilter(item, search, status),
-    );
-    this.invitesSource.data = this.rawInvites.filter((item) =>
-      this.matchesInviteFilter(item, search, status),
-    );
-  }
-
-  private matchesAccessFilter(item: TenantAccess, search: string, status: string) {
-    const haystack =
-      `${item.EnvironmentName ?? ''} ${item.Role ?? ''} ${this.memberStatusLabel(item)}`
-        .toLowerCase()
-        .trim();
-    const matchesSearch = !search || haystack.includes(search);
-    const normalizedStatus = this.memberStatusLabel(item).toLowerCase();
-    const matchesStatus =
-      !status ||
-      (status === 'active' && normalizedStatus === 'active') ||
-      (status === 'inactive' && normalizedStatus === 'inactive');
-    return matchesSearch && matchesStatus;
-  }
-
-  private matchesInviteFilter(item: TenantInvite, search: string, status: string) {
-    const label = this.inviteStatusLabel(item);
-    const haystack = `${item.UsiEmail ?? ''} ${item.UsiRole ?? ''} ${label}`.toLowerCase().trim();
-    const matchesSearch = !search || haystack.includes(search);
-    const matchesStatus = !status || label.toLowerCase() === status;
-    return matchesSearch && matchesStatus;
-  }
-
-  private accessSortValue(row: TenantAccess, column: string) {
-    if (column === 'tenant') return row.EnvironmentName ?? '';
-    if (column === 'role') return row.Role ?? '';
-    if (column === 'default') return this.isDefaultAccess(row) ? 1 : 0;
-    if (column === 'status') return this.memberStatusLabel(row);
-    return '';
-  }
-
-  private inviteSortValue(row: TenantInvite, column: string) {
-    if (column === 'email') return row.UsiEmail ?? '';
-    if (column === 'role') return row.UsiRole ?? '';
-    if (column === 'status') return this.inviteStatusLabel(row);
-    if (column === 'createdAt') return row.UsiDateCreated ?? '';
-    if (column === 'acceptedAt') return row.UsiDateAccepted ?? '';
-    return '';
-  }
-
-  private firstPage() {
-    this.myTenantsPaginator()?.firstPage();
-    this.membersPaginator()?.firstPage();
-    this.invitesPaginator()?.firstPage();
-  }
-
-  private openInviteDialog() {
-    const inviteDialog = this.inviteDialog();
-    if (!inviteDialog || this.inviteDialogBinding) return;
-    this.inviteDialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      inviteDialog,
-      'crud-dialog-panel tenant-invite-dialog-panel',
-      { onEscape: () => this.closeInviteDialog() },
-    );
-    bindDialogClosed(this.inviteDialogBinding.ref, () => {
-      this.inviteDialogBinding?.stop();
-      this.inviteDialogBinding = null;
+    const search = filters.search.trim().toLocaleLowerCase();
+    return [...members, ...invites].filter((entry) => {
+      const matchesStatus = !filters.status || entry.Status === filters.status;
+      const haystack = `${entry.Name} ${entry.Email} ${entry.Role} ${entry.Status}`.toLowerCase();
+      return matchesStatus && (!search || haystack.includes(search));
     });
-  }
-
-  private async confirm(data: { title: string; message: string; confirmLabel: string }) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      width: '420px',
-      disableClose: true,
-      panelClass: 'slow-confirm-dialog',
-      data,
-    });
-    return (await firstValueFrom(ref.afterClosed())) === true;
-  }
-
-  private errorMessage(error: any, fallback: string) {
-    return error?.error?.message ?? error?.error?.error ?? error?.message ?? fallback;
   }
 }

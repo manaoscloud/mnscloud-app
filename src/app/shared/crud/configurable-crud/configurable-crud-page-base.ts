@@ -32,7 +32,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { ApiService } from '../../../services/api.service';
 import { DateTimeFormatService } from '../../../services/date-time-format.service';
@@ -206,6 +206,14 @@ export type ConfigurableCrudStatusMode = 'number' | 'string';
 
 export type ConfigurableCrudConfig = {
   endpoint: string;
+  /** Optional lifecycle endpoint when a resource reads from a projection but creates elsewhere. */
+  createEndpoint?: string;
+  /** Optional lifecycle endpoint when updates are handled by a dedicated resource route. */
+  updateEndpoint?: string;
+  /** Optional lifecycle endpoint for delete. The resolver supports mixed lifecycle rows. */
+  deleteEndpoint?: string | ((row: ConfigurableCrudRecord) => string);
+  /** Optional lifecycle endpoint for bulk delete. */
+  bulkDeleteEndpoint?: string;
   uuidField: string;
   pageTitle: string;
   pageDescription: string;
@@ -249,7 +257,7 @@ export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
   record: T | null;
 };
 
-type ConfigurableCrudFilters = {
+export type ConfigurableCrudFilters = {
   search: string;
   status: '' | string | number;
   extra: Record<string, string | number | boolean | null>;
@@ -262,6 +270,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly dateTime = inject(DateTimeFormatService);
   protected readonly parameters = inject(SystemParameterService);
   protected readonly dialog = inject(MatDialog);
+  protected readonly transloco = inject(TranslocoService);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly dateLocale = inject(MAT_DATE_LOCALE, { optional: true }) as string | null;
@@ -489,13 +498,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       let response: unknown;
       if (current) {
         response = await this.api.put(
-          `${this.config.endpoint}/${this.recordUUID(current)}`,
+          `${this.config.updateEndpoint ?? this.config.endpoint}/${this.recordUUID(current)}`,
           payload,
         );
       } else {
-        response = await this.api.post(this.config.endpoint, payload);
+        response = await this.api.post(this.config.createEndpoint ?? this.config.endpoint, payload);
       }
-      this.snack.success(this.config.savedMessage);
+      this.snack.success(this.t(this.config.savedMessage));
       if (current) this.reflectSavedRecord(current, payload);
       this.itemsResource.reload();
       if (saveAndNew) {
@@ -512,7 +521,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         record: current,
       });
     } catch (error) {
-      this.snack.error(this.errorMessage(error));
+      this.snack.error(this.t(this.errorMessage(error)));
     } finally {
       this.saving.set(false);
     }
@@ -525,11 +534,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
     this.mutating.set(true);
     try {
-      await this.api.delete(`${this.config.endpoint}/${this.recordUUID(row)}`);
-      this.snack.success(this.config.deletedMessage);
+      await this.api.delete(`${this.deleteEndpointFor(row)}/${this.recordUUID(row)}`);
+      this.snack.success(this.t(this.config.deletedMessage));
       this.itemsResource.reload();
     } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.config.deleteFailedMessage);
+      this.snack.error(this.t(this.errorMessage(error) || this.config.deleteFailedMessage));
     } finally {
       this.mutating.set(false);
     }
@@ -554,12 +563,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
     this.mutating.set(true);
     try {
-      await this.api.delete(`${this.config.endpoint}/bulk`, { ids });
+      await this.api.delete(this.config.bulkDeleteEndpoint ?? `${this.config.endpoint}/bulk`, {
+        ids,
+      });
       this.selectedUUIDs.set(new Set());
-      this.snack.success(this.config.deletedMessage);
+      this.snack.success(this.t(this.config.deletedMessage));
       this.itemsResource.reload();
     } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.config.deleteFailedMessage);
+      this.snack.error(this.t(this.errorMessage(error) || this.config.deleteFailedMessage));
     } finally {
       this.mutating.set(false);
     }
@@ -842,6 +853,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   columnText(row: T, column: ConfigurableCrudColumn): string {
     const field = column.field ?? column.id;
+    if (column.lookupKey) {
+      return this.lookupLabel(column.lookupKey, row[field]) || this.displayValue(row[field]);
+    }
     if (column.kind === 'boolean') return this.booleanLabel(row[field]);
     if (column.kind === 'date') return this.dateTime.formatDate(this.dateValue(row[field])) || '-';
     if (column.kind === 'datetime' || this.isDateTimeColumn(column, row[field])) {
@@ -866,6 +880,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected onFieldValueChanged(_key: string, _value: unknown): void {}
+
+  protected deleteEndpointFor(row: T): string {
+    const endpoint = this.config.deleteEndpoint;
+    return typeof endpoint === 'function' ? endpoint(row) : (endpoint ?? this.config.endpoint);
+  }
 
   protected patchFormValues(values: ConfigurableCrudRecord): void {
     this.formValues.update((current) => ({ ...current, ...values }));
@@ -946,7 +965,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (next.size !== selected.size) this.enabledCopyActions.set(next);
   }
 
-  private async fetchItems(filters: ConfigurableCrudFilters): Promise<T[]> {
+  protected async fetchItems(filters: ConfigurableCrudFilters): Promise<T[]> {
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
     params.set('offset', '0');
@@ -1243,7 +1262,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       width: '420px',
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
-      data: { title, message, confirmLabel },
+      data: {
+        title: this.t(title),
+        message: this.t(message),
+        confirmLabel: this.t(confirmLabel),
+      },
     });
     return Boolean(await firstValueFrom(ref.afterClosed()));
   }
@@ -1252,11 +1275,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.confirmAction(title, message, 'Delete');
   }
 
-  private errorMessage(error: unknown): string {
+  protected errorMessage(error: unknown): string {
     if (error && typeof error === 'object') {
       const maybe = error as { error?: { error?: string; message?: string }; message?: string };
       return maybe.error?.error ?? maybe.error?.message ?? maybe.message ?? 'Operation failed.';
     }
     return 'Operation failed.';
+  }
+
+  protected t(key: string, params?: Record<string, string | number>): string {
+    return this.transloco.translate(key, params);
   }
 }

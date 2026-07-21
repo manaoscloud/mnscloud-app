@@ -84,6 +84,10 @@ function validateHtml(file) {
   const content = read(file);
   const errors = [];
 
+  // Public invitation/account screens may live next to a CRUD page. This validator is scoped to
+  // CRUD templates and their configured visible labels, not to standalone public flows.
+  if (!content.includes('class="erp-page')) return errors;
+
   for (const match of content.matchAll(/<([a-zA-Z][\w:-]*)\b[^>]*>([^<>{}][^<>]*?)<\/\1>/g)) {
     const [full, tagName, rawText] = match;
     const text = normalizeText(rawText);

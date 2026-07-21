@@ -81,9 +81,18 @@ const tsRules = [
   ['signal query api', /viewChild|viewChildren/],
   ['shared dialog closed binding', 'bindDialogClosed'],
   ['resource read model', /resource\s*\(/],
-  ['computed visible rows', /visibleRows\s*=\s*computed|visibleRows\s*=\s*this\.table\.visibleRows/],
-  ['sort state signals', /sortActive\s*=\s*signal|sortDirection\s*=\s*signal|sortActive\s*=\s*this\.table\.sortActive|sortDirection\s*=\s*this\.table\.sortDirection/],
-  ['page state signals', /pageIndex\s*=\s*signal|pageSize\s*=\s*signal|pageIndex\s*=\s*this\.table\.pageIndex|pageSize\s*=\s*this\.table\.pageSize/],
+  [
+    'computed visible rows',
+    /visibleRows\s*=\s*computed|visibleRows\s*=\s*this\.table\.visibleRows/,
+  ],
+  [
+    'sort state signals',
+    /sortActive\s*=\s*signal|sortDirection\s*=\s*signal|sortActive\s*=\s*this\.table\.sortActive|sortDirection\s*=\s*this\.table\.sortDirection/,
+  ],
+  [
+    'page state signals',
+    /pageIndex\s*=\s*signal|pageSize\s*=\s*signal|pageIndex\s*=\s*this\.table\.pageIndex|pageSize\s*=\s*this\.table\.pageSize/,
+  ],
   ['explicit sort handler', /setSort\s*\(/],
   ['explicit page handler', /setPage\s*\(/],
   ['openCrudTemplateDialog', 'openCrudTemplateDialog'],
@@ -102,10 +111,7 @@ const fkTsRules = [
 
 const forbiddenHtmlRules = [
   ['raw column label', /\{\{\s*column\s*\}\}/],
-  [
-    'native external dialog form submit',
-    /<button\b[^>]*\btype="submit"[^>]*\bform="[^"]+"/i,
-  ],
+  ['native external dialog form submit', /<button\b[^>]*\btype="submit"[^>]*\bform="[^"]+"/i],
   ['legacy data tab label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*t"/],
   ['legacy data tab transloco label', /<mat-tab[^>]*\[label\]="'Data'\s*\|\s*transloco"/],
   ['legacy details tab label', /<mat-tab[^>]*\[label\]="'Details'\s*\|\s*t"/],
@@ -139,6 +145,10 @@ const files = args.flatMap(walk);
 const htmlFiles = files.filter((file) => extname(file) === '.html');
 const tsFiles = files.filter((file) => extname(file) === '.ts');
 const combinedTs = tsFiles.map((file) => readFileSync(file, 'utf8')).join('\n');
+const configurableCrudBase = readFileSync(
+  resolve(root, 'src/app/shared/crud/configurable-crud/configurable-crud-page-base.ts'),
+  'utf8',
+);
 const requiresFkSearchSelect =
   /\blookup\b|domainLookupEnabled|SelectOptions|UUID['"]?,\s*label|realtimeDomainUUID|serverUUID|providerUUID|customerUUID|TenantUUID|EnvironmentUUID/.test(
     combinedTs,
@@ -146,6 +156,8 @@ const requiresFkSearchSelect =
 
 for (const file of htmlFiles) {
   const content = readFileSync(file, 'utf8');
+  // Public pages can share a feature folder with a CRUD page without being CRUDs themselves.
+  if (!content.includes('class="erp-page')) continue;
   const requiredHtmlRules = requiresFkSearchSelect ? [...htmlRules, ...fkHtmlRules] : htmlRules;
   const missing = requiredHtmlRules
     .filter(([, pattern]) => !has(content, pattern))
@@ -164,9 +176,9 @@ for (const file of htmlFiles) {
 for (const file of tsFiles) {
   const content = readFileSync(file, 'utf8');
   if (!content.includes('@Component')) continue;
-  if (!content.includes('erp-page') && !htmlFiles.length) continue;
+  if (!content.includes('ConfigurableCrudPageBase')) continue;
   const requiredTsRules = requiresFkSearchSelect ? [...tsRules, ...fkTsRules] : tsRules;
-  const inheritedContent = `${content}\n${combinedTs}`;
+  const inheritedContent = `${content}\n${combinedTs}\n${configurableCrudBase}`;
   const missing = requiredTsRules
     .filter(([, pattern]) => !has(inheritedContent, pattern))
     .map(([name]) => name);
