@@ -16,6 +16,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AppI18nService } from '../../../../services/app-i18n.service';
 import { DateMaskDirective } from '../../../../shared/date-mask/date-mask.directive';
+import { MnsDateAdapterModule } from '../../../../shared/date-mask/mns-date-adapter.module';
 import { PhoneInputComponent } from '../../../../shared/phone-input/phone-input.component';
 
 @Component({
@@ -34,6 +35,7 @@ import { PhoneInputComponent } from '../../../../shared/phone-input/phone-input.
     MatDatepickerModule,
     TranslocoPipe,
     DateMaskDirective,
+    MnsDateAdapterModule,
     PhoneInputComponent,
   ],
   templateUrl: './invite-accept.html',

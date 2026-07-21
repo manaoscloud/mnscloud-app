@@ -27,6 +27,7 @@ import { ApiService } from '../../services/api.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { PhoneInputComponent } from '../../shared/phone-input/phone-input.component';
 import { DateMaskDirective } from '../../shared/date-mask/date-mask.directive';
+import { MnsDateAdapterModule } from '../../shared/date-mask/mns-date-adapter.module';
 
 type SignupPolicy = {
   captchaEnabled: boolean;
@@ -49,6 +50,7 @@ type SignupPolicy = {
     MatButtonModule,
     PhoneInputComponent,
     DateMaskDirective,
+    MnsDateAdapterModule,
   ],
   templateUrl: './signup.html',
   styleUrls: ['./signup.scss'],

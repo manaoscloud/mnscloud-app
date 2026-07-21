@@ -44,6 +44,7 @@ import {
 } from '../../currency-mask/currency-mask.directive';
 import { DateMaskDirective } from '../../date-mask/date-mask.directive';
 import { formatDateInput, toDateOnly } from '../../date-mask/date-input-format';
+import { MnsDateAdapterModule } from '../../date-mask/mns-date-adapter.module';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../dialog/dialog-events.util';
 import {
@@ -76,6 +77,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   TranslocoPipe,
   CurrencyMaskDirective,
   DateMaskDirective,
+  MnsDateAdapterModule,
 ];
 
 export type ConfigurableCrudRecord = Record<string, unknown>;

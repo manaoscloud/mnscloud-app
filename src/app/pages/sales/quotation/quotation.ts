@@ -34,6 +34,7 @@ import { SystemParameterService } from '../../../services/system-parameter.servi
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive';
+import { MnsDateAdapterModule } from '../../../shared/date-mask/mns-date-adapter.module';
 import { CurrencyMaskDirective } from '../../../shared/currency-mask/currency-mask.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
@@ -146,6 +147,7 @@ const emptyQuotationItemForm = (): QuotationItemFormModel => ({
     MatTabsModule,
     TranslocoPipe,
     DateMaskDirective,
+    MnsDateAdapterModule,
     CurrencyMaskDirective,
     DecimalPipe,
   ],

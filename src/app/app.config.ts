@@ -18,14 +18,14 @@ import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { TitleStrategy } from '@angular/router';
 import { apiInterceptor } from './core/interceptors/api.interceptor';
-import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { provideTransloco, TranslocoService } from '@jsverse/transloco';
 import { AppI18nService, resolveInitialLanguage } from './services/app-i18n.service';
 import { TranslocoHttpLoader } from './services/transloco-loader';
 import { PublicThemeContextService } from './services/public-theme-context.service';
 import { PublicThemeTitleStrategy } from './services/public-theme-title.strategy';
-import { MnsNativeDateAdapter } from './shared/date-mask/mns-native-date-adapter';
+import { MnsDateAdapterModule } from './shared/date-mask/mns-date-adapter.module';
 
 registerLocaleData(localeEn);
 registerLocaleData(localeEs);
@@ -42,7 +42,7 @@ export const appConfig: ApplicationConfig = {
       firstValueFrom(inject(TranslocoService).load(inject(AppI18nService).language())),
     ),
     { provide: TitleStrategy, useClass: PublicThemeTitleStrategy },
-    importProvidersFrom(MatSnackBarModule),
+    importProvidersFrom(MatSnackBarModule, MnsDateAdapterModule),
     provideHttpClient(withXhr(), withInterceptors([apiInterceptor])),
     provideTransloco({
       config: {
@@ -58,7 +58,6 @@ export const appConfig: ApplicationConfig = {
       provide: MAT_DATE_LOCALE,
       useFactory: () => inject(AppI18nService).language(),
     },
-    { provide: DateAdapter, useClass: MnsNativeDateAdapter },
     {
       provide: LOCALE_ID,
       useFactory: () => resolveInitialLanguage(),

@@ -135,6 +135,10 @@
   per component. Do not replace CRUD date fields with plain
   `type="date"` inputs unless the datepicker interaction is explicitly not available for that
   control and the exception is documented in the component.
+- All standalone pages/components that render a Material datepicker must import the shared
+  `MnsDateAdapterModule`, never `MatNativeDateModule`. The shared module provides both the
+  locale-aware `MnsNativeDateAdapter` and Material date formats to the component/dialog injector;
+  this is required for `TemplateRef` forms opened through `MatDialog`.
 - Date-only inputs must serialize at the CRUD/API boundary as a validated `YYYY-MM-DD` value. The
   shared adapter must reject calendar-invalid manual dates before save. Never use timezone-based ISO
   timestamps for date-only data; locale formatting belongs only to the form. The adapter must keep
