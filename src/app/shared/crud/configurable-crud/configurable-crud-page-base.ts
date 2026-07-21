@@ -278,7 +278,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly transloco = inject(TranslocoService);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  private readonly i18n = inject(AppI18nService);
+  private readonly appI18n = inject(AppI18nService);
   protected readonly listLimit = 500;
   protected readonly config: ConfigurableCrudConfig;
 
@@ -1186,22 +1186,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private normalizeDateForPayload(value: unknown): string | null | undefined {
     if (value === null || value === undefined || value === '') return null;
-    return toDateOnly(value, this.i18n.language()) ?? undefined;
+    return toDateOnly(value, this.appI18n.language()) ?? undefined;
   }
 
   private formatDateForInput(value: unknown): string {
     if (value === null || value === undefined || value === '') return '';
     if (value instanceof Date) {
       if (Number.isNaN(value.getTime())) return '';
-      return formatDateInput(value, this.i18n.language());
+      return formatDateInput(value, this.appI18n.language());
     }
     if (typeof value !== 'string') return String(value);
 
     const iso = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
     if (!iso) return value;
-    const normalized = toDateOnly(value, this.i18n.language());
+    const normalized = toDateOnly(value, this.appI18n.language());
     if (!normalized) return value;
-    return formatDateInput(new Date(`${normalized}T00:00:00`), this.i18n.language());
+    return formatDateInput(new Date(`${normalized}T00:00:00`), this.appI18n.language());
   }
 
   protected async confirmAction(
