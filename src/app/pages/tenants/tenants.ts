@@ -10,6 +10,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { TenantsService } from './tenants.service';
+import { AuthService } from '../../services/auth.service';
 import { TenantService } from '../../services/tenant.service';
 
 type TenantAccessEntry = ConfigurableCrudRecord & {
@@ -33,12 +34,12 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
   deleteEndpoint: (row) => (row['EntryType'] === 'INVITE' ? 'user/access/invites' : 'user/access'),
   uuidField: 'EntryUUID',
   pageTitle: 'Tenants',
-  pageDescription: 'Manage tenant members and pending invitations for this environment.',
+  pageDescription: 'Manage tenant members and invitations for this environment.',
   createTitle: 'Invite a Member',
   editTitle: 'Edit tenant access',
   dialogDescription: 'Send a tenant access invitation by email.',
   searchPlaceholder: 'Tenant member or email',
-  emptyLabel: 'No tenant members or pending invitations found.',
+  emptyLabel: 'No tenant members or invitations found.',
   deleteTitle: 'Remove tenant access',
   deleteMessage: 'Are you sure you want to remove this tenant access or cancel its invitation?',
   deleteSelectedTitle: 'Remove selected tenant access entries',
@@ -102,12 +103,16 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
 })
 export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEntry> {
   private readonly tenantsService = inject(TenantsService);
+  private readonly auth = inject(AuthService);
   private readonly tenantService = inject(TenantService);
-  private readonly canManageTenant = computed(() =>
-    ['OWNER', 'ADMIN'].includes(
-      String(this.tenantService.selectedTenant()?.Role ?? '').toUpperCase(),
-    ),
-  );
+  private readonly canManageTenant = computed(() => {
+    const environmentRole = String(this.tenantService.selectedTenant()?.Role ?? '').toUpperCase();
+    const accountRole = String(this.auth.user()?.role ?? '').toUpperCase();
+    return (
+      ['MASTER', 'OWNER', 'ADMIN'].includes(environmentRole) ||
+      ['MASTER', 'OWNER', 'ADMIN'].includes(accountRole)
+    );
+  });
 
   override readonly canCreate = computed(() => this.canManageTenant());
   override readonly canDelete = computed(() => this.canManageTenant());
@@ -140,8 +145,6 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
   protected override async fetchItems(
     filters: ConfigurableCrudFilters,
   ): Promise<TenantAccessEntry[]> {
-    if (!this.canManageTenant()) return [];
-
     const [membersResponse, invitesResponse] = await Promise.all([
       this.tenantsService.getEnvironmentAccess(),
       this.tenantsService.listInvites(),
