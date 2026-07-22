@@ -111,7 +111,7 @@ function config(): ConfigurableCrudConfig {
         key: 'runtime-status',
         label: 'Runtime status',
         tooltip: 'Inspect trunk runtime status',
-        icon: 'monitoring',
+        icon: 'terminal',
       },
     ],
     tabLabels: {
