@@ -129,7 +129,6 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       { key: 'name', source: 'name', label: 'Name', required: true, span: 1 },
-      { key: 'host', source: 'host', label: 'Host', required: true, tab: 'network', span: 1 },
       {
         key: 'port',
         source: 'port',
@@ -196,6 +195,14 @@ function config(): ConfigurableCrudConfig {
         span: 1,
         hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
         requiredWhen: ({ values }) => ['digest', 'register'].includes(String(values['authMode'])),
+      },
+      {
+        key: 'host',
+        source: 'host',
+        label: 'Host',
+        required: true,
+        tab: 'authentication',
+        span: 1,
       },
       {
         key: 'realm',
