@@ -3237,5 +3237,17 @@
   "No PABX trunks found.": "Nenhum tronco PABX encontrado.",
   "PABX trunk deleted successfully.": "Tronco PABX excluído com sucesso.",
   "PABX trunk saved successfully.": "Tronco PABX salvo com sucesso.",
-  "PABX Trunks": "Troncos PABX"
+  "PABX Trunks": "Troncos PABX",
+  "Runtime status": "Status de runtime",
+  "Inspect trunk runtime status": "Consultar status de runtime do tronco",
+  "PABX trunk runtime status": "Status de runtime do tronco PABX",
+  "Read-only registration and connectivity diagnostic from the assigned PABX server.": "Diagnóstico somente leitura de registro e conectividade do servidor PABX atribuído.",
+  "Checking runtime status…": "Consultando status de runtime…",
+  "Checking": "Consultando",
+  "Command output": "Saída do comando",
+  "Runtime name": "Nome de runtime",
+  "Observed at": "Consultado em",
+  "Error code": "Código do erro",
+  "Failed to retrieve runtime diagnostic.": "Falha ao consultar o diagnóstico de runtime.",
+  "The runtime diagnostic timed out. Try again in a moment.": "O diagnóstico de runtime excedeu o tempo limite. Tente novamente em instantes."
 }

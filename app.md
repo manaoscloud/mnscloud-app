@@ -649,6 +649,10 @@
   troubleshooting.
 - The caller remains responsible for authorization, tenant scope, and masking/redacting secrets
   before passing data into the viewer. The viewer must not fetch privileged data by itself.
+- Read-only runtime diagnostics that queue a typed Agent job must use the shared
+  `runRuntimeDiagnostic` helper and render the completed result via `openDataViewerDialog`. They
+  may poll only a fixed resource-specific status endpoint; never expose free-form command input or
+  browser-provided shell arguments.
 - Visible labels, section names, copy/close actions, and snackbar messages must be present in every
   Transloco dictionary.
 
