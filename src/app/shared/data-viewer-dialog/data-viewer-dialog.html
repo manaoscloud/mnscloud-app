@@ -53,12 +53,19 @@
 
           @if (section.code; as block) {
             <div class="data-viewer-code-header">
-              <span>{{ block.title || section.title | transloco }}</span>
+              @if (block.title && block.title !== section.title) {
+                <span>{{ block.title | transloco }}</span>
+              }
               <div class="data-viewer-code-actions">
                 @if (block.download; as download) {
-                  <button mat-stroked-button color="primary" type="button" (click)="downloadCode(block)">
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    type="button"
+                    (click)="downloadCode(block)"
+                  >
                     <mat-icon>download</mat-icon>
-                    {{ (download.label || 'Download') | transloco }}
+                    {{ download.label || 'Download' | transloco }}
                   </button>
                 }
                 @if (block.copy) {
