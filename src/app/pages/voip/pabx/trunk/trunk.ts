@@ -5,8 +5,10 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -98,11 +100,19 @@ function config(): ConfigurableCrudConfig {
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
-      { id: 'pabx', label: 'PABX', kind: 'text', field: 'pabxName' },
+      { id: 'pabx', label: 'PABX', kind: 'identity', field: 'pabxName', uuidField: 'pabxUUID' },
       { id: 'direction', label: 'Direction', kind: 'text', field: 'direction' },
       { id: 'host', label: 'Host', kind: 'text', field: 'host' },
       { id: 'authMode', label: 'Authentication mode', kind: 'text', field: 'authMode' },
       { id: 'status', label: 'Status', kind: 'status', field: 'enabled' },
+    ],
+    rowActions: [
+      {
+        key: 'runtime-status',
+        label: 'Runtime status',
+        tooltip: 'Inspect trunk runtime status',
+        icon: 'monitoring',
+      },
     ],
     tabLabels: {
       network: 'Connection',
@@ -284,6 +294,19 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
       priority: Number(payload['priority'] ?? 100),
       codecs: codecList(payload['codecs']).join(',') || null,
     };
+  }
+
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key !== 'runtime-status') return;
+    const uuid = String(row['uuid'] ?? '').trim();
+    if (!uuid) return;
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'PABX trunk runtime status',
+      description:
+        'Read-only registration and connectivity diagnostic from the assigned PABX server.',
+      startEndpoint: `voip/pabx/trunks/${uuid}/runtime-status`,
+      statusEndpoint: (jobUUID) => `voip/pabx/trunks/${uuid}/runtime-status/${jobUUID}`,
+    });
   }
 
   private async loadPabxOptions(): Promise<void> {

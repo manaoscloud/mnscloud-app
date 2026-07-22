@@ -3237,5 +3237,17 @@
   "No PABX trunks found.": "No PABX trunks found.",
   "PABX trunk deleted successfully.": "PABX trunk deleted successfully.",
   "PABX trunk saved successfully.": "PABX trunk saved successfully.",
-  "PABX Trunks": "PABX Trunks"
+  "PABX Trunks": "PABX Trunks",
+  "Runtime status": "Runtime status",
+  "Inspect trunk runtime status": "Inspect trunk runtime status",
+  "PABX trunk runtime status": "PABX trunk runtime status",
+  "Read-only registration and connectivity diagnostic from the assigned PABX server.": "Read-only registration and connectivity diagnostic from the assigned PABX server.",
+  "Checking runtime status…": "Checking runtime status…",
+  "Checking": "Checking",
+  "Command output": "Command output",
+  "Runtime name": "Runtime name",
+  "Observed at": "Observed at",
+  "Error code": "Error code",
+  "Failed to retrieve runtime diagnostic.": "Failed to retrieve runtime diagnostic.",
+  "The runtime diagnostic timed out. Try again in a moment.": "The runtime diagnostic timed out. Try again in a moment."
 }
