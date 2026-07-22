@@ -110,7 +110,7 @@ function config(): ConfigurableCrudConfig {
       {
         key: 'runtime-status',
         label: 'Runtime status',
-        tooltip: 'Synchronize and inspect trunk runtime status',
+        tooltip: 'Inspect trunk runtime status',
         icon: 'terminal',
       },
     ],
@@ -303,7 +303,7 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
     void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
       title: 'PABX trunk runtime status',
       description:
-        'Synchronizes the assigned PABX runtime, then reads its outbound registration and connectivity status.',
+        'Reads the outbound registration and connectivity status from the assigned PABX runtime.',
       startEndpoint: `voip/pabx/trunks/${uuid}/runtime-status`,
       statusEndpoint: (jobUUID) => `voip/pabx/trunks/${uuid}/runtime-status/${jobUUID}`,
     });
