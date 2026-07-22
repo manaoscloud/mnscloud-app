@@ -239,7 +239,7 @@ function config(): ConfigurableCrudConfig {
         type: 'multi-select',
         options: codecs,
         tab: 'codecs',
-        span: 4,
+        span: 1,
         fromRecord: (value) => codecList(value),
       },
     ],
