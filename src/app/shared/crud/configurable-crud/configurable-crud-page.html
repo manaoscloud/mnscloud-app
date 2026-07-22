@@ -387,6 +387,22 @@
                         }
                       </button>
                     }
+                    @if (field.type === 'password') {
+                      <button
+                        mat-icon-button
+                        matSuffix
+                        type="button"
+                        [matTooltip]="
+                          (isPasswordVisible(field.key)
+                            ? 'signin.hidePassword'
+                            : 'signin.showPassword'
+                          ) | transloco
+                        "
+                        (click)="togglePasswordVisibility(field.key)"
+                      >
+                        <mat-icon>{{ isPasswordVisible(field.key) ? 'visibility_off' : 'visibility' }}</mat-icon>
+                      </button>
+                    }
                   </mat-form-field>
                 }
               }
@@ -756,6 +772,24 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'password') {
+                        <button
+                          mat-icon-button
+                          matSuffix
+                          type="button"
+                          [matTooltip]="
+                            (isPasswordVisible(field.key)
+                              ? 'signin.hidePassword'
+                              : 'signin.showPassword'
+                            ) | transloco
+                          "
+                          (click)="togglePasswordVisibility(field.key)"
+                        >
+                          <mat-icon>{{
+                            isPasswordVisible(field.key) ? 'visibility_off' : 'visibility'
+                          }}</mat-icon>
+                        </button>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -990,6 +1024,24 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
+                      @if (field.type === 'password') {
+                        <button
+                          mat-icon-button
+                          matSuffix
+                          type="button"
+                          [matTooltip]="
+                            (isPasswordVisible(field.key)
+                              ? 'signin.hidePassword'
+                              : 'signin.showPassword'
+                            ) | transloco
+                          "
+                          (click)="togglePasswordVisibility(field.key)"
+                        >
+                          <mat-icon>{{
+                            isPasswordVisible(field.key) ? 'visibility_off' : 'visibility'
+                          }}</mat-icon>
+                        </button>
+                      }
                     </mat-form-field>
                   }
                 }

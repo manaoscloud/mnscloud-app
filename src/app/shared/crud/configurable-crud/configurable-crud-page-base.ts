@@ -293,6 +293,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly listFilterValues = signal<Record<string, string | number | boolean | null>>({});
   readonly appliedFilters = signal<ConfigurableCrudFilters>({ search: '', status: '', extra: {} });
   readonly selectedUUIDs = signal(new Set<string>());
+  readonly revealedPasswordFields = signal<ReadonlySet<string>>(new Set());
   readonly sortActive = signal('');
   readonly sortDirection = signal<SortDirection>('');
   readonly pageIndex = signal(0);
@@ -483,6 +484,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   startCreate(): void {
     if (!this.canCreate()) return;
     this.dateDrafts.clear();
+    this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(null);
     this.formValues.set(this.emptyFormValues());
     this.enabledCopyActions.set(this.defaultCopyActionKeys());
@@ -495,6 +497,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   startEdit(row: T): void {
     if (!this.canEdit()) return;
     this.dateDrafts.clear();
+    this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(row);
     this.formValues.set(this.formValuesFromRecord(row));
     this.enabledCopyActions.set(this.inferredCopyActionKeys());
@@ -600,6 +603,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   closeDialog(): void {
     this.dateDrafts.clear();
+    this.revealedPasswordFields.set(new Set());
     this.dialogBinding?.ref.close();
   }
 
@@ -619,8 +623,23 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   htmlInputType(field: ConfigurableCrudField): 'email' | 'number' | 'password' | 'text' {
     if (field.type === 'number') return 'number';
     if (field.type === 'email') return 'email';
-    if (field.type === 'password') return 'password';
+    if (field.type === 'password') {
+      return this.revealedPasswordFields().has(field.key) ? 'text' : 'password';
+    }
     return 'text';
+  }
+
+  isPasswordVisible(key: string): boolean {
+    return this.revealedPasswordFields().has(key);
+  }
+
+  togglePasswordVisibility(key: string): void {
+    this.revealedPasswordFields.update((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   /** Value binding for MatDatepickerInput must always be a Date or null, never typed text. */
