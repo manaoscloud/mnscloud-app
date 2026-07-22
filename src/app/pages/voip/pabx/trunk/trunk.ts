@@ -182,6 +182,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Username',
         tab: 'authentication',
         span: 1,
+        breakBefore: true,
         hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
         requiredWhen: ({ values }) => ['digest', 'register'].includes(String(values['authMode'])),
       },
@@ -202,6 +203,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Realm',
         tab: 'authentication',
         span: 1,
+        breakBefore: true,
         hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
       },
       {
