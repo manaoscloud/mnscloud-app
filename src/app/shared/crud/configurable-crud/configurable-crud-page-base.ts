@@ -126,6 +126,8 @@ export type ConfigurableCrudField = {
     | 'address'
     | 'financial'
     | 'network'
+    | 'routing'
+    | 'storage'
     | 'monitoring'
     | 'match'
     | 'authentication'
@@ -367,6 +369,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly networkFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'network'),
+  );
+  readonly routingFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'routing'),
+  );
+  readonly storageFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'storage'),
   );
   readonly monitoringFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'monitoring'),
