@@ -68,7 +68,7 @@ function config(): ConfigurableCrudConfig {
     inactiveValue: 0,
     statusOptions: statuses,
     bulkDelete: true,
-    tabLabels: { match: 'Match', transform: 'Transform', network: 'Routing' },
+    tabLabels: { match: 'Criteria', transform: 'Transform', network: 'Routing' },
     initialValues: {
       enabled: 1,
       dialPlanUUID: '',
@@ -148,7 +148,7 @@ function config(): ConfigurableCrudConfig {
         source: 'pattern',
         label: 'Expression',
         required: true,
-        span: 2,
+        span: 1,
         tab: 'match',
       },
       {
@@ -169,6 +169,7 @@ function config(): ConfigurableCrudConfig {
         options: yesNo,
         span: 1,
         tab: 'match',
+        hiddenWhen: ({ values }) => values['operator'] === 'regex',
       },
       {
         key: 'stripDigits',
@@ -208,10 +209,10 @@ function config(): ConfigurableCrudConfig {
       {
         key: 'fallbackTrunkUUIDs',
         source: 'fallbackTrunkUUIDs',
-        label: 'Fallback trunks',
+        label: 'Contingency trunks',
         type: 'search-select',
         multiple: true,
-        span: 1,
+        span: 4,
         tab: 'network',
         breakBefore: true,
         fromRecord: (value) => {
