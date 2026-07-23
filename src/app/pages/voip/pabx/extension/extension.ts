@@ -1,1028 +1,576 @@
-import {
-  Component,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-  DestroyRef,
-} from '@angular/core';
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
+import { Component, signal } from '@angular/core';
 
 import {
-  FormField,
-  form as createForm,
-  minLength,
-  pattern,
-  required,
-} from '@angular/forms/signals';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudField,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudSaveContext,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
-import { MatCardModule } from '@angular/material/card';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatMenuModule } from '@angular/material/menu';
-import { firstValueFrom, takeUntil } from 'rxjs';
-
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import {
-  CrudDialogBinding,
-  openCrudTemplateDialog,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { VoipPabxService, VoipPabxAccount } from '../voip-pabx.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
-import {
-  MnsSearchSelectFieldComponent,
-  MnsSearchSelectFieldOption,
-} from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import {
-  VoipPabxExtensionGeneratedCredential,
-  VoipPabxExtensionItem,
-  VoipPabxExtensionService,
-} from './extension.service';
-
-type PabxOption = {
-  value: string;
-  label: string;
-  disabled?: boolean;
-  disabledReason?: string;
+type PabxLookup = ConfigurableCrudOption & {
+  requiresDomain: boolean;
+  domainName: string;
+  defaultCodecs: string[];
 };
 
-type JsonRecord = Record<string, unknown>;
-type CreateMode = 'single' | 'range';
-type ExtensionFormModel = {
-  pabxUUID: string;
-  createMode: CreateMode;
-  extensionRange: string;
-  username: string;
-  password: string;
-  callerIdName: string;
-  callerIdNumber: string;
-  context: string;
-  vmEnabled: number;
-  vmPassword: string;
-  recordCalls: number;
-  outboundCid: string;
-  audioCodecs: string[];
-  videoCodecs: string[];
-  enabled: number;
-  paramsJson: string;
+type ExtensionRecord = ConfigurableCrudRecord & {
+  VpeUUID: string;
+  VpeUsername?: string | null;
+  VpeCodecs?: string | null;
+  PabxName?: string | null;
+  DialPlanName?: string | null;
 };
 
-type ExtensionFilters = {
-  search: string;
-  status: number | '';
-  pabxUUID: string;
-};
+const statusOptions: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Active' },
+  { value: 0, label: 'Inactive' },
+];
 
-const emptyExtensionFilters = (): ExtensionFilters => ({
-  search: '',
-  status: '',
-  pabxUUID: '',
-});
+const yesNoOptions: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const codecOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'OPUS', label: 'OPUS' },
+  { value: 'PCMU', label: 'PCMU' },
+  { value: 'PCMA', label: 'PCMA' },
+  { value: 'G722', label: 'G722' },
+  { value: 'G729', label: 'G729' },
+  { value: 'H264', label: 'H264' },
+];
+
+const fields: readonly ConfigurableCrudField[] = [
+  {
+    key: 'enabled',
+    label: 'Status',
+    source: 'VpeEnabled',
+    type: 'status',
+    tab: 'record',
+    span: 1,
+    options: statusOptions,
+  },
+  {
+    key: 'pabxUUID',
+    label: 'PABX',
+    payloadKey: 'pabxUUID',
+    source: 'VoipPabxAccountVpaUUID',
+    type: 'search-select',
+    tab: 'record',
+    span: 1,
+    required: true,
+    placeholder: 'Search PABX',
+    autocomplete: 'off',
+  },
+  {
+    key: 'createMode',
+    label: 'Creation mode',
+    type: 'select',
+    tab: 'record',
+    span: 1,
+    hiddenWhen: ({ editing }) => editing,
+    options: [
+      { value: 'single', label: 'Single' },
+      { value: 'range', label: 'Range' },
+    ],
+  },
+  {
+    key: 'username',
+    label: 'Extension',
+    payloadKey: 'username',
+    source: 'VpeUsername',
+    type: 'text',
+    tab: 'record',
+    span: 1,
+    requiredWhen: ({ editing, values }) => editing || values['createMode'] !== 'range',
+    hiddenWhen: ({ editing, values }) => !editing && values['createMode'] === 'range',
+    autocomplete: 'off',
+  },
+  {
+    key: 'extensionRange',
+    label: 'Extension range',
+    type: 'text',
+    tab: 'record',
+    span: 1,
+    requiredWhen: ({ editing, values }) => !editing && values['createMode'] === 'range',
+    hiddenWhen: ({ editing, values }) => editing || values['createMode'] !== 'range',
+    placeholder: 'Example: 1000-1010',
+    autocomplete: 'off',
+  },
+  {
+    key: 'callerIdName',
+    label: 'Caller ID name',
+    payloadKey: 'callerIdName',
+    source: 'VpeCallerIdName',
+    type: 'text',
+    tab: 'routing',
+    span: 1,
+    autocomplete: 'off',
+  },
+  {
+    key: 'callerIdNumber',
+    label: 'Caller ID number',
+    payloadKey: 'callerIdNumber',
+    source: 'VpeCallerIdNumber',
+    type: 'text',
+    tab: 'routing',
+    span: 1,
+    autocomplete: 'off',
+  },
+  {
+    key: 'context',
+    label: 'Context',
+    payloadKey: 'context',
+    source: 'VpeContext',
+    type: 'text',
+    tab: 'routing',
+    span: 1,
+    autocomplete: 'off',
+  },
+  {
+    key: 'outboundCid',
+    label: 'Outbound caller ID',
+    payloadKey: 'outboundCid',
+    source: 'VpeOutboundCid',
+    type: 'text',
+    tab: 'routing',
+    span: 1,
+    autocomplete: 'off',
+  },
+  {
+    key: 'dialPlanUUID',
+    label: 'Dial plan',
+    payloadKey: 'dialPlanUUID',
+    source: 'VoipPabxDialPlanVdpUUID',
+    type: 'search-select',
+    tab: 'routing',
+    span: 1,
+    placeholder: 'Search dial plan',
+    autocomplete: 'off',
+  },
+  {
+    key: 'vmEnabled',
+    label: 'Voicemail enabled',
+    payloadKey: 'vmEnabled',
+    source: 'VpeVmEnabled',
+    type: 'select',
+    tab: 'monitoring',
+    span: 1,
+    options: yesNoOptions,
+  },
+  {
+    key: 'vmPassword',
+    label: 'Voicemail password',
+    payloadKey: 'vmPassword',
+    source: 'VpeVmPassword',
+    type: 'password',
+    tab: 'monitoring',
+    span: 1,
+    hiddenWhen: ({ values }) => !toBoolean(values['vmEnabled']),
+    autocomplete: 'new-password',
+  },
+  {
+    key: 'recordCalls',
+    label: 'Call recording',
+    payloadKey: 'recordCalls',
+    source: 'VpeRecordCalls',
+    type: 'select',
+    tab: 'monitoring',
+    span: 1,
+    options: yesNoOptions,
+  },
+  {
+    key: 'codecs',
+    label: 'Codecs',
+    payloadKey: 'codecs',
+    source: 'VpeCodecs',
+    type: 'multi-select',
+    tab: 'codecs',
+    span: 1,
+    options: codecOptions,
+    fromRecord: (value) => splitCodecs(value),
+  },
+  {
+    key: 'params',
+    label: 'Engine configuration',
+    payloadKey: 'params',
+    source: 'VpeParamsJson',
+    format: 'json',
+    type: 'textarea',
+    tab: 'notes',
+    span: 4,
+    rows: 4,
+    placeholder: '{}',
+  },
+];
+
+const config: ConfigurableCrudConfig = {
+  endpoint: 'voip/pabx/extensions',
+  bulkDeleteEndpoint: 'voip/pabx/extensions/bulk',
+  uuidField: 'VpeUUID',
+  pageTitle: 'PABX Extensions',
+  pageDescription: 'Manage extensions linked to tenant PABX accounts.',
+  createTitle: 'New PABX extension',
+  editTitle: 'Edit PABX extension',
+  dialogDescription:
+    'Maintain extension identity, routing, voicemail, codecs, and engine settings.',
+  searchPlaceholder: 'Extension, caller ID, PABX, domain...',
+  emptyLabel: 'No PABX extensions found.',
+  deleteTitle: 'Delete PABX extension',
+  deleteMessage: 'Are you sure you want to delete this PABX extension?',
+  deleteSelectedTitle: 'Delete selected PABX extensions',
+  deleteSelectedMessage: 'Are you sure you want to delete {count} selected PABX extensions?',
+  savedMessage: 'PABX extension saved successfully.',
+  deletedMessage: 'PABX extension deleted successfully.',
+  deleteFailedMessage: 'Failed to delete PABX extension.',
+  fields,
+  columns: [
+    {
+      id: 'username',
+      label: 'Extension',
+      field: 'VpeUsername',
+      kind: 'identity',
+      uuidField: 'VpeUUID',
+    },
+    { id: 'pabx', label: 'PABX', field: 'PabxName', kind: 'text' },
+    { id: 'domain', label: 'Domain', field: 'DomainName', kind: 'text' },
+    { id: 'engine', label: 'Engine', field: 'VpeEngine', kind: 'text' },
+    { id: 'dialPlan', label: 'Dial plan', field: 'DialPlanName', kind: 'text' },
+    { id: 'recordCalls', label: 'Call recording', field: 'VpeRecordCalls', kind: 'boolean' },
+    { id: 'status', label: 'Status', field: 'VpeEnabled', kind: 'status' },
+  ],
+  initialValues: {
+    enabled: 1,
+    pabxUUID: '',
+    createMode: 'single',
+    extensionRange: '',
+    username: '',
+    callerIdName: '',
+    callerIdNumber: '',
+    context: 'public',
+    outboundCid: '',
+    dialPlanUUID: '',
+    vmEnabled: 0,
+    vmPassword: '',
+    recordCalls: 0,
+    codecs: [],
+    params: '{}',
+  },
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  statusOptions,
+  listFilters: [
+    {
+      key: 'pabxUUID',
+      label: 'PABX',
+      paramKey: 'pabxUUID',
+      type: 'search-select',
+      span: 1,
+      placeholder: 'Search PABX',
+      emptyLabel: 'No PABX accounts found.',
+    },
+  ],
+  bulkDelete: true,
+  statusFilter: true,
+  tabLabels: {
+    record: 'Record',
+    routing: 'Routing',
+    monitoring: 'Voicemail',
+    codecs: 'Codecs',
+    notes: 'Advanced',
+  },
+};
 
 @Component({
   selector: 'app-voip-pabx-extension',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatCardModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatCheckboxModule,
-    MatMenuModule,
-    MnsSearchSelectFieldComponent,
-  ],
-  templateUrl: './extension.html',
-  styleUrls: ['./extension.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.scss',
 })
-export class VoipPabxExtensionPage {
-  private readonly listLimit = 5000;
-  private readonly api = inject(VoipPabxExtensionService);
-  private readonly pabxApi = inject(VoipPabxService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
+export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRecord> {
+  private readonly pabxOptionsState = signal<readonly PabxLookup[]>([]);
+  private readonly dialPlanOptionsState = signal<readonly ConfigurableCrudOption[]>([]);
+  private readonly lookupsLoading = signal(false);
 
-  readonly pageTitle = computed(() => 'PABX Extension');
-  readonly pageSubtitle = computed(() => 'Manage extensions linked to tenant PABX accounts.');
-
-  private readonly mutating = signal(false);
-  readonly saving = signal(false);
-  readonly deletingSelected = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly editing = signal<VoipPabxExtensionItem | null>(null);
-  readonly generatedCredentials = signal<VoipPabxExtensionGeneratedCredential[]>([]);
-  readonly rows = computed(() => this.extensionsResource.value());
-  readonly table = createSignalCrudTable<VoipPabxExtensionItem>(this.rows, (row, column) => this.sortValue(row, column));
-  readonly sortActive = this.table.sortActive;
-  readonly sortDirection = this.table.sortDirection;
-  readonly pageIndex = this.table.pageIndex;
-  readonly pageSize = this.table.pageSize;
-  readonly sortedRows = this.table.sortedRows;
-  readonly visibleRows = this.table.visibleRows;
-  private readonly appliedFilters = signal<ExtensionFilters>(emptyExtensionFilters());
-  private readonly extensionsResource = resource({
-    params: () => this.appliedFilters(),
-    defaultValue: [] as VoipPabxExtensionItem[],
-    loader: ({ params }) => this.fetchExtensions(params),
-  });
-  readonly loading = computed(() => this.extensionsResource.isLoading() || this.mutating());
-  readonly displayedColumns = [
-    'select',
-    'username',
-    'password',
-    'pabx',
-    'domain',
-    'engine',
-    'recording',
-    'status',
-    'actions',
-  ];
-  readonly selectedExtensionUUIDs = new Set<string>();
-  search = '';
-  readonly searchInput = signal('');
-  readonly statusFilter = signal<number | ''>('');
-  readonly pabxFilter = signal('');
-
-  pabxOptions: PabxOption[] = [];
-  private readonly pabxMap = new Map<string, VoipPabxAccount>();
-  readonly pabxSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
-    this.pabxOptions.map((option) => ({
-      value: option.value,
-      label: option.label,
-      disabled: option.disabled,
-      description: option.disabledReason,
-      searchText: option.value,
-    })),
-  );
-  readonly pabxFilterOptions = computed<MnsSearchSelectFieldOption[]>(() => [
-    { value: '', label: 'All', searchText: 'All' },
-    ...this.pabxSelectOptions(),
-  ]);
-
-  readonly statusOptions = [
-    { value: 1, label: 'Active' },
-    { value: 0, label: 'Inactive' },
-  ];
-
-  readonly vmOptions = [
-    { value: 1, label: 'Enabled' },
-    { value: 0, label: 'Disabled' },
-  ];
-
-  readonly recordingOptions = [
-    { value: 1, label: 'Enabled' },
-    { value: 0, label: 'Disabled' },
-  ];
-
-  private readonly defaultAudioCodecs = ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'];
-  private readonly defaultVideoCodecs = ['H264'];
-  audioCodecOptions: string[] = this.defaultAudioCodecs;
-  videoCodecOptions: string[] = this.defaultVideoCodecs;
-  codecDefaultHint = '';
-
-  readonly formModel = signal<ExtensionFormModel>(this.emptyFormModel());
-  readonly form = createForm(this.formModel, (schema) => {
-    required(schema.pabxUUID);
-    required(schema.context);
-    required(schema.username, { when: () => this.editing() !== null || this.isSingleMode() });
-    minLength(schema.username, 1, { when: () => this.editing() !== null || this.isSingleMode() });
-    required(schema.password, { when: () => this.editing() === null && this.isSingleMode() });
-    required(schema.extensionRange, { when: () => this.isRangeMode() });
-    pattern(schema.extensionRange, /^\s*\d+\s*-\s*\d+\s*$/, { when: () => this.isRangeMode() });
-    pattern(schema.vmPassword, /^\d{6}$/, {
-      when: () => this.formModel().vmPassword.trim().length > 0,
-    });
-  });
-  readonly extensionFormDialog = viewChild<TemplateRef<unknown>>('extensionFormDialog');
-  private extensionFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
-  private readonly extensionsEffect = effect(() => {
-    this.rows();
-    this.reconcileSelection();
-    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
-  });
-  private readonly extensionsErrorEffect = effect(() => {
-    const error = this.extensionsResource.error();
-    if (!error) return;
-    this.error.set(null);
-    this.snack.error(this.extractApiError(error, 'Failed to load extensions.'));
-    this.rows();
-    this.reconcileSelection();
-  });
-
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.closeExtensionDialog();
-  });
-
-  onSearchChange(value: string) {
-    this.searchInput.set(value);
+  constructor() {
+    super(config);
+    void this.loadLookups();
   }
 
-  onPabxFilterChange(value: string) {
-    this.pabxFilter.set(value ?? '');
+  override startEdit(row: ExtensionRecord): void {
+    super.startEdit(row);
+    this.patchFormValues({ createMode: 'single', codecs: splitCodecs(row['VpeCodecs']) });
   }
 
-  onStatusFilterChange(value: number | '') {
-    this.statusFilter.set(value === '' ? '' : (Number(value) as 0 | 1));
-  }
-
-  onFormPabxChange(value: string) {
-    this.updateCodecOptions(value);
-  }
-
-  setSort(sort: Sort): void {
-    this.table.setSort(sort);
-  }
-
-  setPage(page: PageEvent): void {
-    this.table.setPage(page);
-  }
-
-  applySearchFilters() {
-    const nextFilters = this.currentExtensionFilters();
-    this.search = nextFilters.search;
-    if (this.sameExtensionFilters(nextFilters, this.appliedFilters())) {
-      this.extensionsResource.reload();
-    } else {
-      this.appliedFilters.set(nextFilters);
-    }
-  }
-
-  clearSearchFilters() {
-    this.searchInput.set('');
-    this.search = '';
-    this.statusFilter.set('');
-    this.pabxFilter.set('');
-    const nextFilters = emptyExtensionFilters();
-    if (this.sameExtensionFilters(nextFilters, this.appliedFilters())) {
-      this.extensionsResource.reload();
-    } else {
-      this.appliedFilters.set(nextFilters);
-    }
-  }
-
-  refreshList() {
-    this.extensionsResource.reload();
-  }
-
-  startCreate() {
-    this.resetForm();
-    this.error.set(null);
-    this.formModel.update((value) => ({
-      ...value,
-      password: this.generateRandomPassword(16),
-      vmPassword: this.generateRandomVoicemailPassword(6),
-    }));
-    this.updateCodecOptions(this.formModel().pabxUUID);
-    this.openExtensionDialog();
-  }
-
-  startEdit(item: VoipPabxExtensionItem) {
-    this.error.set(null);
-    this.editing.set(item);
-    this.generatedCredentials.set([]);
-    this.formModel.set({
-      pabxUUID: item.VoipPabxAccountVpaUUID,
-      createMode: 'single',
-      extensionRange: '',
-      username: item.VpeUsername ?? '',
-      password: item.VpePassword ?? '',
-      callerIdName: item.VpeCallerIdName ?? '',
-      callerIdNumber: item.VpeCallerIdNumber ?? '',
-      context: item.VpeContext ?? 'default',
-      vmEnabled: item.VpeVmEnabled === 1 ? 1 : 0,
-      vmPassword: item.VpeVmPassword ?? '',
-      recordCalls: item.VpeRecordCalls === 0 ? 0 : 1,
-      outboundCid: item.VpeOutboundCid ?? '',
-      audioCodecs: this.parseAudioCodecs(item.VpeCodecs),
-      videoCodecs: this.parseVideoCodecs(item.VpeCodecs),
-      enabled: item.VpeEnabled === 1 ? 1 : 0,
-      paramsJson: this.formatParams(item.VpeParamsJson),
-    });
-    this.updateCodecOptions(item.VoipPabxAccountVpaUUID);
-    this.openExtensionDialog();
-  }
-
-  cancelEdit() {
-    this.resetForm();
-    this.closeExtensionDialog();
-  }
-
-  onCreateModeChange(value: CreateMode) {
-    this.formModel.update((current) => ({ ...current, createMode: value }));
-    this.generatedCredentials.set([]);
-
-    if (value === 'single' && !this.formModel().password.trim().length) {
-      this.formModel.update((current) => ({
-        ...current,
-        password: this.generateRandomPassword(16),
-      }));
-    }
-
-    if (value === 'range') {
-      // In range mode we let backend generate voicemail passwords per extension.
-      this.formModel.update((current) => ({ ...current, vmPassword: '' }));
-    }
-  }
-
-  isRangeMode() {
-    return !this.editing() && this.formModel().createMode === 'range';
-  }
-
-  isSingleMode() {
-    return !!this.editing() || this.formModel().createMode === 'single';
-  }
-
-  regeneratePassword() {
-    this.formModel.update((current) => ({ ...current, password: this.generateRandomPassword(16) }));
-  }
-
-  regenerateVoicemailPassword() {
-    if (this.editing()) return;
-    this.formModel.update((current) => ({
-      ...current,
-      vmPassword: this.generateRandomVoicemailPassword(6),
-    }));
-  }
-
-  async saveExtension(createAnother = false) {
-    if (this.saving()) {
+  override async saveItem(saveAndNew = false): Promise<void> {
+    if (this.editingRecord() || this.formValues()['createMode'] !== 'range') {
+      await super.saveItem(saveAndNew);
       return;
     }
 
-    if (!this.form().valid()) return;
+    const values = this.formValues();
+    const pabx = this.validateSelectedPabx(values['pabxUUID']);
+    if (!pabx) return;
 
-    const value = this.formModel();
-    const selectedPabx = this.pabxMap.get(value.pabxUUID);
-    const pabxValidationMessage = this.validatePabxForExtension(selectedPabx);
-    if (pabxValidationMessage) {
-      this.snack.warning(pabxValidationMessage);
+    const range = parseRange(values['extensionRange']);
+    if (!range) {
+      this.snack.warning(this.t('Range must follow the format 1000-1010.'));
+      return;
+    }
+    if (range.total > 100) {
+      this.snack.warning(this.t('Range exceeds max size of 100 extensions per operation.'));
       return;
     }
 
-    const effectiveVmPassword =
-      !this.editing() && value.createMode === 'single' && value.vmEnabled === 1
-        ? this.generateRandomVoicemailPassword(6)
-        : value.vmEnabled === 1 && !String(value.vmPassword ?? '').trim().length
-          ? this.generateRandomVoicemailPassword(6)
-          : value.vmPassword;
-    const normalizedVmPassword = String(effectiveVmPassword ?? '').trim();
-
-    if (effectiveVmPassword !== value.vmPassword) {
-      this.formModel.update((current) => ({ ...current, vmPassword: effectiveVmPassword }));
+    const params = parseParams(values['params']);
+    if (params === undefined) {
+      this.snack.warning(this.t('Engine configuration must be valid JSON.'));
+      return;
     }
-
-    const payload = {
-      pabxUUID: value.pabxUUID,
-      username: value.username.trim(),
-      password: value.password ? value.password.trim() : undefined,
-      callerIdName: value.callerIdName || null,
-      callerIdNumber: value.callerIdNumber || null,
-      context: value.context || null,
-      vmEnabled: value.vmEnabled === 1,
-      vmPassword: normalizedVmPassword || undefined,
-      recordCalls: value.recordCalls === 1,
-      outboundCid: value.outboundCid || null,
-      codecs: this.formatCodecs([...value.audioCodecs, ...value.videoCodecs]),
-      params: this.parseParams(value.paramsJson),
-      enabled: value.enabled === 1,
-    };
 
     this.saving.set(true);
-    this.error.set(null);
     try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.update(editing.VpeUUID, payload);
+      const response = await this.api.post('voip/pabx/extensions/bulk', {
+        pabxUUID: pabx.value,
+        range: `${range.start}-${range.end}`,
+        callerIdName: nullableString(values['callerIdName']),
+        callerIdNumber: nullableString(values['callerIdNumber']),
+        context: nullableString(values['context']),
+        outboundCid: nullableString(values['outboundCid']),
+        dialPlanUUID: nullableString(values['dialPlanUUID']),
+        vmEnabled: toBoolean(values['vmEnabled']),
+        vmPassword: nullableString(values['vmPassword']),
+        recordCalls: toBoolean(values['recordCalls']),
+        codecs: splitCodecs(values['codecs']).join(','),
+        params,
+        enabled: toBoolean(values['enabled']),
+      });
+      this.snack.success(this.t('PABX extensions created successfully.'));
+      this.itemsResource.reload();
+      if (saveAndNew) {
+        this.patchFormValues({ extensionRange: '' });
       } else {
-        if (value.createMode === 'range') {
-          const parsedRange = this.parseRange(value.extensionRange);
-          if (!parsedRange) {
-            this.snack.warning('Range must follow the format "1000-1010".');
-            return;
-          }
-
-          if (parsedRange.total > 100) {
-            this.snack.warning('Range exceeds max size of 100 extensions per operation.');
-            return;
-          }
-
-          const response = await this.api.bulkCreate({
-            pabxUUID: payload.pabxUUID,
-            rangeStart: parsedRange.start,
-            rangeEnd: parsedRange.end,
-            callerIdName: payload.callerIdName,
-            callerIdNumber: payload.callerIdNumber,
-            context: payload.context,
-            vmEnabled: payload.vmEnabled,
-            vmPassword: undefined,
-            recordCalls: payload.recordCalls,
-            outboundCid: payload.outboundCid,
-            codecs: payload.codecs,
-            params: payload.params,
-            enabled: payload.enabled,
-          });
-
-          this.generatedCredentials.set(response?.data?.credentials ?? []);
-          this.formModel.update((current) => ({ ...current, extensionRange: '' }));
-          this.extensionsResource.reload();
-          const skipped = Array.isArray(response?.data?.skippedExisting)
-            ? response.data.skippedExisting.length
-            : 0;
-          if (skipped === 0) {
-            this.snack.success(response?.message || 'Extensions created successfully.');
-            this.cancelEdit();
-            return;
-          }
-          this.error.set(null);
-          this.snack.warning(
-            response?.message || `${skipped} extensions were skipped because they already exist.`,
-          );
-          return;
-        }
-
-        await this.api.create({
-          ...payload,
-          password: payload.password || this.generateRandomPassword(16),
-        });
+        this.closeDialog();
       }
-      this.extensionsResource.reload();
-      if (createAnother && !editing) {
-        this.resetForm();
-        return;
+      this.openGeneratedCredentials(response, pabx.label);
+      const skipped = readArray(response, 'skippedExisting');
+      if (skipped.length) {
+        this.snack.warning(
+          this.t('{count} extensions were skipped because they already exist.', {
+            count: skipped.length,
+          }),
+        );
       }
-      this.cancelEdit();
-    } catch (err: any) {
-      const message = this.extractApiError(err, 'Failed to save extension.');
-      this.error.set(null);
-      this.snack.error(message);
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
     } finally {
       this.saving.set(false);
     }
   }
 
-  saveAndNewExtension() {
-    void this.saveExtension(true);
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const normalized = { ...payload };
+    delete normalized['createMode'];
+    delete normalized['extensionRange'];
+    normalized['enabled'] = toBoolean(normalized['enabled']);
+    normalized['vmEnabled'] = toBoolean(normalized['vmEnabled']);
+    normalized['recordCalls'] = toBoolean(normalized['recordCalls']);
+    normalized['codecs'] = splitCodecs(normalized['codecs']).join(',');
+    normalized['dialPlanUUID'] = nullableString(normalized['dialPlanUUID']);
+    normalized['vmPassword'] = toBoolean(normalized['vmEnabled'])
+      ? nullableString(normalized['vmPassword'])
+      : null;
+    return normalized;
   }
 
-  async removeExtension(item: VoipPabxExtensionItem) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete Extension',
-        message: `Are you sure you want to delete extension "${item.VpeUsername}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      this.mutating.set(true);
-      await this.api.remove(item.VpeUUID);
-      this.selectedExtensionUUIDs.delete(item.VpeUUID);
-      this.extensionsResource.reload();
-      this.snack.success('Extension deleted successfully.');
-    } catch (err: any) {
-      const message = this.extractApiError(err, 'Failed to delete extension.');
-      this.error.set(null);
-      this.snack.error(message);
-    } finally {
-      this.mutating.set(false);
-    }
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'pabxUUID' || this.editingRecord()) return;
+    const pabx = this.pabxOptionsState().find((option) => String(option.value) === String(value));
+    if (pabx) this.patchFormValues({ codecs: pabx.defaultCodecs });
   }
 
-  get selectedCount() {
-    return this.selectedExtensionUUIDs.size;
-  }
-
-  isSelected(item: VoipPabxExtensionItem) {
-    return this.selectedExtensionUUIDs.has(item.VpeUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleExtensionSelection(item: VoipPabxExtensionItem, checked: boolean) {
-    if (checked) {
-      this.selectedExtensionUUIDs.add(item.VpeUUID);
-    } else {
-      this.selectedExtensionUUIDs.delete(item.VpeUUID);
-    }
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.visibleRows().forEach((row) => this.toggleExtensionSelection(row, checked));
-  }
-
-  async removeSelectedExtensions() {
-    const ids = Array.from(this.selectedExtensionUUIDs);
-    if (!ids.length) return;
-
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete Selected Extensions',
-        message: `Are you sure you want to delete ${ids.length} selected PABX extension(s)?`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.deletingSelected.set(true);
-    this.error.set(null);
-    try {
-      const response = await this.api.removeMany(ids);
-      const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = new Set<string>(
-        (response?.data?.failed ?? []).map((item: any) => item.VpeUUID),
-      );
-    this.rows();
-      this.selectedExtensionUUIDs.clear();
-      failed.forEach((uuid) => this.selectedExtensionUUIDs.add(uuid));
-      if (failed.size)
-        this.snack.warning(`${failed.size} selected extension(s) could not be deleted.`);
-      this.extensionsResource.reload();
-    } catch (err: any) {
-      const message = this.extractApiError(err, 'Failed to delete selected extensions.');
-      this.snack.error(message);
-    } finally {
-      this.deletingSelected.set(false);
-    }
-  }
-
-  pabxLabel(pabxUUID: string) {
-    return this.pabxMap.get(pabxUUID)?.VpaName ?? pabxUUID;
-  }
-
-  domainLabel(item: VoipPabxExtensionItem) {
-    if (item.DomainName) return item.DomainName;
-    const pabx = this.pabxMap.get(item.VoipPabxAccountVpaUUID);
-    return pabx?.DomainName ?? '-';
-  }
-
-  async copyValue(value: string | null | undefined, label: string) {
-    const text = String(value ?? '').trim();
-    if (!text.length) {
-      this.snack.warning(`No ${label.toLowerCase()} available to copy.`);
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(text);
-      this.snack.success(`${label} copied.`);
-    } catch {
-      this.snack.error(`Failed to copy ${label.toLowerCase()}.`);
-    }
-  }
-
-  private applyFilter() {
-    this.table.setPage({ pageIndex: 0, pageSize: this.pageSize(), length: this.sortedRows().length });
-  }
-
-  private reconcileSelection() {
-    const validIds = new Set(this.rows().map((row) => row.VpeUUID));
-    Array.from(this.selectedExtensionUUIDs).forEach((uuid) => {
-      if (!validIds.has(uuid)) this.selectedExtensionUUIDs.delete(uuid);
-    });
-  }
-
-  private matchesFilters(item: VoipPabxExtensionItem) {
-    const searchValue = this.search.trim().toLowerCase();
-    if (searchValue) {
-      const fields = [
-        item.VpeUsername,
-        item.VpeCallerIdName,
-        item.VpeCallerIdNumber,
-        item.VpeEngine,
-        item.PabxName,
-        item.DomainName,
-        this.pabxLabel(item.VoipPabxAccountVpaUUID),
-      ]
-        .filter(Boolean)
-        .map((value) => String(value).toLowerCase());
-      if (!fields.some((value) => value.includes(searchValue))) {
-        return false;
-      }
-    }
-
-    if (this.statusFilter() !== '' && item.VpeEnabled !== this.statusFilter()) {
-      return false;
-    }
-
-    if (this.pabxFilter() && item.VoipPabxAccountVpaUUID !== this.pabxFilter()) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private sortValue(item: VoipPabxExtensionItem, column: string): string | number {
-    switch (column) {
-      case 'username':
-        return this.normalizeSortText(item.VpeUsername);
-      case 'password':
-        return this.normalizeSortText(item.VpePassword);
-      case 'pabx':
-        return this.normalizeSortText(item.PabxName || this.pabxLabel(item.VoipPabxAccountVpaUUID));
-      case 'domain':
-        return this.normalizeSortText(this.domainLabel(item));
-      case 'engine':
-        return this.normalizeSortText(item.VpeEngine);
-      case 'recording':
-        return Number(item.VpeRecordCalls ?? 1);
-      case 'status':
-        return Number(item.VpeEnabled ?? 0);
-      default:
-        return this.normalizeSortText((item as Record<string, unknown>)[column]);
-    }
-  }
-
-  private normalizeSortText(value: unknown): string {
-    return String(value ?? '')
-      .trim()
-      .toLowerCase();
-  }
-
-  private async fetchPabxOptions() {
-    const response = await this.pabxApi.list({ limit: this.listLimit });
-    const accounts: VoipPabxAccount[] = response?.data?.items ?? [];
-    this.pabxMap.clear();
-    accounts.forEach((item) => this.pabxMap.set(item.VpaUUID, item));
-    this.pabxOptions = accounts
-      .filter((item) => item.VpaIsActive === 1)
-      .map((item) => {
-        const validationMessage = this.validatePabxForExtension(item);
-        return {
-          value: item.VpaUUID,
-          label: `${item.VpaName} (${item.DomainName ?? 'no-domain'})`,
-          disabled: !!validationMessage,
-          disabledReason: validationMessage ?? undefined,
-        };
-      });
-    this.updateCodecOptions(this.formModel().pabxUUID);
-  }
-
-  private async fetchExtensions(filters: ExtensionFilters): Promise<VoipPabxExtensionItem[]> {
-    this.error.set(null);
-    await this.fetchPabxOptions();
-    const params = new URLSearchParams();
-    params.set('limit', String(this.listLimit));
-    if (filters.search) params.set('search', filters.search);
-    if (filters.status !== '') params.set('status', String(filters.status));
-    if (filters.pabxUUID) params.set('pabxUUID', filters.pabxUUID);
-    const response = await this.api.list(params);
-    return response?.data?.items ?? [];
-  }
-
-  private currentExtensionFilters(): ExtensionFilters {
-    return {
-      search: this.searchInput().trim(),
-      status: this.statusFilter(),
-      pabxUUID: this.pabxFilter(),
-    };
-  }
-
-  private sameExtensionFilters(left: ExtensionFilters, right: ExtensionFilters) {
-    return (
-      left.search === right.search &&
-      left.status === right.status &&
-      left.pabxUUID === right.pabxUUID
-    );
-  }
-
-  private parseParams(params: string): Record<string, unknown> | null {
-    const trimmed = params.trim();
-    if (!trimmed.length) return null;
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  private formatParams(params: unknown) {
-    if (!params) return '';
-    if (typeof params === 'string') return params;
-    try {
-      return JSON.stringify(params, null, 2);
-    } catch {
-      return '';
-    }
-  }
-
-  private parseCodecs(codecs?: string | null): string[] {
-    if (!codecs) return [];
-    return codecs
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .map((item) => item.toUpperCase());
-  }
-
-  private formatCodecs(codecs: string[]): string {
-    if (!codecs?.length) return '';
-    return codecs
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .join(',');
-  }
-
-  private updateCodecOptions(pabxUUID: string) {
-    const currentSelected = [
-      ...(this.formModel().audioCodecs ?? []),
-      ...(this.formModel().videoCodecs ?? []),
-    ];
-    const pabx = this.pabxMap.get(pabxUUID);
-    const engine = this.resolveEngine(pabx).toLowerCase();
-    const accountDefaults = this.extractAccountDefaultCodecs(pabx);
-    const engineDefaults = this.resolveEngineDefaultCodecs(engine);
-    const effectiveDefaults = accountDefaults.length ? accountDefaults : engineDefaults;
-    const options = this.uniqueCodecs([
-      ...effectiveDefaults,
-      ...engineDefaults,
-      ...currentSelected,
-    ]);
-    this.audioCodecOptions = options.filter((codec) => !this.defaultVideoCodecs.includes(codec));
-    this.videoCodecOptions = this.uniqueCodecs([
-      ...options.filter((codec) => this.defaultVideoCodecs.includes(codec)),
-      ...this.defaultVideoCodecs,
-    ]);
-    this.codecDefaultHint = effectiveDefaults.length
-      ? effectiveDefaults.join(', ')
-      : 'No account default configured.';
-  }
-
-  private resolveEngine(pabx?: VoipPabxAccount): string {
-    return (pabx?.ServerEngine || 'freeswitch').trim();
-  }
-
-  private validatePabxForExtension(pabx?: VoipPabxAccount): string | null {
-    if (!pabx) return 'Select a valid PABX before saving the extension.';
-    if (this.pabxRequiresDomain(pabx) && !pabx.VoipDomainVdmUUID) {
-      return 'Selected PABX requires a domain before creating extensions.';
-    }
-    return null;
-  }
-
-  private pabxRequiresDomain(pabx: VoipPabxAccount): boolean {
-    return this.resolveEngine(pabx).toLowerCase() === 'freeswitch';
-  }
-
-  private resolveEngineDefaultCodecs(_engine: string): string[] {
-    return [...this.defaultAudioCodecs, ...this.defaultVideoCodecs];
-  }
-
-  private extractAccountDefaultCodecs(pabx?: VoipPabxAccount): string[] {
-    return this.uniqueCodecs([
-      ...this.parseCodecs(pabx?.VpaDefaultAudioCodecs),
-      ...this.parseCodecs(pabx?.VpaDefaultVideoCodecs),
-    ]);
-  }
-
-  private parseAudioCodecs(codecs?: string | null): string[] {
-    return this.parseCodecs(codecs).filter((codec) => !this.defaultVideoCodecs.includes(codec));
-  }
-
-  private parseVideoCodecs(codecs?: string | null): string[] {
-    return this.parseCodecs(codecs).filter((codec) => this.defaultVideoCodecs.includes(codec));
-  }
-
-  private parseConfigObject(config: unknown): JsonRecord | null {
-    if (!config) return null;
-    if (typeof config === 'string') {
-      try {
-        const parsed = JSON.parse(config);
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          return parsed as JsonRecord;
-        }
-      } catch {
-        return null;
-      }
-      return null;
-    }
-    if (typeof config === 'object' && !Array.isArray(config)) {
-      return config as JsonRecord;
-    }
-    return null;
-  }
-
-  private readObject(config: JsonRecord, key: string): JsonRecord | null {
-    const value = config[key];
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-    return value as JsonRecord;
-  }
-
-  private readString(config: JsonRecord | null, key: string): string {
-    if (!config) return '';
-    const value = config[key];
-    return typeof value === 'string' ? value : '';
-  }
-
-  private parseCodecList(value: unknown): string[] {
-    if (!value) return [];
-    if (Array.isArray(value)) {
-      return this.uniqueCodecs(value.map((item) => String(item)));
-    }
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (!trimmed.length) return [];
-      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-        try {
-          const parsed = JSON.parse(trimmed);
-          if (Array.isArray(parsed)) return this.uniqueCodecs(parsed.map((item) => String(item)));
-        } catch {
-          return [];
-        }
-      }
-      return this.uniqueCodecs(trimmed.split(',').map((item) => item.trim()));
-    }
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'pabxUUID') return this.pabxOptionsState();
+    if (key === 'dialPlanUUID') return this.dialPlanOptionsState();
     return [];
   }
 
-  private uniqueCodecs(codecs: string[]): string[] {
-    const uniq = new Set<string>();
-    codecs.forEach((codec) => {
-      const normalized = String(codec).trim().toUpperCase();
-      if (normalized) uniq.add(normalized);
-    });
-    return Array.from(uniq);
+  override fieldLoading(field: ConfigurableCrudField): boolean {
+    return field.key === 'pabxUUID' || field.key === 'dialPlanUUID'
+      ? this.lookupsLoading()
+      : super.fieldLoading(field);
   }
 
-  private resetForm() {
-    this.error.set(null);
-    this.editing.set(null);
-    this.generatedCredentials.set([]);
-    this.formModel.set(this.emptyFormModel());
-    this.audioCodecOptions = this.defaultAudioCodecs;
-    this.videoCodecOptions = this.defaultVideoCodecs;
-    this.codecDefaultHint = [...this.defaultAudioCodecs, ...this.defaultVideoCodecs].join(', ');
-  }
-
-  private emptyFormModel(): ExtensionFormModel {
-    return {
-      pabxUUID: '',
-      createMode: 'single',
-      extensionRange: '',
-      username: '',
-      password: '',
-      callerIdName: '',
-      callerIdNumber: '',
-      context: 'default',
-      vmEnabled: 0,
-      vmPassword: '',
-      recordCalls: 1,
-      outboundCid: '',
-      audioCodecs: [],
-      videoCodecs: [],
-      enabled: 1,
-      paramsJson: '',
-    };
-  }
-
-  private parseRange(rangeText: string): { start: number; end: number; total: number } | null {
-    const match = rangeText.trim().match(/^(\d+)\s*-\s*(\d+)$/);
-    if (!match) return null;
-
-    const start = Number(match[1]);
-    const end = Number(match[2]);
-    if (!Number.isInteger(start) || !Number.isInteger(end) || start > end) return null;
-
-    return { start, end, total: end - start + 1 };
-  }
-
-  private extractApiError(err: any, fallback: string): string {
-    const apiError = err?.error;
-    if (typeof apiError === 'string' && apiError.trim().length) return apiError.trim();
-
-    const direct =
-      (typeof apiError?.error === 'string' && apiError.error.trim().length && apiError.error) ||
-      (typeof apiError?.message === 'string' &&
-        apiError.message.trim().length &&
-        apiError.message) ||
-      (typeof err?.message === 'string' && err.message.trim().length && err.message);
-    if (direct) return direct;
-
-    if (apiError && typeof apiError === 'object') {
-      try {
-        const serialized = JSON.stringify(apiError);
-        if (serialized && serialized !== '{}') return serialized;
-      } catch {
-        // ignore serialization failure
-      }
-    }
-
-    return fallback;
-  }
-
-  private generateRandomPassword(length = 16): string {
-    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lower = 'abcdefghijklmnopqrstuvwxyz';
-    const digits = '0123456789';
-    const all = `${upper}${lower}${digits}`;
-    const bytes = new Uint32Array(length + 6);
-    crypto.getRandomValues(bytes);
-
-    const passwordChars = [
-      upper[bytes[0] % upper.length],
-      lower[bytes[1] % lower.length],
-      digits[bytes[2] % digits.length],
-    ];
-
-    for (let i = 3; i < length; i++) {
-      passwordChars.push(all[bytes[i] % all.length]);
-    }
-
-    for (let i = passwordChars.length - 1, j = 3; i > 0; i--, j++) {
-      const swap = bytes[j] % (i + 1);
-      [passwordChars[i], passwordChars[swap]] = [passwordChars[swap], passwordChars[i]];
-    }
-
-    return passwordChars.join('');
-  }
-
-  private generateRandomVoicemailPassword(length = 6): string {
-    const digits = '0123456789';
-    const bytes = new Uint32Array(length);
-    crypto.getRandomValues(bytes);
-    const chars: string[] = [];
-
-    for (let i = 0; i < length; i++) {
-      chars.push(digits[bytes[i] % digits.length]);
-    }
-
-    return chars.join('');
-  }
-
-  private openExtensionDialog() {
-    const extensionFormDialog = this.extensionFormDialog();
-    if (!extensionFormDialog || this.extensionFormDialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      extensionFormDialog,
-      'voip-pabx-extension-form-dialog',
+  protected override async afterSave(
+    context: ConfigurableCrudSaveContext<ExtensionRecord>,
+  ): Promise<void> {
+    if (context.mode !== 'create') return;
+    const pabx = this.pabxOptionsState().find(
+      (option) => String(option.value) === String(context.payload['pabxUUID']),
     );
-    this.extensionFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.extensionFormDialogRef, () => {
-      this.cancelEdit();
-    });
-    bindDialogClosed(this.extensionFormDialogRef, () => {
-      this.dialogBinding?.stop();
-      this.dialogBinding = null;
-      this.extensionFormDialogRef = null;
-    });
+    this.openGeneratedCredentials(context.response, pabx?.label ?? '-');
   }
 
-  private closeExtensionDialog() {
-    this.dialogBinding?.stop();
-    this.dialogBinding = null;
-    this.extensionFormDialogRef?.close();
-    this.extensionFormDialogRef = null;
+  private async loadLookups(): Promise<void> {
+    this.lookupsLoading.set(true);
+    try {
+      const [pabxRows, dialPlanRows] = await Promise.all([
+        this.fetchRows('voip/pabx/accounts?status=1&limit=500&offset=0'),
+        this.fetchRows('voip/pabx/dial-plans?status=1&limit=500&offset=0'),
+      ]);
+      this.pabxOptionsState.set(
+        pabxRows
+          .map((row) => {
+            const domainName = String(row['DomainName'] ?? '').trim();
+            const requiresDomain = toBoolean(row['RequiresDomain']);
+            const name = String(row['VpaName'] ?? row['PabxName'] ?? row['name'] ?? '-');
+            const engine = String(row['VpaEngine'] ?? row['ServerEngine'] ?? '').trim();
+            return {
+              value: String(row['VpaUUID'] ?? row['uuid'] ?? ''),
+              label: name,
+              description: [engine, domainName].filter(Boolean).join(' - ') || undefined,
+              disabled: requiresDomain && !domainName,
+              disabledReason:
+                requiresDomain && !domainName
+                  ? 'PABX account requires a domain before extensions can be provisioned.'
+                  : undefined,
+              requiresDomain,
+              domainName,
+              defaultCodecs: splitCodecs(row['VpaDefaultAudioCodecs']),
+            };
+          })
+          .filter((option) => option.value),
+      );
+      this.dialPlanOptionsState.set(
+        dialPlanRows
+          .map((row) => ({
+            value: String(row['VdpUUID'] ?? row['uuid'] ?? ''),
+            label: String(row['VdpName'] ?? row['name'] ?? '-'),
+          }))
+          .filter((option) => option.value),
+      );
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.lookupsLoading.set(false);
+    }
   }
+
+  private async fetchRows(endpoint: string): Promise<ConfigurableCrudRecord[]> {
+    const response = await this.api.get<unknown>(endpoint);
+    return readRows(response);
+  }
+
+  private validateSelectedPabx(value: unknown): PabxLookup | null {
+    const pabx = this.pabxOptionsState().find(
+      (option) => String(option.value) === String(value ?? ''),
+    );
+    if (!pabx) {
+      this.snack.warning(this.t('Select a PABX account.'));
+      return null;
+    }
+    if (pabx.disabled) {
+      this.snack.warning(
+        this.t('PABX account requires a domain before extensions can be provisioned.'),
+      );
+      return null;
+    }
+    return pabx;
+  }
+
+  private openGeneratedCredentials(response: unknown, pabxName: string): void {
+    const credentials = readArray(response, 'credentials');
+    if (!credentials.length) return;
+    openDataViewerDialog(this.dialog, {
+      title: 'Extension credentials',
+      description: 'Save these credentials now. The password is only shown during provisioning.',
+      status: { value: 'Success', tone: 'success' },
+      details: [{ label: 'PABX', value: pabxName }],
+      sections: [
+        {
+          title: 'Generated credentials',
+          code: {
+            title: 'Credentials',
+            value: credentials,
+            format: 'json',
+            copy: true,
+            download: { filename: 'pabx-extension-credentials.json', label: 'Download' },
+          },
+        },
+      ],
+      closeLabel: 'Close',
+    });
+  }
+}
+
+function toBoolean(value: unknown): boolean {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase();
+  return (
+    value === true ||
+    value === 1 ||
+    ['1', 'true', 'yes', 'y', 'active', 'enabled'].includes(normalized)
+  );
+}
+
+function nullableString(value: unknown): string | null {
+  const normalized = String(value ?? '').trim();
+  return normalized || null;
+}
+
+function splitCodecs(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return String(value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseRange(value: unknown): { start: number; end: number; total: number } | null {
+  const match = String(value ?? '')
+    .trim()
+    .match(/^(\d+)\s*-\s*(\d+)$/);
+  if (!match) return null;
+  const start = Number(match[1]);
+  const end = Number(match[2]);
+  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || end < start) return null;
+  return { start, end, total: end - start + 1 };
+}
+
+function parseParams(value: unknown): Record<string, unknown> | null | undefined {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function readRows(response: unknown): ConfigurableCrudRecord[] {
+  if (Array.isArray(response)) return response as ConfigurableCrudRecord[];
+  const payload = response as { data?: unknown } | null;
+  if (Array.isArray(payload?.data)) return payload.data as ConfigurableCrudRecord[];
+  if (payload?.data && typeof payload.data === 'object') {
+    const data = payload.data as { items?: unknown; rows?: unknown };
+    if (Array.isArray(data.items)) return data.items as ConfigurableCrudRecord[];
+    if (Array.isArray(data.rows)) return data.rows as ConfigurableCrudRecord[];
+  }
+  return [];
+}
+
+function readArray(response: unknown, key: string): ConfigurableCrudRecord[] {
+  const payload = response as { data?: Record<string, unknown> } | null;
+  const value = payload?.data?.[key];
+  return Array.isArray(value) ? (value as ConfigurableCrudRecord[]) : [];
 }

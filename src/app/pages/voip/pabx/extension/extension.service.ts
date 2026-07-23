@@ -12,6 +12,7 @@ export type VoipPabxExtensionItem = {
   VpeCallerIdName?: string | null;
   VpeCallerIdNumber?: string | null;
   VpeContext?: string | null;
+  VoipPabxDialPlanVdpUUID?: string | null;
   VpeVmEnabled: number;
   VpeVmPassword?: string | null;
   VpeRecordCalls: number;
@@ -27,6 +28,7 @@ export type VoipPabxExtensionItem = {
   ServerEngine?: string | null;
   VpaDefaultAudioCodecs?: string | null;
   VpaDefaultVideoCodecs?: string | null;
+  DialPlanName?: string | null;
   RequiresDomain?: number;
 };
 
@@ -53,10 +55,11 @@ export class VoipPabxExtensionService {
   create(payload: {
     pabxUUID: string;
     username: string;
-    password: string;
+    password?: string | null;
     callerIdName?: string | null;
     callerIdNumber?: string | null;
     context?: string | null;
+    dialPlanUUID?: string | null;
     vmEnabled?: boolean;
     vmPassword?: string | null;
     recordCalls?: boolean;
@@ -96,6 +99,7 @@ export class VoipPabxExtensionService {
       callerIdName?: string | null;
       callerIdNumber?: string | null;
       context?: string | null;
+      dialPlanUUID?: string | null;
       vmEnabled?: boolean;
       vmPassword?: string | null;
       recordCalls?: boolean;
