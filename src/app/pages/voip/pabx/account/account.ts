@@ -60,7 +60,11 @@ function config(): ConfigurableCrudConfig {
     inactiveValue: 0,
     statusOptions: statuses,
     bulkDelete: true,
-    tabLabels: { network: 'Routing and Storage' },
+    tabLabels: {
+      routing: 'Routing',
+      storage: 'Storage',
+      codecs: 'Codecs',
+    },
     initialValues: {
       isActive: 1,
       isDefault: 0,
@@ -123,6 +127,15 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
+        key: 'serverUUID',
+        source: 'VoipPabxServerVpsUUID',
+        payloadKey: 'serverUUID',
+        label: 'Server',
+        type: 'search-select',
+        required: true,
+        span: 1,
+      },
+      {
         key: 'customerUUID',
         source: 'CustomerCusUUID',
         payloadKey: 'customerUUID',
@@ -140,12 +153,10 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
-        key: 'serverUUID',
-        source: 'VoipPabxServerVpsUUID',
-        payloadKey: 'serverUUID',
-        label: 'Server',
-        type: 'search-select',
-        required: true,
+        key: 'timezone',
+        source: 'VpaTimezone',
+        payloadKey: 'timezone',
+        label: 'Timezone',
         span: 1,
       },
       {
@@ -155,13 +166,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Dial Plan',
         type: 'search-select',
         required: true,
-        span: 1,
-      },
-      {
-        key: 'timezone',
-        source: 'VpaTimezone',
-        payloadKey: 'timezone',
-        label: 'Timezone',
+        tab: 'routing',
         span: 1,
       },
       {
@@ -170,7 +175,7 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'blacklistUUID',
         label: 'Inbound blacklist',
         type: 'search-select',
-        tab: 'network',
+        tab: 'routing',
         span: 1,
       },
       {
@@ -180,7 +185,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Recording storage',
         type: 'select',
         options: storageModes,
-        tab: 'network',
+        tab: 'storage',
         span: 1,
       },
       {
@@ -189,7 +194,7 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'storageAccountUUID',
         label: 'Recording storage account',
         type: 'search-select',
-        tab: 'network',
+        tab: 'storage',
         span: 2,
         hiddenWhen: ({ values }) => values['recordingStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['recordingStorageMode'] === 'storage',
@@ -201,7 +206,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Media file storage',
         type: 'select',
         options: storageModes,
-        tab: 'network',
+        tab: 'storage',
         span: 1,
       },
       {
@@ -210,7 +215,7 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'mediaStorageAccountUUID',
         label: 'Media file storage account',
         type: 'search-select',
-        tab: 'network',
+        tab: 'storage',
         span: 2,
         hiddenWhen: ({ values }) => values['mediaStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['mediaStorageMode'] === 'storage',
@@ -222,7 +227,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Media delivery',
         type: 'select',
         options: deliveryModes,
-        tab: 'network',
+        tab: 'storage',
         span: 1,
       },
       {
@@ -233,7 +238,7 @@ function config(): ConfigurableCrudConfig {
         type: 'multi-select',
         options: audioCodecs,
         tab: 'codecs',
-        span: 2,
+        span: 1,
       },
       {
         key: 'defaultVideoCodecs',
@@ -243,7 +248,7 @@ function config(): ConfigurableCrudConfig {
         type: 'multi-select',
         options: videoCodecs,
         tab: 'codecs',
-        span: 2,
+        span: 1,
       },
     ],
   };
