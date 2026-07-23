@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../dialog/crud-dialog.util';
@@ -259,9 +260,6 @@ export function openDataViewerDialog(
   const binding = openCrudTemplateDialog(dialog, DataViewerDialogComponent, 'crud-form-dialog', {
     data,
   });
-  const subscription = binding.ref.afterClosed().subscribe(() => {
-    subscription.unsubscribe();
-    binding.stop();
-  });
+  void firstValueFrom(binding.ref.afterClosed()).finally(binding.stop);
   return binding;
 }
