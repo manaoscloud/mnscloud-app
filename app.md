@@ -378,6 +378,10 @@
 
 ## Searchable Select Baseline (Current)
 
+- A relationship that permits multiple records must use the shared searchable-select adapter with
+  `multiple: true`. Its form value is always an ordered UUID array; never use free text or a
+  comma-separated string for a persisted relation. The API validates and persists the order.
+
 - Any `mat-select` bound to records from another table/entity (FK-like fields) must be searchable.
 - CRUD validators should enforce searchable selects only when the page actually contains FK-like
   dynamic relationship fields. Pages with static enum selects only, or no related-record selects,
