@@ -134,6 +134,7 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
+        breakBefore: true,
       },
       {
         key: 'customerUUID',
