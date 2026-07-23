@@ -102,6 +102,16 @@ const fields: readonly ConfigurableCrudField[] = [
     autocomplete: 'off',
   },
   {
+    key: 'password',
+    label: 'Password',
+    payloadKey: 'password',
+    source: 'VpePassword',
+    type: 'password',
+    tab: 'record',
+    span: 1,
+    autocomplete: 'new-password',
+  },
+  {
     key: 'callerIdName',
     label: 'Caller ID name',
     payloadKey: 'callerIdName',
@@ -251,6 +261,7 @@ const config: ConfigurableCrudConfig = {
     createMode: 'single',
     extensionRange: '',
     username: '',
+    password: '',
     callerIdName: '',
     callerIdNumber: '',
     context: 'public',
@@ -341,6 +352,7 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       const response = await this.api.post('voip/pabx/extensions/bulk', {
         pabxUUID: pabx.value,
         range: `${range.start}-${range.end}`,
+        password: nullableString(values['password']),
         callerIdName: nullableString(values['callerIdName']),
         callerIdNumber: nullableString(values['callerIdNumber']),
         context: nullableString(values['context']),
