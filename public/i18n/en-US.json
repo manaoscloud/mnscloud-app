@@ -3315,5 +3315,15 @@
   "No command output returned.": "No command output returned.",
   "Diagnostic job was not created.": "Diagnostic job was not created.",
   "Diagnostic status was not returned.": "Diagnostic status was not returned.",
-  "Download": "Download"
+  "Download": "Download",
+  "Inspect PABX runtime statuses": "Inspect PABX runtime statuses",
+  "Inspect all PABX trunk statuses": "Inspect all PABX trunk statuses",
+  "Select a PABX account before inspecting its runtime status.": "Select a PABX account before inspecting its runtime status.",
+  "PABX trunks runtime status": "PABX trunks runtime status",
+  "Reads the outbound registration and connectivity status of all active trunks assigned to the selected PABX.": "Reads the outbound registration and connectivity status of all active trunks assigned to the selected PABX.",
+  "Trunk registrations": "Trunk registrations",
+  "No trunk statuses were returned.": "No trunk statuses were returned.",
+  "Registering": "Registering",
+  "Not applicable": "Not applicable",
+  "Method": "Method"
 }

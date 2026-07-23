@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudFilterAction,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -9,6 +10,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
+import type { RuntimeDiagnosticResult } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -106,6 +108,30 @@ function config(): ConfigurableCrudConfig {
       { id: 'authMode', label: 'Authentication mode', kind: 'text', field: 'authMode' },
       { id: 'status', label: 'Status', kind: 'status', field: 'enabled' },
     ],
+    listFilters: [
+      {
+        key: 'pabxUUID',
+        label: 'PABX',
+        paramKey: 'pabxUUID',
+        type: 'search-select',
+        span: 1,
+        placeholder: 'Search PABX',
+        emptyLabel: 'No PABX accounts found.',
+      },
+    ],
+    filterActionMenu: {
+      label: 'Status',
+      tooltip: 'Inspect PABX runtime statuses',
+      icon: 'monitor_heart',
+      actions: [
+        {
+          key: 'runtime-status-all',
+          label: 'Trunks',
+          tooltip: 'Inspect all PABX trunk statuses',
+          icon: 'settings_input_component',
+        },
+      ],
+    },
     rowActions: [
       {
         key: 'runtime-status',
@@ -309,6 +335,33 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
     });
   }
 
+  override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean {
+    return action.key === 'runtime-status-all' && !this.selectedPabxUUID();
+  }
+
+  override handleFilterAction(action: ConfigurableCrudFilterAction): void {
+    if (action.key !== 'runtime-status-all') return;
+    const pabxUUID = this.selectedPabxUUID();
+    if (!pabxUUID) {
+      this.snack.warning(this.t('Select a PABX account before inspecting its runtime status.'));
+      return;
+    }
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'PABX trunks runtime status',
+      description:
+        'Reads the outbound registration and connectivity status of all active trunks assigned to the selected PABX.',
+      startEndpoint: `voip/pabx/accounts/${pabxUUID}/trunks/runtime-status`,
+      statusEndpoint: (jobUUID) => `voip/pabx/accounts/${pabxUUID}/trunks/runtime-status/${jobUUID}`,
+      sections: trunkStatusSections,
+    });
+  }
+
+  private selectedPabxUUID(): string {
+    return String(
+      this.listFilterValue({ key: 'pabxUUID', label: 'PABX', type: 'search-select' }) ?? '',
+    ).trim();
+  }
+
   private async loadPabxOptions(): Promise<void> {
     this.pabxLoading.set(true);
     try {
@@ -336,5 +389,51 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
     } finally {
       this.pabxLoading.set(false);
     }
+  }
+}
+
+function trunkStatusSections(result: RuntimeDiagnosticResult) {
+  const trunks = Array.isArray(result.result?.['trunks'])
+    ? result.result['trunks'].filter(
+        (item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object',
+      )
+    : [];
+
+  return [
+    {
+      title: 'Trunk registrations',
+      table: {
+        columns: [
+          { key: 'trunk', label: 'Trunk' },
+          { key: 'runtimeName', label: 'Runtime name', monospace: true },
+          { key: 'registration', label: 'Registration', translate: true },
+          { key: 'method', label: 'Method' },
+        ],
+        rows: trunks.map((item) => ({
+          trunk: item['name'] ?? '-',
+          runtimeName: item['runtimeName'] ?? '-',
+          registration: trunkRegistrationLabel(item['registrationStatus'] ?? 'unknown'),
+          method: item['method'] ?? '-',
+        })),
+        emptyLabel: 'No trunk statuses were returned.',
+      },
+    },
+  ];
+}
+
+function trunkRegistrationLabel(value: unknown): string {
+  switch (String(value ?? '').toLowerCase()) {
+    case 'registered':
+      return 'Registered';
+    case 'registering':
+      return 'Registering';
+    case 'not_registered':
+      return 'Not registered';
+    case 'not_applicable':
+      return 'Not applicable';
+    case 'failed':
+      return 'Failed';
+    default:
+      return 'Unknown';
   }
 }

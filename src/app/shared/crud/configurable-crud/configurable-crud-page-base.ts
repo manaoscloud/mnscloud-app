@@ -222,6 +222,17 @@ export type ConfigurableCrudFilterAction = {
   tooltip?: string;
 };
 
+/**
+ * Optional contextual action group rendered before the standard Apply/Clear controls.
+ * Pages opt in explicitly, so the default CRUD filter layout remains unchanged.
+ */
+export type ConfigurableCrudFilterActionMenu = {
+  label: string;
+  icon: string;
+  tooltip?: string;
+  actions: readonly ConfigurableCrudFilterAction[];
+};
+
 export type ConfigurableCrudStatusMode = 'number' | 'string';
 
 export type ConfigurableCrudConfig = {
@@ -262,6 +273,7 @@ export type ConfigurableCrudConfig = {
   listFilters?: readonly ConfigurableCrudListFilter[];
   rowActions?: readonly ConfigurableCrudRowAction[];
   filterActions?: readonly ConfigurableCrudFilterAction[];
+  filterActionMenu?: ConfigurableCrudFilterActionMenu;
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
@@ -595,6 +607,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   filterActions(): readonly ConfigurableCrudFilterAction[] {
     return this.config.filterActions ?? [];
+  }
+
+  filterActionMenu(): ConfigurableCrudFilterActionMenu | null {
+    return this.config.filterActionMenu ?? null;
+  }
+
+  isFilterActionMenuDisabled(menu: ConfigurableCrudFilterActionMenu): boolean {
+    return !menu.actions.length || menu.actions.every((action) => this.isFilterActionDisabled(action));
   }
 
   isFilterActionDisabled(_action: ConfigurableCrudFilterAction): boolean {

@@ -251,6 +251,11 @@
   - Use explicit `Apply` and `Clear` actions.
   - Button order is mandatory: `Apply` first, `Clear` second.
   - Filter action icons are mandatory: `Apply` uses `<mat-icon>filter_alt</mat-icon>` and `Clear` uses `<mat-icon>backspace</mat-icon>`.
+  - Contextual diagnostics or page-specific commands use the optional declarative
+    `filterActionMenu` contract. The generic template renders it only when the page declares it,
+    on the left side of the dedicated filter-actions row; `Apply` and `Clear` remain right-aligned
+    for every other CRUD page. Menu actions must remain server/Agent authorized and may not be
+    inferred from a visible client-side control.
   - Placement is mandatory: `filter-actions` must be on its own row (`grid-column: 1 / -1`), never inline at the side of the search input.
   - Standard `Apply` and `Clear` actions remain grouped and right-aligned, including mobile. Render the shared `filter-actions-start` slot only when the page has contextual actions; those actions may depend on an active filter (for example, a status inspection for the selected PABX) and must be disabled until their prerequisite filter is selected.
   - Short filter action buttons (`Apply`, `Clear`) share the global fixed width from `--crud-action-button-width`. Contextual actions in `filter-actions-start` use intrinsic width with concise scope labels (for example, `Ramais`), so they never inherit the Apply/Clear width.
