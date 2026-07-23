@@ -190,6 +190,8 @@ export type ConfigurableCrudColumn = {
   kind?: 'identity' | 'related' | 'status' | 'boolean' | 'text' | 'date' | 'datetime';
   lookupKey?: string;
   className?: string;
+  /** Renders a copy action beside the displayed value when the record has a value. */
+  copyable?: boolean;
 };
 
 export type ConfigurableCrudListFilter = {
@@ -947,6 +949,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.displayValue(row[field]);
   }
 
+  canCopyColumn(row: T, column: ConfigurableCrudColumn): boolean {
+    return column.copyable === true && this.columnCopyValue(row, column) !== '';
+  }
+
+  async copyColumnValue(row: T, column: ConfigurableCrudColumn): Promise<void> {
+    const value = this.columnCopyValue(row, column);
+    if (!value) return;
+
+    try {
+      await navigator.clipboard.writeText(value);
+      this.snack.success(this.t('Data copied.'));
+    } catch {
+      this.snack.error(this.t('Failed to copy data.'));
+    }
+  }
+
   protected lookupOptions(_key: string): readonly ConfigurableCrudOption[] {
     return [];
   }
@@ -1101,6 +1119,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       return String(this.dateTime.toEpoch(this.dateValue(row[field]))).padStart(16, '0');
     }
     return this.displayValue(row[field]).toLowerCase();
+  }
+
+  private columnCopyValue(row: T, column: ConfigurableCrudColumn): string {
+    const value =
+      column.kind === 'identity' || column.kind === 'related'
+        ? this.columnMain(row, column)
+        : this.columnText(row, column);
+    return value === '-' ? '' : value.trim();
   }
 
   private dateValue(value: unknown): Date | string | number | null | undefined {
