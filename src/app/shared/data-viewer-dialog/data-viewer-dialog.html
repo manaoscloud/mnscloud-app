@@ -51,6 +51,41 @@
             </div>
           }
 
+          @if (section.table; as table) {
+            <div class="data-viewer-table-wrapper">
+              <table class="data-viewer-table">
+                <thead>
+                  <tr>
+                    @for (column of table.columns; track column.key) {
+                      <th [class.monospace]="column.monospace">{{ column.label | transloco }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of table.rows; track $index) {
+                    <tr>
+                      @for (column of table.columns; track column.key) {
+                        <td [class.monospace]="column.monospace">
+                          @if (column.translate) {
+                            {{ tableValue(row[column.key]) | transloco }}
+                          } @else {
+                            {{ tableValue(row[column.key]) }}
+                          }
+                        </td>
+                      }
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td [attr.colspan]="table.columns.length">
+                        {{ (table.emptyLabel ?? 'No records found.') | transloco }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
           @if (section.code; as block) {
             <div class="data-viewer-code-header">
               @if (block.title && block.title !== section.title) {

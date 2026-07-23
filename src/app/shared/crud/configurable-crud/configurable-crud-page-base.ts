@@ -215,6 +215,13 @@ export type ConfigurableCrudRowAction = {
   tooltip?: string;
 };
 
+export type ConfigurableCrudFilterAction = {
+  key: string;
+  label: string;
+  icon: string;
+  tooltip?: string;
+};
+
 export type ConfigurableCrudStatusMode = 'number' | 'string';
 
 export type ConfigurableCrudConfig = {
@@ -254,6 +261,7 @@ export type ConfigurableCrudConfig = {
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
   listFilters?: readonly ConfigurableCrudListFilter[];
   rowActions?: readonly ConfigurableCrudRowAction[];
+  filterActions?: readonly ConfigurableCrudFilterAction[];
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
@@ -585,11 +593,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.config.rowActions ?? [];
   }
 
+  filterActions(): readonly ConfigurableCrudFilterAction[] {
+    return this.config.filterActions ?? [];
+  }
+
+  isFilterActionDisabled(_action: ConfigurableCrudFilterAction): boolean {
+    return false;
+  }
+
   canDeleteRow(row: T): boolean {
     return this.canDelete() && (this.config.canDeleteRow?.(row) ?? true);
   }
 
   handleRowAction(_action: ConfigurableCrudRowAction, _row: T): void | Promise<void> {}
+
+  handleFilterAction(_action: ConfigurableCrudFilterAction): void | Promise<void> {}
 
   protected afterSave(_context: ConfigurableCrudSaveContext<T>): void | Promise<void> {}
 

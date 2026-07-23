@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../dialog/crud-dialog.util';
@@ -35,9 +36,23 @@ export type DataViewerCodeBlock = {
   };
 };
 
+export type DataViewerTableColumn = {
+  key: string;
+  label: string;
+  monospace?: boolean;
+  translate?: boolean;
+};
+
+export type DataViewerTable = {
+  columns: readonly DataViewerTableColumn[];
+  rows: readonly Record<string, unknown>[];
+  emptyLabel?: string;
+};
+
 export type DataViewerSection = {
   title: string;
   details?: readonly DataViewerDetail[];
+  table?: DataViewerTable;
   code?: DataViewerCodeBlock;
 };
 
@@ -77,7 +92,7 @@ export class DataViewerDialogComponent {
         ...section,
         details: this.visibleDetails(section.details ?? []),
       }))
-      .filter((section) => section.details.length || section.code),
+      .filter((section) => section.details.length || section.table || section.code),
   );
 
   statusTone(status: DataViewerStatus): DataViewerTone {
@@ -86,6 +101,10 @@ export class DataViewerDialogComponent {
 
   detailValue(detail: DataViewerDetail): string {
     return this.displayValue(detail.value);
+  }
+
+  tableValue(value: unknown): string {
+    return this.displayValue(value);
   }
 
   codeText(block: DataViewerCodeBlock): string {
@@ -241,9 +260,6 @@ export function openDataViewerDialog(
   const binding = openCrudTemplateDialog(dialog, DataViewerDialogComponent, 'crud-form-dialog', {
     data,
   });
-  const subscription = binding.ref.afterClosed().subscribe(() => {
-    subscription.unsubscribe();
-    binding.stop();
-  });
+  void firstValueFrom(binding.ref.afterClosed()).finally(binding.stop);
   return binding;
 }

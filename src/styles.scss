@@ -491,11 +491,35 @@ mat-card.erp-card,
 .filter-actions {
   display: flex;
   grid-column: 1 / -1;
-  justify-self: end;
+  width: 100%;
+  justify-self: stretch;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.5rem;
   padding-right: 0.25rem;
+}
+
+.filter-actions-start,
+.filter-actions-end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.filter-actions-start {
+  justify-content: flex-start;
+
+  button {
+    width: auto;
+    min-width: var(--crud-action-button-width);
+  }
+}
+
+.filter-actions-end {
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .filter-actions button {
@@ -1154,7 +1178,6 @@ mat-chip.status-pill.is-inactive,
 
   .header-actions,
   .filter-actions {
-    justify-content: flex-end;
     flex-wrap: wrap;
   }
 
@@ -1169,6 +1192,17 @@ mat-chip.status-pill.is-inactive,
   .filter-actions {
     grid-column: 1 / -1;
     padding-right: 0;
+    align-items: stretch;
+  }
+
+  .filter-actions-start,
+  .filter-actions-end {
+    width: 100%;
+  }
+
+  .filter-actions-end {
+    margin-left: 0;
+    justify-content: flex-end;
   }
 
   .mobile-paginator .mat-mdc-paginator-container {

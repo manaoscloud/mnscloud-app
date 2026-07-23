@@ -4,12 +4,18 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudField,
+  ConfigurableCrudFilterAction,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
+import {
+  runRuntimeDiagnostic,
+  RuntimeDiagnosticResult,
+} from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 
 type PabxLookup = ConfigurableCrudOption & {
   requiresDomain: boolean;
@@ -288,6 +294,22 @@ const config: ConfigurableCrudConfig = {
       emptyLabel: 'No PABX accounts found.',
     },
   ],
+  filterActions: [
+    {
+      key: 'runtime-status-all',
+      label: 'Extension status',
+      tooltip: 'Inspect all PABX extension statuses',
+      icon: 'terminal',
+    },
+  ],
+  rowActions: [
+    {
+      key: 'runtime-status',
+      label: 'Runtime status',
+      tooltip: 'Inspect extension runtime status',
+      icon: 'terminal',
+    },
+  ],
   bulkDelete: true,
   statusFilter: true,
   tabLabels: {
@@ -421,6 +443,49 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       : super.fieldLoading(field);
   }
 
+  override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean {
+    return action.key === 'runtime-status-all' && !String(this.listFilterValue({
+      key: 'pabxUUID',
+      label: 'PABX',
+      type: 'search-select',
+    })).trim();
+  }
+
+  override handleFilterAction(action: ConfigurableCrudFilterAction): void {
+    if (action.key !== 'runtime-status-all') return;
+    const pabxUUID = String(
+      this.listFilterValue({ key: 'pabxUUID', label: 'PABX', type: 'search-select' }),
+    ).trim();
+    if (!pabxUUID) {
+      this.snack.warning(this.t('Select a PABX account to inspect extension statuses.'));
+      return;
+    }
+
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'PABX extension runtime status',
+      description: 'Read-only registration and connectivity status of extensions assigned to the selected PABX.',
+      startEndpoint: `voip/pabx/accounts/${pabxUUID}/extensions/runtime-status`,
+      statusEndpoint: (jobUUID) =>
+        `voip/pabx/accounts/${pabxUUID}/extensions/runtime-status/${jobUUID}`,
+      sections: extensionStatusSections,
+    });
+  }
+
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ExtensionRecord): void {
+    if (action.key !== 'runtime-status') return;
+    const extensionUUID = String(row['VpeUUID'] ?? '').trim();
+    if (!extensionUUID) return;
+
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'PABX extension runtime status',
+      description: 'Read-only registration and connectivity status of the selected PABX extension.',
+      startEndpoint: `voip/pabx/extensions/${extensionUUID}/runtime-status`,
+      statusEndpoint: (jobUUID) =>
+        `voip/pabx/extensions/${extensionUUID}/runtime-status/${jobUUID}`,
+      sections: extensionStatusSections,
+    });
+  }
+
   protected override async afterSave(
     context: ConfigurableCrudSaveContext<ExtensionRecord>,
   ): Promise<void> {
@@ -520,6 +585,50 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       ],
       closeLabel: 'Close',
     });
+  }
+}
+
+function extensionStatusSections(result: RuntimeDiagnosticResult) {
+  const extensions = Array.isArray(result.result?.['extensions'])
+    ? result.result['extensions'].filter(
+        (item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object',
+      )
+    : [];
+
+  return [
+    {
+      title: 'Extension registrations',
+      table: {
+        columns: [
+          { key: 'extension', label: 'Extension', monospace: true },
+          { key: 'domain', label: 'Domain' },
+          { key: 'registration', label: 'Registration', translate: true },
+          { key: 'endpoint', label: 'Endpoint', monospace: true },
+          { key: 'contact', label: 'Contact', monospace: true },
+        ],
+        rows: extensions.map((item) => ({
+          extension: item['username'] ?? item['extension'] ?? '-',
+          domain: item['domain'] ?? '-',
+          registration: extensionRegistrationLabel(
+            item['registrationStatus'] ?? item['status'] ?? 'unknown',
+          ),
+          endpoint: item['endpoint'] ?? '-',
+          contact: item['contact'] ?? '-',
+        })),
+        emptyLabel: 'No extension statuses were returned.',
+      },
+    },
+  ];
+}
+
+function extensionRegistrationLabel(value: unknown): string {
+  switch (String(value ?? '').toLowerCase()) {
+    case 'registered':
+      return 'Registered';
+    case 'not_registered':
+      return 'Not registered';
+    default:
+      return 'Unknown';
   }
 }
 
