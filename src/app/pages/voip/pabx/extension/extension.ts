@@ -294,14 +294,19 @@ const config: ConfigurableCrudConfig = {
       emptyLabel: 'No PABX accounts found.',
     },
   ],
-  filterActions: [
-    {
-      key: 'runtime-status-all',
-      label: 'Extension status',
-      tooltip: 'Inspect all PABX extension statuses',
-      icon: 'terminal',
-    },
-  ],
+  filterActionMenu: {
+    label: 'Status',
+    tooltip: 'Inspect PABX runtime statuses',
+    icon: 'monitor_heart',
+    actions: [
+      {
+        key: 'runtime-status-all',
+        label: 'Extensions',
+        tooltip: 'Inspect all PABX extension statuses',
+        icon: 'dialpad',
+      },
+    ],
+  },
   rowActions: [
     {
       key: 'runtime-status',

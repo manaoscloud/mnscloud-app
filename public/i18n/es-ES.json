@@ -3315,5 +3315,15 @@
   "No command output returned.": "No se devolvió salida del comando.",
   "Diagnostic job was not created.": "No se creó el trabajo de diagnóstico.",
   "Diagnostic status was not returned.": "No se devolvió el estado del diagnóstico.",
-  "Download": "Descargar"
+  "Download": "Descargar",
+  "Inspect PABX runtime statuses": "Consultar estados de tiempo de ejecución de PABX",
+  "Inspect all PABX trunk statuses": "Consultar estados de todos los troncales PABX",
+  "Select a PABX account before inspecting its runtime status.": "Seleccione una cuenta PABX antes de consultar su estado de tiempo de ejecución.",
+  "PABX trunks runtime status": "Estado de tiempo de ejecución de los troncales PABX",
+  "Reads the outbound registration and connectivity status of all active trunks assigned to the selected PABX.": "Consulta el registro saliente y la conectividad de todos los troncales activos asignados al PABX seleccionado.",
+  "Trunk registrations": "Registros de troncales",
+  "No trunk statuses were returned.": "No se devolvieron estados de troncales.",
+  "Registering": "Registrando",
+  "Not applicable": "No aplicable",
+  "Method": "Método"
 }

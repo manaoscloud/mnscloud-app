@@ -74,8 +74,35 @@
       }
 
       <div class="filter-actions">
-        @if (filterActions().length) {
+        @if (filterActionMenu() || filterActions().length) {
           <div class="filter-actions-start">
+            @if (filterActionMenu(); as actionMenu) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="isFilterActionMenuDisabled(actionMenu)"
+                [matTooltip]="(actionMenu.tooltip ?? actionMenu.label) | transloco"
+                [matMenuTriggerFor]="contextualActionMenu"
+              >
+                <mat-icon>{{ actionMenu.icon }}</mat-icon>
+                {{ actionMenu.label | transloco }}
+                <mat-icon>arrow_drop_down</mat-icon>
+              </button>
+              <mat-menu #contextualActionMenu="matMenu">
+                @for (action of actionMenu.actions; track action.key) {
+                  <button
+                    mat-menu-item
+                    type="button"
+                    [disabled]="isFilterActionDisabled(action)"
+                    [matTooltip]="(action.tooltip ?? action.label) | transloco"
+                    (click)="handleFilterAction(action)"
+                  >
+                    <mat-icon>{{ action.icon }}</mat-icon>
+                    <span>{{ action.label | transloco }}</span>
+                  </button>
+                }
+              </mat-menu>
+            }
             @for (action of filterActions(); track action.key) {
               <button
                 mat-stroked-button
