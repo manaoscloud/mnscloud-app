@@ -16,8 +16,7 @@ export type MnsSearchSelectFieldOption = {
   disabled?: boolean;
 };
 
-type MnsSearchSelectValue =
-  string | number | boolean | null | readonly (string | number | boolean | null)[];
+type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[];
 
 @Component({
   selector: 'mns-search-select-field',

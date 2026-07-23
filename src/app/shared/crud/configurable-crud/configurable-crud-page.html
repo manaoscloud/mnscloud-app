@@ -50,7 +50,7 @@
             [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
             [loading]="listFilterLoading(filter)"
             [translateOptions]="filter.translateOptions ?? false"
-            (selectionChange)="setListFilterValue(filter, $event)"
+            (selectionChange)="setListFilterValue(filter, $any($event))"
           />
         } @else {
           <mat-form-field appearance="outline" class="span-1">
@@ -401,7 +401,9 @@
                         "
                         (click)="togglePasswordVisibility(field.key)"
                       >
-                        <mat-icon>{{ isPasswordVisible(field.key) ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        <mat-icon>{{
+                          isPasswordVisible(field.key) ? 'visibility_off' : 'visibility'
+                        }}</mat-icon>
                       </button>
                     }
                   </mat-form-field>
