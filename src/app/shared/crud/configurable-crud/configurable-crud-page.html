@@ -136,10 +136,23 @@
               [class.status-col]="column.kind === 'status'"
             >
               @if (column.kind === 'identity' || column.kind === 'related') {
-                <div class="record-stack">
-                  <span class="record-main">{{ columnMain(row, column) }}</span>
-                  @if (columnUUID(row, column)) {
-                    <span class="record-uuid">{{ columnUUID(row, column) }}</span>
+                <div class="crud-copy-cell">
+                  <div class="record-stack">
+                    <span class="record-main">{{ columnMain(row, column) }}</span>
+                    @if (columnUUID(row, column)) {
+                      <span class="record-uuid">{{ columnUUID(row, column) }}</span>
+                    }
+                  </div>
+                  @if (canCopyColumn(row, column)) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="crud-copy-button"
+                      [matTooltip]="'Copy' | transloco"
+                      (click)="copyColumnValue(row, column)"
+                    >
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
                   }
                 </div>
               } @else if (column.kind === 'status') {
@@ -159,7 +172,22 @@
                   {{ booleanLabel(row[column.field ?? column.id]) | transloco }}
                 </span>
               } @else {
-                {{ columnText(row, column) }}
+                @if (canCopyColumn(row, column)) {
+                  <div class="crud-copy-cell">
+                    <span>{{ columnText(row, column) }}</span>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="crud-copy-button"
+                      [matTooltip]="'Copy' | transloco"
+                      (click)="copyColumnValue(row, column)"
+                    >
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
+                  </div>
+                } @else {
+                  {{ columnText(row, column) }}
+                }
               }
             </td>
           </ng-container>

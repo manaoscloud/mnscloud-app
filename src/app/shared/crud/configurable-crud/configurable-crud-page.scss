@@ -184,6 +184,22 @@
   min-width: 0;
 }
 
+.crud-copy-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.crud-copy-cell > span,
+.crud-copy-cell > .record-stack {
+  min-width: 0;
+}
+
+.crud-copy-button {
+  flex: 0 0 auto;
+}
+
 .postal-code-spinner {
   display: inline-block;
 }
