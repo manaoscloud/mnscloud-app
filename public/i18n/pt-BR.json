@@ -3292,7 +3292,7 @@
   "Extension credentials": "Credenciais do ramal",
   "Save these credentials now. The password is only shown during provisioning.": "Guarde estas credenciais agora. A senha é exibida somente durante o provisionamento.",
   "Generated credentials": "Credenciais geradas",
-  "Extension status": "Status dos ramais",
+  "Extension status": "Ramais",
   "Inspect all PABX extension statuses": "Consultar status de todos os ramais PABX",
   "Inspect extension runtime status": "Consultar status de runtime do ramal",
   "PABX extension runtime status": "Status de runtime do ramal PABX",

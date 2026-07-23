@@ -253,7 +253,7 @@
   - Filter action icons are mandatory: `Apply` uses `<mat-icon>filter_alt</mat-icon>` and `Clear` uses `<mat-icon>backspace</mat-icon>`.
   - Placement is mandatory: `filter-actions` must be on its own row (`grid-column: 1 / -1`), never inline at the side of the search input.
   - Standard `Apply` and `Clear` actions remain right-aligned, including mobile. Contextual list actions that depend on an active filter (for example, a status inspection for the selected PABX) may use the shared `filter-actions-start` slot on the left; they must be disabled until their prerequisite filter is selected.
-  - Short filter action buttons (`Apply`, `Clear`) share the global fixed width from `--crud-action-button-width`; longer contextual actions such as `Delete selected` may grow beyond that width.
+  - Short filter action buttons (`Apply`, `Clear`) share the global fixed width from `--crud-action-button-width`. Contextual actions in `filter-actions-start` use intrinsic width with concise scope labels (for example, `Ramais`), so they never inherit the Apply/Clear width.
   - On mobile (`<=900px`), keep header actions (`Refresh` / `New`) right-aligned as well (`.header-actions { justify-content: flex-end; }` inside mobile media block).
 - List data completeness:
   - When the API/list procedure supports `search`, `Apply` must reload from the API with the search parameter instead of filtering only the currently loaded table rows.

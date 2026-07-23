@@ -3292,7 +3292,7 @@
   "Extension credentials": "Extension credentials",
   "Save these credentials now. The password is only shown during provisioning.": "Save these credentials now. The password is only shown during provisioning.",
   "Generated credentials": "Generated credentials",
-  "Extension status": "Extension status",
+  "Extension status": "Extensions",
   "Inspect all PABX extension statuses": "Inspect all PABX extension statuses",
   "Inspect extension runtime status": "Inspect extension runtime status",
   "PABX extension runtime status": "PABX extension runtime status",
