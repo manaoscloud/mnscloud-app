@@ -509,12 +509,8 @@ mat-card.erp-card,
 }
 
 .filter-actions-start {
+  flex: 0 1 auto;
   justify-content: flex-start;
-
-  button {
-    width: auto;
-    min-width: var(--crud-action-button-width);
-  }
 }
 
 .filter-actions-end {
@@ -535,6 +531,13 @@ mat-card.erp-card,
   mat-icon {
     margin-right: 0.25rem;
   }
+}
+
+// Contextual list actions describe the selected scope, so they stay compact.
+// Apply/Clear remain the only fixed-width filter controls.
+.filter-actions .filter-actions-start button {
+  width: auto;
+  min-width: 0;
 }
 
 .header-actions button .mdc-button__label,
