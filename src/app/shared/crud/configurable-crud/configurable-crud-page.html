@@ -74,21 +74,23 @@
       }
 
       <div class="filter-actions">
-        <div class="filter-actions-start">
-          @for (action of filterActions(); track action.key) {
-            <button
-              mat-stroked-button
-              color="primary"
-              type="button"
-              [disabled]="isFilterActionDisabled(action)"
-              [matTooltip]="(action.tooltip ?? action.label) | transloco"
-              (click)="handleFilterAction(action)"
-            >
-              <mat-icon>{{ action.icon }}</mat-icon>
-              {{ action.label | transloco }}
-            </button>
-          }
-        </div>
+        @if (filterActions().length) {
+          <div class="filter-actions-start">
+            @for (action of filterActions(); track action.key) {
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                [disabled]="isFilterActionDisabled(action)"
+                [matTooltip]="(action.tooltip ?? action.label) | transloco"
+                (click)="handleFilterAction(action)"
+              >
+                <mat-icon>{{ action.icon }}</mat-icon>
+                {{ action.label | transloco }}
+              </button>
+            }
+          </div>
+        }
         <div class="filter-actions-end">
           <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
             <mat-icon>filter_alt</mat-icon>
