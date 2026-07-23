@@ -77,6 +77,42 @@
   font-size: 0.86rem;
 }
 
+.data-viewer-table-wrapper {
+  overflow: auto;
+  border: 1px solid var(--mns-border-subtle, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+}
+
+.data-viewer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.data-viewer-table th,
+.data-viewer-table td {
+  min-width: 9rem;
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mns-border-subtle, rgba(255, 255, 255, 0.12));
+  overflow-wrap: anywhere;
+}
+
+.data-viewer-table th {
+  color: var(--mns-text-secondary, rgba(255, 255, 255, 0.72));
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.data-viewer-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-viewer-table .monospace {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}
+
 .data-viewer-code-header {
   display: flex;
   align-items: center;

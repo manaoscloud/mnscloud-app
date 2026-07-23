@@ -2,16 +2,21 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { ApiService } from '../../services/api.service';
 import { SnackbarService } from '../../services/snackbar.service';
-import { DataViewerDetail, openDataViewerDialog } from '../data-viewer-dialog/data-viewer-dialog';
+import {
+  DataViewerDetail,
+  DataViewerSection,
+  openDataViewerDialog,
+} from '../data-viewer-dialog/data-viewer-dialog';
 
 export type RuntimeDiagnosticRequest = {
   title: string;
   description: string;
   startEndpoint: string;
   statusEndpoint: (jobUUID: string) => string;
+  sections?: (result: RuntimeDiagnosticResult) => readonly DataViewerSection[];
 };
 
-type RuntimeDiagnosticResult = {
+export type RuntimeDiagnosticResult = {
   jobUUID: string;
   status: string;
   summary?: Record<string, unknown> | null;
@@ -93,6 +98,7 @@ export async function runRuntimeDiagnostic(
       status: { value: statusLabel(result.status), tone: statusTone(result.status) },
       details: detailRows(result),
       sections: [
+        ...(request.sections?.(result) ?? []),
         {
           title: 'Command output',
           code: {

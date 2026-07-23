@@ -251,8 +251,8 @@
   - Use explicit `Apply` and `Clear` actions.
   - Button order is mandatory: `Apply` first, `Clear` second.
   - Filter action icons are mandatory: `Apply` uses `<mat-icon>filter_alt</mat-icon>` and `Clear` uses `<mat-icon>backspace</mat-icon>`.
-  - Placement is mandatory: `filter-actions` must be on its own row (`grid-column: 1 / -1`) right-aligned, never inline at the side of the search input.
-  - Keep `filter-actions` right-aligned, including mobile.
+  - Placement is mandatory: `filter-actions` must be on its own row (`grid-column: 1 / -1`), never inline at the side of the search input.
+  - Standard `Apply` and `Clear` actions remain right-aligned, including mobile. Contextual list actions that depend on an active filter (for example, a status inspection for the selected PABX) may use the shared `filter-actions-start` slot on the left; they must be disabled until their prerequisite filter is selected.
   - Short filter action buttons (`Apply`, `Clear`) share the global fixed width from `--crud-action-button-width`; longer contextual actions such as `Delete selected` may grow beyond that width.
   - On mobile (`<=900px`), keep header actions (`Refresh` / `New`) right-aligned as well (`.header-actions { justify-content: flex-end; }` inside mobile media block).
 - List data completeness:
@@ -806,7 +806,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
     `.dashboard-metric-label`, `.dashboard-metric-value`, and `.dashboard-metric-hint`
 - Shared CRUD action button sizing:
   - `--crud-action-button-width` is the global fixed width for short header/filter action buttons.
-  - `.header-actions button` and regular `.filter-actions button` use this width by default on desktop and mobile.
+  - `.header-actions button` and regular `.filter-actions-end button` use this width by default on desktop and mobile. Contextual buttons in `.filter-actions-start` may use their intrinsic width.
   - Longer contextual filter actions, such as `Delete selected`, must override to `width: auto` while keeping the same minimum width.
 - Input density is mandatory and must follow compact baseline in `styles.scss`:
   - page forms (`.erp-page mat-form-field`) and dialog forms (`.cdk-overlay-pane.<panelClass> .crud-dialog mat-form-field`)

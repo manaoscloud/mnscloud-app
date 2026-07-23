@@ -35,9 +35,23 @@ export type DataViewerCodeBlock = {
   };
 };
 
+export type DataViewerTableColumn = {
+  key: string;
+  label: string;
+  monospace?: boolean;
+  translate?: boolean;
+};
+
+export type DataViewerTable = {
+  columns: readonly DataViewerTableColumn[];
+  rows: readonly Record<string, unknown>[];
+  emptyLabel?: string;
+};
+
 export type DataViewerSection = {
   title: string;
   details?: readonly DataViewerDetail[];
+  table?: DataViewerTable;
   code?: DataViewerCodeBlock;
 };
 
@@ -77,7 +91,7 @@ export class DataViewerDialogComponent {
         ...section,
         details: this.visibleDetails(section.details ?? []),
       }))
-      .filter((section) => section.details.length || section.code),
+      .filter((section) => section.details.length || section.table || section.code),
   );
 
   statusTone(status: DataViewerStatus): DataViewerTone {
@@ -86,6 +100,10 @@ export class DataViewerDialogComponent {
 
   detailValue(detail: DataViewerDetail): string {
     return this.displayValue(detail.value);
+  }
+
+  tableValue(value: unknown): string {
+    return this.displayValue(value);
   }
 
   codeText(block: DataViewerCodeBlock): string {
