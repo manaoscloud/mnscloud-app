@@ -289,7 +289,8 @@
                     [placeholder]="field.placeholder ?? 'Search' | transloco"
                     [options]="fieldOptions(field)"
                     [loading]="fieldLoading(field)"
-                    [value]="fieldValue(field.key)"
+                    [multiple]="field.multiple ?? false"
+                    [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                     (valueChange)="setFieldValue(field.key, $event)"
                   />
                 }
@@ -486,7 +487,10 @@
                               [placeholder]="field.placeholder ?? 'Search' | transloco"
                               [options]="fieldOptions(field)"
                               [loading]="fieldLoading(field)"
-                              [value]="fieldValue(field.key)"
+                              [multiple]="field.multiple ?? false"
+                              [value]="
+                                field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)
+                              "
                               (valueChange)="setFieldValue(field.key, $event)"
                             />
                           }
@@ -613,7 +617,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [value]="fieldValue(field.key)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
                     />
                   }
@@ -714,7 +719,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [value]="fieldValue(field.key)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
                     />
                   }
@@ -1002,7 +1008,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [value]="fieldValue(field.key)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
                     />
                   }
@@ -1080,7 +1087,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [value]="fieldValue(field.key)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
                     />
                   }
@@ -1146,6 +1154,100 @@
           </mat-tab>
         }
 
+        @if (transformFields().length) {
+          <mat-tab [label]="tabLabel('transform', 'Transform') | transloco">
+            <div class="tab-content form-grid">
+              @for (field of transformFields(); track field.key) {
+                @switch (field.type) {
+                  @case ('search-select') {
+                    <mns-search-select-field
+                      [fieldClass]="fieldClass(field)"
+                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [placeholder]="field.placeholder ?? 'Search' | transloco"
+                      [options]="fieldOptions(field)"
+                      [loading]="fieldLoading(field)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
+                  @case ('select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        [value]="fieldValue(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @case ('multi-select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        multiple
+                        [value]="fieldValueArray(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            option.label | transloco
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @case ('textarea') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <textarea
+                        matInput
+                        [rows]="field.rows ?? 4"
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                        [value]="fieldValueString(field.key)"
+                        (input)="setFieldValue(field.key, $any($event.target).value)"
+                      ></textarea>
+                    </mat-form-field>
+                  }
+                  @default {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <input
+                        matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                        [type]="htmlInputType(field)"
+                        [appCurrencyMask]="field.type === 'currency'"
+                        [appCurrencyMaskCurrency]="currencyForField(field)"
+                        [autocomplete]="field.autocomplete ?? 'off'"
+                        [attr.data-field-key]="field.key"
+                        [value]="fieldValueString(field.key)"
+                        (input)="setFieldValue(field.key, $any($event.target).value)"
+                      />
+                    </mat-form-field>
+                  }
+                }
+              }
+            </div>
+          </mat-tab>
+        }
+
         @if (authenticationFields().length) {
           <mat-tab [label]="tabLabel('authentication', 'Authentication') | transloco">
             <div class="tab-content form-grid">
@@ -1158,7 +1260,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [value]="fieldValue(field.key)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
                     />
                   }
@@ -1254,7 +1357,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [value]="fieldValue(field.key)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
                     />
                   }

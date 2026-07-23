@@ -16,6 +16,9 @@ export type MnsSearchSelectFieldOption = {
   disabled?: boolean;
 };
 
+type MnsSearchSelectValue =
+  string | number | boolean | null | readonly (string | number | boolean | null)[];
+
 @Component({
   selector: 'mns-search-select-field',
   standalone: true,
@@ -36,12 +39,15 @@ export type MnsSearchSelectFieldOption = {
       @if (field(); as formField) {
         <mat-select
           [formField]="formField"
+          [multiple]="multiple()"
           [compareWith]="compareOptionValues"
           (selectionChange)="selectValue($event.value)"
           (openedChange)="handleOpenedChange($event)"
         >
           <mat-select-trigger>
-            @if (selectedOption(); as option) {
+            @if (multiple()) {
+              {{ selectedOptionLabels() }}
+            } @else if (selectedOption(); as option) {
               @if (translateOptions()) {
                 {{ option.label | transloco }}
               } @else {
@@ -86,19 +92,24 @@ export type MnsSearchSelectFieldOption = {
             </mat-option>
           } @empty {
             @if (!loading()) {
-              <mat-option disabled class="select-state-option">{{ emptyLabel() | transloco }}</mat-option>
+              <mat-option disabled class="select-state-option">{{
+                emptyLabel() | transloco
+              }}</mat-option>
             }
           }
         </mat-select>
       } @else {
         <mat-select
           [value]="value()"
+          [multiple]="multiple()"
           [compareWith]="compareOptionValues"
           (selectionChange)="selectValue($event.value)"
           (openedChange)="handleOpenedChange($event)"
         >
           <mat-select-trigger>
-            @if (selectedOption(); as option) {
+            @if (multiple()) {
+              {{ selectedOptionLabels() }}
+            } @else if (selectedOption(); as option) {
               @if (translateOptions()) {
                 {{ option.label | transloco }}
               } @else {
@@ -143,7 +154,9 @@ export type MnsSearchSelectFieldOption = {
             </mat-option>
           } @empty {
             @if (!loading()) {
-              <mat-option disabled class="select-state-option">{{ emptyLabel() | transloco }}</mat-option>
+              <mat-option disabled class="select-state-option">{{
+                emptyLabel() | transloco
+              }}</mat-option>
             }
           }
         </mat-select>
@@ -165,9 +178,9 @@ export type MnsSearchSelectFieldOption = {
 })
 export class MnsSearchSelectFieldComponent {
   readonly field = input<SignalFormField | null>(null);
-  readonly value = input<string | number | boolean | null>('');
-  readonly valueChange = output<string | number | boolean | null>();
-  readonly selectionChange = output<string | number | boolean | null>();
+  readonly value = input<MnsSearchSelectValue>('');
+  readonly valueChange = output<MnsSearchSelectValue>();
+  readonly selectionChange = output<MnsSearchSelectValue>();
   readonly openedChange = output<boolean>();
   readonly label = input.required<string>();
   readonly options = input.required<readonly MnsSearchSelectFieldOption[]>();
@@ -177,12 +190,25 @@ export class MnsSearchSelectFieldComponent {
   readonly loadingLabel = input('Loading...');
   readonly loading = input(false);
   readonly translateOptions = input(false);
+  readonly multiple = input(false);
 
   readonly search = signal('');
   readonly selectedOption = computed(() => {
     const field = this.field();
     const currentValue = field ? field().value() : this.value();
     return this.options().find((option) => this.areOptionValuesEqual(option.value, currentValue));
+  });
+  readonly selectedOptionLabels = computed(() => {
+    const field = this.field();
+    const value = field ? field().value() : this.value();
+    const selectedValues = Array.isArray(value) ? value : [];
+    return selectedValues
+      .map((selected) =>
+        this.options().find((option) => this.areOptionValuesEqual(option.value, selected)),
+      )
+      .filter((option): option is MnsSearchSelectFieldOption => option !== undefined)
+      .map((option) => option.label)
+      .join(', ');
   });
 
   readonly filteredOptions = computed(() => {
@@ -201,9 +227,26 @@ export class MnsSearchSelectFieldComponent {
   readonly compareOptionValues = (left: unknown, right: unknown): boolean =>
     this.areOptionValuesEqual(left, right);
 
-  selectValue(value: string | number | boolean | null): void {
-    this.valueChange.emit(value);
-    this.selectionChange.emit(value);
+  selectValue(value: MnsSearchSelectValue): void {
+    const nextValue = this.multiple() ? this.orderMultipleValues(value) : value;
+    this.valueChange.emit(nextValue);
+    this.selectionChange.emit(nextValue);
+  }
+
+  private orderMultipleValues(value: MnsSearchSelectValue): MnsSearchSelectValue {
+    const selectedValues = Array.isArray(value) ? [...value] : [];
+    const field = this.field();
+    const currentValue = field ? field().value() : this.value();
+    const currentValues = Array.isArray(currentValue) ? currentValue : [];
+    return [
+      ...currentValues.filter((current) =>
+        selectedValues.some((selected) => this.areOptionValuesEqual(current, selected)),
+      ),
+      ...selectedValues.filter(
+        (selected) =>
+          !currentValues.some((current) => this.areOptionValuesEqual(current, selected)),
+      ),
+    ];
   }
 
   private optionSearchText(option: MnsSearchSelectFieldOption): string {

@@ -130,6 +130,7 @@ export type ConfigurableCrudField = {
     | 'storage'
     | 'monitoring'
     | 'match'
+    | 'transform'
     | 'authentication'
     | 'limits'
     | 'codecs'
@@ -148,6 +149,8 @@ export type ConfigurableCrudField = {
   /** Key holding the ISO 4217 code for this monetary value. */
   currencyKey?: string;
   options?: readonly ConfigurableCrudOption[];
+  /** Enables multiple selection for a searchable relation field. */
+  multiple?: boolean;
   loading?: () => boolean;
   hiddenWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   requiredWhen?: (context: ConfigurableCrudFieldContext) => boolean;
@@ -381,6 +384,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly matchFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'match'),
+  );
+  readonly transformFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'transform'),
   );
   readonly authenticationFields = computed(() =>
     this.config.fields.filter(

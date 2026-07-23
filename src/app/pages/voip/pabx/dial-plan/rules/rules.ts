@@ -68,7 +68,7 @@ function config(): ConfigurableCrudConfig {
     inactiveValue: 0,
     statusOptions: statuses,
     bulkDelete: true,
-    tabLabels: { match: 'Match and Transform', network: 'Routing' },
+    tabLabels: { match: 'Match', transform: 'Transform', network: 'Routing' },
     initialValues: {
       enabled: 1,
       dialPlanUUID: '',
@@ -85,8 +85,7 @@ function config(): ConfigurableCrudConfig {
       trunkUUID: '',
       callerIdMode: 'extension',
       callerIdValue: '',
-      fallbackTrunks: '',
-      engineConfig: '',
+      fallbackTrunkUUIDs: [],
       description: '',
     },
     columns: [
@@ -163,16 +162,6 @@ function config(): ConfigurableCrudConfig {
         tab: 'match',
       },
       {
-        key: 'stripDigits',
-        source: 'stripDigits',
-        label: 'Strip digits',
-        type: 'number',
-        span: 1,
-        tab: 'match',
-      },
-      { key: 'prepend', source: 'prepend', label: 'Prepend', span: 1, tab: 'match' },
-      { key: 'replacement', source: 'replacement', label: 'Replacement', span: 1, tab: 'match' },
-      {
         key: 'caseSensitive',
         source: 'caseSensitive',
         label: 'Case sensitive',
@@ -182,11 +171,27 @@ function config(): ConfigurableCrudConfig {
         tab: 'match',
       },
       {
+        key: 'stripDigits',
+        source: 'stripDigits',
+        label: 'Strip digits',
+        type: 'number',
+        span: 1,
+        tab: 'transform',
+      },
+      { key: 'prepend', source: 'prepend', label: 'Prepend', span: 1, tab: 'transform' },
+      {
+        key: 'replacement',
+        source: 'replacement',
+        label: 'Replacement',
+        span: 1,
+        tab: 'transform',
+      },
+      {
         key: 'trunkUUID',
         source: 'trunkUUID',
         label: 'Trunk',
         type: 'search-select',
-        span: 2,
+        span: 1,
         tab: 'network',
         requiredWhen: ({ values }) =>
           values['direction'] === 'outbound' && values['resultType'] === 'outbound',
@@ -201,29 +206,34 @@ function config(): ConfigurableCrudConfig {
         tab: 'network',
       },
       {
+        key: 'fallbackTrunkUUIDs',
+        source: 'fallbackTrunkUUIDs',
+        label: 'Fallback trunks',
+        type: 'search-select',
+        multiple: true,
+        span: 1,
+        tab: 'network',
+        breakBefore: true,
+        fromRecord: (value) => {
+          if (Array.isArray(value)) return value;
+          if (typeof value === 'string' && value.trim()) {
+            try {
+              const parsed = JSON.parse(value);
+              return Array.isArray(parsed) ? parsed : [];
+            } catch {
+              return [];
+            }
+          }
+          return [];
+        },
+      },
+      {
         key: 'callerIdValue',
         source: 'callerIdValue',
         label: 'Caller ID value',
         span: 1,
         tab: 'network',
         hiddenWhen: ({ values }) => values['callerIdMode'] !== 'fixed',
-      },
-      {
-        key: 'fallbackTrunks',
-        source: 'fallbackTrunks',
-        label: 'Fallback trunks',
-        span: 4,
-        tab: 'network',
-      },
-      {
-        key: 'engineConfig',
-        source: 'engineConfig',
-        label: 'Engine config',
-        type: 'textarea',
-        format: 'json',
-        span: 4,
-        rows: 4,
-        tab: 'network',
       },
       {
         key: 'description',
@@ -257,12 +267,15 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return ['dialPlanUUID', 'trunkUUID'].includes(field.key) && this.lookupsLoading();
+    return (
+      ['dialPlanUUID', 'trunkUUID', 'fallbackTrunkUUIDs'].includes(field.key) &&
+      this.lookupsLoading()
+    );
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'dialPlanUUID') return this.dialPlans();
-    if (key === 'trunkUUID') return this.trunks();
+    if (key === 'trunkUUID' || key === 'fallbackTrunkUUIDs') return this.trunks();
     return [];
   }
 
@@ -278,6 +291,17 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
       enabled: Number(payload['enabled']) === 1,
       caseSensitive: Number(payload['caseSensitive']) === 1,
       trunkUUID: payload['trunkUUID'] || null,
+      fallbackTrunkUUIDs:
+        payload['direction'] === 'outbound' && payload['resultType'] === 'outbound'
+          ? Array.from(
+              new Set(
+                (Array.isArray(payload['fallbackTrunkUUIDs'])
+                  ? payload['fallbackTrunkUUIDs']
+                  : []
+                ).filter((uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0),
+              ),
+            ).filter((uuid) => uuid !== payload['trunkUUID'])
+          : [],
       callerIdValue: payload['callerIdMode'] === 'fixed' ? payload['callerIdValue'] || null : null,
     };
   }
