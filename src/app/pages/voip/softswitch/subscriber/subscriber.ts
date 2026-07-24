@@ -49,7 +49,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
     outboundCid: '',
     codecs: '',
     registerEnabled: 1,
-    recordCalls: 1,
+    recordCalls: 0,
     enabled: 1,
   },
   columns: [
@@ -97,9 +97,9 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       source: 'VsuPassword',
       payloadKey: 'password',
       label: 'Password',
+      type: 'password',
       required: true,
       span: 1,
-      tab: 'authentication',
     },
     {
       key: 'callerIdName',
