@@ -3325,5 +3325,21 @@
   "No trunk statuses were returned.": "No se devolvieron estados de troncales.",
   "Registering": "Registrando",
   "Not applicable": "No aplicable",
-  "Method": "Método"
+  "Method": "Método",
+  "Softswitch subscribers": "Suscriptores Softswitch",
+  "Manage SIP subscribers linked to tenant Softswitch accounts.": "Gestione los suscriptores SIP vinculados a las cuentas Softswitch de este entorno.",
+  "New subscriber": "Nuevo suscriptor",
+  "Edit subscriber": "Editar suscriptor",
+  "Maintain SIP credentials, caller ID and registration policy.": "Mantenga las credenciales SIP, el identificador de llamada y la política de registro.",
+  "No subscribers found.": "No se encontraron suscriptores.",
+  "Delete subscriber": "Eliminar suscriptor",
+  "Are you sure you want to delete this subscriber?": "¿Está seguro de que desea eliminar este suscriptor?",
+  "Delete selected subscribers": "Eliminar suscriptores seleccionados",
+  "Delete {count} selected subscribers?": "¿Eliminar {count} suscriptores seleccionados?",
+  "Subscriber saved successfully.": "Suscriptor guardado correctamente.",
+  "Subscriber deleted successfully.": "Suscriptor eliminado correctamente.",
+  "Failed to delete subscriber.": "No se pudo eliminar el suscriptor.",
+  "Max contacts": "Máximo de contactos",
+  "Outbound CID": "Identificador de llamada saliente",
+  "Record calls": "Grabar llamadas"
 }

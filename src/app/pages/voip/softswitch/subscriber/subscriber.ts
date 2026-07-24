@@ -30,6 +30,13 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
+  tabLabels: {
+    routing: 'Routing',
+    authentication: 'Authentication',
+    limits: 'Limits',
+    codecs: 'Codecs',
+    monitoring: 'Call recording',
+  },
   initialValues: {
     accountUUID: '',
     username: '',
@@ -92,6 +99,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       label: 'Password',
       required: true,
       span: 1,
+      tab: 'authentication',
     },
     {
       key: 'callerIdName',
@@ -99,6 +107,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'callerIdName',
       label: 'Caller ID name',
       span: 1,
+      tab: 'routing',
     },
     {
       key: 'callerIdNumber',
@@ -106,8 +115,16 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'callerIdNumber',
       label: 'Caller ID number',
       span: 1,
+      tab: 'routing',
     },
-    { key: 'context', source: 'VsuContext', payloadKey: 'context', label: 'Context', span: 1 },
+    {
+      key: 'context',
+      source: 'VsuContext',
+      payloadKey: 'context',
+      label: 'Context',
+      span: 1,
+      tab: 'routing',
+    },
     {
       key: 'maxContacts',
       source: 'VsuMaxContacts',
@@ -115,6 +132,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       label: 'Max contacts',
       type: 'number',
       span: 1,
+      tab: 'limits',
     },
     {
       key: 'maxConcurrentCalls',
@@ -123,6 +141,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       label: 'Max concurrent calls',
       type: 'number',
       span: 1,
+      tab: 'limits',
     },
     {
       key: 'outboundCid',
@@ -130,8 +149,16 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'outboundCid',
       label: 'Outbound CID',
       span: 1,
+      tab: 'routing',
     },
-    { key: 'codecs', source: 'VsuCodecs', payloadKey: 'codecs', label: 'Codecs', span: 1 },
+    {
+      key: 'codecs',
+      source: 'VsuCodecs',
+      payloadKey: 'codecs',
+      label: 'Codecs',
+      span: 1,
+      tab: 'codecs',
+    },
     {
       key: 'registerEnabled',
       source: 'VsuRegisterEnabled',
@@ -139,6 +166,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       label: 'Registration',
       type: 'select',
       span: 1,
+      tab: 'authentication',
       options: [
         { value: 1, label: 'Enabled' },
         { value: 0, label: 'Disabled' },
@@ -151,6 +179,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       label: 'Record calls',
       type: 'select',
       span: 1,
+      tab: 'monitoring',
       options: [
         { value: 1, label: 'Yes' },
         { value: 0, label: 'No' },
