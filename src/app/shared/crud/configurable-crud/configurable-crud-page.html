@@ -81,7 +81,8 @@
                 mat-stroked-button
                 type="button"
                 [disabled]="isFilterActionMenuDisabled(actionMenu)"
-                [matTooltip]="(actionMenu.tooltip ?? actionMenu.label) | transloco"
+                [matTooltip]="actionMenu.tooltip ? (actionMenu.tooltip | transloco) : ''"
+                [matTooltipDisabled]="!actionMenu.tooltip"
                 [matMenuTriggerFor]="contextualActionMenu"
               >
                 <mat-icon>{{ actionMenu.icon }}</mat-icon>

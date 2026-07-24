@@ -121,7 +121,6 @@ function config(): ConfigurableCrudConfig {
     ],
     filterActionMenu: {
       label: 'Status',
-      tooltip: 'Inspect PABX runtime statuses',
       icon: 'monitor_heart',
       actions: [
         {

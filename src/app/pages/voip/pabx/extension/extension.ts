@@ -294,10 +294,9 @@ const config: ConfigurableCrudConfig = {
       emptyLabel: 'No PABX accounts found.',
     },
   ],
-  filterActionMenu: {
-    label: 'Status',
-    tooltip: 'Inspect PABX runtime statuses',
-    icon: 'monitor_heart',
+    filterActionMenu: {
+      label: 'Status',
+      icon: 'monitor_heart',
     actions: [
       {
         key: 'runtime-status-all',
