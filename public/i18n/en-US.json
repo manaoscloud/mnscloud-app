@@ -3325,5 +3325,21 @@
   "No trunk statuses were returned.": "No trunk statuses were returned.",
   "Registering": "Registering",
   "Not applicable": "Not applicable",
-  "Method": "Method"
+  "Method": "Method",
+  "Softswitch subscribers": "Softswitch subscribers",
+  "Manage SIP subscribers linked to tenant Softswitch accounts.": "Manage SIP subscribers linked to tenant Softswitch accounts.",
+  "New subscriber": "New subscriber",
+  "Edit subscriber": "Edit subscriber",
+  "Maintain SIP credentials, caller ID and registration policy.": "Maintain SIP credentials, caller ID and registration policy.",
+  "No subscribers found.": "No subscribers found.",
+  "Delete subscriber": "Delete subscriber",
+  "Are you sure you want to delete this subscriber?": "Are you sure you want to delete this subscriber?",
+  "Delete selected subscribers": "Delete selected subscribers",
+  "Delete {count} selected subscribers?": "Delete {count} selected subscribers?",
+  "Subscriber saved successfully.": "Subscriber saved successfully.",
+  "Subscriber deleted successfully.": "Subscriber deleted successfully.",
+  "Failed to delete subscriber.": "Failed to delete subscriber.",
+  "Max contacts": "Max contacts",
+  "Outbound CID": "Outbound CID",
+  "Record calls": "Record calls"
 }
