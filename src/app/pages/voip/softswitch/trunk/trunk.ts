@@ -15,6 +15,23 @@ const authenticationModes: ConfigurableCrudOption[] = [
   { value: 'none', label: 'None' },
 ];
 
+const codecs: ConfigurableCrudOption[] = [
+  { value: 'OPUS', label: 'OPUS' },
+  { value: 'PCMU', label: 'PCMU' },
+  { value: 'PCMA', label: 'PCMA' },
+  { value: 'G729', label: 'G729' },
+  { value: 'G722', label: 'G722' },
+  { value: 'H264', label: 'H264' },
+];
+
+function codecList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  return String(value ?? '')
+    .split(',')
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+}
+
 const TRUNK_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/softswitch/trunks',
   uuidField: 'uuid',
@@ -32,6 +49,13 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
   savedMessage: 'Trunk saved successfully.',
   deletedMessage: 'Trunk deleted successfully.',
   deleteFailedMessage: 'Failed to delete trunk.',
+  tabLabels: {
+    record: 'Record',
+    network: 'Connection',
+    authentication: 'Authentication',
+    limits: 'Limits',
+    codecs: 'Codecs',
+  },
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
@@ -57,11 +81,8 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     password: '',
     realm: '',
     fromDomain: '',
-    fromUser: '',
-    aor: '',
-    contactUser: '',
-    contactDomain: '',
     registrationExpires: 3600,
+    codecs: [],
     trustedCidrs: '',
     priority: 100,
     weight: 100,
@@ -99,10 +120,6 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     { key: 'password', source: 'password', payloadKey: 'password', label: 'Password', type: 'password', requiredWhen: ({ values }) => String(values['authenticationMode']) === 'register', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
     { key: 'realm', source: 'realm', payloadKey: 'realm', label: 'Realm', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
     { key: 'fromDomain', source: 'fromDomain', payloadKey: 'fromDomain', label: 'From domain', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
-    { key: 'fromUser', source: 'fromUser', payloadKey: 'fromUser', label: 'From user', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
-    { key: 'aor', source: 'aor', payloadKey: 'aor', label: 'AOR', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
-    { key: 'contactUser', source: 'contactUser', payloadKey: 'contactUser', label: 'Contact user', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
-    { key: 'contactDomain', source: 'contactDomain', payloadKey: 'contactDomain', label: 'Contact domain', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
     { key: 'registrationExpires', source: 'registrationExpires', payloadKey: 'registrationExpires', label: 'Registration expiration', type: 'number', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
     {
       key: 'trustedCidrs',
@@ -120,6 +137,17 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     { key: 'priority', source: 'priority', payloadKey: 'priority', label: 'Priority', type: 'number', span: 1, tab: 'limits' },
     { key: 'weight', source: 'weight', payloadKey: 'weight', label: 'Weight', type: 'number', span: 1, tab: 'limits' },
     { key: 'maxConcurrentCalls', source: 'maxConcurrentCalls', payloadKey: 'maxConcurrentCalls', label: 'Maximum concurrent calls', type: 'number', span: 1, tab: 'limits' },
+    {
+      key: 'codecs',
+      source: 'codecs',
+      payloadKey: 'codecs',
+      label: 'Codecs',
+      type: 'multi-select',
+      options: codecs,
+      span: 1,
+      tab: 'codecs',
+      fromRecord: (value) => codecList(value),
+    },
   ],
 };
 
@@ -150,7 +178,11 @@ export class VoipSoftswitchTrunkPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, status: Number(payload['status']) === 1 };
+    return {
+      ...payload,
+      status: Number(payload['status']) === 1,
+      codecs: codecList(payload['codecs']).join(',') || null,
+    };
   }
 
   private async loadLookups(): Promise<void> {
