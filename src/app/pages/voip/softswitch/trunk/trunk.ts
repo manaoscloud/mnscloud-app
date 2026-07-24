@@ -15,6 +15,12 @@ const authenticationModes: ConfigurableCrudOption[] = [
   { value: 'none', label: 'None' },
 ];
 
+const trunkDirections: ConfigurableCrudOption[] = [
+  { value: 'inbound', label: 'Inbound' },
+  { value: 'outbound', label: 'Outbound' },
+  { value: 'both', label: 'Both' },
+];
+
 const codecs: ConfigurableCrudOption[] = [
   { value: 'OPUS', label: 'OPUS' },
   { value: 'PCMU', label: 'PCMU' },
@@ -52,6 +58,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
   tabLabels: {
     record: 'Record',
     network: 'Connection',
+    routing: 'Routing',
     authentication: 'Authentication',
     limits: 'Limits',
     codecs: 'Codecs',
@@ -109,8 +116,18 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       tab: 'record',
     },
-    { key: 'direction', source: 'direction', payloadKey: 'direction', label: 'Direction', span: 1, tab: 'record' },
     { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 1, tab: 'record' },
+    {
+      key: 'direction',
+      source: 'direction',
+      payloadKey: 'direction',
+      label: 'Direction',
+      type: 'select',
+      options: trunkDirections,
+      required: true,
+      span: 1,
+      tab: 'routing',
+    },
     { key: 'host', source: 'host', payloadKey: 'host', label: 'Host', required: true, span: 1, tab: 'network' },
     { key: 'port', source: 'port', payloadKey: 'port', label: 'Port', type: 'number', span: 1, tab: 'network' },
     { key: 'transport', source: 'transport', payloadKey: 'transport', label: 'Transport', span: 1, tab: 'network' },
