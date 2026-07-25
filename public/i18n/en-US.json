@@ -3361,5 +3361,7 @@
   "Contact domain": "Contact domain",
   "Registration expiration": "Registration expiration",
   "Allowed source addresses": "Allowed source addresses",
-  "Maximum concurrent calls": "Maximum concurrent calls"
+  "Maximum concurrent calls": "Maximum concurrent calls",
+  "SIP username": "SIP username",
+  "SIP password": "SIP password"
 }
