@@ -281,7 +281,13 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
         }),
       );
       this.customerOptions.set(
-        await this.fetchPaged('erp/customers?status=1', (row) => option(row.CusUUID, row.CusName)),
+        await this.fetchPaged('erp/customers?status=1', (row) =>
+          option(
+            row.CusUUID ?? row.CustomerCusUUID ?? row.CustomerUUID,
+            row.CusName ?? row.Name ?? row.CustomerName,
+            [row.CusDocument ?? row.Document, row.CusEmail ?? row.Email],
+          ),
+        ),
       );
     } finally {
       this.lookupLoading.set(false);
