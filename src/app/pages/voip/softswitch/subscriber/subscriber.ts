@@ -10,6 +10,23 @@ import {
 import { ApiService } from '../../../../services/api.service';
 import { VoipSoftswitchSubscriberItem } from './subscriber.service';
 
+const codecs: ConfigurableCrudOption[] = [
+  { value: 'OPUS', label: 'OPUS' },
+  { value: 'PCMU', label: 'PCMU' },
+  { value: 'PCMA', label: 'PCMA' },
+  { value: 'G729', label: 'G729' },
+  { value: 'G722', label: 'G722' },
+  { value: 'H264', label: 'H264' },
+];
+
+function codecList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  return String(value ?? '')
+    .split(',')
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+}
+
 const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/softswitch/subscribers',
   uuidField: 'VsuUUID',
@@ -39,6 +56,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
   },
   initialValues: {
     accountUUID: '',
+    customerUUID: '',
     username: '',
     password: '',
     callerIdName: '',
@@ -47,7 +65,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
     maxContacts: 1,
     maxConcurrentCalls: 1,
     outboundCid: '',
-    codecs: '',
+    codecs: [],
     registerEnabled: 1,
     recordCalls: 0,
     enabled: 1,
@@ -68,6 +86,14 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
   ],
   fields: [
     {
+      key: 'enabled',
+      source: 'VsuEnabled',
+      payloadKey: 'enabled',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
       key: 'accountUUID',
       source: 'VoipSoftswitchAccountVssUUID',
       payloadKey: 'accountUUID',
@@ -77,11 +103,12 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'enabled',
-      source: 'VsuEnabled',
-      payloadKey: 'enabled',
-      label: 'Status',
-      type: 'status',
+      key: 'customerUUID',
+      source: 'CustomerCusUUID',
+      payloadKey: 'customerUUID',
+      label: 'Customer',
+      type: 'search-select',
+      required: true,
       span: 1,
     },
     {
@@ -156,8 +183,11 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       source: 'VsuCodecs',
       payloadKey: 'codecs',
       label: 'Codecs',
+      type: 'multi-select',
+      options: codecs,
       span: 1,
       tab: 'codecs',
+      fromRecord: (value) => codecList(value),
     },
     {
       key: 'registerEnabled',
@@ -199,7 +229,9 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
   private readonly rawApi = inject(ApiService);
 
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
+  private readonly accountCustomerUUIDs = new Map<string, string>();
 
   constructor() {
     super(SUBSCRIBER_CONFIG);
@@ -207,11 +239,15 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return field.key === 'accountUUID' ? this.lookupLoading() : false;
+    return field.key === 'accountUUID' || field.key === 'customerUUID'
+      ? this.lookupLoading()
+      : false;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    return key === 'accountUUID' ? this.accountOptions() : [];
+    if (key === 'accountUUID') return this.accountOptions();
+    if (key === 'customerUUID') return this.customerOptions();
+    return [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -222,16 +258,30 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
       registerEnabled: Number(payload['registerEnabled']) === 1,
       recordCalls: Number(payload['recordCalls']) === 1,
       enabled: Number(payload['enabled']) === 1,
+      codecs: codecList(payload['codecs']),
     };
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'accountUUID') return;
+    const customerUUID = this.accountCustomerUUIDs.get(String(value ?? ''));
+    if (customerUUID) this.setFieldValue('customerUUID', customerUUID);
   }
 
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
+      this.accountCustomerUUIDs.clear();
       this.accountOptions.set(
-        await this.fetchPaged('voip/softswitch/accounts?status=1', (row) =>
-          option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]),
-        ),
+        await this.fetchPaged('voip/softswitch/accounts?status=1', (row) => {
+          const accountUUID = String(row.VssUUID ?? '').trim();
+          const customerUUID = String(row.CustomerCusUUID ?? '').trim();
+          if (accountUUID && customerUUID) this.accountCustomerUUIDs.set(accountUUID, customerUUID);
+          return option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]);
+        }),
+      );
+      this.customerOptions.set(
+        await this.fetchPaged('erp/customers?status=1', (row) => option(row.CusUUID, row.CusName)),
       );
     } finally {
       this.lookupLoading.set(false);
