@@ -52,7 +52,7 @@ function domainConfig(scope: 'tenant' | 'master'): ConfigurableCrudConfig {
     fields: [
       { key: 'status', source: 'VdmStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
       { key: 'purpose', source: 'VdmPurpose', payloadKey: 'purpose', label: 'Purpose', type: 'select', options: purposeOptions, required: true, span: 1 },
-      { key: 'name', source: 'VdmName', payloadKey: 'name', label: 'Domain', type: 'text', required: true, placeholder: 'pbx.example.com', span: 2 },
+      { key: 'name', source: 'VdmName', payloadKey: 'name', label: 'Domain', type: 'text', required: true, placeholder: 'pbx.example.com', span: 1 },
     ],
   };
 }
