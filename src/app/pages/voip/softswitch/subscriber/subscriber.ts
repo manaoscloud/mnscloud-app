@@ -231,7 +231,6 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
-  private readonly accountCustomerUUIDs = new Map<string, string>();
 
   constructor() {
     super(SUBSCRIBER_CONFIG);
@@ -262,28 +261,18 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
     };
   }
 
-  protected override onFieldValueChanged(key: string, value: unknown): void {
-    if (key !== 'accountUUID') return;
-    const customerUUID = this.accountCustomerUUIDs.get(String(value ?? ''));
-    if (customerUUID) this.setFieldValue('customerUUID', customerUUID);
-  }
-
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      this.accountCustomerUUIDs.clear();
       this.accountOptions.set(
-        await this.fetchPaged('voip/softswitch/accounts?status=1', (row) => {
-          const accountUUID = String(row.VssUUID ?? '').trim();
-          const customerUUID = String(row.CustomerCusUUID ?? '').trim();
-          if (accountUUID && customerUUID) this.accountCustomerUUIDs.set(accountUUID, customerUUID);
-          return option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]);
-        }),
+        await this.fetchPaged('voip/softswitch/accounts?status=1', (row) =>
+          option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]),
+        ),
       );
       this.customerOptions.set(
         await this.fetchPaged('erp/customers?status=1', (row) =>
           option(
-            row.CusUUID ?? row.CustomerCusUUID ?? row.CustomerUUID,
+            row.CustomerUUID ?? row.CusUUID ?? row.CustomerCusUUID,
             row.CusName ?? row.Name ?? row.CustomerName,
             [row.CusDocument ?? row.Document, row.CusEmail ?? row.Email],
           ),
@@ -299,14 +288,15 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
     mapItem: (row: any) => ConfigurableCrudOption | null,
   ): Promise<ConfigurableCrudOption[]> {
     const options: ConfigurableCrudOption[] = [];
-    for (let offset = 0; offset < 5000; offset += 500) {
+    const pageSize = 200;
+    for (let offset = 0; offset < 5000; offset += pageSize) {
       const separator = endpoint.includes('?') ? '&' : '?';
       const response = await this.rawApi.get<any>(
-        `${endpoint}${separator}limit=500&offset=${offset}`,
+        `${endpoint}${separator}limit=${pageSize}&offset=${offset}`,
       );
       const rows = extractItems(response);
       options.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
-      if (rows.length < 500) break;
+      if (rows.length < pageSize) break;
     }
     return options.sort((left, right) => left.label.localeCompare(right.label));
   }
