@@ -3299,6 +3299,7 @@
   "Read-only registration and connectivity status of extensions assigned to the selected PABX.": "Diagnóstico de solo lectura del registro y la conectividad de las extensiones vinculadas al PABX seleccionado.",
   "Read-only registration and connectivity status of the selected PABX extension.": "Diagnóstico de solo lectura del registro y la conectividad de la extensión PABX seleccionada.",
   "Select a PABX account to inspect extension statuses.": "Seleccione una cuenta PABX para consultar los estados de las extensiones.",
+  "Select a Softswitch account to inspect subscriber statuses.": "Seleccione una cuenta Softswitch para consultar los estados de los suscriptores.",
   "Extension registrations": "Registros de extensiones",
   "Extension": "Extensión",
   "Domain": "Dominio",

@@ -3299,6 +3299,7 @@
   "Read-only registration and connectivity status of extensions assigned to the selected PABX.": "Read-only registration and connectivity status of extensions assigned to the selected PABX.",
   "Read-only registration and connectivity status of the selected PABX extension.": "Read-only registration and connectivity status of the selected PABX extension.",
   "Select a PABX account to inspect extension statuses.": "Select a PABX account to inspect extension statuses.",
+  "Select a Softswitch account to inspect subscriber statuses.": "Select a Softswitch account to inspect subscriber statuses.",
   "Extension registrations": "Extension registrations",
   "Extension": "Extension",
   "Domain": "Domain",
