@@ -2,12 +2,19 @@ import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
+  ConfigurableCrudFilterAction,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import {
+  runRuntimeDiagnostic,
+  RuntimeDiagnosticResult,
+} from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 import { VoipSoftswitchSubscriberItem } from './subscriber.service';
 
 const codecs: ConfigurableCrudOption[] = [
@@ -48,12 +55,44 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
   activeValue: 1,
   inactiveValue: 0,
   tabLabels: {
-    routing: 'Routing',
+    record: 'Record',
     authentication: 'Authentication',
+    routing: 'Routing',
     limits: 'Limits',
     codecs: 'Codecs',
     monitoring: 'Call recording',
   },
+  listFilters: [
+    {
+      key: 'accountUUID',
+      label: 'Softswitch',
+      paramKey: 'accountUUID',
+      type: 'search-select',
+      span: 1,
+      placeholder: 'Search Softswitch',
+      emptyLabel: 'No Softswitch accounts found.',
+    },
+  ],
+  filterActionMenu: {
+    label: 'Status',
+    icon: 'monitor_heart',
+    actions: [
+      {
+        key: 'runtime-status-all',
+        label: 'Subscribers',
+        tooltip: 'Inspect all Softswitch subscriber statuses',
+        icon: 'group',
+      },
+    ],
+  },
+  rowActions: [
+    {
+      key: 'runtime-status',
+      label: 'Runtime status',
+      tooltip: 'Inspect subscriber runtime status',
+      icon: 'terminal',
+    },
+  ],
   initialValues: {
     accountUUID: '',
     customerUUID: '',
@@ -92,6 +131,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       label: 'Status',
       type: 'status',
       span: 1,
+      tab: 'record',
     },
     {
       key: 'accountUUID',
@@ -101,6 +141,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 1,
+      tab: 'record',
     },
     {
       key: 'customerUUID',
@@ -110,6 +151,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 1,
+      tab: 'record',
     },
     {
       key: 'registerEnabled',
@@ -237,7 +279,7 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
     void this.loadLookups();
   }
 
-  override fieldLoading(field: { key: string }): boolean {
+  override fieldLoading(field: ConfigurableCrudField): boolean {
     return field.key === 'accountUUID' || field.key === 'customerUUID'
       ? this.lookupLoading()
       : false;
@@ -259,6 +301,54 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
       enabled: Number(payload['enabled']) === 1,
       codecs: codecList(payload['codecs']),
     };
+  }
+
+  override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean {
+    return action.key === 'runtime-status-all' && !this.selectedAccountUUID();
+  }
+
+  override handleFilterAction(action: ConfigurableCrudFilterAction): void {
+    if (action.key !== 'runtime-status-all') return;
+    const accountUUID = this.selectedAccountUUID();
+    if (!accountUUID) {
+      this.snack.warning(this.t('Select a Softswitch account to inspect subscriber statuses.'));
+      return;
+    }
+
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'Softswitch subscriber runtime status',
+      description:
+        'Read-only registration and contact status of subscribers assigned to the selected Softswitch.',
+      startEndpoint: `voip/softswitch/accounts/${accountUUID}/subscribers/runtime-status`,
+      statusEndpoint: (jobUUID) =>
+        `voip/softswitch/accounts/${accountUUID}/subscribers/runtime-status/${jobUUID}`,
+      sections: subscriberStatusSections,
+    });
+  }
+
+  override handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: VoipSoftswitchSubscriberItem,
+  ): void {
+    if (action.key !== 'runtime-status') return;
+    const subscriberUUID = String(row.VsuUUID ?? '').trim();
+    if (!subscriberUUID) return;
+
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'Softswitch subscriber runtime status',
+      description:
+        'Read-only registration and contact status of the selected Softswitch subscriber.',
+      startEndpoint: `voip/softswitch/subscribers/${subscriberUUID}/runtime-status`,
+      statusEndpoint: (jobUUID) =>
+        `voip/softswitch/subscribers/${subscriberUUID}/runtime-status/${jobUUID}`,
+      sections: subscriberStatusSections,
+    });
+  }
+
+  private selectedAccountUUID(): string {
+    return String(
+      this.listFilterValue({ key: 'accountUUID', label: 'Softswitch', type: 'search-select' }),
+    ).trim();
   }
 
   private async loadLookups(): Promise<void> {
@@ -299,6 +389,46 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
       if (rows.length < pageSize) break;
     }
     return options.sort((left, right) => left.label.localeCompare(right.label));
+  }
+}
+
+function subscriberStatusSections(result: RuntimeDiagnosticResult) {
+  const subscribers = Array.isArray(result.result?.['subscribers'])
+    ? result.result['subscribers'].filter(
+        (item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object',
+      )
+    : [];
+
+  return [
+    {
+      title: 'Subscriber registrations',
+      table: {
+        columns: [
+          { key: 'subscriber', label: 'Subscriber', monospace: true },
+          { key: 'domain', label: 'Domain' },
+          { key: 'registration', label: 'Registration', translate: true },
+          { key: 'contact', label: 'Contact', monospace: true },
+        ],
+        rows: subscribers.map((item) => ({
+          subscriber: item['username'] ?? '-',
+          domain: item['domain'] ?? '-',
+          registration: subscriberRegistrationLabel(item['registrationStatus'] ?? 'unknown'),
+          contact: item['contact'] ?? '-',
+        })),
+        emptyLabel: 'No subscriber statuses were returned.',
+      },
+    },
+  ];
+}
+
+function subscriberRegistrationLabel(value: unknown): string {
+  switch (String(value ?? '').toLowerCase()) {
+    case 'registered':
+      return 'Registered';
+    case 'not_registered':
+      return 'Not registered';
+    default:
+      return 'Unknown';
   }
 }
 
