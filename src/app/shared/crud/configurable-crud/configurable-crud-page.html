@@ -488,6 +488,10 @@
           </div>
         </mat-tab>
 
+        @if (config.authenticationTabAfterRecord && authenticationFields().length) {
+          <ng-container [ngTemplateOutlet]="authenticationTab" />
+        }
+
         @if (addressFields().length) {
           <mat-tab [label]="tabLabel('address', 'Address') | transloco">
             <div class="tab-content address-section-list">
@@ -1325,7 +1329,11 @@
           </mat-tab>
         }
 
-        @if (authenticationFields().length) {
+        @if (authenticationFields().length && !config.authenticationTabAfterRecord) {
+          <ng-container [ngTemplateOutlet]="authenticationTab" />
+        }
+
+        <ng-template #authenticationTab>
           <mat-tab [label]="tabLabel('authentication', 'Authentication') | transloco">
             <div class="tab-content form-grid">
               @for (field of authenticationFields(); track field.key) {
@@ -1420,7 +1428,7 @@
               }
             </div>
           </mat-tab>
-        }
+        </ng-template>
 
         @if (limitsFields().length) {
           <mat-tab [label]="tabLabel('limits', 'Limits') | transloco">
