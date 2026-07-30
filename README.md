@@ -148,6 +148,12 @@ metadata with the control plane. `main` stays restricted to reviewed source chan
 Agents consume only that published stable artifact. This prevents a source commit from being offered
 as an update when it did not produce a validated browser bundle.
 
+Release catalog synchronization has bounded connection retries and is reconciled hourly from the latest
+published GitHub Release. This is idempotent: a temporary control-plane connectivity failure cannot make
+an already-published artifact permanently invisible to runtime hosts. The manual `Reconcile Runtime Release
+Cache` workflow can reconcile a specific published tag during incident handling without rebuilding or
+creating another release.
+
 The manual release workflow is an emergency path only. It requires an explicit version, builds the
 same candidate payload and promotes it through the same immutable-release path; normal releases must
 use CI artifact promotion. Candidate numbering uses the highest published app tag as well as `VERSION`,
