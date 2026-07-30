@@ -30,6 +30,11 @@ The API repository dispatches this payload after API validation/deployment:
 6. Synchronize artifact URL, SHA-256, size, and content type to the MNSCloud runtime release cache.
 7. Request deployment through the MNSCloud control plane.
 
+The release-cache publication is retried with bounded connection and total timeouts. A separate hourly
+`Reconcile Runtime Release Cache` workflow compares the latest published GitHub Release with the catalog and
+republishes only when it is missing or stale. It may also be dispatched manually with a published tag; it never
+rebuilds the App or creates a new release.
+
 App runtime hosts do not install Node.js and do not run Angular builds. The Agent downloads the
 published browser artifact, validates its SHA-256 digest, publishes it to Nginx, and reports the
 installed runtime version back to the API.

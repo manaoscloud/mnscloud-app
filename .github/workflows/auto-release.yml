@@ -86,44 +86,4 @@ jobs:
           MNSCLOUD_RELEASE_SYNC_URL: ${{ vars.MNSCLOUD_RELEASE_SYNC_URL || secrets.MNSCLOUD_RELEASE_SYNC_URL || '' }}
           MNSCLOUD_RELEASE_SYNC_TOKEN: ${{ secrets.MNSCLOUD_RELEASE_SYNC_TOKEN || secrets.MNSCLOUD_DEPLOY_TOKEN || '' }}
         run: |
-          set -euo pipefail
-          if [ -z "$MNSCLOUD_RELEASE_SYNC_URL" ] || [ -z "$MNSCLOUD_RELEASE_SYNC_TOKEN" ]; then
-            echo 'Release cache notification is not configured; skipped.'
-            exit 0
-          fi
-          python3 - <<'PY' > /tmp/mnscloud-release-payload.json
-          import json
-          import subprocess
-
-          with open('releases/manifest.json', encoding='utf-8') as handle:
-              manifest = json.load(handle)
-          stable = manifest['channels']['stable']
-          artifact = stable['artifact']
-          ref = stable['ref']
-          # Runtime inventory reports the immutable release checkout.  The cache must
-          # compare against that tag commit, never the source commit that built it.
-          build_ref = subprocess.check_output(['git', 'rev-list', '-n', '1', ref], text=True).strip()
-          print(json.dumps({
-              'product': 'mnscloud-app',
-              'channel': 'stable',
-              'version': stable['version'],
-              'ref': ref,
-              'buildRef': build_ref[:12],
-              'buildDate': stable['releasedAt'],
-              'releasedAt': stable['releasedAt'],
-              'notes': f'Synced from GitHub Actions release {ref}.',
-              'artifactName': artifact['name'],
-              'artifactUrl': f'https://github.com/{subprocess.check_output(["git", "config", "--get", "remote.origin.url"], text=True).strip().removesuffix(".git").removeprefix("https://github.com/")}/releases/download/{ref}/{artifact["name"]}',
-              'artifactSha256': artifact['sha256'],
-              'artifactSizeBytes': artifact['sizeBytes'],
-              'artifactContentType': artifact['contentType'],
-          }))
-          PY
-          base_url="${MNSCLOUD_RELEASE_SYNC_URL%/}"
-          endpoint="${base_url}/runtime/releases/publish"
-          [[ "$base_url" == */api/v1 ]] || endpoint="${base_url}/api/v1/runtime/releases/publish"
-          curl -fsS -X POST \
-            -H "Authorization: Bearer ${MNSCLOUD_RELEASE_SYNC_TOKEN}" \
-            -H 'Content-Type: application/json' \
-            --data @/tmp/mnscloud-release-payload.json \
-            "$endpoint"
+          bash scripts/sync-runtime-release-cache.sh
