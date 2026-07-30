@@ -10,6 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 
 import { firstValueFrom } from 'rxjs';
 
@@ -73,6 +74,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatTableModule,
   MatTabsModule,
   MatTooltipModule,
+  NgTemplateOutlet,
   MnsSearchSelectFieldComponent,
   TranslocoPipe,
   CurrencyMaskDirective,
@@ -282,6 +284,8 @@ export type ConfigurableCrudConfig = {
   bulkDelete?: boolean;
   statusFilter?: boolean;
   tabLabels?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
+  /** Places Authentication directly after Record without changing the default tab sequence. */
+  authenticationTabAfterRecord?: boolean;
 };
 
 export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {

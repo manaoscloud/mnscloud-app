@@ -62,6 +62,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
     codecs: 'Codecs',
     monitoring: 'Call recording',
   },
+  authenticationTabAfterRecord: true,
   listFilters: [
     {
       key: 'accountUUID',
