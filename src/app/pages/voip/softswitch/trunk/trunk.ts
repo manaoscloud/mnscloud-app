@@ -5,9 +5,13 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudFilterAction,
+  ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
+import type { RuntimeDiagnosticResult } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 
 const authenticationModes: ConfigurableCrudOption[] = [
   { value: 'ip_acl', label: 'IP ACL' },
@@ -75,6 +79,9 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     { id: 'transport', label: 'Transport', field: 'transport' },
     { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
   ],
+  listFilters: [{ key: 'accountUUID', label: 'Softswitch', paramKey: 'accountUUID', type: 'search-select', span: 1, placeholder: 'Search Softswitch', emptyLabel: 'No Softswitch accounts found.' }],
+  filterActionMenu: { label: 'Status', icon: 'monitor_heart', actions: [{ key: 'runtime-status-all', label: 'Trunks', tooltip: 'Inspect all Softswitch trunk statuses', icon: 'settings_input_component' }] },
+  rowActions: [{ key: 'runtime-status', label: 'Runtime status', tooltip: 'Inspect trunk runtime status', icon: 'terminal' }],
   initialValues: {
     accountUUID: '',
     name: '',
@@ -202,6 +209,22 @@ export class VoipSoftswitchTrunkPage extends ConfigurableCrudPageBase<Configurab
     };
   }
 
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key !== 'runtime-status') return;
+    const uuid = String(row['uuid'] ?? row['VtkUUID'] ?? '').trim(); if (!uuid) return;
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, { title: 'Softswitch trunk runtime status', description: 'Reads the assigned Kamailio runtime through the Agent only.', startEndpoint: `voip/softswitch/trunks/${uuid}/runtime-status`, statusEndpoint: (jobUUID) => `voip/softswitch/trunks/${uuid}/runtime-status/${jobUUID}`, sections: trunkStatusSections });
+  }
+
+  override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean { return action.key === 'runtime-status-all' && !this.selectedAccountUUID(); }
+  override handleFilterAction(action: ConfigurableCrudFilterAction): void {
+    if (action.key !== 'runtime-status-all') return;
+    const accountUUID = this.selectedAccountUUID();
+    if (!accountUUID) { this.snack.warning(this.t('Select a Softswitch account before inspecting its runtime status.')); return; }
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, { title: 'Softswitch trunks runtime status', description: 'Reads the assigned Kamailio runtime through the Agent only.', startEndpoint: `voip/softswitch/accounts/${accountUUID}/trunks/runtime-status`, statusEndpoint: (jobUUID) => `voip/softswitch/accounts/${accountUUID}/trunks/runtime-status/${jobUUID}`, sections: trunkStatusSections });
+  }
+
+  private selectedAccountUUID(): string { return String(this.listFilterValue({ key: 'accountUUID', label: 'Softswitch', type: 'search-select' }) ?? '').trim(); }
+
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
@@ -226,6 +249,12 @@ export class VoipSoftswitchTrunkPage extends ConfigurableCrudPageBase<Configurab
       .sort((left, right) => left.label.localeCompare(right.label)) as ConfigurableCrudOption[];
   }
 }
+
+function trunkStatusSections(result: RuntimeDiagnosticResult) {
+  const trunks = Array.isArray(result.result?.['trunks']) ? result.result['trunks'].filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object') : [];
+  return [{ title: 'Trunk registrations', table: { columns: [{ key: 'trunk', label: 'Trunk' }, { key: 'registration', label: 'Registration', translate: true }, { key: 'detail', label: 'Detail' }], rows: trunks.map((item) => ({ trunk: item['name'] ?? '-', registration: trunkRegistrationLabel(item['registrationStatus']), detail: item['detail'] ?? '-' })), emptyLabel: 'No trunk statuses were returned.' } }];
+}
+function trunkRegistrationLabel(value: unknown): string { const status = String(value ?? '').toLowerCase(); return status === 'registered' ? 'Registered' : status === 'registering' ? 'Registering' : status === 'not_registered' ? 'Not registered' : status === 'not_applicable' ? 'Not applicable' : 'Unknown'; }
 
 function extractItems(response: any): any[] {
   if (Array.isArray(response?.data?.items)) return response.data.items;
