@@ -3364,5 +3364,14 @@
   "Allowed source addresses": "Allowed source addresses",
   "Maximum concurrent calls": "Maximum concurrent calls",
   "SIP username": "SIP username",
-  "SIP password": "SIP password"
+  "SIP password": "SIP password",
+  "Softswitch trunk runtime status": "Softswitch trunk runtime status",
+  "Softswitch trunks runtime status": "Softswitch trunks runtime status",
+  "Inspect all Softswitch trunk statuses": "Inspect all Softswitch trunk statuses",
+  "Select a Softswitch account before inspecting its runtime status.": "Select a Softswitch account before inspecting its runtime status.",
+  "Reads the assigned Kamailio runtime through the Agent only.": "Reads the assigned Kamailio runtime through the Agent only.",
+  "Trunk registrations": "Trunk registrations",
+  "No trunk statuses were returned.": "No trunk statuses were returned.",
+  "Registration": "Registration",
+  "Detail": "Detail"
 }
