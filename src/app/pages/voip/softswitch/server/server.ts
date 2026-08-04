@@ -382,8 +382,8 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
         title: 'Softswitch runtime inventory',
         description: 'Sanitized runtime details reported by the assigned Agent.',
         status: {
-          label: 'UAC RPC',
-          value: this.uacStatusLabel(inventory?.uacRpcStatus),
+          label: 'Capability',
+          value: this.capabilityStatusLabel(inventory?.capabilityStatus),
           tone: status,
         },
         details: [
@@ -398,7 +398,7 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
             details: [
               { label: 'Engine version', value: inventory?.engineVersion, wide: true },
               { label: 'Service status', value: inventory?.serviceStatus },
-              { label: 'UAC RPC status', value: this.uacStatusLabel(inventory?.uacRpcStatus) },
+              { label: 'Capability status', value: this.capabilityStatusLabel(inventory?.capabilityStatus) },
             ],
           },
           {
@@ -432,12 +432,12 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
 
   private inventoryStatus(inventory: any): DataViewerTone {
     if (!inventory) return 'neutral';
-    if (inventory.uacRpcStatus === 'ready') return 'success';
-    if (inventory.uacRpcStatus === 'unavailable') return 'warning';
+    if (inventory.capabilityStatus === 'ready') return 'success';
+    if (inventory.capabilityStatus === 'unavailable') return 'warning';
     return 'info';
   }
 
-  private uacStatusLabel(status: unknown): string {
+  private capabilityStatusLabel(status: unknown): string {
     if (status === 'ready') return 'Ready';
     if (status === 'unavailable') return 'Unavailable';
     return 'Unknown';
