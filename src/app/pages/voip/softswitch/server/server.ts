@@ -16,6 +16,10 @@ import {
   type InstallCommandDialogData,
 } from '../../../../shared/install-command-dialog/install-command-dialog';
 import {
+  openDataViewerDialog,
+  type DataViewerTone,
+} from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
+import {
   openCrudTemplateDialog,
   type CrudDialogBinding,
 } from '../../../../shared/dialog/crud-dialog.util';
@@ -70,7 +74,10 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
-  rowActions: [{ key: 'install-command', label: 'Install command', icon: 'terminal' }],
+  rowActions: [
+    { key: 'runtime-inventory', label: 'Runtime inventory', icon: 'monitor_heart' },
+    { key: 'install-command', label: 'Install command', icon: 'terminal' },
+  ],
   initialValues: {
     name: '',
     nodeUUID: '',
@@ -286,6 +293,10 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipSoftswitchServerItem) {
+    if (action.key === 'runtime-inventory') {
+      await this.showRuntimeInventory(row);
+      return;
+    }
     if (action.key !== 'install-command') return;
     const confirmed = await this.confirmAction(
       'Generate install command',
@@ -362,6 +373,76 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
     };
   }
 
+  private async showRuntimeInventory(row: VoipSoftswitchServerItem): Promise<void> {
+    try {
+      const response = await this.serverApi.getRuntimeInventory(row.VsrUUID);
+      const inventory = response?.data?.inventory ?? null;
+      const status = this.inventoryStatus(inventory);
+      openDataViewerDialog(this.dialog, {
+        title: 'Softswitch runtime inventory',
+        description: 'Sanitized runtime details reported by the assigned Agent.',
+        status: {
+          label: 'UAC RPC',
+          value: this.uacStatusLabel(inventory?.uacRpcStatus),
+          tone: status,
+        },
+        details: [
+          { label: 'Server', value: row.VsrName },
+          { label: 'Engine', value: inventory?.engine ?? row.VsrEngine },
+          { label: 'Agent', value: inventory?.agentName ?? inventory?.agentUUID },
+          { label: 'Observed at', value: inventory?.observedAt },
+        ],
+        sections: [
+          {
+            title: 'Runtime',
+            details: [
+              { label: 'Engine version', value: inventory?.engineVersion, wide: true },
+              { label: 'Service status', value: inventory?.serviceStatus },
+              { label: 'UAC RPC status', value: this.uacStatusLabel(inventory?.uacRpcStatus) },
+            ],
+          },
+          {
+            title: 'Operating system',
+            details: [
+              { label: 'Distribution', value: inventory?.distribution },
+              { label: 'OS name', value: inventory?.osName },
+              { label: 'OS version', value: inventory?.osVersion },
+              { label: 'Kernel', value: inventory?.kernelVersion },
+              { label: 'Architecture', value: inventory?.architecture },
+            ],
+          },
+          {
+            title: 'Payload',
+            code: {
+              value: inventory?.payload ?? {},
+              format: 'json',
+              copy: true,
+              download: {
+                filename: `softswitch-runtime-inventory-${row.VsrUUID}.json`,
+                label: 'Download',
+              },
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      this.snack.error((error as any)?.error?.error ?? 'Failed to load runtime inventory.');
+    }
+  }
+
+  private inventoryStatus(inventory: any): DataViewerTone {
+    if (!inventory) return 'neutral';
+    if (inventory.uacRpcStatus === 'ready') return 'success';
+    if (inventory.uacRpcStatus === 'unavailable') return 'warning';
+    return 'info';
+  }
+
+  private uacStatusLabel(status: unknown): string {
+    if (status === 'ready') return 'Ready';
+    if (status === 'unavailable') return 'Unavailable';
+    return 'Unknown';
+  }
+
   private createdItemFromResponse(response: unknown): VoipSoftswitchServerItem | null {
     if (!response || typeof response !== 'object') return null;
     const data = (response as { data?: { item?: unknown } }).data;
@@ -370,7 +451,10 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   }
 
   override rowActions(row: VoipSoftswitchServerItem): readonly ConfigurableCrudRowAction[] {
-    return this.hasKamailioInstaller(row) ? super.rowActions(row) : [];
+    const actions = super.rowActions(row);
+    return this.hasKamailioInstaller(row)
+      ? actions
+      : actions.filter((action) => action.key !== 'install-command');
   }
 
   private hasKamailioInstaller(row: VoipSoftswitchServerItem): boolean {

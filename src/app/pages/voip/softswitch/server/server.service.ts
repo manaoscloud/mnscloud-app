@@ -51,6 +51,10 @@ export class VoipSoftswitchServerService {
     return this.api.post<any>(`system/voip/softswitch/servers/${uuid}/install-command`, {});
   }
 
+  getRuntimeInventory(uuid: string) {
+    return this.api.get<any>(`system/voip/softswitch/servers/${uuid}/runtime-inventory`);
+  }
+
   private basePath(isMaster: boolean) {
     return isMaster ? 'system/voip/softswitch/servers' : 'voip/softswitch/servers';
   }
