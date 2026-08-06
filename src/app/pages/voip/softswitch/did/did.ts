@@ -179,7 +179,7 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
           option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]),
         ),
         this.fetchPaged('voip/softswitch/subscribers?status=1', (row) =>
-          option(row.VsuUUID, row.VsuUsername, [row.CustomerName, row.DomainName]),
+          option(row.VsuUUID, subscriberLookupLabel(row), [row.DomainName]),
         ),
       ]);
       this.accountOptions.set(accounts);
@@ -232,4 +232,10 @@ function option(
     description,
     searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
   };
+}
+
+function subscriberLookupLabel(row: any): string {
+  const customerName = String(row?.CustomerName ?? '').trim();
+  const username = String(row?.VsuUsername ?? '').trim();
+  return [customerName, username].filter(Boolean).join(' — ');
 }
