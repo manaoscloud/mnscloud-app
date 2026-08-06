@@ -40,6 +40,10 @@ const DID_CONFIG: ConfigurableCrudConfig = {
   savedMessage: 'DID saved successfully.',
   deletedMessage: 'DID deleted successfully.',
   deleteFailedMessage: 'Failed to delete DID.',
+  tabLabels: {
+    record: 'Record',
+    routing: 'Routing',
+  },
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
@@ -63,6 +67,14 @@ const DID_CONFIG: ConfigurableCrudConfig = {
   ],
   fields: [
     {
+      key: 'enabled',
+      source: 'VsdEnabled',
+      payloadKey: 'enabled',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
       key: 'accountUUID',
       source: 'VoipSoftswitchAccountVssUUID',
       payloadKey: 'accountUUID',
@@ -80,14 +92,6 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'enabled',
-      source: 'VsdEnabled',
-      payloadKey: 'enabled',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-    },
-    {
       key: 'number',
       source: 'VsdNumber',
       payloadKey: 'number',
@@ -102,6 +106,7 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       label: 'Direction',
       type: 'select',
       options: DIRECTION_OPTIONS,
+      tab: 'routing',
       span: 1,
     },
     {
@@ -111,6 +116,7 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       label: 'Route type',
       type: 'select',
       options: ROUTE_TYPE_OPTIONS,
+      tab: 'routing',
       span: 1,
     },
     {
@@ -118,6 +124,8 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       source: 'VsdRouteValue',
       payloadKey: 'routeValue',
       label: 'Route value',
+      placeholder: 'Route value is used for external or trunk targets.',
+      tab: 'routing',
       span: 1,
     },
     {
@@ -125,7 +133,7 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       source: 'VsdDescription',
       payloadKey: 'description',
       label: 'Description',
-      span: 2,
+      span: 4,
     },
   ],
 };
