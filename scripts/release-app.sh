@@ -18,8 +18,10 @@ promote_candidate() {
     exit 1
   }
   if [[ "$verify_only" != "1" ]]; then
-    [[ -z "$(git status --short)" ]] || {
-      printf '[mnscloud-app] ERROR: working tree must be clean before promotion\n' >&2
+    local unexpected_dirty
+    unexpected_dirty="$(git status --short | awk '{print $2}' | grep -Ev '^(VERSION|package.json|package-lock.json|src/app/app-build-info[.]ts|releases/manifest[.]json|releases/mnscloud-app-browser-v[0-9A-Za-z.+_-]+[.]tar[.]gz([.]sha256)?)$' || true)"
+    [[ -z "$unexpected_dirty" ]] || {
+      printf '[mnscloud-app] ERROR: working tree has unexpected changes before promotion:\n%s\n' "$unexpected_dirty" >&2
       exit 1
     }
   fi
