@@ -4,6 +4,7 @@ export type VoipSoftswitchDidItem = {
   VoipSoftswitchAccountVssUUID: string;
   CustomerCusUUID: string;
   VoipDomainVdmUUID: string;
+  VoipDidVddUUID: string;
   VoipSoftswitchSubscriberVsuUUID?: string | null;
   VsdNumber: string;
   VsdDirection: 'inbound' | 'outbound' | 'both';
@@ -15,4 +16,7 @@ export type VoipSoftswitchDidItem = {
   CustomerName?: string | null;
   DomainName?: string | null;
   SubscriberUsername?: string | null;
+  DidOrigin?: 'MNSCLOUD' | 'EXTERNAL' | string | null;
+  DidValidationStatus?: string | null;
+  DidBillingStatus?: string | null;
 };
