@@ -204,6 +204,19 @@ export class MonitoringAgentsPage {
   readonly canUpdateTenantAgent = computed(() =>
     ['MASTER', 'OWNER', 'ADMIN'].includes(this.auth.user()?.role ?? ''),
   );
+  readonly runtimeProductsSummary = computed(() => {
+    const products = this.runtimeProducts();
+    return {
+      current: products.filter((product) => this.runtimeProductStatus(product) === 'Up to date')
+        .length,
+      actionable: products.filter((product) => this.canUpdateRuntimeProduct(product)).length,
+      attention: products.filter((product) =>
+        ['Updating', 'Failed', 'No runtime reported', 'Capability missing', 'Check'].includes(
+          this.runtimeProductStatus(product),
+        ),
+      ).length,
+    };
+  });
   readonly pageIndex = signal(0);
   readonly pageSize = signal(10);
   readonly sortActive = signal('');
@@ -777,7 +790,11 @@ export class MonitoringAgentsPage {
   runtimeProductStatus(product: RuntimeProductFleet) {
     if (this.runtimeProductBusy(product)) return 'Updating';
     if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'Failed';
+    if (product.nodeCount <= 0) return 'No runtime reported';
     if (product.availableCount > 0) return 'Update';
+    if (product.nodeCount > 0 && product.availableCount <= 0 && product.outdatedCount > 0) {
+      return 'Capability missing';
+    }
     if (product.outdatedCount > 0 || product.rolloutStatus === 'outdated') return 'Outdated';
     if (product.unknownCount > 0) return 'Check';
     return 'Up to date';
@@ -796,6 +813,7 @@ export class MonitoringAgentsPage {
   runtimeProductClass(product: RuntimeProductFleet) {
     if (this.runtimeProductBusy(product)) return 'chip-skipped is-inactive';
     if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'chip-danger';
+    if (product.nodeCount <= 0) return 'chip-skipped is-inactive';
     if (
       product.availableCount > 0 ||
       product.outdatedCount > 0 ||
@@ -805,6 +823,36 @@ export class MonitoringAgentsPage {
     }
     if (product.unknownCount > 0) return 'chip-skipped is-inactive';
     return 'chip-success is-active';
+  }
+
+  runtimeProductReason(product: RuntimeProductFleet) {
+    if (this.runtimeProductBusy(product)) return 'Rollout job is already pending or running.';
+    if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') {
+      return 'Review the failed runtime update job before retrying.';
+    }
+    if (product.nodeCount <= 0) return 'No Agent has reported this runtime product as installed.';
+    if (product.availableCount > 0)
+      return 'Update available for nodes with the required capability.';
+    if (product.outdatedCount > 0 || product.rolloutStatus === 'outdated') {
+      return 'A newer release exists, but no node currently exposes the required update capability.';
+    }
+    if (product.unknownCount > 0) return 'Some nodes have incomplete runtime version data.';
+    return 'All reporting nodes are on the latest release.';
+  }
+
+  runtimeInstalledVersion(product: RuntimeProductFleet) {
+    if (product.nodeCount <= 0) return '-';
+    if (product.currentCount === product.nodeCount && product.latestVersion)
+      return product.latestVersion;
+    if (product.currentCount > 0 || product.outdatedCount > 0 || product.unknownCount > 0)
+      return 'Mixed';
+    return product.targetRef ?? product.latestVersion ?? '-';
+  }
+
+  runtimeCapabilityLabel(product: RuntimeProductFleet) {
+    if (product.nodeCount <= 0) return 'Not reported';
+    if (product.availableCount > 0) return 'Available';
+    return 'Missing';
   }
 
   private runtimeProductBusy(product: RuntimeProductFleet) {
