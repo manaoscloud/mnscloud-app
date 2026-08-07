@@ -73,23 +73,35 @@
             }}
           </p>
         </div>
-        <div class="runtime-summary" [attr.aria-label]="'Runtime summary' | transloco">
-          <span>
-            <strong>{{ runtimeProductsSummary().current }}</strong>
-            {{ 'current' | transloco }}
-          </span>
-          <span>
-            <strong>{{ runtimeProductsSummary().actionable }}</strong>
-            {{ 'actionable' | transloco }}
-          </span>
-          <span>
-            <strong>{{ runtimeProductsSummary().attention }}</strong>
-            {{ 'attention' | transloco }}
-          </span>
+        <div class="runtime-header-actions">
+          <div class="runtime-summary" [attr.aria-label]="'Runtime summary' | transloco">
+            <span>
+              <strong>{{ runtimeProductsSummary().current }}</strong>
+              {{ 'current' | transloco }}
+            </span>
+            <span>
+              <strong>{{ runtimeProductsSummary().actionable }}</strong>
+              {{ 'actionable' | transloco }}
+            </span>
+            <span>
+              <strong>{{ runtimeProductsSummary().attention }}</strong>
+              {{ 'attention' | transloco }}
+            </span>
+          </div>
+          <button
+            mat-stroked-button
+            type="button"
+            class="runtime-collapse-button"
+            (click)="toggleRuntimeProductsCollapsed()"
+            [attr.aria-expanded]="!runtimeProductsCollapsed()"
+          >
+            <mat-icon>{{ runtimeProductsCollapsed() ? 'unfold_more' : 'unfold_less' }}</mat-icon>
+            {{ (runtimeProductsCollapsed() ? 'Expand' : 'Collapse') | transloco }}
+          </button>
         </div>
       </div>
 
-      <div class="runtime-table-wrapper">
+      <div class="runtime-table-wrapper" [class.is-collapsed]="runtimeProductsCollapsed()">
         <table class="runtime-table">
           <thead>
             <tr>
@@ -106,13 +118,13 @@
           <tbody>
             @for (product of runtimeProducts(); track product.product) {
               <tr>
-                <td data-label="Product">
+                <td [attr.data-label]="'Product' | transloco" class="runtime-product-cell">
                   <div class="runtime-product-name">
                     <strong>{{ product.label }}</strong>
                     <small>{{ product.product }}</small>
                   </div>
                 </td>
-                <td data-label="Status">
+                <td [attr.data-label]="'Status' | transloco" class="runtime-status-cell">
                   <span
                     class="status-pill version-chip runtime-status-chip"
                     [ngClass]="runtimeProductClass(product)"
@@ -121,7 +133,7 @@
                     {{ runtimeProductStatus(product) | transloco }}
                   </span>
                 </td>
-                <td data-label="Installed">
+                <td [attr.data-label]="'Installed' | transloco">
                   <div class="runtime-version-block">
                     <span>{{ runtimeInstalledVersion(product) }}</span>
                     <small>
@@ -131,13 +143,13 @@
                     </small>
                   </div>
                 </td>
-                <td data-label="Latest">
+                <td [attr.data-label]="'Latest' | transloco">
                   <div class="runtime-version-block">
                     <span>{{ product.latestVersion || '-' }}</span>
                     <small>{{ shortBuildRef(product.latestBuildRef) }}</small>
                   </div>
                 </td>
-                <td data-label="Nodes">
+                <td [attr.data-label]="'Nodes' | transloco">
                   <div class="runtime-node-counts">
                     <span>{{ product.nodeCount }} {{ 'total' | transloco }}</span>
                     <small>
@@ -146,19 +158,19 @@
                     </small>
                   </div>
                 </td>
-                <td data-label="Capability">
+                <td [attr.data-label]="'Capability' | transloco">
                   <div class="runtime-capability">
                     <span>{{ runtimeCapabilityLabel(product) | transloco }}</span>
                     <small>{{ product.availableCount }} {{ 'available' | transloco }}</small>
                   </div>
                 </td>
-                <td data-label="Rollout">
+                <td [attr.data-label]="'Rollout' | transloco">
                   <div class="runtime-rollout">
                     <span>{{ runtimeModeLabel(product.mode) | transloco }}</span>
                     <small>{{ runtimeRolloutLabel(product) }}</small>
                   </div>
                 </td>
-                <td class="runtime-actions-col" data-label="Action">
+                <td class="runtime-actions-col" [attr.data-label]="'Action' | transloco">
                   @if (canUpdateRuntimeProduct(product)) {
                     <button
                       mat-stroked-button
