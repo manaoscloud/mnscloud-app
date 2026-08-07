@@ -64,8 +64,31 @@
 
     <section class="runtime-panel" [attr.aria-label]="'Runtime products' | transloco">
       <div class="runtime-panel-header">
-        <div>
-          <h2>{{ 'Runtime products' | transloco }}</h2>
+        <div class="runtime-title-block">
+          <div class="runtime-title-row">
+            <h2>{{ 'Runtime products' | transloco }}</h2>
+            <button
+              mat-icon-button
+              type="button"
+              class="runtime-collapse-button"
+              (click)="toggleRuntimeProductsCollapsed()"
+              [attr.aria-expanded]="!runtimeProductsCollapsed()"
+              [attr.aria-label]="
+                (runtimeProductsCollapsed()
+                  ? 'Expand runtime products'
+                  : 'Collapse runtime products'
+                ) | transloco
+              "
+              [matTooltip]="
+                (runtimeProductsCollapsed()
+                  ? 'Expand runtime products'
+                  : 'Collapse runtime products'
+                ) | transloco
+              "
+            >
+              <mat-icon>{{ runtimeProductsCollapsed() ? 'unfold_more' : 'unfold_less' }}</mat-icon>
+            </button>
+          </div>
           <p>
             {{
               'Operational rollout state for installed platform modules and their Agent capabilities.'
@@ -88,16 +111,6 @@
               {{ 'attention' | transloco }}
             </span>
           </div>
-          <button
-            mat-stroked-button
-            type="button"
-            class="runtime-collapse-button"
-            (click)="toggleRuntimeProductsCollapsed()"
-            [attr.aria-expanded]="!runtimeProductsCollapsed()"
-          >
-            <mat-icon>{{ runtimeProductsCollapsed() ? 'unfold_more' : 'unfold_less' }}</mat-icon>
-            {{ (runtimeProductsCollapsed() ? 'Expand' : 'Collapse') | transloco }}
-          </button>
         </div>
       </div>
 
