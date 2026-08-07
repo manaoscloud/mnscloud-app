@@ -199,7 +199,7 @@ export class MonitoringAgentsPage {
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly updatingIds = signal<Set<string>>(new Set());
   readonly updatingProducts = signal<Set<string>>(new Set());
-  readonly runtimeProductsCollapsed = signal(false);
+  readonly runtimeProductsCollapsed = signal(true);
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly isMaster = computed(() => this.auth.user()?.role === 'MASTER');
   readonly canUpdateTenantAgent = computed(() =>
