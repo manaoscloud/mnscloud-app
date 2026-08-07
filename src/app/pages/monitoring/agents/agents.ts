@@ -199,6 +199,7 @@ export class MonitoringAgentsPage {
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly updatingIds = signal<Set<string>>(new Set());
   readonly updatingProducts = signal<Set<string>>(new Set());
+  readonly runtimeProductsCollapsed = signal(false);
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly isMaster = computed(() => this.auth.user()?.role === 'MASTER');
   readonly canUpdateTenantAgent = computed(() =>
@@ -874,6 +875,10 @@ export class MonitoringAgentsPage {
 
   shortBuildRef(value: string | null | undefined) {
     return value ? value.slice(0, 12) : '-';
+  }
+
+  toggleRuntimeProductsCollapsed() {
+    this.runtimeProductsCollapsed.update((collapsed) => !collapsed);
   }
 
   private async loadAgentsSnapshot(filters: AgentFilters): Promise<MonitoringAgentsSnapshot> {
