@@ -62,47 +62,132 @@
       </div>
     </div>
 
-    <section class="runtime-products" [attr.aria-label]="'Runtime products' | transloco">
-      @for (product of runtimeProducts(); track product.product) {
-        <article class="runtime-product">
-          <div>
-            <strong>{{ product.label }}</strong>
-            <small>
-              {{ runtimeModeLabel(product.mode) | transloco }} · {{ product.nodeCount }} node(s) ·
-              {{ runtimeRolloutLabel(product) }}
-            </small>
-          </div>
-          <div class="runtime-product-version">
-            <span>{{ product.latestVersion || '-' }}</span>
-            <small>{{ 'Latest' | transloco }} {{ shortBuildRef(product.latestBuildRef) }}</small>
-          </div>
-          <div class="runtime-product-counts">
-            <span>{{ product.currentCount }} {{ 'current' | transloco }}</span>
-            <span>{{ product.outdatedCount }} {{ 'outdated' | transloco }}</span>
-            @if (product.unknownCount > 0) {
-              <span>{{ product.unknownCount }} {{ 'unknown' | transloco }}</span>
+    <section class="runtime-panel" [attr.aria-label]="'Runtime products' | transloco">
+      <div class="runtime-panel-header">
+        <div>
+          <h2>{{ 'Runtime products' | transloco }}</h2>
+          <p>
+            {{
+              'Operational rollout state for installed platform modules and their Agent capabilities.'
+                | transloco
+            }}
+          </p>
+        </div>
+        <div class="runtime-summary" [attr.aria-label]="'Runtime summary' | transloco">
+          <span>
+            <strong>{{ runtimeProductsSummary().current }}</strong>
+            {{ 'current' | transloco }}
+          </span>
+          <span>
+            <strong>{{ runtimeProductsSummary().actionable }}</strong>
+            {{ 'actionable' | transloco }}
+          </span>
+          <span>
+            <strong>{{ runtimeProductsSummary().attention }}</strong>
+            {{ 'attention' | transloco }}
+          </span>
+        </div>
+      </div>
+
+      <div class="runtime-table-wrapper">
+        <table class="runtime-table">
+          <thead>
+            <tr>
+              <th>{{ 'Product' | transloco }}</th>
+              <th>{{ 'Status' | transloco }}</th>
+              <th>{{ 'Installed' | transloco }}</th>
+              <th>{{ 'Latest' | transloco }}</th>
+              <th>{{ 'Nodes' | transloco }}</th>
+              <th>{{ 'Capability' | transloco }}</th>
+              <th>{{ 'Rollout' | transloco }}</th>
+              <th class="runtime-actions-col">{{ 'Action' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of runtimeProducts(); track product.product) {
+              <tr>
+                <td data-label="Product">
+                  <div class="runtime-product-name">
+                    <strong>{{ product.label }}</strong>
+                    <small>{{ product.product }}</small>
+                  </div>
+                </td>
+                <td data-label="Status">
+                  <span
+                    class="status-pill version-chip runtime-status-chip"
+                    [ngClass]="runtimeProductClass(product)"
+                    [matTooltip]="runtimeProductReason(product) | transloco"
+                  >
+                    {{ runtimeProductStatus(product) | transloco }}
+                  </span>
+                </td>
+                <td data-label="Installed">
+                  <div class="runtime-version-block">
+                    <span>{{ runtimeInstalledVersion(product) }}</span>
+                    <small>
+                      {{ 'Current nodes' | transloco }}: {{ product.currentCount }}/{{
+                        product.nodeCount
+                      }}
+                    </small>
+                  </div>
+                </td>
+                <td data-label="Latest">
+                  <div class="runtime-version-block">
+                    <span>{{ product.latestVersion || '-' }}</span>
+                    <small>{{ shortBuildRef(product.latestBuildRef) }}</small>
+                  </div>
+                </td>
+                <td data-label="Nodes">
+                  <div class="runtime-node-counts">
+                    <span>{{ product.nodeCount }} {{ 'total' | transloco }}</span>
+                    <small>
+                      {{ product.outdatedCount }} {{ 'outdated' | transloco }} ·
+                      {{ product.unknownCount }} {{ 'unknown' | transloco }}
+                    </small>
+                  </div>
+                </td>
+                <td data-label="Capability">
+                  <div class="runtime-capability">
+                    <span>{{ runtimeCapabilityLabel(product) | transloco }}</span>
+                    <small>{{ product.availableCount }} {{ 'available' | transloco }}</small>
+                  </div>
+                </td>
+                <td data-label="Rollout">
+                  <div class="runtime-rollout">
+                    <span>{{ runtimeModeLabel(product.mode) | transloco }}</span>
+                    <small>{{ runtimeRolloutLabel(product) }}</small>
+                  </div>
+                </td>
+                <td class="runtime-actions-col" data-label="Action">
+                  @if (canUpdateRuntimeProduct(product)) {
+                    <button
+                      mat-stroked-button
+                      color="primary"
+                      type="button"
+                      class="runtime-row-action"
+                      (click)="queueRuntimeProductUpdate(product)"
+                      [disabled]="isUpdatingRuntimeProduct(product)"
+                    >
+                      <mat-icon>published_with_changes</mat-icon>
+                      {{ 'Update' | transloco }}
+                    </button>
+                  } @else {
+                    <span class="runtime-action-note">
+                      {{ runtimeProductReason(product) | transloco }}
+                    </span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">{{ 'No runtime products found.' | transloco }}</div>
+                </td>
+              </tr>
             }
-          </div>
-          @if (canUpdateRuntimeProduct(product)) {
-            <button
-              class="status-pill version-chip version-chip-action runtime-product-action"
-              type="button"
-              [ngClass]="runtimeProductClass(product)"
-              (click)="queueRuntimeProductUpdate(product)"
-              [disabled]="isUpdatingRuntimeProduct(product)"
-            >
-              <span>{{ runtimeProductStatus(product) | transloco }}</span>
-            </button>
-          } @else {
-            <span
-              class="status-pill version-chip runtime-product-action"
-              [ngClass]="runtimeProductClass(product)"
-            >
-              {{ runtimeProductStatus(product) | transloco }}
-            </span>
-          }
-        </article>
-      }
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="tableLoading()">
