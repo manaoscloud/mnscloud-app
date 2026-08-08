@@ -60,6 +60,7 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
             label: 'View',
             type: 'select',
             span: 1,
+            translateOptions: true,
             options: [
               { value: 'contracted', label: 'Contracted DIDs' },
               { value: 'available', label: 'Available DIDs' },
