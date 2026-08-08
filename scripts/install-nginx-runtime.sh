@@ -19,12 +19,27 @@ APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
 APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
 APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
 APP_ARTIFACT_TMP_DIR=""
+AGENT_REPO_INSTALLER="/opt/mnscloud/mnscloud-agent/scripts/install-agent.sh"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 log() { printf '[mnscloud-app] %s\n' "$*"; }
 die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
 require_root() { [[ "${EUID}" -eq 0 ]] || die "this command must run as root"; }
+
+refresh_agent_capabilities() {
+  local install_label
+  install_label="$(hostname -f 2>/dev/null || hostname 2>/dev/null || printf 'mnscloud-agent')"
+
+  if [[ -x "${AGENT_REPO_INSTALLER}" ]]; then
+    log "refreshing mnscloud-agent capabilities after App runtime install"
+    bash "${AGENT_REPO_INSTALLER}" --install-label "${install_label}"
+    return 0
+  fi
+
+  log "mnscloud-agent source repo not found at ${AGENT_REPO_INSTALLER}; restarting service so runtime capability detection can refresh"
+  systemctl restart mnscloud-agent || true
+}
 
 cleanup_artifact_tmp() {
   if [[ -n "${APP_ARTIFACT_TMP_DIR:-}" && -d "$APP_ARTIFACT_TMP_DIR" ]]; then
@@ -333,6 +348,7 @@ write_build_metadata
 write_env_js
 write_nginx_site
 reload_nginx
+refresh_agent_capabilities
 
 echo "${APP_NAME} installed at ${APP_WEB_ROOT}"
 echo "Nginx site: ${NGINX_CONF_PATH}"
