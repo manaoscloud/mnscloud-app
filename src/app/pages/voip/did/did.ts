@@ -75,15 +75,19 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
     },
     columns: [
       { id: 'number', label: 'Number', kind: 'identity', field: 'VddNumber', uuidField: 'VddUUID' },
-      {
-        id: 'operator',
-        label: 'DID operator',
-        kind: 'related',
-        uuidField: 'VoipDidOperatorVdoUUID',
-        lookupKey: 'operatorUUID',
-      },
-      { id: 'customer', label: 'Customer', field: 'CustomerName' },
-      { id: 'available', label: 'Available', field: 'IsAvailable' },
+      ...(system
+        ? [
+            {
+              id: 'operator',
+              label: 'DID operator',
+              kind: 'related',
+              uuidField: 'VoipDidOperatorVdoUUID',
+              lookupKey: 'operatorUUID',
+            } satisfies ConfigurableCrudColumn,
+            { id: 'customer', label: 'Customer', field: 'CustomerName' },
+            { id: 'available', label: 'Available', field: 'IsAvailable' },
+          ]
+        : []),
       { id: 'status', label: 'Status', kind: 'status', field: 'VddStatus', className: 'status-col' },
     ],
     fields: [
@@ -165,7 +169,7 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
         extra: { didView: 'contracted' },
       });
     }
-    void this.loadOperators();
+    if (this.system) void this.loadOperators();
   }
 
   override fieldLoading(field: { key: string }): boolean {
