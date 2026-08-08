@@ -7,7 +7,7 @@ export type VoipDidItem = {
   VddID: string;
   VddNumber: string;
   VddStatus: number;
-  VoipDidOperatorVdoUUID: string;
+  VoipDidOperatorVdoUUID: string | null;
   OperatorName?: string | null;
   VoipDidAssignmentVdaUUID?: string | null;
   CustomerCusUUID?: string | null;
