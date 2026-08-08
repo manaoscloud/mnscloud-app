@@ -46,7 +46,26 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
     canEdit: system,
     canDelete: system,
     bulkDelete: system,
-    rowActions: system ? [] : [{ key: 'release', label: 'Release DID', icon: 'link_off' }],
+    rowActions: system
+      ? []
+      : [
+          { key: 'claim', label: 'Contract DID', icon: 'add_shopping_cart' },
+          { key: 'release', label: 'Release DID', icon: 'link_off' },
+        ],
+    listFilters: system
+      ? []
+      : [
+          {
+            key: 'didView',
+            label: 'View',
+            type: 'select',
+            span: 1,
+            options: [
+              { value: 'contracted', label: 'Contracted DIDs' },
+              { value: 'available', label: 'Available DIDs' },
+            ],
+          },
+        ],
     initialValues: {
       status: 1,
       createMode: 'single',
@@ -138,6 +157,14 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
 
   constructor() {
     super(didConfig(isSystemScope()));
+    if (!this.system) {
+      this.listFilterValues.set({ didView: 'contracted' });
+      this.appliedFilters.set({
+        search: '',
+        status: '',
+        extra: { didView: 'contracted' },
+      });
+    }
     void this.loadOperators();
   }
 
@@ -152,12 +179,19 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
 
   override rowActions(row: VoipDidItem): readonly ConfigurableCrudRowAction[] {
     if (this.system) return [];
+    if (Number(row.IsAvailable ?? 0) === 1) {
+      return [{ key: 'claim', label: 'Contract DID', icon: 'add_shopping_cart' }];
+    }
     return row.VoipDidAssignmentVdaUUID || row.CustomerCusUUID || row.UserUsrUUID
       ? [{ key: 'release', label: 'Release DID', icon: 'link_off' }]
       : [];
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipDidItem) {
+    if (action.key === 'claim') {
+      await this.claimDid(row);
+      return;
+    }
     if (action.key !== 'release') return;
     const confirmed = await this.confirmAction(
       'Release DID',
@@ -168,6 +202,50 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     await this.didApi.release(row.VddUUID);
     this.snack.success('DID released successfully.');
     this.refreshList();
+  }
+
+  protected override async fetchItems(filters: {
+    search: string;
+    status: '' | string | number;
+    extra: Record<string, string | number | boolean | null>;
+  }): Promise<VoipDidItem[]> {
+    if (this.system || filters.extra['didView'] !== 'available') {
+      return super.fetchItems(filters);
+    }
+
+    const response = await this.didApi.available({
+      search: filters.search,
+      status: filters.status === '' ? undefined : Number(filters.status),
+      limit: this.listLimit,
+      offset: 0,
+    });
+    return extractItems(response) as VoipDidItem[];
+  }
+
+  private async claimDid(row: VoipDidItem): Promise<void> {
+    const confirmed = await this.confirmAction(
+      'Contract DID',
+      this.t('Contract DID confirmation', { number: row.VddNumber }),
+      'Contract',
+    );
+    if (!confirmed) return;
+
+    this.mutating.set(true);
+    try {
+      await this.didApi.claim(row.VddUUID);
+      this.snack.success('DID contracted successfully.');
+      this.listFilterValues.set({ ...this.listFilterValues(), didView: 'contracted' });
+      this.appliedFilters.set({
+        search: this.search().trim(),
+        status: this.status(),
+        extra: { ...this.listFilterValues(), didView: 'contracted' },
+      });
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.didErrorMessage(error));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
   override async saveItem(saveAndNew = false): Promise<void> {

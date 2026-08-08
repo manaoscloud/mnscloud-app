@@ -148,6 +148,7 @@
   "Available": "Available",
   "Available balance": "Available balance",
   "Available catalog": "Available catalog",
+  "Available DIDs": "Available DIDs",
   "Available under /api/v1/infragis.": "Available under /api/v1/infragis.",
   "Avatar": "Avatar",
   "Avatar updated successfully.": "Avatar updated successfully.",
@@ -2554,6 +2555,11 @@
   "DID number saved successfully.": "DID number saved successfully.",
   "DID number deleted successfully.": "DID number deleted successfully.",
   "Failed to delete DID number.": "Failed to delete DID number.",
+  "Contract DID": "Contract DID",
+  "Contract DID confirmation": "Contract DID \"{{number}}\" for this tenant? The billing subscription will be created when the contract completes.",
+  "Contracted DIDs": "Contracted DIDs",
+  "Contract": "Contract",
+  "DID contracted successfully.": "DID contracted successfully.",
   "Release DID": "Release DID",
   "DID released successfully.": "DID released successfully.",
   "External DID numbers": "External DID numbers",
@@ -3411,5 +3417,6 @@
   "Kernel": "Kernel",
   "Architecture": "Architecture",
   "Payload": "Payload",
-  "Failed to load runtime inventory.": "Failed to load runtime inventory."
+  "Failed to load runtime inventory.": "Failed to load runtime inventory.",
+  "View": "View"
 }

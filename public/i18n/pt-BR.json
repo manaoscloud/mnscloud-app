@@ -148,6 +148,7 @@
   "Available": "Disponível",
   "Available balance": "Saldo disponível",
   "Available catalog": "Catálogo disponível",
+  "Available DIDs": "DIDs disponíveis",
   "Available under /api/v1/infragis.": "Disponível em /api/v1/infragis.",
   "Avatar": "Avatar",
   "Avatar updated successfully.": "Avatar atualizado com sucesso.",
@@ -2554,6 +2555,11 @@
   "DID number saved successfully.": "Número DID salvo com sucesso.",
   "DID number deleted successfully.": "Número DID excluído com sucesso.",
   "Failed to delete DID number.": "Falha ao excluir número DID.",
+  "Contract DID": "Contratar DID",
+  "Contract DID confirmation": "Contratar DID \"{{number}}\" para este tenant? A assinatura de faturamento será criada quando a contratação for concluída.",
+  "Contracted DIDs": "DIDs contratados",
+  "Contract": "Contratar",
+  "DID contracted successfully.": "DID contratado com sucesso.",
   "Release DID": "Liberar DID",
   "DID released successfully.": "DID liberado com sucesso.",
   "External DID numbers": "Números DID externos",
@@ -3411,5 +3417,6 @@
   "Kernel": "Kernel",
   "Architecture": "Arquitetura",
   "Payload": "Payload",
-  "Failed to load runtime inventory.": "Falha ao carregar o inventário de runtime."
+  "Failed to load runtime inventory.": "Falha ao carregar o inventário de runtime.",
+  "View": "Visualização"
 }

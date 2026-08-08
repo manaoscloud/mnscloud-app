@@ -148,6 +148,7 @@
   "Available": "Disponible",
   "Available balance": "Saldo disponible",
   "Available catalog": "Catálogo disponible",
+  "Available DIDs": "DIDs disponibles",
   "Available under /api/v1/infragis.": "Disponible en /api/v1/infragis.",
   "Avatar": "Avatar",
   "Avatar updated successfully.": "Avatar actualizado correctamente.",
@@ -2554,6 +2555,11 @@
   "DID number saved successfully.": "Número DID guardado correctamente.",
   "DID number deleted successfully.": "Número DID eliminado correctamente.",
   "Failed to delete DID number.": "Error al eliminar el número DID.",
+  "Contract DID": "Contratar DID",
+  "Contract DID confirmation": "¿Contratar el DID \"{{number}}\" para este tenant? La suscripción de facturación se creará cuando la contratación se complete.",
+  "Contracted DIDs": "DIDs contratados",
+  "Contract": "Contratar",
+  "DID contracted successfully.": "DID contratado correctamente.",
   "Release DID": "Liberar DID",
   "DID released successfully.": "DID liberado correctamente.",
   "External DID numbers": "Números DID externos",
@@ -3411,5 +3417,6 @@
   "Kernel": "Kernel",
   "Architecture": "Arquitectura",
   "Payload": "Payload",
-  "Failed to load runtime inventory.": "No se pudo cargar el inventario de runtime."
+  "Failed to load runtime inventory.": "No se pudo cargar el inventario de runtime.",
+  "View": "Vista"
 }
