@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { extname, join, relative, resolve } from 'node:path';
+import { dirname, extname, join, relative, resolve } from 'node:path';
 
 const root = process.cwd();
 const args = process.argv.slice(2);
@@ -154,10 +154,20 @@ const requiresFkSearchSelect =
     combinedTs,
   );
 
+function isCrudComponentDirectory(directory) {
+  return tsFiles.some((file) => {
+    if (dirname(file) !== directory) return false;
+    const content = readFileSync(file, 'utf8');
+    return content.includes('@Component') && content.includes('ConfigurableCrudPageBase');
+  });
+}
+
 for (const file of htmlFiles) {
   const content = readFileSync(file, 'utf8');
   // Public pages can share a feature folder with a CRUD page without being CRUDs themselves.
   if (!content.includes('class="erp-page')) continue;
+  // Feature folders may also contain dashboards or other erp-page components beside CRUD pages.
+  if (!isCrudComponentDirectory(dirname(file))) continue;
   const requiredHtmlRules = requiresFkSearchSelect ? [...htmlRules, ...fkHtmlRules] : htmlRules;
   const missing = requiredHtmlRules
     .filter(([, pattern]) => !has(content, pattern))

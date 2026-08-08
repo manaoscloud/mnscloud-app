@@ -418,12 +418,23 @@ function validateConfigurableCrudFieldOrder(tsFile, content) {
   return errors;
 }
 
+function isCrudComponentDirectory(directory, tsFiles) {
+  return tsFiles.some((file) => {
+    if (dirname(file) !== directory) return false;
+    const content = read(file);
+    return content.includes('@Component') && content.includes('ConfigurableCrudPageBase');
+  });
+}
+
 function validateTarget(target) {
   const files = walk(relative(root, target));
   const htmlFiles = files.filter((file) => extname(file) === '.html');
   const scssFiles = files.filter((file) => extname(file) === '.scss');
   const tsFiles = files.filter((file) => extname(file) === '.ts');
-  const rootHtmlFiles = htmlFiles.filter((file) => read(file).includes('class="erp-page'));
+  const rootHtmlFiles = htmlFiles.filter(
+    (file) =>
+      read(file).includes('class="erp-page') && isCrudComponentDirectory(dirname(file), tsFiles),
+  );
   const errors = [];
 
   for (const htmlFile of rootHtmlFiles) {

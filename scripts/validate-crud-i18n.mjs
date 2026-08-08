@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { extname, join, relative, resolve } from 'node:path';
+import { dirname, extname, join, relative, resolve } from 'node:path';
 
 const root = process.cwd();
 const args = process.argv.slice(2);
@@ -80,13 +80,22 @@ function validateKeys(file, keys) {
   return errors;
 }
 
-function validateHtml(file) {
+function isCrudComponentDirectory(directory, tsFiles) {
+  return tsFiles.some((file) => {
+    if (dirname(file) !== directory) return false;
+    const content = read(file);
+    return content.includes('@Component') && content.includes('ConfigurableCrudPageBase');
+  });
+}
+
+function validateHtml(file, tsFiles) {
   const content = read(file);
   const errors = [];
 
   // Public invitation/account screens may live next to a CRUD page. This validator is scoped to
   // CRUD templates and their configured visible labels, not to standalone public flows.
   if (!content.includes('class="erp-page')) return errors;
+  if (!isCrudComponentDirectory(dirname(file), tsFiles)) return errors;
 
   for (const match of content.matchAll(/<([a-zA-Z][\w:-]*)\b[^>]*>([^<>{}][^<>]*?)<\/\1>/g)) {
     const [full, tagName, rawText] = match;
@@ -115,9 +124,10 @@ function validateTs(file) {
 let failed = false;
 const files = args.flatMap(walk);
 const targets = files.filter((file) => ['.html', '.ts'].includes(extname(file)));
+const tsFiles = targets.filter((file) => extname(file) === '.ts');
 
 for (const file of targets) {
-  const errors = extname(file) === '.html' ? validateHtml(file) : validateTs(file);
+  const errors = extname(file) === '.html' ? validateHtml(file, tsFiles) : validateTs(file);
   if (!errors.length) continue;
   failed = true;
   console.error(`\n${relative(root, file)}`);
