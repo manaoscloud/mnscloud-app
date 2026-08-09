@@ -1097,6 +1097,38 @@ export const routes: Routes = [
                 title: 'VoIP • Softswitch • Routes | mnscloud',
               },
               {
+                path: 'voip/softswitch/trunk-groups',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/trunk-group/trunk-group').then(
+                    (m) => m.VoipSoftswitchTrunkGroupPage,
+                  ),
+                title: 'VoIP • Softswitch • Trunk Groups | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/trunk-group-members',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/trunk-group-member/trunk-group-member').then(
+                    (m) => m.VoipSoftswitchTrunkGroupMemberPage,
+                  ),
+                title: 'VoIP • Softswitch • Trunk Group Members | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/dialplans',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/dialplan/dialplan').then(
+                    (m) => m.VoipSoftswitchDialplanPage,
+                  ),
+                title: 'VoIP • Softswitch • Dialplans | mnscloud',
+              },
+              {
+                path: 'voip/softswitch/dialplan-rules',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/dialplan-rule/dialplan-rule').then(
+                    (m) => m.VoipSoftswitchDialplanRulePage,
+                  ),
+                title: 'VoIP • Softswitch • Dialplan Rules | mnscloud',
+              },
+              {
                 path: 'voip/softswitch/rates',
                 loadComponent: () =>
                   import('./pages/voip/softswitch/rate/rate').then((m) => m.VoipSoftswitchRatePage),

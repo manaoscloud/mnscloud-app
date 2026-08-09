@@ -1434,6 +1434,30 @@ export class MainLayout {
               route: '/voip/softswitch/routes',
             },
             {
+              id: 'voip/softswitch/trunk-groups',
+              label: 'Trunk groups',
+              icon: 'hub',
+              route: '/voip/softswitch/trunk-groups',
+            },
+            {
+              id: 'voip/softswitch/trunk-group-members',
+              label: 'Group members',
+              icon: 'lan',
+              route: '/voip/softswitch/trunk-group-members',
+            },
+            {
+              id: 'voip/softswitch/dialplans',
+              label: 'Dialplans',
+              icon: 'route',
+              route: '/voip/softswitch/dialplans',
+            },
+            {
+              id: 'voip/softswitch/dialplan-rules',
+              label: 'Dialplan rules',
+              icon: 'rule',
+              route: '/voip/softswitch/dialplan-rules',
+            },
+            {
               id: 'voip/softswitch/rates',
               label: 'Rates',
               icon: 'payments',
