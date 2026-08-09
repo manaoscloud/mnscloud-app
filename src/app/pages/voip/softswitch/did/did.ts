@@ -111,8 +111,10 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'trunkUUID',
       label: 'Trunk',
       type: 'search-select',
+      placeholder: 'Select an outbound trunk from the selected Softswitch.',
       requiredWhen: ({ values }) => values['routeType'] === 'trunk',
       hiddenWhen: ({ values }) => values['routeType'] !== 'trunk',
+      tab: 'routing',
       span: 1,
     },
     {
