@@ -39,6 +39,8 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
     name: '',
     prefix: '',
     direction: 'outbound',
+    trunkGroupUUID: '',
+    trunkUUID: '',
     priority: 100,
     status: 1,
   },
@@ -71,6 +73,22 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
     },
     { key: 'direction', source: 'direction', payloadKey: 'direction', label: 'Direction', span: 1 },
     {
+      key: 'trunkGroupUUID',
+      source: 'trunkGroupUUID',
+      payloadKey: 'trunkGroupUUID',
+      label: 'Trunk group',
+      type: 'search-select',
+      span: 1,
+    },
+    {
+      key: 'trunkUUID',
+      source: 'trunkUUID',
+      payloadKey: 'trunkUUID',
+      label: 'Fallback trunk',
+      type: 'search-select',
+      span: 1,
+    },
+    {
       key: 'priority',
       source: 'priority',
       payloadKey: 'priority',
@@ -92,6 +110,8 @@ export class VoipSoftswitchRoutePage extends ConfigurableCrudPageBase<Configurab
   private readonly rawApi = inject(ApiService);
 
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly trunkOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly trunkGroupOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
   constructor() {
@@ -100,15 +120,25 @@ export class VoipSoftswitchRoutePage extends ConfigurableCrudPageBase<Configurab
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return field.key === 'accountUUID' ? this.lookupLoading() : false;
+    return ['accountUUID', 'trunkUUID', 'trunkGroupUUID'].includes(field.key)
+      ? this.lookupLoading()
+      : false;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    return key === 'accountUUID' ? this.accountOptions() : [];
+    if (key === 'accountUUID') return this.accountOptions();
+    if (key === 'trunkUUID') return this.trunkOptions();
+    if (key === 'trunkGroupUUID') return this.trunkGroupOptions();
+    return [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, status: Number(payload['status']) === 1 };
+    return {
+      ...payload,
+      trunkUUID: payload['trunkUUID'] || null,
+      trunkGroupUUID: payload['trunkGroupUUID'] || null,
+      status: Number(payload['status']) === 1,
+    };
   }
 
   private async loadLookups(): Promise<void> {
@@ -120,6 +150,22 @@ export class VoipSoftswitchRoutePage extends ConfigurableCrudPageBase<Configurab
       this.accountOptions.set(
         extractItems(response)
           .map((row) => option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]))
+          .filter(isOption)
+          .sort((left, right) => left.label.localeCompare(right.label)) as ConfigurableCrudOption[],
+      );
+      const [trunks, trunkGroups] = await Promise.all([
+        this.rawApi.get<any>('voip/softswitch/trunks?status=1&limit=5000&offset=0'),
+        this.rawApi.get<any>('voip/softswitch/trunk-groups?status=1&limit=5000&offset=0'),
+      ]);
+      this.trunkOptions.set(
+        extractItems(trunks)
+          .map((row) => option(row.uuid, row.name, [row.accountName, row.host]))
+          .filter(isOption)
+          .sort((left, right) => left.label.localeCompare(right.label)) as ConfigurableCrudOption[],
+      );
+      this.trunkGroupOptions.set(
+        extractItems(trunkGroups)
+          .map((row) => option(row.uuid, row.name, [row.accountName, row.strategy]))
           .filter(isOption)
           .sort((left, right) => left.label.localeCompare(right.label)) as ConfigurableCrudOption[],
       );
