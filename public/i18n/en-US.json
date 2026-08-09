@@ -3401,6 +3401,8 @@
   "Softswitch runtime inventory": "Softswitch runtime inventory",
   "Route type": "Route type",
   "Route value": "Route value",
+  "Reserved / no route": "Reserved / no route",
+  "Route value is used for external targets.": "Route value is used for external targets.",
   "Route value is used for external or trunk targets.": "Route value is used for external or trunk targets.",
   "Sanitized runtime details reported by the assigned Agent.": "Sanitized runtime details reported by the assigned Agent.",
   "Capability": "Capability",
