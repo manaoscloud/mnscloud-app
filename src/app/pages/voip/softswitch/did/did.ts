@@ -20,6 +20,7 @@ const DIRECTION_OPTIONS = [
 const ROUTE_TYPE_OPTIONS = [
   { value: 'subscriber', label: 'Subscriber' },
   { value: 'external', label: 'External' },
+  { value: 'trunk', label: 'Trunk' },
   { value: 'none', label: 'Reserved / no route' },
 ];
 
@@ -51,6 +52,7 @@ const DID_CONFIG: ConfigurableCrudConfig = {
     accountUUID: '',
     didUUID: '',
     subscriberUUID: '',
+    trunkUUID: '',
     direction: 'inbound',
     routeType: 'subscriber',
     routeValue: '',
@@ -61,6 +63,7 @@ const DID_CONFIG: ConfigurableCrudConfig = {
     { id: 'number', label: 'Number', kind: 'identity', field: 'VsdNumber', uuidField: 'VsdUUID' },
     { id: 'softswitch', label: 'Softswitch', field: 'SoftswitchName' },
     { id: 'subscriber', label: 'Subscriber', field: 'SubscriberUsername' },
+    { id: 'trunk', label: 'Trunk', field: 'TrunkName' },
     { id: 'direction', label: 'Direction', field: 'VsdDirection' },
     { id: 'routeType', label: 'Route type', field: 'VsdRouteType' },
     { id: 'status', label: 'Status', kind: 'status', field: 'VsdEnabled', className: 'status-col' },
@@ -100,6 +103,16 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       requiredWhen: ({ values }) => values['routeType'] === 'subscriber',
       hiddenWhen: ({ values }) => values['routeType'] !== 'subscriber',
+      span: 1,
+    },
+    {
+      key: 'trunkUUID',
+      source: 'VoipSoftswitchTrunkVtkUUID',
+      payloadKey: 'trunkUUID',
+      label: 'Trunk',
+      type: 'search-select',
+      requiredWhen: ({ values }) => values['routeType'] === 'trunk',
+      hiddenWhen: ({ values }) => values['routeType'] !== 'trunk',
       span: 1,
     },
     {
@@ -156,6 +169,7 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly didOptions = signal<ConfigurableCrudOption[]>([]);
   readonly subscriberOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly trunkOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
   constructor() {
@@ -164,7 +178,7 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return ['accountUUID', 'didUUID', 'subscriberUUID'].includes(field.key)
+    return ['accountUUID', 'didUUID', 'subscriberUUID', 'trunkUUID'].includes(field.key)
       ? this.lookupLoading()
       : false;
   }
@@ -173,6 +187,7 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
     if (key === 'accountUUID') return this.accountOptions();
     if (key === 'didUUID') return this.didOptions();
     if (key === 'subscriberUUID') return this.subscriberOptions();
+    if (key === 'trunkUUID') return this.trunkOptions();
     return [];
   }
 
@@ -181,15 +196,16 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
     return {
       ...payload,
       subscriberUUID: routeType === 'subscriber' ? payload['subscriberUUID'] : null,
+      trunkUUID: routeType === 'trunk' ? payload['trunkUUID'] : null,
       routeValue: routeType === 'external' ? payload['routeValue'] : null,
       enabled: Number(payload['enabled']) === 1,
     };
   }
 
   override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
-    if (field.key !== 'subscriberUUID') return super.fieldOptions(field);
+    if (field.key !== 'subscriberUUID' && field.key !== 'trunkUUID') return super.fieldOptions(field);
     const accountUUID = String(this.fieldValue('accountUUID') ?? '').trim();
-    const options = this.subscriberOptions();
+    const options = field.key === 'subscriberUUID' ? this.subscriberOptions() : this.trunkOptions();
     if (!accountUUID) return options;
     return options.filter((item) => String((item as any).accountUUID ?? '') === accountUUID);
   }
@@ -197,7 +213,7 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      const [accounts, dids, subscribers] = await Promise.all([
+      const [accounts, dids, subscribers, trunks] = await Promise.all([
         this.fetchPaged('voip/softswitch/accounts?status=1', (row) =>
           option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]),
         ),
@@ -207,10 +223,18 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
             accountUUID: row.VoipSoftswitchAccountVssUUID,
           }),
         ),
+        this.fetchPaged('voip/softswitch/trunks?status=1', (row) => {
+          const direction = String(row.direction ?? '').toLowerCase();
+          if (direction !== 'outbound' && direction !== 'both') return null;
+          return option(row.uuid, row.name, [row.host, row.transport], {
+            accountUUID: row.accountUUID,
+          });
+        }),
       ]);
       this.accountOptions.set(accounts);
       this.didOptions.set(dids);
       this.subscriberOptions.set(subscribers);
+      this.trunkOptions.set(trunks);
     } finally {
       this.lookupLoading.set(false);
     }
