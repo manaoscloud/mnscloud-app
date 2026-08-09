@@ -3401,6 +3401,8 @@
   "Softswitch runtime inventory": "Inventário de runtime Softswitch",
   "Route type": "Tipo de rota",
   "Route value": "Valor da rota",
+  "Reserved / no route": "Reservado / sem rota",
+  "Route value is used for external targets.": "O valor da rota é usado para destinos externos.",
   "Route value is used for external or trunk targets.": "O valor da rota é usado para destinos externos ou troncos.",
   "Sanitized runtime details reported by the assigned Agent.": "Detalhes sanitizados do runtime reportados pelo Agent atribuído.",
   "Capability": "Capacidade",

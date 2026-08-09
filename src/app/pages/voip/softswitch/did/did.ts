@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -19,8 +20,7 @@ const DIRECTION_OPTIONS = [
 const ROUTE_TYPE_OPTIONS = [
   { value: 'subscriber', label: 'Subscriber' },
   { value: 'external', label: 'External' },
-  { value: 'trunk', label: 'Trunk' },
-  { value: 'none', label: 'None' },
+  { value: 'none', label: 'Reserved / no route' },
 ];
 
 const DID_CONFIG: ConfigurableCrudConfig = {
@@ -98,6 +98,8 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'subscriberUUID',
       label: 'Subscriber',
       type: 'search-select',
+      requiredWhen: ({ values }) => values['routeType'] === 'subscriber',
+      hiddenWhen: ({ values }) => values['routeType'] !== 'subscriber',
       span: 1,
     },
     {
@@ -125,8 +127,10 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       source: 'VsdRouteValue',
       payloadKey: 'routeValue',
       label: 'Route value',
-      placeholder: 'Route value is used for external or trunk targets.',
+      placeholder: 'Route value is used for external targets.',
       tab: 'routing',
+      requiredWhen: ({ values }) => values['routeType'] === 'external',
+      hiddenWhen: ({ values }) => values['routeType'] !== 'external',
       span: 1,
     },
     {
@@ -173,7 +177,21 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, enabled: Number(payload['enabled']) === 1 };
+    const routeType = String(payload['routeType'] ?? '').trim().toLowerCase();
+    return {
+      ...payload,
+      subscriberUUID: routeType === 'subscriber' ? payload['subscriberUUID'] : null,
+      routeValue: routeType === 'external' ? payload['routeValue'] : null,
+      enabled: Number(payload['enabled']) === 1,
+    };
+  }
+
+  override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
+    if (field.key !== 'subscriberUUID') return super.fieldOptions(field);
+    const accountUUID = String(this.fieldValue('accountUUID') ?? '').trim();
+    const options = this.subscriberOptions();
+    if (!accountUUID) return options;
+    return options.filter((item) => String((item as any).accountUUID ?? '') === accountUUID);
   }
 
   private async loadLookups(): Promise<void> {
@@ -185,7 +203,9 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
         ),
         this.fetchDidOptions(),
         this.fetchPaged('voip/softswitch/subscribers?status=1', (row) =>
-          option(row.VsuUUID, subscriberLookupLabel(row), [row.DomainName]),
+          option(row.VsuUUID, subscriberLookupLabel(row), [row.DomainName], {
+            accountUUID: row.VoipSoftswitchAccountVssUUID,
+          }),
         ),
       ]);
       this.accountOptions.set(accounts);
@@ -241,6 +261,7 @@ function option(
   value: unknown,
   label: unknown,
   descriptionParts: unknown[] = [],
+  extra: Record<string, unknown> = {},
 ): ConfigurableCrudOption | null {
   const normalizedValue = String(value ?? '').trim();
   const normalizedLabel = String(label ?? '').trim();
@@ -254,6 +275,7 @@ function option(
     label: normalizedLabel,
     description,
     searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+    ...extra,
   };
 }
 
