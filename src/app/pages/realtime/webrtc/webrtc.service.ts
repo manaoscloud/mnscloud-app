@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 
-export type WebRtcResource = 'servers' | 'parameters' | 'domains';
+export type WebRtcResource = 'servers' | 'parameters' | 'domains' | 'sip-targets';
 export type WebRtcScope = 'tenant' | 'master';
 
 export type WebRtcRecord = Record<string, any>;
@@ -54,6 +54,26 @@ export class RealtimeWebRtcService {
     }
     const suffix = query.toString();
     return this.api.get<any>(`system/realtime/media/servers${suffix ? `?${suffix}` : ''}`);
+  }
+
+  listPabxAccounts(params: { limit?: number; offset?: number; search?: string; status?: number } = {}) {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    if (params.search) query.set('search', params.search);
+    if (params.status !== undefined && params.status !== null) query.set('status', String(params.status));
+    const suffix = query.toString();
+    return this.api.get<any>(`voip/pabx/accounts${suffix ? `?${suffix}` : ''}`);
+  }
+
+  listSoftswitchAccounts(params: { limit?: number; offset?: number; search?: string; status?: number } = {}) {
+    const query = new URLSearchParams();
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    if (params.search) query.set('search', params.search);
+    if (params.status !== undefined && params.status !== null) query.set('status', String(params.status));
+    const suffix = query.toString();
+    return this.api.get<any>(`voip/softswitch/accounts${suffix ? `?${suffix}` : ''}`);
   }
 
   create(resource: WebRtcResource, payload: WebRtcRecord, scope: WebRtcScope = 'tenant') {

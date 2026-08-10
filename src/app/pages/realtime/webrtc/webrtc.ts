@@ -49,7 +49,7 @@ import {
   type MnsSelectFieldOption,
 } from '../../../shared/forms';
 
-type LookupKey = 'servers' | 'domains' | 'mediaServers';
+type LookupKey = 'servers' | 'domains' | 'mediaServers' | 'pabxAccounts' | 'softswitchAccounts';
 type LookupOption = MnsSearchSelectFieldOption;
 type Field = {
   key: string;
@@ -60,6 +60,7 @@ type Field = {
   required?: boolean;
   span?: string;
   tab?: 'record' | 'network' | 'notes';
+  visibleWhen?: { key: string; value: string };
 };
 type SignalFormField = SignalField<any, any>;
 
@@ -80,6 +81,13 @@ const COLUMN_LABELS: Record<string, string> = {
   hostname: 'Hostname',
   publicDomain: 'Primary Domain',
   mediaServer: 'Media Server',
+  webRtcDomain: 'WebRTC Domain',
+  targetType: 'Target Type',
+  target: 'Target',
+  sipDomain: 'SIP Domain',
+  port: 'Port',
+  transport: 'Transport',
+  priority: 'Priority',
   publicIP: 'Public IP',
   domain: 'Realtime Domain',
   certificateProvider: 'Certificate',
@@ -217,6 +225,57 @@ const CONFIGS: Record<WebRtcResource, Config> = {
       { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
     ],
   },
+  'sip-targets': {
+    resource: 'sip-targets',
+    title: 'WebRTC SIP Targets',
+    subtitle: 'Bind each WebRTC domain to one explicit PABX or Softswitch SIP destination.',
+    uuid: 'RwtUUID',
+    name: 'WebRtcDomainName',
+    status: 'RwtStatus',
+    columns: ['webRtcDomain', 'targetType', 'target', 'sipDomain', 'host', 'port', 'transport', 'status'],
+    fields: [
+      { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], span: 'span-1' },
+      {
+        key: 'webRtcDomainUUID',
+        label: 'WebRTC Domain',
+        type: 'lookup',
+        lookup: 'domains',
+        required: true,
+        span: 'span-1',
+      },
+      {
+        key: 'targetType',
+        label: 'Target Type',
+        type: 'select',
+        options: ['pabx', 'softswitch'],
+        required: true,
+        span: 'span-1',
+      },
+      {
+        key: 'pabxAccountUUID',
+        label: 'PABX Account',
+        type: 'lookup',
+        lookup: 'pabxAccounts',
+        required: true,
+        span: 'span-1',
+        visibleWhen: { key: 'targetType', value: 'pabx' },
+      },
+      {
+        key: 'softswitchAccountUUID',
+        label: 'Softswitch Account',
+        type: 'lookup',
+        lookup: 'softswitchAccounts',
+        required: true,
+        span: 'span-1',
+        visibleWhen: { key: 'targetType', value: 'softswitch' },
+      },
+      { key: 'host', label: 'SIP Host Override', tab: 'network', span: 'span-1' },
+      { key: 'port', label: 'SIP Port', type: 'number', tab: 'network', span: 'span-1' },
+      { key: 'transport', label: 'Transport', type: 'select', options: ['udp', 'tcp', 'tls'], tab: 'network', span: 'span-1' },
+      { key: 'priority', label: 'Priority', type: 'number', tab: 'network', span: 'span-1' },
+      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
+    ],
+  },
 };
 
 @Component({
@@ -261,7 +320,10 @@ export class RealtimeWebRtcPage {
   readonly currentResource = computed<WebRtcResource>(() => {
     const data = this.routeData() as Record<string, unknown>;
     const resource = data['resource'];
-    return resource === 'domains' || resource === 'parameters' || resource === 'servers'
+    return resource === 'domains' ||
+        resource === 'parameters' ||
+        resource === 'servers' ||
+        resource === 'sip-targets'
       ? resource
       : 'servers';
   });
@@ -290,6 +352,8 @@ export class RealtimeWebRtcPage {
     servers: [],
     domains: [],
     mediaServers: [],
+    pabxAccounts: [],
+    softswitchAccounts: [],
   });
   readonly formModel = signal<Record<string, any>>({});
   readonly form = createForm(this.formModel);
@@ -395,6 +459,14 @@ export class RealtimeWebRtcPage {
       hostname: row['RwsHostname'],
       publicDomain: row['RtdName'] ?? row['DomainName'] ?? row['RwsPublicDomain'],
       mediaServer: row['RmsName'] ?? row['MediaServerName'],
+      webRtcDomain: row['WebRtcDomainName'],
+      targetType: this.optionLabel(String(row['RwtTargetType'] ?? '')),
+      target: row['PabxAccountName'] ?? row['SoftswitchAccountName'],
+      sipDomain: row['SipDomainName'],
+      host: row['RwtHost'],
+      port: row['RwtPort'],
+      transport: this.optionLabel(String(row['RwtTransport'] ?? '')),
+      priority: row['RwtPriority'],
       publicIP: row['RwsPublicIP'],
       version: row['RwsVersion'],
       lastSeen: row['RwsLastSeenAt'],
@@ -470,6 +542,10 @@ export class RealtimeWebRtcPage {
               })
             : key === 'mediaServers'
               ? await this.api.listMediaServers({ status: 1, limit: 5000 })
+              : key === 'pabxAccounts'
+                ? await this.api.listPabxAccounts({ status: 1, limit: 5000 })
+                : key === 'softswitchAccounts'
+                  ? await this.api.listSoftswitchAccounts({ status: 1, limit: 5000 })
               : this.config().resource === 'domains' &&
                   key === 'servers' &&
                   this.scope() === 'tenant'
@@ -483,28 +559,44 @@ export class RealtimeWebRtcPage {
                 ? (row['RtdUUID'] ?? '')
                 : key === 'mediaServers'
                   ? (row['RmsUUID'] ?? '')
-                  : (row['RwsUUID'] ?? ''),
+                  : key === 'pabxAccounts'
+                    ? (row['VoipPabxAccountVpaUUID'] ?? row['VpaUUID'] ?? '')
+                    : key === 'softswitchAccounts'
+                      ? (row['VoipSoftswitchAccountVssUUID'] ?? row['VssUUID'] ?? '')
+                      : (row['RwsUUID'] ?? ''),
             ),
             label: String(
               key === 'domains'
                 ? (row['RtdName'] ?? row['DomainName'] ?? '')
                 : key === 'mediaServers'
                   ? (row['RmsName'] ?? '')
-                  : (row['RwsName'] ?? ''),
+                  : key === 'pabxAccounts'
+                    ? (row['VpaName'] ?? '')
+                    : key === 'softswitchAccounts'
+                      ? (row['VssName'] ?? '')
+                      : (row['RwsName'] ?? ''),
             ),
             description: String(
               key === 'domains'
                 ? (row['RtdUUID'] ?? row['DomainName'] ?? '')
                 : key === 'mediaServers'
                   ? (row['hostname'] ?? row['controlIP'] ?? row['value'] ?? row['RmsUUID'] ?? '')
-                  : (row['RwsHostname'] ?? row['RwsUUID'] ?? ''),
+                  : key === 'pabxAccounts'
+                    ? (row['VpaID'] ?? row['CustomerName'] ?? row['VpaUUID'] ?? '')
+                    : key === 'softswitchAccounts'
+                      ? (row['VssID'] ?? row['CustomerName'] ?? row['VssUUID'] ?? '')
+                      : (row['RwsHostname'] ?? row['RwsUUID'] ?? ''),
             ),
             searchText: String(
               key === 'domains'
                 ? `${row['RtdName'] ?? ''} ${row['DomainName'] ?? ''} ${row['RtdUUID'] ?? ''}`
                 : key === 'mediaServers'
                   ? `${row['label'] ?? ''} ${row['hostname'] ?? ''} ${row['controlIP'] ?? ''} ${row['value'] ?? ''}`
-                  : `${row['RwsName'] ?? ''} ${row['RwsHostname'] ?? ''} ${row['RwsUUID'] ?? ''}`,
+                  : key === 'pabxAccounts'
+                    ? `${row['VpaName'] ?? ''} ${row['VpaID'] ?? ''} ${row['VpaUUID'] ?? ''}`
+                    : key === 'softswitchAccounts'
+                      ? `${row['VssName'] ?? ''} ${row['VssID'] ?? ''} ${row['VssUUID'] ?? ''}`
+                      : `${row['RwsName'] ?? ''} ${row['RwsHostname'] ?? ''} ${row['RwsUUID'] ?? ''}`,
             ),
           }))
           .filter((option: LookupOption) => option.value);
@@ -518,16 +610,22 @@ export class RealtimeWebRtcPage {
   lookupPlaceholder(key: LookupKey): string {
     if (key === 'domains') return 'Search domains';
     if (key === 'mediaServers') return 'Search media servers';
+    if (key === 'pabxAccounts') return 'Search PABX accounts';
+    if (key === 'softswitchAccounts') return 'Search Softswitch accounts';
     return 'Search servers';
   }
   recordFields() {
-    return this.config().fields.filter((field) => !field.tab || field.tab === 'record');
+    return this.config().fields.filter((field) => (!field.tab || field.tab === 'record') && this.fieldVisible(field));
   }
   networkFields() {
-    return this.config().fields.filter((field) => field.tab === 'network');
+    return this.config().fields.filter((field) => field.tab === 'network' && this.fieldVisible(field));
   }
   textareaFields() {
-    return this.config().fields.filter((field) => field.type === 'textarea');
+    return this.config().fields.filter((field) => field.type === 'textarea' && this.fieldVisible(field));
+  }
+  fieldVisible(field: Field) {
+    if (!field.visibleWhen) return true;
+    return String(this.formModel()[field.visibleWhen.key] ?? '') === field.visibleWhen.value;
   }
   hasNetworkFields() {
     return this.networkFields().length > 0;
@@ -565,6 +663,15 @@ export class RealtimeWebRtcPage {
       baseUrl: 'RwsBaseUrl',
       version: 'RwsVersion',
       serverUUID: 'RealtimeWebRtcServerRwsUUID',
+      webRtcDomainUUID: 'RealtimeWebRtcDomainRwdUUID',
+      targetType: 'RwtTargetType',
+      pabxAccountUUID: 'VoipPabxAccountVpaUUID',
+      softswitchAccountUUID: 'VoipSoftswitchAccountVssUUID',
+      voipDomainUUID: 'VoipDomainVdmUUID',
+      host: 'RwtHost',
+      port: 'RwtPort',
+      transport: 'RwtTransport',
+      priority: 'RwtPriority',
       certificateProvider: 'RwdCertificateProvider',
       autoProvision: 'RwdAutoProvision',
       key: 'RwpKey',
@@ -622,6 +729,12 @@ export class RealtimeWebRtcPage {
     if ('autoProvision' in raw) p['autoProvision'] = raw['autoProvision'] === 'inactive' ? 0 : 1;
     if (this.config().resource === 'servers') {
       p['engine'] = 'kamailio';
+    }
+    if (this.config().resource === 'sip-targets') {
+      p['port'] = Number(raw['port'] || 5060);
+      p['priority'] = Number(raw['priority'] || 100);
+      if (raw['targetType'] === 'pabx') p['softswitchAccountUUID'] = null;
+      if (raw['targetType'] === 'softswitch') p['pabxAccountUUID'] = null;
     }
     if (raw['configJson']) {
       try {
@@ -695,6 +808,11 @@ export class RealtimeWebRtcPage {
       letsencrypt: 'Let’s Encrypt',
       manual: 'Manual',
       self_signed: 'Self-signed',
+      pabx: 'PABX',
+      softswitch: 'Softswitch',
+      udp: 'UDP',
+      tcp: 'TCP',
+      tls: 'TLS',
     };
     return labels[option] ?? option;
   }
@@ -702,7 +820,7 @@ export class RealtimeWebRtcPage {
   isFormValid() {
     const model = this.formModel();
     return this.config().fields.every((field) => {
-      if (!field.required) return true;
+      if (!this.fieldVisible(field) || !field.required) return true;
       const value = model[field.key];
       return value !== undefined && value !== null && String(value).trim() !== '';
     });

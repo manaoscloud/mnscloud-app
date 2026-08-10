@@ -1026,7 +1026,7 @@ export const routes: Routes = [
                 title: 'Realtime • WebRTC Dashboard | mnscloud',
                 data: { scope: 'tenant' },
               },
-              ...(['domain'].map((section) => ({
+              ...(['domain', 'sip-target'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
                 loadComponent: () =>
                   import('./pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcPage),
@@ -1038,6 +1038,8 @@ export const routes: Routes = [
                       ? 'servers'
                       : section === 'domain'
                         ? 'domains'
+                        : section === 'sip-target'
+                          ? 'sip-targets'
                         : 'parameters',
                 },
               })) as any),
@@ -1521,7 +1523,7 @@ export const routes: Routes = [
                 title: 'System Realtime • Domains | mnscloud',
                 data: { scope: 'master' },
               },
-              ...(['domain', 'server', 'parameter'].map((section) => ({
+              ...(['domain', 'server', 'parameter', 'sip-target'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
                 loadComponent: () =>
                   import('./pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcPage),
@@ -1533,6 +1535,8 @@ export const routes: Routes = [
                       ? 'servers'
                       : section === 'domain'
                         ? 'domains'
+                        : section === 'sip-target'
+                          ? 'sip-targets'
                         : 'parameters',
                 },
               })) as any),

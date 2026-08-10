@@ -188,8 +188,8 @@
   <div class="crud-dialog webrtc-dialog">
     <header class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit ' + title() : 'New ' + title() }}</h2>
-        <p>{{ subtitle() }}</p>
+        <h2>{{ (editing() ? 'Edit ' : 'New ') | transloco }}{{ title() | transloco }}</h2>
+        <p>{{ subtitle() | transloco }}</p>
       </div>
     </header>
     <mat-dialog-content class="dialog-content">
@@ -269,7 +269,7 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">Cancel</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | transloco }}</button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
         <button
@@ -280,7 +280,7 @@
           (click)="submit()"
           [disabled]="!isFormValid() || saving()"
         >
-          <mat-icon>save</mat-icon>Save
+          <mat-icon>save</mat-icon>{{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -305,7 +305,7 @@
           [disabled]="!isFormValid() || saving()"
         >
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button></mat-menu
       >
     </mat-dialog-actions>
