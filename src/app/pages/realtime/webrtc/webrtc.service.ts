@@ -35,13 +35,20 @@ export class RealtimeWebRtcService {
     return this.api.get<any>(`${this.resourcePath(resource, scope)}${suffix ? `?${suffix}` : ''}`);
   }
 
-  listRealtimeDomains(params: { limit?: number; search?: string; purpose?: string } = {}) {
+  listRealtimeDomains(
+    params: { limit?: number; search?: string; purpose?: string; status?: number | string | null } = {},
+    scope: WebRtcScope = 'tenant',
+  ) {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.search) query.set('search', params.search);
     if (params.purpose) query.set('purpose', params.purpose);
+    if (params.status !== undefined && params.status !== null && params.status !== '') {
+      query.set('status', String(params.status));
+    }
     const suffix = query.toString();
-    return this.api.get<any>(`system/realtime/domains${suffix ? `?${suffix}` : ''}`);
+    const basePath = scope === 'master' ? 'system/realtime/domains' : 'realtime/domains';
+    return this.api.get<any>(`${basePath}${suffix ? `?${suffix}` : ''}`);
   }
 
   listMediaServers(params: { limit?: number; offset?: number; search?: string; status?: number } = {}) {
