@@ -1,1037 +1,473 @@
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-  untracked,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { form as createForm, type Field as SignalField } from '@angular/forms/signals';
+import { Component, inject } from '@angular/core';
 
-import { ActivatedRoute } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { SnackbarService } from '../../../services/snackbar.service';
-import { RealtimeWebRtcService, WebRtcRecord, WebRtcResource, WebRtcScope } from './webrtc.service';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { InstallCommandDialogComponent } from '../../../shared/install-command-dialog/install-command-dialog';
+
 import {
-  MnsSearchSelectFieldComponent,
-  MnsSelectFieldComponent,
-  MnsStatusSelectFieldComponent,
-  MnsTextFieldComponent,
-  MnsTextareaFieldComponent,
-  type MnsSearchSelectFieldOption,
-  type MnsSelectFieldOption,
-} from '../../../shared/forms';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  InstallCommandDialogComponent,
+  InstallCommandDialogData,
+} from '../../../shared/install-command-dialog/install-command-dialog';
+import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { RealtimeWebRtcService, WebRtcResource, WebRtcScope } from './webrtc.service';
 
-type LookupKey = 'servers' | 'domains' | 'mediaServers' | 'pabxAccounts' | 'softswitchAccounts';
-type LookupOption = MnsSearchSelectFieldOption;
-type Field = {
-  key: string;
-  label: string;
-  type?: 'text' | 'number' | 'select' | 'lookup' | 'textarea';
-  options?: string[];
-  lookup?: LookupKey;
-  required?: boolean;
-  span?: string;
-  rows?: number;
-  tab?: 'record' | 'network' | 'notes';
-  visibleWhen?: { key: string; value: string };
-};
-type SignalFormField = SignalField<any, any>;
+const STATUS_OPTIONS = [
+  { value: 1, label: 'Active' },
+  { value: 0, label: 'Inactive' },
+] as const;
 
-type Config = {
-  resource: WebRtcResource;
-  title: string;
-  subtitle: string;
-  uuid: string;
-  name: string;
-  status: string;
-  columns: string[];
-  fields: Field[];
-};
+const ACTIVE_INACTIVE_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+] as const;
 
-const COLUMN_LABELS: Record<string, string> = {
-  name: 'Name',
-  engine: 'Engine',
-  hostname: 'Hostname',
-  publicDomain: 'Primary Domain',
-  mediaServer: 'Media Server',
-  webRtcDomain: 'WebRTC Domain',
-  targetType: 'Target Type',
-  target: 'Target',
-  sipDomain: 'SIP Domain',
-  port: 'Port',
-  transport: 'Transport',
-  priority: 'Priority',
-  publicIP: 'Public IP',
-  domain: 'Realtime Domain',
-  certificateProvider: 'Certificate',
-  nginxStatus: 'Nginx',
-  certificateStatus: 'TLS',
-  autoProvision: 'Auto',
-  version: 'Version',
-  lastSeen: 'Last Seen',
-  server: 'Server',
-  key: 'Key',
-  value: 'Value',
-  type: 'Type',
-  description: 'Description',
-  status: 'Status',
-};
-
-const CONFIGS: Record<WebRtcResource, Config> = {
-  servers: {
-    resource: 'servers',
-    title: 'WebRTC Servers',
-    subtitle: 'Register Kamailio WebRTC edge nodes authorized by node UUID.',
-    uuid: 'RwsUUID',
-    name: 'RwsName',
-    status: 'RwsStatus',
-    columns: [
-      'name',
-      'engine',
-      'hostname',
-      'publicDomain',
-      'mediaServer',
-      'publicIP',
-      'status',
-      'lastSeen',
-    ],
-    fields: [
-      {
-        key: 'status',
-        label: 'Status',
-        type: 'select',
-        options: ['active', 'inactive'],
-        span: 'span-1',
-      },
-      {
-        key: 'engine',
-        label: 'Engine',
-        type: 'select',
-        options: ['kamailio'],
-        span: 'span-1',
-      },
-      { key: 'name', label: 'Name', required: true, span: 'span-1' },
-      {
-        key: 'realtimeDomainUUID',
-        label: 'Primary Domain',
-        type: 'lookup',
-        lookup: 'domains',
-        span: 'span-1',
-      },
-      {
-        key: 'mediaServerUUID',
-        label: 'Media Server',
-        type: 'lookup',
-        lookup: 'mediaServers',
-        span: 'span-1',
-      },
-      { key: 'nodeUUID', label: 'Node UUID', tab: 'network' },
-      { key: 'hostname', label: 'Hostname', tab: 'network' },
-      { key: 'publicIP', label: 'Public IP', tab: 'network' },
-      { key: 'privateIP', label: 'Private IP', tab: 'network' },
-      { key: 'baseUrl', label: 'Base URL', tab: 'network' },
-      { key: 'version', label: 'Version', tab: 'network' },
-      { key: 'configJson', label: 'Config JSON', type: 'textarea', span: 'span-4', tab: 'notes' },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
-    ],
+const WEBRTC_SERVER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'system/realtime/webrtc/servers',
+  uuidField: 'RwsUUID',
+  pageTitle: 'WebRTC Servers',
+  pageDescription: 'Register Kamailio WebRTC edge nodes authorized by node UUID.',
+  createTitle: 'New WebRTC server',
+  editTitle: 'Edit WebRTC server',
+  dialogDescription: 'Runtime identity and network settings for the WebRTC edge.',
+  searchPlaceholder: 'Search WebRTC servers',
+  emptyLabel: 'No WebRTC servers found.',
+  deleteTitle: 'Delete WebRTC server',
+  deleteMessage: 'Delete this WebRTC server?',
+  deleteSelectedTitle: 'Delete selected WebRTC servers',
+  deleteSelectedMessage: 'Delete {count} selected WebRTC servers?',
+  savedMessage: 'WebRTC server saved.',
+  deletedMessage: 'WebRTC server deleted.',
+  deleteFailedMessage: 'Failed to delete WebRTC server.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  statusOptions: STATUS_OPTIONS,
+  initialValues: {
+    status: 1,
+    engine: 'kamailio',
+    name: '',
+    realtimeDomainUUID: '',
+    mediaServerUUID: '',
+    nodeUUID: '',
+    hostname: '',
+    publicIP: '',
+    privateIP: '',
+    baseUrl: '',
+    version: '',
+    configJson: '{}',
+    notes: '',
   },
-  parameters: {
-    resource: 'parameters',
-    title: 'WebRTC Parameters',
-    subtitle: 'Manage tenant and edge-specific WebRTC runtime parameters.',
-    uuid: 'RwpUUID',
-    name: 'RwpKey',
-    status: 'RwpStatus',
-    columns: ['key', 'server', 'type', 'value', 'status'],
-    fields: [
-      { key: 'serverUUID', label: 'Server', type: 'lookup', lookup: 'servers' },
-      { key: 'key', label: 'Key', required: true },
-      {
-        key: 'type',
-        label: 'Type',
-        type: 'select',
-        options: ['string', 'number', 'boolean', 'json'],
-      },
-      { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
-      { key: 'valueJson', label: 'Value', type: 'textarea', span: 'span-4', tab: 'notes' },
-      { key: 'description', label: 'Description', type: 'textarea', span: 'span-4', tab: 'notes' },
-    ],
-  },
-  domains: {
-    resource: 'domains',
-    title: 'WebRTC Domains',
-    subtitle: 'Publish partner and tenant WSS domains on authorized WebRTC edge nodes.',
-    uuid: 'RwdUUID',
-    name: 'RtdName',
-    status: 'RwdStatus',
-    columns: [
-      'domain',
-      'server',
-      'certificateProvider',
-      'nginxStatus',
-      'certificateStatus',
-      'autoProvision',
-      'status',
-    ],
-    fields: [
-      {
-        key: 'status',
-        label: 'Status',
-        type: 'select',
-        options: ['active', 'inactive'],
-        span: 'span-1',
-      },
-      {
-        key: 'serverUUID',
-        label: 'Server',
-        type: 'lookup',
-        lookup: 'servers',
-        required: true,
-        span: 'span-1',
-      },
-      {
-        key: 'realtimeDomainUUID',
-        label: 'Realtime Domain',
-        type: 'lookup',
-        lookup: 'domains',
-        required: true,
-        span: 'span-1',
-      },
-      {
-        key: 'certificateProvider',
-        label: 'Certificate Provider',
-        type: 'select',
-        options: ['letsencrypt', 'manual', 'self_signed'],
-        span: 'span-1',
-      },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 4, tab: 'notes' },
-    ],
-  },
-  'sip-targets': {
-    resource: 'sip-targets',
-    title: 'WebRTC SIP Targets',
-    subtitle: 'Bind each WebRTC domain to one explicit PABX or Softswitch SIP destination.',
-    uuid: 'RwtUUID',
-    name: 'WebRtcDomainName',
-    status: 'RwtStatus',
-    columns: [
-      'webRtcDomain',
-      'targetType',
-      'target',
-      'sipDomain',
-      'host',
-      'port',
-      'transport',
-      'status',
-    ],
-    fields: [
-      {
-        key: 'status',
-        label: 'Status',
-        type: 'select',
-        options: ['active', 'inactive'],
-        span: 'span-1',
-      },
-      {
-        key: 'webRtcDomainUUID',
-        label: 'WebRTC Domain',
-        type: 'lookup',
-        lookup: 'domains',
-        required: true,
-        span: 'span-1',
-      },
-      {
-        key: 'targetType',
-        label: 'Target Type',
-        type: 'select',
-        options: ['pabx', 'softswitch'],
-        required: true,
-        span: 'span-1',
-      },
-      {
-        key: 'pabxAccountUUID',
-        label: 'PABX Account',
-        type: 'lookup',
-        lookup: 'pabxAccounts',
-        required: true,
-        span: 'span-1',
-        visibleWhen: { key: 'targetType', value: 'pabx' },
-      },
-      {
-        key: 'softswitchAccountUUID',
-        label: 'Softswitch Account',
-        type: 'lookup',
-        lookup: 'softswitchAccounts',
-        required: true,
-        span: 'span-1',
-        visibleWhen: { key: 'targetType', value: 'softswitch' },
-      },
-      { key: 'host', label: 'SIP Host Override', tab: 'network', span: 'span-1' },
-      { key: 'port', label: 'SIP Port', type: 'number', tab: 'network', span: 'span-1' },
-      {
-        key: 'transport',
-        label: 'Transport',
-        type: 'select',
-        options: ['udp', 'tcp', 'tls'],
-        tab: 'network',
-        span: 'span-1',
-      },
-      { key: 'priority', label: 'Priority', type: 'number', tab: 'network', span: 'span-1' },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
-    ],
-  },
-};
-
-@Component({
-  selector: 'app-realtime-webrtc',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    MnsSearchSelectFieldComponent,
-    MnsSelectFieldComponent,
-    MnsStatusSelectFieldComponent,
-    MnsTextFieldComponent,
-    MnsTextareaFieldComponent,
-    InstallCommandDialogComponent,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'RwsName', uuidField: 'RwsUUID' },
+    { id: 'engine', label: 'Engine', field: 'RwsEngine' },
+    { id: 'hostname', label: 'Hostname', field: 'RwsHostname' },
+    { id: 'domain', label: 'Primary Domain', field: 'RtdName' },
+    { id: 'mediaServer', label: 'Media Server', field: 'RmsName' },
+    { id: 'publicIP', label: 'Public IP', field: 'RwsPublicIP', copyable: true },
+    { id: 'status', label: 'Status', kind: 'status', field: 'RwsStatus', className: 'status-col' },
+    { id: 'lastSeen', label: 'Last Seen', field: 'RwsLastSeenAt', kind: 'datetime' },
   ],
-  templateUrl: './webrtc.html',
-  styleUrls: ['./webrtc.scss'],
-})
-export class RealtimeWebRtcPage {
-  private readonly api = inject(RealtimeWebRtcService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
-  readonly currentResource = computed<WebRtcResource>(() => {
-    const data = this.routeData() as Record<string, unknown>;
-    const resource = data['resource'];
-    return resource === 'domains' ||
-      resource === 'parameters' ||
-      resource === 'servers' ||
-      resource === 'sip-targets'
-      ? resource
-      : 'servers';
-  });
-  readonly scope = computed<WebRtcScope>(() => {
-    const data = this.routeData() as Record<string, unknown>;
-    return data['scope'] === 'master' ? 'master' : 'tenant';
-  });
-  readonly config = computed(() => CONFIGS[this.currentResource()]);
-  readonly title = computed(() => this.config().title);
-  readonly subtitle = computed(() => this.config().subtitle);
-  readonly saving = signal(false);
-  readonly editing = signal<WebRtcRecord | null>(null);
-  readonly selected = signal<Set<string>>(new Set());
-  readonly generatedInstall = signal<Record<string, string> | null>(null);
-  private readonly appliedSearch = signal('');
-  private readonly appliedStatus = signal('');
-  readonly searchInput = signal('');
-  readonly search = signal('');
-  readonly statusInput = signal('');
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<SortDirection>('');
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(5);
-  readonly displayedColumns = computed(() => ['select', ...this.config().columns, 'actions']);
-  readonly lookups = signal<Record<LookupKey, LookupOption[]>>({
-    servers: [],
-    domains: [],
-    mediaServers: [],
-    pabxAccounts: [],
-    softswitchAccounts: [],
-  });
-  readonly formModel = signal<Record<string, any>>({});
-  readonly form = createForm(this.formModel);
-  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
-  readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private binding: CrudDialogBinding | null = null;
-  private installCommandBinding: CrudDialogBinding | null = null;
+  rowActions: [{ key: 'generate-install', label: 'Generate install command', icon: 'terminal' }],
+  fields: [
+    { key: 'status', source: 'RwsStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    { key: 'engine', source: 'RwsEngine', payloadKey: 'engine', label: 'Engine', type: 'select', options: [{ value: 'kamailio', label: 'Kamailio' }], span: 1 },
+    { key: 'name', source: 'RwsName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Primary Domain', type: 'search-select', span: 1 },
+    { key: 'mediaServerUUID', source: 'RealtimeMediaServerRmsUUID', payloadKey: 'mediaServerUUID', label: 'Media Server', type: 'search-select', span: 1 },
+    { key: 'nodeUUID', source: 'RwsNodeUUID', payloadKey: 'nodeUUID', label: 'Node UUID', tab: 'network', span: 1 },
+    { key: 'hostname', source: 'RwsHostname', payloadKey: 'hostname', label: 'Hostname', tab: 'network', span: 1 },
+    { key: 'publicIP', source: 'RwsPublicIP', payloadKey: 'publicIP', label: 'Public IP', tab: 'network', span: 1 },
+    { key: 'privateIP', source: 'RwsPrivateIP', payloadKey: 'privateIP', label: 'Private IP', tab: 'network', span: 1 },
+    { key: 'baseUrl', source: 'RwsBaseUrl', payloadKey: 'baseUrl', label: 'Base URL', tab: 'network', span: 1 },
+    { key: 'version', source: 'RwsVersion', payloadKey: 'version', label: 'Version', tab: 'network', span: 1 },
+    { key: 'configJson', source: 'RwsConfig', payloadKey: 'config', label: 'Config JSON', type: 'textarea', format: 'json', tab: 'notes', span: 4, rows: 8 },
+    { key: 'notes', source: 'RwsNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+  ],
+};
 
-  private readonly recordsResource = resource({
-    params: () => ({
-      resource: this.config().resource,
-      scope: this.scope(),
-      search: this.appliedSearch(),
-      status: this.appliedStatus(),
-    }),
-    defaultValue: [] as WebRtcRecord[],
-    loader: async ({ params }) => {
-      const res = await this.api.list(
-        params.resource,
-        {
-          limit: 5000,
-          search: params.search,
-          status: params.status,
-        },
-        params.scope,
-      );
-      return res?.data?.items ?? [];
+function webRtcDomainConfig(endpoint: string, titlePrefix = 'WebRTC'): ConfigurableCrudConfig {
+  return {
+    endpoint,
+    uuidField: 'RwdUUID',
+    pageTitle: `${titlePrefix} Domains`,
+    pageDescription: 'Publish partner and tenant WSS domains on authorized WebRTC edge nodes.',
+    createTitle: 'New WebRTC domain',
+    editTitle: 'Edit WebRTC domain',
+    dialogDescription: 'Bind a realtime domain to a WebRTC signaling edge.',
+    searchPlaceholder: 'Search WebRTC domains',
+    emptyLabel: 'No WebRTC domains found.',
+    deleteTitle: 'Delete WebRTC domain',
+    deleteMessage: 'Delete this WebRTC domain?',
+    deleteSelectedTitle: 'Delete selected WebRTC domains',
+    deleteSelectedMessage: 'Delete {count} selected WebRTC domains?',
+    savedMessage: 'WebRTC domain saved.',
+    deletedMessage: 'WebRTC domain deleted.',
+    deleteFailedMessage: 'Failed to delete WebRTC domain.',
+    statusMode: 'number',
+    activeValue: 1,
+    inactiveValue: 0,
+    statusOptions: STATUS_OPTIONS,
+    initialValues: {
+      status: 1,
+      serverUUID: '',
+      realtimeDomainUUID: '',
+      certificateProvider: 'letsencrypt',
+      notes: '',
     },
-  });
-  readonly rows = computed(() => this.recordsResource.value());
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly visibleRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-  readonly allVisibleSelected = computed(() => {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
-  });
-  readonly someVisibleSelected = computed(() => {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
-  });
+    columns: [
+      { id: 'domain', label: 'Realtime Domain', kind: 'identity', field: 'RtdName', uuidField: 'RealtimeDomainRtdUUID' },
+      { id: 'server', label: 'Server', field: 'RwsName' },
+      { id: 'certificateProvider', label: 'Certificate', field: 'RwdCertificateProvider' },
+      { id: 'nginxStatus', label: 'Nginx', field: 'RwdNginxStatus' },
+      { id: 'certificateStatus', label: 'TLS', field: 'RwdCertificateStatus' },
+      { id: 'autoProvision', label: 'Auto', kind: 'boolean', field: 'RwdAutoProvision' },
+      { id: 'status', label: 'Status', kind: 'status', field: 'RwdStatus', className: 'status-col' },
+    ],
+    rowActions: [{ key: 'provision-domain', label: 'Provision domain', icon: 'cloud_sync' }],
+    fields: [
+      { key: 'status', source: 'RwdStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+      { key: 'serverUUID', source: 'RealtimeWebRtcServerRwsUUID', payloadKey: 'serverUUID', label: 'Server', type: 'search-select', required: true, span: 1 },
+      { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'search-select', required: true, span: 1 },
+      { key: 'certificateProvider', source: 'RwdCertificateProvider', payloadKey: 'certificateProvider', label: 'Certificate Provider', type: 'select', options: [{ value: 'letsencrypt', label: 'Let’s Encrypt' }, { value: 'manual', label: 'Manual' }, { value: 'self_signed', label: 'Self-signed' }], span: 1 },
+      { key: 'notes', source: 'RwdNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    ],
+  };
+}
 
-  readonly loading = this.recordsResource.isLoading;
+const WEBRTC_PARAMETER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'system/realtime/webrtc/parameters',
+  uuidField: 'RwpUUID',
+  pageTitle: 'WebRTC Parameters',
+  pageDescription: 'Manage tenant and edge-specific WebRTC runtime parameters.',
+  createTitle: 'New WebRTC parameter',
+  editTitle: 'Edit WebRTC parameter',
+  dialogDescription: 'Runtime parameter consumed by WebRTC edges.',
+  searchPlaceholder: 'Search WebRTC parameters',
+  emptyLabel: 'No WebRTC parameters found.',
+  deleteTitle: 'Delete WebRTC parameter',
+  deleteMessage: 'Delete this WebRTC parameter?',
+  deleteSelectedTitle: 'Delete selected WebRTC parameters',
+  deleteSelectedMessage: 'Delete {count} selected WebRTC parameters?',
+  savedMessage: 'WebRTC parameter saved.',
+  deletedMessage: 'WebRTC parameter deleted.',
+  deleteFailedMessage: 'Failed to delete WebRTC parameter.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  statusOptions: STATUS_OPTIONS,
+  initialValues: { status: 1, serverUUID: '', key: '', type: 'string', valueJson: '', description: '' },
+  columns: [
+    { id: 'key', label: 'Key', kind: 'identity', field: 'RwpKey', uuidField: 'RwpUUID' },
+    { id: 'server', label: 'Server', field: 'RwsName' },
+    { id: 'type', label: 'Type', field: 'RwpType' },
+    { id: 'value', label: 'Value', field: 'RwpValue' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'RwpStatus', className: 'status-col' },
+  ],
+  fields: [
+    { key: 'serverUUID', source: 'RealtimeWebRtcServerRwsUUID', payloadKey: 'serverUUID', label: 'Server', type: 'search-select', span: 1 },
+    { key: 'key', source: 'RwpKey', payloadKey: 'key', label: 'Key', required: true, span: 1 },
+    { key: 'type', source: 'RwpType', payloadKey: 'type', label: 'Type', type: 'select', options: [{ value: 'string', label: 'String' }, { value: 'number', label: 'Number' }, { value: 'boolean', label: 'Boolean' }, { value: 'json', label: 'JSON' }], span: 1 },
+    { key: 'status', source: 'RwpStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    { key: 'valueJson', source: 'RwpValue', payloadKey: 'value', label: 'Value', type: 'textarea', format: 'json', tab: 'notes', span: 4, rows: 4 },
+    { key: 'description', source: 'RwpDescription', payloadKey: 'description', label: 'Description', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+  ],
+};
 
-  private readonly syncTableData = effect(() => {
-    this.rows();
-    this.reconcile();
-  });
+const WEBRTC_SIP_TARGET_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'system/realtime/webrtc/sip-targets',
+  uuidField: 'RwtUUID',
+  pageTitle: 'WebRTC SIP Targets',
+  pageDescription: 'Bind each WebRTC domain to one explicit PABX or Softswitch SIP destination.',
+  createTitle: 'New WebRTC SIP target',
+  editTitle: 'Edit WebRTC SIP target',
+  dialogDescription: 'Master-only mapping between WebRTC domains and SIP destinations.',
+  searchPlaceholder: 'Search WebRTC SIP targets',
+  emptyLabel: 'No WebRTC SIP targets found.',
+  deleteTitle: 'Delete WebRTC SIP target',
+  deleteMessage: 'Delete this WebRTC SIP target?',
+  deleteSelectedTitle: 'Delete selected WebRTC SIP targets',
+  deleteSelectedMessage: 'Delete {count} selected WebRTC SIP targets?',
+  savedMessage: 'WebRTC SIP target saved.',
+  deletedMessage: 'WebRTC SIP target deleted.',
+  deleteFailedMessage: 'Failed to delete WebRTC SIP target.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  statusOptions: STATUS_OPTIONS,
+  initialValues: {
+    status: 1,
+    webRtcDomainUUID: '',
+    targetType: 'pabx',
+    pabxAccountUUID: '',
+    softswitchAccountUUID: '',
+    host: '',
+    port: 5060,
+    transport: 'udp',
+    priority: 100,
+    notes: '',
+  },
+  columns: [
+    { id: 'webRtcDomain', label: 'WebRTC Domain', kind: 'identity', field: 'WebRtcDomainName', uuidField: 'RealtimeWebRtcDomainRwdUUID' },
+    { id: 'targetType', label: 'Target Type', field: 'RwtTargetType' },
+    { id: 'pabxTarget', label: 'PABX Account', field: 'PabxAccountName' },
+    { id: 'softswitchTarget', label: 'Softswitch Account', field: 'SoftswitchAccountName' },
+    { id: 'sipDomain', label: 'SIP Domain', field: 'SipDomainName' },
+    { id: 'host', label: 'Host', field: 'RwtHost' },
+    { id: 'port', label: 'Port', field: 'RwtPort' },
+    { id: 'transport', label: 'Transport', field: 'RwtTransport' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'RwtStatus', className: 'status-col' },
+  ],
+  fields: [
+    { key: 'status', source: 'RwtStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    { key: 'webRtcDomainUUID', source: 'RealtimeWebRtcDomainRwdUUID', payloadKey: 'webRtcDomainUUID', label: 'WebRTC Domain', type: 'search-select', required: true, span: 1 },
+    { key: 'targetType', source: 'RwtTargetType', payloadKey: 'targetType', label: 'Target Type', type: 'select', options: [{ value: 'pabx', label: 'PABX' }, { value: 'softswitch', label: 'Softswitch' }], required: true, span: 1 },
+    { key: 'pabxAccountUUID', source: 'VoipPabxAccountVpaUUID', payloadKey: 'pabxAccountUUID', label: 'PABX Account', type: 'search-select', requiredWhen: ({ values }) => values['targetType'] === 'pabx', hiddenWhen: ({ values }) => values['targetType'] !== 'pabx', span: 1 },
+    { key: 'softswitchAccountUUID', source: 'VoipSoftswitchAccountVssUUID', payloadKey: 'softswitchAccountUUID', label: 'Softswitch Account', type: 'search-select', requiredWhen: ({ values }) => values['targetType'] === 'softswitch', hiddenWhen: ({ values }) => values['targetType'] !== 'softswitch', span: 1 },
+    { key: 'host', source: 'RwtHost', payloadKey: 'host', label: 'SIP Host Override', tab: 'network', span: 1 },
+    { key: 'port', source: 'RwtPort', payloadKey: 'port', label: 'SIP Port', type: 'number', tab: 'network', span: 1 },
+    { key: 'transport', source: 'RwtTransport', payloadKey: 'transport', label: 'Transport', type: 'select', options: [{ value: 'udp', label: 'UDP' }, { value: 'tcp', label: 'TCP' }, { value: 'tls', label: 'TLS' }], tab: 'network', span: 1 },
+    { key: 'priority', source: 'RwtPriority', payloadKey: 'priority', label: 'Priority', type: 'number', tab: 'network', span: 1 },
+    { key: 'notes', source: 'RwtNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+  ],
+};
 
-  private readonly reportLoadError = effect(() => {
-    const error = this.recordsResource.error();
-    if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load WebRTC records.'));
-  });
+abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly webRtcApi = inject(RealtimeWebRtcService);
+  private readonly resourceName: WebRtcResource;
+  private readonly resourceScope: WebRtcScope;
+  protected servers: ConfigurableCrudOption[] = [];
+  protected domains: ConfigurableCrudOption[] = [];
+  protected mediaServers: ConfigurableCrudOption[] = [];
+  protected pabxAccounts: ConfigurableCrudOption[] = [];
+  protected softswitchAccounts: ConfigurableCrudOption[] = [];
 
-  private readonly resetPageStateOnRouteChange = effect(() => {
-    this.currentResource();
-    this.scope();
-    untracked(() => {
-      this.searchInput.set('');
-      this.search.set('');
-      this.statusInput.set('');
-      this.appliedSearch.set('');
-      this.appliedStatus.set('');
-      this.pageIndex.set(0);
-      this.selected.set(new Set());
-    });
-  });
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.binding?.stop();
-    this.installCommandBinding?.stop();
-  });
-  uuid(row: WebRtcRecord) {
-    return String(row[this.config().uuid] ?? '');
-  }
-  relatedUuid(row: WebRtcRecord, column: string): string {
-    const map: Record<string, unknown> = {
-      publicDomain: row['RealtimeDomainRtdUUID'],
-      mediaServer: row['RealtimeMediaServerRmsUUID'],
-      server: row['RealtimeWebRtcServerRwsUUID'],
-      domain: row['RealtimeDomainRtdUUID'],
-      name: this.uuid(row),
-      key: this.uuid(row),
-    };
-    return String(map[column] ?? '');
-  }
-  name(row: WebRtcRecord) {
-    return String(row[this.config().name] ?? '');
-  }
-  status(row: WebRtcRecord) {
-    return Number(row[this.config().status] ?? 0) === 1;
-  }
-  columnLabel(column: string) {
-    return COLUMN_LABELS[column] ?? column;
-  }
-  cell(row: WebRtcRecord, column: string) {
-    const map: Record<string, any> = {
-      name: this.name(row),
-      engine: row['RwsEngine'],
-      hostname: row['RwsHostname'],
-      publicDomain: row['RtdName'] ?? row['DomainName'] ?? row['RwsPublicDomain'],
-      mediaServer: row['RmsName'] ?? row['MediaServerName'],
-      webRtcDomain: row['WebRtcDomainName'],
-      targetType: this.optionLabel(String(row['RwtTargetType'] ?? '')),
-      target: row['PabxAccountName'] ?? row['SoftswitchAccountName'],
-      sipDomain: row['SipDomainName'],
-      host: row['RwtHost'],
-      port: row['RwtPort'],
-      transport: this.optionLabel(String(row['RwtTransport'] ?? '')),
-      priority: row['RwtPriority'],
-      publicIP: row['RwsPublicIP'],
-      version: row['RwsVersion'],
-      lastSeen: row['RwsLastSeenAt'],
-      server: row['RwsName'],
-      domain: row['RtdName'] ?? row['DomainName'],
-      certificateProvider: row['RwdCertificateProvider'],
-      nginxStatus: row['RwdNginxStatus'],
-      certificateStatus: row['RwdCertificateStatus'],
-      autoProvision: Number(row['RwdAutoProvision'] ?? 0) === 1 ? 'YES' : 'NO',
-      key: row['RwpKey'],
-      value: this.displayValue(row['RwpValue']),
-      type: row['RwpType'],
-      description: row['RwpDescription'],
-      status: this.status(row) ? 'ACTIVE' : 'INACTIVE',
-    };
-    return map[column] ?? '';
-  }
-  publicIpParts(row: WebRtcRecord) {
-    const raw = String(this.cell(row, 'publicIP') ?? '').trim();
-    if (!raw) return [];
-    return raw
-      .split(/[,\n]+/)
-      .map((part) => part.trim())
-      .filter(Boolean);
-  }
-  displayValue(value: unknown) {
-    if (value === undefined || value === null) return '';
-    if (typeof value === 'object') return JSON.stringify(value);
-    return String(value);
-  }
-  refreshList() {
-    this.recordsResource.reload();
-  }
-  applySearchFilters() {
-    const nextSearch = this.searchInput().trim();
-    this.search.set(nextSearch);
-    this.pageIndex.set(0);
-    this.appliedSearch.set(nextSearch);
-    this.appliedStatus.set(this.statusInput());
-  }
-  clearSearchFilters() {
-    this.searchInput.set('');
-    this.search.set('');
-    this.statusInput.set('');
-    this.pageIndex.set(0);
-    this.appliedSearch.set('');
-    this.appliedStatus.set('');
-  }
-
-  setSort(sort: Sort) {
-    this.sortActive.set(sort.active || '');
-    this.sortDirection.set(sort.direction || '');
-    this.pageIndex.set(0);
+  protected constructor(
+    config: ConfigurableCrudConfig,
+    resourceName: WebRtcResource,
+    resourceScope: WebRtcScope,
+  ) {
+    super(config);
+    this.resourceName = resourceName;
+    this.resourceScope = resourceScope;
+    void this.fetchLookupOptions();
   }
 
-  setPage(page: PageEvent) {
-    this.pageIndex.set(page.pageIndex);
-    this.pageSize.set(page.pageSize);
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'serverUUID') return this.servers;
+    if (key === 'realtimeDomainUUID') return this.domains;
+    if (key === 'mediaServerUUID') return this.mediaServers;
+    if (key === 'webRtcDomainUUID') return this.domains;
+    if (key === 'pabxAccountUUID') return this.pabxAccounts;
+    if (key === 'softswitchAccountUUID') return this.softswitchAccounts;
+    return [];
   }
-  async fetchLookups() {
-    const needs = new Set(
-      this.config()
-        .fields.map((field) => field.lookup)
-        .filter(Boolean) as LookupKey[],
-    );
-    await Promise.all(
-      [...needs].map(async (key) => {
-        const res =
-          key === 'domains'
-            ? await this.api.listRealtimeDomains({
-                limit: 5000,
-                purpose: 'webrtc',
-              })
-            : key === 'mediaServers'
-              ? await this.api.listMediaServers({ status: 1, limit: 5000 })
-              : key === 'pabxAccounts'
-                ? await this.api.listPabxAccounts({ status: 1, limit: 5000 })
-                : key === 'softswitchAccounts'
-                  ? await this.api.listSoftswitchAccounts({ status: 1, limit: 5000 })
-                  : this.config().resource === 'domains' &&
-                      key === 'servers' &&
-                      this.scope() === 'tenant'
-                    ? await this.api.list('servers', { status: 1, limit: 5000 }, 'tenant')
-                    : await this.api.list(key, { limit: 5000 }, 'master');
-        const rows = res?.data?.items ?? [];
-        const options = rows
-          .map((row: WebRtcRecord) => ({
-            value: String(
-              key === 'domains'
-                ? (row['RtdUUID'] ?? '')
-                : key === 'mediaServers'
-                  ? (row['RmsUUID'] ?? '')
-                  : key === 'pabxAccounts'
-                    ? (row['VoipPabxAccountVpaUUID'] ?? row['VpaUUID'] ?? '')
-                    : key === 'softswitchAccounts'
-                      ? (row['VoipSoftswitchAccountVssUUID'] ?? row['VssUUID'] ?? '')
-                      : (row['RwsUUID'] ?? ''),
-            ),
-            label: String(
-              key === 'domains'
-                ? (row['RtdName'] ?? row['DomainName'] ?? '')
-                : key === 'mediaServers'
-                  ? (row['RmsName'] ?? '')
-                  : key === 'pabxAccounts'
-                    ? (row['VpaName'] ?? '')
-                    : key === 'softswitchAccounts'
-                      ? (row['VssName'] ?? '')
-                      : (row['RwsName'] ?? ''),
-            ),
-            description: String(
-              key === 'domains'
-                ? (row['RtdUUID'] ?? row['DomainName'] ?? '')
-                : key === 'mediaServers'
-                  ? (row['hostname'] ?? row['controlIP'] ?? row['value'] ?? row['RmsUUID'] ?? '')
-                  : key === 'pabxAccounts'
-                    ? (row['VpaID'] ?? row['CustomerName'] ?? row['VpaUUID'] ?? '')
-                    : key === 'softswitchAccounts'
-                      ? (row['VssID'] ?? row['CustomerName'] ?? row['VssUUID'] ?? '')
-                      : (row['RwsHostname'] ?? row['RwsUUID'] ?? ''),
-            ),
-            searchText: String(
-              key === 'domains'
-                ? `${row['RtdName'] ?? ''} ${row['DomainName'] ?? ''} ${row['RtdUUID'] ?? ''}`
-                : key === 'mediaServers'
-                  ? `${row['label'] ?? ''} ${row['hostname'] ?? ''} ${row['controlIP'] ?? ''} ${row['value'] ?? ''}`
-                  : key === 'pabxAccounts'
-                    ? `${row['VpaName'] ?? ''} ${row['VpaID'] ?? ''} ${row['VpaUUID'] ?? ''}`
-                    : key === 'softswitchAccounts'
-                      ? `${row['VssName'] ?? ''} ${row['VssID'] ?? ''} ${row['VssUUID'] ?? ''}`
-                      : `${row['RwsName'] ?? ''} ${row['RwsHostname'] ?? ''} ${row['RwsUUID'] ?? ''}`,
-            ),
-          }))
-          .filter((option: LookupOption) => option.value);
-        this.lookups.update((current) => ({ ...current, [key]: options }));
-      }),
-    );
-  }
-  lookupOptions(key: LookupKey): readonly MnsSearchSelectFieldOption[] {
-    return this.lookups()[key];
-  }
-  lookupPlaceholder(key: LookupKey): string {
-    if (key === 'domains') return 'Search domains';
-    if (key === 'mediaServers') return 'Search media servers';
-    if (key === 'pabxAccounts') return 'Search PABX accounts';
-    if (key === 'softswitchAccounts') return 'Search Softswitch accounts';
-    return 'Search servers';
-  }
-  recordFields() {
-    return this.config().fields.filter(
-      (field) => (!field.tab || field.tab === 'record') && this.fieldVisible(field),
-    );
-  }
-  networkFields() {
-    return this.config().fields.filter(
-      (field) => field.tab === 'network' && this.fieldVisible(field),
-    );
-  }
-  textareaFields() {
-    return this.config().fields.filter(
-      (field) => field.type === 'textarea' && this.fieldVisible(field),
-    );
-  }
-  fieldVisible(field: Field) {
-    if (!field.visibleWhen) return true;
-    return String(this.formModel()[field.visibleWhen.key] ?? '') === field.visibleWhen.value;
-  }
-  hasNetworkFields() {
-    return this.networkFields().length > 0;
-  }
-  hasTextareaFields() {
-    return this.textareaFields().length > 0;
-  }
-  textareaTabLabel() {
-    return this.textareaFields().some((field) => field.key.toLowerCase().includes('notes'))
-      ? 'Notes'
-      : 'Config';
-  }
-  buildForm(row?: WebRtcRecord | null) {
-    const nextValue: Record<string, any> = {};
-    for (const field of this.config().fields) {
-      nextValue[field.key] = this.valueForField(field.key, row);
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    if (this.resourceName === 'servers') payload['engine'] = 'kamailio';
+    if (this.resourceName === 'sip-targets') {
+      payload['port'] = Number(payload['port'] || 5060);
+      payload['priority'] = Number(payload['priority'] || 100);
+      if (payload['targetType'] === 'pabx') payload['softswitchAccountUUID'] = null;
+      if (payload['targetType'] === 'softswitch') payload['pabxAccountUUID'] = null;
     }
-    this.formModel.set(nextValue);
-  }
-  valueForField(key: string, row?: WebRtcRecord | null) {
-    if (!row) {
-      if (key === 'status') return 'active';
-      if (key === 'engine' && this.config().resource === 'servers') return 'kamailio';
-      return '';
-    }
-    const m: Record<string, string> = {
-      name: this.config().name,
-      engine: 'RwsEngine',
-      nodeUUID: 'RwsNodeUUID',
-      realtimeDomainUUID: 'RealtimeDomainRtdUUID',
-      mediaServerUUID: 'RealtimeMediaServerRmsUUID',
-      hostname: 'RwsHostname',
-      publicIP: 'RwsPublicIP',
-      privateIP: 'RwsPrivateIP',
-      baseUrl: 'RwsBaseUrl',
-      version: 'RwsVersion',
-      serverUUID: 'RealtimeWebRtcServerRwsUUID',
-      webRtcDomainUUID: 'RealtimeWebRtcDomainRwdUUID',
-      targetType: 'RwtTargetType',
-      pabxAccountUUID: 'VoipPabxAccountVpaUUID',
-      softswitchAccountUUID: 'VoipSoftswitchAccountVssUUID',
-      voipDomainUUID: 'VoipDomainVdmUUID',
-      host: 'RwtHost',
-      port: 'RwtPort',
-      transport: 'RwtTransport',
-      priority: 'RwtPriority',
-      certificateProvider: 'RwdCertificateProvider',
-      autoProvision: 'RwdAutoProvision',
-      key: 'RwpKey',
-      type: 'RwpType',
-      description: 'RwpDescription',
-    };
-    if (key === 'status') return this.status(row) ? 'active' : 'inactive';
-    if (key === 'autoProvision')
-      return Number(row['RwdAutoProvision'] ?? 1) === 1 ? 'active' : 'inactive';
-    if (key === 'notes') {
-      return this.config().resource === 'domains'
-        ? (row['RwdNotes'] ?? '')
-        : (row['RwsNotes'] ?? '');
-    }
-    if (key === 'configJson') return JSON.stringify(row['RwsConfig'] ?? {}, null, 2);
-    if (key === 'valueJson') return this.displayValue(row['RwpValue']);
-    return row[m[key]] ?? '';
-  }
-  async startCreate() {
-    this.editing.set(null);
-    await this.fetchLookups();
-    this.buildForm(null);
-    this.openDialog();
-  }
-  async startEdit(row: WebRtcRecord) {
-    this.editing.set(row);
-    await this.fetchLookups();
-    this.buildForm(row);
-    this.openDialog();
-  }
-  openDialog() {
-    const formDialog = this.formDialog();
-    if (!formDialog) return;
-    this.binding = openCrudTemplateDialog(this.dialog, formDialog, 'realtime-webrtc-form-dialog', {
-      onEscape: () => this.closeDialog(),
-    });
-    this.dialogRef = this.binding.ref;
-    bindDialogClosed(this.dialogRef, () => {
-      this.binding?.stop();
-      this.binding = null;
-      this.dialogRef = null;
-      this.saving.set(false);
-    });
-  }
-  closeDialog() {
-    this.dialogRef?.close();
-    this.dialogRef = null;
-    this.binding?.stop();
-    this.binding = null;
-    this.saving.set(false);
-  }
-  payload() {
-    const raw = this.formModel();
-    const p: Record<string, any> = { ...raw, status: raw['status'] === 'inactive' ? 0 : 1 };
-    if ('autoProvision' in raw) p['autoProvision'] = raw['autoProvision'] === 'inactive' ? 0 : 1;
-    if (this.config().resource === 'servers') {
-      p['engine'] = 'kamailio';
-    }
-    if (this.config().resource === 'sip-targets') {
-      p['port'] = Number(raw['port'] || 5060);
-      p['priority'] = Number(raw['priority'] || 100);
-      if (raw['targetType'] === 'pabx') p['softswitchAccountUUID'] = null;
-      if (raw['targetType'] === 'softswitch') p['pabxAccountUUID'] = null;
-    }
-    if (raw['configJson']) {
-      try {
-        p['config'] = JSON.parse(raw['configJson']);
-      } catch {
-        p['config'] = raw['configJson'];
+    if (this.resourceName === 'parameters' && typeof payload['value'] === 'string') {
+      const raw = String(payload['value']).trim();
+      if (raw) {
+        try {
+          payload['value'] = JSON.parse(raw);
+        } catch {
+          payload['value'] = raw;
+        }
       }
     }
-    delete p['configJson'];
-    if (raw['valueJson']) {
-      try {
-        p['value'] = JSON.parse(raw['valueJson']);
-      } catch {
-        p['value'] = raw['valueJson'];
-      }
-    }
-    delete p['valueJson'];
-    return p;
+    return payload;
   }
 
-  async submit(saveAndNew = false) {
-    if (!this.isFormValid()) return;
-    this.saving.set(true);
-    try {
-      const row = this.editing();
-      const resource = this.config().resource;
-      const response = row
-        ? await this.api.update(resource, this.uuid(row), this.payload(), this.scope())
-        : await this.api.create(resource, this.payload(), this.scope());
-      this.snack.success('WebRTC record saved.');
-      this.recordsResource.reload();
-      if (!row && resource === 'servers' && !saveAndNew) {
-        const item = response?.data?.item ?? null;
-        const createdUUID = String(item?.[this.config().uuid] ?? '');
-        this.closeDialog();
-        if (createdUUID) await this.generateInstallCommandForUUID(createdUUID, false);
-        else this.snack.error('WebRTC server saved, but install command could not be generated.');
-        return;
-      }
-      if (saveAndNew && !row) {
-        this.editing.set(null);
-        this.buildForm(null);
-      } else this.closeDialog();
-    } catch (e: any) {
-      this.snack.error(e?.error?.error || e?.message || 'Failed to save WebRTC record.');
-    } finally {
-      this.saving.set(false);
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'generate-install') {
+      await this.confirmAndOpenInstallCommand(row);
+      return;
+    }
+    if (action.key === 'provision-domain') {
+      await this.webRtcApi.provisionDomain(String(row['RwdUUID'] ?? ''), this.resourceScope);
+      this.snack.success('WebRTC domain provisioning queued on edge agent.');
+      this.refreshList();
     }
   }
 
-  formField(key: string): SignalFormField {
-    return (this.form as any)[key];
-  }
-
-  selectOptions(field: Field): MnsSelectFieldOption[] {
-    return (field.options ?? []).map((option) => ({
-      value: option,
-      label: this.optionLabel(option),
-    }));
-  }
-
-  optionLabel(option: string): string {
-    const labels: Record<string, string> = {
-      active: 'Active',
-      inactive: 'Inactive',
-      kamailio: 'Kamailio',
-      string: 'String',
-      number: 'Number',
-      boolean: 'Boolean',
-      json: 'JSON',
-      letsencrypt: 'Let’s Encrypt',
-      manual: 'Manual',
-      self_signed: 'Self-signed',
-      pabx: 'PABX',
-      softswitch: 'Softswitch',
-      udp: 'UDP',
-      tcp: 'TCP',
-      tls: 'TLS',
-    };
-    return labels[option] ?? option;
-  }
-
-  isFormValid() {
-    const model = this.formModel();
-    return this.config().fields.every((field) => {
-      if (!this.fieldVisible(field) || !field.required) return true;
-      const value = model[field.key];
-      return value !== undefined && value !== null && String(value).trim() !== '';
-    });
-  }
-  private async generateInstallCommandForUUID(uuid: string, showSuccess = true) {
-    try {
-      const response = await this.api.generateInstallCommand(uuid);
-      this.generatedInstall.set(response?.data ?? null);
-      this.openInstallCommandDialog();
-      if (showSuccess) this.snack.success('WebRTC install command generated.');
-    } catch (e: any) {
-      this.snack.error(e?.error?.error || e?.message || 'Failed to generate install command.');
+  protected override async afterSave(context: { mode: 'create'; response: unknown } | any) {
+    const item = context?.response?.data?.item as ConfigurableCrudRecord | undefined;
+    const uuid = String(item?.['RwsUUID'] ?? '');
+    if (context?.mode === 'create' && uuid && this.resourceName === 'servers') {
+      await this.openInstallCommand(item ?? {});
     }
   }
-  async remove(row: WebRtcRecord) {
-    const ok = await firstValueFrom(
-      this.dialog
-        .open(SlowConfirmDialogComponent, {
-          panelClass: 'slow-confirm-dialog',
-          disableClose: true,
-          data: {
-            title: 'Delete WebRTC Record',
-            message: `Delete ${this.name(row)}?`,
-            confirmText: 'Delete',
-          },
-        })
-        .afterClosed(),
-    );
-    if (!ok) return;
-    await this.api.remove(this.config().resource, this.uuid(row), this.scope());
-    this.snack.success('WebRTC record deleted.');
-    this.recordsResource.reload();
+
+  private async fetchLookupOptions() {
+    const needsSipTargets = this.resourceName === 'sip-targets';
+    const [servers, domains, mediaServers, pabxAccounts, softswitchAccounts] = await Promise.all([
+      this.webRtcApi.list('servers', { status: 1, limit: 5000 }, this.resourceScope),
+      this.resourceName === 'sip-targets'
+        ? this.webRtcApi.list('domains', { status: 1, limit: 5000 }, 'master')
+        : this.webRtcApi.listRealtimeDomains({ limit: 5000, purpose: 'webrtc' }),
+      this.webRtcApi.listMediaServers({ status: 1, limit: 5000 }),
+      needsSipTargets ? this.webRtcApi.listPabxAccounts({ status: 1, limit: 5000 }) : Promise.resolve({ data: { items: [] } }),
+      needsSipTargets ? this.webRtcApi.listSoftswitchAccounts({ status: 1, limit: 5000 }) : Promise.resolve({ data: { items: [] } }),
+    ]);
+    this.servers = this.toOptions(servers?.data?.items ?? [], 'RwsUUID', 'RwsName', 'RwsHostname');
+    this.domains =
+      this.resourceName === 'sip-targets'
+        ? this.toOptions(domains?.data?.items ?? [], 'RwdUUID', 'RtdName', 'RwdUUID')
+        : this.toOptions(domains?.data?.items ?? [], 'RtdUUID', 'RtdName', 'RtdPurpose');
+    this.mediaServers = this.toOptions(mediaServers?.data?.items ?? [], 'RmsUUID', 'RmsName', 'RmsControlIP');
+    this.pabxAccounts = this.toOptions(pabxAccounts?.data?.items ?? [], 'VpaUUID', 'VpaName', 'VpaID');
+    this.softswitchAccounts = this.toOptions(softswitchAccounts?.data?.items ?? [], 'VssUUID', 'VssName', 'VssID');
   }
-  async provisionDomain(row: WebRtcRecord) {
-    await this.api.provisionDomain(this.uuid(row), this.scope());
-    this.snack.success('WebRTC domain provisioning queued on edge agent.');
-    this.recordsResource.reload();
+
+  private toOptions(rows: ConfigurableCrudRecord[], valueKey: string, labelKey: string, descriptionKey: string): ConfigurableCrudOption[] {
+    return rows
+      .map((row) => ({
+        value: String(row[valueKey] ?? row[`VoipPabxAccount${valueKey}`] ?? row[`VoipSoftswitchAccount${valueKey}`] ?? ''),
+        label: String(row[labelKey] ?? row[valueKey] ?? ''),
+        description: String(row[descriptionKey] ?? ''),
+        searchText: `${row[labelKey] ?? ''} ${row[descriptionKey] ?? ''} ${row[valueKey] ?? ''}`,
+      }))
+      .filter((option) => option.value);
   }
-  async generateInstallCommand(row: WebRtcRecord) {
-    if (this.config().resource !== 'servers') return;
-    const ok = await firstValueFrom(
+
+  private async confirmAndOpenInstallCommand(row: ConfigurableCrudRecord) {
+    const confirmed = await firstValueFrom(
       this.dialog
         .open(SlowConfirmDialogComponent, {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
             title: 'Generate Install Command',
-            message: `Generate a new install command for ${this.name(row)}? The previous WebRTC runtime token will be replaced.`,
+            message: `Generate a new install command for ${String(row['RwsName'] ?? '')}? The previous WebRTC runtime token will be replaced.`,
             confirmText: 'Generate command',
           },
         })
         .afterClosed(),
     );
-    if (!ok) return;
-    await this.generateInstallCommandForUUID(this.uuid(row));
+    if (confirmed) await this.openInstallCommand(row);
   }
-  openInstallCommandDialog() {
-    const installCommandDialog = this.installCommandDialog();
-    if (!installCommandDialog || this.installCommandBinding) return;
-    const binding = openCrudTemplateDialog(
-      this.dialog,
-      installCommandDialog,
-      'install-command-dialog-panel',
-    );
-    this.installCommandBinding = binding;
-    bindDialogClosed(binding.ref, () => {
-      binding.stop();
-      if (this.installCommandBinding === binding) this.installCommandBinding = null;
-    });
+
+  private async openInstallCommand(row: ConfigurableCrudRecord) {
+    try {
+      const response = await this.webRtcApi.generateInstallCommand(String(row['RwsUUID'] ?? ''));
+      const token = response?.data ?? {};
+      const data: InstallCommandDialogData = {
+        title: 'WebRTC install command',
+        description: 'Run this command on the target WebRTC edge host.',
+        warning: 'The runtime token is sensitive. Copy it only to the intended server.',
+        command: this.installCommand(token),
+        details: [
+          { label: 'API base', value: window.location.origin, monospace: true },
+          { label: 'Node UUID', value: token['nodeUUID'], monospace: true },
+          { label: 'Public domain', value: token['publicDomain'], monospace: true },
+          { label: 'Runtime', value: 'mnscloud-kamailio-webrtc', monospace: true },
+        ],
+      };
+      this.dialog.open(InstallCommandDialogComponent, {
+        panelClass: 'install-command-dialog-panel',
+        data,
+      });
+      this.snack.success('WebRTC install command generated.');
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to generate WebRTC install command.');
+    }
   }
-  installCommand() {
-    const data = this.generatedInstall();
-    if (!data) return '';
-    const apiBase = window.location.origin;
-    const installArgs = [
-      `--api-base ${this.shellQuote(apiBase)}`,
-      `--node-uuid ${this.shellQuote(data['nodeUUID'] || '')}`,
-      `--runtime-token ${this.shellQuote(data['runtimeToken'] || '')}`,
+
+  private installCommand(token: ConfigurableCrudRecord) {
+    const args = [
+      `--api-base ${this.shellQuote(window.location.origin)}`,
+      `--node-uuid ${this.shellQuote(String(token['nodeUUID'] ?? ''))}`,
+      `--runtime-token ${this.shellQuote(String(token['runtimeToken'] ?? ''))}`,
     ];
-    if (data['publicDomain']) {
-      installArgs.push(`--public-domain ${this.shellQuote(String(data['publicDomain']))}`);
+    if (token['publicDomain']) {
+      args.push(`--public-domain ${this.shellQuote(String(token['publicDomain']))}`);
     }
     return [
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
       '[ -d mnscloud-kamailio-webrtc/.git ] && sudo git -C mnscloud-kamailio-webrtc pull || gh repo clone manaoscloud/mnscloud-kamailio-webrtc',
-      `sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/install-kamailio-webrtc.sh ${installArgs.join(' ')}`,
+      `sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/install-kamailio-webrtc.sh ${args.join(' ')}`,
       'sudo bash /opt/mnscloud/mnscloud-kamailio-webrtc/scripts/validate-kamailio-webrtc.sh',
     ].join(' && ');
   }
-  installCommandDetails() {
-    const data = this.generatedInstall();
-    return [
-      { label: 'API base', value: window.location.origin, monospace: true },
-      { label: 'Node UUID', value: data?.['nodeUUID'], monospace: true },
-      { label: 'Public domain', value: data?.['publicDomain'], monospace: true },
-      { label: 'Runtime', value: 'mnscloud-kamailio-webrtc', monospace: true },
-    ];
-  }
+
   private shellQuote(value: string) {
     return `'${value.replace(/'/g, `'\\''`)}'`;
   }
-  isSelected(row: WebRtcRecord) {
-    return this.selected().has(this.uuid(row));
-  }
-  toggle(row: WebRtcRecord, checked: boolean) {
-    this.selected.update((current) => {
-      const next = new Set(current);
-      checked ? next.add(this.uuid(row)) : next.delete(this.uuid(row));
-      return next;
-    });
-  }
-  toggleVisible(checked: boolean) {
-    this.selected.update((current) => {
-      const next = new Set(current);
-      for (const row of this.visibleRows()) {
-        checked ? next.add(this.uuid(row)) : next.delete(this.uuid(row));
-      }
-      return next;
-    });
-  }
-  reconcile() {
-    const valid = new Set(this.rows().map((row: WebRtcRecord) => this.uuid(row)));
-    const current = untracked(() => this.selected());
-    const next = new Set([...current].filter((uuid) => valid.has(uuid)));
-    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
-    this.selected.set(next);
-  }
-  async removeSelected() {
-    const ids = [...this.selected()];
-    if (!ids.length) return;
-    const ok = await firstValueFrom(
-      this.dialog
-        .open(SlowConfirmDialogComponent, {
-          panelClass: 'slow-confirm-dialog',
-          disableClose: true,
-          data: {
-            title: 'Delete Selected WebRTC Records',
-            message: `Delete ${ids.length} selected record(s)?`,
-            confirmText: 'Delete selected',
-          },
-        })
-        .afterClosed(),
-    );
-    if (!ok) return;
-    const result = await this.api.removeMany(this.config().resource, ids, this.scope());
-    const failed = result?.data?.failed ?? [];
-    const uuidKey = this.config().uuid;
-    const failedIds = new Set(
-      failed.map((item: Record<string, string>) => item[uuidKey]).filter(Boolean),
-    );
-    this.selected.set(new Set([...failedIds].map(String)));
-    if (failed.length)
-      this.snack.error(`${failed.length} selected WebRTC record(s) could not be deleted.`);
-    else this.snack.success('Selected WebRTC records deleted.');
-    this.recordsResource.reload();
-  }
+}
 
-  private sortRows(rows: WebRtcRecord[]): WebRtcRecord[] {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-    const multiplier = direction === 'asc' ? 1 : -1;
-    return [...rows].sort(
-      (left, right) =>
-        String(this.cell(left, active) ?? '').localeCompare(
-          String(this.cell(right, active) ?? ''),
-        ) * multiplier,
-    );
+@Component({
+  selector: 'app-realtime-webrtc-servers',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RealtimeWebRtcServersPage extends RealtimeWebRtcCrudPage {
+  constructor() {
+    super(WEBRTC_SERVER_CONFIG, 'servers', 'master');
   }
+}
 
-  private errorMessage(error: unknown, fallback: string) {
-    const maybe = error as { error?: { error?: string }; message?: string };
-    return maybe?.error?.error || maybe?.message || fallback;
+@Component({
+  selector: 'app-realtime-webrtc-domains-master',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RealtimeWebRtcDomainsMasterPage extends RealtimeWebRtcCrudPage {
+  constructor() {
+    super(webRtcDomainConfig('system/realtime/webrtc/domains'), 'domains', 'master');
+  }
+}
+
+@Component({
+  selector: 'app-realtime-webrtc-domains-tenant',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RealtimeWebRtcDomainsTenantPage extends RealtimeWebRtcCrudPage {
+  constructor() {
+    super(webRtcDomainConfig('realtime/webrtc/domains'), 'domains', 'tenant');
+  }
+}
+
+@Component({
+  selector: 'app-realtime-webrtc-parameters',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RealtimeWebRtcParametersPage extends RealtimeWebRtcCrudPage {
+  constructor() {
+    super(WEBRTC_PARAMETER_CONFIG, 'parameters', 'master');
+  }
+}
+
+@Component({
+  selector: 'app-realtime-webrtc-sip-targets',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RealtimeWebRtcSipTargetsPage extends RealtimeWebRtcCrudPage {
+  constructor() {
+    super(WEBRTC_SIP_TARGET_CONFIG, 'sip-targets', 'master');
   }
 }

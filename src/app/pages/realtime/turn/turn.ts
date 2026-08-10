@@ -1,670 +1,301 @@
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  untracked,
-  viewChild,
-} from '@angular/core';
-import { form as createForm, type Field as SignalField } from '@angular/forms/signals';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { Component, inject } from '@angular/core';
+
 import { firstValueFrom } from 'rxjs';
 
-import { SnackbarService } from '../../../services/snackbar.service';
-import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { InstallCommandDialogComponent } from '../../../shared/install-command-dialog/install-command-dialog';
 import {
-  MnsSearchSelectFieldComponent,
-  MnsSelectFieldComponent,
-  MnsStatusSelectFieldComponent,
-  MnsTextFieldComponent,
-  MnsTextareaFieldComponent,
-  type MnsSearchSelectFieldOption,
-  type MnsSelectFieldOption,
-} from '../../../shared/forms';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  InstallCommandDialogComponent,
+  InstallCommandDialogData,
+} from '../../../shared/install-command-dialog/install-command-dialog';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { RealtimeTurnService, TurnRecord, TurnResource, TurnScope } from './turn.service';
-
-type FieldType = 'text' | 'number' | 'select' | 'domain' | 'server' | 'textarea';
-type Field = {
-  key: string;
-  label: string;
-  type?: FieldType;
-  required?: boolean;
-  span?: string;
-  rows?: number;
-  options?: { value: string | number; label: string }[];
-};
-type SignalFormField = SignalField<any, any>;
-type TurnFormModel = {
-  status: number;
-  serverUUID: string;
-  realtimeDomainUUID: string;
-  name: string;
-  nodeUUID: string;
-  hostname: string;
-  publicIP: string;
-  privateIP: string;
-  listeningIP: string;
-  externalIP: string;
-  listeningPort: number | string;
-  tlsListeningPort: number | string;
-  minRelayPort: number | string;
-  maxRelayPort: number | string;
-  totalQuota: number | string;
-  bpsCapacity: number | string;
-  certificateProvider: string;
-  autoProvision: number;
-  tlsCertPath: string;
-  tlsKeyPath: string;
-  configJson: string;
-  notes: string;
-};
+import { RealtimeTurnService } from './turn.service';
 
 const STATUS_OPTIONS = [
   { value: 1, label: 'Active' },
   { value: 0, label: 'Inactive' },
-];
+] as const;
 
 const CERTIFICATE_PROVIDER_OPTIONS = [
   { value: 'letsencrypt', label: 'Let’s Encrypt' },
   { value: 'manual', label: 'Manual' },
   { value: 'self_signed', label: 'Self-signed' },
   { value: 'none', label: 'None' },
-];
+] as const;
 
-const RECORD_FIELDS: Field[] = [
-  { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
-  { key: 'realtimeDomainUUID', label: 'Primary Realm Domain', type: 'domain' },
-  { key: 'name', label: 'Name', required: true },
-];
-
-const DOMAIN_RECORD_FIELDS: Field[] = [
-  { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
-  { key: 'serverUUID', label: 'Server', type: 'server', required: true },
-  { key: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'domain', required: true },
-  {
-    key: 'certificateProvider',
-    label: 'Certificate Provider',
-    type: 'select',
-    options: CERTIFICATE_PROVIDER_OPTIONS,
+const TURN_SERVER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'system/realtime/turn/servers',
+  uuidField: 'RtsUUID',
+  pageTitle: 'TURN/STUN Servers',
+  pageDescription: 'Register dedicated coturn relay servers for realtime media traversal.',
+  createTitle: 'New TURN/STUN server',
+  editTitle: 'Edit TURN/STUN server',
+  dialogDescription: 'Runtime identity, network and certificate settings for coturn edges.',
+  searchPlaceholder: 'Search TURN/STUN servers',
+  emptyLabel: 'No TURN/STUN servers found.',
+  deleteTitle: 'Delete TURN/STUN server',
+  deleteMessage: 'Delete this TURN/STUN server?',
+  deleteSelectedTitle: 'Delete selected TURN/STUN servers',
+  deleteSelectedMessage: 'Delete {count} selected TURN/STUN servers?',
+  savedMessage: 'TURN/STUN server saved.',
+  deletedMessage: 'TURN/STUN server deleted.',
+  deleteFailedMessage: 'Failed to delete TURN/STUN server.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  statusOptions: STATUS_OPTIONS,
+  initialValues: {
+    status: 1,
+    realtimeDomainUUID: '',
+    name: '',
+    nodeUUID: '',
+    hostname: '',
+    publicIP: '',
+    privateIP: '',
+    listeningIP: '0.0.0.0',
+    externalIP: '',
+    listeningPort: 3478,
+    tlsListeningPort: 5349,
+    minRelayPort: 49152,
+    maxRelayPort: 65535,
+    totalQuota: 1000,
+    bpsCapacity: 0,
+    certificateProvider: 'letsencrypt',
+    tlsCertPath: '',
+    tlsKeyPath: '',
+    configJson: '{}',
+    notes: '',
   },
-  {
-    key: 'autoProvision',
-    label: 'Auto Provision',
-    type: 'select',
-    options: STATUS_OPTIONS,
-  },
-];
-
-const NETWORK_FIELDS: Field[] = [
-  { key: 'nodeUUID', label: 'Node UUID' },
-  { key: 'hostname', label: 'Hostname' },
-  { key: 'publicIP', label: 'Public IP' },
-  { key: 'privateIP', label: 'Private IP' },
-  { key: 'listeningIP', label: 'Listening IP' },
-  { key: 'externalIP', label: 'External IP' },
-  { key: 'listeningPort', label: 'Listening Port', type: 'number' },
-  { key: 'tlsListeningPort', label: 'TLS Listening Port', type: 'number' },
-  { key: 'minRelayPort', label: 'Min Relay Port', type: 'number' },
-  { key: 'maxRelayPort', label: 'Max Relay Port', type: 'number' },
-  { key: 'totalQuota', label: 'Total Quota', type: 'number' },
-  { key: 'bpsCapacity', label: 'BPS Capacity', type: 'number' },
-];
-
-const CERTIFICATE_FIELDS: Field[] = [
-  {
-    key: 'certificateProvider',
-    label: 'Certificate Provider',
-    type: 'select',
-    options: CERTIFICATE_PROVIDER_OPTIONS,
-  },
-  { key: 'tlsCertPath', label: 'TLS Cert Path' },
-  { key: 'tlsKeyPath', label: 'TLS Key Path' },
-];
-
-const DOMAIN_CERTIFICATE_FIELDS: Field[] = [
-  { key: 'tlsCertPath', label: 'TLS Cert Path' },
-  { key: 'tlsKeyPath', label: 'TLS Key Path' },
-];
-
-const NOTES_FIELDS: Field[] = [
-  { key: 'configJson', label: 'Config JSON', type: 'textarea', span: 'span-4', rows: 8 },
-  { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 4 },
-];
-
-const DOMAIN_NOTES_FIELDS: Field[] = [
-  { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 4 },
-];
-
-@Component({
-  selector: 'app-realtime-turn',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    MnsSearchSelectFieldComponent,
-    MnsSelectFieldComponent,
-    MnsStatusSelectFieldComponent,
-    MnsTextFieldComponent,
-    MnsTextareaFieldComponent,
-    InstallCommandDialogComponent,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    MatTooltipModule,
-    TranslocoPipe,
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'RtsName', uuidField: 'RtsUUID' },
+    { id: 'domain', label: 'Primary Realm Domain', field: 'RtdName' },
+    { id: 'externalIP', label: 'External IP', field: 'RtsExternalIP', copyable: true },
+    { id: 'listeningPort', label: 'Listening Port', field: 'RtsListeningPort' },
+    { id: 'tlsListeningPort', label: 'TLS Port', field: 'RtsTlsListeningPort' },
+    { id: 'certificateProvider', label: 'Certificate', field: 'RtsCertificateProvider' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'RtsStatus', className: 'status-col' },
+    { id: 'lastSeen', label: 'Last Seen', field: 'RtsLastSeenAt', kind: 'datetime' },
   ],
-  templateUrl: './turn.html',
-  styleUrls: ['./turn.scss'],
-})
-export class RealtimeTurnPage {
-  private readonly api = inject(RealtimeTurnService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly snack = inject(SnackbarService);
-
-  readonly searchInput = signal('');
-  readonly statusInput = signal('');
-  private readonly appliedSearch = signal('');
-  private readonly appliedStatus = signal('');
-  readonly saving = signal(false);
-  readonly mutating = signal(false);
-  readonly editing = signal<TurnRecord | null>(null);
-  readonly selected = signal<Set<string>>(new Set());
-  readonly generatedInstall = signal<TurnRecord | null>(null);
-  readonly generatedInstallSource = signal<TurnRecord | null>(null);
-  readonly domainLookupEnabled = signal(false);
-  readonly serverOptions = signal<TurnRecord[]>([]);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<SortDirection>('');
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(5);
-  private readonly routeData = toSignal(this.route.data, { initialValue: {} });
-
-  readonly currentResource = computed<TurnResource>(() => {
-    const resource = (this.routeData() as Record<string, unknown>)['resource'];
-    return resource === 'domains' ? 'domains' : 'servers';
-  });
-  readonly scope = computed<TurnScope>(() => {
-    const scope = (this.routeData() as Record<string, unknown>)['scope'];
-    return scope === 'tenant' ? 'tenant' : 'master';
-  });
-  readonly isDomains = computed(() => this.currentResource() === 'domains');
-  readonly formModel = signal<TurnFormModel>(this.defaultFormModel());
-  readonly form = createForm(this.formModel);
-  readonly pageTitle = computed(() =>
-    this.isDomains() ? 'TURN/STUN Domains' : 'TURN/STUN Servers',
-  );
-  readonly pageSubtitle = computed(() =>
-    this.isDomains()
-      ? 'Assign realtime TURN/STUN domains to managed coturn edge nodes.'
-      : 'Register dedicated coturn relay servers for realtime media traversal.',
-  );
-
-  readonly displayedColumns = computed(() =>
-    this.isDomains()
-      ? [
-          'select',
-          'domain',
-          'server',
-          'certificateProvider',
-          'provisionStatus',
-          'certificateStatus',
-          'status',
-          'actions',
-        ]
-      : [
-          'select',
-          'name',
-          'domain',
-          'externalIP',
-          'ports',
-          'certificateProvider',
-          'status',
-          'lastSeen',
-          'actions',
-        ],
-  );
-
-  readonly recordFields = computed(() => (this.isDomains() ? DOMAIN_RECORD_FIELDS : RECORD_FIELDS));
-  readonly networkFields = computed(() => (this.isDomains() ? [] : NETWORK_FIELDS));
-  readonly certificateFields = computed(() =>
-    this.isDomains() ? DOMAIN_CERTIFICATE_FIELDS : CERTIFICATE_FIELDS,
-  );
-  readonly notesFields = computed(() => (this.isDomains() ? DOMAIN_NOTES_FIELDS : NOTES_FIELDS));
-  readonly turnFormDialog = viewChild<TemplateRef<unknown>>('turnFormDialog');
-  readonly installCommandDialog = viewChild<TemplateRef<unknown>>('installCommandDialog');
-
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private binding: CrudDialogBinding | null = null;
-  private installCommandBinding: CrudDialogBinding | null = null;
-
-  private readonly itemsResource = resource({
-    params: () => ({
-      resource: this.currentResource(),
-      scope: this.scope(),
-      search: this.appliedSearch(),
-      status: this.appliedStatus(),
-    }),
-    defaultValue: [] as TurnRecord[],
-    loader: async ({ params }) => {
-      const response = await this.api.list(
-        params.resource,
-        {
-          limit: 5000,
-          search: params.search,
-          status: params.status === '' ? null : Number(params.status),
-        },
-        params.scope,
-      );
-      return response?.data?.items ?? [];
+  rowActions: [
+    {
+      key: 'generate-install',
+      label: 'Generate install command',
+      icon: 'terminal',
+      tooltip: 'Generate install command',
     },
-  });
-  readonly rows = computed(() => this.itemsResource.value());
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly visibleRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-  readonly allVisibleSelected = computed(() => {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.selected().has(this.uuid(row)));
-  });
-  readonly someVisibleSelected = computed(() => {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.selected().has(this.uuid(row))) && !this.allVisibleSelected();
-  });
+  ],
+  fields: [
+    { key: 'status', source: 'RtsStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Primary Realm Domain', type: 'search-select', span: 1 },
+    { key: 'name', source: 'RtsName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    { key: 'nodeUUID', source: 'RtsNodeUUID', payloadKey: 'nodeUUID', label: 'Node UUID', tab: 'network', span: 1 },
+    { key: 'hostname', source: 'RtsHostname', payloadKey: 'hostname', label: 'Hostname', tab: 'network', span: 1 },
+    { key: 'publicIP', source: 'RtsPublicIP', payloadKey: 'publicIP', label: 'Public IP', tab: 'network', span: 1 },
+    { key: 'privateIP', source: 'RtsPrivateIP', payloadKey: 'privateIP', label: 'Private IP', tab: 'network', span: 1 },
+    { key: 'listeningIP', source: 'RtsListeningIP', payloadKey: 'listeningIP', label: 'Listening IP', tab: 'network', span: 1 },
+    { key: 'externalIP', source: 'RtsExternalIP', payloadKey: 'externalIP', label: 'External IP', tab: 'network', span: 1 },
+    { key: 'listeningPort', source: 'RtsListeningPort', payloadKey: 'listeningPort', label: 'Listening Port', type: 'number', tab: 'network', span: 1 },
+    { key: 'tlsListeningPort', source: 'RtsTlsListeningPort', payloadKey: 'tlsListeningPort', label: 'TLS Listening Port', type: 'number', tab: 'network', span: 1 },
+    { key: 'minRelayPort', source: 'RtsMinRelayPort', payloadKey: 'minRelayPort', label: 'Min Relay Port', type: 'number', tab: 'network', span: 1 },
+    { key: 'maxRelayPort', source: 'RtsMaxRelayPort', payloadKey: 'maxRelayPort', label: 'Max Relay Port', type: 'number', tab: 'network', span: 1 },
+    { key: 'totalQuota', source: 'RtsTotalQuota', payloadKey: 'totalQuota', label: 'Total Quota', type: 'number', tab: 'network', span: 1 },
+    { key: 'bpsCapacity', source: 'RtsBpsCapacity', payloadKey: 'bpsCapacity', label: 'BPS Capacity', type: 'number', tab: 'network', span: 1 },
+    { key: 'certificateProvider', source: 'RtsCertificateProvider', payloadKey: 'certificateProvider', label: 'Certificate Provider', type: 'select', options: CERTIFICATE_PROVIDER_OPTIONS, tab: 'authentication', span: 1 },
+    { key: 'tlsCertPath', source: 'RtsTlsCertPath', payloadKey: 'tlsCertPath', label: 'TLS Cert Path', tab: 'authentication', span: 1 },
+    { key: 'tlsKeyPath', source: 'RtsTlsKeyPath', payloadKey: 'tlsKeyPath', label: 'TLS Key Path', tab: 'authentication', span: 1 },
+    { key: 'configJson', source: 'RtsConfig', payloadKey: 'config', label: 'Config JSON', type: 'textarea', format: 'json', tab: 'notes', span: 4, rows: 8 },
+    { key: 'notes', source: 'RtsNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+  ],
+};
 
-  private readonly domainsResource = resource({
-    params: () => ({
-      enabled: this.isDomains() || this.domainLookupEnabled(),
-      resource: this.currentResource(),
-      scope: this.scope(),
-    }),
-    defaultValue: [] as TurnRecord[],
-    loader: async ({ params }) => {
-      if (!params.enabled) return [];
-      const response =
-        params.resource === 'domains'
-          ? await this.api.listRealtimeDomains(
-              {
-                purpose: 'turn',
-                status: 1,
-                limit: 5000,
-              },
-              params.scope,
-            )
-          : await this.api.listTurnDomainOptions(params.scope);
-      return response?.data?.items ?? [];
+const TURN_DOMAIN_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'system/realtime/turn/domains',
+  uuidField: 'RtnUUID',
+  pageTitle: 'TURN/STUN Domains',
+  pageDescription: 'Assign realtime TURN/STUN domains to managed coturn edge nodes.',
+  createTitle: 'New TURN/STUN domain',
+  editTitle: 'Edit TURN/STUN domain',
+  dialogDescription: 'Bind a realtime domain to a TURN/STUN relay server.',
+  searchPlaceholder: 'Search TURN/STUN domains',
+  emptyLabel: 'No TURN/STUN domains found.',
+  deleteTitle: 'Delete TURN/STUN domain',
+  deleteMessage: 'Delete this TURN/STUN domain?',
+  deleteSelectedTitle: 'Delete selected TURN/STUN domains',
+  deleteSelectedMessage: 'Delete {count} selected TURN/STUN domains?',
+  savedMessage: 'TURN/STUN domain saved.',
+  deletedMessage: 'TURN/STUN domain deleted.',
+  deleteFailedMessage: 'Failed to delete TURN/STUN domain.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  statusOptions: STATUS_OPTIONS,
+  initialValues: {
+    status: 1,
+    serverUUID: '',
+    realtimeDomainUUID: '',
+    certificateProvider: 'letsencrypt',
+    autoProvision: 1,
+    tlsCertPath: '',
+    tlsKeyPath: '',
+    notes: '',
+  },
+  columns: [
+    { id: 'domain', label: 'Realtime Domain', kind: 'identity', field: 'RtdName', uuidField: 'RealtimeDomainRtdUUID' },
+    { id: 'server', label: 'Server', field: 'RtsName' },
+    { id: 'certificateProvider', label: 'Certificate', field: 'RtnCertificateProvider' },
+    { id: 'provisionStatus', label: 'Provision', field: 'RtnProvisionStatus' },
+    { id: 'certificateStatus', label: 'TLS', field: 'RtnCertificateStatus' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'RtnStatus', className: 'status-col' },
+  ],
+  rowActions: [
+    {
+      key: 'provision-domain',
+      label: 'Provision domain',
+      icon: 'cloud_sync',
+      tooltip: 'Provision domain',
     },
-  });
+  ],
+  fields: [
+    { key: 'status', source: 'RtnStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    { key: 'serverUUID', source: 'RealtimeTurnServerRtsUUID', payloadKey: 'serverUUID', label: 'Server', type: 'search-select', required: true, span: 1 },
+    { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'search-select', required: true, span: 1 },
+    { key: 'certificateProvider', source: 'RtnCertificateProvider', payloadKey: 'certificateProvider', label: 'Certificate Provider', type: 'select', options: CERTIFICATE_PROVIDER_OPTIONS, span: 1 },
+    { key: 'autoProvision', source: 'RtnAutoProvision', payloadKey: 'autoProvision', label: 'Auto Provision', type: 'select', options: STATUS_OPTIONS, span: 1 },
+    { key: 'tlsCertPath', source: 'RtnTlsCertPath', payloadKey: 'tlsCertPath', label: 'TLS Cert Path', tab: 'authentication', span: 1 },
+    { key: 'tlsKeyPath', source: 'RtnTlsKeyPath', payloadKey: 'tlsKeyPath', label: 'TLS Key Path', tab: 'authentication', span: 1 },
+    { key: 'notes', source: 'RtnNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+  ],
+};
 
-  readonly domainOptions = computed(() => this.domainsResource.value());
-  readonly domainSelectOptions = computed<MnsSearchSelectFieldOption[]>(() => {
-    const fromRealtimeDomain = this.isDomains();
-    return this.domainOptions()
-      .map((domain: TurnRecord) => {
-        const value = fromRealtimeDomain ? domain['RtdUUID'] : domain['RealtimeDomainRtdUUID'];
-        const label = domain['RtdName'] || domain['DomainName'] || value;
-        const server = domain['RtsName'] || domain['ServerName'] || '';
-        return {
-          value: String(value ?? ''),
-          label: String(label ?? ''),
-          description: String(server || value || ''),
-          searchText: `${label ?? ''} ${server} ${domain['RtnUUID'] ?? ''} ${value ?? ''}`,
-        };
-      })
-      .filter((option: MnsSearchSelectFieldOption) => option.value);
-  });
-  readonly serverSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
-    this.serverOptions()
-      .map((server: TurnRecord) => {
-        const value = server['RtsUUID'];
-        const label = server['RtsName'] || server['RtsHostname'] || value;
-        const description = server['RtsHostname'] || server['RtsExternalIP'] || value;
-        return {
-          value: String(value ?? ''),
-          label: String(label ?? ''),
-          description: String(description ?? ''),
-          searchText: `${label ?? ''} ${description ?? ''} ${server['RtsNodeUUID'] ?? ''} ${
-            value ?? ''
-          }`,
-        };
-      })
-      .filter((option: MnsSearchSelectFieldOption) => option.value),
-  );
+abstract class RealtimeTurnCrudPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly turnApi = inject(RealtimeTurnService);
+  protected serverOptions: ConfigurableCrudOption[] = [];
+  protected realtimeDomainOptions: ConfigurableCrudOption[] = [];
 
-  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
-
-  private readonly syncRows = effect(() => {
-    this.rows();
-    this.reconcileSelection();
-  });
-
-  private readonly reportLoadError = effect(() => {
-    const error = this.itemsResource.error();
-    if (!error) return;
-    this.snack.error(this.errorMessage(error, `Failed to load ${this.pageTitle()}.`));
-  });
-
-  private readonly loadServerOptions = effect(() => {
-    if (!this.isDomains()) return;
-    this.api
-      .list('servers', { status: 1, limit: 5000 }, this.scope())
-      .then((response) => this.serverOptions.set(response?.data?.items ?? []))
-      .catch(() => this.serverOptions.set([]));
-  });
-
-  private readonly cleanup = this.destroyRef.onDestroy(() => {
-    this.closeDialog();
-    this.closeInstallCommandDialog();
-  });
-
-  refreshList(): void {
-    this.itemsResource.reload();
+  protected constructor(config: ConfigurableCrudConfig) {
+    super(config);
+    void this.fetchLookupOptions();
   }
 
-  applySearchFilters(): void {
-    const nextSearch = this.searchInput().trim();
-    const nextStatus = this.statusInput();
-    this.pageIndex.set(0);
-    if (nextSearch === this.appliedSearch() && nextStatus === this.appliedStatus()) {
-      this.itemsResource.reload();
-    } else {
-      this.appliedSearch.set(nextSearch);
-      this.appliedStatus.set(nextStatus);
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'serverUUID') return this.serverOptions;
+    if (key === 'realtimeDomainUUID') return this.realtimeDomainOptions;
+    return [];
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'generate-install') {
+      await this.confirmAndOpenInstallCommand(row);
+      return;
+    }
+    if (action.key === 'provision-domain') {
+      await this.turnApi.provisionDomain(String(row['RtnUUID'] ?? ''), 'master');
+      this.snack.success('TURN/STUN domain provisioning queued.');
+      this.refreshList();
     }
   }
 
-  clearSearchFilters(): void {
-    this.searchInput.set('');
-    this.statusInput.set('');
-    this.pageIndex.set(0);
-    if (this.appliedSearch() || this.appliedStatus()) {
-      this.appliedSearch.set('');
-      this.appliedStatus.set('');
-    } else {
-      this.itemsResource.reload();
+  protected override async afterSave(context: { mode: 'create'; response: unknown } | any) {
+    const item = context?.response?.data?.item as ConfigurableCrudRecord | undefined;
+    const uuid = String(item?.['RtsUUID'] ?? '');
+    if (context?.mode === 'create' && uuid && this.config.uuidField === 'RtsUUID') {
+      await this.openInstallCommand(item ?? {});
     }
   }
 
-  setSort(sort: Sort): void {
-    this.sortActive.set(sort.active || '');
-    this.sortDirection.set(sort.direction || '');
-    this.pageIndex.set(0);
+  private async fetchLookupOptions() {
+    const [servers, domains] = await Promise.all([
+      this.turnApi.list('servers', { status: 1, limit: 5000 }, 'master'),
+      this.turnApi.listRealtimeDomains({ purpose: 'turn', status: 1, limit: 5000 }, 'master'),
+    ]);
+    this.serverOptions = this.toOptions(servers?.data?.items ?? [], 'RtsUUID', 'RtsName', 'RtsHostname');
+    this.realtimeDomainOptions = this.toOptions(domains?.data?.items ?? [], 'RtdUUID', 'RtdName', 'RtdPurpose');
   }
 
-  setPage(page: PageEvent): void {
-    this.pageIndex.set(page.pageIndex);
-    this.pageSize.set(page.pageSize);
+  private toOptions(rows: ConfigurableCrudRecord[], valueKey: string, labelKey: string, descriptionKey: string): ConfigurableCrudOption[] {
+    return rows
+      .map((row) => ({
+        value: String(row[valueKey] ?? ''),
+        label: String(row[labelKey] ?? row[valueKey] ?? ''),
+        description: String(row[descriptionKey] ?? ''),
+        searchText: `${row[labelKey] ?? ''} ${row[descriptionKey] ?? ''} ${row[valueKey] ?? ''}`,
+      }))
+      .filter((option) => option.value);
   }
 
-  startCreate(): void {
-    this.editing.set(null);
-    this.formModel.set(this.defaultFormModel());
-    this.openDialog();
-  }
-
-  startEdit(row: TurnRecord): void {
-    this.editing.set(row);
-    this.formModel.set(this.formModelFromRow(row));
-    this.openDialog();
-  }
-
-  openDialog(): void {
-    const template = this.turnFormDialog();
-    if (!template) return;
-    this.binding = openCrudTemplateDialog(this.dialog, template, 'realtime-turn-form-dialog', {
-      onEscape: () => this.closeDialog(),
-    });
-    this.dialogRef = this.binding.ref;
-    this.domainLookupEnabled.set(true);
-    bindDialogClosed(this.dialogRef, () => {
-      this.binding?.stop();
-      this.binding = null;
-      this.dialogRef = null;
-      this.domainLookupEnabled.set(false);
-      this.saving.set(false);
-    });
-  }
-
-  closeDialog(): void {
-    this.dialogRef?.close();
-    this.dialogRef = null;
-    this.binding?.stop();
-    this.binding = null;
-    this.domainLookupEnabled.set(false);
-    this.saving.set(false);
-  }
-
-  async submit(saveAndNew = false): Promise<void> {
-    if (!this.isFormValid()) return;
-    this.saving.set(true);
-    try {
-      const row = this.editing();
-      if (row) {
-        await this.api.update(this.currentResource(), this.uuid(row), this.payload(), this.scope());
-        this.snack.success(`${this.itemLabel()} updated.`);
-      } else {
-        const response = await this.api.create(
-          this.currentResource(),
-          this.payload(),
-          this.scope(),
-        );
-        this.snack.success(`${this.itemLabel()} created.`);
-        if (!saveAndNew) {
-          const item = response?.data?.item ?? null;
-          this.closeDialog();
-          if (!this.isDomains() && item?.RtsUUID)
-            await this.generateInstallCommandForUUID(String(item.RtsUUID), item, false);
-          this.itemsResource.reload();
-          return;
-        }
-      }
-
-      this.itemsResource.reload();
-      if (saveAndNew && !row) {
-        this.editing.set(null);
-        this.formModel.set(this.defaultFormModel());
-      } else {
-        this.closeDialog();
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, `Failed to save ${this.itemLabel()}.`));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async remove(row: TurnRecord): Promise<void> {
-    const ok = await firstValueFrom(
-      this.dialog
-        .open(SlowConfirmDialogComponent, {
-          panelClass: 'slow-confirm-dialog',
-          disableClose: true,
-          data: {
-            title: `Delete ${this.itemLabel()}`,
-            message: `Delete ${this.name(row)}?`,
-            confirmText: 'Delete',
-          },
-        })
-        .afterClosed(),
-    );
-    if (!ok) return;
-    await this.runMutation(async () => {
-      await this.api.remove(this.currentResource(), this.uuid(row), this.scope());
-      this.snack.success(`${this.itemLabel()} deleted.`);
-      this.itemsResource.reload();
-    });
-  }
-
-  async removeSelected(): Promise<void> {
-    const ids = [...this.selected()];
-    if (!ids.length) return;
-    const ok = await firstValueFrom(
-      this.dialog
-        .open(SlowConfirmDialogComponent, {
-          panelClass: 'slow-confirm-dialog',
-          disableClose: true,
-          data: {
-            title: `Delete Selected ${this.pageTitle()}`,
-            message: `Delete ${ids.length} selected record(s)?`,
-            confirmText: 'Delete selected',
-          },
-        })
-        .afterClosed(),
-    );
-    if (!ok) return;
-    await this.runMutation(async () => {
-      const result = await this.api.removeMany(this.currentResource(), ids, this.scope());
-      const failed = result?.data?.failed ?? [];
-      const failedIds = new Set<string>(
-        failed.map((item: any) => String(item.uuid ?? '')).filter(Boolean),
-      );
-      this.selected.set(failedIds);
-      if (failed.length) {
-        this.snack.error(`${failed.length} selected record(s) could not be deleted.`);
-      } else {
-        this.snack.success(`Selected ${this.pageTitle()} deleted.`);
-      }
-      this.itemsResource.reload();
-    });
-  }
-
-  async generateInstallCommand(row: TurnRecord): Promise<void> {
-    if (this.isDomains()) return;
-    const ok = await firstValueFrom(
+  private async confirmAndOpenInstallCommand(row: ConfigurableCrudRecord) {
+    const confirmed = await firstValueFrom(
       this.dialog
         .open(SlowConfirmDialogComponent, {
           panelClass: 'slow-confirm-dialog',
           disableClose: true,
           data: {
             title: 'Generate Install Command',
-            message: `Generate a new install command for ${this.name(row)}? The previous TURN/STUN runtime token will be replaced.`,
+            message: `Generate a new install command for ${String(row['RtsName'] ?? '')}? The previous TURN/STUN runtime token will be replaced.`,
             confirmText: 'Generate command',
           },
         })
         .afterClosed(),
     );
-    if (!ok) return;
-    await this.generateInstallCommandForUUID(this.uuid(row), row);
+    if (confirmed) await this.openInstallCommand(row);
   }
 
-  async provisionDomain(row: TurnRecord): Promise<void> {
-    if (!this.isDomains()) return;
-    await this.runMutation(async () => {
-      await this.api.provisionDomain(this.uuid(row), this.scope());
-      this.snack.success('TURN/STUN domain provisioning queued.');
-      this.itemsResource.reload();
-    });
-  }
-
-  private async generateInstallCommandForUUID(
-    uuid: string,
-    source: TurnRecord | null,
-    showSuccess = true,
-  ): Promise<void> {
+  private async openInstallCommand(row: ConfigurableCrudRecord) {
     try {
-      const response = await this.api.generateInstallCommand(uuid);
-      this.generatedInstall.set(response?.data ?? null);
-      this.generatedInstallSource.set(source);
-      this.openInstallCommandDialog();
-      if (showSuccess) this.snack.success('TURN/STUN install command generated.');
+      const response = await this.turnApi.generateInstallCommand(String(row['RtsUUID'] ?? ''));
+      const token = response?.data ?? {};
+      const data: InstallCommandDialogData = {
+        title: 'TURN/STUN install command',
+        description: 'Run this command on the target TURN/STUN edge host.',
+        warning: 'The runtime token is sensitive. Copy it only to the intended server.',
+        command: this.installCommand(token, row),
+        details: [
+          { label: 'API base', value: window.location.origin, monospace: true },
+          { label: 'Node UUID', value: token['nodeUUID'], monospace: true },
+          { label: 'Realm', value: token['realm'] || row['RtdName'] || row['DomainName'], monospace: true },
+          { label: 'Runtime', value: 'mnscloud-turn', monospace: true },
+        ],
+      };
+      this.dialog.open(InstallCommandDialogComponent, {
+        panelClass: 'install-command-dialog-panel',
+        data,
+      });
+      this.snack.success('TURN/STUN install command generated.');
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to generate TURN/STUN install command.'));
+      this.snack.error(this.errorMessage(error) || 'Failed to generate TURN/STUN install command.');
     }
   }
 
-  openInstallCommandDialog(): void {
-    const template = this.installCommandDialog();
-    if (!template || this.installCommandBinding) return;
-    const binding = openCrudTemplateDialog(this.dialog, template, 'install-command-dialog-panel');
-    this.installCommandBinding = binding;
-    bindDialogClosed(binding.ref, () => {
-      binding.stop();
-      if (this.installCommandBinding === binding) this.installCommandBinding = null;
-    });
-  }
-
-  closeInstallCommandDialog(): void {
-    const binding = this.installCommandBinding;
-    this.installCommandBinding = null;
-    binding?.stop();
-    binding?.ref.close();
-  }
-
-  installCommand(): string {
-    const token = this.generatedInstall();
-    const source = this.generatedInstallSource();
-    if (!token) return '';
-    const apiBase = window.location.origin;
+  private installCommand(token: ConfigurableCrudRecord, row: ConfigurableCrudRecord): string {
     const args = [
       '--non-interactive',
       '--api-base',
-      this.shellQuote(apiBase),
+      this.shellQuote(window.location.origin),
       '--node-uuid',
       this.shellQuote(String(token['nodeUUID'] ?? '')),
       '--runtime-token',
       this.shellQuote(String(token['runtimeToken'] ?? '')),
       '--realm',
-      this.shellQuote(
-        String(token['realm'] || source?.['RtdName'] || source?.['DomainName'] || ''),
-      ),
+      this.shellQuote(String(token['realm'] || row['RtdName'] || row['DomainName'] || '')),
       '--listening-ip',
-      this.shellQuote(String(source?.['RtsListeningIP'] || '0.0.0.0')),
+      this.shellQuote(String(row['RtsListeningIP'] || '0.0.0.0')),
       '--listening-port',
-      this.shellQuote(String(source?.['RtsListeningPort'] || '3478')),
+      this.shellQuote(String(row['RtsListeningPort'] || '3478')),
       '--tls-listening-port',
-      this.shellQuote(String(source?.['RtsTlsListeningPort'] || '5349')),
+      this.shellQuote(String(row['RtsTlsListeningPort'] || '5349')),
       '--min-relay-port',
-      this.shellQuote(String(source?.['RtsMinRelayPort'] || '49152')),
+      this.shellQuote(String(row['RtsMinRelayPort'] || '49152')),
       '--max-relay-port',
-      this.shellQuote(String(source?.['RtsMaxRelayPort'] || '65535')),
+      this.shellQuote(String(row['RtsMaxRelayPort'] || '65535')),
     ];
-    const externalIP = String(token['externalIP'] || source?.['RtsExternalIP'] || '').trim();
+    const externalIP = String(token['externalIP'] || row['RtsExternalIP'] || '').trim();
     if (externalIP) args.push('--external-ip', this.shellQuote(externalIP));
-    const tlsCert = String(source?.['RtsTlsCertPath'] || '').trim();
-    const tlsKey = String(source?.['RtsTlsKeyPath'] || '').trim();
-    if (tlsCert && tlsKey)
-      args.push('--tls-cert', this.shellQuote(tlsCert), '--tls-key', this.shellQuote(tlsKey));
-
     return [
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
@@ -674,264 +305,33 @@ export class RealtimeTurnPage {
     ].join(' && ');
   }
 
-  installCommandDetails(): Array<{ label: string; value: unknown; monospace?: boolean }> {
-    const token = this.generatedInstall();
-    const source = this.generatedInstallSource();
-    return [
-      { label: 'API base', value: window.location.origin, monospace: true },
-      { label: 'Node UUID', value: token?.['nodeUUID'], monospace: true },
-      {
-        label: 'Realm',
-        value: token?.['realm'] || source?.['RtdName'] || source?.['DomainName'],
-        monospace: true,
-      },
-      { label: 'Runtime', value: 'mnscloud-turn', monospace: true },
-    ];
-  }
-
-  formField(key: keyof TurnFormModel | string): SignalFormField {
-    return (this.form as any)[key];
-  }
-
-  selectOptions(field: Field): MnsSelectFieldOption[] {
-    return field.options ?? [];
-  }
-
-  isFormValid(): boolean {
-    const model = this.formModel() as Record<string, unknown>;
-    return this.recordFields().every((field) => {
-      if (!field.required) return true;
-      const value = model[field.key];
-      return value !== undefined && value !== null && String(value).trim() !== '';
-    });
-  }
-
-  uuid(row: TurnRecord): string {
-    return String(this.isDomains() ? (row['RtnUUID'] ?? '') : (row['RtsUUID'] ?? ''));
-  }
-
-  relatedUuid(row: TurnRecord, column: string): string {
-    const map: Record<string, unknown> = {
-      name: this.uuid(row),
-      domain: row['RealtimeDomainRtdUUID'],
-      server: row['RealtimeTurnServerRtsUUID'],
-    };
-    return String(map[column] ?? '');
-  }
-
-  name(row: TurnRecord): string {
-    return String(
-      this.isDomains() ? (row['RtdName'] ?? row['DomainName'] ?? '') : (row['RtsName'] ?? ''),
-    );
-  }
-
-  status(row: TurnRecord): boolean {
-    return Number(this.isDomains() ? (row['RtnStatus'] ?? 0) : (row['RtsStatus'] ?? 0)) === 1;
-  }
-
-  cell(row: TurnRecord, column: string): string {
-    const map: Record<string, any> = {
-      name: row['RtsName'],
-      domain: row['RtdName'] ?? row['DomainName'],
-      externalIP: row['RtsExternalIP'] || row['RtsPublicIP'],
-      ports: `${row['RtsListeningPort'] ?? 3478} / ${row['RtsTlsListeningPort'] ?? 5349}`,
-      certificateProvider: this.isDomains()
-        ? row['RtnCertificateProvider']
-        : row['RtsCertificateProvider'],
-      server: row['RtsName'],
-      provisionStatus: row['RtnProvisionStatus'],
-      certificateStatus: row['RtnCertificateStatus'],
-      status: this.status(row) ? 'ACTIVE' : 'INACTIVE',
-      lastSeen: row['RtsLastSeenAt'] || '-',
-    };
-    return String(map[column] ?? '');
-  }
-
-  columnLabel(column: string): string {
-    const labels: Record<string, string> = {
-      name: 'Name',
-      domain: 'Domain',
-      server: 'Server',
-      externalIP: 'External IP',
-      ports: 'Ports',
-      certificateProvider: 'Certificate',
-      provisionStatus: 'Provisioning',
-      certificateStatus: 'TLS',
-      status: 'Status',
-      lastSeen: 'Last Seen',
-      actions: 'Actions',
-    };
-    return labels[column] ?? column;
-  }
-
-  isSelected(row: TurnRecord): boolean {
-    return this.selected().has(this.uuid(row));
-  }
-
-  toggle(row: TurnRecord, checked: boolean): void {
-    this.selected.update((current) => {
-      const next = new Set(current);
-      checked ? next.add(this.uuid(row)) : next.delete(this.uuid(row));
-      return next;
-    });
-  }
-
-  toggleVisible(checked: boolean): void {
-    const rows = this.visibleRows();
-    this.selected.update((current) => {
-      const next = new Set(current);
-      for (const row of rows) {
-        checked ? next.add(this.uuid(row)) : next.delete(this.uuid(row));
-      }
-      return next;
-    });
-  }
-
-  private reconcileSelection(): void {
-    const valid = new Set(this.rows().map((row: TurnRecord) => this.uuid(row)));
-    const current = untracked(() => this.selected());
-    const next = new Set([...current].filter((uuid) => valid.has(uuid)));
-    if (next.size === current.size && [...next].every((uuid) => current.has(uuid))) return;
-    this.selected.set(next);
-  }
-
-  private sortRows(rows: TurnRecord[]): TurnRecord[] {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-    const multiplier = direction === 'asc' ? 1 : -1;
-    return [...rows].sort(
-      (left, right) =>
-        String(this.cell(left, active) ?? '').localeCompare(
-          String(this.cell(right, active) ?? ''),
-        ) * multiplier,
-    );
-  }
-
-  private defaultFormModel(): TurnFormModel {
-    const base: TurnFormModel = {
-      status: 1,
-      serverUUID: '',
-      name: '',
-      realtimeDomainUUID: '',
-      nodeUUID: '',
-      hostname: '',
-      publicIP: '',
-      privateIP: '',
-      listeningIP: '0.0.0.0',
-      externalIP: '',
-      listeningPort: 3478,
-      tlsListeningPort: 5349,
-      minRelayPort: 49152,
-      maxRelayPort: 65535,
-      totalQuota: 1000,
-      bpsCapacity: 0,
-      certificateProvider: 'letsencrypt',
-      autoProvision: 1,
-      tlsCertPath: '',
-      tlsKeyPath: '',
-      configJson: '{}',
-      notes: '',
-    };
-    if (this.isDomains()) {
-      return {
-        ...base,
-        certificateProvider: 'letsencrypt',
-        autoProvision: 1,
-        configJson: '',
-      };
-    }
-    return base;
-  }
-
-  private formModelFromRow(row: TurnRecord): TurnFormModel {
-    const base = this.defaultFormModel();
-    if (this.isDomains()) {
-      return {
-        ...base,
-        status: Number(row['RtnStatus'] ?? 1),
-        serverUUID: row['RealtimeTurnServerRtsUUID'] ?? '',
-        realtimeDomainUUID: row['RealtimeDomainRtdUUID'] ?? '',
-        certificateProvider: row['RtnCertificateProvider'] ?? 'letsencrypt',
-        autoProvision: Number(row['RtnAutoProvision'] ?? 1),
-        tlsCertPath: row['RtnTlsCertPath'] ?? '',
-        tlsKeyPath: row['RtnTlsKeyPath'] ?? '',
-        notes: row['RtnNotes'] ?? '',
-      };
-    }
-    return {
-      ...base,
-      status: Number(row['RtsStatus'] ?? 1),
-      name: row['RtsName'] ?? '',
-      realtimeDomainUUID: row['RealtimeDomainRtdUUID'] ?? '',
-      nodeUUID: row['RtsNodeUUID'] ?? '',
-      hostname: row['RtsHostname'] ?? '',
-      publicIP: row['RtsPublicIP'] ?? '',
-      privateIP: row['RtsPrivateIP'] ?? '',
-      listeningIP: row['RtsListeningIP'] ?? '0.0.0.0',
-      externalIP: row['RtsExternalIP'] ?? '',
-      listeningPort: row['RtsListeningPort'] ?? 3478,
-      tlsListeningPort: row['RtsTlsListeningPort'] ?? 5349,
-      minRelayPort: row['RtsMinRelayPort'] ?? 49152,
-      maxRelayPort: row['RtsMaxRelayPort'] ?? 65535,
-      totalQuota: row['RtsTotalQuota'] ?? 1000,
-      bpsCapacity: row['RtsBpsCapacity'] ?? 0,
-      certificateProvider: row['RtsCertificateProvider'] ?? 'letsencrypt',
-      tlsCertPath: row['RtsTlsCertPath'] ?? '',
-      tlsKeyPath: row['RtsTlsKeyPath'] ?? '',
-      configJson: JSON.stringify(row['RtsConfig'] ?? {}, null, 2),
-      notes: row['RtsNotes'] ?? '',
-    };
-  }
-
-  private payload(): TurnRecord {
-    const raw = this.formModel();
-    const payload: TurnRecord = {
-      ...raw,
-      status: Number(raw['status'] ?? 1),
-      listeningPort: this.numberOrNull(raw['listeningPort']),
-      tlsListeningPort: this.numberOrNull(raw['tlsListeningPort']),
-      minRelayPort: this.numberOrNull(raw['minRelayPort']),
-      maxRelayPort: this.numberOrNull(raw['maxRelayPort']),
-      totalQuota: this.numberOrNull(raw['totalQuota']),
-      bpsCapacity: this.numberOrNull(raw['bpsCapacity']),
-    };
-    if (raw['configJson']) {
-      try {
-        payload['config'] = JSON.parse(raw['configJson']);
-      } catch {
-        payload['config'] = raw['configJson'];
-      }
-    }
-    delete payload['configJson'];
-    return payload;
-  }
-
-  itemLabel(): string {
-    return this.isDomains() ? 'TURN/STUN domain' : 'TURN/STUN server';
-  }
-
-  private numberOrNull(value: unknown): number | null {
-    if (value === undefined || value === null || value === '') return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-
-  private async runMutation(action: () => Promise<void>): Promise<void> {
-    this.mutating.set(true);
-    try {
-      await action();
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-  private shellQuote(value: string): string {
+  private shellQuote(value: string) {
     return `'${value.replace(/'/g, `'\\''`)}'`;
   }
+}
 
-  private errorMessage(error: unknown, fallback: string): string {
-    const maybe = error as { error?: { error?: string }; message?: string };
-    return maybe?.error?.error || maybe?.message || fallback;
+@Component({
+  selector: 'app-realtime-turn-servers',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RealtimeTurnServersPage extends RealtimeTurnCrudPage {
+  constructor() {
+    super(TURN_SERVER_CONFIG);
+  }
+}
+
+@Component({
+  selector: 'app-realtime-turn-domains',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RealtimeTurnDomainsPage extends RealtimeTurnCrudPage {
+  constructor() {
+    super(TURN_DOMAIN_CONFIG);
   }
 }
