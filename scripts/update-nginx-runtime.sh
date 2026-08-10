@@ -95,6 +95,7 @@ if ! APP_UPDATE_CHANNEL="$CHANNEL" \
   APP_ARTIFACT_URL="$APP_ARTIFACT_URL" \
   APP_ARTIFACT_SHA256="$APP_ARTIFACT_SHA256" \
   APP_ARTIFACT_NAME="$APP_ARTIFACT_NAME" \
+  APP_REFRESH_AGENT_CAPABILITIES=0 \
   "$REPO_ROOT/scripts/install-nginx-runtime.sh"; then
   restore_previous
   die "update failed during install and previous commit was restored"

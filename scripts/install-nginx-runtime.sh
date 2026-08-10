@@ -18,6 +18,7 @@ APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaosc
 APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
 APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
 APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
+APP_REFRESH_AGENT_CAPABILITIES="${APP_REFRESH_AGENT_CAPABILITIES:-1}"
 APP_ARTIFACT_TMP_DIR=""
 AGENT_REPO_INSTALLER="/opt/mnscloud/mnscloud-agent/scripts/install-agent.sh"
 
@@ -28,6 +29,11 @@ die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
 require_root() { [[ "${EUID}" -eq 0 ]] || die "this command must run as root"; }
 
 refresh_agent_capabilities() {
+  if [[ "${APP_REFRESH_AGENT_CAPABILITIES}" == "0" ]]; then
+    log "skipping mnscloud-agent capability refresh"
+    return 0
+  fi
+
   local install_label
   install_label="$(hostname -f 2>/dev/null || hostname 2>/dev/null || printf 'mnscloud-agent')"
 
