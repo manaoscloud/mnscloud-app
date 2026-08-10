@@ -59,6 +59,7 @@ type Field = {
   lookup?: LookupKey;
   required?: boolean;
   span?: string;
+  rows?: number;
   tab?: 'record' | 'network' | 'notes';
   visibleWhen?: { key: string; value: string };
 };
@@ -201,28 +202,37 @@ const CONFIGS: Record<WebRtcResource, Config> = {
       'status',
     ],
     fields: [
-      { key: 'serverUUID', label: 'Server', type: 'lookup', lookup: 'servers', required: true },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: ['active', 'inactive'],
+        span: 'span-1',
+      },
+      {
+        key: 'serverUUID',
+        label: 'Server',
+        type: 'lookup',
+        lookup: 'servers',
+        required: true,
+        span: 'span-1',
+      },
       {
         key: 'realtimeDomainUUID',
         label: 'Realtime Domain',
         type: 'lookup',
         lookup: 'domains',
         required: true,
+        span: 'span-1',
       },
       {
         key: 'certificateProvider',
         label: 'Certificate Provider',
         type: 'select',
         options: ['letsencrypt', 'manual', 'self_signed'],
+        span: 'span-1',
       },
-      {
-        key: 'autoProvision',
-        label: 'Auto Provision',
-        type: 'select',
-        options: ['active', 'inactive'],
-      },
-      { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'] },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
+      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-1', rows: 4, tab: 'notes' },
     ],
   },
   'sip-targets': {
@@ -232,9 +242,24 @@ const CONFIGS: Record<WebRtcResource, Config> = {
     uuid: 'RwtUUID',
     name: 'WebRtcDomainName',
     status: 'RwtStatus',
-    columns: ['webRtcDomain', 'targetType', 'target', 'sipDomain', 'host', 'port', 'transport', 'status'],
+    columns: [
+      'webRtcDomain',
+      'targetType',
+      'target',
+      'sipDomain',
+      'host',
+      'port',
+      'transport',
+      'status',
+    ],
     fields: [
-      { key: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], span: 'span-1' },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: ['active', 'inactive'],
+        span: 'span-1',
+      },
       {
         key: 'webRtcDomainUUID',
         label: 'WebRTC Domain',
@@ -271,7 +296,14 @@ const CONFIGS: Record<WebRtcResource, Config> = {
       },
       { key: 'host', label: 'SIP Host Override', tab: 'network', span: 'span-1' },
       { key: 'port', label: 'SIP Port', type: 'number', tab: 'network', span: 'span-1' },
-      { key: 'transport', label: 'Transport', type: 'select', options: ['udp', 'tcp', 'tls'], tab: 'network', span: 'span-1' },
+      {
+        key: 'transport',
+        label: 'Transport',
+        type: 'select',
+        options: ['udp', 'tcp', 'tls'],
+        tab: 'network',
+        span: 'span-1',
+      },
       { key: 'priority', label: 'Priority', type: 'number', tab: 'network', span: 'span-1' },
       { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', tab: 'notes' },
     ],
@@ -321,9 +353,9 @@ export class RealtimeWebRtcPage {
     const data = this.routeData() as Record<string, unknown>;
     const resource = data['resource'];
     return resource === 'domains' ||
-        resource === 'parameters' ||
-        resource === 'servers' ||
-        resource === 'sip-targets'
+      resource === 'parameters' ||
+      resource === 'servers' ||
+      resource === 'sip-targets'
       ? resource
       : 'servers';
   });
@@ -546,11 +578,11 @@ export class RealtimeWebRtcPage {
                 ? await this.api.listPabxAccounts({ status: 1, limit: 5000 })
                 : key === 'softswitchAccounts'
                   ? await this.api.listSoftswitchAccounts({ status: 1, limit: 5000 })
-              : this.config().resource === 'domains' &&
-                  key === 'servers' &&
-                  this.scope() === 'tenant'
-                ? await this.api.list('servers', { status: 1, limit: 5000 }, 'tenant')
-                : await this.api.list(key, { limit: 5000 }, 'master');
+                  : this.config().resource === 'domains' &&
+                      key === 'servers' &&
+                      this.scope() === 'tenant'
+                    ? await this.api.list('servers', { status: 1, limit: 5000 }, 'tenant')
+                    : await this.api.list(key, { limit: 5000 }, 'master');
         const rows = res?.data?.items ?? [];
         const options = rows
           .map((row: WebRtcRecord) => ({
@@ -615,13 +647,19 @@ export class RealtimeWebRtcPage {
     return 'Search servers';
   }
   recordFields() {
-    return this.config().fields.filter((field) => (!field.tab || field.tab === 'record') && this.fieldVisible(field));
+    return this.config().fields.filter(
+      (field) => (!field.tab || field.tab === 'record') && this.fieldVisible(field),
+    );
   }
   networkFields() {
-    return this.config().fields.filter((field) => field.tab === 'network' && this.fieldVisible(field));
+    return this.config().fields.filter(
+      (field) => field.tab === 'network' && this.fieldVisible(field),
+    );
   }
   textareaFields() {
-    return this.config().fields.filter((field) => field.type === 'textarea' && this.fieldVisible(field));
+    return this.config().fields.filter(
+      (field) => field.type === 'textarea' && this.fieldVisible(field),
+    );
   }
   fieldVisible(field: Field) {
     if (!field.visibleWhen) return true;
