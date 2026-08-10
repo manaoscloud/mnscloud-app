@@ -259,7 +259,7 @@
                   [field]="formField(field.key)"
                   [label]="field.label | transloco"
                   [fieldClass]="field.span || ''"
-                  [rows]="10"
+                  [rows]="field.rows || 10"
                 />
               }
             </div>
@@ -269,7 +269,9 @@
     </mat-dialog-content>
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | transloco }}</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
         <button
