@@ -1026,12 +1026,22 @@ export const routes: Routes = [
                 title: 'Realtime • WebRTC Dashboard | mnscloud',
                 data: { scope: 'tenant' },
               },
+              {
+                path: 'realtime/domain',
+                loadComponent: () =>
+                  import('./pages/realtime/domains/domains').then(
+                    (m) => m.RealtimeDomainsTenantPage,
+                  ),
+                title: 'Realtime • Domains | mnscloud',
+                data: { scope: 'tenant' },
+              },
               ...(['domain', 'sip-target'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
                 loadComponent: () => {
                   const page = import('./pages/realtime/webrtc/webrtc');
-                  if (section === 'sip-target')
+                  if (section === 'sip-target') {
                     return page.then((m) => m.RealtimeWebRtcSipTargetsPage);
+                  }
                   return page.then((m) => m.RealtimeWebRtcDomainsTenantPage);
                 },
                 title: `Realtime • WebRTC • ${section} | mnscloud`,
@@ -1229,9 +1239,7 @@ export const routes: Routes = [
               {
                 path: 'voip/pabx/trunks',
                 loadComponent: () =>
-                  import('./pages/voip/pabx/trunk/trunk').then(
-                    (m) => m.VoipPabxTrunkPage,
-                  ),
+                  import('./pages/voip/pabx/trunk/trunk').then((m) => m.VoipPabxTrunkPage),
                 title: 'VoIP • PABX • Trunks | mnscloud',
               },
               {
@@ -1530,8 +1538,9 @@ export const routes: Routes = [
                 loadComponent: () => {
                   const page = import('./pages/realtime/webrtc/webrtc');
                   if (section === 'server') return page.then((m) => m.RealtimeWebRtcServersPage);
-                  if (section === 'domain')
+                  if (section === 'domain') {
                     return page.then((m) => m.RealtimeWebRtcDomainsMasterPage);
+                  }
                   return page.then((m) => m.RealtimeWebRtcParametersPage);
                 },
                 title: `System Realtime • WebRTC • ${section} | mnscloud`,
