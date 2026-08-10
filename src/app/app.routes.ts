@@ -1026,12 +1026,14 @@ export const routes: Routes = [
                 title: 'Realtime • WebRTC Dashboard | mnscloud',
                 data: { scope: 'tenant' },
               },
-              ...(['domain'].map((section) => ({
+              ...(['domain', 'sip-target'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
-                loadComponent: () =>
-                  import('./pages/realtime/webrtc/webrtc').then(
-                    (m) => m.RealtimeWebRtcDomainsTenantPage,
-                  ),
+                loadComponent: () => {
+                  const page = import('./pages/realtime/webrtc/webrtc');
+                  if (section === 'sip-target')
+                    return page.then((m) => m.RealtimeWebRtcSipTargetsPage);
+                  return page.then((m) => m.RealtimeWebRtcDomainsTenantPage);
+                },
                 title: `Realtime • WebRTC • ${section} | mnscloud`,
                 data: {
                   scope: 'tenant',
@@ -1040,7 +1042,7 @@ export const routes: Routes = [
                       ? 'servers'
                       : section === 'domain'
                         ? 'domains'
-                        : 'parameters',
+                        : 'sip-targets',
                 },
               })) as any),
               {
@@ -1523,15 +1525,13 @@ export const routes: Routes = [
                 title: 'System Realtime • Domains | mnscloud',
                 data: { scope: 'master' },
               },
-              ...(['domain', 'server', 'parameter', 'sip-target'].map((section) => ({
+              ...(['domain', 'server', 'parameter'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
                 loadComponent: () => {
                   const page = import('./pages/realtime/webrtc/webrtc');
                   if (section === 'server') return page.then((m) => m.RealtimeWebRtcServersPage);
                   if (section === 'domain')
                     return page.then((m) => m.RealtimeWebRtcDomainsMasterPage);
-                  if (section === 'sip-target')
-                    return page.then((m) => m.RealtimeWebRtcSipTargetsPage);
                   return page.then((m) => m.RealtimeWebRtcParametersPage);
                 },
                 title: `System Realtime • WebRTC • ${section} | mnscloud`,
@@ -1542,8 +1542,6 @@ export const routes: Routes = [
                       ? 'servers'
                       : section === 'domain'
                         ? 'domains'
-                        : section === 'sip-target'
-                          ? 'sip-targets'
                         : 'parameters',
                 },
               })) as any),

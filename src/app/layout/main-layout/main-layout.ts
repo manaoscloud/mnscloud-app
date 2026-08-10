@@ -1675,8 +1675,7 @@ export class MainLayout {
               id: 'realtime/webrtc/sip-target',
               label: 'SIP Targets',
               icon: 'sync_alt',
-              masterRoute: '/system/realtime/webrtc/sip-target',
-              roles: ['MASTER'],
+              route: '/realtime/webrtc/sip-target',
             },
             {
               id: 'realtime/webrtc/parameter',
