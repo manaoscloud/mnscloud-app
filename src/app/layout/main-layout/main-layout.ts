@@ -1665,17 +1665,17 @@ export class MainLayout {
               masterRoute: '/system/realtime/webrtc/domain',
             },
             {
-              id: 'realtime/webrtc/sip-target',
-              label: 'SIP Targets',
-              icon: 'sync_alt',
-              masterRoute: '/system/realtime/webrtc/sip-target',
-              roles: ['MASTER'],
-            },
-            {
               id: 'realtime/webrtc/server',
               label: 'Servers',
               icon: 'dns',
               masterRoute: '/system/realtime/webrtc/server',
+              roles: ['MASTER'],
+            },
+            {
+              id: 'realtime/webrtc/sip-target',
+              label: 'SIP Targets',
+              icon: 'sync_alt',
+              masterRoute: '/system/realtime/webrtc/sip-target',
               roles: ['MASTER'],
             },
             {
