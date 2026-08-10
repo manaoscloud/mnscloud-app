@@ -7,16 +7,16 @@
 
 import {
   Component,
-  signal,
   computed,
-  inject,
-  HostBinding,
-  effect,
   DestroyRef,
+  effect,
+  HostBinding,
+  inject,
+  signal,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 // Shared
@@ -34,7 +34,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 // Services
 import { ThemeService } from '../../services/theme.service';
-import { AuthService, AppRole } from '../../services/auth.service';
+import { AppRole, AuthService } from '../../services/auth.service';
 import { NetworkService } from '../../services/network.service';
 import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
@@ -189,7 +189,8 @@ export class MainLayout {
   private compactCloseTimer: ReturnType<typeof setTimeout> | null = null;
   private autoExpandScheduled = false;
 
-  @HostBinding('class') themeClass = '';
+  @HostBinding('class')
+  themeClass = '';
 
   constructor() {
     // Atualiza tema automaticamente
@@ -303,8 +304,9 @@ export class MainLayout {
     const mode = this.effectiveContextMode();
 
     if (scope === 'public') return item.route;
-    if (scope === 'master')
+    if (scope === 'master') {
       return this.isMasterUser() && mode === 'master' ? item.masterRoute : undefined;
+    }
     if (scope === 'both') {
       if (this.isMasterUser() && mode === 'master') return item.masterRoute;
       return item.route;
@@ -603,8 +605,9 @@ export class MainLayout {
       if (this.isMasterUser() && mode === 'master') return !!item.masterRoute;
       return !!item.route && (!this.isMasterUser() || this.hasTenantSelected());
     }
-    if (scope === 'tenant')
+    if (scope === 'tenant') {
       return mode === 'tenant' && (!this.isMasterUser() || this.hasTenantSelected());
+    }
     return false;
   }
 
@@ -1642,8 +1645,8 @@ export class MainLayout {
           id: 'realtime/domain',
           label: 'Domains',
           icon: 'language',
+          route: '/realtime/domain',
           masterRoute: '/system/realtime/domain',
-          roles: ['MASTER'],
         },
         {
           id: 'realtime/webrtc',
