@@ -1026,10 +1026,12 @@ export const routes: Routes = [
                 title: 'Realtime • WebRTC Dashboard | mnscloud',
                 data: { scope: 'tenant' },
               },
-              ...(['domain', 'sip-target'].map((section) => ({
+              ...(['domain'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
                 loadComponent: () =>
-                  import('./pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcPage),
+                  import('./pages/realtime/webrtc/webrtc').then(
+                    (m) => m.RealtimeWebRtcDomainsTenantPage,
+                  ),
                 title: `Realtime • WebRTC • ${section} | mnscloud`,
                 data: {
                   scope: 'tenant',
@@ -1038,8 +1040,6 @@ export const routes: Routes = [
                       ? 'servers'
                       : section === 'domain'
                         ? 'domains'
-                        : section === 'sip-target'
-                          ? 'sip-targets'
                         : 'parameters',
                 },
               })) as any),
@@ -1525,8 +1525,15 @@ export const routes: Routes = [
               },
               ...(['domain', 'server', 'parameter', 'sip-target'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
-                loadComponent: () =>
-                  import('./pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcPage),
+                loadComponent: () => {
+                  const page = import('./pages/realtime/webrtc/webrtc');
+                  if (section === 'server') return page.then((m) => m.RealtimeWebRtcServersPage);
+                  if (section === 'domain')
+                    return page.then((m) => m.RealtimeWebRtcDomainsMasterPage);
+                  if (section === 'sip-target')
+                    return page.then((m) => m.RealtimeWebRtcSipTargetsPage);
+                  return page.then((m) => m.RealtimeWebRtcParametersPage);
+                },
                 title: `System Realtime • WebRTC • ${section} | mnscloud`,
                 data: {
                   scope: 'master',
@@ -1552,14 +1559,14 @@ export const routes: Routes = [
               {
                 path: 'realtime/turn/server',
                 loadComponent: () =>
-                  import('./pages/realtime/turn/turn').then((m) => m.RealtimeTurnPage),
+                  import('./pages/realtime/turn/turn').then((m) => m.RealtimeTurnServersPage),
                 title: 'System Realtime • TURN/STUN Servers | mnscloud',
                 data: { scope: 'master', resource: 'servers' },
               },
               {
                 path: 'realtime/turn/domains',
                 loadComponent: () =>
-                  import('./pages/realtime/turn/turn').then((m) => m.RealtimeTurnPage),
+                  import('./pages/realtime/turn/turn').then((m) => m.RealtimeTurnDomainsPage),
                 title: 'System Realtime • TURN/STUN Domains | mnscloud',
                 data: { scope: 'master', resource: 'domains' },
               },
@@ -1575,14 +1582,14 @@ export const routes: Routes = [
               {
                 path: 'realtime/media/server',
                 loadComponent: () =>
-                  import('./pages/realtime/media/media').then((m) => m.RealtimeMediaPage),
+                  import('./pages/realtime/media/media').then((m) => m.RealtimeMediaServersPage),
                 title: 'System Realtime • Media Servers | mnscloud',
                 data: { scope: 'master', resource: 'servers' },
               },
               {
                 path: 'realtime/media/domains',
                 loadComponent: () =>
-                  import('./pages/realtime/media/media').then((m) => m.RealtimeMediaPage),
+                  import('./pages/realtime/media/media').then((m) => m.RealtimeMediaDomainsPage),
                 title: 'System Realtime • Media Domains | mnscloud',
                 data: { scope: 'master', resource: 'domains' },
               },
