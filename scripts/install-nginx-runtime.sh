@@ -18,6 +18,7 @@ APP_RUNTIME_KIT_REPO_URL="${APP_RUNTIME_KIT_REPO_URL:-https://github.com/manaosc
 APP_RUNTIME_KIT_REF="${APP_RUNTIME_KIT_REF:-}"
 APP_RUNTIME_KIT_CHANNEL="${APP_RUNTIME_KIT_CHANNEL:-stable}"
 APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
+APP_INSTALL_PACKAGES="${APP_INSTALL_PACKAGES:-1}"
 APP_REFRESH_AGENT_CAPABILITIES="${APP_REFRESH_AGENT_CAPABILITIES:-1}"
 APP_ARTIFACT_TMP_DIR=""
 AGENT_REPO_INSTALLER="/opt/mnscloud/mnscloud-agent/scripts/install-agent.sh"
@@ -340,8 +341,12 @@ EOF
 require_root
 detect_os
 log "detected ${OS_PRETTY_NAME}"
-install_packages
-install_nginx_package
+if [[ "${APP_INSTALL_PACKAGES}" == "1" ]]; then
+  install_packages
+  install_nginx_package
+else
+  log "skipping package installation"
+fi
 
 if [[ -n "$APP_API_BASE_URL" ]]; then
   log "using explicit API base URL from APP_API_BASE_URL"
