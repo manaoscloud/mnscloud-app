@@ -3,7 +3,12 @@
     <header class="erp-header">
       <div>
         <h1>{{ 'Realtime Domains' | transloco }}</h1>
-        <p>{{ 'Manage public realtime domains used by TURN/STUN, WebRTC, SFU and signaling edges.' | transloco }}</p>
+        <p>
+          {{
+            'Manage public realtime domains used by TURN/STUN, WebRTC, SFU and signaling edges.'
+              | transloco
+          }}
+        </p>
       </div>
 
       <div class="header-actions">
@@ -28,10 +33,7 @@
 
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select
-          [value]="statusInput()"
-          (selectionChange)="statusInput.set($any($event.value))"
-        >
+        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($any($event.value))">
           @for (option of statusFilterOptions(); track option.value) {
             <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
           }
@@ -118,7 +120,7 @@
                     <div class="record-main">{{ cell(row, column) || '-' }}</div>
                     <div class="record-uuid">{{ uuid(row) }}</div>
                   } @else if (isTranslatedColumn(column)) {
-                    {{ (cell(row, column) || '-') | transloco }}
+                    {{ cell(row, column) || '-' | transloco }}
                   } @else {
                     {{ cell(row, column) || '-' }}
                   }
@@ -196,8 +198,11 @@
           >
             @for (field of recordFields; track field.key) {
               @if (field.key === 'status') {
-                <mns-status-select-field [field]="formField(field.key)" [label]="field.label | transloco"
-                  [fieldClass]="field.span || ''" />
+                <mns-status-select-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''"
+                />
               } @else if (field.type === 'select') {
                 <mns-select-field
                   [field]="formField(field.key)"
@@ -206,8 +211,11 @@
                   [fieldClass]="field.span || ''"
                 />
               } @else {
-                <mns-text-field [field]="formField(field.key)" [label]="field.label | transloco"
-                  [fieldClass]="field.span || ''" />
+                <mns-text-field
+                  [field]="formField(field.key)"
+                  [label]="field.label | transloco"
+                  [fieldClass]="field.span || ''"
+                />
               }
             }
           </form>
