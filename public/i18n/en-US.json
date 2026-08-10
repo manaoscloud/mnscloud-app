@@ -1922,6 +1922,7 @@
   "WebRTC": "WebRTC",
   "WebRTC Dashboard": "WebRTC Dashboard",
   "WebRTC Domains": "WebRTC Domains",
+  "Publish partner and tenant WSS domains on authorized WebRTC edge nodes.": "Publish partner and tenant WSS domains on authorized WebRTC edge nodes.",
   "WebRTC domains active": "WebRTC domains active",
   "WebRTC online": "WebRTC online",
   "WebRTC Parameters": "WebRTC Parameters",

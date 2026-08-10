@@ -232,7 +232,7 @@ const CONFIGS: Record<WebRtcResource, Config> = {
         options: ['letsencrypt', 'manual', 'self_signed'],
         span: 'span-1',
       },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-1', rows: 4, tab: 'notes' },
+      { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 4, tab: 'notes' },
     ],
   },
   'sip-targets': {
