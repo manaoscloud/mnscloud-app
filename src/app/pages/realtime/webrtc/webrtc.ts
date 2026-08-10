@@ -180,7 +180,7 @@ const WEBRTC_PARAMETER_CONFIG: ConfigurableCrudConfig = {
 };
 
 const WEBRTC_SIP_TARGET_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'system/realtime/webrtc/sip-targets',
+  endpoint: 'realtime/webrtc/sip-targets',
   uuidField: 'RwtUUID',
   pageTitle: 'WebRTC SIP Targets',
   pageDescription: 'Bind each WebRTC domain to one explicit PABX or Softswitch SIP destination.',
@@ -314,7 +314,7 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
     const [servers, domains, mediaServers, pabxAccounts, softswitchAccounts] = await Promise.all([
       this.webRtcApi.list('servers', { status: 1, limit: 5000 }, this.resourceScope),
       this.resourceName === 'sip-targets'
-        ? this.webRtcApi.list('domains', { status: 1, limit: 5000 }, 'master')
+        ? this.webRtcApi.list('domains', { status: 1, limit: 5000 }, this.resourceScope)
         : this.webRtcApi.listRealtimeDomains({ limit: 5000, purpose: 'webrtc' }),
       this.webRtcApi.listMediaServers({ status: 1, limit: 5000 }),
       needsSipTargets ? this.webRtcApi.listPabxAccounts({ status: 1, limit: 5000 }) : Promise.resolve({ data: { items: [] } }),
@@ -468,6 +468,6 @@ export class RealtimeWebRtcParametersPage extends RealtimeWebRtcCrudPage {
 })
 export class RealtimeWebRtcSipTargetsPage extends RealtimeWebRtcCrudPage {
   constructor() {
-    super(WEBRTC_SIP_TARGET_CONFIG, 'sip-targets', 'master');
+    super(WEBRTC_SIP_TARGET_CONFIG, 'sip-targets', 'tenant');
   }
 }
