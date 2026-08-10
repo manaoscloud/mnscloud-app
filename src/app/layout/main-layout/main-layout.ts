@@ -1479,7 +1479,7 @@ export class MainLayout {
             },
             {
               id: 'voip/softswitch/cdrs',
-              label: 'CDR/Billing',
+              label: 'Call history',
               icon: 'receipt_long',
               route: '/voip/softswitch/cdrs',
             },
