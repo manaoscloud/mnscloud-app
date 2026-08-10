@@ -12,23 +12,28 @@ import { ApiService } from '../../../../services/api.service';
 const CDR_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/softswitch/cdrs',
   uuidField: 'uuid',
-  pageTitle: 'Softswitch CDR/Billing',
-  pageDescription: 'Inspect and register billing call records.',
-  createTitle: 'New CDR',
-  editTitle: 'Edit CDR',
-  dialogDescription: 'Maintain billing call record data for this tenant Softswitch.',
+  pageTitle: 'Softswitch call history',
+  pageDescription: 'Inspect consolidated Softswitch call records collected from runtime events.',
+  createTitle: 'Call details',
+  editTitle: 'Call details',
+  dialogDescription: 'Inspect call routing, accounting and runtime event summary.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No CDR records found.',
-  deleteTitle: 'Delete CDR',
-  deleteMessage: 'Are you sure you want to delete this CDR?',
-  deleteSelectedTitle: 'Delete selected CDR records',
-  deleteSelectedMessage: 'Delete {count} selected CDR records?',
-  savedMessage: 'CDR saved successfully.',
-  deletedMessage: 'CDR deleted successfully.',
-  deleteFailedMessage: 'Failed to delete CDR.',
+  emptyLabel: 'No call records found.',
+  deleteTitle: 'Delete call record',
+  deleteMessage: 'Are you sure you want to delete this call record?',
+  deleteSelectedTitle: 'Delete selected call records',
+  deleteSelectedMessage: 'Delete {count} selected call records?',
+  savedMessage: 'Call record saved successfully.',
+  deletedMessage: 'Call record deleted successfully.',
+  deleteFailedMessage: 'Failed to delete call record.',
   statusMode: 'string',
   activeValue: 'answered',
   inactiveValue: 'failed',
+  statusFilter: false,
+  canCreate: false,
+  canEdit: false,
+  canDelete: false,
+  bulkDelete: false,
   initialValues: {
     accountUUID: '',
     name: '',
@@ -41,9 +46,16 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
     sellAmount: 0,
   },
   columns: [
-    { id: 'callee', label: 'Callee', kind: 'identity', field: 'name', uuidField: 'uuid' },
+    { id: 'call', label: 'Call-ID', kind: 'identity', field: 'callId', uuidField: 'uuid' },
     { id: 'account', label: 'Softswitch', field: 'accountName' },
-    { id: 'status', label: 'Status', field: 'status' },
+    { id: 'direction', label: 'Direction', field: 'direction' },
+    { id: 'caller', label: 'Caller', field: 'callerNumber' },
+    { id: 'callee', label: 'Callee', field: 'calleeNumber' },
+    { id: 'trunk', label: 'Trunk', field: 'trunkName' },
+    { id: 'duration', label: 'Duration seconds', field: 'durationSeconds' },
+    { id: 'billsec', label: 'Bill seconds', field: 'billSeconds' },
+    { id: 'startedAt', label: 'Started at', field: 'startedAt', kind: 'datetime' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
   ],
   fields: [
     {
@@ -54,6 +66,13 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 1,
+    },
+    {
+      key: 'callId',
+      source: 'callId',
+      payloadKey: 'providerCallId',
+      label: 'Call-ID',
+      span: 2,
     },
     {
       key: 'callStatus',
@@ -71,13 +90,20 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'calleeNumber',
-      source: 'name',
+      source: 'calleeNumber',
       payloadKey: 'calleeNumber',
       label: 'Callee',
       required: true,
       span: 1,
     },
     { key: 'direction', source: 'direction', payloadKey: 'direction', label: 'Direction', span: 1 },
+    {
+      key: 'callerNumber',
+      source: 'callerNumber',
+      payloadKey: 'callerNumber',
+      label: 'Caller',
+      span: 1,
+    },
     {
       key: 'durationSeconds',
       source: 'durationSeconds',
@@ -150,7 +176,15 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
   }
 
   override statusLabel(value: unknown): string {
-    return String(value ?? '-');
+    const normalized = String(value ?? '').toLowerCase();
+    const labels: Record<string, string> = {
+      answered: 'Answered',
+      failed: 'Failed',
+      busy: 'Busy',
+      no_answer: 'No answer',
+      cancelled: 'Cancelled',
+    };
+    return labels[normalized] ?? String(value ?? '-');
   }
 
   override isActiveStatus(value: unknown): boolean {
