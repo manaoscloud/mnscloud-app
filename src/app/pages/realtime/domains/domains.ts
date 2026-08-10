@@ -77,7 +77,9 @@ const PURPOSE_OPTIONS = [
   { value: 'mixed', label: 'Mixed' },
 ];
 
-const PURPOSE_LABELS = Object.fromEntries(PURPOSE_OPTIONS.map((option) => [option.value, option.label]));
+const PURPOSE_LABELS = Object.fromEntries(
+  PURPOSE_OPTIONS.map((option) => [option.value, option.label]),
+);
 
 const RECORD_FIELDS: Field[] = [
   { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS },
@@ -86,7 +88,7 @@ const RECORD_FIELDS: Field[] = [
 ];
 
 const NOTES_FIELDS: Field[] = [
-  { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 8 },
+  { key: 'notes', label: 'Notes', type: 'textarea', span: 'span-4', rows: 4 },
 ];
 
 @Component({
@@ -143,14 +145,7 @@ export class RealtimeDomainsPage {
     required(schema.name);
     required(schema.purpose);
   });
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'purpose',
-    'status',
-    'updatedAt',
-    'actions',
-  ];
+  readonly displayedColumns = ['select', 'name', 'purpose', 'status', 'updatedAt', 'actions'];
 
   readonly recordFields = RECORD_FIELDS;
   readonly notesFields = NOTES_FIELDS;
@@ -385,7 +380,9 @@ export class RealtimeDomainsPage {
     );
     this.selected.set(failedIds);
     if (failed.length) {
-      this.snack.error(this.t('Selected realtime domains could not be deleted.', { count: failed.length }));
+      this.snack.error(
+        this.t('Selected realtime domains could not be deleted.', { count: failed.length }),
+      );
     } else {
       this.snack.success(this.t('Selected realtime domains deleted.'));
     }
