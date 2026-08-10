@@ -315,7 +315,10 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
       this.webRtcApi.list('servers', { status: 1, limit: 5000 }, this.resourceScope),
       this.resourceName === 'sip-targets'
         ? this.webRtcApi.list('domains', { status: 1, limit: 5000 }, this.resourceScope)
-        : this.webRtcApi.listRealtimeDomains({ limit: 5000, purpose: 'webrtc' }),
+        : this.webRtcApi.listRealtimeDomains(
+          { limit: 5000, purpose: 'webrtc', status: 1 },
+          this.resourceScope,
+        ),
       this.webRtcApi.listMediaServers({ status: 1, limit: 5000 }),
       needsSipTargets ? this.webRtcApi.listPabxAccounts({ status: 1, limit: 5000 }) : Promise.resolve({ data: { items: [] } }),
       needsSipTargets ? this.webRtcApi.listSoftswitchAccounts({ status: 1, limit: 5000 }) : Promise.resolve({ data: { items: [] } }),
