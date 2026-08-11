@@ -88,6 +88,7 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       label: 'Prefix',
       required: true,
       span: 1,
+      breakBefore: true,
       tab: 'record',
     },
     {
