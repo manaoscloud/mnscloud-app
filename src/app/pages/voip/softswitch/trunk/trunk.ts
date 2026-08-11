@@ -19,6 +19,13 @@ const authenticationModes: ConfigurableCrudOption[] = [
   { value: 'none', label: 'None' },
 ];
 
+const inboundAuthPolicies: ConfigurableCrudOption[] = [
+  { value: 'source_acl', label: 'Source ACL' },
+  { value: 'registered', label: 'Registered trunk' },
+  { value: 'registered_with_source_acl', label: 'Registered trunk + source ACL' },
+  { value: 'disabled', label: 'Inbound disabled' },
+];
+
 const trunkDirections: ConfigurableCrudOption[] = [
   { value: 'inbound', label: 'Inbound' },
   { value: 'outbound', label: 'Outbound' },
@@ -75,6 +82,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     { id: 'account', label: 'Softswitch', field: 'accountName' },
     { id: 'host', label: 'Host', field: 'host' },
     { id: 'authenticationMode', label: 'Authentication mode', field: 'authenticationMode' },
+    { id: 'inboundAuthPolicy', label: 'Inbound policy', field: 'inboundAuthPolicy' },
     { id: 'direction', label: 'Direction', field: 'direction' },
     { id: 'transport', label: 'Transport', field: 'transport' },
     { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
@@ -90,6 +98,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     transport: 'udp',
     port: 5060,
     authenticationMode: 'ip_acl',
+    inboundAuthPolicy: 'source_acl',
     outboundProxy: '',
     username: '',
     password: '',
@@ -140,6 +149,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     { key: 'transport', source: 'transport', payloadKey: 'transport', label: 'Transport', span: 1, tab: 'network' },
     { key: 'outboundProxy', source: 'outboundProxy', payloadKey: 'outboundProxy', label: 'Outbound proxy', span: 1, tab: 'network' },
     { key: 'authenticationMode', source: 'authenticationMode', payloadKey: 'authenticationMode', label: 'Authentication mode', type: 'select', options: authenticationModes, required: true, span: 1, tab: 'authentication' },
+    { key: 'inboundAuthPolicy', source: 'inboundAuthPolicy', payloadKey: 'inboundAuthPolicy', label: 'Inbound policy', type: 'select', options: inboundAuthPolicies, required: true, span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) === 'none' },
     { key: 'username', source: 'username', payloadKey: 'username', label: 'Username', requiredWhen: ({ values }) => String(values['authenticationMode']) === 'register', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
     { key: 'password', source: 'password', payloadKey: 'password', label: 'Password', type: 'password', requiredWhen: ({ values }) => String(values['authenticationMode']) === 'register', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
     { key: 'realm', source: 'realm', payloadKey: 'realm', label: 'Realm', span: 1, tab: 'authentication', hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'register' },
@@ -152,11 +162,11 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       label: 'Allowed source addresses',
       type: 'textarea',
       placeholder: '198.51.100.10, 203.0.113.0/24',
-      requiredWhen: ({ values }) => String(values['authenticationMode']) === 'ip_acl',
+      requiredWhen: ({ values }) => String(values['authenticationMode']) === 'ip_acl' || String(values['inboundAuthPolicy']) === 'registered_with_source_acl',
       span: 4,
       rows: 4,
       tab: 'authentication',
-      hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'ip_acl',
+      hiddenWhen: ({ values }) => String(values['authenticationMode']) !== 'ip_acl' && String(values['inboundAuthPolicy']) !== 'registered_with_source_acl',
     },
     { key: 'priority', source: 'priority', payloadKey: 'priority', label: 'Priority', type: 'number', span: 1, tab: 'limits' },
     { key: 'weight', source: 'weight', payloadKey: 'weight', label: 'Weight', type: 'number', span: 1, tab: 'limits' },
@@ -205,6 +215,9 @@ export class VoipSoftswitchTrunkPage extends ConfigurableCrudPageBase<Configurab
     return {
       ...payload,
       status: Number(payload['status']) === 1,
+      inboundAuthPolicy: String(payload['authenticationMode']) === 'none'
+        ? 'disabled'
+        : String(payload['inboundAuthPolicy'] || (String(payload['authenticationMode']) === 'register' ? 'registered' : 'source_acl')),
       codecs: codecList(payload['codecs']).join(',') || null,
     };
   }
