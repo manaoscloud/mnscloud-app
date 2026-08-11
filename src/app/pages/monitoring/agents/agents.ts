@@ -794,7 +794,7 @@ export class MonitoringAgentsPage {
     if (product.nodeCount <= 0) return 'No runtime reported';
     if (product.availableCount > 0) return 'Update';
     if (product.nodeCount > 0 && product.availableCount <= 0 && product.outdatedCount > 0) {
-      return 'Capability missing';
+      return 'Update unavailable';
     }
     if (product.outdatedCount > 0 || product.rolloutStatus === 'outdated') return 'Outdated';
     if (product.unknownCount > 0) return 'Check';
@@ -815,13 +815,10 @@ export class MonitoringAgentsPage {
     if (this.runtimeProductBusy(product)) return 'chip-skipped is-inactive';
     if ((product.failedCount ?? 0) > 0 || product.rolloutStatus === 'failed') return 'chip-danger';
     if (product.nodeCount <= 0) return 'chip-skipped is-inactive';
-    if (
-      product.availableCount > 0 ||
-      product.outdatedCount > 0 ||
-      product.rolloutStatus === 'outdated'
-    ) {
+    if (product.availableCount > 0 || product.rolloutStatus === 'outdated') {
       return 'chip-warning';
     }
+    if (product.outdatedCount > 0) return 'chip-skipped is-inactive';
     if (product.unknownCount > 0) return 'chip-skipped is-inactive';
     return 'chip-success is-active';
   }
@@ -835,7 +832,7 @@ export class MonitoringAgentsPage {
     if (product.availableCount > 0)
       return 'Update available for nodes with the required capability.';
     if (product.outdatedCount > 0 || product.rolloutStatus === 'outdated') {
-      return 'A newer release exists, but no node currently exposes the required update capability.';
+      return 'A newer release exists, but no Agent row can currently run the update for this product.';
     }
     if (product.unknownCount > 0) return 'Some nodes have incomplete runtime version data.';
     return 'All reporting nodes are on the latest release.';
