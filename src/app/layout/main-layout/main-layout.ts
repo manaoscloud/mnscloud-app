@@ -1482,7 +1482,7 @@ export class MainLayout {
             },
             {
               id: 'voip/softswitch/cdrs',
-              label: 'Call history',
+              label: 'CDR',
               icon: 'receipt_long',
               route: '/voip/softswitch/cdrs',
             },

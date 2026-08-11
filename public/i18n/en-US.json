@@ -3435,6 +3435,7 @@
   "No trunk statuses were returned.": "No trunk statuses were returned.",
   "Call history": "Call history",
   "Softswitch call history": "Softswitch call history",
+  "Softswitch CDR": "Softswitch CDR",
   "Inspect consolidated Softswitch call records collected from runtime events.": "Inspect consolidated Softswitch call records collected from runtime events.",
   "Call details": "Call details",
   "Inspect call routing, accounting and runtime event summary.": "Inspect call routing, accounting and runtime event summary.",

@@ -3435,6 +3435,7 @@
   "No trunk statuses were returned.": "No se devolvieron estados de troncales.",
   "Call history": "Historial de llamadas",
   "Softswitch call history": "Historial de llamadas Softswitch",
+  "Softswitch CDR": "CDR Softswitch",
   "Inspect consolidated Softswitch call records collected from runtime events.": "Consulte llamadas Softswitch consolidadas a partir de eventos de runtime.",
   "Call details": "Detalles de la llamada",
   "Inspect call routing, accounting and runtime event summary.": "Consulte enrutamiento, accounting y resumen de eventos de runtime de la llamada.",
