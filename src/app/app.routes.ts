@@ -1154,7 +1154,7 @@ export const routes: Routes = [
                   import('./pages/voip/softswitch/cdr-billing/cdr-billing').then(
                     (m) => m.VoipSoftswitchCdrBillingPage,
                   ),
-                title: 'VoIP • Softswitch • Call History | mnscloud',
+                title: 'VoIP • Softswitch • CDR | mnscloud',
               },
               {
                 path: 'voip/pabx',

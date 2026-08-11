@@ -12,7 +12,7 @@ import { ApiService } from '../../../../services/api.service';
 const CDR_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/softswitch/cdrs',
   uuidField: 'uuid',
-  pageTitle: 'Softswitch call history',
+  pageTitle: 'Softswitch CDR',
   pageDescription: 'Inspect consolidated Softswitch call records collected from runtime events.',
   createTitle: 'Call details',
   editTitle: 'Call details',
