@@ -9,6 +9,12 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
 
+const routeDirections: ConfigurableCrudOption[] = [
+  { value: 'inbound', label: 'Inbound' },
+  { value: 'outbound', label: 'Outbound' },
+  { value: 'both', label: 'Both' },
+];
+
 const ROUTE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/softswitch/routes',
   uuidField: 'uuid',
@@ -29,6 +35,9 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
+  tabLabels: {
+    record: 'Record',
+  },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
     { id: 'account', label: 'Softswitch', field: 'accountName' },
@@ -40,11 +49,19 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
     prefix: '',
     direction: 'outbound',
     trunkGroupUUID: '',
-    trunkUUID: '',
     priority: 100,
     status: 1,
   },
   fields: [
+    {
+      key: 'status',
+      source: 'status',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+      tab: 'record',
+    },
     {
       key: 'accountUUID',
       source: 'accountUUID',
@@ -53,16 +70,17 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 1,
+      tab: 'record',
     },
     {
-      key: 'status',
-      source: 'status',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
+      key: 'name',
+      source: 'name',
+      payloadKey: 'name',
+      label: 'Name',
+      required: true,
       span: 1,
+      tab: 'record',
     },
-    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
     {
       key: 'prefix',
       source: 'prefix',
@@ -70,8 +88,19 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       label: 'Prefix',
       required: true,
       span: 1,
+      tab: 'record',
     },
-    { key: 'direction', source: 'direction', payloadKey: 'direction', label: 'Direction', span: 1 },
+    {
+      key: 'direction',
+      source: 'direction',
+      payloadKey: 'direction',
+      label: 'Direction',
+      type: 'select',
+      options: routeDirections,
+      required: true,
+      span: 1,
+      tab: 'record',
+    },
     {
       key: 'trunkGroupUUID',
       source: 'trunkGroupUUID',
@@ -79,14 +108,7 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       label: 'Trunk group',
       type: 'search-select',
       span: 1,
-    },
-    {
-      key: 'trunkUUID',
-      source: 'trunkUUID',
-      payloadKey: 'trunkUUID',
-      label: 'Fallback trunk',
-      type: 'search-select',
-      span: 1,
+      tab: 'record',
     },
     {
       key: 'priority',
@@ -95,6 +117,7 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       label: 'Priority',
       type: 'number',
       span: 1,
+      tab: 'record',
     },
   ],
 };
@@ -110,7 +133,6 @@ export class VoipSoftswitchRoutePage extends ConfigurableCrudPageBase<Configurab
   private readonly rawApi = inject(ApiService);
 
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
-  readonly trunkOptions = signal<ConfigurableCrudOption[]>([]);
   readonly trunkGroupOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
@@ -120,14 +142,11 @@ export class VoipSoftswitchRoutePage extends ConfigurableCrudPageBase<Configurab
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return ['accountUUID', 'trunkUUID', 'trunkGroupUUID'].includes(field.key)
-      ? this.lookupLoading()
-      : false;
+    return ['accountUUID', 'trunkGroupUUID'].includes(field.key) ? this.lookupLoading() : false;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'accountUUID') return this.accountOptions();
-    if (key === 'trunkUUID') return this.trunkOptions();
     if (key === 'trunkGroupUUID') return this.trunkGroupOptions();
     return [];
   }
@@ -135,7 +154,7 @@ export class VoipSoftswitchRoutePage extends ConfigurableCrudPageBase<Configurab
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       ...payload,
-      trunkUUID: payload['trunkUUID'] || null,
+      trunkUUID: null,
       trunkGroupUUID: payload['trunkGroupUUID'] || null,
       status: Number(payload['status']) === 1,
     };
@@ -153,15 +172,8 @@ export class VoipSoftswitchRoutePage extends ConfigurableCrudPageBase<Configurab
           .filter(isOption)
           .sort((left, right) => left.label.localeCompare(right.label)) as ConfigurableCrudOption[],
       );
-      const [trunks, trunkGroups] = await Promise.all([
-        this.rawApi.get<any>('voip/softswitch/trunks?status=1&limit=5000&offset=0'),
-        this.rawApi.get<any>('voip/softswitch/trunk-groups?status=1&limit=5000&offset=0'),
-      ]);
-      this.trunkOptions.set(
-        extractItems(trunks)
-          .map((row) => option(row.uuid, row.name, [row.accountName, row.host]))
-          .filter(isOption)
-          .sort((left, right) => left.label.localeCompare(right.label)) as ConfigurableCrudOption[],
+      const trunkGroups = await this.rawApi.get<any>(
+        'voip/softswitch/trunk-groups?status=1&limit=5000&offset=0',
       );
       this.trunkGroupOptions.set(
         extractItems(trunkGroups)
