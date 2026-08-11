@@ -198,7 +198,14 @@ fetch_artifact() {
   fi
   [[ -n "$APP_ARTIFACT_URL" ]] || die "APP_ARTIFACT_URL or APP_ARTIFACT_PATH is required"
   [[ "$APP_ARTIFACT_URL" =~ ^https:// ]] || die "APP_ARTIFACT_URL must use HTTPS"
-  curl -fsSL --retry 3 --retry-delay 2 -o "$target" "$APP_ARTIFACT_URL"
+  curl -fsSL \
+    --connect-timeout "${APP_ARTIFACT_CONNECT_TIMEOUT_SECONDS:-15}" \
+    --max-time "${APP_ARTIFACT_MAX_TIME_SECONDS:-300}" \
+    --retry "${APP_ARTIFACT_RETRY_COUNT:-3}" \
+    --retry-delay "${APP_ARTIFACT_RETRY_DELAY_SECONDS:-2}" \
+    --retry-all-errors \
+    -o "$target" \
+    "$APP_ARTIFACT_URL"
 }
 
 verify_artifact() {
