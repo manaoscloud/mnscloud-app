@@ -1573,7 +1573,7 @@ export class MainLayout {
             {
               id: 'voip/pabx/cdr',
               label: 'CDR',
-              icon: 'history',
+              icon: 'receipt_long',
               route: '/voip/pabx/cdr',
             },
             {
