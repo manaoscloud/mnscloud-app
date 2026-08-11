@@ -75,19 +75,109 @@ const WEBRTC_SERVER_CONFIG: ConfigurableCrudConfig = {
   ],
   rowActions: [{ key: 'generate-install', label: 'Generate install command', icon: 'terminal' }],
   fields: [
-    { key: 'status', source: 'RwsStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'engine', source: 'RwsEngine', payloadKey: 'engine', label: 'Engine', type: 'select', options: [{ value: 'kamailio', label: 'Kamailio' }], span: 1 },
+    {
+      key: 'status',
+      source: 'RwsStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'engine',
+      source: 'RwsEngine',
+      payloadKey: 'engine',
+      label: 'Engine',
+      type: 'select',
+      options: [{ value: 'kamailio', label: 'Kamailio' }],
+      span: 1,
+    },
     { key: 'name', source: 'RwsName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Primary Domain', type: 'search-select', span: 1 },
-    { key: 'mediaServerUUID', source: 'RealtimeMediaServerRmsUUID', payloadKey: 'mediaServerUUID', label: 'Media Server', type: 'search-select', span: 1 },
-    { key: 'nodeUUID', source: 'RwsNodeUUID', payloadKey: 'nodeUUID', label: 'Node UUID', tab: 'network', span: 1 },
-    { key: 'hostname', source: 'RwsHostname', payloadKey: 'hostname', label: 'Hostname', tab: 'network', span: 1 },
-    { key: 'publicIP', source: 'RwsPublicIP', payloadKey: 'publicIP', label: 'Public IP', tab: 'network', span: 1 },
-    { key: 'privateIP', source: 'RwsPrivateIP', payloadKey: 'privateIP', label: 'Private IP', tab: 'network', span: 1 },
-    { key: 'baseUrl', source: 'RwsBaseUrl', payloadKey: 'baseUrl', label: 'Base URL', tab: 'network', span: 1 },
-    { key: 'version', source: 'RwsVersion', payloadKey: 'version', label: 'Version', tab: 'network', span: 1 },
-    { key: 'configJson', source: 'RwsConfig', payloadKey: 'config', label: 'Config JSON', type: 'textarea', format: 'json', tab: 'notes', span: 4, rows: 8 },
-    { key: 'notes', source: 'RwsNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'realtimeDomainUUID',
+      source: 'RealtimeDomainRtdUUID',
+      payloadKey: 'realtimeDomainUUID',
+      label: 'Primary Domain',
+      type: 'search-select',
+      span: 1,
+    },
+    {
+      key: 'mediaServerUUID',
+      source: 'RealtimeMediaServerRmsUUID',
+      payloadKey: 'mediaServerUUID',
+      label: 'Media Server',
+      type: 'search-select',
+      span: 1,
+    },
+    {
+      key: 'nodeUUID',
+      source: 'RwsNodeUUID',
+      payloadKey: 'nodeUUID',
+      label: 'Node UUID',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'hostname',
+      source: 'RwsHostname',
+      payloadKey: 'hostname',
+      label: 'Hostname',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'publicIP',
+      source: 'RwsPublicIP',
+      payloadKey: 'publicIP',
+      label: 'Public IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'privateIP',
+      source: 'RwsPrivateIP',
+      payloadKey: 'privateIP',
+      label: 'Private IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'baseUrl',
+      source: 'RwsBaseUrl',
+      payloadKey: 'baseUrl',
+      label: 'Base URL',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'version',
+      source: 'RwsVersion',
+      payloadKey: 'version',
+      label: 'Version',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'configJson',
+      source: 'RwsConfig',
+      payloadKey: 'config',
+      label: 'Config JSON',
+      type: 'textarea',
+      format: 'json',
+      tab: 'notes',
+      span: 4,
+      rows: 8,
+    },
+    {
+      key: 'notes',
+      source: 'RwsNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
 };
 
@@ -121,21 +211,77 @@ function webRtcDomainConfig(endpoint: string, titlePrefix = 'WebRTC'): Configura
       notes: '',
     },
     columns: [
-      { id: 'domain', label: 'Realtime Domain', kind: 'identity', field: 'RtdName', uuidField: 'RealtimeDomainRtdUUID' },
+      {
+        id: 'domain',
+        label: 'Realtime Domain',
+        kind: 'identity',
+        field: 'RtdName',
+        uuidField: 'RealtimeDomainRtdUUID',
+      },
       { id: 'server', label: 'Server', field: 'RwsName' },
       { id: 'certificateProvider', label: 'Certificate', field: 'RwdCertificateProvider' },
       { id: 'nginxStatus', label: 'Nginx', field: 'RwdNginxStatus' },
       { id: 'certificateStatus', label: 'TLS', field: 'RwdCertificateStatus' },
       { id: 'autoProvision', label: 'Auto', kind: 'boolean', field: 'RwdAutoProvision' },
-      { id: 'status', label: 'Status', kind: 'status', field: 'RwdStatus', className: 'status-col' },
+      {
+        id: 'status',
+        label: 'Status',
+        kind: 'status',
+        field: 'RwdStatus',
+        className: 'status-col',
+      },
     ],
     rowActions: [{ key: 'provision-domain', label: 'Provision domain', icon: 'cloud_sync' }],
     fields: [
-      { key: 'status', source: 'RwdStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-      { key: 'serverUUID', source: 'RealtimeWebRtcServerRwsUUID', payloadKey: 'serverUUID', label: 'Server', type: 'search-select', required: true, span: 1 },
-      { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'search-select', required: true, span: 1 },
-      { key: 'certificateProvider', source: 'RwdCertificateProvider', payloadKey: 'certificateProvider', label: 'Certificate Provider', type: 'select', options: [{ value: 'letsencrypt', label: 'Let’s Encrypt' }, { value: 'manual', label: 'Manual' }, { value: 'self_signed', label: 'Self-signed' }], span: 1 },
-      { key: 'notes', source: 'RwdNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+      {
+        key: 'status',
+        source: 'RwdStatus',
+        payloadKey: 'status',
+        label: 'Status',
+        type: 'status',
+        span: 1,
+      },
+      {
+        key: 'serverUUID',
+        source: 'RealtimeWebRtcServerRwsUUID',
+        payloadKey: 'serverUUID',
+        label: 'Server',
+        type: 'search-select',
+        required: true,
+        span: 1,
+      },
+      {
+        key: 'realtimeDomainUUID',
+        source: 'RealtimeDomainRtdUUID',
+        payloadKey: 'realtimeDomainUUID',
+        label: 'Realtime Domain',
+        type: 'search-select',
+        required: true,
+        span: 1,
+      },
+      {
+        key: 'certificateProvider',
+        source: 'RwdCertificateProvider',
+        payloadKey: 'certificateProvider',
+        label: 'Certificate Provider',
+        type: 'select',
+        options: [
+          { value: 'letsencrypt', label: 'Let’s Encrypt' },
+          { value: 'manual', label: 'Manual' },
+          { value: 'self_signed', label: 'Self-signed' },
+        ],
+        span: 1,
+      },
+      {
+        key: 'notes',
+        source: 'RwdNotes',
+        payloadKey: 'notes',
+        label: 'Notes',
+        type: 'textarea',
+        tab: 'notes',
+        span: 4,
+        rows: 4,
+      },
     ],
   };
 }
@@ -161,7 +307,14 @@ const WEBRTC_PARAMETER_CONFIG: ConfigurableCrudConfig = {
   activeValue: 1,
   inactiveValue: 0,
   statusOptions: STATUS_OPTIONS,
-  initialValues: { status: 1, serverUUID: '', key: '', type: 'string', valueJson: '', description: '' },
+  initialValues: {
+    status: 1,
+    serverUUID: '',
+    key: '',
+    type: 'string',
+    valueJson: '',
+    description: '',
+  },
   columns: [
     { id: 'key', label: 'Key', kind: 'identity', field: 'RwpKey', uuidField: 'RwpUUID' },
     { id: 'server', label: 'Server', field: 'RwsName' },
@@ -170,12 +323,58 @@ const WEBRTC_PARAMETER_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'RwpStatus', className: 'status-col' },
   ],
   fields: [
-    { key: 'serverUUID', source: 'RealtimeWebRtcServerRwsUUID', payloadKey: 'serverUUID', label: 'Server', type: 'search-select', span: 1 },
+    {
+      key: 'serverUUID',
+      source: 'RealtimeWebRtcServerRwsUUID',
+      payloadKey: 'serverUUID',
+      label: 'Server',
+      type: 'search-select',
+      span: 1,
+    },
     { key: 'key', source: 'RwpKey', payloadKey: 'key', label: 'Key', required: true, span: 1 },
-    { key: 'type', source: 'RwpType', payloadKey: 'type', label: 'Type', type: 'select', options: [{ value: 'string', label: 'String' }, { value: 'number', label: 'Number' }, { value: 'boolean', label: 'Boolean' }, { value: 'json', label: 'JSON' }], span: 1 },
-    { key: 'status', source: 'RwpStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'valueJson', source: 'RwpValue', payloadKey: 'value', label: 'Value', type: 'textarea', format: 'json', tab: 'notes', span: 4, rows: 4 },
-    { key: 'description', source: 'RwpDescription', payloadKey: 'description', label: 'Description', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'type',
+      source: 'RwpType',
+      payloadKey: 'type',
+      label: 'Type',
+      type: 'select',
+      options: [
+        { value: 'string', label: 'String' },
+        { value: 'number', label: 'Number' },
+        { value: 'boolean', label: 'Boolean' },
+        { value: 'json', label: 'JSON' },
+      ],
+      span: 1,
+    },
+    {
+      key: 'status',
+      source: 'RwpStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'valueJson',
+      source: 'RwpValue',
+      payloadKey: 'value',
+      label: 'Value',
+      type: 'textarea',
+      format: 'json',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
+    {
+      key: 'description',
+      source: 'RwpDescription',
+      payloadKey: 'description',
+      label: 'Description',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
 };
 
@@ -213,7 +412,13 @@ const WEBRTC_SIP_TARGET_CONFIG: ConfigurableCrudConfig = {
     notes: '',
   },
   columns: [
-    { id: 'webRtcDomain', label: 'WebRTC Domain', kind: 'identity', field: 'WebRtcDomainName', uuidField: 'RealtimeWebRtcDomainRwdUUID' },
+    {
+      id: 'webRtcDomain',
+      label: 'WebRTC Domain',
+      kind: 'identity',
+      field: 'WebRtcDomainName',
+      uuidField: 'RealtimeWebRtcDomainRwdUUID',
+    },
     { id: 'targetType', label: 'Target Type', field: 'RwtTargetType' },
     { id: 'pabxTarget', label: 'PABX Account', field: 'PabxAccountName' },
     { id: 'softswitchTarget', label: 'Softswitch Account', field: 'SoftswitchAccountName' },
@@ -224,16 +429,106 @@ const WEBRTC_SIP_TARGET_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'RwtStatus', className: 'status-col' },
   ],
   fields: [
-    { key: 'status', source: 'RwtStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'webRtcDomainUUID', source: 'RealtimeWebRtcDomainRwdUUID', payloadKey: 'webRtcDomainUUID', label: 'WebRTC Domain', type: 'search-select', required: true, span: 1 },
-    { key: 'targetType', source: 'RwtTargetType', payloadKey: 'targetType', label: 'Target Type', type: 'select', options: [{ value: 'pabx', label: 'PABX' }, { value: 'softswitch', label: 'Softswitch' }], required: true, span: 1 },
-    { key: 'pabxAccountUUID', source: 'VoipPabxAccountVpaUUID', payloadKey: 'pabxAccountUUID', label: 'PABX Account', type: 'search-select', requiredWhen: ({ values }) => values['targetType'] === 'pabx', hiddenWhen: ({ values }) => values['targetType'] !== 'pabx', span: 1 },
-    { key: 'softswitchAccountUUID', source: 'VoipSoftswitchAccountVssUUID', payloadKey: 'softswitchAccountUUID', label: 'Softswitch Account', type: 'search-select', requiredWhen: ({ values }) => values['targetType'] === 'softswitch', hiddenWhen: ({ values }) => values['targetType'] !== 'softswitch', span: 1 },
-    { key: 'host', source: 'RwtHost', payloadKey: 'host', label: 'SIP Host Override', tab: 'network', span: 1 },
-    { key: 'port', source: 'RwtPort', payloadKey: 'port', label: 'SIP Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'transport', source: 'RwtTransport', payloadKey: 'transport', label: 'Transport', type: 'select', options: [{ value: 'udp', label: 'UDP' }, { value: 'tcp', label: 'TCP' }, { value: 'tls', label: 'TLS' }], tab: 'network', span: 1 },
-    { key: 'priority', source: 'RwtPriority', payloadKey: 'priority', label: 'Priority', type: 'number', tab: 'network', span: 1 },
-    { key: 'notes', source: 'RwtNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'status',
+      source: 'RwtStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'webRtcDomainUUID',
+      source: 'RealtimeWebRtcDomainRwdUUID',
+      payloadKey: 'webRtcDomainUUID',
+      label: 'WebRTC Domain',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'targetType',
+      source: 'RwtTargetType',
+      payloadKey: 'targetType',
+      label: 'Target Type',
+      type: 'select',
+      options: [
+        { value: 'pabx', label: 'PABX' },
+        { value: 'softswitch', label: 'Softswitch' },
+      ],
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'pabxAccountUUID',
+      source: 'VoipPabxAccountVpaUUID',
+      payloadKey: 'pabxAccountUUID',
+      label: 'PABX Account',
+      type: 'search-select',
+      requiredWhen: ({ values }) => values['targetType'] === 'pabx',
+      hiddenWhen: ({ values }) => values['targetType'] !== 'pabx',
+      span: 1,
+    },
+    {
+      key: 'softswitchAccountUUID',
+      source: 'VoipSoftswitchAccountVssUUID',
+      payloadKey: 'softswitchAccountUUID',
+      label: 'Softswitch Account',
+      type: 'search-select',
+      requiredWhen: ({ values }) => values['targetType'] === 'softswitch',
+      hiddenWhen: ({ values }) => values['targetType'] !== 'softswitch',
+      span: 1,
+    },
+    {
+      key: 'host',
+      source: 'RwtHost',
+      payloadKey: 'host',
+      label: 'SIP Host Override',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'port',
+      source: 'RwtPort',
+      payloadKey: 'port',
+      label: 'SIP Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'transport',
+      source: 'RwtTransport',
+      payloadKey: 'transport',
+      label: 'Transport',
+      type: 'select',
+      options: [
+        { value: 'udp', label: 'UDP' },
+        { value: 'tcp', label: 'TCP' },
+        { value: 'tls', label: 'TLS' },
+      ],
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'priority',
+      source: 'RwtPriority',
+      payloadKey: 'priority',
+      label: 'Priority',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'notes',
+      source: 'RwtNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
 };
 
@@ -311,32 +606,64 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
 
   private async fetchLookupOptions() {
     const needsSipTargets = this.resourceName === 'sip-targets';
+    const needsServerLookups = this.resourceName === 'servers';
     const [servers, domains, mediaServers, pabxAccounts, softswitchAccounts] = await Promise.all([
       this.webRtcApi.list('servers', { status: 1, limit: 5000 }, this.resourceScope),
       this.resourceName === 'sip-targets'
         ? this.webRtcApi.list('domains', { status: 1, limit: 5000 }, this.resourceScope)
         : this.webRtcApi.listRealtimeDomains(
-          { limit: 5000, purpose: 'webrtc', status: 1 },
-          this.resourceScope,
-        ),
-      this.webRtcApi.listMediaServers({ status: 1, limit: 5000 }),
-      needsSipTargets ? this.webRtcApi.listPabxAccounts({ status: 1, limit: 5000 }) : Promise.resolve({ data: { items: [] } }),
-      needsSipTargets ? this.webRtcApi.listSoftswitchAccounts({ status: 1, limit: 5000 }) : Promise.resolve({ data: { items: [] } }),
+            { limit: 5000, purpose: 'webrtc', status: 1 },
+            this.resourceScope,
+          ),
+      needsServerLookups
+        ? this.webRtcApi.listMediaServers({ status: 1, limit: 5000 })
+        : Promise.resolve({ data: { items: [] } }),
+      needsSipTargets
+        ? this.webRtcApi.listPabxAccounts({ status: 1, limit: 5000 })
+        : Promise.resolve({ data: { items: [] } }),
+      needsSipTargets
+        ? this.webRtcApi.listSoftswitchAccounts({ status: 1, limit: 5000 })
+        : Promise.resolve({ data: { items: [] } }),
     ]);
     this.servers = this.toOptions(servers?.data?.items ?? [], 'RwsUUID', 'RwsName', 'RwsHostname');
     this.domains =
       this.resourceName === 'sip-targets'
         ? this.toOptions(domains?.data?.items ?? [], 'RwdUUID', 'RtdName', 'RwdUUID')
         : this.toOptions(domains?.data?.items ?? [], 'RtdUUID', 'RtdName', 'RtdPurpose');
-    this.mediaServers = this.toOptions(mediaServers?.data?.items ?? [], 'RmsUUID', 'RmsName', 'RmsControlIP');
-    this.pabxAccounts = this.toOptions(pabxAccounts?.data?.items ?? [], 'VpaUUID', 'VpaName', 'VpaID');
-    this.softswitchAccounts = this.toOptions(softswitchAccounts?.data?.items ?? [], 'VssUUID', 'VssName', 'VssID');
+    this.mediaServers = this.toOptions(
+      mediaServers?.data?.items ?? [],
+      'RmsUUID',
+      'RmsName',
+      'RmsControlIP',
+    );
+    this.pabxAccounts = this.toOptions(
+      pabxAccounts?.data?.items ?? [],
+      'VpaUUID',
+      'VpaName',
+      'VpaID',
+    );
+    this.softswitchAccounts = this.toOptions(
+      softswitchAccounts?.data?.items ?? [],
+      'VssUUID',
+      'VssName',
+      'VssID',
+    );
   }
 
-  private toOptions(rows: ConfigurableCrudRecord[], valueKey: string, labelKey: string, descriptionKey: string): ConfigurableCrudOption[] {
+  private toOptions(
+    rows: ConfigurableCrudRecord[],
+    valueKey: string,
+    labelKey: string,
+    descriptionKey: string,
+  ): ConfigurableCrudOption[] {
     return rows
       .map((row) => ({
-        value: String(row[valueKey] ?? row[`VoipPabxAccount${valueKey}`] ?? row[`VoipSoftswitchAccount${valueKey}`] ?? ''),
+        value: String(
+          row[valueKey] ??
+            row[`VoipPabxAccount${valueKey}`] ??
+            row[`VoipSoftswitchAccount${valueKey}`] ??
+            '',
+        ),
         label: String(row[labelKey] ?? row[valueKey] ?? ''),
         description: String(row[descriptionKey] ?? ''),
         searchText: `${row[labelKey] ?? ''} ${row[descriptionKey] ?? ''} ${row[valueKey] ?? ''}`,
