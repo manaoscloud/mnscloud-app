@@ -139,6 +139,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       label: 'Hostname',
       tab: 'network',
       span: 1,
+      breakBefore: true,
     },
     {
       key: 'publicIP',
