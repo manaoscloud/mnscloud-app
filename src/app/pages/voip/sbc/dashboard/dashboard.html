@@ -5,7 +5,8 @@
         <h1>{{ 'SBC dashboard' | transloco }}</h1>
         <p>
           {{
-            'Monitor SBC accounts, servers, interfaces, peers, pipes and manipulations.' | transloco
+            'Operational SBC statistics for runtime readiness, SIP topology and routing coverage.'
+              | transloco
           }}
         </p>
       </div>
@@ -21,38 +22,84 @@
         </div>
       }
 
+      <section class="summary-panel" aria-label="SBC operational summary">
+        <div>
+          <span>{{ 'Operational posture' | transloco }}</span>
+          <strong>{{ operationalSummary().state | transloco }}</strong>
+          <small>
+            {{ operationalSummary().ready }} / {{ operationalSummary().total }}
+            {{ 'readiness checks passing' | transloco }}
+          </small>
+        </div>
+        <mat-icon>verified</mat-icon>
+      </section>
+
       <div class="kpi-grid">
         @for (metric of metrics(); track metric.key) {
-          <a class="kpi-tile" [routerLink]="metric.route" [class.is-static]="!metric.route">
+          <article class="kpi-tile">
             <mat-icon>{{ metric.icon }}</mat-icon>
-            <span>{{ metric.label | transloco }}</span>
-            <strong>{{ metric.total }}</strong>
-            <small>{{ metric.active }} {{ 'Active' | transloco }}</small>
-          </a>
+            <div>
+              <span>{{ metric.label | transloco }}</span>
+              <strong>{{ metric.total }}</strong>
+              <small>
+                {{ metric.active }} {{ 'Active' | transloco }} · {{ metric.inactive }}
+                {{ 'Inactive' | transloco }}
+              </small>
+              <p>{{ metric.description | transloco }}</p>
+            </div>
+          </article>
         }
       </div>
 
-      <section class="dashboard-panel">
-        <div class="panel-header">
-          <div>
-            <h2>{{ 'SBC operations' | transloco }}</h2>
-            <p>{{ 'Use these shortcuts to keep the SBC topology complete.' | transloco }}</p>
+      <div class="dashboard-grid">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Readiness checks' | transloco }}</h2>
+              <p>{{ 'Required SBC building blocks for safe routing operation.' | transloco }}</p>
+            </div>
           </div>
-        </div>
 
-        <div class="action-grid">
-          @for (action of actions(); track action.key) {
-            <a class="action-tile" [routerLink]="action.route">
-              <mat-icon>{{ action.icon }}</mat-icon>
-              <div>
-                <strong>{{ action.label | transloco }}</strong>
-                <span>{{ action.description | transloco }}</span>
+          <div class="readiness-list">
+            @for (item of readiness(); track item.key) {
+              <article class="readiness-item" [class.is-ready]="item.ready">
+                <mat-icon>{{ item.ready ? 'check_circle' : 'error_outline' }}</mat-icon>
+                <div>
+                  <strong>{{ item.label | transloco }}</strong>
+                  <span>{{ item.description | transloco }}</span>
+                </div>
+                <small>{{ item.current }} / {{ item.required }}</small>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'Inventory coverage' | transloco }}</h2>
+              <p>{{ 'Active inventory ratio by SBC resource type.' | transloco }}</p>
+            </div>
+          </div>
+
+          <div class="inventory-table" role="table" aria-label="SBC inventory coverage">
+            <div class="inventory-row inventory-head" role="row">
+              <span role="columnheader">{{ 'Resource' | transloco }}</span>
+              <span role="columnheader">{{ 'Active' | transloco }}</span>
+              <span role="columnheader">{{ 'Inactive' | transloco }}</span>
+              <span role="columnheader">{{ 'Coverage' | transloco }}</span>
+            </div>
+            @for (row of inventory(); track row.key) {
+              <div class="inventory-row" role="row">
+                <strong role="cell">{{ row.label | transloco }}</strong>
+                <span role="cell">{{ row.active }} / {{ row.total }}</span>
+                <span role="cell">{{ row.inactive }}</span>
+                <span role="cell">{{ row.coverage }}%</span>
               </div>
-              <mat-icon>chevron_right</mat-icon>
-            </a>
-          }
-        </div>
-      </section>
+            }
+          </div>
+        </section>
+      </div>
     </div>
   </mat-card>
 </section>

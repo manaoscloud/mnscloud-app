@@ -1,10 +1,9 @@
 import { Component, computed, inject, resource } from '@angular/core';
 
-import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -18,15 +17,26 @@ type SbcMetric = {
   icon: string;
   total: number;
   active: number;
-  route: string | null;
+  inactive: number;
+  description: string;
 };
 
-type SbcAction = {
+type SbcReadinessItem = {
   key: string;
   label: string;
   description: string;
-  icon: string;
-  route: string | null;
+  ready: boolean;
+  current: number;
+  required: number;
+};
+
+type SbcInventoryRow = {
+  key: string;
+  label: string;
+  total: number;
+  active: number;
+  inactive: number;
+  coverage: number;
 };
 
 type SbcSnapshot = {
@@ -51,12 +61,10 @@ const EMPTY_SNAPSHOT: SbcSnapshot = {
   selector: 'app-voip-sbc-dashboard',
   standalone: true,
   imports: [
-    MatButtonModule,
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
     RefreshButtonComponent,
-    RouterLink,
     TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
@@ -75,95 +83,100 @@ export class VoipSbcDashboardPage {
 
   readonly snapshot = computed(() => this.snapshotResource.value() ?? EMPTY_SNAPSHOT);
   readonly loading = computed(() => this.snapshotResource.isLoading());
-  readonly baseRoute = computed(() =>
-    this.route.snapshot.data['scope'] === 'master' ? '/system/sbc' : '/voip/sbc',
-  );
+  readonly masterScope = computed(() => this.route.snapshot.data['scope'] === 'master');
   readonly metrics = computed<SbcMetric[]>(() => {
     const snapshot = this.snapshot();
-    const master = this.route.snapshot.data['scope'] === 'master';
-    if (master) {
+    if (this.masterScope()) {
       return [
-        this.metric('servers', 'Servers', 'dns', snapshot.servers, 'VbsStatus', 'server'),
+        this.metric(
+          'servers',
+          'Runtime nodes',
+          'dns',
+          snapshot.servers,
+          'VbsStatus',
+          'Authorized SBC runtime servers available to tenants.',
+        ),
         this.metric(
           'interfaces',
-          'Interfaces',
+          'SIP interfaces',
           'settings_input_component',
           snapshot.interfaces,
           'VsiStatus',
-          'interface',
+          'Listening interfaces prepared for inbound and outbound SIP traffic.',
+        ),
+        this.metric(
+          'readiness',
+          'Operational readiness',
+          'verified',
+          this.readinessRows(),
+          'ready',
+          'Required SBC master-side building blocks currently ready.',
         ),
       ];
     }
     return [
       this.metric(
         'accounts',
-        'SBC',
+        'Tenant SBC accounts',
         'settings_input_component',
         snapshot.accounts,
         'VsaStatus',
-        'account',
+        'Tenant SBC assignments linked to authorized runtime servers.',
       ),
       this.metric(
         'peers',
-        'Peers',
+        'SIP peers',
         'settings_ethernet',
         snapshot.peers,
         'VspStatus',
-        'peer',
+        'Inbound and outbound SIP interconnections configured for the tenant.',
       ),
-      this.metric('pipes', 'Pipes', 'schema', snapshot.pipes, 'VbpStatus', 'pipe'),
+      this.metric(
+        'pipes',
+        'Traffic pipes',
+        'schema',
+        snapshot.pipes,
+        'VbpStatus',
+        'Routing pipes that bind matched traffic to output destinations.',
+      ),
       this.metric(
         'manipulations',
-        'Manipulations',
+        'Manipulation rules',
         'transform',
         snapshot.manipulations,
         'VsmStatus',
-        'manipulation',
+        'Number and SIP header manipulation rules available to routing pipes.',
       ),
     ];
   });
-  readonly actions = computed<SbcAction[]>(() => {
-    const master = this.route.snapshot.data['scope'] === 'master';
-    return master
+  readonly readiness = computed<SbcReadinessItem[]>(() => this.readinessRows());
+  readonly inventory = computed<SbcInventoryRow[]>(() => {
+    const snapshot = this.snapshot();
+    const rows = this.masterScope()
       ? [
-          {
-            key: 'interface',
-            label: 'Interfaces',
-            description: 'Configure SIP listening interfaces.',
-            icon: 'settings_input_component',
-            route: `${this.baseRoute()}/interface`,
-          },
-          {
-            key: 'server',
-            label: 'Servers',
-            description: 'Register authorized SBC runtime nodes.',
-            icon: 'dns',
-            route: `${this.baseRoute()}/server`,
-          },
+          this.inventoryRow('servers', 'Runtime nodes', snapshot.servers, 'VbsStatus'),
+          this.inventoryRow('interfaces', 'SIP interfaces', snapshot.interfaces, 'VsiStatus'),
         ]
       : [
-          {
-            key: 'account',
-            label: 'SBC',
-            description: 'Select the authorized SBC server for this tenant.',
-            icon: 'settings_input_component',
-            route: `${this.baseRoute()}/account`,
-          },
-          {
-            key: 'peer',
-            label: 'Peers',
-            description: 'Configure SIP interconnections and authentication.',
-            icon: 'settings_ethernet',
-            route: `${this.baseRoute()}/peer`,
-          },
-          {
-            key: 'pipe',
-            label: 'Pipes',
-            description: 'Bind inbound peers to outbound SIP destinations.',
-            icon: 'schema',
-            route: `${this.baseRoute()}/pipe`,
-          },
+          this.inventoryRow('accounts', 'Tenant SBC accounts', snapshot.accounts, 'VsaStatus'),
+          this.inventoryRow('servers', 'Runtime nodes', snapshot.servers, 'VbsStatus'),
+          this.inventoryRow('peers', 'SIP peers', snapshot.peers, 'VspStatus'),
+          this.inventoryRow('pipes', 'Traffic pipes', snapshot.pipes, 'VbpStatus'),
+          this.inventoryRow(
+            'manipulations',
+            'Manipulation rules',
+            snapshot.manipulations,
+            'VsmStatus',
+          ),
         ];
+    return rows;
+  });
+  readonly operationalSummary = computed(() => {
+    const readiness = this.readiness();
+    const ready = readiness.filter((item) => item.ready).length;
+    const total = readiness.length;
+    const state = total > 0 && ready === total ? 'Ready' : ready > 0 ? 'Partial' : 'Attention';
+    return { ready, total, state };
   });
 
   refresh(): void {
@@ -172,7 +185,7 @@ export class VoipSbcDashboardPage {
 
   private async loadSnapshot(): Promise<SbcSnapshot> {
     try {
-      const master = this.route.snapshot.data['scope'] === 'master';
+      const master = this.masterScope();
       const [accounts, servers, interfaces, peers, pipes, manipulations] = await Promise.all([
         master
           ? Promise.resolve([])
@@ -209,21 +222,109 @@ export class VoipSbcDashboardPage {
     icon: string,
     rows: any[],
     statusField: string,
-    routeSegment: string,
+    description: string,
   ): SbcMetric {
-    const master = this.route.snapshot.data['scope'] === 'master';
-    const route =
-      master && !['server', 'interface'].includes(routeSegment)
-        ? null
-        : `${this.baseRoute()}/${routeSegment}`;
+    const active = rows.filter((row) => this.isActive(row?.[statusField])).length;
     return {
       key,
       label,
       icon,
       total: rows.length,
-      active: rows.filter((row) => Number(row?.[statusField]) === 1).length,
-      route,
+      active,
+      inactive: Math.max(rows.length - active, 0),
+      description,
     };
+  }
+
+  private inventoryRow(
+    key: string,
+    label: string,
+    rows: any[],
+    statusField: string,
+  ): SbcInventoryRow {
+    const active = rows.filter((row) => this.isActive(row?.[statusField])).length;
+    const total = rows.length;
+    return {
+      key,
+      label,
+      total,
+      active,
+      inactive: Math.max(total - active, 0),
+      coverage: total > 0 ? Math.round((active / total) * 100) : 0,
+    };
+  }
+
+  private readinessRows(): SbcReadinessItem[] {
+    const snapshot = this.snapshot();
+    if (this.masterScope()) {
+      const activeServers = this.activeCount(snapshot.servers, 'VbsStatus');
+      const activeInterfaces = this.activeCount(snapshot.interfaces, 'VsiStatus');
+      return [
+        {
+          key: 'runtime-node',
+          label: 'Runtime node available',
+          description: 'At least one authorized SBC runtime server is active.',
+          ready: activeServers >= 1,
+          current: activeServers,
+          required: 1,
+        },
+        {
+          key: 'sip-interface',
+          label: 'SIP interface available',
+          description: 'At least one SIP listening interface is active.',
+          ready: activeInterfaces >= 1,
+          current: activeInterfaces,
+          required: 1,
+        },
+      ];
+    }
+
+    const activeAccounts = this.activeCount(snapshot.accounts, 'VsaStatus');
+    const activeServers = this.activeCount(snapshot.servers, 'VbsStatus');
+    const activePeers = this.activeCount(snapshot.peers, 'VspStatus');
+    const activePipes = this.activeCount(snapshot.pipes, 'VbpStatus');
+    return [
+      {
+        key: 'tenant-account',
+        label: 'Tenant SBC assigned',
+        description: 'At least one tenant SBC account is active and linked to a runtime server.',
+        ready: activeAccounts >= 1,
+        current: activeAccounts,
+        required: 1,
+      },
+      {
+        key: 'runtime-node',
+        label: 'Runtime node reachable',
+        description: 'At least one authorized runtime server is visible to this tenant.',
+        ready: activeServers >= 1,
+        current: activeServers,
+        required: 1,
+      },
+      {
+        key: 'sip-peer',
+        label: 'SIP peer configured',
+        description: 'At least one active SIP peer exists for interconnection.',
+        ready: activePeers >= 1,
+        current: activePeers,
+        required: 1,
+      },
+      {
+        key: 'traffic-pipe',
+        label: 'Traffic pipe configured',
+        description: 'At least one active pipe can route matched traffic.',
+        ready: activePipes >= 1,
+        current: activePipes,
+        required: 1,
+      },
+    ];
+  }
+
+  private activeCount(rows: any[], statusField: string): number {
+    return rows.filter((row) => this.isActive(row?.[statusField])).length;
+  }
+
+  private isActive(value: unknown): boolean {
+    return value === true || Number(value) === 1 || String(value).toLowerCase() === 'active';
   }
 }
 

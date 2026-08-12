@@ -5,55 +5,98 @@
     gap: 1rem;
   }
 
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.75rem;
-  }
-
+  .summary-panel,
   .kpi-tile,
   .dashboard-panel {
     border: 1px solid var(--mat-sys-color-outline-variant);
-    border-radius: 8px;
+    border-radius: 12px;
     background: var(--mat-sys-color-surface);
   }
 
-  .kpi-tile {
+  .summary-panel {
     align-items: center;
-    color: inherit;
     display: flex;
-    gap: 0.75rem;
-    min-height: 86px;
-    padding: 0.9rem;
-    text-decoration: none;
-
-    mat-icon {
-      color: var(--mat-sys-color-primary);
-    }
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
 
     span,
     small {
       color: var(--mat-sys-color-on-surface-variant);
       display: block;
-      font-size: 0.78rem;
-      line-height: 1.1rem;
+      font-size: 0.8rem;
+      line-height: 1.2rem;
     }
 
     strong {
       display: block;
-      font-size: 1.35rem;
-      line-height: 1.45rem;
+      font-size: 1.55rem;
+      line-height: 1.85rem;
     }
 
-    &.is-static {
-      pointer-events: none;
+    mat-icon {
+      color: var(--mat-sys-color-primary);
+      font-size: 2rem;
+      height: 2rem;
+      width: 2rem;
     }
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .kpi-tile {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.8rem;
+    min-height: 132px;
+    padding: 1rem;
+
+    mat-icon {
+      color: var(--mat-sys-color-primary);
+      margin-top: 0.15rem;
+    }
+
+    div {
+      min-width: 0;
+    }
+
+    span,
+    small,
+    p {
+      color: var(--mat-sys-color-on-surface-variant);
+      display: block;
+      font-size: 0.78rem;
+      line-height: 1.15rem;
+    }
+
+    strong {
+      display: block;
+      font-size: 1.6rem;
+      line-height: 1.8rem;
+      margin: 0.2rem 0;
+    }
+
+    p {
+      margin: 0.45rem 0 0;
+    }
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem;
   }
 
   .dashboard-panel {
     display: grid;
+    align-content: start;
     gap: 1rem;
     padding: 1rem;
+    min-width: 0;
   }
 
   .panel-header {
@@ -71,25 +114,25 @@
     }
   }
 
-  .action-grid {
+  .readiness-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 0.75rem;
   }
 
-  .action-tile {
+  .readiness-item {
     align-items: center;
     border: 1px solid var(--mat-sys-color-outline-variant);
-    border-radius: 8px;
-    color: inherit;
+    border-radius: 10px;
     display: grid;
     gap: 0.75rem;
-    grid-template-columns: auto 1fr auto;
-    min-width: 0;
-    padding: 0.9rem;
-    text-decoration: none;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0.85rem;
 
     mat-icon {
+      color: var(--mat-sys-color-error);
+    }
+
+    &.is-ready mat-icon {
       color: var(--mat-sys-color-primary);
     }
 
@@ -99,25 +142,64 @@
       min-width: 0;
     }
 
-    span {
+    span,
+    small {
       color: var(--mat-sys-color-on-surface-variant);
       font-size: 0.78rem;
       line-height: 1.1rem;
     }
   }
+
+  .inventory-table {
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .inventory-row {
+    align-items: center;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: minmax(140px, 1.4fr) repeat(3, minmax(72px, 0.55fr));
+    padding: 0.75rem 0.85rem;
+
+    & + .inventory-row {
+      border-top: 1px solid var(--mat-sys-color-outline-variant);
+    }
+
+    span,
+    strong {
+      min-width: 0;
+    }
+  }
+
+  .inventory-head {
+    background: var(--mat-sys-color-surface-container-highest);
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
 }
 
-@media (max-width: 960px) {
-  .sbc-dashboard .kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 1100px) {
+  .sbc-dashboard .dashboard-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
   .sbc-dashboard {
-    .kpi-grid,
-    .action-grid {
+    .kpi-grid {
       grid-template-columns: 1fr;
+    }
+
+    .inventory-table {
+      overflow-x: auto;
+    }
+
+    .inventory-row {
+      min-width: 560px;
     }
   }
 }
