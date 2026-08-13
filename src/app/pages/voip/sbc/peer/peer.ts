@@ -84,7 +84,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       {
         key: 'runtime-status-all',
         label: 'Peers',
-        tooltip: 'Inspect all SBC peer statuses',
+        tooltip: 'Inspect SBC peer statuses for the selected account',
         icon: 'hub',
       },
     ],
@@ -134,6 +134,17 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
     maxConcurrentCalls: 0,
     cpsLimit: 0,
   },
+  listFilters: [
+    {
+      key: 'accountUUID',
+      label: 'SBC',
+      type: 'search-select',
+      paramKey: 'accountUUID',
+      span: 1,
+      placeholder: 'Search SBC',
+      emptyLabel: 'No SBC accounts found.',
+    },
+  ],
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'VspName', uuidField: 'VspUUID' },
     {
@@ -542,15 +553,35 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     });
   }
 
+  override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean {
+    return action.key === 'runtime-status-all' && !this.selectedAccountUUID();
+  }
+
   override handleFilterAction(action: ConfigurableCrudFilterAction): void {
     if (action.key !== 'runtime-status-all') return;
+    const accountUUID = this.selectedAccountUUID();
+    if (!accountUUID) {
+      this.snack.warning(this.t('Select an SBC account before inspecting its runtime status.'));
+      return;
+    }
+    const query = encodeURIComponent(accountUUID);
     void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
       title: 'SBC peers runtime status',
       description: 'Reads the latest runtime registration and health reported by the SBC edge.',
-      startEndpoint: 'voip/sbc/peers/runtime-status',
-      statusEndpoint: () => 'voip/sbc/peers/runtime-status',
+      startEndpoint: `voip/sbc/peers/runtime-status?accountUUID=${query}`,
+      statusEndpoint: () => `voip/sbc/peers/runtime-status?accountUUID=${query}`,
       sections: peerStatusSections,
     });
+  }
+
+  private selectedAccountUUID(): string {
+    return String(
+      this.listFilterValue({
+        key: 'accountUUID',
+        label: 'SBC',
+        type: 'search-select',
+      }) ?? '',
+    ).trim();
   }
 
   private async loadLookups(): Promise<void> {
