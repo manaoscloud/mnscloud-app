@@ -19,12 +19,6 @@ const YES_NO_OPTIONS = [
   { value: 1, label: 'Yes' },
   { value: 0, label: 'No' },
 ];
-const PEER_TYPE_OPTIONS = [
-  { value: 'carrier', label: 'Carrier' },
-  { value: 'pbx', label: 'PABX' },
-  { value: 'customer', label: 'Customer' },
-  { value: 'internal', label: 'Internal' },
-];
 const AUTH_MODE_OPTIONS = [
   { value: 'ip', label: 'IP' },
   { value: 'register', label: 'Register' },
@@ -81,7 +75,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     status: 1,
     accountUUID: '',
-    peerType: 'carrier',
     authMode: 'ip',
     signalingProfile: 'sip',
     mediaMode: 'passthrough',
@@ -143,15 +136,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'status',
       label: 'Status',
       type: 'status',
-      span: 1,
-    },
-    {
-      key: 'peerType',
-      source: 'VspPeerType',
-      payloadKey: 'peerType',
-      label: 'Destination type',
-      type: 'select',
-      options: PEER_TYPE_OPTIONS,
       span: 1,
     },
     {
