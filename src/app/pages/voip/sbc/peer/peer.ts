@@ -1,11 +1,16 @@
 import { Component, inject, signal } from '@angular/core';
 
+import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
+import type { RuntimeDiagnosticResult } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
+
 import { ApiService } from '../../../../services/api.service';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
+  ConfigurableCrudFilterAction,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
@@ -72,6 +77,26 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
   tabLabels: {
     monitoring: 'Monitoring',
   },
+  filterActionMenu: {
+    label: 'Status',
+    icon: 'monitor_heart',
+    actions: [
+      {
+        key: 'runtime-status-all',
+        label: 'Peers',
+        tooltip: 'Inspect all SBC peer statuses',
+        icon: 'hub',
+      },
+    ],
+  },
+  rowActions: [
+    {
+      key: 'runtime-status',
+      label: 'Runtime status',
+      tooltip: 'Inspect SBC peer runtime status',
+      icon: 'terminal',
+    },
+  ],
   initialValues: {
     status: 1,
     accountUUID: '',
@@ -503,6 +528,31 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     };
   }
 
+
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key !== 'runtime-status') return;
+    const uuid = String(row['VspUUID'] ?? '').trim();
+    if (!uuid) return;
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'SBC peer runtime status',
+      description: 'Reads the latest runtime registration and health reported by the SBC edge.',
+      startEndpoint: `voip/sbc/peers/${uuid}/runtime-status`,
+      statusEndpoint: () => `voip/sbc/peers/${uuid}/runtime-status`,
+      sections: peerStatusSections,
+    });
+  }
+
+  override handleFilterAction(action: ConfigurableCrudFilterAction): void {
+    if (action.key !== 'runtime-status-all') return;
+    void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
+      title: 'SBC peers runtime status',
+      description: 'Reads the latest runtime registration and health reported by the SBC edge.',
+      startEndpoint: 'voip/sbc/peers/runtime-status',
+      statusEndpoint: () => 'voip/sbc/peers/runtime-status',
+      sections: peerStatusSections,
+    });
+  }
+
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
@@ -558,4 +608,54 @@ function option(
     description,
     searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
   };
+}
+
+
+function peerStatusSections(result: RuntimeDiagnosticResult) {
+  const peers = Array.isArray(result.result?.['peers']) ? result.result['peers'] : [];
+  return [
+    {
+      title: 'Peer statuses',
+      table: {
+        columns: [
+          { key: 'peer', label: 'Peer' },
+          { key: 'sbc', label: 'SBC' },
+          { key: 'registration', label: 'Registration', translate: true },
+          { key: 'health', label: 'Health', translate: true },
+          { key: 'code', label: 'Code' },
+          { key: 'message', label: 'Message' },
+          { key: 'retry', label: 'Next retry' },
+        ],
+        rows: peers.map((item) => ({
+          peer: item['name'] ?? '-',
+          sbc: item['accountName'] ?? item['serverName'] ?? '-',
+          registration: peerRegistrationLabel(item['registrationStatus']),
+          health: peerHealthLabel(item['healthStatus']),
+          code: item['registrationLastCode'] ?? item['healthLastCode'] ?? '-',
+          message: item['registrationLastMessage'] ?? item['healthLastMessage'] ?? '-',
+          retry: item['registrationNextRetryAt'] ?? '-',
+        })),
+        emptyLabel: 'No peer statuses were returned.',
+      },
+    },
+  ];
+}
+
+function peerRegistrationLabel(value: unknown): string {
+  const status = String(value ?? '').toLowerCase();
+  if (status === 'registered') return 'Registered';
+  if (status === 'registering') return 'Registering';
+  if (status === 'pending') return 'Pending';
+  if (status === 'failed') return 'Failed';
+  if (status === 'expired') return 'Expired';
+  if (status === 'disabled') return 'Disabled';
+  return 'Unknown';
+}
+
+function peerHealthLabel(value: unknown): string {
+  const status = String(value ?? '').toLowerCase();
+  if (status === 'reachable') return 'Reachable';
+  if (status === 'unreachable') return 'Unreachable';
+  if (status === 'degraded') return 'Degraded';
+  return 'Unknown';
 }
