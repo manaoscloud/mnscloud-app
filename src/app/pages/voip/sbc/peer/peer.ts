@@ -28,7 +28,6 @@ const PEER_TYPE_OPTIONS = [
 const AUTH_MODE_OPTIONS = [
   { value: 'ip', label: 'IP' },
   { value: 'register', label: 'Register' },
-  { value: 'ip_digest', label: 'IP + Digest' },
   { value: 'none', label: 'None' },
 ];
 const SIGNALING_PROFILE_OPTIONS = [
@@ -129,13 +128,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
     { id: 'authMode', label: 'Auth mode', field: 'VspAuthMode' },
     { id: 'signalingProfile', label: 'Signaling', field: 'VspSignalingProfile' },
     {
-      id: 'register',
-      label: 'Register',
-      kind: 'boolean',
-      field: 'VspRegisterEnabled',
-      className: 'status-col',
-    },
-    {
       id: 'cdr',
       label: 'CDR',
       kind: 'boolean',
@@ -183,17 +175,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'registerEnabled',
-      source: 'VspRegisterEnabled',
-      payloadKey: 'registerEnabled',
-      label: 'Register',
-      type: 'select',
-      options: YES_NO_OPTIONS,
-      tab: 'authentication',
-      span: 1,
-      hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
-    },
-    {
       key: 'authUsername',
       source: 'VspAuthUsername',
       payloadKey: 'authUsername',
@@ -209,7 +190,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       autocomplete: 'new-password',
-      hiddenWhen: ({ values }) => !['register', 'ip_digest'].includes(String(values['authMode'])),
+      hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
     },
     {
       key: 'fromDomain',
@@ -231,7 +212,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       rows: 4,
       placeholder:
         'One address per line. Example: 200.215.239.234, 200.215.239.0/24, 2804:8094::/48',
-      hiddenWhen: ({ values }) => !['ip', 'ip_digest', 'register'].includes(String(values['authMode'])),
+      hiddenWhen: ({ values }) => !['ip', 'register'].includes(String(values['authMode'])),
     },
     {
       key: 'registrarHost',
@@ -520,7 +501,7 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       ...payload,
       port: Number(payload['port'] || 0),
       registrarPort: Number(payload['registrarPort'] || 0) || null,
-      registerEnabled: Number(payload['registerEnabled']) === 1,
+      registerEnabled: String(payload['authMode']) === 'register',
       registerExpires: Number(payload['registerExpires'] || 3600),
       registerRetryInterval: Number(payload['registerRetryInterval'] || 60),
       registerMaxRetryInterval: Number(payload['registerMaxRetryInterval'] || 600),
