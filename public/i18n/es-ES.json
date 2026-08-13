@@ -2860,7 +2860,6 @@
   "Allowed source addresses": "Direcciones de origen permitidas",
   "Origin domain": "Dominio de origen",
   "One address per line. Example: 200.215.239.234, 200.215.239.0/24, 2804:8094::/48": "Una dirección por línea. Ejemplo: 200.215.239.234, 200.215.239.0/24, 2804:8094::/48",
-  "IP + Digest": "IP + Digest",
   "Anchor": "Anclar media",
   "Brazil custom": "Brasil personalizado",
   "Generate": "Generar",
