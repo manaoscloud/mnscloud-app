@@ -64,6 +64,10 @@ const SOURCE_TRANSPORT_OPTIONS = [
   { value: 'tls', label: 'TLS' },
 ];
 const TRANSPORT_OPTIONS = SOURCE_TRANSPORT_OPTIONS.filter((option) => option.value !== '');
+const DESTINATION_MODE_OPTIONS = [
+  { value: 'peer', label: 'Peer' },
+  { value: 'manual', label: 'Manual host' },
+];
 
 const PIPE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/sbc/pipes',
@@ -89,7 +93,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     record: 'Registration',
     network: 'Media',
     match: 'Input',
-    authentication: 'Outbound',
+    authentication: 'Destination',
     codecs: 'Codecs',
   },
   initialValues: {
@@ -97,6 +101,8 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     accountUUID: '',
     interfaceUUID: '',
     inputPeerUUID: '',
+    destinationMode: 'peer',
+    outputPeerUUID: '',
     outputHost: '',
     outputPort: 5060,
     outputTransport: 'udp',
@@ -141,14 +147,22 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
     },
     {
       id: 'inputPeer',
-      label: 'Inbound peer',
+      label: 'Origin peer',
       kind: 'related',
       uuidField: 'VoipSbcInputPeerVspUUID',
       lookupKey: 'inputPeerUUID',
     },
-    { id: 'outputHost', label: 'Outbound host', field: 'VbpOutputHost' },
-    { id: 'outputPort', label: 'Outbound port', field: 'VbpOutputPort' },
-    { id: 'outputTransport', label: 'Outbound transport', field: 'VbpOutputTransport' },
+    {
+      id: 'outputPeer',
+      label: 'Destination peer',
+      kind: 'related',
+      uuidField: 'VoipSbcOutputPeerVspUUID',
+      lookupKey: 'outputPeerUUID',
+    },
+    { id: 'destinationMode', label: 'Destination mode', field: 'VbpDestinationMode' },
+    { id: 'outputHost', label: 'Manual destination host', field: 'VbpOutputHost' },
+    { id: 'outputPort', label: 'Manual destination port', field: 'VbpOutputPort' },
+    { id: 'outputTransport', label: 'Manual destination transport', field: 'VbpOutputTransport' },
     { id: 'direction', label: 'Direction', field: 'VbpDirection' },
     { id: 'destination', label: 'Destination pattern', field: 'VbpDestinationPattern' },
     { id: 'mediaMode', label: 'Media mode', field: 'VbpMediaMode' },
@@ -205,40 +219,64 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'outputHost',
-      source: 'VbpOutputHost',
-      payloadKey: 'outputHost',
-      label: 'Outbound host',
+      key: 'destinationMode',
+      source: 'VbpDestinationMode',
+      payloadKey: 'destinationMode',
+      label: 'Destination mode',
+      type: 'select',
+      options: DESTINATION_MODE_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'outputPeerUUID',
+      source: 'VoipSbcOutputPeerVspUUID',
+      payloadKey: 'outputPeerUUID',
+      label: 'Destination peer',
+      type: 'search-select',
       required: true,
       tab: 'authentication',
       span: 1,
+      hiddenWhen: ({ values }) => String(values['destinationMode'] || 'peer') !== 'peer',
+    },
+    {
+      key: 'outputHost',
+      source: 'VbpOutputHost',
+      payloadKey: 'outputHost',
+      label: 'Manual destination host',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => String(values['destinationMode'] || 'peer') !== 'manual',
     },
     {
       key: 'outputPort',
       source: 'VbpOutputPort',
       payloadKey: 'outputPort',
-      label: 'Outbound port',
+      label: 'Manual destination port',
       type: 'number',
       tab: 'authentication',
       span: 1,
+      hiddenWhen: ({ values }) => String(values['destinationMode'] || 'peer') !== 'manual',
     },
     {
       key: 'outputTransport',
       source: 'VbpOutputTransport',
       payloadKey: 'outputTransport',
-      label: 'Outbound transport',
+      label: 'Manual destination transport',
       type: 'select',
       options: TRANSPORT_OPTIONS,
       tab: 'authentication',
       span: 1,
+      hiddenWhen: ({ values }) => String(values['destinationMode'] || 'peer') !== 'manual',
     },
     {
       key: 'outputFailoverHost',
       source: 'VbpOutputFailoverHost',
       payloadKey: 'outputFailoverHost',
-      label: 'Outbound failover host',
+      label: 'Manual failover host',
       tab: 'authentication',
       span: 1,
+      hiddenWhen: ({ values }) => String(values['destinationMode'] || 'peer') !== 'manual',
     },
     {
       key: 'direction',
@@ -442,7 +480,7 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return ['accountUUID', 'interfaceUUID', 'inputPeerUUID'].includes(field.key)
+    return ['accountUUID', 'interfaceUUID', 'inputPeerUUID', 'outputPeerUUID'].includes(field.key)
       ? this.lookupLoading()
       : false;
   }
@@ -450,7 +488,7 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'accountUUID') return this.accountOptions();
     if (key === 'interfaceUUID') return this.interfaceOptions();
-    if (key === 'inputPeerUUID') return this.peerOptions();
+    if (key === 'inputPeerUUID' || key === 'outputPeerUUID') return this.peerOptions();
     return [];
   }
 
@@ -469,6 +507,9 @@ export class VoipSbcPipePage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       allowedCodecs: arrayToCsv(payload['allowedCodecs']),
       preferredCodecs: arrayToCsv(payload['preferredCodecs']),
       transcodeCodecs: arrayToCsv(payload['transcodeCodecs']),
+      outputPeerUUID:
+        String(payload['destinationMode'] || 'peer') === 'peer' ? payload['outputPeerUUID'] : null,
+      outputHost: String(payload['destinationMode'] || 'peer') === 'manual' ? payload['outputHost'] : null,
       sourcePort: Number(payload['sourcePort'] || 0) || null,
       outputPort: Number(payload['outputPort'] || 5060),
       priority: Number(payload['priority'] || 100),
