@@ -39,6 +39,24 @@ const PEER_MEDIA_MODE_OPTIONS = [
   { value: 'anchor', label: 'Anchor' },
   { value: 'transcode', label: 'Transcode' },
 ];
+const CODEC_MODE_OPTIONS = [
+  { value: 'passthrough', label: 'Pass-through' },
+  { value: 'filter', label: 'Filter' },
+  { value: 'prefer', label: 'Prefer' },
+  { value: 'transcode', label: 'Transcode' },
+];
+const CODEC_OPTIONS = [
+  'PCMU',
+  'PCMA',
+  'G729',
+  'G722',
+  'OPUS',
+  'GSM',
+  'AMR',
+  'AMR-WB',
+  'ILBC',
+  'SPEEX',
+].map((codec) => ({ value: codec, label: codec }));
 const ISUP_VARIANT_OPTIONS = [
   { value: '', label: 'None' },
   { value: 'itu', label: 'ITU' },
@@ -103,11 +121,14 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
     authMode: 'ip',
     signalingProfile: 'sip',
     mediaMode: 'passthrough',
+    codecMode: 'passthrough',
+    allowedCodecs: ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'],
+    preferredCodecs: ['PCMU', 'PCMA'],
+    transcodeCodecs: [],
     name: '',
     allowedSourceAddresses: '',
     authUsername: '',
     authPassword: '',
-    fromDomain: '',
     host: '',
     port: 5060,
     transport: 'udp',
@@ -161,6 +182,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
     { id: 'host', label: 'Host', field: 'VspHost' },
     { id: 'port', label: 'Port', field: 'VspPort' },
     { id: 'signalingProfile', label: 'Signaling', field: 'VspSignalingProfile' },
+    { id: 'codecMode', label: 'Codec mode', field: 'VspCodecMode' },
     {
       id: 'cdr',
       label: 'CDR',
@@ -207,6 +229,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       breakBefore: true,
+      hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
     },
     {
       key: 'authPassword',
@@ -235,15 +258,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
-    },
-    {
-      key: 'fromDomain',
-      source: 'VspFromDomain',
-      payloadKey: 'fromDomain',
-      label: 'Origin domain',
-      tab: 'authentication',
-      span: 1,
-      hiddenWhen: ({ values }) => String(values['authMode']) === 'register',
     },
     {
       key: 'host',
@@ -424,6 +438,46 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'codecMode',
+      source: 'VspCodecMode',
+      payloadKey: 'codecMode',
+      label: 'Codec mode',
+      type: 'select',
+      options: CODEC_MODE_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
+      key: 'allowedCodecs',
+      source: 'VspAllowedCodecs',
+      payloadKey: 'allowedCodecs',
+      label: 'Allowed codecs',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
+      key: 'preferredCodecs',
+      source: 'VspPreferredCodecs',
+      payloadKey: 'preferredCodecs',
+      label: 'Preferred codecs',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
+      key: 'transcodeCodecs',
+      source: 'VspTranscodeCodecs',
+      payloadKey: 'transcodeCodecs',
+      label: 'Transcode codecs',
+      type: 'multi-select',
+      options: CODEC_OPTIONS,
+      tab: 'codecs',
+      span: 1,
+    },
+    {
       key: 'isupVariant',
       source: 'VspIsupVariant',
       payloadKey: 'isupVariant',
@@ -549,9 +603,25 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     return key === 'accountUUID' ? this.accountOptions() : [];
   }
 
+  override startEdit(row: ConfigurableCrudRecord): void {
+    super.startEdit(row);
+    this.patchFormValues({
+      allowedCodecs: csvToArray(row['VspAllowedCodecs']),
+      preferredCodecs: csvToArray(row['VspPreferredCodecs']),
+      transcodeCodecs: csvToArray(row['VspTranscodeCodecs']),
+    });
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const authMode = String(payload['authMode'] || 'ip');
     return {
       ...payload,
+      allowedCodecs: arrayToCsv(payload['allowedCodecs']),
+      preferredCodecs: arrayToCsv(payload['preferredCodecs']),
+      transcodeCodecs: arrayToCsv(payload['transcodeCodecs']),
+      authUsername: authMode === 'register' ? payload['authUsername'] : null,
+      authPassword: authMode === 'register' ? payload['authPassword'] : null,
+      fromDomain: null,
       port: Number(payload['port'] || 0),
       registrarPort: Number(payload['registrarPort'] || 0) || null,
       registerEnabled: String(payload['authMode']) === 'register',
@@ -671,6 +741,19 @@ function option(
     description,
     searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
   };
+}
+
+function csvToArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  return String(value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function arrayToCsv(value: unknown): string {
+  if (Array.isArray(value)) return value.map(String).join(',');
+  return String(value ?? '');
 }
 
 
