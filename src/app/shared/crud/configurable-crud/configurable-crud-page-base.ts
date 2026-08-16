@@ -117,6 +117,8 @@ export type ConfigurableCrudField = {
   key: string;
   label: string;
   labelWhen?: (context: ConfigurableCrudFieldContext) => string;
+  /** Set to false for protocol/vendor terms that must remain literal. */
+  translateLabel?: boolean;
   source?: string;
   /** Maps a persisted value into the field value used by the generic form. */
   fromRecord?: (value: unknown, row: ConfigurableCrudRecord) => unknown;
@@ -151,6 +153,8 @@ export type ConfigurableCrudField = {
   /** Key holding the ISO 4217 code for this monetary value. */
   currencyKey?: string;
   options?: readonly ConfigurableCrudOption[];
+  /** Set to false for protocol/vendor option labels that must remain literal. */
+  translateOptions?: boolean;
   /** Enables multiple selection for a searchable relation field. */
   multiple?: boolean;
   loading?: () => boolean;
@@ -618,7 +622,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   isFilterActionMenuDisabled(menu: ConfigurableCrudFilterActionMenu): boolean {
-    return !menu.actions.length || menu.actions.every((action) => this.isFilterActionDisabled(action));
+    return (
+      !menu.actions.length || menu.actions.every((action) => this.isFilterActionDisabled(action))
+    );
   }
 
   isFilterActionDisabled(_action: ConfigurableCrudFilterAction): boolean {
@@ -812,6 +818,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         values: this.formValues(),
       }) ?? field.label
     );
+  }
+
+  translatedFieldLabel(field: ConfigurableCrudField): string {
+    const label = this.fieldLabel(field);
+    return field.translateLabel === false ? label : this.t(label);
+  }
+
+  translatedOptionLabel(field: ConfigurableCrudField, option: ConfigurableCrudOption): string {
+    return field.translateOptions === false ? option.label : this.t(option.label);
   }
 
   tabLabel(tab: NonNullable<ConfigurableCrudField['tab']>, fallback: string): string {

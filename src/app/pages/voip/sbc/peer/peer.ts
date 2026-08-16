@@ -123,8 +123,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
     mediaMode: 'passthrough',
     codecMode: 'passthrough',
     allowedCodecs: ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'],
-    preferredCodecs: ['PCMU', 'PCMA'],
-    transcodeCodecs: [],
     name: '',
     allowedSourceAddresses: '',
     authUsername: '',
@@ -432,8 +430,10 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       source: 'VspMediaMode',
       payloadKey: 'mediaMode',
       label: 'Media mode',
+      translateLabel: false,
       type: 'select',
       options: PEER_MEDIA_MODE_OPTIONS,
+      translateOptions: false,
       tab: 'codecs',
       span: 1,
     },
@@ -442,8 +442,10 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       source: 'VspCodecMode',
       payloadKey: 'codecMode',
       label: 'Codec mode',
+      translateLabel: false,
       type: 'select',
       options: CODEC_MODE_OPTIONS,
+      translateOptions: false,
       tab: 'codecs',
       span: 1,
     },
@@ -452,26 +454,6 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       source: 'VspAllowedCodecs',
       payloadKey: 'allowedCodecs',
       label: 'Allowed codecs',
-      type: 'multi-select',
-      options: CODEC_OPTIONS,
-      tab: 'codecs',
-      span: 1,
-    },
-    {
-      key: 'preferredCodecs',
-      source: 'VspPreferredCodecs',
-      payloadKey: 'preferredCodecs',
-      label: 'Preferred codecs',
-      type: 'multi-select',
-      options: CODEC_OPTIONS,
-      tab: 'codecs',
-      span: 1,
-    },
-    {
-      key: 'transcodeCodecs',
-      source: 'VspTranscodeCodecs',
-      payloadKey: 'transcodeCodecs',
-      label: 'Transcode codecs',
       type: 'multi-select',
       options: CODEC_OPTIONS,
       tab: 'codecs',
@@ -607,8 +589,6 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     super.startEdit(row);
     this.patchFormValues({
       allowedCodecs: csvToArray(row['VspAllowedCodecs']),
-      preferredCodecs: csvToArray(row['VspPreferredCodecs']),
-      transcodeCodecs: csvToArray(row['VspTranscodeCodecs']),
     });
   }
 
@@ -617,8 +597,6 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     return {
       ...payload,
       allowedCodecs: arrayToCsv(payload['allowedCodecs']),
-      preferredCodecs: arrayToCsv(payload['preferredCodecs']),
-      transcodeCodecs: arrayToCsv(payload['transcodeCodecs']),
       authUsername: authMode === 'register' ? payload['authUsername'] : null,
       authPassword: authMode === 'register' ? payload['authPassword'] : null,
       fromDomain: null,
@@ -640,7 +618,6 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       status: Number(payload['status']),
     };
   }
-
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
     if (action.key !== 'runtime-status') return;
@@ -755,7 +732,6 @@ function arrayToCsv(value: unknown): string {
   if (Array.isArray(value)) return value.map(String).join(',');
   return String(value ?? '');
 }
-
 
 function peerStatusSections(result: RuntimeDiagnosticResult) {
   const peers = Array.isArray(result.result?.['peers']) ? result.result['peers'] : [];
