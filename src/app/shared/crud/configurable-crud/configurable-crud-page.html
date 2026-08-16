@@ -95,7 +95,7 @@
                     mat-menu-item
                     type="button"
                     [disabled]="isFilterActionDisabled(action)"
-                    [matTooltip]="(action.tooltip ?? action.label) | transloco"
+                    [matTooltip]="action.tooltip ?? action.label | transloco"
                     (click)="handleFilterAction(action)"
                   >
                     <mat-icon>{{ action.icon }}</mat-icon>
@@ -110,7 +110,7 @@
                 color="primary"
                 type="button"
                 [disabled]="isFilterActionDisabled(action)"
-                [matTooltip]="(action.tooltip ?? action.label) | transloco"
+                [matTooltip]="action.tooltip ?? action.label | transloco"
                 (click)="handleFilterAction(action)"
               >
                 <mat-icon>{{ action.icon }}</mat-icon>
@@ -322,7 +322,7 @@
                 @case ('date') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ fieldLabel(field) | transloco
+                      >{{ translatedFieldLabel(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <input
@@ -342,7 +342,7 @@
                 @case ('select') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                      >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
@@ -351,7 +351,7 @@
                     >
                       @for (option of fieldOptions(field); track option.value) {
                         <mat-option [value]="option.value">{{
-                          option.label | transloco
+                          translatedOptionLabel(field, option)
                         }}</mat-option>
                       }
                     </mat-select>
@@ -360,7 +360,7 @@
                 @case ('search-select') {
                   <mns-search-select-field
                     [fieldClass]="fieldClass(field)"
-                    [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                    [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                     [placeholder]="field.placeholder ?? 'Search' | transloco"
                     [options]="fieldOptions(field)"
                     [loading]="fieldLoading(field)"
@@ -372,7 +372,7 @@
                 @case ('status') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                      >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
@@ -381,7 +381,7 @@
                     >
                       @for (option of statusOptions(); track option.value) {
                         <mat-option [value]="option.value">{{
-                          option.label | transloco
+                          translatedOptionLabel(field, option)
                         }}</mat-option>
                       }
                     </mat-select>
@@ -390,7 +390,7 @@
                 @case ('multi-select') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                      >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <mat-select
@@ -401,7 +401,7 @@
                     >
                       @for (option of fieldOptions(field); track option.value) {
                         <mat-option [value]="option.value">{{
-                          option.label | transloco
+                          translatedOptionLabel(field, option)
                         }}</mat-option>
                       }
                     </mat-select>
@@ -410,7 +410,7 @@
                 @case ('textarea') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                      >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <textarea
@@ -427,7 +427,7 @@
                 @default {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
-                      >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                      >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                       }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                     >
                     <input
@@ -539,7 +539,7 @@
                           @case ('date') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
-                                >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                                 }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <input
@@ -563,7 +563,7 @@
                             <mns-search-select-field
                               [fieldClass]="fieldClass(field)"
                               [label]="
-                                (field.label | transloco) + (isFieldRequired(field) ? '*' : '')
+                                translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')
                               "
                               [placeholder]="field.placeholder ?? 'Search' | transloco"
                               [options]="fieldOptions(field)"
@@ -578,7 +578,7 @@
                           @case ('select') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
-                                >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                                 }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <mat-select
@@ -588,7 +588,7 @@
                               >
                                 @for (option of fieldOptions(field); track option.value) {
                                   <mat-option [value]="option.value">{{
-                                    option.label | transloco
+                                    translatedOptionLabel(field, option)
                                   }}</mat-option>
                                 }
                               </mat-select>
@@ -597,7 +597,7 @@
                           @case ('multi-select') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
-                                >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                                 }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                               >
                               <mat-select
@@ -608,7 +608,7 @@
                               >
                                 @for (option of fieldOptions(field); track option.value) {
                                   <mat-option [value]="option.value">{{
-                                    option.label | transloco
+                                    translatedOptionLabel(field, option)
                                   }}</mat-option>
                                 }
                               </mat-select>
@@ -616,7 +616,7 @@
                           }
                           @default {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                              <mat-label>{{ field.label | transloco }}</mat-label>
+                              <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
                               <input
                                 matInput
                                 [placeholder]="
@@ -674,7 +674,7 @@
                   @case ('date') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -694,7 +694,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -706,7 +706,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -715,7 +715,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -724,7 +724,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -734,7 +734,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -743,7 +743,7 @@
                   @case ('textarea') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <textarea
@@ -760,7 +760,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -796,7 +796,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -808,7 +808,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -817,7 +817,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -826,7 +826,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -836,7 +836,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -845,7 +845,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -893,7 +893,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -904,7 +904,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -913,7 +913,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -922,7 +922,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -932,7 +932,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -941,7 +941,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -989,7 +989,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -1000,7 +1000,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1009,7 +1009,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1018,7 +1018,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1028,7 +1028,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1037,7 +1037,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1085,7 +1085,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -1097,7 +1097,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1106,7 +1106,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1115,7 +1115,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1125,7 +1125,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1134,7 +1134,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1164,7 +1164,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -1176,7 +1176,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1185,7 +1185,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1194,7 +1194,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1204,7 +1204,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1213,7 +1213,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1243,7 +1243,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -1255,7 +1255,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1264,7 +1264,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1273,7 +1273,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1283,7 +1283,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1292,7 +1292,7 @@
                   @case ('textarea') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <textarea
@@ -1307,7 +1307,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1341,7 +1341,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -1353,7 +1353,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1362,7 +1362,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1371,7 +1371,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1381,7 +1381,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1390,7 +1390,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1438,7 +1438,7 @@
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"
-                      [label]="(field.label | transloco) + (isFieldRequired(field) ? '*' : '')"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
@@ -1450,7 +1450,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1459,7 +1459,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1468,7 +1468,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1478,7 +1478,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1487,7 +1487,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1517,7 +1517,7 @@
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1526,7 +1526,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1535,7 +1535,7 @@
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <mat-select
@@ -1545,7 +1545,7 @@
                       >
                         @for (option of fieldOptions(field); track option.value) {
                           <mat-option [value]="option.value">{{
-                            option.label | transloco
+                            translatedOptionLabel(field, option)
                           }}</mat-option>
                         }
                       </mat-select>
@@ -1554,7 +1554,7 @@
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
-                        >{{ field.label | transloco }}{{ currencyLabelSuffix(field)
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
                       >
                       <input
@@ -1581,7 +1581,7 @@
             <div class="tab-content form-grid">
               @for (field of notesFields(); track field.key) {
                 <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                  <mat-label>{{ field.label | transloco }}</mat-label>
+                  <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
                   <textarea
                     matInput
                     [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
