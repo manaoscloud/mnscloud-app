@@ -322,6 +322,7 @@
   "Config JSON": "Config JSON",
   "Configuration": "Configuration",
   "Allowed codecs": "Allowed codecs",
+  "Allowed codecs (empty = inherit from peer)": "Allowed codecs (empty = inherit from peer)",
   "Configure billing units, recurrence and commercial values.": "Configure billing units, recurrence and commercial values.",
   "Configure DigitalOcean Droplets and Amazon Lightsail credentials.": "Configure DigitalOcean Droplets and Amazon Lightsail credentials.",
   "Configure discounts, coupon policy and validity windows.": "Configure discounts, coupon policy and validity windows.",
