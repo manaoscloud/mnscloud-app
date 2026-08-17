@@ -6,6 +6,10 @@ APP_LISTEN_PORT="${APP_LISTEN_PORT:-8080}"
 APP_HEALTH_URL="${APP_HEALTH_URL:-http://${APP_LISTEN_ADDR}:${APP_LISTEN_PORT}/health}"
 NGINX_CONF_PATH="${NGINX_CONF_PATH:-/etc/nginx/conf.d/mnscloud-app.conf}"
 APP_WEB_ROOT="${APP_WEB_ROOT:-/var/www/mnscloud-app}"
+APP_VALIDATE_CONNECT_TIMEOUT_SECONDS="${APP_VALIDATE_CONNECT_TIMEOUT_SECONDS:-5}"
+APP_VALIDATE_MAX_TIME_SECONDS="${APP_VALIDATE_MAX_TIME_SECONDS:-20}"
+APP_VALIDATE_RETRY_COUNT="${APP_VALIDATE_RETRY_COUNT:-2}"
+APP_VALIDATE_RETRY_DELAY_SECONDS="${APP_VALIDATE_RETRY_DELAY_SECONDS:-1}"
 
 log() { printf '[mnscloud-app] %s\n' "$*"; }
 die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -18,10 +22,22 @@ if command -v systemctl >/dev/null 2>&1; then
 fi
 
 if command -v curl >/dev/null 2>&1; then
-  curl -fsS "$APP_HEALTH_URL" >/dev/null || die "app health check failed: $APP_HEALTH_URL"
+  curl -fsS \
+    --connect-timeout "$APP_VALIDATE_CONNECT_TIMEOUT_SECONDS" \
+    --max-time "$APP_VALIDATE_MAX_TIME_SECONDS" \
+    --retry "$APP_VALIDATE_RETRY_COUNT" \
+    --retry-delay "$APP_VALIDATE_RETRY_DELAY_SECONDS" \
+    --retry-all-errors \
+    "$APP_HEALTH_URL" >/dev/null || die "app health check failed: $APP_HEALTH_URL"
 
   i18n_url="${APP_HEALTH_URL%/health}/i18n/pt-BR.json"
-  i18n_headers="$(curl -fsSI "$i18n_url")" || die "translation catalog is unavailable: $i18n_url"
+  i18n_headers="$(curl -fsSI \
+    --connect-timeout "$APP_VALIDATE_CONNECT_TIMEOUT_SECONDS" \
+    --max-time "$APP_VALIDATE_MAX_TIME_SECONDS" \
+    --retry "$APP_VALIDATE_RETRY_COUNT" \
+    --retry-delay "$APP_VALIDATE_RETRY_DELAY_SECONDS" \
+    --retry-all-errors \
+    "$i18n_url")" || die "translation catalog is unavailable: $i18n_url"
   grep -qi '^cache-control:.*no-cache' <<<"$i18n_headers" ||
     die "translation catalog must be served with revalidation: $i18n_url"
 fi
