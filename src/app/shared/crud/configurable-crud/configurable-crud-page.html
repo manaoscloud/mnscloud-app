@@ -1576,6 +1576,52 @@
           </mat-tab>
         }
 
+        @if (diagnosticsFields().length) {
+          <mat-tab [label]="tabLabel('diagnostics', 'Diagnostics') | transloco">
+            <div class="tab-content form-grid">
+              @for (field of diagnosticsFields(); track field.key) {
+                @switch (field.type) {
+                  @case ('select') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <mat-select
+                        [value]="fieldValue(field.key)"
+                        (selectionChange)="setFieldValue(field.key, $event.value)"
+                      >
+                        @for (option of fieldOptions(field); track option.value) {
+                          <mat-option [value]="option.value">{{
+                            translatedOptionLabel(field, option)
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                  @default {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label
+                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
+                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                      >
+                      <input
+                        matInput
+                        [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                        [type]="htmlInputType(field)"
+                        [autocomplete]="field.autocomplete ?? 'off'"
+                        [attr.data-field-key]="field.key"
+                        [value]="fieldValueString(field.key)"
+                        (input)="setFieldValue(field.key, $any($event.target).value)"
+                      />
+                    </mat-form-field>
+                  }
+                }
+              }
+            </div>
+          </mat-tab>
+        }
+
         @if (notesFields().length) {
           <mat-tab [label]="tabLabel('notes', 'Notes') | transloco">
             <div class="tab-content form-grid">

@@ -3595,5 +3595,11 @@
   "Reachable": "Alcançável",
   "Unreachable": "Inalcançável",
   "Degraded": "Degradado",
-  "Coverage": "Cobertura"
+  "Coverage": "Cobertura",
+  "Diagnostics": "Diagnóstico",
+  "Diagnostic capture": "Captura de diagnóstico",
+  "Capture mode": "Modo da captura",
+  "Capture duration (seconds)": "Duração da captura (segundos)",
+  "SIP capture": "Captura SIP",
+  "PCAPNG": "PCAPNG"
 }

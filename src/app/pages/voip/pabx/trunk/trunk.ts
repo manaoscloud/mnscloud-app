@@ -41,6 +41,11 @@ const yesNo: ConfigurableCrudOption[] = [
   { value: 0, label: 'No' },
 ];
 
+const diagnosticCaptureModes: ConfigurableCrudOption[] = [
+  { value: 'sip_capture', label: 'SIP capture' },
+  { value: 'pcapng', label: 'PCAPNG' },
+];
+
 const codecs: ConfigurableCrudOption[] = [
   { value: 'OPUS', label: 'OPUS' },
   { value: 'PCMU', label: 'PCMU' },
@@ -99,6 +104,9 @@ function config(): ConfigurableCrudConfig {
       fromUser: '',
       allowedCidrs: '',
       codecs: [],
+      diagnosticCaptureEnabled: 0,
+      diagnosticCaptureMode: 'sip_capture',
+      diagnosticCaptureSeconds: 60,
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
@@ -143,6 +151,7 @@ function config(): ConfigurableCrudConfig {
       network: 'Connection',
       authentication: 'Authentication',
       codecs: 'Codecs',
+      diagnostics: 'Diagnostics',
     },
     fields: [
       { key: 'enabled', source: 'enabled', label: 'Status', type: 'status', span: 1 },
@@ -286,6 +295,34 @@ function config(): ConfigurableCrudConfig {
         span: 1,
         fromRecord: (value) => codecList(value),
       },
+      {
+        key: 'diagnosticCaptureEnabled',
+        source: 'diagnosticCaptureEnabled',
+        label: 'Diagnostic capture',
+        type: 'select',
+        options: yesNo,
+        tab: 'diagnostics',
+        span: 1,
+      },
+      {
+        key: 'diagnosticCaptureMode',
+        source: 'diagnosticCaptureMode',
+        label: 'Capture mode',
+        type: 'select',
+        options: diagnosticCaptureModes,
+        tab: 'diagnostics',
+        span: 1,
+        hiddenWhen: ({ values }) => Number(values['diagnosticCaptureEnabled']) !== 1,
+      },
+      {
+        key: 'diagnosticCaptureSeconds',
+        source: 'diagnosticCaptureSeconds',
+        label: 'Capture duration (seconds)',
+        type: 'number',
+        tab: 'diagnostics',
+        span: 1,
+        hiddenWhen: ({ values }) => Number(values['diagnosticCaptureEnabled']) !== 1,
+      },
     ],
   };
 }
@@ -318,6 +355,9 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
       port: Number(payload['port']),
       priority: Number(payload['priority'] ?? 100),
       codecs: codecList(payload['codecs']).join(',') || null,
+      diagnosticCaptureEnabled: Number(payload['diagnosticCaptureEnabled']) === 1,
+      diagnosticCaptureMode: String(payload['diagnosticCaptureMode'] || 'sip_capture'),
+      diagnosticCaptureSeconds: Number(payload['diagnosticCaptureSeconds'] || 60),
     };
   }
 

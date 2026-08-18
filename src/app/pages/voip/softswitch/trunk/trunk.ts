@@ -32,6 +32,16 @@ const trunkDirections: ConfigurableCrudOption[] = [
   { value: 'both', label: 'Both' },
 ];
 
+const yesNo: ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const diagnosticCaptureModes: ConfigurableCrudOption[] = [
+  { value: 'sip_capture', label: 'SIP capture' },
+  { value: 'pcapng', label: 'PCAPNG' },
+];
+
 const codecs: ConfigurableCrudOption[] = [
   { value: 'OPUS', label: 'OPUS' },
   { value: 'PCMU', label: 'PCMU' },
@@ -73,6 +83,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     authentication: 'Authentication',
     limits: 'Limits',
     codecs: 'Codecs',
+    diagnostics: 'Diagnostics',
   },
   statusMode: 'number',
   activeValue: 1,
@@ -110,6 +121,9 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     priority: 100,
     weight: 100,
     maxConcurrentCalls: 0,
+    diagnosticCaptureEnabled: 0,
+    diagnosticCaptureMode: 'sip_capture',
+    diagnosticCaptureSeconds: 60,
     status: 1,
   },
   fields: [
@@ -171,6 +185,9 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
     { key: 'priority', source: 'priority', payloadKey: 'priority', label: 'Priority', type: 'number', span: 1, tab: 'limits' },
     { key: 'weight', source: 'weight', payloadKey: 'weight', label: 'Weight', type: 'number', span: 1, tab: 'limits' },
     { key: 'maxConcurrentCalls', source: 'maxConcurrentCalls', payloadKey: 'maxConcurrentCalls', label: 'Maximum concurrent calls', type: 'number', span: 1, tab: 'limits' },
+    { key: 'diagnosticCaptureEnabled', source: 'diagnosticCaptureEnabled', payloadKey: 'diagnosticCaptureEnabled', label: 'Diagnostic capture', type: 'select', options: yesNo, span: 1, tab: 'diagnostics' },
+    { key: 'diagnosticCaptureMode', source: 'diagnosticCaptureMode', payloadKey: 'diagnosticCaptureMode', label: 'Capture mode', type: 'select', options: diagnosticCaptureModes, span: 1, tab: 'diagnostics', hiddenWhen: ({ values }) => Number(values['diagnosticCaptureEnabled']) !== 1 },
+    { key: 'diagnosticCaptureSeconds', source: 'diagnosticCaptureSeconds', payloadKey: 'diagnosticCaptureSeconds', label: 'Capture duration (seconds)', type: 'number', span: 1, tab: 'diagnostics', hiddenWhen: ({ values }) => Number(values['diagnosticCaptureEnabled']) !== 1 },
     {
       key: 'codecs',
       source: 'codecs',
@@ -219,6 +236,9 @@ export class VoipSoftswitchTrunkPage extends ConfigurableCrudPageBase<Configurab
         ? 'disabled'
         : String(payload['inboundAuthPolicy'] || (String(payload['authenticationMode']) === 'register' ? 'registered' : 'source_acl')),
       codecs: codecList(payload['codecs']).join(',') || null,
+      diagnosticCaptureEnabled: Number(payload['diagnosticCaptureEnabled']) === 1,
+      diagnosticCaptureMode: String(payload['diagnosticCaptureMode'] || 'sip_capture'),
+      diagnosticCaptureSeconds: Number(payload['diagnosticCaptureSeconds'] || 60),
     };
   }
 
