@@ -3,11 +3,13 @@ import { Component, inject, signal } from '@angular/core';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
+  ConfigurableCrudRowAction,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 const CDR_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/softswitch/cdrs',
@@ -34,6 +36,14 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   canDelete: false,
   bulkDelete: false,
+  rowActions: [
+    {
+      key: 'view-sip-summary',
+      label: 'View SIP summary',
+      icon: 'visibility',
+      tooltip: 'View SIP summary',
+    },
+  ],
   initialValues: {
     accountUUID: '',
     name: '',
@@ -195,6 +205,83 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
     return payload;
   }
 
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    return row['uuid'] || row['callId'] ? (CDR_CONFIG.rowActions ?? []) : [];
+  }
+
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key !== 'view-sip-summary') return;
+    openDataViewerDialog(this.dialog, {
+      title: 'Softswitch SIP summary',
+      description:
+        'Inspect the reconstructed Softswitch SIP call summary and raw CDR metadata.',
+      status: {
+        label: 'Status',
+        value: this.statusLabel(row['status']),
+        tone: this.isActiveStatus(row['status']) ? 'success' : 'danger',
+      },
+      details: [
+        { label: 'UUID', value: row['uuid'], monospace: true, wide: true },
+        { label: 'Call-ID', value: row['callId'], monospace: true, wide: true },
+        { label: 'Engine', value: row['engine'] },
+        { label: 'Softswitch', value: row['accountName'] },
+        { label: 'Server', value: row['serverName'] },
+        { label: 'Trunk', value: row['trunkName'] },
+        { label: 'Subscriber', value: row['subscriberName'] ?? row['subscriberUsername'] },
+        { label: 'Final SIP response', value: this.finalSipResponse(row) },
+      ],
+      sections: [
+        {
+          title: 'SIP',
+          details: [
+            { label: 'Direction', value: row['direction'] },
+            { label: 'Caller', value: row['callerNumber'] },
+            { label: 'Callee', value: row['calleeNumber'] },
+            { label: 'Hangup cause', value: row['hangupCause'] },
+          ],
+        },
+        {
+          title: 'Timing',
+          details: [
+            { label: 'Started at', value: row['startedAt'] },
+            { label: 'Answered at', value: row['answeredAt'] },
+            { label: 'Ended at', value: row['endedAt'] },
+            { label: 'Duration seconds', value: row['durationSeconds'] },
+            { label: 'Bill seconds', value: row['billSeconds'] },
+          ],
+        },
+        {
+          title: 'SIP message',
+          code: {
+            title: 'SIP message',
+            value: this.sipMessage(row),
+            format: 'text',
+            copy: true,
+            download: {
+              filename: `softswitch-cdr-${this.downloadToken(row)}.sip`,
+              label: 'Download SIP summary',
+              mimeType: 'message/sip;charset=utf-8',
+            },
+          },
+        },
+        {
+          title: 'Raw metadata',
+          code: {
+            title: 'Raw metadata',
+            value: row['rawJson'] ?? row,
+            format: 'json',
+            copy: true,
+            download: {
+              filename: `softswitch-cdr-${this.downloadToken(row)}.json`,
+              label: 'Download JSON',
+              mimeType: 'application/json;charset=utf-8',
+            },
+          },
+        },
+      ],
+    });
+  }
+
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
@@ -211,6 +298,45 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
       this.lookupLoading.set(false);
     }
   }
+
+  private finalSipResponse(row: ConfigurableCrudRecord): string {
+    const code = display(row['finalSipCode']);
+    const reason = display(row['finalSipReason']);
+    if (code === '-' && reason === '-') return '-';
+    return [code === '-' ? '' : code, reason === '-' ? '' : reason].filter(Boolean).join(' ');
+  }
+
+  private sipMessage(row: ConfigurableCrudRecord): string {
+    return [
+      `INVITE sip:${display(row['calleeNumber'])} SIP/2.0`,
+      `Call-ID: ${display(row['callId'])}`,
+      `From: <sip:${display(row['callerNumber'])}>`,
+      `To: <sip:${display(row['calleeNumber'])}>`,
+      `Direction: ${display(row['direction'])}`,
+      `Engine: ${display(row['engine'])}`,
+      `Softswitch: ${display(row['accountName'])}`,
+      `Server: ${display(row['serverName'])}`,
+      `Trunk: ${display(row['trunkName'])}`,
+      `Subscriber: ${display(row['subscriberName'] ?? row['subscriberUsername'])}`,
+      `Call-Status: ${this.statusLabel(row['status'])}`,
+      `Final-SIP-Response: ${this.finalSipResponse(row)}`,
+      '',
+      '# This file is a reconstructed SIP summary from MNSCloud CDR metadata, not a raw packet capture.',
+    ].join('\n');
+  }
+
+  private downloadToken(row: ConfigurableCrudRecord): string {
+    return String(row['callId'] || row['uuid'] || 'record')
+      .trim()
+      .replace(/[^\w.\-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+}
+
+function display(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '-';
+  return String(value);
 }
 
 function extractItems(response: any): any[] {

@@ -29,6 +29,7 @@ import { VoipPabxCdrRecordingDialogComponent } from './recording-dialog/recordin
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 type CdrFilters = {
   search: string;
@@ -114,6 +115,7 @@ export class VoipPabxCdrPage {
     'duration',
     'cause',
     'recording',
+    'actions',
   ];
 
   private readonly syncRows = effect(() => {
@@ -223,6 +225,80 @@ export class VoipPabxCdrPage {
     }
   }
 
+  openSipSummary(row: any) {
+    openDataViewerDialog(this.dialog, {
+      title: 'PABX SIP summary',
+      description: 'Inspect the reconstructed PABX SIP/CDR summary and raw engine metadata.',
+      status: {
+        label: 'Status',
+        value: row.status || '-',
+        tone: ['answered', 'complete', 'completed'].includes(String(row.status ?? '').toLowerCase())
+          ? 'success'
+          : 'danger',
+      },
+      details: [
+        { label: 'CDR UUID', value: row.cdrUUID, monospace: true, wide: true },
+        { label: 'Provider Call-ID', value: row.providerCallId, monospace: true, wide: true },
+        { label: 'SIP Call-ID', value: row.sipCallId, monospace: true, wide: true },
+        { label: 'Engine', value: row.engine },
+        { label: 'PABX', value: row.pabxName },
+        { label: 'Server', value: row.serverName },
+        { label: 'Extension', value: row.extensionNumber },
+        { label: 'Recording status', value: row.recordingStorageStatus },
+      ],
+      sections: [
+        {
+          title: 'Call',
+          details: [
+            { label: 'Direction', value: row.direction },
+            { label: 'Caller', value: row.callerNumber },
+            { label: 'Caller name', value: row.callerName },
+            { label: 'Destination', value: row.destinationNumber },
+            { label: 'Hangup cause', value: row.hangupCause },
+          ],
+        },
+        {
+          title: 'Timing',
+          details: [
+            { label: 'Started at', value: row.startedAt },
+            { label: 'Answered at', value: row.answeredAt },
+            { label: 'Ended at', value: row.endedAt },
+            { label: 'Duration seconds', value: row.durationSeconds },
+            { label: 'Bill seconds', value: row.billSeconds },
+          ],
+        },
+        {
+          title: 'SIP message',
+          code: {
+            title: 'SIP message',
+            value: this.sipMessage(row),
+            format: 'text',
+            copy: true,
+            download: {
+              filename: `pabx-cdr-${this.downloadToken(row)}.sip`,
+              label: 'Download SIP summary',
+              mimeType: 'message/sip;charset=utf-8',
+            },
+          },
+        },
+        {
+          title: 'Raw metadata',
+          code: {
+            title: 'Raw metadata',
+            value: row.rawPayload ?? row,
+            format: 'json',
+            copy: true,
+            download: {
+              filename: `pabx-cdr-${this.downloadToken(row)}.json`,
+              label: 'Download JSON',
+              mimeType: 'application/json;charset=utf-8',
+            },
+          },
+        },
+      ],
+    });
+  }
+
   private sortValue(row: any, column: string): string | number {
     const sortMap: Record<string, unknown> = {
       startedAt: row.startedAt,
@@ -235,6 +311,7 @@ export class VoipPabxCdrPage {
       duration: row.durationSeconds,
       cause: row.hangupCause,
       recording: row.recordingAvailable ? 1 : 0,
+      actions: '',
     };
     const value = sortMap[column] ?? '';
     return typeof value === 'number' ? value : String(value).toLowerCase();
@@ -255,5 +332,36 @@ export class VoipPabxCdrPage {
     if (typeof serverMessage === 'string' && serverMessage.trim()) return serverMessage;
     if (error instanceof Error && error.message) return error.message;
     return fallback;
+  }
+
+  private sipMessage(row: any): string {
+    return [
+      `INVITE sip:${this.display(row.destinationNumber)} SIP/2.0`,
+      `Call-ID: ${this.display(row.sipCallId ?? row.providerCallId)}`,
+      `From: <sip:${this.display(row.callerNumber)}>`,
+      `To: <sip:${this.display(row.destinationNumber)}>`,
+      `Direction: ${this.display(row.direction)}`,
+      `Engine: ${this.display(row.engine)}`,
+      `PABX: ${this.display(row.pabxName)}`,
+      `Server: ${this.display(row.serverName)}`,
+      `Extension: ${this.display(row.extensionNumber)}`,
+      `Call-Status: ${this.display(row.status)}`,
+      `Hangup-Cause: ${this.display(row.hangupCause)}`,
+      '',
+      '# This file is a reconstructed SIP summary from MNSCloud CDR metadata, not a raw packet capture.',
+    ].join('\n');
+  }
+
+  private downloadToken(row: any): string {
+    return String(row.sipCallId || row.providerCallId || row.cdrUUID || 'record')
+      .trim()
+      .replace(/[^\w.\-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  private display(value: unknown): string {
+    if (value === null || value === undefined || value === '') return '-';
+    return String(value);
   }
 }
