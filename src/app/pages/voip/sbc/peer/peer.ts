@@ -24,6 +24,10 @@ const YES_NO_OPTIONS = [
   { value: 1, label: 'Yes' },
   { value: 0, label: 'No' },
 ];
+const DIAGNOSTIC_CAPTURE_MODE_OPTIONS = [
+  { value: 'sip_capture', label: 'SIP capture' },
+  { value: 'pcapng', label: 'PCAPNG' },
+];
 const AUTH_MODE_OPTIONS = [
   { value: 'ip', label: 'IP' },
   { value: 'register', label: 'Register' },
@@ -94,6 +98,7 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   tabLabels: {
     monitoring: 'Monitoring',
+    diagnostics: 'Diagnostics',
   },
   filterActionMenu: {
     label: 'Status',
@@ -145,6 +150,9 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
     optionsTimeout: 5,
     optionsFailureThreshold: 3,
     enableCdr: 0,
+    diagnosticCaptureEnabled: 0,
+    diagnosticCaptureMode: 'sip_capture',
+    diagnosticCaptureSeconds: 60,
     isupVariant: '',
     isupMode: '',
     isupPreserve: 1,
@@ -416,6 +424,37 @@ const PEER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'diagnosticCaptureEnabled',
+      source: 'VspDiagnosticCaptureEnabled',
+      payloadKey: 'diagnosticCaptureEnabled',
+      label: 'Diagnostic capture',
+      type: 'select',
+      options: YES_NO_OPTIONS,
+      tab: 'diagnostics',
+      span: 1,
+    },
+    {
+      key: 'diagnosticCaptureMode',
+      source: 'VspDiagnosticCaptureMode',
+      payloadKey: 'diagnosticCaptureMode',
+      label: 'Capture mode',
+      type: 'select',
+      options: DIAGNOSTIC_CAPTURE_MODE_OPTIONS,
+      tab: 'diagnostics',
+      span: 1,
+      hiddenWhen: ({ values }) => Number(values['diagnosticCaptureEnabled']) !== 1,
+    },
+    {
+      key: 'diagnosticCaptureSeconds',
+      source: 'VspDiagnosticCaptureSeconds',
+      payloadKey: 'diagnosticCaptureSeconds',
+      label: 'Capture duration (seconds)',
+      type: 'number',
+      tab: 'diagnostics',
+      span: 1,
+      hiddenWhen: ({ values }) => Number(values['diagnosticCaptureEnabled']) !== 1,
+    },
+    {
       key: 'signalingProfile',
       source: 'VspSignalingProfile',
       payloadKey: 'signalingProfile',
@@ -615,6 +654,9 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       optionsTimeout: Number(payload['optionsTimeout'] || 5),
       optionsFailureThreshold: Number(payload['optionsFailureThreshold'] || 3),
       enableCdr: Number(payload['enableCdr']) === 1,
+      diagnosticCaptureEnabled: Number(payload['diagnosticCaptureEnabled']) === 1,
+      diagnosticCaptureMode: String(payload['diagnosticCaptureMode'] || 'sip_capture'),
+      diagnosticCaptureSeconds: Number(payload['diagnosticCaptureSeconds'] || 60),
       isupPreserve: Number(payload['isupPreserve']) === 1,
       isupMapCause: Number(payload['isupMapCause']) === 1,
       maxConcurrentCalls: Number(payload['maxConcurrentCalls'] || 0),
