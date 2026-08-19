@@ -4,6 +4,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import {
   ConfigurableCrudColumn,
   ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudRowAction,
   ConfigurableCrudPageBase,
@@ -85,6 +86,7 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
   private readonly i18n = inject(TranslocoService);
   readonly peerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
+  readonly diagnosticResourceUUIDs = signal<ReadonlySet<string>>(new Set());
 
   constructor() {
     super(CDR_CONFIG);
@@ -96,7 +98,20 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    return row['VscEvent'] ? (CDR_CONFIG.rowActions ?? []) : [];
+    if (!row['VscEvent']) return [];
+    const resourceUUID = String(row['VscUUID'] ?? '').trim();
+    const hasDiagnostics = resourceUUID && this.diagnosticResourceUUIDs().has(resourceUUID);
+    return (CDR_CONFIG.rowActions ?? []).filter(
+      (action) => action.key !== 'view-diagnostics' || hasDiagnostics,
+    );
+  }
+
+  protected override async fetchItems(
+    filters: ConfigurableCrudFilters,
+  ): Promise<ConfigurableCrudRecord[]> {
+    const rows = await super.fetchItems(filters);
+    await this.refreshDiagnosticAvailability(rows);
+    return rows;
   }
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
@@ -419,6 +434,33 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     });
     const response = await this.rawApi.get<any>(`voip/cdr-diagnostics?${params.toString()}`);
     return extractItems(response);
+  }
+
+  private async refreshDiagnosticAvailability(rows: readonly ConfigurableCrudRecord[]) {
+    const pageUUIDs = new Set(
+      rows.map((row) => String(row['VscUUID'] ?? '').trim()).filter(Boolean),
+    );
+    if (!pageUUIDs.size) {
+      this.diagnosticResourceUUIDs.set(new Set());
+      return;
+    }
+    const params = new URLSearchParams({
+      resourceType: 'sbc_cdr',
+      status: 'available',
+      limit: String(Math.max(100, Math.min(500, pageUUIDs.size * 4))),
+      offset: '0',
+    });
+    try {
+      const response = await this.rawApi.get<any>(`voip/cdr-diagnostics?${params.toString()}`);
+      const available = new Set(
+        extractItems(response)
+          .map((item) => String(item['resourceUUID'] ?? '').trim())
+          .filter((uuid) => pageUUIDs.has(uuid)),
+      );
+      this.diagnosticResourceUUIDs.set(available);
+    } catch {
+      this.diagnosticResourceUUIDs.set(new Set());
+    }
   }
 
   private async downloadUrl(uuid: string): Promise<string> {
