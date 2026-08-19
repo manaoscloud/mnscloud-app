@@ -41,11 +41,21 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>From</mat-label>
-        <input matInput type="datetime-local" [value]="dateFrom" (input)="dateFrom = $any($event.target).value" />
+        <input
+          matInput
+          type="datetime-local"
+          [value]="dateFrom"
+          (input)="dateFrom = $any($event.target).value"
+        />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>To</mat-label>
-        <input matInput type="datetime-local" [value]="dateTo" (input)="dateTo = $any($event.target).value" />
+        <input
+          matInput
+          type="datetime-local"
+          [value]="dateTo"
+          (input)="dateTo = $any($event.target).value"
+        />
       </mat-form-field>
       <div class="filter-actions">
         <button mat-stroked-button type="button" (click)="applySearchFilters()">
@@ -157,6 +167,17 @@
             >
               <mat-icon>visibility</mat-icon>
             </button>
+            @if (hasDiagnostics(row)) {
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="View diagnostic captures"
+                (click)="openDiagnostics(row)"
+                aria-label="View diagnostic captures"
+              >
+                <mat-icon>bug_report</mat-icon>
+              </button>
+            }
           </td>
         </ng-container>
 
@@ -178,7 +199,6 @@
       [pageSize]="pageSize"
       [pageSizeOptions]="[5, 10, 25, 100]"
       showFirstLastButtons
-
       (page)="setPage($event)"
     />
   </mat-card>
