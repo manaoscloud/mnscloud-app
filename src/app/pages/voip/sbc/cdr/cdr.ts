@@ -45,6 +45,12 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
       icon: 'visibility',
       tooltip: 'View INVITE details',
     },
+    {
+      key: 'view-diagnostics',
+      label: 'View diagnostics',
+      icon: 'bug_report',
+      tooltip: 'View diagnostic captures',
+    },
   ],
   listFilters: [
     {
@@ -94,6 +100,10 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
   }
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key === 'view-diagnostics') {
+      void this.openDiagnostics(row);
+      return;
+    }
     if (action.key !== 'view-invite') return;
     openDataViewerDialog(this.dialog, {
       title: 'INVITE details',
@@ -330,6 +340,109 @@ export class VoipSbcCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       .replace(/[^\w.\-]+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
+  }
+
+  private async openDiagnostics(row: ConfigurableCrudRecord): Promise<void> {
+    const resourceUUID = String(row['VscUUID'] ?? '').trim();
+    if (!resourceUUID) return;
+    const attachments = await this.loadDiagnostics('sbc_cdr', resourceUUID);
+    const downloads: Record<string, unknown>[] = await Promise.all(
+      attachments.map(async (item) => ({
+        ...item,
+        downloadUrl: await this.downloadUrl(String(item['diagnosticAttachmentUUID'] ?? '')),
+      })),
+    );
+    const firstText = downloads.find((item) =>
+      ['sip_capture', 'sip_summary', 'diagnostic_json', 'rtp_summary'].includes(
+        String(item['diagnosticType'] ?? ''),
+      )
+    );
+    const previewUrl = String(firstText?.['downloadUrl'] ?? '');
+    const preview = previewUrl ? await this.tryFetchText(previewUrl) : '';
+    openDataViewerDialog(this.dialog, {
+      title: 'CDR diagnostics',
+      description: 'Private diagnostic captures linked to this SBC CDR.',
+      status: {
+        label: 'Attachments',
+        value: String(downloads.length),
+        tone: downloads.length ? 'success' : 'warning',
+      },
+      details: [
+        { label: 'CDR UUID', value: row['VscUUID'], monospace: true, wide: true },
+        { label: 'Call-ID', value: row['VscCallID'], monospace: true, wide: true },
+      ],
+      sections: [
+        {
+          title: 'Diagnostic attachments',
+          table: {
+            columns: [
+              { key: 'diagnosticType', label: 'Type' },
+              { key: 'captureMode', label: 'Capture mode' },
+              { key: 'status', label: 'Status', translate: true },
+              { key: 'sizeBytes', label: 'Size bytes' },
+              { key: 'dateCreated', label: 'Created at' },
+              { key: 'downloadUrl', label: 'Signed download URL', monospace: true },
+            ],
+            rows: downloads,
+            emptyLabel: 'No diagnostic attachments found.',
+          },
+        },
+        {
+          title: 'Preview',
+          code: {
+            title: 'Preview',
+            value: preview || 'No text preview available. Use the signed download URL.',
+            format: 'text',
+            copy: true,
+            download: preview
+              ? {
+                  filename: `sbc-diagnostic-${this.downloadToken(row)}.txt`,
+                  label: 'Download preview',
+                  mimeType: 'text/plain;charset=utf-8',
+                }
+              : undefined,
+          },
+        },
+      ],
+    });
+  }
+
+  private async loadDiagnostics(
+    resourceType: string,
+    resourceUUID: string,
+  ): Promise<Record<string, unknown>[]> {
+    const params = new URLSearchParams({
+      resourceType,
+      resourceUUID,
+      limit: '100',
+      offset: '0',
+    });
+    const response = await this.rawApi.get<any>(`voip/cdr-diagnostics?${params.toString()}`);
+    return extractItems(response);
+  }
+
+  private async downloadUrl(uuid: string): Promise<string> {
+    if (!uuid) return '';
+    try {
+      const response = await this.rawApi.get<any>(
+        `voip/cdr-diagnostics/${encodeURIComponent(uuid)}/download`,
+      );
+      return String(response?.data?.downloadUrl ?? response?.downloadUrl ?? '');
+    } catch {
+      return '';
+    }
+  }
+
+  private async tryFetchText(url: string): Promise<string> {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return '';
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!contentType.includes('text') && !contentType.includes('json')) return '';
+      return await response.text();
+    } catch {
+      return '';
+    }
   }
 
   private display(value: unknown): string {
