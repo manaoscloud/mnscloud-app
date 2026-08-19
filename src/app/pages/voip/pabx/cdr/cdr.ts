@@ -1,13 +1,5 @@
 import { NgClass } from '@angular/common';
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -89,7 +81,9 @@ export class VoipPabxCdrPage {
 
   readonly loading = this.cdrResource.isLoading;
   readonly rows = computed(() => this.cdrResource.value());
-  readonly table = createSignalCrudTable<any>(this.rows, (row, column) => this.sortValue(row, column));
+  readonly table = createSignalCrudTable<any>(this.rows, (row, column) =>
+    this.sortValue(row, column),
+  );
   readonly sortActive = this.table.sortActive;
   readonly sortDirection = this.table.sortDirection;
   readonly pageIndex = this.table.pageIndex;
@@ -189,6 +183,14 @@ export class VoipPabxCdrPage {
 
   hasRecording(row: any) {
     return row?.recordingAvailable === true || row?.recordingAvailable === 1;
+  }
+
+  hasDiagnostics(row: any) {
+    return (
+      this.flagEnabled(row?.diagnosticCaptureEnabled) &&
+      this.flagEnabled(row?.diagnosticAvailable) &&
+      Number(row?.diagnosticAttachmentCount ?? 0) > 0
+    );
   }
 
   recordingTooltip(row: any) {
@@ -299,6 +301,77 @@ export class VoipPabxCdrPage {
     });
   }
 
+  async openDiagnostics(row: any) {
+    if (!this.hasDiagnostics(row) || !row?.cdrUUID) return;
+    try {
+      const response = await this.api.diagnostics(row.cdrUUID);
+      const attachments = this.extractItems(response);
+      const downloads = await Promise.all(
+        attachments.map(async (item: any) => ({
+          ...item,
+          downloadUrl: await this.diagnosticDownloadUrl(item?.diagnosticAttachmentUUID),
+        })),
+      );
+      const firstText = downloads.find((item) =>
+        ['sip_capture', 'sip_summary', 'diagnostic_json', 'rtp_summary'].includes(
+          String(item?.diagnosticType ?? ''),
+        ),
+      );
+      const previewUrl = String(firstText?.downloadUrl ?? '');
+      const preview = previewUrl ? await this.tryFetchText(previewUrl) : '';
+
+      openDataViewerDialog(this.dialog, {
+        title: 'PABX CDR diagnostics',
+        description: 'Private diagnostic captures linked to this PABX CDR.',
+        status: {
+          label: 'Attachments',
+          value: String(downloads.length),
+          tone: downloads.length ? 'success' : 'warning',
+        },
+        details: [
+          { label: 'CDR UUID', value: row.cdrUUID, monospace: true, wide: true },
+          { label: 'Provider Call-ID', value: row.providerCallId, monospace: true, wide: true },
+          { label: 'SIP Call-ID', value: row.sipCallId, monospace: true, wide: true },
+        ],
+        sections: [
+          {
+            title: 'Diagnostic attachments',
+            table: {
+              columns: [
+                { key: 'diagnosticType', label: 'Type' },
+                { key: 'captureMode', label: 'Capture mode' },
+                { key: 'status', label: 'Status', translate: true },
+                { key: 'sizeBytes', label: 'Size bytes' },
+                { key: 'dateCreated', label: 'Created at' },
+                { key: 'downloadUrl', label: 'Signed download URL', monospace: true },
+              ],
+              rows: downloads,
+              emptyLabel: 'No diagnostic attachments found.',
+            },
+          },
+          {
+            title: 'Preview',
+            code: {
+              title: 'Preview',
+              value: preview || 'No text preview available. Use the signed download URL.',
+              format: 'text',
+              copy: true,
+              download: preview
+                ? {
+                    filename: `pabx-diagnostic-${this.downloadToken(row)}.txt`,
+                    label: 'Download preview',
+                    mimeType: 'text/plain;charset=utf-8',
+                  }
+                : undefined,
+            },
+          },
+        ],
+      });
+    } catch (err: any) {
+      this.snack.error(err?.error?.error || err?.message || 'Failed to open diagnostics.');
+    }
+  }
+
   private sortValue(row: any, column: string): string | number {
     const sortMap: Record<string, unknown> = {
       startedAt: row.startedAt,
@@ -332,6 +405,52 @@ export class VoipPabxCdrPage {
     if (typeof serverMessage === 'string' && serverMessage.trim()) return serverMessage;
     if (error instanceof Error && error.message) return error.message;
     return fallback;
+  }
+
+  private flagEnabled(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    return ['1', 'true', 'yes', 'available'].includes(
+      String(value ?? '')
+        .trim()
+        .toLowerCase(),
+    );
+  }
+
+  private extractItems(response: any): any[] {
+    if (Array.isArray(response?.data?.items)) return response.data.items;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.items)) return response.items;
+    return [];
+  }
+
+  private async diagnosticDownloadUrl(uuid: unknown): Promise<string> {
+    const normalized = String(uuid ?? '').trim();
+    if (!normalized) return '';
+    try {
+      const response = await this.api.diagnosticDownloadUrl(normalized);
+      return String(response?.data?.downloadUrl ?? response?.downloadUrl ?? '');
+    } catch {
+      return '';
+    }
+  }
+
+  private async tryFetchText(url: string): Promise<string> {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return '';
+      const contentType = response.headers.get('content-type') ?? '';
+      if (
+        !contentType.includes('text') &&
+        !contentType.includes('json') &&
+        !contentType.includes('sip')
+      ) {
+        return '';
+      }
+      return await response.text();
+    } catch {
+      return '';
+    }
   }
 
   private sipMessage(row: any): string {

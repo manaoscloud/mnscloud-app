@@ -19,4 +19,20 @@ export class VoipPabxCdrService {
       `${this.basePath}/recording/${encodeURIComponent(engine)}/${encodeURIComponent(cdrUUID)}`,
     );
   }
+
+  diagnostics(resourceUUID: string) {
+    const params = new URLSearchParams({
+      resourceType: 'pabx_cdr',
+      resourceUUID,
+      limit: '100',
+      offset: '0',
+    });
+    return this.api.get<any>(`voip/cdr-diagnostics?${params.toString()}`);
+  }
+
+  diagnosticDownloadUrl(diagnosticAttachmentUUID: string) {
+    return this.api.get<any>(
+      `voip/cdr-diagnostics/${encodeURIComponent(diagnosticAttachmentUUID)}/download`,
+    );
+  }
 }

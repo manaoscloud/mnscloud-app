@@ -2,7 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
-  ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudRowAction,
   ConfigurableCrudPageBase,
@@ -168,7 +167,6 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
 
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
-  readonly diagnosticResourceUUIDs = signal<ReadonlySet<string>>(new Set());
 
   constructor() {
     super(CDR_CONFIG);
@@ -215,19 +213,9 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     if (!row['uuid'] && !row['callId']) return [];
-    const resourceUUID = String(row['uuid'] ?? '').trim();
-    const hasDiagnostics = resourceUUID && this.diagnosticResourceUUIDs().has(resourceUUID);
     return (CDR_CONFIG.rowActions ?? []).filter(
-      (action) => action.key !== 'view-diagnostics' || hasDiagnostics,
+      (action) => action.key !== 'view-diagnostics' || this.hasDiagnostics(row),
     );
-  }
-
-  protected override async fetchItems(
-    filters: ConfigurableCrudFilters,
-  ): Promise<ConfigurableCrudRecord[]> {
-    const rows = await super.fetchItems(filters);
-    await this.refreshDiagnosticAvailability(rows);
-    return rows;
   }
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
@@ -238,8 +226,7 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
     if (action.key !== 'view-sip-summary') return;
     openDataViewerDialog(this.dialog, {
       title: 'Softswitch SIP summary',
-      description:
-        'Inspect the reconstructed Softswitch SIP call summary and raw CDR metadata.',
+      description: 'Inspect the reconstructed Softswitch SIP call summary and raw CDR metadata.',
       status: {
         label: 'Status',
         value: this.statusLabel(row['status']),
@@ -371,7 +358,7 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
     const firstText = downloads.find((item) =>
       ['sip_capture', 'sip_summary', 'diagnostic_json', 'rtp_summary'].includes(
         String(item['diagnosticType'] ?? ''),
-      )
+      ),
     );
     const previewUrl = String(firstText?.['downloadUrl'] ?? '');
     const preview = previewUrl ? await this.tryFetchText(previewUrl) : '';
@@ -437,29 +424,22 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
     return extractItems(response);
   }
 
-  private async refreshDiagnosticAvailability(rows: readonly ConfigurableCrudRecord[]) {
-    const pageUUIDs = new Set(rows.map((row) => String(row['uuid'] ?? '').trim()).filter(Boolean));
-    if (!pageUUIDs.size) {
-      this.diagnosticResourceUUIDs.set(new Set());
-      return;
-    }
-    const params = new URLSearchParams({
-      resourceType: 'softswitch_cdr',
-      status: 'available',
-      limit: String(Math.max(100, Math.min(500, pageUUIDs.size * 4))),
-      offset: '0',
-    });
-    try {
-      const response = await this.rawApi.get<any>(`voip/cdr-diagnostics?${params.toString()}`);
-      const available = new Set(
-        extractItems(response)
-          .map((item) => String(item['resourceUUID'] ?? '').trim())
-          .filter((uuid) => pageUUIDs.has(uuid)),
-      );
-      this.diagnosticResourceUUIDs.set(available);
-    } catch {
-      this.diagnosticResourceUUIDs.set(new Set());
-    }
+  private hasDiagnostics(row: ConfigurableCrudRecord): boolean {
+    return (
+      this.flagEnabled(row['diagnosticCaptureEnabled']) &&
+      this.flagEnabled(row['diagnosticAvailable']) &&
+      Number(row['diagnosticAttachmentCount'] ?? 0) > 0
+    );
+  }
+
+  private flagEnabled(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    return ['1', 'true', 'yes', 'available'].includes(
+      String(value ?? '')
+        .trim()
+        .toLowerCase(),
+    );
   }
 
   private async downloadUrl(uuid: string): Promise<string> {
