@@ -7,6 +7,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
 import { SnackbarService } from '../../services/snackbar.service';
+import { DateTimeFormatService } from '../../services/date-time-format.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../dialog/crud-dialog.util';
 
 export type DataViewerTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -28,6 +29,7 @@ export type DataViewerCodeBlock = {
   title?: string;
   value: unknown;
   format?: 'json' | 'text' | 'shell';
+  translate?: boolean;
   copy?: boolean;
   download?: {
     filename: string;
@@ -41,7 +43,7 @@ export type DataViewerTableColumn = {
   label: string;
   monospace?: boolean;
   translate?: boolean;
-  kind?: 'text' | 'download';
+  kind?: 'text' | 'datetime' | 'download';
   filenameKey?: string;
   actionLabel?: string;
 };
@@ -80,6 +82,7 @@ export class DataViewerDialogComponent {
     optional: true,
   });
   private readonly snack = inject(SnackbarService);
+  private readonly dateTime = inject(DateTimeFormatService);
 
   readonly dataInput = input<DataViewerDialogData | null>(null, { alias: 'data' });
 
@@ -108,6 +111,13 @@ export class DataViewerDialogComponent {
 
   tableValue(value: unknown): string {
     return this.displayValue(value);
+  }
+
+  tableCellValue(row: Record<string, unknown>, column: DataViewerTableColumn): string {
+    if (column.kind === 'datetime') {
+      return this.dateTime.formatDateTime(this.dateValue(row[column.key])) || '-';
+    }
+    return this.tableValue(row[column.key]);
   }
 
   tableDownloadUrl(row: Record<string, unknown>, column: DataViewerTableColumn): string {
@@ -154,6 +164,12 @@ export class DataViewerDialogComponent {
       const value = detail.value;
       return value !== null && value !== undefined && String(value) !== '';
     });
+  }
+
+  private dateValue(value: unknown): Date | string | number | null {
+    if (value instanceof Date) return value;
+    if (typeof value === 'string' || typeof value === 'number') return value;
+    return null;
   }
 
   private displayValue(value: unknown): string {
