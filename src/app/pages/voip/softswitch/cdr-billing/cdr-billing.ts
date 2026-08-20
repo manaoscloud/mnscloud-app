@@ -355,13 +355,14 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
         return {
           ...item,
           statusLabel: this.diagnosticStatusLabel(item),
+          diagnosticTypeLabel: this.diagnosticTypeLabel(item),
           downloadFilename: `${this.downloadToken(row)}-${diagnosticType}.${this.diagnosticExtension(item)}`,
           downloadUrl: await this.downloadUrl(String(item['diagnosticAttachmentUUID'] ?? '')),
         };
       }),
     );
     const firstText = downloads.find((item) =>
-      ['sip_capture', 'sip_summary', 'diagnostic_json', 'rtp_summary'].includes(
+      ['sip_capture', 'sip_summary', 'diagnostic_json', 'rtp_summary', 'engine_log', 'runtime_snapshot'].includes(
         String(item['diagnosticType'] ?? ''),
       ),
     );
@@ -384,7 +385,7 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
           title: 'Diagnostic attachments',
           table: {
             columns: [
-              { key: 'diagnosticType', label: 'Type' },
+              { key: 'diagnosticTypeLabel', label: 'Type', translate: true },
               { key: 'captureMode', label: 'Capture mode' },
               { key: 'statusLabel', label: 'Status', translate: true },
               { key: 'sizeBytes', label: 'Size bytes' },
@@ -464,6 +465,13 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
     } catch {
       return '';
     }
+  }
+
+  private diagnosticTypeLabel(item: Record<string, unknown>): string {
+    const type = String(item['diagnosticType'] ?? '')
+      .trim()
+      .toLowerCase();
+    return type || '-';
   }
 
   private diagnosticStatusLabel(item: Record<string, unknown>): string {
