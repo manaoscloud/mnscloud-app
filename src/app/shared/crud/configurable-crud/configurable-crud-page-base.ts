@@ -194,9 +194,22 @@ export type ConfigurableCrudColumn = {
   label: string;
   field?: string;
   uuidField?: string;
-  kind?: 'identity' | 'related' | 'status' | 'boolean' | 'text' | 'date' | 'datetime';
+  kind?:
+    | 'identity'
+    | 'related'
+    | 'status'
+    | 'boolean'
+    | 'text'
+    | 'date'
+    | 'datetime'
+    | 'currency'
+    | 'number';
   lookupKey?: string;
   className?: string;
+  currencyField?: string;
+  currencyCode?: string;
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
   /** Renders a copy action beside the displayed value when the record has a value. */
   copyable?: boolean;
 };
@@ -1007,6 +1020,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (column.kind === 'datetime' || this.isDateTimeColumn(column, row[field])) {
       return this.dateTime.formatDateTime(this.dateValue(row[field])) || '-';
     }
+    if (column.kind === 'currency') return this.formatCurrencyColumn(row, column, row[field]);
+    if (column.kind === 'number') return this.formatNumberColumn(column, row[field]);
     return this.displayValue(row[field]);
   }
 
@@ -1172,6 +1187,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (column.kind === 'related') return this.columnMain(row, column).toLowerCase();
     const field = column.field ?? column.id;
     if (column.kind === 'boolean') return this.isTruthyValue(row[field]) ? '1' : '0';
+    if (column.kind === 'currency' || column.kind === 'number') {
+      const numeric = Number(row[field]);
+      return Number.isFinite(numeric) ? String(numeric).padStart(16, '0') : '';
+    }
     if (
       column.kind === 'date' ||
       column.kind === 'datetime' ||
@@ -1219,6 +1238,39 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   private displayValue(value: unknown): string {
     if (value === null || value === undefined || value === '') return '-';
     return String(value);
+  }
+
+  private formatCurrencyColumn(row: T, column: ConfigurableCrudColumn, value: unknown): string {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return '-';
+    const candidate = column.currencyField ? row[column.currencyField] : column.currencyCode;
+    const currency = String(candidate ?? column.currencyCode ?? this.defaultCurrency())
+      .trim()
+      .toUpperCase();
+    const currencyCode = /^[A-Z]{3}$/.test(currency) ? currency : this.defaultCurrency();
+    try {
+      return new Intl.NumberFormat(this.appI18n.language(), {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: column.minimumFractionDigits ?? 2,
+        maximumFractionDigits: column.maximumFractionDigits ?? 2,
+      }).format(amount);
+    } catch {
+      return `${currencyCode} ${amount.toFixed(column.maximumFractionDigits ?? 2)}`;
+    }
+  }
+
+  private formatNumberColumn(column: ConfigurableCrudColumn, value: unknown): string {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return '-';
+    try {
+      return new Intl.NumberFormat(this.appI18n.language(), {
+        minimumFractionDigits: column.minimumFractionDigits ?? 0,
+        maximumFractionDigits: column.maximumFractionDigits ?? 6,
+      }).format(amount);
+    } catch {
+      return String(amount);
+    }
   }
 
   private openDialog(): void {

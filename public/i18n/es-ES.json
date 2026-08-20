@@ -2641,6 +2641,7 @@
   "Billing ledger": "Extracto de facturación",
   "Billing subscriptions": "Suscripciones de facturación",
   "Wallet balance": "Saldo de la cartera",
+  "Next bill at": "Próxima facturación",
   "Cancel subscription": "Cancelar suscripción",
   "Cancel this subscription?": "¿Cancelar esta suscripción?",
   "Cancel {count} selected subscriptions?": "¿Cancelar {count} suscripciones seleccionadas?",
