@@ -2641,6 +2641,7 @@
   "Billing ledger": "Billing ledger",
   "Billing subscriptions": "Billing subscriptions",
   "Wallet balance": "Wallet balance",
+  "Next bill at": "Next bill at",
   "Cancel subscription": "Cancel subscription",
   "Cancel this subscription?": "Cancel this subscription?",
   "Cancel {count} selected subscriptions?": "Cancel {count} selected subscriptions?",
