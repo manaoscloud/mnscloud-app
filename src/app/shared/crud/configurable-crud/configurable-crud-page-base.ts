@@ -210,6 +210,7 @@ export type ConfigurableCrudColumn = {
   currencyCode?: string;
   minimumFractionDigits?: number;
   maximumFractionDigits?: number;
+  translateValue?: boolean;
   /** Renders a copy action beside the displayed value when the record has a value. */
   copyable?: boolean;
 };
@@ -1022,6 +1023,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
     if (column.kind === 'currency') return this.formatCurrencyColumn(row, column, row[field]);
     if (column.kind === 'number') return this.formatNumberColumn(column, row[field]);
+    if (column.translateValue) {
+      const value = this.displayValue(row[field]);
+      return value === '-' ? value : this.transloco.translate(value);
+    }
     return this.displayValue(row[field]);
   }
 

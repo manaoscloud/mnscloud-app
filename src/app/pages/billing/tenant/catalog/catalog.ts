@@ -41,10 +41,15 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
   initialValues: {},
   columns: [
     { id: 'product', label: 'Product', kind: 'identity', field: 'BprName', uuidField: 'BprUUID' },
-    { id: 'price', label: 'Price', field: 'BpcName' },
-    { id: 'mode', label: 'Billing mode', field: 'BpcBillingMode' },
-    { id: 'currency', label: 'Currency', field: 'BpcCurrency' },
-    { id: 'unitPrice', label: 'Unit price', field: 'BpcUnitPrice' },
+    { id: 'plan', label: 'Plan', field: 'BpcName' },
+    {
+      id: 'price',
+      label: 'Price',
+      kind: 'currency',
+      field: 'BpcUnitPrice',
+      currencyField: 'BpcCurrency',
+    },
+    { id: 'mode', label: 'Billing mode', field: 'BpcBillingMode', translateValue: true },
     { id: 'promotion', label: 'Promotion', field: 'PromotionName' },
     {
       id: 'subscriptionStatus',
