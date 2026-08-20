@@ -1003,7 +1003,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       return this.lookupLabel(column.lookupKey, row[column.uuidField]) || '-';
     }
     const field = column.field ?? column.id;
-    return this.displayValue(row[field]);
+    const value = this.displayValue(row[field]);
+    return column.translateValue && value !== '-' ? this.transloco.translate(value) : value;
   }
 
   columnUUID(row: T, column: ConfigurableCrudColumn): string {
