@@ -249,6 +249,80 @@ export type BillingCatalogItem = BillingProduct &
     PromotionDiscountValue?: number | null;
   };
 
+export interface BillingTenantDashboardWallet {
+  currency: string;
+  balance: number;
+  reserved: number;
+  available: number;
+}
+
+export interface BillingTenantDashboardMetrics {
+  catalogItems: number;
+  activeSubscriptions: number;
+  pendingCancelSubscriptions: number;
+  suspendedSubscriptions: number;
+  pendingPaymentSubscriptions: number;
+  totalSubscriptions: number;
+  pendingTopups: number;
+  ledgerEntries: number;
+  activeEntitlements: number;
+}
+
+export interface BillingTenantDashboardContract {
+  subscriptionUUID: string;
+  productCode?: string | null;
+  productName?: string | null;
+  planName?: string | null;
+  module?: string | null;
+  status: string;
+  quantity: number;
+  currency: string;
+  unitPrice: number;
+  totalAmount: number;
+  contractedAt?: string | null;
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  nextBillAt?: string | null;
+  resourceType?: string | null;
+  resourceLabel?: string | null;
+}
+
+export interface BillingTenantDashboardLedger {
+  ledgerUUID: string;
+  type: string;
+  direction: string;
+  amount: number;
+  currency: string;
+  balanceAfter: number;
+  reference?: string | null;
+  createdAt?: string | null;
+}
+
+export interface BillingTenantDashboardAlert {
+  severity: 'info' | 'warning' | 'error';
+  code: string;
+  message: string;
+}
+
+export interface BillingTenantDashboard {
+  generatedAt: string;
+  wallet: BillingTenantDashboardWallet;
+  metrics: BillingTenantDashboardMetrics;
+  nextRenewal?: {
+    subscriptionUUID: string;
+    productCode?: string | null;
+    productName?: string | null;
+    planName?: string | null;
+    module?: string | null;
+    nextBillAt?: string | null;
+    currency: string;
+    amount: number;
+  } | null;
+  contractedModules: BillingTenantDashboardContract[];
+  recentLedger: BillingTenantDashboardLedger[];
+  alerts: BillingTenantDashboardAlert[];
+}
+
 interface ApiListResponse<T> {
   data?: {
     items?: T[];
@@ -260,6 +334,13 @@ interface ApiListResponse<T> {
 export class BillingService {
   private readonly api = inject(ApiService);
   readonly entitlementRevision = signal(0);
+
+  async getTenantDashboard() {
+    const response = await this.api.get<ApiListResponse<BillingTenantDashboard>>(
+      'billing/dashboard',
+    );
+    return response.data?.item ?? null;
+  }
 
   async listProducts(search = '', status: number | null = null) {
     const params = new URLSearchParams();
