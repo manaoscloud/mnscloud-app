@@ -307,10 +307,14 @@ export class VoipPabxCdrPage {
       const response = await this.api.diagnostics(row.cdrUUID);
       const attachments = this.extractItems(response);
       const downloads = await Promise.all(
-        attachments.map(async (item: any) => ({
-          ...item,
-          downloadUrl: await this.diagnosticDownloadUrl(item?.diagnosticAttachmentUUID),
-        })),
+        attachments.map(async (item: any) => {
+          const diagnosticType = String(item?.diagnosticType ?? 'diagnostic').trim();
+          return {
+            ...item,
+            downloadFilename: `${this.downloadToken(row)}-${diagnosticType}.${this.diagnosticExtension(item)}`,
+            downloadUrl: await this.diagnosticDownloadUrl(item?.diagnosticAttachmentUUID),
+          };
+        }),
       );
       const firstText = downloads.find((item) =>
         ['sip_capture', 'sip_summary', 'diagnostic_json', 'rtp_summary'].includes(
@@ -343,7 +347,13 @@ export class VoipPabxCdrPage {
                 { key: 'status', label: 'Status', translate: true },
                 { key: 'sizeBytes', label: 'Size bytes' },
                 { key: 'dateCreated', label: 'Created at' },
-                { key: 'downloadUrl', label: 'Signed download URL', monospace: true },
+                {
+                  key: 'downloadUrl',
+                  label: 'Download',
+                  kind: 'download',
+                  filenameKey: 'downloadFilename',
+                  actionLabel: 'Download',
+                },
               ],
               rows: downloads,
               emptyLabel: 'No diagnostic attachments found.',
@@ -433,6 +443,22 @@ export class VoipPabxCdrPage {
     } catch {
       return '';
     }
+  }
+
+  private diagnosticExtension(item: Record<string, unknown>): string {
+    const type = String(item['diagnosticType'] ?? '')
+      .trim()
+      .toLowerCase();
+    const mime = String(item['mimeType'] ?? '')
+      .trim()
+      .toLowerCase();
+    const objectKey = String(item['storageObjectKey'] ?? item['objectKey'] ?? '').trim();
+    const keyExtension = objectKey.match(/\.([a-z0-9]+)$/i)?.[1];
+    if (keyExtension) return keyExtension.toLowerCase();
+    if (type === 'pcapng' || mime.includes('pcapng')) return 'pcapng';
+    if (type === 'sip_capture' || mime.includes('sip')) return 'sip';
+    if (type.includes('json') || mime.includes('json')) return 'json';
+    return 'txt';
   }
 
   private async tryFetchText(url: string): Promise<string> {
