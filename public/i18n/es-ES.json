@@ -3606,5 +3606,19 @@
   "diagnostic.status.available": "disponible",
   "diagnostic.status.pending": "pendiente",
   "diagnostic.status.failed": "falló",
-  "diagnostic.status.expired": "expirado"
+  "diagnostic.status.expired": "expirado",
+  "commercial.entitlement.required": "Suscripción necesaria. Módulo necesario: {{module}}. Permiso: {{entitlement}}.",
+  "commercial.entitlement.requiredModule": "Suscripción necesaria. Módulo necesario: {{module}}.",
+  "commercial.entitlement.policyMissing": "Falta la política comercial para este recurso. Módulo necesario: {{module}}.",
+  "commercial.entitlement.tenantRequired": "Seleccione un tenant autenticado para validar la suscripción comercial. Módulo necesario: {{module}}.",
+  "commercial.module.erp": "ERP",
+  "commercial.module.isp": "ISP",
+  "commercial.module.voip": "VoIP",
+  "commercial.module.hosting": "Hosting",
+  "commercial.module.sale": "Ventas",
+  "commercial.module.support": "Soporte",
+  "commercial.module.monitoring": "Monitoreo",
+  "commercial.module.cyber-security": "Ciberseguridad",
+  "commercial.module.infragis": "InfraGIS",
+  "commercial.module.realtime": "Realtime"
 }

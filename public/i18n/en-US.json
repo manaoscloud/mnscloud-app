@@ -3606,5 +3606,19 @@
   "diagnostic.status.available": "available",
   "diagnostic.status.pending": "pending",
   "diagnostic.status.failed": "failed",
-  "diagnostic.status.expired": "expired"
+  "diagnostic.status.expired": "expired",
+  "commercial.entitlement.required": "Subscription required. Required module: {{module}}. Entitlement: {{entitlement}}.",
+  "commercial.entitlement.requiredModule": "Subscription required. Required module: {{module}}.",
+  "commercial.entitlement.policyMissing": "Commercial policy is missing for this resource. Required module: {{module}}.",
+  "commercial.entitlement.tenantRequired": "Select an authenticated tenant to validate the commercial subscription. Required module: {{module}}.",
+  "commercial.module.erp": "ERP",
+  "commercial.module.isp": "ISP",
+  "commercial.module.voip": "VoIP",
+  "commercial.module.hosting": "Hosting",
+  "commercial.module.sale": "Sales",
+  "commercial.module.support": "Support",
+  "commercial.module.monitoring": "Monitoring",
+  "commercial.module.cyber-security": "Cyber Security",
+  "commercial.module.infragis": "InfraGIS",
+  "commercial.module.realtime": "Realtime"
 }
