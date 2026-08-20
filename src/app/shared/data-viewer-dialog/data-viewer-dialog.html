@@ -66,7 +66,24 @@
                     <tr>
                       @for (column of table.columns; track column.key) {
                         <td [class.monospace]="column.monospace">
-                          @if (column.translate) {
+                          @if (column.kind === 'download') {
+                            @if (tableDownloadUrl(row, column); as url) {
+                              <a
+                                mat-stroked-button
+                                color="primary"
+                                class="data-viewer-download-link"
+                                [href]="url"
+                                [attr.download]="tableDownloadFilename(row, column)"
+                                target="_blank"
+                                rel="noopener"
+                              >
+                                <mat-icon>download</mat-icon>
+                                {{ column.actionLabel || 'Download' | transloco }}
+                              </a>
+                            } @else {
+                              -
+                            }
+                          } @else if (column.translate) {
                             {{ tableValue(row[column.key]) | transloco }}
                           } @else {
                             {{ tableValue(row[column.key]) }}
@@ -77,7 +94,7 @@
                   } @empty {
                     <tr>
                       <td [attr.colspan]="table.columns.length">
-                        {{ (table.emptyLabel ?? 'No records found.') | transloco }}
+                        {{ table.emptyLabel ?? 'No records found.' | transloco }}
                       </td>
                     </tr>
                   }

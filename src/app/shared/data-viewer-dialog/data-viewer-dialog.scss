@@ -113,6 +113,12 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 }
 
+.data-viewer-download-link {
+  min-width: 8rem;
+  justify-content: center;
+  white-space: nowrap;
+}
+
 .data-viewer-code-header {
   display: flex;
   align-items: center;

@@ -41,6 +41,9 @@ export type DataViewerTableColumn = {
   label: string;
   monospace?: boolean;
   translate?: boolean;
+  kind?: 'text' | 'download';
+  filenameKey?: string;
+  actionLabel?: string;
 };
 
 export type DataViewerTable = {
@@ -105,6 +108,15 @@ export class DataViewerDialogComponent {
 
   tableValue(value: unknown): string {
     return this.displayValue(value);
+  }
+
+  tableDownloadUrl(row: Record<string, unknown>, column: DataViewerTableColumn): string {
+    return String(row[column.key] ?? '').trim();
+  }
+
+  tableDownloadFilename(row: Record<string, unknown>, column: DataViewerTableColumn): string {
+    const value = column.filenameKey ? row[column.filenameKey] : null;
+    return this.safeFilename(String(value ?? 'mnscloud-diagnostic-capture'));
   }
 
   codeText(block: DataViewerCodeBlock): string {
