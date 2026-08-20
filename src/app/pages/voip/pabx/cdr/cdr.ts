@@ -344,9 +344,9 @@ export class VoipPabxCdrPage {
               columns: [
                 { key: 'diagnosticType', label: 'Type' },
                 { key: 'captureMode', label: 'Capture mode' },
-                { key: 'status', label: 'Status', translate: true },
+                { key: 'statusLabel', label: 'Status', translate: true },
                 { key: 'sizeBytes', label: 'Size bytes' },
-                { key: 'dateCreated', label: 'Created at' },
+                { key: 'dateCreated', label: 'Created at', kind: 'datetime' },
                 {
                   key: 'downloadUrl',
                   label: 'Download',
@@ -365,7 +365,8 @@ export class VoipPabxCdrPage {
               title: 'Preview',
               value: preview || 'No text preview available. Use the signed download URL.',
               format: 'text',
-              copy: true,
+              translate: !preview,
+              copy: Boolean(preview),
               download: preview
                 ? {
                     filename: `pabx-diagnostic-${this.downloadToken(row)}.txt`,
@@ -443,6 +444,13 @@ export class VoipPabxCdrPage {
     } catch {
       return '';
     }
+  }
+
+  private diagnosticStatusLabel(item: Record<string, unknown>): string {
+    const status = String(item['status'] ?? '')
+      .trim()
+      .toLowerCase();
+    return status ? `diagnostic.status.${status}` : '-';
   }
 
   private diagnosticExtension(item: Record<string, unknown>): string {

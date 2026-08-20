@@ -84,9 +84,9 @@
                               -
                             }
                           } @else if (column.translate) {
-                            {{ tableValue(row[column.key]) | transloco }}
+                            {{ tableCellValue(row, column) | transloco }}
                           } @else {
-                            {{ tableValue(row[column.key]) }}
+                            {{ tableCellValue(row, column) }}
                           }
                         </td>
                       }
@@ -135,7 +135,7 @@
               </div>
             </div>
             <pre class="data-viewer-code" [class.is-shell]="block.format === 'shell'"><code>{{
-              codeText(block)
+              block.translate ? (codeText(block) | transloco) : codeText(block)
             }}</code></pre>
           }
         </section>
