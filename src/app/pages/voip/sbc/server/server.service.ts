@@ -19,8 +19,6 @@ export type VoipSbcServerItem = {
   VbsBaseUrl?: string | null;
   VbsCodecMode?: string | null;
   VbsAllowedCodecs?: string | null;
-  VbsPreferredCodecs?: string | null;
-  VbsTranscodeCodecs?: string | null;
   VbsNotes?: string | null;
   VbsStatus: number;
   VbsLastSeenAt?: string | null;

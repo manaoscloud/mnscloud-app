@@ -52,6 +52,7 @@ type ServerPayload = {
   privateIPv4: string;
   privateIPv6: string;
   baseUrl: string;
+  allowedCodecs: string[];
   controlHost: string;
   controlPort: number | null;
   controlUsername: string;
@@ -61,6 +62,22 @@ type ServerPayload = {
   notes: string;
   status: number;
 };
+
+const CODEC_OPTIONS = [
+  'PCMU',
+  'PCMA',
+  'G729',
+  'G722',
+  'OPUS',
+  'GSM',
+  'AMR',
+  'AMR-WB',
+  'ILBC',
+  'SPEEX',
+  'TELEPHONE-EVENT',
+];
+
+const DEFAULT_ALLOWED_CODECS = ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'];
 
 @Component({
   selector: 'app-voip-pabx-server',
@@ -155,6 +172,7 @@ export class VoipPabxServerPage {
     { value: 1, label: 'Active' },
     { value: 0, label: 'Inactive' },
   ];
+  readonly codecOptions = CODEC_OPTIONS;
 
   private readonly cleanupOnDestroy = this.destroyRef.onDestroy(() => {
     this.closeDialog();
@@ -244,6 +262,7 @@ export class VoipPabxServerPage {
       privateIPv4: this.privateIPv4(row),
       privateIPv6: this.privateIPv6(row),
       baseUrl: row.VpsBaseUrl || '',
+      allowedCodecs: this.codecList(row.VpsAllowedCodecs, DEFAULT_ALLOWED_CODECS),
       controlHost: row.VpsControlHost || '',
       controlPort: row.VpsControlPort ? Number(row.VpsControlPort) : null,
       controlUsername: row.VpsControlUsername || '',
@@ -561,6 +580,7 @@ export class VoipPabxServerPage {
       privateIPv4: '',
       privateIPv6: '',
       baseUrl: '',
+      allowedCodecs: [...DEFAULT_ALLOWED_CODECS],
       controlHost: '',
       controlPort: null,
       controlUsername: '',
@@ -584,6 +604,7 @@ export class VoipPabxServerPage {
       privateIPv4: value.privateIPv4.trim(),
       privateIPv6: value.privateIPv6.trim(),
       baseUrl: value.baseUrl.trim(),
+      allowedCodecs: this.codecList(value.allowedCodecs, DEFAULT_ALLOWED_CODECS),
       controlHost: value.controlHost.trim(),
       controlPort:
         value.controlPort === null || value.controlPort === undefined
@@ -665,6 +686,16 @@ export class VoipPabxServerPage {
   private shellQuote(value: string) {
     return `'${value.replace(/'/g, `'\\''`)}'`;
   }
+
+  private codecList(value: unknown, fallback: readonly string[]): string[] {
+    const text = Array.isArray(value) ? value.join(',') : String(value ?? '');
+    const items = text
+      .split(/[,\s]+/)
+      .map((item) => item.trim().toUpperCase())
+      .filter(Boolean);
+    return items.length ? [...new Set(items)] : [...fallback];
+  }
+
   private sortValue(row: VoipPabxServerItem, column: string): string | number {
     if (column === 'advertisedIP') return row.VpsAdvertisedIP || '';
     const value = (row as Record<string, unknown>)[column];

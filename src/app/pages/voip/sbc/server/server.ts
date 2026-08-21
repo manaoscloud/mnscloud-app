@@ -48,7 +48,6 @@ const CODEC_OPTIONS = [
 ];
 
 const DEFAULT_ALLOWED_CODECS = ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'];
-const DEFAULT_PREFERRED_CODECS = ['PCMU', 'PCMA'];
 
 const SERVER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/voip/sbc/servers',
@@ -83,8 +82,6 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     baseUrl: '',
     codecMode: 'passthrough',
     allowedCodecs: DEFAULT_ALLOWED_CODECS,
-    preferredCodecs: DEFAULT_PREFERRED_CODECS,
-    transcodeCodecs: [],
     notes: '',
   },
   columns: [
@@ -187,26 +184,6 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'preferredCodecs',
-      source: 'VbsPreferredCodecs',
-      payloadKey: 'preferredCodecs',
-      label: 'Codecs preferenciais',
-      type: 'multi-select',
-      tab: 'codecs',
-      options: CODEC_OPTIONS,
-      span: 1,
-    },
-    {
-      key: 'transcodeCodecs',
-      source: 'VbsTranscodeCodecs',
-      payloadKey: 'transcodeCodecs',
-      label: 'Codecs transcode',
-      type: 'multi-select',
-      tab: 'codecs',
-      options: CODEC_OPTIONS,
-      span: 1,
-    },
-    {
       key: 'notes',
       source: 'VbsNotes',
       payloadKey: 'notes',
@@ -251,8 +228,6 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
     super.startEdit(row);
     this.patchFormValues({
       allowedCodecs: this.codecList(row.VbsAllowedCodecs, DEFAULT_ALLOWED_CODECS),
-      preferredCodecs: this.codecList(row.VbsPreferredCodecs, DEFAULT_PREFERRED_CODECS),
-      transcodeCodecs: this.codecList(row.VbsTranscodeCodecs, []),
     });
   }
 
@@ -261,8 +236,6 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
       ...payload,
       status: Number(payload['status']),
       allowedCodecs: this.codecCsv(payload['allowedCodecs']),
-      preferredCodecs: this.codecCsv(payload['preferredCodecs']),
-      transcodeCodecs: this.codecCsv(payload['transcodeCodecs']),
     };
   }
 
