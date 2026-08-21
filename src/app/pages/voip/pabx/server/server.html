@@ -394,6 +394,19 @@
             </div>
           </mat-tab>
 
+          <mat-tab label="Codecs">
+            <div class="tab-content form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'Codecs permitidos' | transloco }}</mat-label>
+                <mat-select [formField]="form.allowedCodecs" multiple>
+                  @for (codec of codecOptions; track codec) {
+                    <mat-option [value]="codec">{{ codec }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
           <mat-tab label="Notes">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-4">
