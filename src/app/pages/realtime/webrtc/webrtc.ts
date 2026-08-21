@@ -70,6 +70,7 @@ const WEBRTC_SERVER_CONFIG: ConfigurableCrudConfig = {
     { id: 'domain', label: 'Primary Domain', field: 'RtdName' },
     { id: 'mediaServer', label: 'Media Server', field: 'RmsName' },
     { id: 'publicIP', label: 'Public IP', field: 'RwsPublicIP', copyable: true },
+    { id: 'advertisedIP', label: 'IP anunciado', field: 'RwsAdvertisedIP', copyable: true },
     { id: 'status', label: 'Status', kind: 'status', field: 'RwsStatus', className: 'status-col' },
     { id: 'lastSeen', label: 'Last Seen', field: 'RwsLastSeenAt', kind: 'datetime' },
   ],

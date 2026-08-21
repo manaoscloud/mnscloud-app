@@ -14,6 +14,8 @@ export type VoipSoftswitchServerItem = {
   VsrHostname?: string | null;
   VsrPublicIP?: string | null;
   VsrPrivateIP?: string | null;
+  VsrAdvertisedIP?: string | null;
+  VsrAdvertisedIPSource?: string | null;
   VsrBaseUrl?: string | null;
   VsrCodecMode?: string | null;
   VsrAllowedCodecs?: string | null;

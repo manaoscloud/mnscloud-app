@@ -76,6 +76,7 @@ const TURN_SERVER_CONFIG: ConfigurableCrudConfig = {
     { id: 'name', label: 'Name', kind: 'identity', field: 'RtsName', uuidField: 'RtsUUID' },
     { id: 'domain', label: 'Primary Realm Domain', field: 'RtdName' },
     { id: 'externalIP', label: 'External IP', field: 'RtsExternalIP', copyable: true },
+    { id: 'advertisedIP', label: 'IP efetivo', field: 'RtsAdvertisedIP', copyable: true },
     { id: 'listeningPort', label: 'Listening Port', field: 'RtsListeningPort' },
     { id: 'tlsListeningPort', label: 'TLS Port', field: 'RtsTlsListeningPort' },
     { id: 'certificateProvider', label: 'Certificate', field: 'RtsCertificateProvider' },

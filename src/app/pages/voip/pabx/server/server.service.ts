@@ -12,6 +12,8 @@ export type VoipPabxServerItem = {
   VpsPublicIPv6?: string | null;
   VpsPrivateIPv4?: string | null;
   VpsPrivateIPv6?: string | null;
+  VpsAdvertisedIP?: string | null;
+  VpsAdvertisedIPSource?: string | null;
   VpsBaseUrl?: string | null;
   VpsControlHost?: string | null;
   VpsControlPort?: number | null;

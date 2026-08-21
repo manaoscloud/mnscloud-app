@@ -98,6 +98,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     { id: 'name', label: 'Name', kind: 'identity', field: 'VsrName', uuidField: 'VsrUUID' },
     { id: 'hostname', label: 'Hostname', field: 'VsrHostname' },
     { id: 'publicIP', label: 'Public IP', field: 'VsrPublicIP' },
+    { id: 'advertisedIP', label: 'IP anunciado', field: 'VsrAdvertisedIP', copyable: true },
     { id: 'privateIP', label: 'Private IP', field: 'VsrPrivateIP' },
     { id: 'engine', label: 'Engine', field: 'VsrEngine' },
     { id: 'media', label: 'Media', field: 'MediaServerName' },

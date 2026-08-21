@@ -93,6 +93,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     { id: 'media', label: 'Media', field: 'MediaServerName' },
     { id: 'hostname', label: 'Hostname', field: 'VbsHostname' },
     { id: 'publicIP', label: 'Public IP', field: 'VbsPublicIP' },
+    { id: 'advertisedIP', label: 'IP anunciado', field: 'VbsAdvertisedIP', copyable: true },
     { id: 'privateIP', label: 'Private IP', field: 'VbsPrivateIP' },
     { id: 'status', label: 'Status', kind: 'status', field: 'VbsStatus', className: 'status-col' },
   ],

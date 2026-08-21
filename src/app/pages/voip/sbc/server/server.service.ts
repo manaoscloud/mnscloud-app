@@ -14,6 +14,8 @@ export type VoipSbcServerItem = {
   VbsHostname?: string | null;
   VbsPublicIP?: string | null;
   VbsPrivateIP?: string | null;
+  VbsAdvertisedIP?: string | null;
+  VbsAdvertisedIPSource?: string | null;
   VbsBaseUrl?: string | null;
   VbsCodecMode?: string | null;
   VbsAllowedCodecs?: string | null;
