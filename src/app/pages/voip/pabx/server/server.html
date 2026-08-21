@@ -2,22 +2,22 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>PABX Servers</h1>
-        <p>Register PABX platform servers used by tenant domains and routing.</p>
+        <h1>{{ 'PABX Servers' | transloco }}</h1>
+        <p>{{ 'Register PABX platform servers used by tenant domains and routing.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
           <mat-icon>add</mat-icon>
-          New
+          {{ 'New' | transloco }}
         </button>
       </div>
     </header>
 
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
-        <mat-label>Search</mat-label>
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
         <input
           matInput
           placeholder="Name, hostname, IP"
@@ -37,7 +37,7 @@
 
       <div class="filter-actions">
         @if (selectedCount) {
-          <span class="selection-count">{{ selectedCount }} selected</span>
+          <span class="selection-count">{{ selectedCount }} {{ 'selected' | transloco }}</span>
           <button
             mat-stroked-button
             color="warn"
@@ -46,7 +46,7 @@
             (click)="removeSelectedServers()"
           >
             <mat-icon>delete</mat-icon>
-            Delete selected
+            {{ 'Delete selected' | transloco }}
           </button>
         }
         <button mat-stroked-button type="button" (click)="applySearchFilters()">
@@ -94,7 +94,7 @@
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="record-main">{{ row.VpsName }}</div>
             <div class="record-uuid">{{ row.VpsUUID }}</div>
@@ -102,12 +102,12 @@
         </ng-container>
 
         <ng-container matColumnDef="hostname">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Hostname</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Hostname' | transloco }}</th>
           <td mat-cell *matCellDef="let row">{{ row.VpsHostname || '-' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="publicIPs">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Public IPs</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'SIP public IPs' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="ip-stack">
               <span>{{ publicIPv4(row) || '-' }}</span>
@@ -119,7 +119,7 @@
         </ng-container>
 
         <ng-container matColumnDef="advertisedIP">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>IP anunciado</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'SIP advertised IP' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="ip-stack">
               <span>{{ advertisedIP(row) || '-' }}</span>
@@ -129,7 +129,7 @@
         </ng-container>
 
         <ng-container matColumnDef="privateIPs">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Private IPs</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Private listen IPs' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="ip-stack">
               <span>{{ privateIPv4(row) || '-' }}</span>
@@ -141,14 +141,14 @@
         </ng-container>
 
         <ng-container matColumnDef="engine">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="engine-col">Engine</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="engine-col">{{ 'Engine' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="engine-col">
             {{ engineLabel(row.VpsEngine) }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="control">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Control</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Control' | transloco }}</th>
           <td mat-cell *matCellDef="let row">
             <div class="control-stack">
               <span>{{ controlTarget(row) }}</span>
@@ -159,14 +159,14 @@
                 [matTooltip]="controlSecretTooltip(row)"
               >
                 <mat-icon>{{ row.VpsControlSecretSet ? 'verified' : 'warning' }}</mat-icon>
-                <span>{{ row.VpsControlSecretSet ? 'Configured' : 'Pending' }}</span>
+                <span>{{ (row.VpsControlSecretSet ? 'Configured' : 'Pending') | transloco }}</span>
               </span>
             </div>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -181,7 +181,7 @@
         </ng-container>
 
         <ng-container matColumnDef="lastSeen">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="last-seen-col">Last Seen</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="last-seen-col">{{ 'Last Seen' | transloco }}</th>
           <td mat-cell *matCellDef="let row" class="last-seen-col">
             {{ row.VpsLastSeenAt ? (row.VpsLastSeenAt | mnsDateTime) : '-' }}
           </td>
@@ -189,7 +189,7 @@
 
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">
-            Actions
+            {{ 'Actions' | transloco }}
           </th>
           <td mat-cell *matCellDef="let row" class="actions-col-cell">
             <div class="actions-col">
@@ -240,7 +240,7 @@
 
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            {{ loading() ? 'Loading PABX servers...' : 'No PABX servers found.' }}
+            {{ (loading() ? 'Loading PABX servers...' : 'No PABX servers found.') | transloco }}
           </td>
         </tr>
       </table>
@@ -263,8 +263,8 @@
   <div class="voip-pabx-server-dialog crud-dialog">
     <div class="dialog-header">
       <div>
-        <h2>{{ editing() ? 'Edit PABX server' : 'New PABX server' }}</h2>
-        <p>Configure the platform server identity used by PABX provisioning.</p>
+        <h2>{{ (editing() ? 'Edit PABX server' : 'New PABX server') | transloco }}</h2>
+        <p>{{ 'Configure the platform server identity used by PABX provisioning.' | transloco }}</p>
       </div>
     </div>
 
@@ -274,15 +274,15 @@
           <mat-tab [label]="'Record' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Status</mat-label>
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="form.status">
-                  <mat-option [value]="1">Active</mat-option>
-                  <mat-option [value]="0">Inactive</mat-option>
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Engine</mat-label>
+                <mat-label>{{ 'Engine' | transloco }}</mat-label>
                 <mat-select [formField]="form.engine">
                   <mat-option value="freeswitch">FreeSWITCH</mat-option>
                   <mat-option value="asterisk">Asterisk</mat-option>
@@ -290,41 +290,42 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Name</mat-label>
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [formField]="form.name" autocomplete="off" />
               </mat-form-field>
             </div>
           </mat-tab>
 
-          <mat-tab label="Network">
+          <mat-tab [label]="'Network' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Hostname</mat-label>
+                <mat-label>{{ 'Hostname' | transloco }}</mat-label>
                 <input matInput [formField]="form.hostname" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Public IPv4</mat-label>
+                <mat-label>{{ 'Public IPv4 (SIP/NAT)' | transloco }}</mat-label>
                 <input matInput [formField]="form.publicIPv4" autocomplete="off" />
+                <mat-hint>{{ 'Used first for SIP advertise and NAT rewriting when present.' | transloco }}</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Public IPv6</mat-label>
+                <mat-label>{{ 'Public IPv6 (SIP/NAT)' | transloco }}</mat-label>
                 <input matInput [formField]="form.publicIPv6" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Private IPv4</mat-label>
+                <mat-label>{{ 'Private IPv4 (listen)' | transloco }}</mat-label>
                 <input matInput [formField]="form.privateIPv4" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Private IPv6</mat-label>
+                <mat-label>{{ 'Private IPv6 (listen)' | transloco }}</mat-label>
                 <input matInput [formField]="form.privateIPv6" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Base URL</mat-label>
+                <mat-label>{{ 'Base URL' | transloco }}</mat-label>
                 <input matInput [formField]="form.baseUrl" autocomplete="off" />
               </mat-form-field>
             </div>
