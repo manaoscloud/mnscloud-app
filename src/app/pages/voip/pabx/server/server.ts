@@ -111,6 +111,7 @@ export class VoipPabxServerPage {
     'name',
     'hostname',
     'publicIPs',
+    'advertisedIP',
     'privateIPs',
     'control',
     'engine',
@@ -483,6 +484,23 @@ export class VoipPabxServerPage {
     return row.VpsPublicIPv6 || '';
   }
 
+  advertisedIP(row: VoipPabxServerItem) {
+    return row.VpsAdvertisedIP || '';
+  }
+
+  advertisedIPSource(row: VoipPabxServerItem) {
+    const source = row.VpsAdvertisedIPSource || 'not_configured';
+    const labels: Record<string, string> = {
+      public_ipv4: 'IPv4 público',
+      public_ipv6: 'IPv6 público',
+      hostname: 'Hostname',
+      private_ipv4: 'IPv4 privado',
+      private_ipv6: 'IPv6 privado',
+      not_configured: 'Não configurado',
+    };
+    return labels[source] || source;
+  }
+
   privateIPv4(row: VoipPabxServerItem) {
     return row.VpsPrivateIPv4 || '';
   }
@@ -648,6 +666,7 @@ export class VoipPabxServerPage {
     return `'${value.replace(/'/g, `'\\''`)}'`;
   }
   private sortValue(row: VoipPabxServerItem, column: string): string | number {
+    if (column === 'advertisedIP') return row.VpsAdvertisedIP || '';
     const value = (row as Record<string, unknown>)[column];
     if (typeof value === 'number') return value;
     return String(value ?? '');

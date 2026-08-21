@@ -118,6 +118,16 @@
           </td>
         </ng-container>
 
+        <ng-container matColumnDef="advertisedIP">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>IP anunciado</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="ip-stack">
+              <span>{{ advertisedIP(row) || '-' }}</span>
+              <span class="record-uuid">{{ advertisedIPSource(row) }}</span>
+            </div>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="privateIPs">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Private IPs</th>
           <td mat-cell *matCellDef="let row">
