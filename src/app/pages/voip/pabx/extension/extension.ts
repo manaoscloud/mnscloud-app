@@ -525,7 +525,7 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
                   : undefined,
               requiresDomain,
               domainName,
-              defaultCodecs: splitCodecs(row['VpaDefaultAudioCodecs']),
+              defaultCodecs: splitCodecs(row['ServerAllowedCodecs']),
             };
           })
           .filter((option) => option.value),

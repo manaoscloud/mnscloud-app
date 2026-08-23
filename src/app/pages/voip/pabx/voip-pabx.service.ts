@@ -23,8 +23,7 @@ export type VoipPabxAccount = {
   RecordingStorageProvider?: string | null;
   RecordingStorageEffectivePath?: string | null;
   RecordingStoragePublicUrl?: string | null;
-  VpaDefaultAudioCodecs?: string | null;
-  VpaDefaultVideoCodecs?: string | null;
+  ServerAllowedCodecs?: string | null;
   ServerName?: string | null;
   ServerEngine?: string | null;
   ServerHostname?: string | null;
@@ -70,8 +69,6 @@ export class VoipPabxService {
     mediaStorageAccountUUID?: string;
     mediaDeliveryMode?: 'default' | 'online' | 'offline';
     timezone?: string;
-    defaultAudioCodecs?: string;
-    defaultVideoCodecs?: string;
     isActive?: boolean;
     isDefault?: boolean;
   }) {
@@ -93,8 +90,6 @@ export class VoipPabxService {
       mediaStorageAccountUUID?: string;
       mediaDeliveryMode?: 'default' | 'online' | 'offline';
       timezone?: string;
-      defaultAudioCodecs?: string;
-      defaultVideoCodecs?: string;
       isActive?: boolean;
       isDefault?: boolean;
     },

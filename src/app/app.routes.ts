@@ -1069,7 +1069,7 @@ export const routes: Routes = [
                   import('./pages/voip/softswitch/accounts/accounts').then(
                     (m) => m.VoipSoftswitchAccountsPage,
                   ),
-                title: 'VoIP • Softswitch • Accounts | mnscloud',
+                title: 'VoIP • Softswitch | mnscloud',
               },
               {
                 path: 'voip/softswitch/domains',
@@ -1168,7 +1168,7 @@ export const routes: Routes = [
                 path: 'voip/pabx/accounts',
                 loadComponent: () =>
                   import('./pages/voip/pabx/account/account').then((m) => m.VoipPabxAccountPage),
-                title: 'VoIP • PABX • Accounts | mnscloud',
+                title: 'VoIP • PABX | mnscloud',
               },
               {
                 path: 'voip/pabx/domains',

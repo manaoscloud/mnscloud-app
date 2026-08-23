@@ -32,29 +32,24 @@ const deliveryModes: ConfigurableCrudOption[] = [
   { value: 'offline', label: 'Offline' },
 ];
 
-const audioCodecs: ConfigurableCrudOption[] = ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'].map(
-  (value) => ({ value, label: value }),
-);
-const videoCodecs: ConfigurableCrudOption[] = ['H264'].map((value) => ({ value, label: value }));
-
 function config(): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/pabx/accounts',
     uuidField: 'VpaUUID',
-    pageTitle: 'PABX Accounts',
-    pageDescription: 'Manage tenant PABX accounts and their runtime defaults.',
-    createTitle: 'New PABX account',
-    editTitle: 'Edit PABX account',
-    dialogDescription: 'Maintain the PABX account identity, routing, codecs, and storage.',
+    pageTitle: 'PABX',
+    pageDescription: 'Manage tenant PABX accounts and their runtime bindings.',
+    createTitle: 'New PABX',
+    editTitle: 'Edit PABX',
+    dialogDescription: 'Maintain the PABX identity, routing and storage.',
     searchPlaceholder: 'Search',
     emptyLabel: 'No PABX accounts found.',
-    deleteTitle: 'Delete PABX account',
-    deleteMessage: 'Delete this PABX account?',
-    deleteSelectedTitle: 'Delete selected PABX accounts',
-    deleteSelectedMessage: 'Delete {count} selected PABX accounts?',
-    savedMessage: 'PABX account saved successfully.',
-    deletedMessage: 'PABX account deleted successfully.',
-    deleteFailedMessage: 'Failed to delete PABX account.',
+    deleteTitle: 'Delete PABX',
+    deleteMessage: 'Delete this PABX?',
+    deleteSelectedTitle: 'Delete selected PABX',
+    deleteSelectedMessage: 'Delete {count} selected PABX records?',
+    savedMessage: 'PABX saved successfully.',
+    deletedMessage: 'PABX deleted successfully.',
+    deleteFailedMessage: 'Failed to delete PABX.',
     statusMode: 'number',
     activeValue: 1,
     inactiveValue: 0,
@@ -63,7 +58,6 @@ function config(): ConfigurableCrudConfig {
     tabLabels: {
       routing: 'Routing',
       storage: 'Storage',
-      codecs: 'Codecs',
     },
     initialValues: {
       isActive: 1,
@@ -74,8 +68,6 @@ function config(): ConfigurableCrudConfig {
       dialPlanUUID: '',
       blacklistUUID: '',
       timezone: '',
-      defaultAudioCodecs: ['OPUS', 'PCMU', 'PCMA', 'G729', 'G722'],
-      defaultVideoCodecs: ['H264'],
       recordingStorageMode: 'default',
       storageAccountUUID: '',
       mediaStorageMode: 'default',
@@ -231,26 +223,6 @@ function config(): ConfigurableCrudConfig {
         tab: 'storage',
         span: 1,
       },
-      {
-        key: 'defaultAudioCodecs',
-        source: 'VpaDefaultAudioCodecs',
-        payloadKey: 'defaultAudioCodecs',
-        label: 'Default audio codecs',
-        type: 'multi-select',
-        options: audioCodecs,
-        tab: 'codecs',
-        span: 1,
-      },
-      {
-        key: 'defaultVideoCodecs',
-        source: 'VpaDefaultVideoCodecs',
-        payloadKey: 'defaultVideoCodecs',
-        label: 'Default video codecs',
-        type: 'multi-select',
-        options: videoCodecs,
-        tab: 'codecs',
-        span: 1,
-      },
     ],
   };
 }
@@ -274,14 +246,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   constructor() {
     super(config());
     void this.loadLookups();
-  }
-
-  override startEdit(row: ConfigurableCrudRecord): void {
-    super.startEdit(row);
-    this.patchFormValues({
-      defaultAudioCodecs: this.splitCodecs(row['VpaDefaultAudioCodecs']),
-      defaultVideoCodecs: this.splitCodecs(row['VpaDefaultVideoCodecs']),
-    });
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
@@ -312,8 +276,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
       ...payload,
       isActive: Number(payload['isActive']) === 1,
       isDefault: Number(payload['isDefault']) === 1,
-      defaultAudioCodecs: this.joinCodecs(payload['defaultAudioCodecs']),
-      defaultVideoCodecs: this.joinCodecs(payload['defaultVideoCodecs']),
       blacklistUUID: payload['blacklistUUID'] || null,
       storageAccountUUID:
         payload['recordingStorageMode'] === 'storage'
@@ -324,20 +286,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
           ? payload['mediaStorageAccountUUID'] || null
           : null,
     };
-  }
-
-  private joinCodecs(value: unknown): string | null {
-    const codecs = (Array.isArray(value) ? value : String(value ?? '').split(','))
-      .map((item) => String(item).trim().toUpperCase())
-      .filter(Boolean);
-    return [...new Set(codecs)].join(',') || null;
-  }
-
-  private splitCodecs(value: unknown): string[] {
-    return String(value ?? '')
-      .split(',')
-      .map((item) => item.trim().toUpperCase())
-      .filter(Boolean);
   }
 
   private async loadLookups(): Promise<void> {

@@ -1407,7 +1407,7 @@ export class MainLayout {
             },
             {
               id: 'voip/softswitch/accounts',
-              label: 'Accounts',
+              label: 'Softswitch',
               icon: 'router',
               route: '/voip/softswitch/accounts',
               scope: 'tenant',
@@ -1516,7 +1516,7 @@ export class MainLayout {
             },
             {
               id: 'voip/pabx/registry',
-              label: 'PABXs',
+              label: 'PABX',
               icon: 'settings_phone',
               route: '/voip/pabx/accounts',
             },

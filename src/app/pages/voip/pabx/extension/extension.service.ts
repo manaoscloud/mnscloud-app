@@ -26,8 +26,7 @@ export type VoipPabxExtensionItem = {
   PabxName?: string | null;
   DomainName?: string | null;
   ServerEngine?: string | null;
-  VpaDefaultAudioCodecs?: string | null;
-  VpaDefaultVideoCodecs?: string | null;
+  ServerAllowedCodecs?: string | null;
   DialPlanName?: string | null;
   RequiresDomain?: number;
 };
