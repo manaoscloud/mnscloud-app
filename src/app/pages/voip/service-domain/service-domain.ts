@@ -6,9 +6,12 @@ import {
   ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
+  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { VoipDomainQuickCreateHostComponent } from '../domain/domain';
+import { VoipPabxAccountQuickCreateHostComponent } from '../pabx/account/account';
 
 type Service = 'pabx' | 'softswitch' | 'sbc';
 
@@ -51,32 +54,52 @@ function config(service: Service): ConfigurableCrudConfig {
     activeValue: 1,
     inactiveValue: 0,
     statusOptions,
+    tabLabels: {
+      record: 'Registration',
+    },
     initialValues: { accountUUID: '', domainUUID: '', isDefault: 0, status: 1 },
     columns: [
-      { id: 'domain', label: 'Domain', kind: 'identity', field: 'DomainName', uuidField: 'BindingUUID' },
-      { id: 'account', label: 'Account', kind: 'related', field: 'AccountName', lookupKey: 'accountUUID' },
+      {
+        id: 'domain',
+        label: 'Domain',
+        kind: 'identity',
+        field: 'DomainName',
+        uuidField: 'BindingUUID',
+      },
+      {
+        id: 'account',
+        label: 'Account',
+        kind: 'related',
+        field: 'AccountName',
+        lookupKey: 'accountUUID',
+      },
       { id: 'default', label: 'Default', kind: 'boolean', field: 'isDefault' },
       { id: 'status', label: 'Status', kind: 'status', field: 'status' },
     ],
     fields: [
-      { key: 'status', source: 'status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
       {
-        key: 'isDefault',
-        source: 'isDefault',
-        payloadKey: 'isDefault',
-        label: 'Default',
-        type: 'select',
-        options: yesNoOptions,
+        key: 'status',
+        source: 'status',
+        payloadKey: 'status',
+        label: 'Status',
+        type: 'status',
         span: 1,
       },
       {
         key: 'accountUUID',
         source: 'AccountUUID',
         payloadKey: 'accountUUID',
-        label: 'Account',
+        label,
         type: 'search-select',
         required: true,
         span: 1,
+        quickCreate:
+          service === 'pabx'
+            ? {
+                label: 'Create PABX',
+                component: VoipPabxAccountQuickCreateHostComponent,
+              }
+            : undefined,
       },
       {
         key: 'domainUUID',
@@ -85,6 +108,22 @@ function config(service: Service): ConfigurableCrudConfig {
         label: 'Domain',
         type: 'search-select',
         required: true,
+        span: 1,
+        quickCreate:
+          service === 'pabx'
+            ? {
+                label: 'Create VoIP domain',
+                component: VoipDomainQuickCreateHostComponent,
+              }
+            : undefined,
+      },
+      {
+        key: 'isDefault',
+        source: 'isDefault',
+        payloadKey: 'isDefault',
+        label: 'Default',
+        type: 'select',
+        options: yesNoOptions,
         span: 1,
       },
     ],
@@ -112,6 +151,19 @@ abstract class VoipServiceDomainPage extends ConfigurableCrudPageBase<Configurab
     if (key === 'accountUUID') return this.accountOptions();
     if (key === 'domainUUID') return this.domainOptions();
     return [];
+  }
+
+  protected override afterQuickCreate(
+    field: ConfigurableCrudField,
+    option: ConfigurableCrudOption,
+    _result: ConfigurableCrudQuickCreateResult,
+  ): void {
+    if (field.key === 'accountUUID') {
+      this.accountOptions.update((items) => mergeOption(items, option));
+    }
+    if (field.key === 'domainUUID') {
+      this.domainOptions.update((items) => mergeOption(items, option));
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -150,7 +202,9 @@ abstract class VoipServiceDomainPage extends ConfigurableCrudPageBase<Configurab
     const items: ConfigurableCrudOption[] = [];
     for (let offset = 0; offset < 5000; offset += 500) {
       const separator = endpoint.includes('?') ? '&' : '?';
-      const response = await this.rawApi.get<unknown>(`${endpoint}${separator}limit=500&offset=${offset}`);
+      const response = await this.rawApi.get<unknown>(
+        `${endpoint}${separator}limit=500&offset=${offset}`,
+      );
       const rows = extractItems(response);
       items.push(...(rows.map(mapItem).filter(Boolean) as ConfigurableCrudOption[]));
       if (rows.length < 500) break;
@@ -167,7 +221,9 @@ abstract class VoipServiceDomainPage extends ConfigurableCrudPageBase<Configurab
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipPabxDomainPage extends VoipServiceDomainPage {
-  constructor() { super('pabx'); }
+  constructor() {
+    super('pabx');
+  }
 }
 
 @Component({
@@ -178,7 +234,9 @@ export class VoipPabxDomainPage extends VoipServiceDomainPage {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipSoftswitchDomainPage extends VoipServiceDomainPage {
-  constructor() { super('softswitch'); }
+  constructor() {
+    super('softswitch');
+  }
 }
 
 @Component({
@@ -189,7 +247,9 @@ export class VoipSoftswitchDomainPage extends VoipServiceDomainPage {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipSbcDomainPage extends VoipServiceDomainPage {
-  constructor() { super('sbc'); }
+  constructor() {
+    super('sbc');
+  }
 }
 
 function extractItems(response: unknown): ConfigurableCrudRecord[] {
@@ -206,5 +266,17 @@ function option(value: unknown, label: unknown): ConfigurableCrudOption | null {
   const normalizedValue = String(value ?? '').trim();
   const normalizedLabel = String(label ?? '').trim();
   if (!normalizedValue || !normalizedLabel) return null;
-  return { value: normalizedValue, label: normalizedLabel, searchText: `${normalizedLabel} ${normalizedValue}` };
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    searchText: `${normalizedLabel} ${normalizedValue}`,
+  };
+}
+
+function mergeOption(
+  items: readonly ConfigurableCrudOption[],
+  option: ConfigurableCrudOption,
+): ConfigurableCrudOption[] {
+  if (items.some((item) => item.value === option.value)) return [...items];
+  return [...items, option].sort((left, right) => left.label.localeCompare(right.label));
 }

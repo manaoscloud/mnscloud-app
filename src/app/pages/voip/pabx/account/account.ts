@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 
 import { ApiService } from '../../../../services/api.service';
 import {
@@ -8,6 +9,7 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
+  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ErpCustomerQuickCreateHostComponent } from '../../../erp/customer/customer';
@@ -418,4 +420,96 @@ function mergeOption(
 ): ConfigurableCrudOption[] {
   if (items.some((item) => item.value === option.value)) return [...items];
   return [...items, option].sort((left, right) => left.label.localeCompare(right.label));
+}
+
+@Component({
+  selector: 'app-voip-pabx-account-quick-create-host',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: [
+    '../../../../shared/crud/configurable-crud/configurable-crud-page.scss',
+    '../../../erp/customer/customer-quick-create-host.scss',
+  ],
+})
+export class VoipPabxAccountQuickCreateHostComponent extends VoipPabxAccountPage {
+  private readonly quickDialogRef = inject(
+    MatDialogRef<VoipPabxAccountQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
+  );
+  private savingFromQuickCreate = false;
+
+  constructor() {
+    super();
+    queueMicrotask(() => this.startCreate());
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    this.savingFromQuickCreate = true;
+    try {
+      await super.saveItem(saveAndNew);
+    } finally {
+      this.savingFromQuickCreate = false;
+    }
+  }
+
+  override closeDialog(): void {
+    super.closeDialog();
+    if (!this.savingFromQuickCreate) {
+      this.quickDialogRef.close({ option: null });
+    }
+  }
+
+  protected override async afterSave(
+    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
+  ): Promise<void> {
+    await super.afterSave(context);
+    if (context.mode !== 'create') return;
+    this.quickDialogRef.close({
+      option: pabxAccountOptionFromResponse(context.response, context.payload),
+      response: context.response,
+      payload: context.payload,
+    });
+  }
+}
+
+function pabxAccountOptionFromResponse(
+  response: unknown,
+  payload: ConfigurableCrudRecord,
+): ConfigurableCrudOption | null {
+  const record = extractRecord(response) ?? payload;
+  const uuid = text(record['VpaUUID']) ?? text(record['uuid']);
+  const label = text(record['VpaName']) ?? text(record['name']) ?? text(payload['name']) ?? uuid;
+  if (!uuid || !label) return null;
+  const server = text(record['VpsName']) ?? text(record['serverName']);
+  const customer = text(record['CustomerName']) ?? text(record['customerName']);
+  const description = [server, customer].filter(Boolean).join(' - ');
+  return {
+    value: uuid,
+    label,
+    description,
+    searchText: `${label} ${description} ${uuid}`,
+  };
+}
+
+function extractRecord(response: unknown): ConfigurableCrudRecord | null {
+  const value = response as { data?: unknown; item?: unknown; record?: unknown } | null | undefined;
+  const data = value?.data as { item?: unknown; record?: unknown; data?: unknown } | undefined;
+  const candidates = [
+    data?.item,
+    data?.record,
+    data?.data,
+    value?.data,
+    value?.item,
+    value?.record,
+  ];
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'object') return candidate as ConfigurableCrudRecord;
+  }
+  return null;
+}
+
+function text(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim();
+  return normalized || null;
 }
