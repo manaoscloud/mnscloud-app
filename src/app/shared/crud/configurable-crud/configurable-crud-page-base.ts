@@ -255,6 +255,30 @@ export type ConfigurableCrudRowAction = {
   tooltip?: string;
 };
 
+export type ConfigurableCrudRelatedCollectionColumn = {
+  id: string;
+  label: string;
+  field?: string;
+  kind?: 'text' | 'number' | 'status' | 'related';
+  lookupKey?: string;
+};
+
+export type ConfigurableCrudRelatedCollection = {
+  key: string;
+  label: string;
+  emptyLabel: string;
+  addLabel?: string;
+  savedMessage?: string;
+  deletedMessage?: string;
+  endpoint: (parentUUID: string) => string;
+  deleteEndpoint: (parentUUID: string, row: ConfigurableCrudRecord) => string;
+  uuidField: string;
+  initialValues: ConfigurableCrudRecord;
+  fields: readonly ConfigurableCrudField[];
+  columns: readonly ConfigurableCrudRelatedCollectionColumn[];
+  payload?: (values: ConfigurableCrudRecord) => ConfigurableCrudRecord;
+};
+
 export type ConfigurableCrudFilterAction = {
   key: string;
   label: string;
@@ -312,6 +336,7 @@ export type ConfigurableCrudConfig = {
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
   listFilters?: readonly ConfigurableCrudListFilter[];
   rowActions?: readonly ConfigurableCrudRowAction[];
+  relatedCollections?: readonly ConfigurableCrudRelatedCollection[];
   filterActions?: readonly ConfigurableCrudFilterAction[];
   filterActionMenu?: ConfigurableCrudFilterActionMenu;
   canCreate?: boolean;
@@ -369,6 +394,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly pageSize = signal(5);
   readonly saving = signal(false);
   readonly mutating = signal(false);
+  readonly relatedRows = signal<Record<string, ConfigurableCrudRecord[]>>({});
+  readonly relatedForms = signal<Record<string, ConfigurableCrudRecord>>({});
+  readonly relatedLoading = signal(new Set<string>());
+  readonly relatedSaving = signal(new Set<string>());
   readonly postalLookupLoadingKey = signal<string | null>(null);
   readonly editingRecord = signal<T | null>(null);
   readonly formValues = signal<ConfigurableCrudRecord>({});
@@ -469,6 +498,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly notesFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'notes'),
   );
+  readonly relatedCollections = computed(() => this.config.relatedCollections ?? []);
+  readonly showRelatedCollections = computed(
+    () => Boolean(this.editingRecord()) && this.relatedCollections().length > 0,
+  );
   readonly dialogTitle = computed(() =>
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
   );
@@ -568,6 +601,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(null);
     this.formValues.set(this.emptyFormValues());
+    this.relatedForms.set({});
+    this.relatedRows.set({});
     this.enabledCopyActions.set(this.defaultCopyActionKeys());
     for (const action of this.addressCopyActions()) {
       if (this.isCopyActionEnabled(action)) this.copyAddressValues(action);
@@ -581,9 +616,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(row);
     this.formValues.set(this.formValuesFromRecord(row));
+    this.relatedForms.set(this.emptyRelatedForms());
+    this.relatedRows.set({});
     this.enabledCopyActions.set(this.inferredCopyActionKeys());
     this.copyEnabledAddressValues();
     this.openDialog();
+    void this.loadRelatedCollections();
   }
 
   async saveItem(saveAndNew = false): Promise<void> {
@@ -643,6 +681,130 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       this.snack.error(this.t(this.errorMessage(error) || this.config.deleteFailedMessage));
     } finally {
       this.mutating.set(false);
+    }
+  }
+
+  relatedCollectionRows(collection: ConfigurableCrudRelatedCollection): ConfigurableCrudRecord[] {
+    return this.relatedRows()[collection.key] ?? [];
+  }
+
+  relatedCollectionFormValue(
+    collection: ConfigurableCrudRelatedCollection,
+    field: ConfigurableCrudField,
+  ): string | number | boolean | null {
+    const value = this.relatedForms()[collection.key]?.[field.key];
+    if (value === undefined) return '';
+    return value as string | number | boolean | null;
+  }
+
+  relatedCollectionFieldValueString(
+    collection: ConfigurableCrudRelatedCollection,
+    field: ConfigurableCrudField,
+  ): string {
+    const value = this.relatedForms()[collection.key]?.[field.key];
+    if (value === undefined || value === null) return '';
+    return String(value);
+  }
+
+  setRelatedCollectionFieldValue(
+    collection: ConfigurableCrudRelatedCollection,
+    field: ConfigurableCrudField,
+    value: unknown,
+  ): void {
+    const forms = { ...this.relatedForms() };
+    forms[collection.key] = {
+      ...(forms[collection.key] ?? collection.initialValues),
+      [field.key]: value,
+    };
+    this.relatedForms.set(forms);
+    this.afterRelatedFieldChange(collection, field, value);
+  }
+
+  relatedCollectionFieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
+    return this.lookupOptions(field.key) ?? field.options ?? [];
+  }
+
+  relatedCollectionColumnValue(
+    row: ConfigurableCrudRecord,
+    column: ConfigurableCrudRelatedCollectionColumn,
+  ): string {
+    if (column.kind === 'related' && column.lookupKey) {
+      const value = String(row[column.field ?? column.id] ?? '');
+      const option = this.lookupOptions(column.lookupKey).find(
+        (candidate) => String(candidate.value) === value,
+      );
+      return option?.label ?? String(row[column.field ?? column.id] ?? '-');
+    }
+    if (column.kind === 'status') {
+      return this.isTruthyValue(row[column.field ?? column.id]) ? this.t('Active') : this.t('Inactive');
+    }
+    return this.displayValue(row[column.field ?? column.id]);
+  }
+
+  isRelatedCollectionLoading(collection: ConfigurableCrudRelatedCollection): boolean {
+    return this.relatedLoading().has(collection.key);
+  }
+
+  isRelatedCollectionSaving(collection: ConfigurableCrudRelatedCollection): boolean {
+    return this.relatedSaving().has(collection.key);
+  }
+
+  relatedCollectionFormValid(collection: ConfigurableCrudRelatedCollection): boolean {
+    const form = this.relatedForms()[collection.key] ?? collection.initialValues;
+    return collection.fields.every((field) => {
+      if (!this.isFieldRequired(field)) return true;
+      const value = form[field.key];
+      return value !== null && value !== undefined && String(value).trim() !== '';
+    });
+  }
+
+  async addRelatedCollectionRow(collection: ConfigurableCrudRelatedCollection): Promise<void> {
+    if (!this.editingRecord() || !this.relatedCollectionFormValid(collection)) return;
+    const parentUUID = this.recordUUID(this.editingRecord() as T);
+    const values = this.relatedForms()[collection.key] ?? collection.initialValues;
+    const payload = collection.payload ? collection.payload(values) : this.relatedPayload(values, collection.fields);
+    this.setRelatedSaving(collection.key, true);
+    try {
+      const response = await this.api.post(collection.endpoint(parentUUID), payload);
+      const rows = extractCrudItems(response);
+      this.relatedRows.update((current) => ({
+        ...current,
+        [collection.key]: rows.length ? rows : this.relatedCollectionRows(collection),
+      }));
+      this.relatedForms.update((current) => ({
+        ...current,
+        [collection.key]: { ...collection.initialValues },
+      }));
+      this.snack.success(this.t(collection.savedMessage ?? 'Record saved successfully.'));
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.setRelatedSaving(collection.key, false);
+    }
+  }
+
+  async deleteRelatedCollectionRow(
+    collection: ConfigurableCrudRelatedCollection,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (!this.editingRecord()) return;
+    const parentUUID = this.recordUUID(this.editingRecord() as T);
+    const confirmed = await this.confirm('Delete', 'Delete this record?');
+    if (!confirmed) return;
+    this.setRelatedSaving(collection.key, true);
+    try {
+      await this.api.delete(collection.deleteEndpoint(parentUUID, row));
+      this.relatedRows.update((current) => ({
+        ...current,
+        [collection.key]: this.relatedCollectionRows(collection).filter(
+          (candidate) => candidate[collection.uuidField] !== row[collection.uuidField],
+        ),
+      }));
+      this.snack.success(this.t(collection.deletedMessage ?? 'Record deleted successfully.'));
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.setRelatedSaving(collection.key, false);
     }
   }
 
@@ -1128,6 +1290,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   protected onFieldValueChanged(_key: string, _value: unknown): void {}
 
+  protected afterRelatedFieldChange(
+    _collection: ConfigurableCrudRelatedCollection,
+    _field: ConfigurableCrudField,
+    _value: unknown,
+  ): void {}
+
   protected deleteEndpointFor(row: T): string {
     const endpoint = this.config.deleteEndpoint;
     return typeof endpoint === 'function' ? endpoint(row) : (endpoint ?? this.config.endpoint);
@@ -1210,6 +1378,72 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       if (isTarget) next.delete(action.key);
     }
     if (next.size !== selected.size) this.enabledCopyActions.set(next);
+  }
+
+  private emptyRelatedForms(): Record<string, ConfigurableCrudRecord> {
+    const forms: Record<string, ConfigurableCrudRecord> = {};
+    for (const collection of this.relatedCollections()) {
+      forms[collection.key] = { ...collection.initialValues };
+    }
+    return forms;
+  }
+
+  private async loadRelatedCollections(): Promise<void> {
+    const row = this.editingRecord();
+    if (!row) return;
+    const parentUUID = this.recordUUID(row);
+    await Promise.all(
+      this.relatedCollections().map((collection) =>
+        this.loadRelatedCollection(collection, parentUUID),
+      ),
+    );
+  }
+
+  private async loadRelatedCollection(
+    collection: ConfigurableCrudRelatedCollection,
+    parentUUID: string,
+  ): Promise<void> {
+    this.setRelatedLoading(collection.key, true);
+    try {
+      const response = await this.api.get(collection.endpoint(parentUUID));
+      this.relatedRows.update((current) => ({
+        ...current,
+        [collection.key]: extractCrudItems(response),
+      }));
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.setRelatedLoading(collection.key, false);
+    }
+  }
+
+  private relatedPayload(
+    values: ConfigurableCrudRecord,
+    fields: readonly ConfigurableCrudField[],
+  ): ConfigurableCrudRecord {
+    const payload: ConfigurableCrudRecord = {};
+    for (const field of fields) {
+      payload[field.payloadKey ?? field.key] = values[field.key] ?? null;
+    }
+    return payload;
+  }
+
+  private setRelatedLoading(key: string, loading: boolean): void {
+    this.relatedLoading.update((current) => {
+      const next = new Set(current);
+      if (loading) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
+
+  private setRelatedSaving(key: string, saving: boolean): void {
+    this.relatedSaving.update((current) => {
+      const next = new Set(current);
+      if (saving) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   }
 
   protected async fetchItems(filters: ConfigurableCrudFilters): Promise<T[]> {
@@ -1548,4 +1782,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected t(key: string, params?: Record<string, string | number>): string {
     return this.transloco.translate(key, params);
   }
+}
+
+function extractCrudItems(response: unknown): ConfigurableCrudRecord[] {
+  const data = (response as { data?: unknown })?.data;
+  if (Array.isArray(data)) return data as ConfigurableCrudRecord[];
+  if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown }).items)) {
+    return (data as { items: ConfigurableCrudRecord[] }).items;
+  }
+  return [];
 }

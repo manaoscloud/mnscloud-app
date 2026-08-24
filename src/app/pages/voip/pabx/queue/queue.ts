@@ -136,6 +136,67 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
     ],
+    relatedCollections: [
+      {
+        key: 'queueMembers',
+        label: 'Members',
+        emptyLabel: 'No members linked',
+        addLabel: 'Add',
+        endpoint: (queueUUID) => `voip/pabx/queues/${queueUUID}/members`,
+        deleteEndpoint: (queueUUID, row) =>
+          `voip/pabx/queues/${queueUUID}/members/${row['VqmUUID']}`,
+        uuidField: 'VqmUUID',
+        initialValues: {
+          extensionUUID: '',
+          priority: 0,
+          penalty: 0,
+          enabled: 1,
+        },
+        fields: [
+          {
+            key: 'extensionUUID',
+            payloadKey: 'extensionUUID',
+            label: 'Extension',
+            type: 'search-select',
+            required: true,
+            span: 1,
+          },
+          {
+            key: 'priority',
+            payloadKey: 'priority',
+            label: 'Priority',
+            type: 'number',
+            span: 1,
+          },
+          {
+            key: 'penalty',
+            payloadKey: 'penalty',
+            label: 'Penalty',
+            type: 'number',
+            span: 1,
+          },
+          { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
+        ],
+        columns: [
+          {
+            id: 'extension',
+            label: 'Extension',
+            field: 'VoipPabxExtensionVpeUUID',
+            kind: 'related',
+            lookupKey: 'extensionUUID',
+          },
+          { id: 'priority', label: 'Priority', field: 'VqmPriority', kind: 'number' },
+          { id: 'penalty', label: 'Penalty', field: 'VqmPenalty', kind: 'number' },
+          { id: 'status', label: 'Status', field: 'VqmEnabled', kind: 'status' },
+        ],
+        payload: (values) => ({
+          extensionUUID: values['extensionUUID'],
+          priority: numberOrNull(values['priority']),
+          penalty: numberOrNull(values['penalty']),
+          enabled: Number(values['enabled']) === 1,
+        }),
+      },
+    ],
   };
 }
 
@@ -150,6 +211,7 @@ export class VoipPabxQueuePage extends ConfigurableCrudPageBase<ConfigurableCrud
   private readonly rawApi = inject(ApiService);
   readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
   readonly mediaFileOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly extensionOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -158,12 +220,13 @@ export class VoipPabxQueuePage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return ['pabxUUID', 'mediaFileUUID'].includes(field.key) && this.lookupsLoading();
+    return ['pabxUUID', 'mediaFileUUID', 'extensionUUID'].includes(field.key) && this.lookupsLoading();
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'pabxUUID') return this.pabxOptions();
     if (key === 'mediaFileUUID') return [{ value: '', label: 'None' }, ...this.mediaFileOptions()];
+    if (key === 'extensionUUID') return this.extensionOptions();
     return [];
   }
 
@@ -178,16 +241,20 @@ export class VoipPabxQueuePage extends ConfigurableCrudPageBase<ConfigurableCrud
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [pabxs, mediaFiles] = await Promise.all([
+      const [pabxs, mediaFiles, extensions] = await Promise.all([
         this.fetchPaged('voip/pabx/accounts', (row) =>
           option(row.VpaUUID, row.VpaName, [row.CustomerName, row.DomainName]),
         ),
         this.fetchPaged('voip/pabx/media-files?status=1', (row) =>
           option(row.uuid ?? row.VmfUUID, row.name ?? row.VmfName, [row.PabxName]),
         ),
+        this.fetchPaged('voip/pabx/extensions?status=1', (row) =>
+          option(row.VpeUUID, row.VpeUsername, [row.PabxName, row.CustomerName]),
+        ),
       ]);
       this.pabxOptions.set(pabxs);
       this.mediaFileOptions.set(mediaFiles);
+      this.extensionOptions.set(extensions);
     } finally {
       this.lookupsLoading.set(false);
     }
@@ -230,4 +297,9 @@ function option(
     .filter(Boolean)
     .join(' - ');
   return { value: normalizedValue, label: normalizedLabel, description, searchText: `${normalizedLabel} ${description} ${normalizedValue}` };
+}
+
+function numberOrNull(value: unknown): number | null {
+  const normalized = Number(value);
+  return Number.isFinite(normalized) ? normalized : null;
 }

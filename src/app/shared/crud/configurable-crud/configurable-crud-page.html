@@ -1673,6 +1673,157 @@
             </div>
           </mat-tab>
         }
+
+        @if (showRelatedCollections()) {
+          @for (collection of relatedCollections(); track collection.key) {
+            <mat-tab [label]="collection.label | transloco">
+              <div class="tab-content related-collection-tab">
+                <div class="related-collection-form form-grid">
+                  @for (field of collection.fields; track field.key) {
+                    @switch (field.type) {
+                      @case ('search-select') {
+                        <mns-search-select-field
+                          [fieldClass]="fieldClass(field)"
+                          [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
+                          [placeholder]="field.placeholder ?? 'Search' | transloco"
+                          [options]="relatedCollectionFieldOptions(field)"
+                          [loading]="fieldLoading(field)"
+                          [value]="relatedCollectionFormValue(collection, field)"
+                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
+                        />
+                      }
+                      @case ('select') {
+                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                          <mat-label
+                            >{{ translatedFieldLabel(field)
+                            }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                          >
+                          <mat-select
+                            [value]="relatedCollectionFormValue(collection, field)"
+                            (selectionChange)="
+                              setRelatedCollectionFieldValue(collection, field, $event.value)
+                            "
+                          >
+                            @for (option of field.options ?? []; track option.value) {
+                              <mat-option [value]="option.value">{{
+                                translatedOptionLabel(field, option)
+                              }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      }
+                      @case ('status') {
+                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                          <mat-label
+                            >{{ translatedFieldLabel(field)
+                            }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                          >
+                          <mat-select
+                            [value]="relatedCollectionFormValue(collection, field)"
+                            (selectionChange)="
+                              setRelatedCollectionFieldValue(collection, field, $event.value)
+                            "
+                          >
+                            @for (option of statusOptions(); track option.value) {
+                              <mat-option [value]="option.value">{{
+                                translatedOptionLabel(field, option)
+                              }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      }
+                      @default {
+                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                          <mat-label
+                            >{{ translatedFieldLabel(field)
+                            }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                          >
+                          <input
+                            matInput
+                            [type]="htmlInputType(field)"
+                            [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                            [value]="relatedCollectionFieldValueString(collection, field)"
+                            (input)="
+                              setRelatedCollectionFieldValue(
+                                collection,
+                                field,
+                                $any($event.target).value
+                              )
+                            "
+                          />
+                        </mat-form-field>
+                      }
+                    }
+                  }
+
+                  <div class="related-collection-actions span-1">
+                    <button
+                      mat-stroked-button
+                      color="primary"
+                      type="button"
+                      [disabled]="
+                        !relatedCollectionFormValid(collection) ||
+                        isRelatedCollectionSaving(collection)
+                      "
+                      (click)="addRelatedCollectionRow(collection)"
+                    >
+                      <mat-icon>add</mat-icon>
+                      {{ (collection.addLabel ?? 'Add') | transloco }}
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="related-collection-table"
+                  [class.is-loading]="isRelatedCollectionLoading(collection)"
+                >
+                  @if (isRelatedCollectionLoading(collection)) {
+                    <div class="table-loading" aria-live="polite" aria-busy="true">
+                      <mat-progress-spinner diameter="28" mode="indeterminate" />
+                    </div>
+                  }
+                  <table>
+                    <thead>
+                      <tr>
+                        @for (column of collection.columns; track column.id) {
+                          <th>{{ column.label | transloco }}</th>
+                        }
+                        <th class="related-actions-col">{{ 'Actions' | transloco }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of relatedCollectionRows(collection); track $index) {
+                        <tr>
+                          @for (column of collection.columns; track column.id) {
+                            <td>{{ relatedCollectionColumnValue(row, column) }}</td>
+                          }
+                          <td class="related-actions-col">
+                            <button
+                              mat-icon-button
+                              color="warn"
+                              type="button"
+                              [matTooltip]="'Delete' | transloco"
+                              [disabled]="isRelatedCollectionSaving(collection)"
+                              (click)="deleteRelatedCollectionRow(collection, row)"
+                            >
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td [attr.colspan]="collection.columns.length + 1">
+                            {{ collection.emptyLabel | transloco }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </mat-tab>
+          }
+        }
       </mat-tab-group>
     </div>
 

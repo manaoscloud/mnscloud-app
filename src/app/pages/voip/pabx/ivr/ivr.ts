@@ -7,6 +7,8 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRelatedCollection,
+  ConfigurableCrudRelatedCollectionColumn,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
@@ -14,6 +16,14 @@ import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
   { value: 0, label: 'Inactive' },
+];
+
+const routeTypes: ConfigurableCrudOption[] = [
+  { value: 'extension', label: 'Extension' },
+  { value: 'ivr', label: 'IVR' },
+  { value: 'queue', label: 'Queue' },
+  { value: 'group', label: 'Group' },
+  { value: 'external', label: 'External' },
 ];
 
 function config(): ConfigurableCrudConfig {
@@ -118,6 +128,73 @@ function config(): ConfigurableCrudConfig {
         rows: 4,
       },
     ],
+    relatedCollections: [
+      {
+        key: 'ivrOptions',
+        label: 'Options',
+        emptyLabel: 'No options linked',
+        addLabel: 'Add',
+        endpoint: (ivrUUID) => `voip/pabx/ivrs/${ivrUUID}/options`,
+        deleteEndpoint: (ivrUUID, row) => `voip/pabx/ivrs/${ivrUUID}/options/${row['VioUUID']}`,
+        uuidField: 'VioUUID',
+        initialValues: {
+          digit: '',
+          routeType: 'extension',
+          routeTargetUUID: '',
+          routeTargetValue: '',
+          enabled: 1,
+          description: '',
+        },
+        fields: [
+          { key: 'digit', payloadKey: 'digit', label: 'Digit', required: true, span: 1 },
+          {
+            key: 'routeType',
+            payloadKey: 'routeType',
+            label: 'Route type',
+            type: 'select',
+            options: routeTypes,
+            translateOptions: true,
+            required: true,
+            span: 1,
+          },
+          {
+            key: 'routeTargetUUID',
+            payloadKey: 'routeTargetUUID',
+            label: 'Destination',
+            type: 'search-select',
+            span: 1,
+          },
+          {
+            key: 'routeTargetValue',
+            payloadKey: 'routeTargetValue',
+            label: 'Target value',
+            span: 1,
+          },
+          { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
+          {
+            key: 'description',
+            payloadKey: 'description',
+            label: 'Description',
+            span: 3,
+          },
+        ],
+        columns: [
+          { id: 'digit', label: 'Digit', field: 'VioDigit' },
+          { id: 'route', label: 'Route type', field: 'VioRouteType' },
+          { id: 'destination', label: 'Destination', field: 'VioRouteTargetUUID', kind: 'related', lookupKey: 'routeTargetUUID' },
+          { id: 'description', label: 'Description', field: 'VioDescription' },
+          { id: 'status', label: 'Status', field: 'VioEnabled', kind: 'status' },
+        ],
+        payload: (values) => ({
+          digit: text(values['digit']),
+          routeType: text(values['routeType']),
+          routeTargetUUID: text(values['routeTargetUUID']),
+          routeTargetValue: text(values['routeTargetValue']),
+          description: text(values['description']),
+          enabled: Number(values['enabled']) === 1,
+        }),
+      },
+    ],
   };
 }
 
@@ -132,6 +209,11 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   private readonly rawApi = inject(ApiService);
   readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
   readonly mediaFileOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly extensionOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly ivrOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly queueOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly groupOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly externalOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -140,13 +222,45 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return ['pabxUUID', 'mediaFileUUID'].includes(field.key) && this.lookupsLoading();
+    return ['pabxUUID', 'mediaFileUUID', 'routeTargetUUID'].includes(field.key) && this.lookupsLoading();
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'pabxUUID') return this.pabxOptions();
     if (key === 'mediaFileUUID') return [{ value: '', label: 'None' }, ...this.mediaFileOptions()];
+    if (key === 'routeTargetUUID') return this.routeTargetOptions();
     return [];
+  }
+
+  protected override afterRelatedFieldChange(
+    collection: ConfigurableCrudRelatedCollection,
+    field: ConfigurableCrudField,
+    _value: unknown,
+  ): void {
+    if (collection.key !== 'ivrOptions' || field.key !== 'routeType') return;
+    this.setRelatedCollectionFieldValue(collection, { key: 'routeTargetUUID', label: 'Destination' }, '');
+    this.setRelatedCollectionFieldValue(collection, { key: 'routeTargetValue', label: 'Target value' }, '');
+  }
+
+  override relatedCollectionColumnValue(
+    row: ConfigurableCrudRecord,
+    column: ConfigurableCrudRelatedCollectionColumn,
+  ): string {
+    if (column.id !== 'destination') return super.relatedCollectionColumnValue(row, column);
+    const value = String(row['VioRouteTargetUUID'] ?? '').trim();
+    if (!value) return String(row['VioRouteTargetValue'] ?? '').trim() || '-';
+    const routeType = String(row['VioRouteType'] ?? 'extension').toLowerCase();
+    const options =
+      routeType === 'ivr'
+        ? this.ivrOptions()
+        : routeType === 'queue'
+          ? this.queueOptions()
+          : routeType === 'group'
+            ? this.groupOptions()
+            : routeType === 'external'
+              ? this.externalOptions()
+              : this.extensionOptions();
+    return options.find((option) => String(option.value) === value)?.label ?? value;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -161,19 +275,48 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [pabxs, mediaFiles] = await Promise.all([
+      const [pabxs, mediaFiles, extensions, ivrs, queues, groups, externals] = await Promise.all([
         this.fetchPaged('voip/pabx/accounts', (row) =>
           option(row.VpaUUID, row.VpaName, [row.CustomerName, row.DomainName]),
         ),
         this.fetchPaged('voip/pabx/media-files?status=1', (row) =>
           option(row.uuid ?? row.VmfUUID, row.name ?? row.VmfName, [row.PabxName]),
         ),
+        this.fetchPaged('voip/pabx/extensions?status=1', (row) =>
+          option(row.VpeUUID, row.VpeUsername, [row.PabxName, row.CustomerName]),
+        ),
+        this.fetchPaged('voip/pabx/ivrs?status=1', (row) =>
+          option(row.VpiUUID, row.VpiName, [row.PabxName]),
+        ),
+        this.fetchPaged('voip/pabx/queues?status=1', (row) =>
+          option(row.VpqUUID, row.VpqName, [row.PabxName]),
+        ),
+        this.fetchPaged('voip/pabx/groups?status=1', (row) =>
+          option(row.VpgUUID, row.VpgName, [row.PabxName]),
+        ),
+        this.fetchPaged('voip/pabx/externals?status=1', (row) =>
+          option(row.VpxUUID, row.VpxName, [row.VpxNumber, row.PabxName]),
+        ),
       ]);
       this.pabxOptions.set(pabxs);
       this.mediaFileOptions.set(mediaFiles);
+      this.extensionOptions.set(extensions);
+      this.ivrOptions.set(ivrs);
+      this.queueOptions.set(queues);
+      this.groupOptions.set(groups);
+      this.externalOptions.set(externals);
     } finally {
       this.lookupsLoading.set(false);
     }
+  }
+
+  private routeTargetOptions(): ConfigurableCrudOption[] {
+    const routeType = String(this.relatedForms()['ivrOptions']?.['routeType'] ?? 'extension');
+    if (routeType === 'ivr') return this.ivrOptions();
+    if (routeType === 'queue') return this.queueOptions();
+    if (routeType === 'group') return this.groupOptions();
+    if (routeType === 'external') return this.externalOptions();
+    return this.extensionOptions();
   }
 
   private async fetchPaged(
