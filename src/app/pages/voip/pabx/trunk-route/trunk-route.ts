@@ -11,7 +11,7 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
 
-type RouteTargetType = 'extension' | 'external' | 'group' | 'queue' | 'ivr';
+type RouteTargetType = 'extension' | 'group' | 'queue' | 'ivr';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -20,7 +20,6 @@ const statuses: ConfigurableCrudOption[] = [
 
 const routeTypes: ConfigurableCrudOption[] = [
   { value: 'extension', label: 'Extension' },
-  { value: 'external', label: 'External' },
   { value: 'group', label: 'Group' },
   { value: 'queue', label: 'Queue' },
   { value: 'ivr', label: 'IVR' },
@@ -302,7 +301,6 @@ export class VoipPabxTrunkRoutePage extends ConfigurableCrudPageBase<Configurabl
 }
 
 function targetEndpoint(routeType: RouteTargetType): string {
-  if (routeType === 'external') return 'externals';
   if (routeType === 'group') return 'groups';
   if (routeType === 'queue') return 'queues';
   if (routeType === 'ivr') return 'ivrs';
@@ -310,7 +308,6 @@ function targetEndpoint(routeType: RouteTargetType): string {
 }
 
 function targetOption(routeType: RouteTargetType, row: any): ConfigurableCrudOption | null {
-  if (routeType === 'external') return option(row.VpxUUID ?? row.uuid, row.VpxName ?? row.name, [row.VpxNumber]);
   if (routeType === 'group') return option(row.VpgUUID ?? row.uuid, row.VpgName ?? row.name, [row.PabxName]);
   if (routeType === 'queue') return option(row.VpqUUID ?? row.uuid, row.VpqName ?? row.name, [row.PabxName]);
   if (routeType === 'ivr') return option(row.VpiUUID ?? row.uuid, row.VpiName ?? row.name, [row.PabxName]);

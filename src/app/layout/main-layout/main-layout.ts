@@ -1565,12 +1565,6 @@ export class MainLayout {
               ],
             },
             {
-              id: 'voip/pabx/external',
-              label: 'External Numbers',
-              icon: 'phone_forwarded',
-              route: '/voip/pabx/external',
-            },
-            {
               id: 'voip/pabx/cdr',
               label: 'CDR',
               icon: 'receipt_long',
