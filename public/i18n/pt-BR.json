@@ -2645,6 +2645,8 @@
   "Activate external DID": "Ativar DID externo",
   "Suspend external DID": "Suspender DID externo",
   "External DID status updated.": "Status do DID externo atualizado.",
+  "Queue agent status updated successfully.": "Status do agente da fila atualizado com sucesso.",
+  "Failed to update queue agent status.": "Falha ao atualizar o status do agente da fila.",
   "DID operator": "Operadora DID",
   "DID operator readiness": "Prontidão das operadoras DID",
   "Manage global DID stock and DID operator assignment.": "Gerencie o estoque global de DID e a atribuição da operadora DID.",
