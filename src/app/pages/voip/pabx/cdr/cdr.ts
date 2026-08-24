@@ -56,7 +56,6 @@ const PABX_CDR_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       translateOptions: false,
       options: [
-        { value: '', label: 'All' },
         { value: 'asterisk', label: 'Asterisk' },
         { value: 'freeswitch', label: 'FreeSWITCH' },
       ],
@@ -69,7 +68,6 @@ const PABX_CDR_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       translateOptions: true,
       options: [
-        { value: '', label: 'All' },
         { value: 'inbound', label: 'Inbound' },
         { value: 'outbound', label: 'Outbound' },
         { value: 'internal', label: 'Internal' },
@@ -99,25 +97,13 @@ const PABX_CDR_CONFIG: ConfigurableCrudConfig = {
   initialValues: {},
   fields: [],
   columns: [
-    {
-      id: 'call',
-      label: 'Call-ID',
-      kind: 'identity',
-      field: 'providerCallId',
-      uuidField: 'cdrUUID',
-      copyable: true,
-    },
     { id: 'startedAt', label: 'Started at', field: 'startedAt', kind: 'datetime' },
-    { id: 'engine', label: 'Engine', field: 'engine' },
     { id: 'pabx', label: 'PABX', field: 'pabxName' },
     { id: 'direction', label: 'Direction', field: 'direction', translateValue: true },
     { id: 'caller', label: 'Caller', field: 'callerNumber' },
     { id: 'destination', label: 'Destination', field: 'destinationNumber' },
-    { id: 'extension', label: 'Extension', field: 'extensionNumber' },
     { id: 'duration', label: 'Duration seconds', field: 'durationSeconds', kind: 'number' },
-    { id: 'billsec', label: 'Bill seconds', field: 'billSeconds', kind: 'number' },
     { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
-    { id: 'cause', label: 'Hangup cause', field: 'hangupCause', translateValue: true },
   ],
 };
 
@@ -178,18 +164,10 @@ export class VoipPabxCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   override columnText(row: ConfigurableCrudRecord, column: ConfigurableCrudColumn): string {
-    if (column.id === 'call') {
-      return this.callId(row);
-    }
-    if (column.id === 'duration' || column.id === 'billsec') {
+    if (column.id === 'duration') {
       return `${Number(row[column.field ?? column.id] ?? 0)}s`;
     }
     return super.columnText(row, column);
-  }
-
-  override columnMain(row: ConfigurableCrudRecord, column: ConfigurableCrudColumn): string {
-    if (column.id === 'call') return this.callId(row);
-    return super.columnMain(row, column);
   }
 
   private async openRecording(row: ConfigurableCrudRecord): Promise<void> {
@@ -262,7 +240,6 @@ export class VoipPabxCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
             { label: 'Answered at', value: row['answeredAt'] },
             { label: 'Ended at', value: row['endedAt'] },
             { label: 'Duration seconds', value: row['durationSeconds'] },
-            { label: 'Bill seconds', value: row['billSeconds'] },
           ],
         },
         {
@@ -506,11 +483,6 @@ export class VoipPabxCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       .replace(/[^\w.\-]+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
-  }
-
-  private callId(row: ConfigurableCrudRecord): string {
-    const providerCallId = this.display(row['providerCallId']);
-    return providerCallId !== '-' ? providerCallId : this.display(row['sipCallId']);
   }
 
   private display(value: unknown): string {
