@@ -1,11 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MatDialogRef } from '@angular/material/dialog';
 
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
+  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
+  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
@@ -50,9 +53,34 @@ function domainConfig(scope: 'tenant' | 'master'): ConfigurableCrudConfig {
       { id: 'status', label: 'Status', kind: 'status', field: 'VdmStatus' },
     ],
     fields: [
-      { key: 'status', source: 'VdmStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-      { key: 'purpose', source: 'VdmPurpose', payloadKey: 'purpose', label: 'Purpose', type: 'select', options: purposeOptions, required: true, span: 1 },
-      { key: 'name', source: 'VdmName', payloadKey: 'name', label: 'Domain', type: 'text', required: true, placeholder: 'pbx.example.com', span: 1 },
+      {
+        key: 'status',
+        source: 'VdmStatus',
+        payloadKey: 'status',
+        label: 'Status',
+        type: 'status',
+        span: 1,
+      },
+      {
+        key: 'purpose',
+        source: 'VdmPurpose',
+        payloadKey: 'purpose',
+        label: 'Purpose',
+        type: 'select',
+        options: purposeOptions,
+        required: true,
+        span: 1,
+      },
+      {
+        key: 'name',
+        source: 'VdmName',
+        payloadKey: 'name',
+        label: 'Domain',
+        type: 'text',
+        required: true,
+        placeholder: 'pbx.example.com',
+        span: 1,
+      },
     ],
   };
 }
@@ -78,4 +106,94 @@ export class VoipDomainPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       status: Number(payload['status']) === 1,
     };
   }
+}
+
+@Component({
+  selector: 'app-voip-domain-quick-create-host',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: [
+    '../../../shared/crud/configurable-crud/configurable-crud-page.scss',
+    '../../erp/customer/customer-quick-create-host.scss',
+  ],
+})
+export class VoipDomainQuickCreateHostComponent extends VoipDomainPage {
+  private readonly quickDialogRef = inject(
+    MatDialogRef<VoipDomainQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
+  );
+  private savingFromQuickCreate = false;
+
+  constructor() {
+    super();
+    queueMicrotask(() => this.startCreate());
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    this.savingFromQuickCreate = true;
+    try {
+      await super.saveItem(saveAndNew);
+    } finally {
+      this.savingFromQuickCreate = false;
+    }
+  }
+
+  override closeDialog(): void {
+    super.closeDialog();
+    if (!this.savingFromQuickCreate) {
+      this.quickDialogRef.close({ option: null });
+    }
+  }
+
+  protected override async afterSave(
+    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
+  ): Promise<void> {
+    await super.afterSave(context);
+    if (context.mode !== 'create') return;
+    this.quickDialogRef.close({
+      option: voipDomainOptionFromResponse(context.response, context.payload),
+      response: context.response,
+      payload: context.payload,
+    });
+  }
+}
+
+function voipDomainOptionFromResponse(
+  response: unknown,
+  payload: ConfigurableCrudRecord,
+): ConfigurableCrudOption | null {
+  const record = extractRecord(response) ?? payload;
+  const uuid = text(record['VdmUUID']) ?? text(record['uuid']);
+  const label = text(record['VdmName']) ?? text(record['name']) ?? text(payload['name']) ?? uuid;
+  if (!uuid || !label) return null;
+  const purpose = text(record['VdmPurpose']) ?? text(record['purpose']) ?? text(payload['purpose']);
+  return {
+    value: uuid,
+    label,
+    description: purpose ?? '',
+    searchText: `${label} ${purpose ?? ''} ${uuid}`,
+  };
+}
+
+function extractRecord(response: unknown): ConfigurableCrudRecord | null {
+  const value = response as { data?: unknown; item?: unknown; record?: unknown } | null | undefined;
+  const data = value?.data as { item?: unknown; record?: unknown; data?: unknown } | undefined;
+  const candidates = [
+    data?.item,
+    data?.record,
+    data?.data,
+    value?.data,
+    value?.item,
+    value?.record,
+  ];
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'object') return candidate as ConfigurableCrudRecord;
+  }
+  return null;
+}
+
+function text(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim();
+  return normalized || null;
 }
