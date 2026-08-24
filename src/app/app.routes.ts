@@ -1230,13 +1230,6 @@ export const routes: Routes = [
                 title: 'VoIP • PABX • Dial Plan • Rules | mnscloud',
               },
               {
-                path: 'voip/pabx/external',
-                loadComponent: () =>
-                  import('./pages/voip/pabx/routing/routing').then((m) => m.VoipPabxRoutingPage),
-                title: 'VoIP • PABX • External | mnscloud',
-                data: { resource: 'external' },
-              },
-              {
                 path: 'voip/pabx/trunks',
                 loadComponent: () =>
                   import('./pages/voip/pabx/trunk/trunk').then((m) => m.VoipPabxTrunkPage),

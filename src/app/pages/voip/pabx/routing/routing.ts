@@ -13,31 +13,27 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
 
-type RoutingResource = 'external' | 'group' | 'queue' | 'ivr';
+type RoutingResource = 'group' | 'queue' | 'ivr';
 
 const endpoints: Record<RoutingResource, string> = {
-  external: 'voip/pabx/externals',
   group: 'voip/pabx/groups',
   queue: 'voip/pabx/queues',
   ivr: 'voip/pabx/ivrs',
 };
 
 const uuidFields: Record<RoutingResource, string> = {
-  external: 'VpxUUID',
   group: 'VpgUUID',
   queue: 'VpqUUID',
   ivr: 'VpiUUID',
 };
 
 const nameFields: Record<RoutingResource, string> = {
-  external: 'VpxName',
   group: 'VpgName',
   queue: 'VpqName',
   ivr: 'VpiName',
 };
 
 const statusFields: Record<RoutingResource, string> = {
-  external: 'VpxEnabled',
   group: 'VpgEnabled',
   queue: 'VpqEnabled',
   ivr: 'VpiEnabled',
@@ -123,9 +119,6 @@ function columns(resource: RoutingResource): ConfigurableCrudConfig['columns'] {
     { id: 'name', label: 'Name', kind: 'identity', field: nameFields[resource], uuidField: uuidFields[resource] },
     { id: 'pabx', label: 'PABX', kind: 'related', uuidField: 'VoipPabxAccountVpaUUID', lookupKey: 'pabxUUID' },
   ];
-  if (resource === 'external') {
-    base.push({ id: 'number', label: 'Number', kind: 'text', field: 'VpxNumber' });
-  }
   if (resource === 'group') {
     base.push({ id: 'strategy', label: 'Ring strategy', kind: 'text', field: 'VpgRingStrategy', translateValue: true });
   }
@@ -156,14 +149,6 @@ function fields(resource: RoutingResource): ConfigurableCrudConfig['fields'] {
     { key: 'name', source: nameFields[resource], payloadKey: 'name', label: 'Name', required: true, span: 1 },
   ];
 
-  if (resource === 'external') {
-    result.push(
-      { key: 'number', source: 'VpxNumber', payloadKey: 'number', label: 'Number', required: true, span: 1 },
-      { key: 'callerId', source: 'VpxCallerId', payloadKey: 'callerId', label: 'Caller ID', tab: 'routing', span: 1 },
-      { key: 'dialPrefix', source: 'VpxDialPrefix', payloadKey: 'dialPrefix', label: 'Dial prefix', tab: 'routing', span: 1 },
-      { key: 'timeoutSeconds', source: 'VpxTimeoutSeconds', payloadKey: 'timeoutSeconds', label: 'Timeout seconds', type: 'number', tab: 'limits', span: 1 },
-    );
-  }
 
   if (resource === 'group') {
     result.push(
@@ -355,20 +340,18 @@ export class VoipPabxRoutingPage extends ConfigurableCrudPageBase<ConfigurableCr
 
 function routeResource(): RoutingResource {
   const value = inject(ActivatedRoute).snapshot.data?.['resource'];
-  return ['external', 'group', 'queue', 'ivr'].includes(String(value))
+  return ['group', 'queue', 'ivr'].includes(String(value))
     ? (value as RoutingResource)
-    : 'external';
+    : 'group';
 }
 
 function resourceTitle(resource: RoutingResource): string {
-  if (resource === 'external') return 'External destinations';
   if (resource === 'group') return 'Groups';
   if (resource === 'queue') return 'Queues';
   return 'IVRs';
 }
 
 function singular(resource: RoutingResource): string {
-  if (resource === 'external') return 'external destination';
   if (resource === 'group') return 'group';
   if (resource === 'queue') return 'queue';
   return 'IVR';
@@ -377,8 +360,7 @@ function singular(resource: RoutingResource): string {
 function timeoutField(resource: RoutingResource): string {
   if (resource === 'group') return 'VpgRingTimeoutSeconds';
   if (resource === 'queue') return 'VpqTimeoutSeconds';
-  if (resource === 'ivr') return 'VpiTimeoutSeconds';
-  return 'VpxTimeoutSeconds';
+  return 'VpiTimeoutSeconds';
 }
 
 function extractItems(response: any): any[] {

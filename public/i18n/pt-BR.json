@@ -3534,7 +3534,6 @@
   "Softswitch runtime inventory": "Inventário de runtime Softswitch",
   "Options": "Opções",
   "External destination": "Destino externo",
-  "External destinations": "Destinos externos",
   "PABX DID Routes": "Rotas DID do PABX",
   "Publish contracted or validated external DIDs to PABX routing targets.": "Publique DIDs contratados ou externos validados para destinos de roteamento do PABX.",
   "Maintain DID publication and inbound routing target for this PABX.": "Mantenha a publicação do DID e o destino de roteamento de entrada deste PABX.",
