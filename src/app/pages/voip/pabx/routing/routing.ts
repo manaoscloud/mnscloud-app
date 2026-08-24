@@ -207,12 +207,13 @@ function relatedCollections(resource: RoutingResource): readonly ConfigurableCru
         `voip/pabx/groups/${groupUUID}/members/${row['VgmUUID']}`,
       uuidField: 'VgmUUID',
       initialValues: {
+        enabled: 1,
         extensionUUID: '',
         priority: 0,
         delaySeconds: 0,
-        enabled: 1,
       },
       fields: [
+        { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
         {
           key: 'extensionUUID',
           payloadKey: 'extensionUUID',
@@ -235,7 +236,6 @@ function relatedCollections(resource: RoutingResource): readonly ConfigurableCru
           type: 'number',
           span: 1,
         },
-        { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
       ],
       columns: [
         {
