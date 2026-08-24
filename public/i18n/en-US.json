@@ -2645,6 +2645,8 @@
   "Activate external DID": "Activate external DID",
   "Suspend external DID": "Suspend external DID",
   "External DID status updated.": "External DID status updated.",
+  "Queue agent status updated successfully.": "Queue agent status updated successfully.",
+  "Failed to update queue agent status.": "Failed to update queue agent status.",
   "DID operator": "DID carrier",
   "DID operator readiness": "DID carrier readiness",
   "Manage global DID stock and DID operator assignment.": "Manage global DID stock and DID carrier assignment.",
