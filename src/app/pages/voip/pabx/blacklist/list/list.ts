@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -39,6 +39,10 @@ import { VoipBlacklistItem, VoipBlacklistUiService } from '../blacklist.service'
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
+import type {
+  ConfigurableCrudOption,
+  ConfigurableCrudQuickCreateResult,
+} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type BlacklistListFilters = {
   search: string;
@@ -385,5 +389,84 @@ export class VoipPabxBlacklistListPage {
 
   private messageFromError(err: any, fallback: string) {
     return err?.error?.message || err?.error?.error || err?.message || fallback;
+  }
+}
+
+@Component({
+  selector: 'app-voip-pabx-blacklist-list-quick-create-host',
+  standalone: true,
+  imports: [
+    RefreshButtonComponent,
+    FormField,
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatChipsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatMenuModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatSortModule,
+    MatTableModule,
+    MatTabsModule,
+    TranslocoPipe,
+    MatTooltipModule,
+  ],
+  templateUrl: './list.html',
+  styleUrls: ['./list.scss', '../../../../erp/customer/customer-quick-create-host.scss'],
+})
+export class VoipPabxBlacklistListQuickCreateHostComponent extends VoipPabxBlacklistListPage {
+  private readonly quickDialogRef = inject(
+    MatDialogRef<
+      VoipPabxBlacklistListQuickCreateHostComponent,
+      ConfigurableCrudQuickCreateResult
+    >,
+  );
+  private readonly quickLookupApi = inject(VoipBlacklistUiService);
+  private savingFromQuickCreate = false;
+
+  constructor() {
+    super();
+    queueMicrotask(() => this.startCreate());
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    const name = this.formModel().name.trim();
+    this.savingFromQuickCreate = true;
+    try {
+      await super.saveItem(saveAndNew);
+      if (!this.editing() && name) {
+        this.quickDialogRef.close({
+          option: await this.findCreatedOption(name),
+          payload: { name },
+        });
+      }
+    } finally {
+      this.savingFromQuickCreate = false;
+    }
+  }
+
+  override cancelForm() {
+    super.cancelForm();
+    if (!this.savingFromQuickCreate) {
+      this.quickDialogRef.close({ option: null });
+    }
+  }
+
+  private async findCreatedOption(name: string): Promise<ConfigurableCrudOption | null> {
+    const response = await this.quickLookupApi.list({ search: name, status: 1, limit: 20 });
+    const rows = (response?.data?.items ?? []) as VoipBlacklistItem[];
+    const exact = rows.find((row) => row.VbkName.toLowerCase() === name.toLowerCase()) ?? rows[0];
+    if (!exact) return null;
+    return {
+      value: exact.VbkUUID,
+      label: exact.VbkName,
+      description: exact.VbkDescription ?? '',
+      searchText: `${exact.VbkName} ${exact.VbkDescription ?? ''} ${exact.VbkUUID}`,
+    };
   }
 }

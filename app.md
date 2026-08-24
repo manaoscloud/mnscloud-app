@@ -398,11 +398,12 @@
   when the panel closes.
   Searchable-select labels and placeholders must be passed through Transloco by the consuming
   template/config. Do not pass untranslated placeholder literals into shared select adapters.
-- FK quick-create actions, when enabled from a searchable select, must reuse the canonical create
-  form of the referenced component/resource. Do not implement a second lightweight dialog or
-  duplicate field list for the referenced entity. If the referenced resource cannot expose its
-  existing create form through a host/component, leave quick-create disabled until that canonical
-  form is reusable.
+- FK quick-create actions should be enabled for every eligible dynamic FK/searchable select whose
+  referenced resource has a canonical create form in the current scope. The quick-create action must
+  reuse that canonical create form of the referenced component/resource. Do not implement a second
+  lightweight dialog or duplicate field list for the referenced entity. If the referenced resource
+  cannot expose its existing create form through a host/component, leave quick-create disabled until
+  that canonical form is reusable.
 - Any free-text code field backed by a canonical DB/API registry, such as Billing Product Code, must
   use `mat-autocomplete` with API-provided suggestions and still preserve manual typing when the
   workflow intentionally creates a new registry entry.

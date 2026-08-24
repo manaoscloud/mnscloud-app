@@ -11,6 +11,9 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ErpCustomerQuickCreateHostComponent } from '../../../erp/customer/customer';
+import { HostingStorageAccountsQuickCreateHostComponent } from '../../../hosting/storage/accounts/accounts';
+import { VoipPabxBlacklistListQuickCreateHostComponent } from '../blacklist/list/list';
+import { VoipPabxDialPlanPlanQuickCreateHostComponent } from '../dial-plan/plan/plan';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -167,6 +170,10 @@ function config(): ConfigurableCrudConfig {
         required: true,
         tab: 'routing',
         span: 1,
+        quickCreate: {
+          label: 'Create dial plan',
+          component: VoipPabxDialPlanPlanQuickCreateHostComponent,
+        },
       },
       {
         key: 'blacklistUUID',
@@ -176,6 +183,10 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         tab: 'routing',
         span: 1,
+        quickCreate: {
+          label: 'Create blacklist',
+          component: VoipPabxBlacklistListQuickCreateHostComponent,
+        },
       },
       {
         key: 'recordingStorageMode',
@@ -197,6 +208,10 @@ function config(): ConfigurableCrudConfig {
         span: 2,
         hiddenWhen: ({ values }) => values['recordingStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['recordingStorageMode'] === 'storage',
+        quickCreate: {
+          label: 'Create storage account',
+          component: HostingStorageAccountsQuickCreateHostComponent,
+        },
       },
       {
         key: 'mediaStorageMode',
@@ -218,6 +233,10 @@ function config(): ConfigurableCrudConfig {
         span: 2,
         hiddenWhen: ({ values }) => values['mediaStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['mediaStorageMode'] === 'storage',
+        quickCreate: {
+          label: 'Create storage account',
+          component: HostingStorageAccountsQuickCreateHostComponent,
+        },
       },
       {
         key: 'mediaDeliveryMode',
@@ -282,8 +301,21 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
     option: ConfigurableCrudOption,
     _result: ConfigurableCrudQuickCreateResult,
   ): void {
-    if (field.key !== 'customerUUID') return;
-    this.customerOptions.update((items) => mergeOption(items, option));
+    switch (field.key) {
+      case 'customerUUID':
+        this.customerOptions.update((items) => mergeOption(items, option));
+        break;
+      case 'dialPlanUUID':
+        this.dialPlanOptions.update((items) => mergeOption(items, option));
+        break;
+      case 'blacklistUUID':
+        this.blacklistOptions.update((items) => mergeOption(items, option));
+        break;
+      case 'storageAccountUUID':
+      case 'mediaStorageAccountUUID':
+        this.storageAccountOptions.update((items) => mergeOption(items, option));
+        break;
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
