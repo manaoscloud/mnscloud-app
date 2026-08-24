@@ -15,7 +15,6 @@ import {
   runRuntimeDiagnostic,
   RuntimeDiagnosticResult,
 } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
-import { customerQuickCreateConfig } from '../../../erp/customer/customer-quick-create';
 import { VoipSoftswitchSubscriberItem } from './subscriber.service';
 
 const codecs: ConfigurableCrudOption[] = [
@@ -152,7 +151,6 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       type: 'search-select',
       required: true,
-      quickCreate: customerQuickCreateConfig(),
       span: 1,
       tab: 'record',
     },
@@ -304,18 +302,6 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
       enabled: Number(payload['enabled']) === 1,
       codecs: codecList(payload['codecs']),
     };
-  }
-
-  protected override afterQuickCreate(
-    field: ConfigurableCrudField,
-    option: ConfigurableCrudOption,
-  ): void {
-    if (field.key !== 'customerUUID') return;
-    this.customerOptions.update((current) =>
-      current.some((item) => String(item.value) === String(option.value))
-        ? current
-        : [...current, option].sort((left, right) => left.label.localeCompare(right.label)),
-    );
   }
 
   override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean {

@@ -365,11 +365,8 @@
                     [options]="fieldOptions(field)"
                     [loading]="fieldLoading(field)"
                     [multiple]="field.multiple ?? false"
-                    [canCreate]="canQuickCreate(field)"
-                    [createLabel]="quickCreateLabel(field)"
                     [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                     (valueChange)="setFieldValue(field.key, $event)"
-                    (createRecord)="quickCreateField(field)"
                   />
                 }
                 @case ('status') {
@@ -572,13 +569,10 @@
                               [options]="fieldOptions(field)"
                               [loading]="fieldLoading(field)"
                               [multiple]="field.multiple ?? false"
-                              [canCreate]="canQuickCreate(field)"
-                              [createLabel]="quickCreateLabel(field)"
                               [value]="
                                 field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)
                               "
                               (valueChange)="setFieldValue(field.key, $event)"
-                              (createRecord)="quickCreateField(field)"
                             />
                           }
                           @case ('select') {
@@ -705,11 +699,8 @@
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
                       [multiple]="field.multiple ?? false"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -810,11 +801,8 @@
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
                       [multiple]="field.multiple ?? false"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -909,11 +897,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -1008,11 +993,8 @@
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -1108,11 +1090,8 @@
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
                       [multiple]="field.multiple ?? false"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -1190,11 +1169,8 @@
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
                       [multiple]="field.multiple ?? false"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -1272,11 +1248,8 @@
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
                       [multiple]="field.multiple ?? false"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -1373,11 +1346,8 @@
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
                       [multiple]="field.multiple ?? false"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
@@ -1473,11 +1443,8 @@
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
                       [multiple]="field.multiple ?? false"
-                      [canCreate]="canQuickCreate(field)"
-                      [createLabel]="quickCreateLabel(field)"
                       [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
-                      (createRecord)="quickCreateField(field)"
                     />
                   }
                   @case ('select') {
