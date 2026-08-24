@@ -13,7 +13,7 @@ const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'person', label: 'Person' },
 ];
 
-const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
+export const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/customers',
   uuidField: 'CustomerUUID',
   pageTitle: 'Customers',

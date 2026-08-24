@@ -9,6 +9,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { customerQuickCreateConfig } from '../../../erp/customer/customer-quick-create';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -104,6 +105,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Customer',
         type: 'search-select',
         required: true,
+        quickCreate: customerQuickCreateConfig(),
         span: 1,
       },
       {
@@ -148,9 +150,7 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return (
-      ['serverUUID', 'customerUUID'].includes(field.key) && this.lookupsLoading()
-    );
+    return ['serverUUID', 'customerUUID'].includes(field.key) && this.lookupsLoading();
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
@@ -165,6 +165,18 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
       isActive: Number(payload['isActive']) === 1,
       isDefault: Number(payload['isDefault']) === 1,
     };
+  }
+
+  protected override afterQuickCreate(
+    field: ConfigurableCrudField,
+    option: ConfigurableCrudOption,
+  ): void {
+    if (field.key !== 'customerUUID') return;
+    this.customerOptions.update((current) =>
+      current.some((item) => String(item.value) === String(option.value))
+        ? current
+        : [...current, option].sort((left, right) => left.label.localeCompare(right.label)),
+    );
   }
 
   private async loadLookups(): Promise<void> {
