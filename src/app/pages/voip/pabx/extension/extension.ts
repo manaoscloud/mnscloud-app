@@ -7,6 +7,7 @@ import {
   ConfigurableCrudFilterAction,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
+  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
@@ -16,6 +17,8 @@ import {
   runRuntimeDiagnostic,
   RuntimeDiagnosticResult,
 } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
+import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
+import { VoipPabxDialPlanPlanQuickCreateHostComponent } from '../dial-plan/plan/plan';
 
 type PabxLookup = ConfigurableCrudOption & {
   requiresDomain: boolean;
@@ -71,6 +74,10 @@ const fields: readonly ConfigurableCrudField[] = [
     required: true,
     placeholder: 'Search PABX',
     autocomplete: 'off',
+    quickCreate: {
+      label: 'Create PABX',
+      component: VoipPabxAccountQuickCreateHostComponent,
+    },
   },
   {
     key: 'createMode',
@@ -95,6 +102,7 @@ const fields: readonly ConfigurableCrudField[] = [
     requiredWhen: ({ editing, values }) => editing || values['createMode'] !== 'range',
     hiddenWhen: ({ editing, values }) => !editing && values['createMode'] === 'range',
     autocomplete: 'off',
+    breakBefore: true,
   },
   {
     key: 'extensionRange',
@@ -106,6 +114,7 @@ const fields: readonly ConfigurableCrudField[] = [
     hiddenWhen: ({ editing, values }) => editing || values['createMode'] !== 'range',
     placeholder: 'Example: 1000-1010',
     autocomplete: 'off',
+    breakBefore: true,
   },
   {
     key: 'password',
@@ -126,6 +135,7 @@ const fields: readonly ConfigurableCrudField[] = [
     tab: 'routing',
     span: 1,
     autocomplete: 'off',
+    breakBefore: true,
   },
   {
     key: 'callerIdNumber',
@@ -167,6 +177,10 @@ const fields: readonly ConfigurableCrudField[] = [
     span: 1,
     placeholder: 'Search dial plan',
     autocomplete: 'off',
+    quickCreate: {
+      label: 'Create dial plan',
+      component: VoipPabxDialPlanPlanQuickCreateHostComponent,
+    },
   },
   {
     key: 'vmEnabled',
@@ -294,9 +308,9 @@ const config: ConfigurableCrudConfig = {
       emptyLabel: 'No PABX accounts found.',
     },
   ],
-    filterActionMenu: {
-      label: 'Status',
-      icon: 'monitor_heart',
+  filterActionMenu: {
+    label: 'Status',
+    icon: 'monitor_heart',
     actions: [
       {
         key: 'runtime-status-all',
@@ -317,7 +331,7 @@ const config: ConfigurableCrudConfig = {
   bulkDelete: true,
   statusFilter: true,
   tabLabels: {
-    record: 'Record',
+    record: 'Registration',
     routing: 'Routing',
     monitoring: 'Voicemail',
     codecs: 'Codecs',
@@ -439,6 +453,20 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
     if (key === 'pabxUUID') return this.pabxOptionsState();
     if (key === 'dialPlanUUID') return this.dialPlanOptionsState();
     return [];
+  }
+
+  protected override afterQuickCreate(
+    field: ConfigurableCrudField,
+    option: ConfigurableCrudOption,
+    _result: ConfigurableCrudQuickCreateResult,
+  ): void {
+    if (field.key === 'pabxUUID') {
+      this.pabxOptionsState.update((items) => mergePabxOption(items, option));
+      return;
+    }
+    if (field.key === 'dialPlanUUID') {
+      this.dialPlanOptionsState.update((items) => mergeOption(items, option));
+    }
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
@@ -700,4 +728,26 @@ function readArray(response: unknown, key: string): ConfigurableCrudRecord[] {
   const payload = response as { data?: Record<string, unknown> } | null;
   const value = payload?.data?.[key];
   return Array.isArray(value) ? (value as ConfigurableCrudRecord[]) : [];
+}
+
+function mergeOption(
+  items: readonly ConfigurableCrudOption[],
+  option: ConfigurableCrudOption,
+): ConfigurableCrudOption[] {
+  const value = String(option.value);
+  return [option, ...items.filter((item) => String(item.value) !== value)];
+}
+
+function mergePabxOption(
+  items: readonly PabxLookup[],
+  option: ConfigurableCrudOption,
+): PabxLookup[] {
+  const value = String(option.value);
+  const enriched: PabxLookup = {
+    ...option,
+    requiresDomain: false,
+    domainName: '',
+    defaultCodecs: [],
+  };
+  return [enriched, ...items.filter((item) => String(item.value) !== value)];
 }
