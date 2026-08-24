@@ -63,6 +63,7 @@ function config(): ConfigurableCrudConfig {
     statusOptions: statuses,
     bulkDelete: true,
     tabLabels: {
+      record: 'Registration',
       routing: 'Routing',
       storage: 'Storage',
     },
@@ -133,7 +134,6 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
-        breakBefore: true,
       },
       {
         key: 'customerUUID',
@@ -155,6 +155,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Name',
         required: true,
         span: 1,
+        breakBefore: true,
       },
       {
         key: 'timezone',
@@ -207,7 +208,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Recording storage account',
         type: 'search-select',
         tab: 'storage',
-        span: 2,
+        span: 1,
         hiddenWhen: ({ values }) => values['recordingStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['recordingStorageMode'] === 'storage',
         quickCreate: {
@@ -232,7 +233,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Media file storage account',
         type: 'search-select',
         tab: 'storage',
-        span: 2,
+        span: 1,
         hiddenWhen: ({ values }) => values['mediaStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['mediaStorageMode'] === 'storage',
         quickCreate: {
@@ -249,6 +250,7 @@ function config(): ConfigurableCrudConfig {
         options: deliveryModes,
         tab: 'storage',
         span: 1,
+        breakBefore: true,
       },
     ],
   };

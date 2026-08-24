@@ -2,15 +2,18 @@ import { Component, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudFilterAction,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
+  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 import type { RuntimeDiagnosticResult } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
+import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -148,6 +151,7 @@ function config(): ConfigurableCrudConfig {
       },
     ],
     tabLabels: {
+      record: 'Registration',
       network: 'Connection',
       authentication: 'Authentication',
       codecs: 'Codecs',
@@ -162,6 +166,10 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
+        quickCreate: {
+          label: 'Create PABX',
+          component: VoipPabxAccountQuickCreateHostComponent,
+        },
       },
       {
         key: 'direction',
@@ -181,6 +189,7 @@ function config(): ConfigurableCrudConfig {
         required: true,
         tab: 'network',
         span: 1,
+        breakBefore: true,
       },
       {
         key: 'transport',
@@ -225,7 +234,6 @@ function config(): ConfigurableCrudConfig {
         label: 'Username',
         tab: 'authentication',
         span: 1,
-        breakBefore: true,
         hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
         requiredWhen: ({ values }) => ['digest', 'register'].includes(String(values['authMode'])),
       },
@@ -247,6 +255,7 @@ function config(): ConfigurableCrudConfig {
         required: true,
         tab: 'authentication',
         span: 1,
+        breakBefore: true,
       },
       {
         key: 'realm',
@@ -254,7 +263,6 @@ function config(): ConfigurableCrudConfig {
         label: 'Realm',
         tab: 'authentication',
         span: 1,
-        breakBefore: true,
         hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
       },
       {
@@ -347,6 +355,15 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
     return key === 'pabxUUID' ? this.pabxOptions() : [];
   }
 
+  protected override afterQuickCreate(
+    field: ConfigurableCrudField,
+    option: ConfigurableCrudOption,
+    _result: ConfigurableCrudQuickCreateResult,
+  ): void {
+    if (field.key !== 'pabxUUID') return;
+    this.pabxOptions.update((items) => mergeOption(items, option));
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       ...payload,
@@ -429,6 +446,14 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
       this.pabxLoading.set(false);
     }
   }
+}
+
+function mergeOption(
+  items: readonly ConfigurableCrudOption[],
+  option: ConfigurableCrudOption,
+): ConfigurableCrudOption[] {
+  const value = String(option.value);
+  return [option, ...items.filter((item) => String(item.value) !== value)];
 }
 
 function trunkStatusSections(result: RuntimeDiagnosticResult) {
