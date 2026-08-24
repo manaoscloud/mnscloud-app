@@ -15,7 +15,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -39,6 +39,10 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import type {
+  ConfigurableCrudOption,
+  ConfigurableCrudQuickCreateResult,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type HostingStorageProvider = {
   HspUUID: string;
@@ -613,5 +617,82 @@ export class HostingStorageAccountsPage {
     const code = maybe?.error?.code;
     if (message && code) return `${message} (${code})`;
     return message || maybe?.message || fallback;
+  }
+}
+
+@Component({
+  selector: 'app-hosting-storage-accounts-quick-create-host',
+  standalone: true,
+  imports: [
+    RefreshButtonComponent,
+    FormField,
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatMenuModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatSortModule,
+    MatTableModule,
+    MatTabsModule,
+    TranslocoPipe,
+    MatTooltipModule,
+  ],
+  templateUrl: './accounts.html',
+  styleUrls: ['./accounts.scss', '../../../erp/customer/customer-quick-create-host.scss'],
+})
+export class HostingStorageAccountsQuickCreateHostComponent extends HostingStorageAccountsPage {
+  private readonly quickDialogRef = inject(
+    MatDialogRef<HostingStorageAccountsQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
+  );
+  private readonly quickApi = inject(ApiService);
+  private savingFromQuickCreate = false;
+
+  constructor() {
+    super();
+    queueMicrotask(() => this.startCreate());
+  }
+
+  override async save(keepOpen = false): Promise<void> {
+    const name = this.accountFormModel().name.trim();
+    this.savingFromQuickCreate = true;
+    try {
+      await super.save(keepOpen);
+      if (!this.editing() && name) {
+        this.quickDialogRef.close({
+          option: await this.findCreatedOption(name),
+          payload: { name },
+        });
+      }
+    } finally {
+      this.savingFromQuickCreate = false;
+    }
+  }
+
+  override closeDialog() {
+    super.closeDialog();
+    if (!this.savingFromQuickCreate) {
+      this.quickDialogRef.close({ option: null });
+    }
+  }
+
+  private async findCreatedOption(name: string): Promise<ConfigurableCrudOption | null> {
+    const response = await this.quickApi.get<ApiResponse<HostingStorageAccount[]>>(
+      `${this.endpoint()}?search=${encodeURIComponent(name)}&status=1&limit=20`,
+    );
+    const rows = Array.isArray(response.data) ? response.data : [];
+    const exact = rows.find((row) => row.HsaName.toLowerCase() === name.toLowerCase()) ?? rows[0];
+    if (!exact) return null;
+    return {
+      value: exact.HsaUUID,
+      label: exact.HsaName,
+      description: [exact.HspName, exact.HspProvider].filter(Boolean).join(' - '),
+      searchText: `${exact.HsaName} ${exact.HspName ?? ''} ${exact.HspProvider ?? ''} ${exact.HsaUUID}`,
+    };
   }
 }
