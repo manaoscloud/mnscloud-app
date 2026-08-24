@@ -9,6 +9,7 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { customerQuickCreateConfig } from '../../../erp/customer/customer-quick-create';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -135,6 +136,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Customer',
         type: 'search-select',
         required: true,
+        quickCreate: customerQuickCreateConfig(),
         span: 1,
       },
       {
@@ -288,33 +290,41 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
     };
   }
 
+  protected override afterQuickCreate(
+    field: ConfigurableCrudField,
+    option: ConfigurableCrudOption,
+  ): void {
+    if (field.key !== 'customerUUID') return;
+    this.customerOptions.update((current) =>
+      current.some((item) => String(item.value) === String(option.value))
+        ? current
+        : [...current, option].sort((left, right) => left.label.localeCompare(right.label)),
+    );
+  }
+
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [servers, customers, dialPlans, blacklists, storageAccounts] =
-        await Promise.all([
-          this.fetchPaged('voip/pabx/servers?status=1', (row) =>
-            option(row.VpsUUID, row.VpsName, [row.VpsEngine, row.VpsHostname, row.VpsPublicIPv4]),
-          ),
-          this.fetchPaged('erp/customers?status=1', (row) =>
-            option(row.CustomerUUID ?? row.CusUUID, row.Name ?? row.CustomerName ?? row.CusName, [
-              row.Document,
-              row.Email,
-            ]),
-          ),
-          this.fetchPaged('voip/pabx/dial-plans?status=1', (row) =>
-            option(row.uuid ?? row.VdpUUID, row.name ?? row.VdpName),
-          ),
-          this.fetchPaged('voip/pabx/blacklists?status=1', (row) =>
-            option(row.VbkUUID ?? row.uuid, row.VbkName ?? row.name),
-          ),
-          this.fetchPaged('hosting/storage/accounts?status=1', (row) =>
-            option(row.HsaUUID ?? row.uuid, row.HsaName ?? row.name, [
-              row.HspName,
-              row.HspProvider,
-            ]),
-          ),
-        ]);
+      const [servers, customers, dialPlans, blacklists, storageAccounts] = await Promise.all([
+        this.fetchPaged('voip/pabx/servers?status=1', (row) =>
+          option(row.VpsUUID, row.VpsName, [row.VpsEngine, row.VpsHostname, row.VpsPublicIPv4]),
+        ),
+        this.fetchPaged('erp/customers?status=1', (row) =>
+          option(row.CustomerUUID ?? row.CusUUID, row.Name ?? row.CustomerName ?? row.CusName, [
+            row.Document,
+            row.Email,
+          ]),
+        ),
+        this.fetchPaged('voip/pabx/dial-plans?status=1', (row) =>
+          option(row.uuid ?? row.VdpUUID, row.name ?? row.VdpName),
+        ),
+        this.fetchPaged('voip/pabx/blacklists?status=1', (row) =>
+          option(row.VbkUUID ?? row.uuid, row.VbkName ?? row.name),
+        ),
+        this.fetchPaged('hosting/storage/accounts?status=1', (row) =>
+          option(row.HsaUUID ?? row.uuid, row.HsaName ?? row.name, [row.HspName, row.HspProvider]),
+        ),
+      ]);
       this.serverOptions.set(servers);
       this.customerOptions.set(customers);
       this.dialPlanOptions.set(dialPlans);
