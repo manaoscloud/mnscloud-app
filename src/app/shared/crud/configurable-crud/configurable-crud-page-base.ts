@@ -119,7 +119,8 @@ export type ConfigurableCrudFieldType =
   | 'multi-select'
   | 'search-select'
   | 'status'
-  | 'textarea';
+  | 'textarea'
+  | 'file';
 
 export type ConfigurableCrudPostalCodeLookup = {
   streetKey?: string;
@@ -167,6 +168,7 @@ export type ConfigurableCrudField = {
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
+  accept?: string;
   /** ISO 4217 code used when the record does not carry its own currency field. */
   currencyCode?: string;
   /** Key holding the ISO 4217 code for this monetary value. */
@@ -945,6 +947,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   fieldValueArray(key: string): readonly unknown[] {
     const value = this.formValues()[key];
     return Array.isArray(value) ? value : [];
+  }
+
+  fieldFileName(key: string): string {
+    const value = this.formValues()[key];
+    return value instanceof File ? value.name : '';
+  }
+
+  onFileInput(key: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.setFieldValue(key, input.files?.[0] ?? null);
   }
 
   setFieldValue(key: string, value: unknown): void {

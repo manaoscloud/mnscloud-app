@@ -1,480 +1,210 @@
-import {
-  Component,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-  DestroyRef,
-} from '@angular/core';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
-import { createSignalCrudTable } from '../../../../../shared/crud/signal-crud-table';
+import { Component, inject, signal } from '@angular/core';
 
-import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApiService } from '../../../../../services/api.service';
 import {
-  CrudDialogBinding,
-  openCrudTemplateDialog,
-} from '../../../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
-import {
-  MnsSearchSelectFieldComponent,
-  MnsSearchSelectFieldOption,
-} from '../../../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import {
-  VoipBlacklistItem,
-  VoipBlacklistNumberItem,
-  VoipBlacklistUiService,
-} from '../blacklist.service';
+  ConfigurableCrudConfig,
+  ConfigurableCrudListFilter,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudQuickCreateResult,
+  ConfigurableCrudRecord,
+  CONFIGURABLE_CRUD_IMPORTS,
+} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { VoipPabxBlacklistListQuickCreateHostComponent } from '../list/list';
 
-type BlacklistNumberFilters = {
-  search: string;
-  blacklistUUID: string;
-  status: number | '';
-};
+const statuses: ConfigurableCrudOption[] = [
+  { value: 1, label: 'Active' },
+  { value: 0, label: 'Inactive' },
+];
 
-const emptyBlacklistNumberFilters = (): BlacklistNumberFilters => ({
-  search: '',
-  blacklistUUID: '',
-  status: '',
-});
+const matchTypes: ConfigurableCrudOption[] = [
+  { value: 'exact', label: 'Exact' },
+  { value: 'prefix', label: 'Prefix' },
+  { value: 'regex', label: 'Regex' },
+];
+
+const actions: ConfigurableCrudOption[] = [
+  { value: 'reject', label: 'Reject' },
+  { value: 'busy', label: 'Busy' },
+  { value: 'hangup', label: 'Hangup' },
+];
+
+function config(listFilters: readonly ConfigurableCrudListFilter[]): ConfigurableCrudConfig {
+  return {
+    endpoint: 'voip/pabx/blacklist-numbers',
+    uuidField: 'VbnUUID',
+    pageTitle: 'Blacklist Numbers',
+    pageDescription: 'Manage blocked numbers and match behavior for PABX blacklists.',
+    createTitle: 'New blacklist number',
+    editTitle: 'Edit blacklist number',
+    dialogDescription: 'Maintain the number, match policy and SIP rejection behavior.',
+    searchPlaceholder: 'Search',
+    emptyLabel: 'No blacklist numbers found.',
+    deleteTitle: 'Delete blacklist number',
+    deleteMessage: 'Delete this blacklist number?',
+    deleteSelectedTitle: 'Delete selected blacklist numbers',
+    deleteSelectedMessage: 'Delete {count} selected blacklist numbers?',
+    savedMessage: 'Blacklist number saved successfully.',
+    deletedMessage: 'Blacklist number deleted successfully.',
+    deleteFailedMessage: 'Failed to delete blacklist number.',
+    statusMode: 'number',
+    activeValue: 1,
+    inactiveValue: 0,
+    statusOptions: statuses,
+    bulkDelete: true,
+    listFilters,
+    tabLabels: { match: 'Routing' },
+    initialValues: {
+      VbnEnabled: 1,
+      VoipBlacklistVbkUUID: '',
+      VbnNumber: '',
+      VbnMatchType: 'exact',
+      VbnAction: 'reject',
+      VbnCause: 'CALL_REJECTED',
+      VbnReason: '',
+      VbnPriority: 100,
+    },
+    columns: [
+      { id: 'number', label: 'Number', kind: 'identity', field: 'VbnNumber', uuidField: 'VbnUUID' },
+      {
+        id: 'blacklist',
+        label: 'Blacklist',
+        kind: 'related',
+        field: 'VoipBlacklistVbkUUID',
+        lookupKey: 'VoipBlacklistVbkUUID',
+      },
+      { id: 'matchType', label: 'Match type', field: 'VbnMatchType', translateValue: true },
+      { id: 'action', label: 'Action', field: 'VbnAction', translateValue: true },
+      { id: 'priority', label: 'Priority', kind: 'number', field: 'VbnPriority' },
+      { id: 'status', label: 'Status', kind: 'status', field: 'VbnEnabled' },
+    ],
+    fields: [
+      { key: 'VbnEnabled', source: 'VbnEnabled', label: 'Status', type: 'status', span: 1 },
+      {
+        key: 'VoipBlacklistVbkUUID',
+        source: 'VoipBlacklistVbkUUID',
+        label: 'Blacklist',
+        type: 'search-select',
+        required: true,
+        span: 1,
+        quickCreate: {
+          component: VoipPabxBlacklistListQuickCreateHostComponent,
+          label: 'Create blacklist',
+        },
+      },
+      { key: 'VbnNumber', source: 'VbnNumber', label: 'Number', required: true, span: 1 },
+      {
+        key: 'VbnPriority',
+        source: 'VbnPriority',
+        label: 'Priority',
+        type: 'number',
+        required: true,
+        span: 1,
+      },
+      {
+        key: 'VbnMatchType',
+        source: 'VbnMatchType',
+        label: 'Match type',
+        type: 'select',
+        options: matchTypes,
+        required: true,
+        tab: 'match',
+        span: 1,
+      },
+      {
+        key: 'VbnAction',
+        source: 'VbnAction',
+        label: 'Action',
+        type: 'select',
+        options: actions,
+        required: true,
+        tab: 'match',
+        span: 1,
+      },
+      { key: 'VbnCause', source: 'VbnCause', label: 'Cause', tab: 'match', span: 1 },
+      { key: 'VbnReason', source: 'VbnReason', label: 'Reason', tab: 'match', span: 1 },
+    ],
+  };
+}
 
 @Component({
   selector: 'app-voip-pabx-blacklist-number',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-    MnsSearchSelectFieldComponent,
-  ],
-  templateUrl: './number.html',
-  styleUrls: ['./number.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipPabxBlacklistNumberPage {
-  private readonly api = inject(VoipBlacklistUiService);
-  private readonly snack = inject(SnackbarService);
-  private readonly dialog = inject(MatDialog);
-  private readonly listLimit = 5000;
+export class VoipPabxBlacklistNumberPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly genericApi = inject(ApiService);
+  private readonly blacklistOptions = signal<ConfigurableCrudOption[]>([]);
 
-  private readonly appliedFilters = signal<BlacklistNumberFilters>(emptyBlacklistNumberFilters());
-  private readonly itemsResource = resource({
-    params: () => this.appliedFilters(),
-    defaultValue: [] as VoipBlacklistNumberItem[],
-    loader: ({ params }) => this.fetchItems(params),
-  });
-  private readonly mutating = signal(false);
-  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
-  readonly saving = signal(false);
-  readonly searchInput = signal('');
-  readonly search = signal('');
-  readonly blacklistFilter = signal('');
-  readonly statusFilter = signal<number | ''>('');
-  readonly statusFilterOptions = [
-    { value: '', label: 'All' },
-    { value: 1, label: 'Active' },
-    { value: 0, label: 'Inactive' },
-  ];
-  readonly lists = signal<VoipBlacklistItem[]>([]);
-  readonly editing = signal<VoipBlacklistNumberItem | null>(null);
-  readonly selectedUUIDs = signal<Set<string>>(new Set());
-  readonly rows = computed(() => this.itemsResource.value());
-  readonly table = createSignalCrudTable<VoipBlacklistNumberItem>(this.rows, (row, column) => this.sortValue(row, column));
-  readonly sortActive = this.table.sortActive;
-  readonly sortDirection = this.table.sortDirection;
-  readonly pageIndex = this.table.pageIndex;
-  readonly pageSize = this.table.pageSize;
-  readonly sortedRows = this.table.sortedRows;
-  readonly visibleRows = this.table.visibleRows;
-  readonly displayedColumns = [
-    'select',
-    'number',
-    'blacklist',
-    'matchType',
-    'action',
-    'priority',
-    'status',
-    'actions',
-  ];
-  readonly blacklistOptions = computed<MnsSearchSelectFieldOption[]>(() =>
-    this.lists().map((item) => ({
-      value: item.VbkUUID,
-      label: item.VbkName,
-      searchText: item.VbkUUID,
-    })),
-  );
-  readonly blacklistFilterOptions = computed<MnsSearchSelectFieldOption[]>(() => [
-    { value: '', label: 'All' },
-    ...this.blacklistOptions(),
-  ]);
-
-  readonly formModel = signal({
-    blacklistUUID: '',
-    number: '',
-    matchType: 'exact',
-    action: 'reject',
-    cause: 'CALL_REJECTED',
-    reason: '',
-    priority: 100,
-    enabled: 1,
-  });
-  readonly form = createForm(this.formModel, (schema) => {
-    required(schema.blacklistUUID);
-    required(schema.number);
-    minLength(schema.number, 2);
-    required(schema.matchType);
-    required(schema.action);
-  });
-  readonly formDialog = viewChild<TemplateRef<unknown>>('formDialog');
-  private dialogBinding: CrudDialogBinding | null = null;
-  private readonly itemsEffect = effect(() => {
-    this.rows();
-    this.reconcileSelection();
-  });
-  private readonly itemsErrorEffect = effect(() => {
-    const error = this.itemsResource.error();
-    if (!error) return;
-    this.snack.error(this.messageFromError(error, 'Failed to load blacklist numbers.'));
-    this.rows();
-    this.reconcileSelection();
-  });
-
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.closeDialog();
-  });
-
-  async bootstrap() {
-    await this.fetchLists();
-    this.itemsResource.reload();
-  }
-  setSort(sort: Sort): void {
-    this.table.setSort(sort);
+  constructor() {
+    super(
+      config([
+        {
+          key: 'VoipBlacklistVbkUUID',
+          paramKey: 'blacklistUUID',
+          label: 'Blacklist',
+          type: 'search-select',
+          span: 1,
+          loading: () => this.blacklistOptions().length === 0,
+        },
+      ]),
+    );
+    void this.loadBlacklists();
   }
 
-  setPage(page: PageEvent): void {
-    this.table.setPage(page);
+  override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'VoipBlacklistVbkUUID') return this.blacklistOptions();
+    return super.lookupOptions(key);
   }
 
-  refreshList() {
-    this.itemsResource.reload();
+  protected override afterQuickCreate(
+    field: { key: string },
+    option: ConfigurableCrudOption,
+    _result: ConfigurableCrudQuickCreateResult,
+  ): void {
+    if (field.key !== 'VoipBlacklistVbkUUID') return;
+    this.blacklistOptions.update((current) =>
+      current.some((candidate) => String(candidate.value) === String(option.value))
+        ? current
+        : [...current, option],
+    );
   }
 
-  applySearchFilters() {
-    const nextFilters = this.currentBlacklistNumberFilters();
-    this.search.set(nextFilters.search);
-    if (this.sameBlacklistNumberFilters(nextFilters, this.appliedFilters())) {
-      this.itemsResource.reload();
-    } else {
-      this.appliedFilters.set(nextFilters);
-    }
-  }
-
-  clearSearchFilters() {
-    this.searchInput.set('');
-    this.search.set('');
-    this.blacklistFilter.set('');
-    this.statusFilter.set('');
-    const nextFilters = emptyBlacklistNumberFilters();
-    if (this.sameBlacklistNumberFilters(nextFilters, this.appliedFilters())) {
-      this.itemsResource.reload();
-    } else {
-      this.appliedFilters.set(nextFilters);
-    }
-  }
-
-  async fetchLists() {
-    const response = await this.api.list({ limit: this.listLimit });
-    this.lists.set((response?.data?.items ?? []) as VoipBlacklistItem[]);
-  }
-
-  private async fetchItems(filters: BlacklistNumberFilters): Promise<VoipBlacklistNumberItem[]> {
-    const response = await this.api.listNumbers(filters.blacklistUUID, {
-      search: filters.search,
-      status: filters.status,
-      limit: this.listLimit,
-    });
-    return (response?.data?.items ?? []) as VoipBlacklistNumberItem[];
-  }
-
-  private currentBlacklistNumberFilters(): BlacklistNumberFilters {
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
-      search: this.searchInput().trim(),
-      blacklistUUID: this.blacklistFilter(),
-      status: this.statusFilter(),
+      blacklistUUID: text(payload['VoipBlacklistVbkUUID']) ?? '',
+      number: text(payload['VbnNumber']) ?? '',
+      matchType: text(payload['VbnMatchType']) ?? 'exact',
+      action: text(payload['VbnAction']) ?? 'reject',
+      cause: text(payload['VbnCause']) ?? '',
+      reason: text(payload['VbnReason']) ?? '',
+      priority: Number(payload['VbnPriority'] ?? 100),
+      enabled: Number(payload['VbnEnabled']) === 1,
     };
   }
 
-  private sameBlacklistNumberFilters(left: BlacklistNumberFilters, right: BlacklistNumberFilters) {
-    return (
-      left.search === right.search &&
-      left.blacklistUUID === right.blacklistUUID &&
-      left.status === right.status
+  private async loadBlacklists(): Promise<void> {
+    const response = await this.genericApi.get<any>('voip/pabx/blacklists?status=1&limit=500');
+    const rows = (response?.data?.items ?? []) as ConfigurableCrudRecord[];
+    this.blacklistOptions.set(
+      rows.map((row) => {
+        const uuid = text(row['VbkUUID']) ?? '';
+        const label = text(row['VbkName']) ?? uuid;
+        const description = text(row['VbkDescription']) ?? '';
+        return {
+          value: uuid,
+          label,
+          description,
+          searchText: `${label} ${description} ${uuid}`,
+        };
+      }),
     );
   }
+}
 
-  startCreate() {
-    this.editing.set(null);
-    this.formModel.set({
-      blacklistUUID: this.blacklistFilter() || this.lists()[0]?.VbkUUID || '',
-      number: '',
-      matchType: 'exact',
-      action: 'reject',
-      cause: 'CALL_REJECTED',
-      reason: '',
-      priority: 100,
-      enabled: 1,
-    });
-    this.openDialog();
-  }
-
-  startEdit(item: VoipBlacklistNumberItem) {
-    this.editing.set(item);
-    this.formModel.set({
-      blacklistUUID: item.VoipBlacklistVbkUUID,
-      number: item.VbnNumber,
-      matchType: item.VbnMatchType,
-      action: item.VbnAction,
-      cause: item.VbnCause ?? 'CALL_REJECTED',
-      reason: item.VbnReason ?? '',
-      priority: Number(item.VbnPriority ?? 100),
-      enabled: item.VbnEnabled === 1 ? 1 : 0,
-    });
-    this.openDialog();
-  }
-
-  async saveItem(saveAndNew = false) {
-    if (!this.form().valid()) return;
-    const value = this.formModel();
-    const payload = {
-      blacklistUUID: value.blacklistUUID,
-      number: value.number.trim(),
-      matchType: value.matchType,
-      action: value.action,
-      cause: value.cause.trim() || null,
-      reason: value.reason.trim() || null,
-      priority: Number(value.priority ?? 100),
-      enabled: value.enabled === 1,
-    };
-    const createMode = !this.editing();
-    this.saving.set(true);
-    try {
-      const editing = this.editing();
-      if (editing) await this.api.updateNumber(editing.VbnUUID, payload);
-      else await this.api.createNumber(payload);
-      this.snack.success(
-        editing
-          ? 'Blacklist number updated successfully.'
-          : 'Blacklist number created successfully.',
-      );
-      this.itemsResource.reload();
-      if (saveAndNew && createMode) {
-        this.startCreate();
-        return;
-      }
-      this.cancelForm();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to save blacklist number.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNew() {
-    if (!this.editing()) void this.saveItem(true);
-  }
-
-  cancelForm() {
-    this.closeDialog();
-    this.editing.set(null);
-  }
-
-  async deleteItem(item: VoipBlacklistNumberItem) {
-    const confirmed = await this.confirmDelete(
-      'Delete blacklist number',
-      `Delete number "${item.VbnNumber}"?`,
-      'Delete',
-    );
-    if (!confirmed) return;
-    this.mutating.set(true);
-    try {
-      await this.api.removeNumber(item.VbnUUID);
-      this.selectedUUIDs.update((current) => this.removeFromSet(current, item.VbnUUID));
-      this.snack.success('Blacklist number deleted successfully.');
-      this.itemsResource.reload();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to delete blacklist number.'));
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-  get selectedCount() {
-    return this.selectedUUIDs().size;
-  }
-
-  isSelected(item: VoipBlacklistNumberItem) {
-    return this.selectedUUIDs().has(item.VbnUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleEntitySelection(item: VoipBlacklistNumberItem, checked: boolean) {
-    this.selectedUUIDs.update((current) => this.toggleSet(current, item.VbnUUID, checked));
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.visibleRows())
-        checked ? next.add(row.VbnUUID) : next.delete(row.VbnUUID);
-      return next;
-    });
-  }
-
-  async deleteSelectedItems() {
-    const ids = Array.from(this.selectedUUIDs());
-    if (!ids.length) return;
-    const confirmed = await this.confirmDelete(
-      'Delete selected numbers',
-      `Delete ${ids.length} selected number(s)?`,
-      'Delete selected',
-    );
-    if (!confirmed) return;
-    this.mutating.set(true);
-    try {
-      const response = await this.api.removeManyNumbers(ids);
-      const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = this.failedUUIDs(response?.data?.failed ?? []);
-    this.rows();
-      this.selectedUUIDs.set(failed);
-      if (failed.size) this.snack.error(`${failed.size} selected number(s) could not be deleted.`);
-      else this.snack.success(`${deleted.size || ids.length} selected number(s) deleted.`);
-      this.itemsResource.reload();
-    } catch (err: any) {
-      this.snack.error(this.messageFromError(err, 'Failed to delete selected numbers.'));
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-  listLabel(uuid: string, fallback?: string | null) {
-    return fallback || this.lists().find((item) => item.VbkUUID === uuid)?.VbkName || uuid || '-';
-  }
-
-  isActive(item: VoipBlacklistNumberItem) {
-    return Number(item.VbnEnabled ?? 0) === 1;
-  }
-
-  private openDialog() {
-    const formDialog = this.formDialog();
-    if (!formDialog || this.dialogBinding) return;
-    this.dialogBinding = openCrudTemplateDialog(this.dialog, formDialog, 'crud-form-dialog', {
-      onEscape: () => this.cancelForm(),
-    });
-    bindDialogClosed(this.dialogBinding.ref, () => {
-      this.dialogBinding?.stop();
-      this.dialogBinding = null;
-    });
-  }
-
-  private closeDialog() {
-    this.dialogBinding?.stop();
-    this.dialogBinding?.ref.close();
-    this.dialogBinding = null;
-  }
-
-  private async confirmDelete(title: string, message: string, confirmLabel: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: { title, message, confirmLabel },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    return Boolean(await firstValueFrom(ref.afterClosed()));
-  }
-
-  private sortValue(row: VoipBlacklistNumberItem, column: string): string | number {
-    if (column === 'blacklist') return this.listLabel(row.VoipBlacklistVbkUUID, row.BlacklistName);
-    if (column === 'number') return row.VbnNumber ?? '';
-    if (column === 'matchType') return row.VbnMatchType ?? '';
-    if (column === 'action') return row.VbnAction ?? '';
-    if (column === 'priority') return Number(row.VbnPriority ?? 0);
-    if (column === 'status') return this.isActive(row) ? 'ACTIVE' : 'INACTIVE';
-    return '';
-  }
-
-  private reconcileSelection() {
-    const valid = new Set(this.rows().map((item) => item.VbnUUID));
-    this.selectedUUIDs.update(
-      (current) => new Set(Array.from(current).filter((uuid) => valid.has(uuid))),
-    );
-  }
-
-  private toggleSet(current: Set<string>, uuid: string, checked: boolean) {
-    const next = new Set(current);
-    checked ? next.add(uuid) : next.delete(uuid);
-    return next;
-  }
-
-  private removeFromSet(current: Set<string>, uuid: string) {
-    const next = new Set(current);
-    next.delete(uuid);
-    return next;
-  }
-
-  private failedUUIDs(items: any[]) {
-    return new Set<string>(
-      items
-        .map((item) => item?.uuid ?? item?.VbnUUID ?? null)
-        .filter((uuid): uuid is string => !!uuid),
-    );
-  }
-
-  private messageFromError(err: any, fallback: string) {
-    return err?.error?.message || err?.error?.error || err?.message || fallback;
-  }
+function text(value: unknown): string | null {
+  const normalized = String(value ?? '').trim();
+  return normalized || null;
 }
