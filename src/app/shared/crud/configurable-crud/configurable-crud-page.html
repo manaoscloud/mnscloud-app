@@ -1655,25 +1655,6 @@
           </mat-tab>
         }
 
-        @if (notesFields().length) {
-          <mat-tab [label]="tabLabel('notes', 'Notes') | transloco">
-            <div class="tab-content form-grid">
-              @for (field of notesFields(); track field.key) {
-                <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                  <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
-                  <textarea
-                    matInput
-                    [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                    [rows]="field.rows ?? 5"
-                    [value]="fieldValueString(field.key)"
-                    (input)="setFieldValue(field.key, $any($event.target).value)"
-                  ></textarea>
-                </mat-form-field>
-              }
-            </div>
-          </mat-tab>
-        }
-
         @if (showRelatedCollections()) {
           @for (collection of relatedCollections(); track collection.key) {
             <mat-tab [label]="collection.label | transloco">
@@ -1823,6 +1804,25 @@
               </div>
             </mat-tab>
           }
+        }
+
+        @if (notesFields().length) {
+          <mat-tab [label]="tabLabel('notes', 'Notes') | transloco">
+            <div class="tab-content form-grid">
+              @for (field of notesFields(); track field.key) {
+                <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                  <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
+                  <textarea
+                    matInput
+                    [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                    [rows]="field.rows ?? 5"
+                    [value]="fieldValueString(field.key)"
+                    (input)="setFieldValue(field.key, $any($event.target).value)"
+                  ></textarea>
+                </mat-form-field>
+              }
+            </div>
+          </mat-tab>
         }
       </mat-tab-group>
     </div>
