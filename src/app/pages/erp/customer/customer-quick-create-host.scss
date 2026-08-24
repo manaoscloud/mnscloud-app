@@ -1,0 +1,10 @@
+:host {
+  display: block;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+}
+
+:host ::ng-deep .erp-page {
+  display: none;
+}

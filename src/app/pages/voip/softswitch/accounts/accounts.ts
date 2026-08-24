@@ -5,10 +5,12 @@ import {
   ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
+  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { ErpCustomerQuickCreateHostComponent } from '../../../erp/customer/customer';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -105,6 +107,10 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
+        quickCreate: {
+          label: 'Create customer',
+          component: ErpCustomerQuickCreateHostComponent,
+        },
       },
       {
         key: 'name',
@@ -148,15 +154,22 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return (
-      ['serverUUID', 'customerUUID'].includes(field.key) && this.lookupsLoading()
-    );
+    return ['serverUUID', 'customerUUID'].includes(field.key) && this.lookupsLoading();
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.serverOptions();
     if (key === 'customerUUID') return this.customerOptions();
     return [];
+  }
+
+  protected override afterQuickCreate(
+    field: ConfigurableCrudField,
+    option: ConfigurableCrudOption,
+    _result: ConfigurableCrudQuickCreateResult,
+  ): void {
+    if (field.key !== 'customerUUID') return;
+    this.customerOptions.update((items) => mergeOption(items, option));
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -239,4 +252,12 @@ function option(
     description,
     searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
   };
+}
+
+function mergeOption(
+  items: readonly ConfigurableCrudOption[],
+  option: ConfigurableCrudOption,
+): ConfigurableCrudOption[] {
+  if (items.some((item) => item.value === option.value)) return [...items];
+  return [...items, option].sort((left, right) => left.label.localeCompare(right.label));
 }

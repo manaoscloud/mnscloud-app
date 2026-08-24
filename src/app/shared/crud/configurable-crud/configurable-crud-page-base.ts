@@ -3,6 +3,7 @@ import {
   DestroyRef,
   ElementRef,
   TemplateRef,
+  Type,
   computed,
   effect,
   inject,
@@ -89,6 +90,23 @@ export type ConfigurableCrudOption = MnsSearchSelectFieldOption & {
   label: string;
 };
 
+export type ConfigurableCrudQuickCreateResult = {
+  option: ConfigurableCrudOption | null;
+  response?: unknown;
+  payload?: ConfigurableCrudRecord;
+};
+
+export type ConfigurableCrudQuickCreateContext = {
+  editing: boolean;
+  values: ConfigurableCrudRecord;
+};
+
+export type ConfigurableCrudQuickCreateConfig = {
+  enabled?: boolean | ((context: ConfigurableCrudQuickCreateContext) => boolean);
+  label?: string;
+  component: Type<unknown>;
+};
+
 export type ConfigurableCrudFieldType =
   | 'text'
   | 'email'
@@ -154,6 +172,7 @@ export type ConfigurableCrudField = {
   /** Key holding the ISO 4217 code for this monetary value. */
   currencyKey?: string;
   options?: readonly ConfigurableCrudOption[];
+  quickCreate?: ConfigurableCrudQuickCreateConfig;
   /** Set to false for protocol/vendor option labels that must remain literal. */
   translateOptions?: boolean;
   /** Enables multiple selection for a searchable relation field. */
@@ -890,6 +909,51 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   fieldLoading(field: ConfigurableCrudField): boolean {
     return field.loading?.() ?? false;
   }
+
+  canQuickCreate(field: ConfigurableCrudField): boolean {
+    const quickCreate = field.quickCreate;
+    if (!quickCreate) return false;
+    const context: ConfigurableCrudQuickCreateContext = {
+      editing: Boolean(this.editingRecord()),
+      values: this.formValues(),
+    };
+    return typeof quickCreate.enabled === 'function'
+      ? quickCreate.enabled(context)
+      : quickCreate.enabled !== false;
+  }
+
+  quickCreateLabel(field: ConfigurableCrudField): string {
+    return field.quickCreate?.label ?? 'Create new';
+  }
+
+  async quickCreateField(field: ConfigurableCrudField): Promise<void> {
+    const quickCreate = field.quickCreate;
+    if (!quickCreate || !this.canQuickCreate(field)) return;
+
+    const ref = this.dialog.open<unknown, unknown, ConfigurableCrudQuickCreateResult>(
+      quickCreate.component,
+      {
+        width: '0',
+        height: '0',
+        maxWidth: '0',
+        maxHeight: '0',
+        autoFocus: false,
+        restoreFocus: true,
+        panelClass: ['quick-create-host-dialog'],
+      },
+    );
+    const result = await firstValueFrom(ref.afterClosed());
+    if (!result?.option) return;
+
+    this.afterQuickCreate(field, result.option, result);
+    this.setFieldValue(field.key, result.option.value);
+  }
+
+  protected afterQuickCreate(
+    _field: ConfigurableCrudField,
+    _option: ConfigurableCrudOption,
+    _result: ConfigurableCrudQuickCreateResult,
+  ): void {}
 
   addressCopyActions(): readonly ConfigurableCrudCopyAction[] {
     return this.config.addressCopyActions ?? [];
