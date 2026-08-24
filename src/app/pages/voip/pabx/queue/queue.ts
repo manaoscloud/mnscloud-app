@@ -147,12 +147,13 @@ function config(): ConfigurableCrudConfig {
           `voip/pabx/queues/${queueUUID}/members/${row['VqmUUID']}`,
         uuidField: 'VqmUUID',
         initialValues: {
+          enabled: 1,
           extensionUUID: '',
           priority: 0,
           penalty: 0,
-          enabled: 1,
         },
         fields: [
+          { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
           {
             key: 'extensionUUID',
             payloadKey: 'extensionUUID',
@@ -175,7 +176,6 @@ function config(): ConfigurableCrudConfig {
             type: 'number',
             span: 1,
           },
-          { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
         ],
         columns: [
           {
