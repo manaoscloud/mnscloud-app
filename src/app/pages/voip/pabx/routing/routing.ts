@@ -361,14 +361,14 @@ function routeResource(): RoutingResource {
 }
 
 function resourceTitle(resource: RoutingResource): string {
-  if (resource === 'external') return 'External routes';
+  if (resource === 'external') return 'External destinations';
   if (resource === 'group') return 'Groups';
   if (resource === 'queue') return 'Queues';
   return 'IVRs';
 }
 
 function singular(resource: RoutingResource): string {
-  if (resource === 'external') return 'external route';
+  if (resource === 'external') return 'external destination';
   if (resource === 'group') return 'group';
   if (resource === 'queue') return 'queue';
   return 'IVR';

@@ -30,11 +30,11 @@ function config(): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/pabx/inbound-routes',
     uuidField: 'uuid',
-    pageTitle: 'PABX Inbound Routes',
-    pageDescription: 'Route carrier DID traffic to extensions, groups, queues, IVRs or external targets.',
+    pageTitle: 'PABX DID Routes',
+    pageDescription: 'Publish contracted or validated external DIDs to PABX routing targets.',
     createTitle: 'New inbound route',
     editTitle: 'Edit inbound route',
-    dialogDescription: 'Maintain PABX DID ownership and inbound routing target.',
+    dialogDescription: 'Maintain DID publication and inbound routing target for this PABX.',
     searchPlaceholder: 'Search',
     emptyLabel: 'No inbound routes found.',
     deleteTitle: 'Delete inbound route',
@@ -73,7 +73,7 @@ function config(): ConfigurableCrudConfig {
         uuidField: 'pabxUUID',
         lookupKey: 'pabxUUID',
       },
-      { id: 'pattern', label: 'Pattern', kind: 'text', field: 'pattern' },
+      { id: 'did', label: 'DID', kind: 'text', field: 'didNumber' },
       { id: 'routeType', label: 'Route type', kind: 'text', field: 'routeType', translateValue: true },
       { id: 'status', label: 'Status', kind: 'status', field: 'enabled' },
     ],
@@ -104,8 +104,8 @@ function config(): ConfigurableCrudConfig {
         source: 'pattern',
         payloadKey: 'pattern',
         label: 'Pattern',
-        required: true,
         tab: 'routing',
+        hidden: true,
         span: 1,
       },
       {
@@ -137,6 +137,14 @@ function config(): ConfigurableCrudConfig {
         label: 'Priority',
         type: 'number',
         tab: 'routing',
+        span: 1,
+      },
+      {
+        key: 'context',
+        source: 'context',
+        payloadKey: 'context',
+        label: 'Context',
+        hidden: true,
         span: 1,
       },
     ],
@@ -186,10 +194,14 @@ export class VoipPabxTrunkRoutePage extends ConfigurableCrudPageBase<Configurabl
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const did = this.didOptions().find((item) => String(item.value) === String(payload['didUUID'] ?? ''));
+    const didNumber = String(did?.label ?? '').trim();
     return {
       ...payload,
       enabled: Number(payload['enabled']) === 1,
       trunkUUID: null,
+      pattern: didNumber ? `^${didNumber}$` : null,
+      routeTargetValue: null,
       context: 'default',
     };
   }
@@ -239,7 +251,7 @@ export class VoipPabxTrunkRoutePage extends ConfigurableCrudPageBase<Configurabl
     );
     this.didOptions.set(
       extractItems(response).map((row) =>
-        option(row.VddUUID, row.VddNumber, [row.CustomerName, row.SuggestedPattern]),
+        option(row.VddUUID, row.VddNumber, [row.CustomerName]),
       ).filter(Boolean) as ConfigurableCrudOption[],
     );
   }
