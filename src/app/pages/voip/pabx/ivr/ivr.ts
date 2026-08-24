@@ -138,14 +138,14 @@ function config(): ConfigurableCrudConfig {
         deleteEndpoint: (ivrUUID, row) => `voip/pabx/ivrs/${ivrUUID}/options/${row['VioUUID']}`,
         uuidField: 'VioUUID',
         initialValues: {
+          enabled: 1,
           digit: '',
           routeType: 'extension',
           routeTargetUUID: '',
-          routeTargetValue: '',
-          enabled: 1,
           description: '',
         },
         fields: [
+          { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
           { key: 'digit', payloadKey: 'digit', label: 'Digit', required: true, span: 1 },
           {
             key: 'routeType',
@@ -165,17 +165,10 @@ function config(): ConfigurableCrudConfig {
             span: 1,
           },
           {
-            key: 'routeTargetValue',
-            payloadKey: 'routeTargetValue',
-            label: 'Target value',
-            span: 1,
-          },
-          { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
-          {
             key: 'description',
             payloadKey: 'description',
             label: 'Description',
-            span: 3,
+            span: 4,
           },
         ],
         columns: [
@@ -189,7 +182,6 @@ function config(): ConfigurableCrudConfig {
           digit: text(values['digit']),
           routeType: text(values['routeType']),
           routeTargetUUID: text(values['routeTargetUUID']),
-          routeTargetValue: text(values['routeTargetValue']),
           description: text(values['description']),
           enabled: Number(values['enabled']) === 1,
         }),
@@ -239,7 +231,6 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   ): void {
     if (collection.key !== 'ivrOptions' || field.key !== 'routeType') return;
     this.setRelatedCollectionFieldValue(collection, { key: 'routeTargetUUID', label: 'Destination' }, '');
-    this.setRelatedCollectionFieldValue(collection, { key: 'routeTargetValue', label: 'Target value' }, '');
   }
 
   override relatedCollectionColumnValue(
