@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -157,7 +158,7 @@ export class ClinicBradescoSiadGuidesPage extends ConfigurableCrudPageBase<Confi
       panelClass: 'crud-form-dialog',
       data: { guideUUID },
     });
-    await new Promise<void>((resolve) => ref.afterClosed().subscribe(() => resolve()));
+    await firstValueFrom(ref.afterClosed());
     this.refreshList();
   }
 }

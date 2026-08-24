@@ -67,12 +67,16 @@ export const DISCOUNT_APPLIES_TO_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 
 export class BillingLookupState {
+  private readonly billing: BillingService;
+
   readonly products = signal<BillingProduct[]>([]);
   readonly prices = signal<BillingPrice[]>([]);
   readonly definitions = signal<BillingProductDefinition[]>([]);
   readonly loading = signal(false);
 
-  constructor(private readonly billing: BillingService) {}
+  constructor(billing: BillingService) {
+    this.billing = billing;
+  }
 
   async load(): Promise<void> {
     this.loading.set(true);
