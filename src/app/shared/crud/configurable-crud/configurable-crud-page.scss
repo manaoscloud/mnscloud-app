@@ -252,6 +252,35 @@
   white-space: nowrap;
 }
 
+.crud-file-field {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 56px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid color-mix(in srgb, currentColor 44%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
+.crud-file-field-label {
+  font-size: 0.75rem;
+  line-height: 1;
+  opacity: 0.78;
+}
+
+.crud-file-field-input {
+  width: 100%;
+  color: inherit;
+}
+
+.crud-file-field-hint {
+  font-size: 0.75rem;
+  opacity: 0.72;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 1400px) {
   .form-grid,
   .address-section-grid {

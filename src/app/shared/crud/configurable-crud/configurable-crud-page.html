@@ -427,6 +427,24 @@
                     ></textarea>
                   </mat-form-field>
                 }
+                @case ('file') {
+                  <div [class]="'crud-file-field ' + fieldClass(field)">
+                    <label class="crud-file-field-label"
+                      >{{ translatedFieldLabel(field)
+                      }}{{ isFieldRequired(field) ? '*' : '' }}</label
+                    >
+                    <input
+                      class="crud-file-field-input"
+                      type="file"
+                      [accept]="field.accept ?? ''"
+                      [attr.data-field-key]="field.key"
+                      (change)="onFileInput(field.key, $event)"
+                    />
+                    <div class="crud-file-field-hint">
+                      {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
+                    </div>
+                  </div>
+                }
                 @default {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
