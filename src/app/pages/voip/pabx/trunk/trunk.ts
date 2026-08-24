@@ -27,9 +27,8 @@ const directions: ConfigurableCrudOption[] = [
 ];
 
 const authModes: ConfigurableCrudOption[] = [
-  { value: 'ip_acl', label: 'IP ACL' },
-  { value: 'digest', label: 'Digest' },
-  { value: 'register', label: 'Register' },
+  { value: 'ip_acl', label: 'IP' },
+  { value: 'register', label: 'Registration' },
   { value: 'none', label: 'None' },
 ];
 
@@ -99,7 +98,6 @@ function config(): ConfigurableCrudConfig {
       transport: 'udp',
       priority: 100,
       authMode: 'ip_acl',
-      registerEnabled: 0,
       username: '',
       password: '',
       realm: '',
@@ -220,22 +218,13 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
-        key: 'registerEnabled',
-        source: 'registerEnabled',
-        label: 'Register',
-        type: 'select',
-        options: yesNo,
-        tab: 'authentication',
-        span: 1,
-      },
-      {
         key: 'username',
         source: 'username',
         label: 'Username',
         tab: 'authentication',
         span: 1,
-        hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
-        requiredWhen: ({ values }) => ['digest', 'register'].includes(String(values['authMode'])),
+        hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
+        requiredWhen: ({ values }) => String(values['authMode']) === 'register',
       },
       {
         key: 'password',
@@ -245,8 +234,8 @@ function config(): ConfigurableCrudConfig {
         autocomplete: 'new-password',
         tab: 'authentication',
         span: 1,
-        hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
-        requiredWhen: ({ values }) => ['digest', 'register'].includes(String(values['authMode'])),
+        hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
+        requiredWhen: ({ values }) => String(values['authMode']) === 'register',
       },
       {
         key: 'host',
@@ -263,7 +252,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Realm',
         tab: 'authentication',
         span: 1,
-        hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
+        hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
       },
       {
         key: 'fromDomain',
@@ -271,7 +260,7 @@ function config(): ConfigurableCrudConfig {
         label: 'From domain',
         tab: 'authentication',
         span: 1,
-        hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
+        hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
       },
       {
         key: 'fromUser',
@@ -279,7 +268,7 @@ function config(): ConfigurableCrudConfig {
         label: 'From user',
         tab: 'authentication',
         span: 1,
-        hiddenWhen: ({ values }) => ['ip_acl', 'none'].includes(String(values['authMode'])),
+        hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
       },
       {
         key: 'allowedCidrs',
@@ -368,7 +357,7 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
     return {
       ...payload,
       enabled: Number(payload['enabled']) === 1,
-      registerEnabled: Number(payload['registerEnabled']) === 1,
+      registerEnabled: String(payload['authMode']) === 'register',
       port: Number(payload['port']),
       priority: Number(payload['priority'] ?? 100),
       codecs: codecList(payload['codecs']).join(',') || null,
