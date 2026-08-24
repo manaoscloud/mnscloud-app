@@ -54,11 +54,6 @@ import {
 } from '../../forms/mns-search-select-field/mns-search-select-field';
 import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
-import {
-  ConfigurableCrudQuickCreateDialogComponent,
-  ConfigurableCrudQuickCreateDialogData,
-  ConfigurableCrudQuickCreateDialogResult,
-} from './configurable-crud-quick-create-dialog';
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
   RefreshButtonComponent,
@@ -92,28 +87,6 @@ export type ConfigurableCrudRecord = Record<string, unknown>;
 export type ConfigurableCrudOption = MnsSearchSelectFieldOption & {
   value: string | number | boolean | null;
   label: string;
-};
-
-export type ConfigurableCrudQuickCreateContext = {
-  editing: boolean;
-  values: ConfigurableCrudRecord;
-  search: string;
-};
-
-export type ConfigurableCrudQuickCreateConfig = {
-  enabled?: boolean | ((context: ConfigurableCrudQuickCreateContext) => boolean);
-  label?: string;
-  title?: string;
-  description?: string;
-  config: ConfigurableCrudConfig;
-  initialValues?:
-    | ConfigurableCrudRecord
-    | ((context: ConfigurableCrudQuickCreateContext) => ConfigurableCrudRecord);
-  lookupOptions?: Record<string, readonly ConfigurableCrudOption[]>;
-  optionFromResponse?: (
-    response: unknown,
-    payload: ConfigurableCrudRecord,
-  ) => ConfigurableCrudOption | null;
 };
 
 export type ConfigurableCrudFieldType =
@@ -181,7 +154,6 @@ export type ConfigurableCrudField = {
   /** Key holding the ISO 4217 code for this monetary value. */
   currencyKey?: string;
   options?: readonly ConfigurableCrudOption[];
-  quickCreate?: ConfigurableCrudQuickCreateConfig;
   /** Set to false for protocol/vendor option labels that must remain literal. */
   translateOptions?: boolean;
   /** Enables multiple selection for a searchable relation field. */
@@ -918,72 +890,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   fieldLoading(field: ConfigurableCrudField): boolean {
     return field.loading?.() ?? false;
   }
-
-  canQuickCreate(field: ConfigurableCrudField): boolean {
-    const quickCreate = field.quickCreate;
-    if (!quickCreate) return false;
-    if (typeof quickCreate.enabled === 'function') {
-      return quickCreate.enabled({
-        editing: Boolean(this.editingRecord()),
-        values: this.formValues(),
-        search: '',
-      });
-    }
-    return quickCreate.enabled !== false;
-  }
-
-  quickCreateLabel(field: ConfigurableCrudField): string {
-    return field.quickCreate?.label ?? 'Create new';
-  }
-
-  async quickCreateField(field: ConfigurableCrudField): Promise<void> {
-    const quickCreate = field.quickCreate;
-    if (!quickCreate || !this.canQuickCreate(field)) return;
-
-    const context: ConfigurableCrudQuickCreateContext = {
-      editing: Boolean(this.editingRecord()),
-      values: this.formValues(),
-      search: '',
-    };
-    const initialValues =
-      typeof quickCreate.initialValues === 'function'
-        ? quickCreate.initialValues(context)
-        : quickCreate.initialValues;
-
-    const ref = this.dialog.open<
-      ConfigurableCrudQuickCreateDialogComponent,
-      ConfigurableCrudQuickCreateDialogData,
-      ConfigurableCrudQuickCreateDialogResult
-    >(ConfigurableCrudQuickCreateDialogComponent, {
-      width: 'min(1120px, 96vw)',
-      maxWidth: '96vw',
-      maxHeight: '92vh',
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: ['crud-form-dialog', 'quick-create-dialog'],
-      data: {
-        config: quickCreate.config,
-        title: quickCreate.title,
-        description: quickCreate.description,
-        initialValues,
-        lookupOptions: quickCreate.lookupOptions,
-        optionFromResponse: quickCreate.optionFromResponse,
-      },
-    });
-
-    const result = await firstValueFrom(ref.afterClosed());
-    if (!result?.option) return;
-
-    this.afterQuickCreate(field, result.option, result);
-    this.setFieldValue(field.key, result.option.value);
-    this.snack.success(this.t('Record created and selected.'));
-  }
-
-  protected afterQuickCreate(
-    _field: ConfigurableCrudField,
-    _option: ConfigurableCrudOption,
-    _result: ConfigurableCrudQuickCreateDialogResult,
-  ): void {}
 
   addressCopyActions(): readonly ConfigurableCrudCopyAction[] {
     return this.config.addressCopyActions ?? [];

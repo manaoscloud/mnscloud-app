@@ -411,21 +411,6 @@
     must be owned by the adapter/component, not by browser auto-translation
   - spacing, option padding, and search field sizing come from the global `src/styles.scss`
     contract; do not add page-local layout overrides for these classes
-- FK quick-create:
-  - FK/search-select fields may expose a related-record create action only when the field metadata
-    explicitly declares `quickCreate`; it is never automatic for every FK.
-  - The quick-create action must reuse the target resource's canonical `ConfigurableCrudConfig`
-    whenever the target resource is CRUD-configurable. Do not duplicate a separate ad-hoc form for
-    the same entity.
-  - The action opens a focused create dialog, saves through the target resource's normal API
-    endpoint, appends the returned option to the current lookup list, and selects the newly created
-    UUID in the parent form without closing or resetting the parent dialog.
-  - Master-only, runtime, provisioning, provider, credential, server, billing catalog, and other
-    sensitive resources must not enable generic quick-create unless their own business workflow
-    explicitly authorizes it. The button is UX only; role, tenant, entitlement, uniqueness, and FK
-    ownership must remain enforced by the API/DB.
-  - Desktop and mobile must use the same quick-create behavior. The icon button belongs inside the
-    searchable field as a suffix action, with translated tooltip/aria labels and safe touch sizing.
 - Exception: small static enum selects (for example `Active/Inactive`, `Yes/No`) can remain without search.
 - Static enum/control selects still must be fully internationalized by the component, not by the DOM
   translation fallback.
