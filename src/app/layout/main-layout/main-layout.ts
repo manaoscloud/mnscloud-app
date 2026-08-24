@@ -1534,7 +1534,7 @@ export class MainLayout {
             },
             {
               id: 'voip/pabx/inbound-routes',
-              label: 'Inbound Routes',
+              label: 'DID Routes',
               icon: 'call_received',
               route: '/voip/pabx/inbound-routes',
             },
