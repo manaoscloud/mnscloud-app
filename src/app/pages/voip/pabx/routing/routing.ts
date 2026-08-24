@@ -8,6 +8,7 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRelatedCollection,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
@@ -93,6 +94,7 @@ function config(resource: RoutingResource): ConfigurableCrudConfig {
     initialValues: initialValues(resource),
     columns: columns(resource),
     fields: fields(resource),
+    relatedCollections: relatedCollections(resource),
   };
 }
 
@@ -192,6 +194,71 @@ function fields(resource: RoutingResource): ConfigurableCrudConfig['fields'] {
   return result;
 }
 
+function relatedCollections(resource: RoutingResource): readonly ConfigurableCrudRelatedCollection[] {
+  if (resource !== 'group') return [];
+  return [
+    {
+      key: 'groupMembers',
+      label: 'Members',
+      emptyLabel: 'No members linked',
+      addLabel: 'Add',
+      endpoint: (groupUUID) => `voip/pabx/groups/${groupUUID}/members`,
+      deleteEndpoint: (groupUUID, row) =>
+        `voip/pabx/groups/${groupUUID}/members/${row['VgmUUID']}`,
+      uuidField: 'VgmUUID',
+      initialValues: {
+        extensionUUID: '',
+        priority: 0,
+        delaySeconds: 0,
+        enabled: 1,
+      },
+      fields: [
+        {
+          key: 'extensionUUID',
+          payloadKey: 'extensionUUID',
+          label: 'Extension',
+          type: 'search-select',
+          required: true,
+          span: 1,
+        },
+        {
+          key: 'priority',
+          payloadKey: 'priority',
+          label: 'Priority',
+          type: 'number',
+          span: 1,
+        },
+        {
+          key: 'delaySeconds',
+          payloadKey: 'delaySeconds',
+          label: 'Delay seconds',
+          type: 'number',
+          span: 1,
+        },
+        { key: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
+      ],
+      columns: [
+        {
+          id: 'extension',
+          label: 'Extension',
+          field: 'VoipPabxExtensionVpeUUID',
+          kind: 'related',
+          lookupKey: 'extensionUUID',
+        },
+        { id: 'priority', label: 'Priority', field: 'VgmPriority', kind: 'number' },
+        { id: 'delay', label: 'Delay seconds', field: 'VgmDelaySeconds', kind: 'number' },
+        { id: 'status', label: 'Status', field: 'VgmEnabled', kind: 'status' },
+      ],
+      payload: (values) => ({
+        extensionUUID: values['extensionUUID'],
+        priority: numberOrNull(values['priority']),
+        delaySeconds: numberOrNull(values['delaySeconds']),
+        enabled: Number(values['enabled']) === 1,
+      }),
+    },
+  ];
+}
+
 @Component({
   selector: 'app-voip-pabx-routing',
   standalone: true,
@@ -204,6 +271,7 @@ export class VoipPabxRoutingPage extends ConfigurableCrudPageBase<ConfigurableCr
   readonly resource = routeResource();
   readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
   readonly mediaFileOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly extensionOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -212,12 +280,13 @@ export class VoipPabxRoutingPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return ['pabxUUID', 'mediaFileUUID'].includes(field.key) && this.lookupsLoading();
+    return ['pabxUUID', 'mediaFileUUID', 'extensionUUID'].includes(field.key) && this.lookupsLoading();
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'pabxUUID') return this.pabxOptions();
     if (key === 'mediaFileUUID') return [{ value: '', label: 'None' }, ...this.mediaFileOptions()];
+    if (key === 'extensionUUID') return this.extensionOptions();
     return [];
   }
 
@@ -239,6 +308,13 @@ export class VoipPabxRoutingPage extends ConfigurableCrudPageBase<ConfigurableCr
           option(row.VpaUUID, row.VpaName, [row.CustomerName, row.DomainName]),
         ),
       ];
+      if (this.resource === 'group') {
+        endpointsToFetch.push(
+          this.fetchPaged('voip/pabx/extensions?status=1', (row) =>
+            option(row.VpeUUID, row.VpeUsername, [row.PabxName, row.CustomerName]),
+          ),
+        );
+      }
       if (this.resource === 'queue' || this.resource === 'ivr') {
         endpointsToFetch.push(
           this.fetchPaged('voip/pabx/media-files?status=1', (row) =>
@@ -246,9 +322,14 @@ export class VoipPabxRoutingPage extends ConfigurableCrudPageBase<ConfigurableCr
           ),
         );
       }
-      const [pabxs, mediaFiles = []] = await Promise.all(endpointsToFetch);
+      const [pabxs, second = [], third = []] = await Promise.all(endpointsToFetch);
       this.pabxOptions.set(pabxs);
-      this.mediaFileOptions.set(mediaFiles);
+      if (this.resource === 'group') {
+        this.extensionOptions.set(second);
+      } else {
+        this.mediaFileOptions.set(second);
+        this.extensionOptions.set(third);
+      }
     } finally {
       this.lookupsLoading.set(false);
     }
@@ -324,4 +405,9 @@ function option(
 function text(value: unknown): string | null {
   const normalized = String(value ?? '').trim();
   return normalized || null;
+}
+
+function numberOrNull(value: unknown): number | null {
+  const normalized = Number(value);
+  return Number.isFinite(normalized) ? normalized : null;
 }

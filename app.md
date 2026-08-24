@@ -342,6 +342,11 @@
   - This keeps the app.md CRUD contract centralized: signal-first `resource()` lists,
     `computed()` table state, searchable FK selects, UUID secondary lines, bulk delete, standard
     dialog footer, and filter grid behavior all come from the shared base.
+  - Parent CRUDs that own operational child collections, such as PABX IVR options, group members,
+    queue members, or routing destination rows, must expose those child collections through the
+    shared configurable CRUD `relatedCollections` contract. Do not remove these nested
+    configuration tabs during refactors, and do not recreate page-local HTML/SCSS for them when the
+    generic related-collection surface can handle the child endpoint.
   - If a directory resource needs behavior outside this base, document the reason in the component
     before adding a local extension.
 - Delete behavior:
