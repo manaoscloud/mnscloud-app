@@ -6,11 +6,13 @@ import {
   ConfigurableCrudFilterAction,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
+  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { ErpCustomerQuickCreateHostComponent } from '../../../erp/customer/customer';
 import {
   runRuntimeDiagnostic,
   RuntimeDiagnosticResult,
@@ -153,6 +155,10 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 1,
       tab: 'record',
+      quickCreate: {
+        label: 'Create customer',
+        component: ErpCustomerQuickCreateHostComponent,
+      },
     },
     {
       key: 'registerEnabled',
@@ -290,6 +296,15 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
     if (key === 'accountUUID') return this.accountOptions();
     if (key === 'customerUUID') return this.customerOptions();
     return [];
+  }
+
+  protected override afterQuickCreate(
+    field: ConfigurableCrudField,
+    option: ConfigurableCrudOption,
+    _result: ConfigurableCrudQuickCreateResult,
+  ): void {
+    if (field.key !== 'customerUUID') return;
+    this.customerOptions.update((items) => mergeOption(items, option));
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -458,4 +473,12 @@ function option(
     description,
     searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
   };
+}
+
+function mergeOption(
+  items: readonly ConfigurableCrudOption[],
+  option: ConfigurableCrudOption,
+): ConfigurableCrudOption[] {
+  if (items.some((item) => item.value === option.value)) return [...items];
+  return [...items, option].sort((left, right) => left.label.localeCompare(right.label));
 }

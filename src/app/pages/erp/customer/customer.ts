@@ -1,10 +1,13 @@
-import { Component, computed, resource } from '@angular/core';
+import { Component, computed, inject, resource } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudPageBase,
   ConfigurableCrudOption,
+  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
+  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
@@ -12,6 +15,67 @@ const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
 ];
+
+export function customerOptionFromResponse(
+  response: unknown,
+  payload: ConfigurableCrudRecord,
+): ConfigurableCrudOption | null {
+  const record = extractCustomerRecord(response) ?? payload;
+  const uuid =
+    stringValue(record['CustomerUUID']) ??
+    stringValue(record['CusUUID']) ??
+    stringValue(record['CustomerCusUUID']) ??
+    stringValue(record['uuid']);
+  if (!uuid) return null;
+  const label =
+    stringValue(record['Name']) ??
+    stringValue(record['CusName']) ??
+    stringValue(record['CustomerName']) ??
+    stringValue(payload['name']) ??
+    stringValue(payload['legalName']) ??
+    uuid;
+  const description = [record['Document'], record['Email'], record['Phone']]
+    .map((value) => stringValue(value))
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+  return {
+    value: uuid,
+    label,
+    description,
+    searchText: `${label} ${description} ${uuid}`,
+  };
+}
+
+function extractCustomerRecord(response: unknown): ConfigurableCrudRecord | null {
+  const value = response as
+    | {
+        data?: unknown;
+        item?: unknown;
+        record?: unknown;
+      }
+    | null
+    | undefined;
+  const candidates = [
+    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).item,
+    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).record,
+    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).data,
+    value?.data,
+    value?.item,
+    value?.record,
+  ];
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'object') {
+      return candidate as ConfigurableCrudRecord;
+    }
+  }
+  return null;
+}
+
+function stringValue(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text || null;
+}
 
 const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/customers',
@@ -545,6 +609,56 @@ export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       addressMainCity: complex.City ?? '',
       addressMainState: complex.State ?? '',
       addressMainCountry: complex.Country ?? '',
+    });
+  }
+}
+
+@Component({
+  selector: 'app-erp-customer-quick-create-host',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: [
+    '../../../shared/crud/configurable-crud/configurable-crud-page.scss',
+    './customer-quick-create-host.scss',
+  ],
+})
+export class ErpCustomerQuickCreateHostComponent extends ErpCustomerPage {
+  private readonly quickDialogRef = inject(
+    MatDialogRef<ErpCustomerQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
+  );
+  private savingFromQuickCreate = false;
+
+  constructor() {
+    super();
+    queueMicrotask(() => this.startCreate());
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    this.savingFromQuickCreate = true;
+    try {
+      await super.saveItem(saveAndNew);
+    } finally {
+      this.savingFromQuickCreate = false;
+    }
+  }
+
+  override closeDialog(): void {
+    super.closeDialog();
+    if (!this.savingFromQuickCreate) {
+      this.quickDialogRef.close({ option: null });
+    }
+  }
+
+  protected override async afterSave(
+    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
+  ): Promise<void> {
+    await super.afterSave(context);
+    if (context.mode !== 'create') return;
+    this.quickDialogRef.close({
+      option: customerOptionFromResponse(context.response, context.payload),
+      response: context.response,
+      payload: context.payload,
     });
   }
 }

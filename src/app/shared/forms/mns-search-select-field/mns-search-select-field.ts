@@ -1,9 +1,11 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { FormField, type Field } from '@angular/forms/signals';
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 type SignalFormField = Field<any, any>;
@@ -26,10 +28,12 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
   },
   imports: [
     FormField,
+    MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    MatTooltipModule,
     TranslocoPipe,
   ],
   template: `
@@ -94,6 +98,12 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
               <mat-option disabled class="select-state-option">{{
                 emptyLabel() | transloco
               }}</mat-option>
+              @if (canCreate()) {
+                <mat-option class="select-create-option" (click)="triggerCreate($event)">
+                  <mat-icon>add</mat-icon>
+                  <span>{{ createLabel() | transloco }}</span>
+                </mat-option>
+              }
             }
           }
         </mat-select>
@@ -156,9 +166,28 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
               <mat-option disabled class="select-state-option">{{
                 emptyLabel() | transloco
               }}</mat-option>
+              @if (canCreate()) {
+                <mat-option class="select-create-option" (click)="triggerCreate($event)">
+                  <mat-icon>add</mat-icon>
+                  <span>{{ createLabel() | transloco }}</span>
+                </mat-option>
+              }
             }
           }
         </mat-select>
+      }
+      @if (canCreate()) {
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          class="select-create-button"
+          [attr.aria-label]="createLabel() | transloco"
+          [matTooltip]="createLabel() | transloco"
+          (click)="triggerCreate($event)"
+        >
+          <mat-icon>add</mat-icon>
+        </button>
       }
     </mat-form-field>
   `,
@@ -171,6 +200,21 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
 
       mat-form-field {
         width: 100%;
+      }
+
+      .select-create-button {
+        --mdc-icon-button-state-layer-size: 36px;
+        color: var(--mns-color-accent, #00d5d5);
+        margin-right: -0.35rem;
+      }
+
+      .select-create-option {
+        color: var(--mns-color-accent, #00d5d5);
+      }
+
+      .select-create-option mat-icon {
+        margin-right: 0.5rem;
+        vertical-align: middle;
       }
     `,
   ],
@@ -190,6 +234,9 @@ export class MnsSearchSelectFieldComponent {
   readonly loading = input(false);
   readonly translateOptions = input(false);
   readonly multiple = input(false);
+  readonly canCreate = input(false);
+  readonly createLabel = input('Create new');
+  readonly createRecord = output<void>();
 
   readonly search = signal('');
   readonly selectedOption = computed(() => {
@@ -230,6 +277,12 @@ export class MnsSearchSelectFieldComponent {
     const nextValue = this.multiple() ? this.orderMultipleValues(value) : value;
     this.valueChange.emit(nextValue);
     this.selectionChange.emit(nextValue);
+  }
+
+  triggerCreate(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.createRecord.emit();
   }
 
   private orderMultipleValues(value: MnsSearchSelectValue): MnsSearchSelectValue {
