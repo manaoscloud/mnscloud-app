@@ -4,6 +4,7 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { parseCurrencyAmount } from '../../../shared/currency-mask/currency-mask.directive';
 import {
   BillingPrice,
   BillingProduct,
@@ -133,6 +134,10 @@ export class BillingLookupState {
 
 export function numberOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'string') {
+    const parsedCurrency = parseCurrencyAmount(value, 'pt-BR');
+    if (parsedCurrency !== null) return parsedCurrency;
+  }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
