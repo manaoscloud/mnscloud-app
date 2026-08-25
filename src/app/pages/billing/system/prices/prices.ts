@@ -180,7 +180,7 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       options: PRICE_CURRENCY_OPTIONS,
       required: true,
       tab: 'financial',
-      span: 1,
+      span: 3,
     },
     {
       key: 'unitPrice',
