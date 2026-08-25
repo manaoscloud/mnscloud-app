@@ -7,40 +7,23 @@ export type VoipDidExternalItem = {
   VddID: string;
   VddNumber: string;
   VddStatus: number;
+  VoipDidOperatorVdoUUID?: string | null;
+  OperatorName?: string | null;
+  OperatorNick?: string | null;
+  VddNotes?: string | null;
   VddOrigin: string;
   VddValidationStatus: string;
   VddBillingStatus: string;
-  VddBillingAmount: number;
-  VddBillingCurrency: string;
-  VddBillingInterval: string;
-  VddExternalProviderName?: string | null;
-  VddExternalProviderAccount?: string | null;
-  VddExternalAllowedSources?: string | null;
-  VddExternalRoutingInstructions?: string | null;
-  VddValidationToken?: string | null;
-  VddValidationExpiresAt?: string | null;
-  VddActivatedAt?: string | null;
-  VddRejectedReason?: string | null;
   UserUsrUUID?: string | null;
   TenantName?: string | null;
-  ValidationAttemptStatus?: string | null;
-  VevAttemptCount?: number;
-  VevLastAttemptAt?: string | null;
-  VevObservedSource?: string | null;
-  VevObservedNumber?: string | null;
-  VevObservedDomain?: string | null;
   VddDateCreated?: string | null;
   VddDateUpdated?: string | null;
 };
 
 export type VoipDidExternalPayload = {
-  number?: string;
-  providerName: string;
-  providerAccount?: string | null;
-  allowedSources?: string | null;
-  billingAmount?: number | null;
-  billingCurrency?: string | null;
-  billingInterval?: string | null;
+  number: string;
+  operatorUUID: string;
+  status?: number | null;
   notes?: string | null;
 };
 
@@ -82,17 +65,6 @@ export class VoipDidExternalService {
 
   update(uuid: string, payload: VoipDidExternalPayload) {
     return this.api.put<any>(`${this.basePath(false)}/${uuid}`, payload);
-  }
-
-  startValidation(uuid: string, payload: { expectedSource?: string; expectedDomain?: string }) {
-    return this.api.post<any>(`${this.basePath(false)}/${uuid}/validation/start`, payload);
-  }
-
-  setStatus(
-    uuid: string,
-    payload: { validationStatus: string; billingStatus?: string; reason?: string | null },
-  ) {
-    return this.api.post<any>(`${this.basePath(true)}/${uuid}/status`, payload);
   }
 
   remove(uuid: string, system = false) {

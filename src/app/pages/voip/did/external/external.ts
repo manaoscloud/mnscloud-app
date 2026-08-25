@@ -1,18 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-  ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { VoipDidExternalItem, VoipDidExternalService } from './external.service';
-
-const BILLING_INTERVAL_OPTIONS = [
-  { value: 'MONTHLY', label: 'Monthly' },
-  { value: 'USAGE', label: 'Usage' },
-];
+import { VoipDidOperatorService } from '../operator/operator.service';
+import { VoipDidExternalItem } from './external.service';
 
 function isSystemScope() {
   return globalThis.location?.pathname.startsWith('/system/') ?? false;
@@ -24,11 +20,11 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
     uuidField: 'VddUUID',
     pageTitle: 'External DID numbers',
     pageDescription: system
-      ? 'Review tenant-owned external DIDs and control validation status.'
+      ? 'Review tenant-owned external DID inventory.'
       : 'Manage external DID numbers owned by this tenant.',
     createTitle: 'New external DID',
     editTitle: 'Edit external DID',
-    dialogDescription: 'Maintain external DID provider, validation, and billing data.',
+    dialogDescription: 'Maintain DID number, status, provider, and notes.',
     searchPlaceholder: 'Search',
     emptyLabel: 'No external DIDs found.',
     deleteTitle: 'Delete external DID',
@@ -45,88 +41,62 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
     canEdit: !system,
     canDelete: true,
     bulkDelete: false,
-    rowActions: system
-      ? [{ key: 'toggle-status', label: 'Update status', icon: 'verified' }]
-      : [{ key: 'start-validation', label: 'Start validation', icon: 'rule' }],
+    tabLabels: {
+      record: 'Record',
+      notes: 'Notes',
+    },
     initialValues: {
+      status: 1,
       number: '',
-      providerName: '',
-      providerAccount: '',
-      allowedSources: '',
-      billingAmount: 0,
-      billingCurrency: 'BRL',
-      billingInterval: 'MONTHLY',
+      operatorUUID: '',
       notes: '',
     },
     columns: [
       { id: 'number', label: 'Number', kind: 'identity', field: 'VddNumber', uuidField: 'VddUUID' },
-      { id: 'provider', label: 'Provider', field: 'VddExternalProviderName' },
+      {
+        id: 'provider',
+        label: 'Provider',
+        kind: 'related',
+        field: 'OperatorName',
+        uuidField: 'VoipDidOperatorVdoUUID',
+        lookupKey: 'operatorUUID',
+      },
       { id: 'tenant', label: 'Tenant', field: 'TenantName' },
-      { id: 'validation', label: 'Validation', field: 'VddValidationStatus' },
       { id: 'billing', label: 'Billing', field: 'VddBillingStatus' },
       { id: 'status', label: 'Status', kind: 'status', field: 'VddStatus', className: 'status-col' },
     ],
     fields: [
+      {
+        key: 'status',
+        source: 'VddStatus',
+        payloadKey: 'status',
+        label: 'Status',
+        type: 'status',
+        tab: 'record',
+        span: 1,
+      },
       {
         key: 'number',
         source: 'VddNumber',
         payloadKey: 'number',
         label: 'Number',
         required: true,
+        tab: 'record',
         span: 1,
       },
       {
-        key: 'providerName',
-        source: 'VddExternalProviderName',
-        payloadKey: 'providerName',
+        key: 'operatorUUID',
+        source: 'VoipDidOperatorVdoUUID',
+        payloadKey: 'operatorUUID',
         label: 'Provider',
-        required: true,
-        span: 1,
-      },
-      {
-        key: 'providerAccount',
-        source: 'VddExternalProviderAccount',
-        payloadKey: 'providerAccount',
-        label: 'Provider account',
-        span: 1,
-      },
-      {
-        key: 'allowedSources',
-        source: 'VddExternalAllowedSources',
-        payloadKey: 'allowedSources',
-        label: 'Allowed sources',
-        span: 1,
-      },
-      {
-        key: 'billingAmount',
-        source: 'VddBillingAmount',
-        payloadKey: 'billingAmount',
-        label: 'Billing amount',
-        type: 'number',
-        tab: 'financial',
-        span: 1,
-      },
-      {
-        key: 'billingCurrency',
-        source: 'VddBillingCurrency',
-        payloadKey: 'billingCurrency',
-        label: 'Currency',
-        tab: 'financial',
-        span: 1,
-      },
-      {
-        key: 'billingInterval',
-        source: 'VddBillingInterval',
-        payloadKey: 'billingInterval',
-        label: 'Billing interval',
         type: 'select',
-        options: BILLING_INTERVAL_OPTIONS,
-        tab: 'financial',
+        required: true,
+        tab: 'record',
         span: 1,
       },
       {
         key: 'notes',
-        source: 'VddExternalRoutingInstructions',
+        source: 'VddNotes',
         payloadKey: 'notes',
         label: 'Notes',
         type: 'textarea',
@@ -146,64 +116,70 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExternalItem> {
-  private readonly externalApi = inject(VoipDidExternalService);
-  private readonly system = isSystemScope();
+  private readonly operatorApi = inject(VoipDidOperatorService);
+  readonly operatorOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly lookupLoading = signal(false);
 
   constructor() {
     super(externalConfig(isSystemScope()));
+    void this.loadLookups();
   }
 
-  override rowActions(row: VoipDidExternalItem): readonly ConfigurableCrudRowAction[] {
-    if (this.system) {
-      const active = String(row.VddValidationStatus ?? '').toUpperCase() === 'ACTIVE';
-      return [
-        {
-          key: active ? 'suspend' : 'activate',
-          label: active ? 'Suspend external DID' : 'Activate external DID',
-          icon: active ? 'block' : 'verified',
-        },
-      ];
-    }
-    return [{ key: 'start-validation', label: 'Start validation', icon: 'rule' }];
+  override fieldLoading(field: { key: string }): boolean {
+    return field.key === 'operatorUUID' ? this.lookupLoading() : false;
   }
 
-  override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipDidExternalItem) {
-    if (action.key === 'start-validation') {
-      const confirmed = await this.confirmAction(
-        'Start validation',
-        `Start validation for external DID "${row.VddNumber}"?`,
-        'Start validation',
-      );
-      if (!confirmed) return;
-      await this.externalApi.startValidation(row.VddUUID, {});
-      this.snack.success('External DID validation started.');
-      this.refreshList();
-      return;
-    }
-
-    if (action.key === 'activate' || action.key === 'suspend') {
-      const activate = action.key === 'activate';
-      const confirmed = await this.confirmAction(
-        activate ? 'Activate external DID' : 'Suspend external DID',
-        `${activate ? 'Activate' : 'Suspend'} external DID "${row.VddNumber}"?`,
-        activate ? 'Activate' : 'Suspend',
-      );
-      if (!confirmed) return;
-      await this.externalApi.setStatus(row.VddUUID, {
-        validationStatus: activate ? 'ACTIVE' : 'SUSPENDED',
-        billingStatus: activate ? 'BILLABLE' : 'SUSPENDED',
-      });
-      this.snack.success('External DID status updated.');
-      this.refreshList();
-    }
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    return key === 'operatorUUID' ? this.operatorOptions() : [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       ...payload,
       number: String(payload['number'] ?? '').replace(/\D+/g, ''),
-      billingAmount: Number(payload['billingAmount'] ?? 0),
-      billingCurrency: String(payload['billingCurrency'] ?? 'BRL').toUpperCase(),
+      status: Number(payload['status']) === 1 ? 1 : 0,
+      operatorUUID: String(payload['operatorUUID'] ?? '').trim(),
     };
   }
+
+  private async loadLookups(): Promise<void> {
+    this.lookupLoading.set(true);
+    try {
+      const response = await this.operatorApi.list({ status: 1, limit: 5000 }, false);
+      this.operatorOptions.set(
+        extractItems(response)
+          .map((row) => option(row.VdoUUID, row.VdoName, [row.VdoNick]))
+          .filter(isOption)
+          .sort((left, right) => left.label.localeCompare(right.label)),
+      );
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+}
+
+function extractItems(response: any): any[] {
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
+  const normalizedValue = String(value ?? '').trim();
+  const normalizedLabel = String(label ?? '').trim();
+  if (!normalizedValue || !normalizedLabel) return null;
+  const description = descriptionParts
+    .map((part) => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' · ');
+  return { value: normalizedValue, label: normalizedLabel, description };
+}
+
+function isOption(value: ConfigurableCrudOption | null): value is ConfigurableCrudOption {
+  return Boolean(value);
 }

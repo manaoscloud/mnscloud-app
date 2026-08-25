@@ -4,7 +4,7 @@
       <div>
         <h1>{{ 'DID Dashboard' | transloco }}</h1>
         <p>
-          {{ 'DID inventory, operator readiness, and external validation health.' | transloco }}
+          {{ 'DID inventory, operator readiness, and external DID ownership health.' | transloco }}
         </p>
       </div>
 
@@ -273,10 +273,10 @@
       <section class="dashboard-panel">
         <div class="panel-header">
           <div>
-            <h2>{{ 'External DID Validation' | transloco }}</h2>
+            <h2>{{ 'External DID Inventory' | transloco }}</h2>
             <p>
               {{
-                'Tenant-owned external DIDs by provider, validation, and billing state.' | transloco
+                'Tenant-owned external DIDs by provider, billing, and active state.' | transloco
               }}
             </p>
           </div>
@@ -307,17 +307,6 @@
                 {{ 'Provider' | transloco }}
               </th>
               <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="validation">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Validation' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">
-                <span class="status-pill status-chip" [ngClass]="statusChipClass(row.validation)">
-                  {{ row.validation | transloco }}
-                </span>
-              </td>
             </ng-container>
 
             <ng-container matColumnDef="billing">
