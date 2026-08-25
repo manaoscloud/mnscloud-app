@@ -2178,6 +2178,7 @@
   "Codecs": "Codecs",
   "Timezone": "Zona horaria",
   "Tenant timezone": "Zona horaria del tenant",
+  "Tenant/System default": "Predeterminado del tenant/sistema",
   "Default audio codecs": "Codecs de audio predeterminados",
   "Default video codecs": "Codecs de video predeterminados",
   "Recording": "Grabación",
