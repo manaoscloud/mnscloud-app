@@ -140,15 +140,6 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'name',
-      source: 'BpcName',
-      payloadKey: 'name',
-      label: 'Name',
-      required: true,
-      tab: 'record',
-      span: 1,
-    },
-    {
       key: 'billingMode',
       source: 'BpcBillingMode',
       payloadKey: 'billingMode',
@@ -157,7 +148,15 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       options: BILLING_MODE_OPTIONS,
       required: true,
       tab: 'record',
-      breakBefore: true,
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'BpcName',
+      payloadKey: 'name',
+      label: 'Name',
+      required: true,
+      tab: 'record',
       span: 1,
     },
     {
