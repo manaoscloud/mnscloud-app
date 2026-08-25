@@ -22,11 +22,6 @@ const statuses: ConfigurableCrudOption[] = [
   { value: 0, label: 'Inactive' },
 ];
 
-const yesNo: ConfigurableCrudOption[] = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
-
 const storageModes: ConfigurableCrudOption[] = [
   { value: 'default', label: 'Default' },
   { value: 'filesystem', label: 'Filesystem' },
@@ -69,7 +64,6 @@ function config(): ConfigurableCrudConfig {
     },
     initialValues: {
       isActive: 1,
-      isDefault: 0,
       name: '',
       serverUUID: '',
       customerUUID: '',
@@ -106,7 +100,6 @@ function config(): ConfigurableCrudConfig {
         lookupKey: 'dialPlanUUID',
       },
       { id: 'status', label: 'Status', kind: 'status', field: 'VpaIsActive' },
-      { id: 'default', label: 'Default', kind: 'boolean', field: 'VpaIsDefault' },
     ],
     fields: [
       {
@@ -115,15 +108,6 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'isActive',
         label: 'Status',
         type: 'status',
-        span: 1,
-      },
-      {
-        key: 'isDefault',
-        source: 'VpaIsDefault',
-        payloadKey: 'isDefault',
-        label: 'Default',
-        type: 'select',
-        options: yesNo,
         span: 1,
       },
       {
@@ -155,7 +139,6 @@ function config(): ConfigurableCrudConfig {
         label: 'Name',
         required: true,
         span: 1,
-        breakBefore: true,
       },
       {
         key: 'timezone',
@@ -326,7 +309,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
     return {
       ...payload,
       isActive: Number(payload['isActive']) === 1,
-      isDefault: Number(payload['isDefault']) === 1,
       blacklistUUID: payload['blacklistUUID'] || null,
       storageAccountUUID:
         payload['recordingStorageMode'] === 'storage'
