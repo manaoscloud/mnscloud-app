@@ -162,6 +162,7 @@ export type ConfigurableCrudField = {
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   breakBefore?: boolean;
+  breakBeforeWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   postalLookup?: ConfigurableCrudPostalCodeLookup;
   rows?: number;
   required?: boolean;
@@ -1017,7 +1018,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   fieldClass(field: ConfigurableCrudField): string {
-    return [`span-${field.span ?? 1}`, field.breakBefore ? 'break-before' : '']
+    const breakBefore = field.breakBefore ||
+      field.breakBeforeWhen?.({
+        editing: Boolean(this.editingRecord()),
+        values: this.formValues(),
+      });
+    return [`span-${field.span ?? 1}`, breakBefore ? 'break-before' : '']
       .filter(Boolean)
       .join(' ');
   }
