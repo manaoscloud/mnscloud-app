@@ -223,6 +223,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Username',
         tab: 'authentication',
         span: 1,
+        breakBefore: true,
         hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
         requiredWhen: ({ values }) => String(values['authMode']) === 'register',
       },
@@ -241,10 +242,10 @@ function config(): ConfigurableCrudConfig {
         key: 'host',
         source: 'host',
         label: 'Host',
-        required: true,
+        requiredWhen: ({ values }) => String(values['authMode']) !== 'none',
         tab: 'authentication',
         span: 1,
-        breakBefore: true,
+        hiddenWhen: ({ values }) => String(values['authMode']) === 'none',
       },
       {
         key: 'realm',
@@ -252,6 +253,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Realm',
         tab: 'authentication',
         span: 1,
+        breakBefore: true,
         hiddenWhen: ({ values }) => String(values['authMode']) !== 'register',
       },
       {
@@ -354,10 +356,17 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const authMode = String(payload['authMode'] ?? 'ip_acl');
     return {
       ...payload,
       enabled: Number(payload['enabled']) === 1,
-      registerEnabled: String(payload['authMode']) === 'register',
+      registerEnabled: authMode === 'register',
+      host: authMode === 'none' ? null : payload['host'],
+      username: authMode === 'register' ? payload['username'] : null,
+      password: authMode === 'register' ? payload['password'] : null,
+      realm: authMode === 'register' ? payload['realm'] : null,
+      fromDomain: authMode === 'register' ? payload['fromDomain'] : null,
+      fromUser: authMode === 'register' ? payload['fromUser'] : null,
       port: Number(payload['port']),
       priority: Number(payload['priority'] ?? 100),
       codecs: codecList(payload['codecs']).join(',') || null,
