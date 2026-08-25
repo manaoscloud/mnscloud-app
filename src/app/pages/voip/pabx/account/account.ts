@@ -34,6 +34,35 @@ const deliveryModes: ConfigurableCrudOption[] = [
   { value: 'offline', label: 'Offline' },
 ];
 
+const timezones: ConfigurableCrudOption[] = [
+  { value: '', label: 'Tenant/System default' },
+  { value: 'UTC', label: 'UTC' },
+  { value: 'America/Sao_Paulo', label: 'America/Sao_Paulo' },
+  { value: 'America/Manaus', label: 'America/Manaus' },
+  { value: 'America/Boa_Vista', label: 'America/Boa_Vista' },
+  { value: 'America/Campo_Grande', label: 'America/Campo_Grande' },
+  { value: 'America/Cuiaba', label: 'America/Cuiaba' },
+  { value: 'America/Rio_Branco', label: 'America/Rio_Branco' },
+  { value: 'America/Fortaleza', label: 'America/Fortaleza' },
+  { value: 'America/Recife', label: 'America/Recife' },
+  { value: 'America/Bahia', label: 'America/Bahia' },
+  { value: 'America/Belem', label: 'America/Belem' },
+  { value: 'America/New_York', label: 'America/New_York' },
+  { value: 'America/Chicago', label: 'America/Chicago' },
+  { value: 'America/Denver', label: 'America/Denver' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles' },
+  { value: 'America/Mexico_City', label: 'America/Mexico_City' },
+  { value: 'America/Bogota', label: 'America/Bogota' },
+  { value: 'America/Lima', label: 'America/Lima' },
+  { value: 'America/Santiago', label: 'America/Santiago' },
+  { value: 'America/Argentina/Buenos_Aires', label: 'America/Argentina/Buenos_Aires' },
+  { value: 'Europe/Lisbon', label: 'Europe/Lisbon' },
+  { value: 'Europe/London', label: 'Europe/London' },
+  { value: 'Europe/Madrid', label: 'Europe/Madrid' },
+  { value: 'Europe/Paris', label: 'Europe/Paris' },
+  { value: 'Europe/Berlin', label: 'Europe/Berlin' },
+];
+
 function config(): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/pabx/accounts',
@@ -145,6 +174,8 @@ function config(): ConfigurableCrudConfig {
         source: 'VpaTimezone',
         payloadKey: 'timezone',
         label: 'Timezone',
+        type: 'select',
+        options: timezones,
         span: 1,
       },
       {

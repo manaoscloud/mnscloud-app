@@ -2178,6 +2178,7 @@
   "Codecs": "Codecs",
   "Timezone": "Fuso horário",
   "Tenant timezone": "Fuso horário do tenant",
+  "Tenant/System default": "Padrão do tenant/sistema",
   "Default audio codecs": "Codecs de áudio padrão",
   "Default video codecs": "Codecs de vídeo padrão",
   "Recording": "Gravação",
