@@ -810,6 +810,9 @@
                     </mat-form-field>
                   }
                 }
+                @if (field.lineFillAfter) {
+                  <div class="line-fill span-{{ field.lineFillAfter }}" aria-hidden="true"></div>
+                }
               }
             </div>
           </mat-tab>
@@ -1683,7 +1686,9 @@
                       @case ('search-select') {
                         <mns-search-select-field
                           [fieldClass]="fieldClass(field)"
-                          [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
+                          [label]="
+                            translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')
+                          "
                           [placeholder]="field.placeholder ?? 'Search' | transloco"
                           [options]="relatedCollectionFieldOptions(field)"
                           [loading]="fieldLoading(field)"

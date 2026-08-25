@@ -30,6 +30,24 @@
   grid-column: 1 / -1;
 }
 
+.form-grid > .line-fill {
+  min-width: 0;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.form-grid > .line-fill.span-1 {
+  grid-column: span 1;
+}
+
+.form-grid > .line-fill.span-2 {
+  grid-column: span 2;
+}
+
+.form-grid > .line-fill.span-3 {
+  grid-column: span 3;
+}
+
 .form-grid > .break-before {
   grid-column-start: 1;
 }

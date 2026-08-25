@@ -161,6 +161,7 @@ export type ConfigurableCrudField = {
     | 'notes';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
+  lineFillAfter?: 1 | 2 | 3;
   breakBefore?: boolean;
   breakBeforeWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   postalLookup?: ConfigurableCrudPostalCodeLookup;
@@ -739,7 +740,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       return option?.label ?? String(row[column.field ?? column.id] ?? '-');
     }
     if (column.kind === 'status') {
-      return this.isTruthyValue(row[column.field ?? column.id]) ? this.t('Active') : this.t('Inactive');
+      return this.isTruthyValue(row[column.field ?? column.id])
+        ? this.t('Active')
+        : this.t('Inactive');
     }
     return this.displayValue(row[column.field ?? column.id]);
   }
@@ -765,7 +768,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (!this.editingRecord() || !this.relatedCollectionFormValid(collection)) return;
     const parentUUID = this.recordUUID(this.editingRecord() as T);
     const values = this.relatedForms()[collection.key] ?? collection.initialValues;
-    const payload = collection.payload ? collection.payload(values) : this.relatedPayload(values, collection.fields);
+    const payload = collection.payload
+      ? collection.payload(values)
+      : this.relatedPayload(values, collection.fields);
     this.setRelatedSaving(collection.key, true);
     try {
       const response = await this.api.post(collection.endpoint(parentUUID), payload);
@@ -1018,14 +1023,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   fieldClass(field: ConfigurableCrudField): string {
-    const breakBefore = field.breakBefore ||
+    const breakBefore =
+      field.breakBefore ||
       field.breakBeforeWhen?.({
         editing: Boolean(this.editingRecord()),
         values: this.formValues(),
       });
-    return [`span-${field.span ?? 1}`, breakBefore ? 'break-before' : '']
-      .filter(Boolean)
-      .join(' ');
+    return [`span-${field.span ?? 1}`, breakBefore ? 'break-before' : ''].filter(Boolean).join(' ');
   }
 
   fieldLabel(field: ConfigurableCrudField): string {
