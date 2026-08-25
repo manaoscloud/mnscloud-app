@@ -386,6 +386,55 @@
                     </mat-select>
                   </mat-form-field>
 
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'PABX SIP realm base' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      [placeholder]="voipPabxAutoDomainBasePlaceholder()"
+                      [value]="item().voipPabxAutoDomainBase"
+                      (input)="updateItem({ voipPabxAutoDomainBase: $any($event.target).value })"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'PABX SIP realm label' | transloco }}</mat-label>
+                    <mat-select
+                      [value]="item().voipPabxAutoDomainLabelMode"
+                      (selectionChange)="updateItem({ voipPabxAutoDomainLabelMode: $event.value })"
+                    >
+                      <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'PABX SIP realm UUID length' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      min="8"
+                      max="32"
+                      [value]="item().voipPabxAutoDomainUuidLength"
+                      (input)="updateItem({ voipPabxAutoDomainUuidLength: $any($event.target).value })"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'PABX SIP realm DNS mode' | transloco }}</mat-label>
+                    <mat-select
+                      [value]="item().voipPabxAutoDomainDnsMode"
+                      (selectionChange)="updateItem({ voipPabxAutoDomainDnsMode: $event.value })"
+                    >
+                      <mat-option value="identity_only">{{ 'Identity only' | transloco }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <div class="parameter-hint span-4">
+                    {{
+                      'PABX automatic SIP realms create VoIP domains only. DNS/hosting publication is intentionally not coupled to billing today.'
+                        | transloco
+                    }}
+                  </div>
+
                   <div class="toggle-grid span-4">
                     <mat-slide-toggle [checked]="item().voipPabxRecordingStorageIsActive" (change)="updateItem({ voipPabxRecordingStorageIsActive: $event.checked })">
                       {{ 'Recording Storage Active' | transloco }}
@@ -398,6 +447,15 @@
                     </mat-slide-toggle>
                     <mat-slide-toggle [checked]="item().voipPabxRemoteCommandExecutorIsActive" (change)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event.checked })">
                       {{ 'Remote Command Active' | transloco }}
+                    </mat-slide-toggle>
+                    <mat-slide-toggle [checked]="item().voipPabxAutoDomainEnabled" (change)="updateItem({ voipPabxAutoDomainEnabled: $event.checked })">
+                      {{ 'Create PABX SIP realm automatically' | transloco }}
+                    </mat-slide-toggle>
+                    <mat-slide-toggle [checked]="item().voipPabxAutoDomainSetDefault" (change)="updateItem({ voipPabxAutoDomainSetDefault: $event.checked })">
+                      {{ 'Set generated PABX SIP realm as default' | transloco }}
+                    </mat-slide-toggle>
+                    <mat-slide-toggle [checked]="item().voipPabxAutoDomainIsActive" (change)="updateItem({ voipPabxAutoDomainIsActive: $event.checked })">
+                      {{ 'PABX SIP realm automation active' | transloco }}
                     </mat-slide-toggle>
                   </div>
                 </form>

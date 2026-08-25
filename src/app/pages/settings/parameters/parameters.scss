@@ -73,6 +73,12 @@ app-settings-parameters .parameters-form .mat-mdc-tab-body-content {
   font-size: 0.95rem;
 }
 
+.parameter-hint {
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
