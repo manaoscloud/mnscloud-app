@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudColumn,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -62,8 +63,14 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
         lookupKey: 'VoipDidOperatorVdoUUID',
       },
       { id: 'tenant', label: 'Tenant', field: 'TenantName' },
-      { id: 'billing', label: 'Billing', field: 'VddBillingStatus' },
-      { id: 'status', label: 'Status', kind: 'status', field: 'VddStatus', className: 'status-col' },
+      { id: 'billing', label: 'Billing', field: 'VddBillingStatus', translateValue: true },
+      {
+        id: 'status',
+        label: 'Status',
+        kind: 'status',
+        field: 'VddStatus',
+        className: 'status-col',
+      },
     ],
     fields: [
       {
@@ -133,6 +140,15 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
     return key === 'operatorUUID' ? this.operatorOptions() : [];
   }
 
+  override columnMain(row: VoipDidExternalItem, column: ConfigurableCrudColumn): string {
+    if (column.id === 'provider') {
+      const name =
+        text(row.OperatorName) || this.lookupLabel('operatorUUID', row.VoipDidOperatorVdoUUID);
+      return name || '-';
+    }
+    return super.columnMain(row, column);
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const number = firstText(payload, ['number', 'VddNumber']).replace(/\D+/g, '');
     const operatorUUID = firstText(payload, [
@@ -190,6 +206,10 @@ function option(
 
 function isOption(value: ConfigurableCrudOption | null): value is ConfigurableCrudOption {
   return Boolean(value);
+}
+
+function text(value: unknown): string {
+  return String(value ?? '').trim();
 }
 
 function firstText(payload: ConfigurableCrudRecord, keys: string[]): string {
