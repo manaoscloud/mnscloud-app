@@ -58,7 +58,6 @@ type ExternalRow = {
   uuid: string;
   number: string;
   provider: string;
-  validation: string;
   billing: string;
   active: boolean;
 };
@@ -132,7 +131,7 @@ export class VoipDidDashboardPage {
     'actions',
   ];
   readonly statusColumns = ['status', 'total', 'available', 'assigned', 'issues', 'actions'];
-  readonly externalColumns = ['number', 'provider', 'validation', 'billing', 'active', 'actions'];
+  readonly externalColumns = ['number', 'provider', 'billing', 'active', 'actions'];
 
   private readonly syncDashboard = effect(() => {
     const snapshot = this.dashboardResource.value();
@@ -196,8 +195,7 @@ export class VoipDidDashboardPage {
     this.externalDids().map((item) => ({
       uuid: item.VddUUID,
       number: item.VddNumber,
-      provider: item.VddExternalProviderName || '-',
-      validation: item.VddValidationStatus || '-',
+      provider: item.OperatorName || '-',
       billing: item.VddBillingStatus || '-',
       active: this.isActive(item.VddStatus),
     })),
@@ -225,7 +223,6 @@ export class VoipDidDashboardPage {
         [
           row.number,
           row.provider,
-          row.validation,
           row.billing,
           row.active ? 'Active' : 'Inactive',
         ],
@@ -277,12 +274,8 @@ export class VoipDidDashboardPage {
     const rows = this.externalDids();
     const total = rows.length;
     const active = rows.filter((row) => this.isActive(row.VddStatus)).length;
-    const pending = rows.filter((row) =>
-      ['pending', 'queued', 'requested'].includes(
-        String(row.VddValidationStatus ?? '').toLowerCase(),
-      ),
-    ).length;
-    return { total, active, pending };
+    const inactive = rows.filter((row) => !this.isActive(row.VddStatus)).length;
+    return { total, active, inactive };
   });
 
   readonly readinessSummary = computed(() => {
@@ -314,10 +307,10 @@ export class VoipDidDashboardPage {
     {
       label: 'External DIDs',
       value: `${this.externalSummary().active} / ${this.externalSummary().total}`,
-      detailValue: String(this.externalSummary().pending),
-      detailLabel: 'pending',
+      detailValue: String(this.externalSummary().inactive),
+      detailLabel: 'inactive',
       icon: 'add_ic_call',
-      state: this.externalSummary().pending > 0 ? 'warn' : 'neutral',
+      state: this.externalSummary().inactive > 0 ? 'warn' : 'neutral',
     },
     {
       label: 'DID Readiness',
@@ -500,7 +493,6 @@ export class VoipDidDashboardPage {
   private externalSortValue(row: ExternalRow, column: string) {
     if (column === 'number') return row.number;
     if (column === 'provider') return row.provider;
-    if (column === 'validation') return row.validation;
     if (column === 'billing') return row.billing;
     if (column === 'active') return row.active ? 1 : 0;
     return '';

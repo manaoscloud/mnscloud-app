@@ -267,7 +267,7 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
       this.fetchPaged('voip/did/external?status=1', (row) => {
         const validation = String(row.VddValidationStatus ?? '').toUpperCase();
         if (validation !== 'ACTIVE') return null;
-        return option(row.VddUUID, row.VddNumber, ['External', row.VddExternalProviderName]);
+        return option(row.VddUUID, row.VddNumber, ['External', row.OperatorName]);
       }),
     ]);
     const byValue = new Map<string, ConfigurableCrudOption>();
