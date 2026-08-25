@@ -245,6 +245,7 @@ function config(): ConfigurableCrudConfig {
         requiredWhen: ({ values }) => String(values['authMode']) !== 'none',
         tab: 'authentication',
         span: 1,
+        breakBeforeWhen: ({ values }) => String(values['authMode']) === 'ip_acl',
         hiddenWhen: ({ values }) => String(values['authMode']) === 'none',
       },
       {
