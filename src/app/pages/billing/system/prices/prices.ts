@@ -168,7 +168,7 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       type: 'select',
       options: PRICE_UNIT_CODE_OPTIONS,
       required: true,
-      tab: 'record',
+      tab: 'financial',
       span: 1,
     },
     {
