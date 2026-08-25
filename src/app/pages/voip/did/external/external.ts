@@ -59,7 +59,7 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
         kind: 'related',
         field: 'OperatorName',
         uuidField: 'VoipDidOperatorVdoUUID',
-        lookupKey: 'operatorUUID',
+        lookupKey: 'VoipDidOperatorVdoUUID',
       },
       { id: 'tenant', label: 'Tenant', field: 'TenantName' },
       { id: 'billing', label: 'Billing', field: 'VddBillingStatus' },
@@ -134,11 +134,19 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const number = firstText(payload, ['number', 'VddNumber']).replace(/\D+/g, '');
+    const operatorUUID = firstText(payload, [
+      'operatorUUID',
+      'VoipDidOperatorVdoUUID',
+      'providerUUID',
+      'provider',
+    ]);
+    const statusValue = payload['status'] ?? payload['VddStatus'];
     return {
       ...payload,
-      number: String(payload['number'] ?? '').replace(/\D+/g, ''),
-      status: Number(payload['status']) === 1 ? 1 : 0,
-      operatorUUID: String(payload['operatorUUID'] ?? '').trim(),
+      number,
+      status: Number(statusValue) === 1 ? 1 : 0,
+      operatorUUID,
     };
   }
 
@@ -182,4 +190,13 @@ function option(
 
 function isOption(value: ConfigurableCrudOption | null): value is ConfigurableCrudOption {
   return Boolean(value);
+}
+
+function firstText(payload: ConfigurableCrudRecord, keys: string[]): string {
+  for (const key of keys) {
+    const value = payload[key];
+    const normalized = String(value ?? '').trim();
+    if (normalized) return normalized;
+  }
+  return '';
 }
