@@ -36,7 +36,6 @@ export type VoipPabxAccount = {
   DialPlanName?: string | null;
   BlacklistName?: string | null;
   VpaIsActive: number;
-  VpaIsDefault: number;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -70,7 +69,6 @@ export class VoipPabxService {
     mediaDeliveryMode?: 'default' | 'online' | 'offline';
     timezone?: string;
     isActive?: boolean;
-    isDefault?: boolean;
   }) {
     return this.api.post<any>(this.basePath(), payload);
   }
@@ -91,7 +89,6 @@ export class VoipPabxService {
       mediaDeliveryMode?: 'default' | 'online' | 'offline';
       timezone?: string;
       isActive?: boolean;
-      isDefault?: boolean;
     },
   ) {
     return this.api.put<any>(`${this.basePath()}/${uuid}`, payload);
@@ -103,9 +100,5 @@ export class VoipPabxService {
 
   removeMany(ids: string[]) {
     return this.api.delete<any>(`${this.basePath()}/bulk`, { ids });
-  }
-
-  resolveDefault() {
-    return this.api.get<any>(`${this.basePath()}/default`);
   }
 }
