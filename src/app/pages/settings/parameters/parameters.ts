@@ -50,6 +50,13 @@ type SystemParametersItem = {
   voipPabxMediaDeliveryModeIsActive: boolean;
   voipPabxRemoteCommandExecutor: 'agent' | 'esl_ami' | '';
   voipPabxRemoteCommandExecutorIsActive: boolean;
+  voipPabxAutoDomainEnabled: boolean;
+  voipPabxAutoDomainBase: string;
+  voipPabxAutoDomainLabelMode: 'uuid_short';
+  voipPabxAutoDomainUuidLength: number;
+  voipPabxAutoDomainSetDefault: boolean;
+  voipPabxAutoDomainDnsMode: 'identity_only';
+  voipPabxAutoDomainIsActive: boolean;
   billingSignupTrialEnabled: boolean;
   billingSignupTrialAmount: number;
   billingSignupTrialCurrency: string;
@@ -131,6 +138,13 @@ const DEFAULT_ITEM: SystemParametersItem = {
   voipPabxMediaDeliveryModeIsActive: true,
   voipPabxRemoteCommandExecutor: '',
   voipPabxRemoteCommandExecutorIsActive: true,
+  voipPabxAutoDomainEnabled: true,
+  voipPabxAutoDomainBase: 'pabx.publichost.cloud',
+  voipPabxAutoDomainLabelMode: 'uuid_short',
+  voipPabxAutoDomainUuidLength: 12,
+  voipPabxAutoDomainSetDefault: true,
+  voipPabxAutoDomainDnsMode: 'identity_only',
+  voipPabxAutoDomainIsActive: true,
   billingSignupTrialEnabled: false,
   billingSignupTrialAmount: 0,
   billingSignupTrialCurrency: 'BRL',
@@ -195,6 +209,9 @@ export class SettingsParametersPage {
   );
   readonly voipPabxRemoteCommandExecutorPlaceholder = computed(() =>
     this.isMaster() ? 'Agent' : 'Master remote command executor',
+  );
+  readonly voipPabxAutoDomainBasePlaceholder = computed(() =>
+    this.isMaster() ? 'pabx.publichost.cloud' : 'Master PABX SIP realm base',
   );
   readonly baseEndpoint = computed(() =>
     this.isMaster() ? 'system/parameters' : 'settings/parameters',
@@ -454,6 +471,25 @@ export class SettingsParametersPage {
         item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
         item.voipPabxRemoteCommandExecutor = this.normalizeRemoteCommandExecutor(value);
         item.voipPabxRemoteCommandExecutorIsActive = isActive;
+      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_ENABLED') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxAutoDomainEnabled = value === '' ? true : Number(value) !== 0;
+      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_BASE') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxAutoDomainBase = value || DEFAULT_ITEM.voipPabxAutoDomainBase;
+      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_LABEL_MODE') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxAutoDomainLabelMode = this.normalizePabxAutoDomainLabelMode(value);
+      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_UUID_LENGTH') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxAutoDomainUuidLength = this.clampInteger(value || 12, 8, 32);
+      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_SET_DEFAULT') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxAutoDomainSetDefault = value === '' ? true : Number(value) !== 0;
+      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_DNS_MODE') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxAutoDomainDnsMode = this.normalizePabxAutoDomainDnsMode(value);
+        item.voipPabxAutoDomainIsActive = isActive;
       }
     }
 
@@ -487,6 +523,23 @@ export class SettingsParametersPage {
         raw?.voipPabxRemoteCommandExecutor,
       ),
       voipPabxRemoteCommandExecutorIsActive: raw?.voipPabxRemoteCommandExecutorIsActive !== false,
+      voipPabxAutoDomainEnabled: raw?.voipPabxAutoDomainEnabled !== false,
+      voipPabxAutoDomainBase:
+        String(raw?.voipPabxAutoDomainBase ?? DEFAULT_ITEM.voipPabxAutoDomainBase).trim() ||
+        DEFAULT_ITEM.voipPabxAutoDomainBase,
+      voipPabxAutoDomainLabelMode: this.normalizePabxAutoDomainLabelMode(
+        raw?.voipPabxAutoDomainLabelMode,
+      ),
+      voipPabxAutoDomainUuidLength: this.clampInteger(
+        raw?.voipPabxAutoDomainUuidLength ?? 12,
+        8,
+        32,
+      ),
+      voipPabxAutoDomainSetDefault: raw?.voipPabxAutoDomainSetDefault !== false,
+      voipPabxAutoDomainDnsMode: this.normalizePabxAutoDomainDnsMode(
+        raw?.voipPabxAutoDomainDnsMode,
+      ),
+      voipPabxAutoDomainIsActive: raw?.voipPabxAutoDomainIsActive !== false,
       billingSignupTrialEnabled: raw?.billingSignupTrialEnabled === true,
       billingSignupTrialAmount: this.normalizeNumber(raw?.billingSignupTrialAmount, 0),
       billingSignupTrialCurrency: String(raw?.billingSignupTrialCurrency ?? 'BRL') || 'BRL',
@@ -523,6 +576,16 @@ export class SettingsParametersPage {
         value.voipPabxMediaStorageMode === 'storage' ? value.voipPabxMediaStorageAccountUUID : '',
       voipPabxMediaDeliveryMode: value.voipPabxMediaDeliveryMode,
       voipPabxRemoteCommandExecutor: value.voipPabxRemoteCommandExecutor,
+      voipPabxAutoDomainBase:
+        value.voipPabxAutoDomainBase.trim().toLowerCase().replace(/^\.+|\.+$/g, '') ||
+        DEFAULT_ITEM.voipPabxAutoDomainBase,
+      voipPabxAutoDomainLabelMode: this.normalizePabxAutoDomainLabelMode(
+        value.voipPabxAutoDomainLabelMode,
+      ),
+      voipPabxAutoDomainUuidLength: this.clampInteger(value.voipPabxAutoDomainUuidLength, 8, 32),
+      voipPabxAutoDomainDnsMode: this.normalizePabxAutoDomainDnsMode(
+        value.voipPabxAutoDomainDnsMode,
+      ),
       billingSignupTrialAmount: Math.max(Number(value.billingSignupTrialAmount || 0), 0),
       billingSignupTrialCurrency: (value.billingSignupTrialCurrency.trim() || 'BRL').toUpperCase(),
       billingSignupTrialExpiresDays: this.clampInteger(value.billingSignupTrialExpiresDays, 1, 365),
@@ -559,6 +622,13 @@ export class SettingsParametersPage {
       voipPabxMediaDeliveryModeIsActive: value.voipPabxMediaDeliveryModeIsActive,
       voipPabxRemoteCommandExecutor: value.voipPabxRemoteCommandExecutor,
       voipPabxRemoteCommandExecutorIsActive: value.voipPabxRemoteCommandExecutorIsActive,
+      voipPabxAutoDomainEnabled: value.voipPabxAutoDomainEnabled,
+      voipPabxAutoDomainBase: value.voipPabxAutoDomainBase,
+      voipPabxAutoDomainLabelMode: value.voipPabxAutoDomainLabelMode,
+      voipPabxAutoDomainUuidLength: value.voipPabxAutoDomainUuidLength,
+      voipPabxAutoDomainSetDefault: value.voipPabxAutoDomainSetDefault,
+      voipPabxAutoDomainDnsMode: value.voipPabxAutoDomainDnsMode,
+      voipPabxAutoDomainIsActive: value.voipPabxAutoDomainIsActive,
       billingSignupTrialEnabled: value.billingSignupTrialEnabled,
       billingSignupTrialAmount: value.billingSignupTrialAmount,
       billingSignupTrialCurrency: value.billingSignupTrialCurrency,
@@ -648,6 +718,14 @@ export class SettingsParametersPage {
       .trim()
       .toLowerCase();
     return normalized === 'agent' || normalized === 'esl_ami' ? normalized : '';
+  }
+
+  private normalizePabxAutoDomainLabelMode(_value: unknown): 'uuid_short' {
+    return 'uuid_short';
+  }
+
+  private normalizePabxAutoDomainDnsMode(_value: unknown): 'identity_only' {
+    return 'identity_only';
   }
 
   private normalizeCaptchaProvider(value: unknown): 'turnstile' | 'hcaptcha' | '' {
