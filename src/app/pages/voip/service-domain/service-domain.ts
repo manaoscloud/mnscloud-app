@@ -41,7 +41,7 @@ function config(service: Service): ConfigurableCrudConfig {
     createTitle: `New ${label} domain`,
     editTitle: `Edit ${label} domain`,
     dialogDescription: 'Bind one canonical VoIP domain to the selected service account.',
-    searchPlaceholder: 'Search',
+    searchPlaceholder: 'Search domains',
     emptyLabel: `No ${label} domains found.`,
     deleteTitle: `Delete ${label} domain`,
     deleteMessage: `Delete this ${label} domain binding?`,
@@ -68,7 +68,7 @@ function config(service: Service): ConfigurableCrudConfig {
       },
       {
         id: 'account',
-        label: 'Account',
+        label,
         kind: 'related',
         field: 'AccountName',
         lookupKey: 'accountUUID',
