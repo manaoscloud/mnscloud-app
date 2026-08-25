@@ -135,6 +135,8 @@ export class BillingLookupState {
 export function numberOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
   if (typeof value === 'string') {
+    const rawNumber = Number(value.trim());
+    if (Number.isFinite(rawNumber)) return rawNumber;
     const parsedCurrency = parseCurrencyAmount(value, 'pt-BR');
     if (parsedCurrency !== null) return parsedCurrency;
   }
