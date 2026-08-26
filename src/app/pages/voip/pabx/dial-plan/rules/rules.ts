@@ -1,9 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudField,
+  ConfigurableCrudFilterAction,
   ConfigurableCrudListFilter,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -45,6 +48,27 @@ const yesNo: ConfigurableCrudOption[] = [
   { value: 0, label: 'No' },
 ];
 
+type DialPatternProfile = {
+  profileUUID: string;
+  name: string;
+  code: string;
+};
+
+type DialPatternTemplate = {
+  templateUUID: string;
+  profileUUID: string;
+  profileName?: string;
+  name: string;
+  code: string;
+  direction: string;
+  category: string;
+  regex: string;
+  exampleMatches?: string[];
+  exampleNonMatches?: string[];
+  description?: string;
+  safeRegexStatus?: string;
+};
+
 function config(): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/pabx/dial-plan-rules',
@@ -69,6 +93,14 @@ function config(): ConfigurableCrudConfig {
     statusOptions: statuses,
     bulkDelete: true,
     tabLabels: { match: 'Criteria', transform: 'Transform', network: 'Routing' },
+    filterActions: [
+      {
+        key: 'regexExamples',
+        label: 'Regex examples',
+        icon: 'rule',
+        tooltip: 'Open reusable dial pattern examples',
+      },
+    ],
     initialValues: {
       enabled: 1,
       dialPlanUUID: '',
@@ -127,7 +159,7 @@ function config(): ConfigurableCrudConfig {
         key: 'direction',
         source: 'direction',
         label: 'Direction',
-        type: 'select',
+        type: 'search-select',
         options: directions,
         required: true,
         span: 1,
@@ -137,7 +169,7 @@ function config(): ConfigurableCrudConfig {
         key: 'operator',
         source: 'operator',
         label: 'Rule operator',
-        type: 'select',
+        type: 'search-select',
         options: operators,
         required: true,
         span: 1,
@@ -155,7 +187,7 @@ function config(): ConfigurableCrudConfig {
         key: 'resultType',
         source: 'resultType',
         label: 'Result',
-        type: 'select',
+        type: 'search-select',
         options: resultTypes,
         required: true,
         span: 1,
@@ -165,7 +197,7 @@ function config(): ConfigurableCrudConfig {
         key: 'caseSensitive',
         source: 'caseSensitive',
         label: 'Case sensitive',
-        type: 'select',
+        type: 'search-select',
         options: yesNo,
         span: 1,
         tab: 'match',
@@ -201,7 +233,7 @@ function config(): ConfigurableCrudConfig {
         key: 'callerIdMode',
         source: 'callerIdMode',
         label: 'Caller ID mode',
-        type: 'select',
+        type: 'search-select',
         options: callerIdModes,
         span: 1,
         tab: 'network',
@@ -250,6 +282,228 @@ function config(): ConfigurableCrudConfig {
 }
 
 @Component({
+  selector: 'app-voip-dial-pattern-examples-dialog',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  template: `
+    <h2 mat-dialog-title>{{ 'Dial pattern examples' | transloco }}</h2>
+    <mat-dialog-content class="dial-pattern-dialog">
+      <p class="dialog-helper">
+        {{ 'Select a reusable regex example for PABX, SBC, or Softswitch dial rules.' | transloco }}
+      </p>
+
+      <div class="dialog-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Pattern profile' | transloco }}</mat-label>
+          <mat-select [value]="selectedProfile" (selectionChange)="selectedProfile = $event.value">
+            <mat-option value="">{{ 'All profiles' | transloco }}</mat-option>
+            @for (profile of data.profiles; track profile.profileUUID) {
+              <mat-option [value]="profile.profileUUID">{{ profile.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Search examples' | transloco }}</mat-label>
+          <input matInput [value]="search" (input)="search = $any($event.target).value" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Test number' | transloco }}</mat-label>
+          <input matInput [value]="testNumber" (input)="testNumber = $any($event.target).value" />
+        </mat-form-field>
+      </div>
+
+      <div class="example-list">
+        @for (template of filteredTemplates(); track template.templateUUID) {
+          <article class="example-card">
+            <div class="example-heading">
+              <div>
+                <strong>{{ template.name }}</strong>
+                <span>{{ template.profileName || profileName(template.profileUUID) }}</span>
+              </div>
+              <mat-chip>{{ template.safeRegexStatus || 'safe' }}</mat-chip>
+            </div>
+            <code>{{ template.regex }}</code>
+            <p>{{ template.description || '-' }}</p>
+            <div class="example-meta">
+              <span>{{ 'Direction' | transloco }}: {{ optionLabel(directions, template.direction) | transloco }}</span>
+              <span>{{ 'Category' | transloco }}: {{ template.category }}</span>
+              @if (testNumber.trim()) {
+                <span>{{ 'Test' | transloco }}: {{ matches(template.regex) ? ('Matches' | transloco) : ('Does not match' | transloco) }}</span>
+              }
+            </div>
+            <div class="example-samples">
+              <span>{{ 'Examples' | transloco }}:</span>
+              <span>{{ (template.exampleMatches ?? []).join(', ') || '-' }}</span>
+            </div>
+            <div class="example-actions">
+              <button mat-stroked-button type="button" (click)="copy(template.regex)">
+                <mat-icon>content_copy</mat-icon>
+                {{ 'Copy regex' | transloco }}
+              </button>
+              <button mat-flat-button color="primary" type="button" (click)="apply(template)">
+                <mat-icon>check</mat-icon>
+                {{ 'Apply regex' | transloco }}
+              </button>
+            </div>
+          </article>
+        } @empty {
+          <div class="empty-state">{{ 'No regex examples found.' | transloco }}</div>
+        }
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" mat-dialog-close>{{ 'Close' | transloco }}</button>
+    </mat-dialog-actions>
+  `,
+  styles: [
+    `
+      .dial-pattern-dialog {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: min(960px, 82vw);
+      }
+
+      .dialog-helper {
+        margin: 0;
+        opacity: 0.78;
+      }
+
+      .dialog-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .example-list {
+        display: grid;
+        gap: 12px;
+        max-height: min(58vh, 640px);
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .example-card {
+        border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+        border-radius: 14px;
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+      }
+
+      .example-heading,
+      .example-meta,
+      .example-actions {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
+      .example-heading div {
+        display: grid;
+        gap: 3px;
+      }
+
+      .example-heading span,
+      .example-meta,
+      .example-samples,
+      .example-card p {
+        opacity: 0.78;
+      }
+
+      .example-meta,
+      .example-samples {
+        flex-wrap: wrap;
+        font-size: 0.88rem;
+      }
+
+      code {
+        border-radius: 8px;
+        display: block;
+        overflow-x: auto;
+        padding: 10px;
+        background: color-mix(in srgb, currentColor 8%, transparent);
+      }
+
+      .empty-state {
+        border: 1px dashed color-mix(in srgb, currentColor 25%, transparent);
+        border-radius: 14px;
+        padding: 24px;
+        text-align: center;
+      }
+
+      @media (max-width: 760px) {
+        .dial-pattern-dialog {
+          min-width: 0;
+        }
+
+        .dialog-filter-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .example-heading,
+        .example-actions {
+          align-items: stretch;
+          flex-direction: column;
+        }
+      }
+    `,
+  ],
+})
+export class VoipDialPatternExamplesDialogComponent {
+  readonly data = inject<{
+    profiles: DialPatternProfile[];
+    templates: DialPatternTemplate[];
+  }>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject(MatDialogRef<VoipDialPatternExamplesDialogComponent>);
+
+  readonly directions = directions;
+  selectedProfile = '';
+  search = '';
+  testNumber = '';
+
+  filteredTemplates(): DialPatternTemplate[] {
+    const term = this.search.trim().toLowerCase();
+    return this.data.templates.filter((template) => {
+      const profileMatches = !this.selectedProfile || template.profileUUID === this.selectedProfile;
+      const textMatches =
+        !term ||
+        [template.name, template.code, template.profileName, template.category, template.regex]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(term));
+      return profileMatches && textMatches;
+    });
+  }
+
+  profileName(profileUUID: string): string {
+    return this.data.profiles.find((profile) => profile.profileUUID === profileUUID)?.name ?? '-';
+  }
+
+  optionLabel(options: readonly ConfigurableCrudOption[], value: unknown): string {
+    return options.find((option) => String(option.value) === String(value))?.label ?? String(value ?? '-');
+  }
+
+  matches(regex: string): boolean {
+    try {
+      return new RegExp(regex).test(this.testNumber.trim());
+    } catch {
+      return false;
+    }
+  }
+
+  copy(regex: string): void {
+    void navigator.clipboard?.writeText(regex);
+  }
+
+  apply(template: DialPatternTemplate): void {
+    this.dialogRef.close(template);
+  }
+}
+
+@Component({
   selector: 'app-voip-pabx-dial-plan-rules',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
@@ -260,6 +514,8 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
   private readonly rawApi = inject(ApiService);
   readonly dialPlans = signal<ConfigurableCrudOption[]>([]);
   readonly trunks = signal<ConfigurableCrudOption[]>([]);
+  readonly patternProfiles = signal<DialPatternProfile[]>([]);
+  readonly patternTemplates = signal<DialPatternTemplate[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -284,6 +540,39 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
     filter: ConfigurableCrudListFilter,
   ): readonly ConfigurableCrudOption[] {
     return filter.key === 'dialPlanUUID' ? this.dialPlans() : super.listFilterOptions(filter);
+  }
+
+  override async handleFilterAction(action: ConfigurableCrudFilterAction): Promise<void> {
+    if (action.key !== 'regexExamples') return;
+    await this.loadPatternLookups();
+    const ref = this.dialog.open<
+      VoipDialPatternExamplesDialogComponent,
+      { profiles: DialPatternProfile[]; templates: DialPatternTemplate[] },
+      DialPatternTemplate
+    >(VoipDialPatternExamplesDialogComponent, {
+      width: 'min(1040px, 96vw)',
+      maxHeight: '92vh',
+      panelClass: 'crud-form-dialog',
+      data: {
+        profiles: this.patternProfiles(),
+        templates: this.patternTemplates(),
+      },
+    });
+    const template = await firstValueFrom(ref.afterClosed());
+    if (!template) return;
+    this.setFieldValue('operator', 'regex');
+    this.setFieldValue('pattern', template.regex);
+    if (!String(this.formValues()['name'] ?? '').trim()) {
+      this.setFieldValue('name', template.name);
+    }
+    if (template.direction && template.direction !== 'any') {
+      this.setFieldValue('direction', template.direction);
+    }
+    if (template.category === 'emergency') {
+      this.setFieldValue('resultType', 'emergency');
+    } else if (template.category === 'service') {
+      this.setFieldValue('resultType', 'feature_code');
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -333,5 +622,15 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
     } finally {
       this.lookupsLoading.set(false);
     }
+  }
+
+  private async loadPatternLookups(): Promise<void> {
+    if (this.patternProfiles().length && this.patternTemplates().length) return;
+    const [profiles, templates] = await Promise.all([
+      this.rawApi.get<any>('voip/dial-patterns/profiles?status=1&limit=500&offset=0'),
+      this.rawApi.get<any>('voip/dial-patterns/templates?status=1&limit=1000&offset=0'),
+    ]);
+    this.patternProfiles.set(profiles?.data?.items ?? []);
+    this.patternTemplates.set(templates?.data?.items ?? []);
   }
 }
