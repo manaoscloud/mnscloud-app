@@ -2201,6 +2201,7 @@
   "New Dial Plan": "Novo plano de discagem",
   "New dial plan": "Novo plano de discagem",
   "Maintain the dialing plan identity and default behavior.": "Mantenha a identidade e o comportamento padrão do plano de discagem.",
+  "Maintain the dialing plan name, status and observations.": "Mantenha o nome, o status e as observações do plano de discagem.",
   "Plan data.": "Dados do plano.",
   "Delete dial plan": "Excluir plano de discagem",
   "Delete this dial plan?": "Excluir este plano de discagem?",

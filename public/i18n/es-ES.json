@@ -2201,6 +2201,7 @@
   "New Dial Plan": "Nuevo plan de marcado",
   "New dial plan": "Nuevo plan de marcado",
   "Maintain the dialing plan identity and default behavior.": "Mantenga la identidad y el comportamiento predeterminado del plan de marcado.",
+  "Maintain the dialing plan name, status and observations.": "Mantenga el nombre, el estado y las observaciones del plan de marcado.",
   "Plan data.": "Datos del plan.",
   "Delete dial plan": "Eliminar plan de marcado",
   "Delete this dial plan?": "¿Eliminar este plan de marcado?",

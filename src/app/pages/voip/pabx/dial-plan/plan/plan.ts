@@ -16,6 +16,13 @@ const statuses: ConfigurableCrudOption[] = [
   { value: 0, label: 'Inactive' },
 ];
 
+function optionalText(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const normalized = String(value).trim();
+  if (!normalized || ['null', 'undefined'].includes(normalized.toLowerCase())) return '';
+  return normalized;
+}
+
 function config(): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/pabx/dial-plans',
@@ -24,7 +31,7 @@ function config(): ConfigurableCrudConfig {
     pageDescription: 'Manage reusable dialing plans for PABX accounts and extensions.',
     createTitle: 'New dial plan',
     editTitle: 'Edit dial plan',
-    dialogDescription: 'Maintain the dialing plan identity and description.',
+    dialogDescription: 'Maintain the dialing plan name, status and observations.',
     searchPlaceholder: 'Search',
     emptyLabel: 'No dial plans found.',
     deleteTitle: 'Delete dial plan',
@@ -39,6 +46,9 @@ function config(): ConfigurableCrudConfig {
     inactiveValue: 0,
     statusOptions: statuses,
     bulkDelete: true,
+    tabLabels: {
+      notes: 'Notes',
+    },
     initialValues: {
       enabled: 1,
       name: '',
@@ -55,6 +65,7 @@ function config(): ConfigurableCrudConfig {
         key: 'description',
         source: 'description',
         label: 'Description',
+        fromRecord: (value) => optionalText(value),
         type: 'textarea',
         tab: 'notes',
         span: 4,
@@ -173,5 +184,6 @@ function extractRecord(response: unknown): ConfigurableCrudRecord | null {
 function text(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
+  if (['null', 'undefined'].includes(normalized.toLowerCase())) return null;
   return normalized || null;
 }
