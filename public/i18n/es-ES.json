@@ -2593,6 +2593,8 @@
   "Register": "Registrar",
   "Destination pattern": "Patrón de destino",
   "Media": "Medios",
+  "Execution": "Ejecución",
+  "SIP Realm": "Realm SIP",
   "DID operators": "Operadoras DID",
   "Manage DID carrier operators available to DID inventory and portability.": "Administra operadoras de telefonía disponibles para inventario DID y portabilidad.",
   "New DID operator": "Nueva operadora DID",

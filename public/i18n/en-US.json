@@ -2593,6 +2593,8 @@
   "Register": "Register",
   "Destination pattern": "Destination pattern",
   "Media": "Media",
+  "Execution": "Execution",
+  "SIP Realm": "SIP Realm",
   "DID operators": "DID carriers",
   "Manage DID carrier operators available to DID inventory and portability.": "Manage DID carriers available to DID inventory and portability.",
   "New DID operator": "New DID carrier",
