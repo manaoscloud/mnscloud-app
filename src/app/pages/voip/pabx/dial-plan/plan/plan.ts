@@ -16,11 +16,6 @@ const statuses: ConfigurableCrudOption[] = [
   { value: 0, label: 'Inactive' },
 ];
 
-const yesNo: ConfigurableCrudOption[] = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
-
 function config(): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/pabx/dial-plans',
@@ -29,7 +24,7 @@ function config(): ConfigurableCrudConfig {
     pageDescription: 'Manage reusable dialing plans for PABX accounts and extensions.',
     createTitle: 'New dial plan',
     editTitle: 'Edit dial plan',
-    dialogDescription: 'Maintain the dialing plan identity and default behavior.',
+    dialogDescription: 'Maintain the dialing plan identity and description.',
     searchPlaceholder: 'Search',
     emptyLabel: 'No dial plans found.',
     deleteTitle: 'Delete dial plan',
@@ -46,25 +41,15 @@ function config(): ConfigurableCrudConfig {
     bulkDelete: true,
     initialValues: {
       enabled: 1,
-      isDefault: 0,
       name: '',
       description: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
-      { id: 'isDefault', label: 'Default', kind: 'boolean', field: 'isDefault' },
       { id: 'status', label: 'Status', kind: 'status', field: 'enabled' },
     ],
     fields: [
       { key: 'enabled', source: 'enabled', label: 'Status', type: 'status', span: 1 },
-      {
-        key: 'isDefault',
-        source: 'isDefault',
-        label: 'Default',
-        type: 'select',
-        options: yesNo,
-        span: 1,
-      },
       { key: 'name', source: 'name', label: 'Name', required: true, span: 1 },
       {
         key: 'description',
@@ -95,7 +80,6 @@ export class VoipPabxDialPlanPlanPage extends ConfigurableCrudPageBase<Configura
     return {
       ...payload,
       enabled: Number(payload['enabled']) === 1,
-      isDefault: Number(payload['isDefault']) === 1,
     };
   }
 }
