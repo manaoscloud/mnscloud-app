@@ -1,23 +1,26 @@
 import { Component, input } from '@angular/core';
-import { FormField, type Field } from '@angular/forms/signals';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { type Field } from '@angular/forms/signals';
+import {
+  MnsSearchSelectFieldComponent,
+  type MnsSearchSelectFieldOption,
+} from '../mns-search-select-field/mns-search-select-field';
 
 type SignalFormField = Field<any, string | number>;
 
 @Component({
   selector: 'mns-status-select-field',
   standalone: true,
-  imports: [FormField, MatFormFieldModule, MatSelectModule, TranslocoPipe],
+  imports: [MnsSearchSelectFieldComponent],
   template: `
-    <mat-form-field appearance="outline" [class]="fieldClass()">
-      <mat-label>{{ label() }}</mat-label>
-      <mat-select [formField]="field()">
-        <mat-option [value]="activeValue()">{{ activeLabel() | transloco }}</mat-option>
-        <mat-option [value]="inactiveValue()">{{ inactiveLabel() | transloco }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <mns-search-select-field
+      [field]="field()"
+      [label]="label()"
+      [options]="options()"
+      [fieldClass]="fieldClass()"
+      [placeholder]="placeholder()"
+      [emptyLabel]="emptyLabel()"
+      [translateOptions]="true"
+    />
   `,
   styles: [
     `
@@ -35,4 +38,13 @@ export class MnsStatusSelectFieldComponent {
   readonly activeLabel = input('Active');
   readonly inactiveLabel = input('Inactive');
   readonly fieldClass = input('');
+  readonly placeholder = input('Search');
+  readonly emptyLabel = input('No records found.');
+
+  options(): readonly MnsSearchSelectFieldOption[] {
+    return [
+      { value: this.activeValue(), label: this.activeLabel() },
+      { value: this.inactiveValue(), label: this.inactiveLabel() },
+    ];
+  }
 }
