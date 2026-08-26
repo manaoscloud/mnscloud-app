@@ -1,8 +1,9 @@
 import { Component, input } from '@angular/core';
-import { FormField, type Field } from '@angular/forms/signals';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { type Field } from '@angular/forms/signals';
+import {
+  MnsSearchSelectFieldComponent,
+  type MnsSearchSelectFieldOption,
+} from '../mns-search-select-field/mns-search-select-field';
 
 type SignalFormField = Field<any, any>;
 
@@ -14,16 +15,17 @@ export type MnsSelectFieldOption = {
 @Component({
   selector: 'mns-select-field',
   standalone: true,
-  imports: [FormField, MatFormFieldModule, MatSelectModule, TranslocoPipe],
+  imports: [MnsSearchSelectFieldComponent],
   template: `
-    <mat-form-field appearance="outline" [class]="fieldClass()">
-      <mat-label>{{ label() }}</mat-label>
-      <mat-select [formField]="field()">
-        @for (option of options(); track option.value) {
-          <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <mns-search-select-field
+      [field]="field()"
+      [label]="label()"
+      [options]="searchOptions()"
+      [fieldClass]="fieldClass()"
+      [placeholder]="placeholder()"
+      [emptyLabel]="emptyLabel()"
+      [translateOptions]="true"
+    />
   `,
   styles: [
     `
@@ -38,4 +40,10 @@ export class MnsSelectFieldComponent {
   readonly label = input.required<string>();
   readonly options = input.required<readonly MnsSelectFieldOption[]>();
   readonly fieldClass = input('');
+  readonly placeholder = input('Search');
+  readonly emptyLabel = input('No records found.');
+
+  searchOptions(): readonly MnsSearchSelectFieldOption[] {
+    return this.options();
+  }
 }

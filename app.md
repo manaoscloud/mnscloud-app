@@ -392,12 +392,15 @@
   `multiple: true`. Its form value is always an ordered UUID array; never use free text or a
   comma-separated string for a persisted relation. The API validates and persists the order.
 
-- Any `mat-select` bound to records from another table/entity (FK-like fields) must be searchable.
-- CRUD validators should enforce searchable selects only when the page actually contains FK-like
-  dynamic relationship fields. Pages with static enum selects only, or no related-record selects,
-  must not add fake searchable adapters just to satisfy the template.
-- Signal Forms CRUD dialogs must use the shared `mns-search-select-field` adapter for FK-like
-  selects instead of hand-written page-local `mat-select` search blocks. The adapter owns
+- Any normal combobox/select must provide the same searchable dropdown experience, including
+  FK-like fields, dynamic records, static enums, status fields, boolean-like lists, timezones,
+  currencies, units, modes, and other fixed option lists. There is no minimum option count
+  exception; the project keeps one visual/interaction identity for selects.
+- CRUD validators should enforce searchable selects for FK-like, dynamic, static enum, and status
+  selects. Native `mat-select` without search should be reserved only for exceptional framework
+  constraints documented in the component.
+- Signal Forms CRUD dialogs must use the shared `mns-search-select-field` adapter for select fields
+  instead of hand-written page-local `mat-select` search blocks. The adapter owns
   `select-search-option`, `select-search-field`, real-time filtering, option spacing, empty state,
   selected trigger labels, optional option descriptions, loading state, and clearing the search text
   when the panel closes.
@@ -422,7 +425,6 @@
     must be owned by the adapter/component, not by browser auto-translation
   - spacing, option padding, and search field sizing come from the global `src/styles.scss`
     contract; do not add page-local layout overrides for these classes
-- Exception: small static enum selects (for example `Active/Inactive`, `Yes/No`) can remain without search.
 - Static enum/control selects still must be fully internationalized by the component, not by the DOM
   translation fallback.
   - Define a canonical option list in the component for commercial/status/mode enums.
