@@ -74,7 +74,7 @@
       }
 
       <div class="filter-actions">
-        @if (filterActionMenu() || filterActions().length) {
+        @if (filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())) {
           <div class="filter-actions-start">
             @if (filterActionMenu(); as actionMenu) {
               <button
@@ -117,6 +117,18 @@
                 {{ action.label | transloco }}
               </button>
             }
+            @if (bulkDeleteEnabled() && selectedCount()) {
+              <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
+              <button
+                mat-stroked-button
+                color="warn"
+                type="button"
+                (click)="deleteSelectedItems()"
+              >
+                <mat-icon>delete</mat-icon>
+                {{ 'Delete selected' | transloco }}
+              </button>
+            }
           </div>
         }
         <div class="filter-actions-end">
@@ -131,16 +143,6 @@
         </div>
       </div>
     </div>
-
-    @if (bulkDeleteEnabled() && selectedCount()) {
-      <div class="bulk-actions">
-        <span>{{ selectedCount() }} {{ 'selected' | transloco }}</span>
-        <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
-          <mat-icon>delete</mat-icon>
-          {{ 'Delete selected' | transloco }}
-        </button>
-      </div>
-    }
 
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
