@@ -319,146 +319,171 @@
                 <div class="tab-content empty-tab">{{ 'No softswitch defaults configured yet.' | transloco }}</div>
               </mat-tab>
               <mat-tab [label]="'PABX' | transloco">
-                <form class="tab-content form-grid">
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'Storage - Recording' | transloco }}</mat-label>
-                    <mat-select
-                      [placeholder]="voipPabxRecordingStoragePlaceholder()" [value]="item().voipPabxRecordingStorageMode" (selectionChange)="updateItem({ voipPabxRecordingStorageMode: $event.value })">
-                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                      <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
-                      <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                <mat-tab-group class="nested-tabs pabx-parameter-tabs">
+                  <mat-tab [label]="'Storage' | transloco">
+                    <form class="tab-content form-grid">
+                      <mat-form-field appearance="outline">
+                        <mat-label>{{ 'Storage - Recording' | transloco }}</mat-label>
+                        <mat-select
+                          [placeholder]="voipPabxRecordingStoragePlaceholder()" [value]="item().voipPabxRecordingStorageMode" (selectionChange)="updateItem({ voipPabxRecordingStorageMode: $event.value })">
+                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                          <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
+                          <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>{{ 'Recording storage account' | transloco }}</mat-label>
-                    <mat-select
-                      [disabled]="item().voipPabxRecordingStorageMode !== 'storage'" [value]="item().voipPabxRecordingStorageAccountUUID" (selectionChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })">
-                      <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
-                      @for (account of storageAccounts(); track account.HsaUUID) {
-                        <mat-option [value]="account.HsaUUID">
-                          {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                      <mat-form-field appearance="outline" class="span-2">
+                        <mat-label>{{ 'Recording storage account' | transloco }}</mat-label>
+                        <mat-select
+                          [disabled]="item().voipPabxRecordingStorageMode !== 'storage'" [value]="item().voipPabxRecordingStorageAccountUUID" (selectionChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })">
+                          <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
+                          @for (account of storageAccounts(); track account.HsaUUID) {
+                            <mat-option [value]="account.HsaUUID">
+                              {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
+                            </mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'Storage - Media File' | transloco }}</mat-label>
-                    <mat-select
-                      [placeholder]="voipPabxMediaStoragePlaceholder()" [value]="item().voipPabxMediaStorageMode" (selectionChange)="updateItem({ voipPabxMediaStorageMode: $event.value })">
-                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                      <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
-                      <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                      <mat-form-field appearance="outline">
+                        <mat-label>{{ 'Storage - Media File' | transloco }}</mat-label>
+                        <mat-select
+                          [placeholder]="voipPabxMediaStoragePlaceholder()" [value]="item().voipPabxMediaStorageMode" (selectionChange)="updateItem({ voipPabxMediaStorageMode: $event.value })">
+                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                          <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
+                          <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>{{ 'Media file storage account' | transloco }}</mat-label>
-                    <mat-select
-                      [disabled]="item().voipPabxMediaStorageMode !== 'storage'" [value]="item().voipPabxMediaStorageAccountUUID" (selectionChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event.value })">
-                      <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
-                      @for (account of storageAccounts(); track account.HsaUUID) {
-                        <mat-option [value]="account.HsaUUID">
-                          {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                      <mat-form-field appearance="outline" class="span-2">
+                        <mat-label>{{ 'Media file storage account' | transloco }}</mat-label>
+                        <mat-select
+                          [disabled]="item().voipPabxMediaStorageMode !== 'storage'" [value]="item().voipPabxMediaStorageAccountUUID" (selectionChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event.value })">
+                          <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
+                          @for (account of storageAccounts(); track account.HsaUUID) {
+                            <mat-option [value]="account.HsaUUID">
+                              {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
+                            </mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'Media File - Delivery Mode' | transloco }}</mat-label>
-                    <mat-select
-                      [placeholder]="voipPabxMediaDeliveryPlaceholder()" [value]="item().voipPabxMediaDeliveryMode" (selectionChange)="updateItem({ voipPabxMediaDeliveryMode: $event.value })">
-                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                      <mat-option value="online">{{ 'Online' | transloco }}</mat-option>
-                      <mat-option value="offline">{{ 'Offline' | transloco }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                      <div class="toggle-grid span-4">
+                        <mat-slide-toggle [checked]="item().voipPabxRecordingStorageIsActive" (change)="updateItem({ voipPabxRecordingStorageIsActive: $event.checked })">
+                          {{ 'Recording Storage Active' | transloco }}
+                        </mat-slide-toggle>
+                        <mat-slide-toggle [checked]="item().voipPabxMediaStorageIsActive" (change)="updateItem({ voipPabxMediaStorageIsActive: $event.checked })">
+                          {{ 'Media Storage Active' | transloco }}
+                        </mat-slide-toggle>
+                      </div>
+                    </form>
+                  </mat-tab>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'Remote Command Executor' | transloco }}</mat-label>
-                    <mat-select
-                      [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()" [value]="item().voipPabxRemoteCommandExecutor" (selectionChange)="updateItem({ voipPabxRemoteCommandExecutor: $event.value })">
-                      <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                      <mat-option value="agent">{{ 'Agent' | transloco }}</mat-option>
-                      <mat-option value="esl_ami">{{ 'ESL/AMI' | transloco }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                  <mat-tab [label]="'Media' | transloco">
+                    <form class="tab-content form-grid">
+                      <mat-form-field appearance="outline">
+                        <mat-label>{{ 'Media File - Delivery Mode' | transloco }}</mat-label>
+                        <mat-select
+                          [placeholder]="voipPabxMediaDeliveryPlaceholder()" [value]="item().voipPabxMediaDeliveryMode" (selectionChange)="updateItem({ voipPabxMediaDeliveryMode: $event.value })">
+                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                          <mat-option value="online">{{ 'Online' | transloco }}</mat-option>
+                          <mat-option value="offline">{{ 'Offline' | transloco }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>{{ 'PABX SIP realm base' | transloco }}</mat-label>
-                    <input
-                      matInput
-                      [placeholder]="voipPabxAutoDomainBasePlaceholder()"
-                      [value]="item().voipPabxAutoDomainBase"
-                      (input)="updateItem({ voipPabxAutoDomainBase: $any($event.target).value })"
-                    />
-                  </mat-form-field>
+                      <div class="toggle-grid span-4">
+                        <mat-slide-toggle [checked]="item().voipPabxMediaDeliveryModeIsActive" (change)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event.checked })">
+                          {{ 'Media Delivery Active' | transloco }}
+                        </mat-slide-toggle>
+                      </div>
+                    </form>
+                  </mat-tab>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'PABX SIP realm label' | transloco }}</mat-label>
-                    <mat-select
-                      [value]="item().voipPabxAutoDomainLabelMode"
-                      (selectionChange)="updateItem({ voipPabxAutoDomainLabelMode: $event.value })"
-                    >
-                      <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                  <mat-tab [label]="'Execution' | transloco">
+                    <form class="tab-content form-grid">
+                      <mat-form-field appearance="outline">
+                        <mat-label>{{ 'Remote Command Executor' | transloco }}</mat-label>
+                        <mat-select
+                          [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()" [value]="item().voipPabxRemoteCommandExecutor" (selectionChange)="updateItem({ voipPabxRemoteCommandExecutor: $event.value })">
+                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                          <mat-option value="agent">{{ 'Agent' | transloco }}</mat-option>
+                          <mat-option value="esl_ami">{{ 'ESL/AMI' | transloco }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'PABX SIP realm UUID length' | transloco }}</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      min="8"
-                      max="32"
-                      [value]="item().voipPabxAutoDomainUuidLength"
-                      (input)="updateItem({ voipPabxAutoDomainUuidLength: $any($event.target).value })"
-                    />
-                  </mat-form-field>
+                      <div class="toggle-grid span-4">
+                        <mat-slide-toggle [checked]="item().voipPabxRemoteCommandExecutorIsActive" (change)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event.checked })">
+                          {{ 'Remote Command Active' | transloco }}
+                        </mat-slide-toggle>
+                      </div>
+                    </form>
+                  </mat-tab>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'PABX SIP realm DNS mode' | transloco }}</mat-label>
-                    <mat-select
-                      [value]="item().voipPabxAutoDomainDnsMode"
-                      (selectionChange)="updateItem({ voipPabxAutoDomainDnsMode: $event.value })"
-                    >
-                      <mat-option value="identity_only">{{ 'Identity only' | transloco }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                  <mat-tab [label]="'SIP Realm' | transloco">
+                    <form class="tab-content form-grid">
+                      <mat-form-field appearance="outline" class="span-2">
+                        <mat-label>{{ 'PABX SIP realm base' | transloco }}</mat-label>
+                        <input
+                          matInput
+                          [placeholder]="voipPabxAutoDomainBasePlaceholder()"
+                          [value]="item().voipPabxAutoDomainBase"
+                          (input)="updateItem({ voipPabxAutoDomainBase: $any($event.target).value })"
+                        />
+                      </mat-form-field>
 
-                  <div class="parameter-hint span-4">
-                    {{
-                      'PABX automatic SIP realms create VoIP domains only. DNS/hosting publication is intentionally not coupled to billing today.'
-                        | transloco
-                    }}
-                  </div>
+                      <mat-form-field appearance="outline">
+                        <mat-label>{{ 'PABX SIP realm label' | transloco }}</mat-label>
+                        <mat-select
+                          [value]="item().voipPabxAutoDomainLabelMode"
+                          (selectionChange)="updateItem({ voipPabxAutoDomainLabelMode: $event.value })"
+                        >
+                          <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
 
-                  <div class="toggle-grid span-4">
-                    <mat-slide-toggle [checked]="item().voipPabxRecordingStorageIsActive" (change)="updateItem({ voipPabxRecordingStorageIsActive: $event.checked })">
-                      {{ 'Recording Storage Active' | transloco }}
-                    </mat-slide-toggle>
-                    <mat-slide-toggle [checked]="item().voipPabxMediaStorageIsActive" (change)="updateItem({ voipPabxMediaStorageIsActive: $event.checked })">
-                      {{ 'Media Storage Active' | transloco }}
-                    </mat-slide-toggle>
-                    <mat-slide-toggle [checked]="item().voipPabxMediaDeliveryModeIsActive" (change)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event.checked })">
-                      {{ 'Media Delivery Active' | transloco }}
-                    </mat-slide-toggle>
-                    <mat-slide-toggle [checked]="item().voipPabxRemoteCommandExecutorIsActive" (change)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event.checked })">
-                      {{ 'Remote Command Active' | transloco }}
-                    </mat-slide-toggle>
-                    <mat-slide-toggle [checked]="item().voipPabxAutoDomainEnabled" (change)="updateItem({ voipPabxAutoDomainEnabled: $event.checked })">
-                      {{ 'Create PABX SIP realm automatically' | transloco }}
-                    </mat-slide-toggle>
-                    <mat-slide-toggle [checked]="item().voipPabxAutoDomainSetDefault" (change)="updateItem({ voipPabxAutoDomainSetDefault: $event.checked })">
-                      {{ 'Set generated PABX SIP realm as default' | transloco }}
-                    </mat-slide-toggle>
-                    <mat-slide-toggle [checked]="item().voipPabxAutoDomainIsActive" (change)="updateItem({ voipPabxAutoDomainIsActive: $event.checked })">
-                      {{ 'PABX SIP realm automation active' | transloco }}
-                    </mat-slide-toggle>
-                  </div>
-                </form>
+                      <mat-form-field appearance="outline">
+                        <mat-label>{{ 'PABX SIP realm UUID length' | transloco }}</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          min="8"
+                          max="32"
+                          [value]="item().voipPabxAutoDomainUuidLength"
+                          (input)="updateItem({ voipPabxAutoDomainUuidLength: $any($event.target).value })"
+                        />
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>{{ 'PABX SIP realm DNS mode' | transloco }}</mat-label>
+                        <mat-select
+                          [value]="item().voipPabxAutoDomainDnsMode"
+                          (selectionChange)="updateItem({ voipPabxAutoDomainDnsMode: $event.value })"
+                        >
+                          <mat-option value="identity_only">{{ 'Identity only' | transloco }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <div class="parameter-hint span-4">
+                        {{
+                          'PABX automatic SIP realms create VoIP domains only. DNS/hosting publication is intentionally not coupled to billing today.'
+                            | transloco
+                        }}
+                      </div>
+
+                      <div class="toggle-grid span-4">
+                        <mat-slide-toggle [checked]="item().voipPabxAutoDomainEnabled" (change)="updateItem({ voipPabxAutoDomainEnabled: $event.checked })">
+                          {{ 'Create PABX SIP realm automatically' | transloco }}
+                        </mat-slide-toggle>
+                        <mat-slide-toggle [checked]="item().voipPabxAutoDomainSetDefault" (change)="updateItem({ voipPabxAutoDomainSetDefault: $event.checked })">
+                          {{ 'Set generated PABX SIP realm as default' | transloco }}
+                        </mat-slide-toggle>
+                        <mat-slide-toggle [checked]="item().voipPabxAutoDomainIsActive" (change)="updateItem({ voipPabxAutoDomainIsActive: $event.checked })">
+                          {{ 'PABX SIP realm automation active' | transloco }}
+                        </mat-slide-toggle>
+                      </div>
+                    </form>
+                  </mat-tab>
+                </mat-tab-group>
               </mat-tab>
             </mat-tab-group>
           </mat-tab>
