@@ -346,8 +346,10 @@ function config(): ConfigurableCrudConfig {
                 <ng-container matColumnDef="regex">
                   <th mat-header-cell *matHeaderCellDef>{{ 'Regex' | transloco }}</th>
                   <td mat-cell *matCellDef="let template">
-                    <code>{{ template.regex }}</code>
-                    <span class="example-description">{{ template.description || '-' }}</span>
+                    <div class="regex-cell">
+                      <code class="regex-inline">{{ template.regex }}</code>
+                      <span class="example-description">{{ template.description || '-' }}</span>
+                    </div>
                   </td>
                 </ng-container>
 
@@ -388,16 +390,27 @@ function config(): ConfigurableCrudConfig {
                 </ng-container>
 
                 <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
-                  <td mat-cell *matCellDef="let template">
+                  <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+                    {{ 'Actions' | transloco }}
+                  </th>
+                  <td mat-cell *matCellDef="let template" class="actions-cell">
                     <div class="table-actions">
-                      <button mat-stroked-button type="button" (click)="copy(template.regex)">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [attr.aria-label]="'Copy regex' | transloco"
+                        (click)="copy(template.regex)"
+                      >
                         <mat-icon>content_copy</mat-icon>
-                        {{ 'Copy regex' | transloco }}
                       </button>
-                      <button mat-flat-button color="primary" type="button" (click)="apply(template)">
+                      <button
+                        mat-icon-button
+                        color="primary"
+                        type="button"
+                        [attr.aria-label]="'Apply regex' | transloco"
+                        (click)="apply(template)"
+                      >
                         <mat-icon>check</mat-icon>
-                        {{ 'Apply regex' | transloco }}
                       </button>
                     </div>
                   </td>
@@ -464,65 +477,61 @@ function config(): ConfigurableCrudConfig {
         padding-right: 0 !important;
       }
 
-      .example-table {
-        border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-        border-radius: 1rem;
-        overflow: hidden;
-        width: 100%;
-      }
-
-      .example-table th,
-      .example-table td {
-        vertical-align: top;
-      }
-
-      .example-table th:last-child,
-      .example-table td:last-child {
-        text-align: right;
-      }
-
       .example-table .mat-column-name {
-        width: 18%;
+        width: 19%;
       }
 
       .example-table .mat-column-regex {
-        width: 34%;
+        width: 35%;
       }
 
       .example-table .mat-column-direction,
       .example-table .mat-column-test {
-        width: 11%;
+        width: 10%;
       }
 
       .example-table .mat-column-category {
-        width: 14%;
+        width: 16%;
       }
 
       .example-table .mat-column-actions {
-        width: 12%;
+        width: 10%;
+      }
+
+      .example-table .mat-mdc-header-cell,
+      .example-table .mat-mdc-cell {
+        padding-bottom: 0.62rem;
+        padding-top: 0.62rem;
+        vertical-align: middle;
+      }
+
+      .example-table .mat-mdc-header-cell:last-child,
+      .example-table .mat-mdc-cell:last-child {
+        padding-right: 1rem;
+        text-align: right;
       }
 
       .table-actions {
-        align-items: flex-end;
-        display: flex;
-        flex-direction: column;
-        gap: 0.45rem;
+        align-items: center;
+        display: inline-flex;
+        gap: 0.25rem;
+        justify-content: flex-end;
       }
 
       .table-actions button {
-        min-width: 148px;
+        flex: 0 0 auto;
       }
 
       .example-title,
-      .example-meta {
+      .example-meta,
+      .regex-cell {
         display: grid;
-        gap: 0.2rem;
+        gap: 0.18rem;
         min-width: 0;
       }
 
       .example-description {
         display: block;
-        margin-top: 0.35rem;
       }
 
       .example-title strong,
@@ -543,12 +552,16 @@ function config(): ConfigurableCrudConfig {
         font-size: 0.88rem;
       }
 
-      code {
-        border-radius: 8px;
-        display: block;
-        overflow-x: auto;
-        padding: 10px;
+      .regex-inline {
         background: color-mix(in srgb, currentColor 8%, transparent);
+        border-radius: 0.45rem;
+        display: inline-block;
+        line-height: 1.25;
+        max-width: 100%;
+        overflow: hidden;
+        padding: 0.32rem 0.48rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .empty-state {
