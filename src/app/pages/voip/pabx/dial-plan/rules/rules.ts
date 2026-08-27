@@ -401,12 +401,12 @@ function config(): ConfigurableCrudConfig {
   styles: [
     `
       .dial-pattern-examples-dialog {
-        --dial-pattern-dialog-inset: 0.75rem;
+        --dial-pattern-dialog-inset: 0;
         min-height: 0;
       }
 
       .dial-pattern-examples-dialog .dialog-content {
-        padding-top: 0.85rem !important;
+        padding-top: 0.65rem !important;
       }
 
       .examples-content-shell {
@@ -422,6 +422,7 @@ function config(): ConfigurableCrudConfig {
       .dialog-filter-grid {
         flex: 0 0 auto;
         margin-bottom: 0;
+        padding-top: 0.45rem;
       }
 
       .example-list {
@@ -431,7 +432,7 @@ function config(): ConfigurableCrudConfig {
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
-        padding: 0.1rem 0 1rem;
+        padding: 0.1rem 0 1.4rem;
         scrollbar-gutter: stable;
       }
 
@@ -506,7 +507,7 @@ function config(): ConfigurableCrudConfig {
 
       @media (max-width: 760px) {
         .dial-pattern-examples-dialog {
-          --dial-pattern-dialog-inset: 0.35rem;
+          --dial-pattern-dialog-inset: 0;
         }
 
         .example-heading,
