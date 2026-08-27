@@ -2,8 +2,8 @@
   <mat-card class="erp-card">
     <header class="erp-header">
       <div>
-        <h1>{{ 'Domain Providers' | transloco }}</h1>
-        <p>{{ 'Manage domain registrar accounts used by tenant domains.' | transloco }}</p>
+        <h1>{{ 'DNS Providers' | transloco }}</h1>
+        <p>{{ 'Manage DNS provider accounts used by tenant domains.' | transloco }}</p>
       </div>
 
       <div class="header-actions">
@@ -18,7 +18,7 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input matInput placeholder="Name or platform" [formField]="filterForm.search" />
+        <input matInput [placeholder]="'Name or platform' | transloco" [formField]="filterForm.search" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
@@ -118,7 +118,7 @@
               [class.is-active]="row.HdpStatus === 1"
               [class.is-inactive]="row.HdpStatus !== 1"
             >
-              {{ statusLabel(row.HdpStatus) }}
+              {{ statusLabel(row.HdpStatus) | transloco }}
             </mat-chip>
           </td>
         </ng-container>
@@ -174,8 +174,8 @@
         <h2>{{ (editing() ? 'Edit domain provider' : 'New domain provider') | transloco }}</h2>
         <p>
           {{ (editing()
-              ? 'Update registrar platform, status and credentials.'
-              : 'Configure a registrar account for tenant domains.') | transloco }}
+              ? 'Update DNS provider details, status and credentials.'
+              : 'Configure a DNS provider account for tenant domains.') | transloco }}
         </p>
       </div>
       @if (editing()) {
@@ -188,12 +188,15 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid">
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Name' | transloco }}</mat-label>
-                <input matInput placeholder="REGISTRO.BR MAIN" [formField]="providerForm.name" />
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
+                <mat-select [formField]="providerForm.status">
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
+                </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Platform' | transloco }}</mat-label>
                 <mat-select [formField]="providerForm.provider">
                   @for (item of catalog(); track item.value) {
@@ -202,38 +205,59 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Status' | transloco }}</mat-label>
-                <mat-select [formField]="providerForm.status">
-                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
-                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
-                </mat-select>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Name' | transloco }}</mat-label>
+                <input matInput placeholder="ROUTE53 MAIN" [formField]="providerForm.name" />
               </mat-form-field>
 
-              <div class="checkbox-wrap">
-                <mat-checkbox [formField]="providerForm.isDefault">{{ 'Default' | transloco }} provider</mat-checkbox>
+              <div class="checkbox-wrap span-1">
+                <mat-checkbox [formField]="providerForm.isDefault">{{ 'Default provider' | transloco }}</mat-checkbox>
               </div>
             </form>
           </div>
         </mat-tab>
 
-        <mat-tab label="API">
+        <mat-tab [label]="'Credentials' | transloco">
           <div class="tab-content">
             <form class="form-grid">
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ 'Config JSON' | transloco }}</mat-label>
-                <textarea matInput rows="8" [formField]="providerForm.configJson"></textarea>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'API endpoint' | transloco }}</mat-label>
+                <input matInput placeholder="https://dns.example.com:2087" [formField]="providerForm.apiEndpoint" />
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="span-4">
-                <mat-label>{{ 'Credentials JSON' | transloco }}</mat-label>
-                <textarea matInput rows="8" [formField]="providerForm.credentialsJson"></textarea>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Access key' | transloco }}</mat-label>
+                <input matInput [formField]="providerForm.accessKey" />
               </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Secret / API token' | transloco }}</mat-label>
+                <input matInput type="password" autocomplete="new-password" [formField]="providerForm.secret" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Region' | transloco }}</mat-label>
+                <input matInput placeholder="us-east-1" [formField]="providerForm.region" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Hosted zone ID' | transloco }}</mat-label>
+                <input matInput placeholder="Z1234567890" [formField]="providerForm.hostedZoneID" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Default TTL' | transloco }}</mat-label>
+                <input matInput type="number" [formField]="providerForm.defaultTtl" />
+              </mat-form-field>
+
+              <div class="checkbox-wrap span-1">
+                <mat-checkbox [formField]="providerForm.verifyTls">{{ 'Verify TLS' | transloco }}</mat-checkbox>
+              </div>
             </form>
           </div>
         </mat-tab>
 
-        <mat-tab label="Notes">
+        <mat-tab [label]="'Notes' | transloco">
           <div class="tab-content notes-tab-content">
             <form>
               <mat-form-field appearance="outline" class="notes-field">

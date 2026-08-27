@@ -47,6 +47,9 @@ type HostingDnsDomain = {
   ProviderName?: string | null;
   ProviderPlatform?: string | null;
   HddProvider?: string | null;
+  HddProviderZoneID?: string | null;
+  HddDefaultTtl?: number | null;
+  HddAutoSync?: number | null;
   HddStatus: DomainStatus;
   HddNotes?: string | null;
 };
@@ -168,6 +171,9 @@ export class HostingDnsDomainsPage {
     customerUUID: '',
     providerUUID: '',
     status: 1 as DomainStatus,
+    providerZoneID: '',
+    defaultTtl: null as number | null,
+    autoSync: false,
     notes: '',
   });
   readonly domainForm = createForm(this.domainFormModel, (schema) => {
@@ -274,6 +280,9 @@ export class HostingDnsDomainsPage {
       customerUUID: '',
       providerUUID: '',
       status: 1,
+      providerZoneID: '',
+      defaultTtl: null,
+      autoSync: false,
       notes: '',
     });
     this.customerFormSearch.set('');
@@ -288,6 +297,9 @@ export class HostingDnsDomainsPage {
       customerUUID: domain.CustomerCusUUID ?? '',
       providerUUID: domain.HostingDnsProviderHdpUUID ?? '',
       status: (domain.HddStatus ?? 1) as DomainStatus,
+      providerZoneID: domain.HddProviderZoneID ?? '',
+      defaultTtl: domain.HddDefaultTtl ?? null,
+      autoSync: domain.HddAutoSync === 1,
       notes: domain.HddNotes ?? '',
     });
     this.customerFormSearch.set('');
@@ -311,6 +323,9 @@ export class HostingDnsDomainsPage {
       name: values.name.trim(),
       customerUUID: values.customerUUID.trim(),
       providerUUID: values.providerUUID.trim() || null,
+      providerZoneID: values.providerZoneID.trim() || null,
+      defaultTtl: this.optionalNumber(values.defaultTtl),
+      autoSync: values.autoSync,
       status: values.status,
       notes: values.notes.trim() || null,
     };
@@ -342,6 +357,9 @@ export class HostingDnsDomainsPage {
           customerUUID: '',
           providerUUID: '',
           status: 1,
+          providerZoneID: '',
+          defaultTtl: null,
+          autoSync: false,
           notes: '',
         });
       }
@@ -517,6 +535,12 @@ export class HostingDnsDomainsPage {
     this.providerFormSearch.set(input.value);
   }
 
+  private optionalNumber(value: number | string | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
   private resetForm() {
     this.editing.set(null);
     this.domainFormModel.set({
@@ -524,6 +548,9 @@ export class HostingDnsDomainsPage {
       customerUUID: '',
       providerUUID: '',
       status: 1,
+      providerZoneID: '',
+      defaultTtl: null,
+      autoSync: false,
       notes: '',
     });
   }
