@@ -476,9 +476,11 @@ function config(): ConfigurableCrudConfig {
       }
 
       .dial-pattern-examples-dialog .form-actions {
-        margin-top: 0 !important;
+        box-sizing: border-box;
+        margin: 0 var(--dial-pattern-dialog-inset) 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        width: auto;
       }
 
       .regex-inline {
@@ -520,6 +522,7 @@ export class VoipDialPatternExamplesDialogComponent {
 
   filteredTemplates(): DialPatternTemplate[] {
     const term = this.search.trim().toLowerCase();
+    const test = this.testNumber.trim();
     return this.data.templates.filter((template) => {
       const profileMatches = !this.selectedProfile || template.profileUUID === this.selectedProfile;
       const textMatches =
@@ -527,7 +530,8 @@ export class VoipDialPatternExamplesDialogComponent {
         [template.name, template.code, template.profileName, template.category, template.regex]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(term));
-      return profileMatches && textMatches;
+      const testMatches = !test || this.matches(template.regex);
+      return profileMatches && textMatches && testMatches;
     });
   }
 
