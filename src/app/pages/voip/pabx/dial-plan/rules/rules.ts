@@ -300,85 +300,91 @@ function config(): ConfigurableCrudConfig {
       </div>
 
       <mat-dialog-content class="dialog-content">
-        <div class="dialog-filter-grid form-grid">
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Pattern profile' | transloco }}</mat-label>
-            <mat-select
-              [value]="selectedProfile"
-              (selectionChange)="selectedProfile = $event.value"
-            >
-              <mat-option value="">{{ 'All profiles' | transloco }}</mat-option>
-              @for (profile of data.profiles; track profile.profileUUID) {
-                <mat-option [value]="profile.profileUUID">{{ profile.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="span-2">
-            <mat-label>{{ 'Search examples' | transloco }}</mat-label>
-            <input matInput [value]="search" (input)="search = $any($event.target).value" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ 'Test number' | transloco }}</mat-label>
-            <input matInput [value]="testNumber" (input)="testNumber = $any($event.target).value" />
-          </mat-form-field>
-        </div>
-
-        <div class="example-list">
-          @for (template of filteredTemplates(); track template.templateUUID) {
-            <article class="example-card">
-              <div class="example-heading">
-                <div class="example-title">
-                  <strong>{{ template.name }}</strong>
-                  <span>{{ template.profileName || profileName(template.profileUUID) }}</span>
-                </div>
-                <mat-chip class="status-pill status-chip">{{
-                  template.safeRegexStatus || 'safe'
-                }}</mat-chip>
-              </div>
-
-              <code>{{ template.regex }}</code>
-
-              <p class="example-description">{{ template.description || '-' }}</p>
-
-              <div class="example-meta">
-                <span>
-                  {{ 'Direction' | transloco }}:
-                  {{ optionLabel(directions, template.direction) | transloco }}
-                </span>
-                <span>{{ 'Category' | transloco }}: {{ template.category }}</span>
-                @if (testNumber.trim()) {
-                  <span>
-                    {{ 'Test' | transloco }}:
-                    {{
-                      matches(template.regex)
-                        ? ('Matches' | transloco)
-                        : ('Does not match' | transloco)
-                    }}
-                  </span>
+        <div class="examples-content-shell">
+          <div class="dialog-filter-grid form-grid">
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Pattern profile' | transloco }}</mat-label>
+              <mat-select
+                [value]="selectedProfile"
+                (selectionChange)="selectedProfile = $event.value"
+              >
+                <mat-option value="">{{ 'All profiles' | transloco }}</mat-option>
+                @for (profile of data.profiles; track profile.profileUUID) {
+                  <mat-option [value]="profile.profileUUID">{{ profile.name }}</mat-option>
                 }
-              </div>
+              </mat-select>
+            </mat-form-field>
 
-              <div class="example-samples">
-                <span>{{ 'Examples' | transloco }}:</span>
-                <span>{{ (template.exampleMatches ?? []).join(', ') || '-' }}</span>
-              </div>
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>{{ 'Search examples' | transloco }}</mat-label>
+              <input matInput [value]="search" (input)="search = $any($event.target).value" />
+            </mat-form-field>
 
-              <div class="example-actions">
-                <button mat-stroked-button type="button" (click)="copy(template.regex)">
-                  <mat-icon>content_copy</mat-icon>
-                  {{ 'Copy regex' | transloco }}
-                </button>
-                <button mat-flat-button color="primary" type="button" (click)="apply(template)">
-                  <mat-icon>check</mat-icon>
-                  {{ 'Apply regex' | transloco }}
-                </button>
-              </div>
-            </article>
-          } @empty {
-            <div class="empty-state">{{ 'No regex examples found.' | transloco }}</div>
-          }
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Test number' | transloco }}</mat-label>
+              <input
+                matInput
+                [value]="testNumber"
+                (input)="testNumber = $any($event.target).value"
+              />
+            </mat-form-field>
+          </div>
+
+          <div class="example-list">
+            @for (template of filteredTemplates(); track template.templateUUID) {
+              <article class="example-card">
+                <div class="example-heading">
+                  <div class="example-title">
+                    <strong>{{ template.name }}</strong>
+                    <span>{{ template.profileName || profileName(template.profileUUID) }}</span>
+                  </div>
+                  <mat-chip class="status-pill status-chip">{{
+                    template.safeRegexStatus || 'safe'
+                  }}</mat-chip>
+                </div>
+
+                <code>{{ template.regex }}</code>
+
+                <p class="example-description">{{ template.description || '-' }}</p>
+
+                <div class="example-meta">
+                  <span>
+                    {{ 'Direction' | transloco }}:
+                    {{ optionLabel(directions, template.direction) | transloco }}
+                  </span>
+                  <span>{{ 'Category' | transloco }}: {{ template.category }}</span>
+                  @if (testNumber.trim()) {
+                    <span>
+                      {{ 'Test' | transloco }}:
+                      {{
+                        matches(template.regex)
+                          ? ('Matches' | transloco)
+                          : ('Does not match' | transloco)
+                      }}
+                    </span>
+                  }
+                </div>
+
+                <div class="example-samples">
+                  <span>{{ 'Examples' | transloco }}:</span>
+                  <span>{{ (template.exampleMatches ?? []).join(', ') || '-' }}</span>
+                </div>
+
+                <div class="example-actions">
+                  <button mat-stroked-button type="button" (click)="copy(template.regex)">
+                    <mat-icon>content_copy</mat-icon>
+                    {{ 'Copy regex' | transloco }}
+                  </button>
+                  <button mat-flat-button color="primary" type="button" (click)="apply(template)">
+                    <mat-icon>check</mat-icon>
+                    {{ 'Apply regex' | transloco }}
+                  </button>
+                </div>
+              </article>
+            } @empty {
+              <div class="empty-state">{{ 'No regex examples found.' | transloco }}</div>
+            }
+          </div>
         </div>
       </mat-dialog-content>
 
@@ -395,6 +401,7 @@ function config(): ConfigurableCrudConfig {
   styles: [
     `
       .dial-pattern-examples-dialog {
+        --dial-pattern-dialog-inset: 0.75rem;
         min-height: 0;
       }
 
@@ -402,8 +409,19 @@ function config(): ConfigurableCrudConfig {
         gap: 0.75rem;
       }
 
+      .examples-content-shell {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-height: 0;
+        overflow: hidden;
+        padding: 0 var(--dial-pattern-dialog-inset);
+      }
+
       .dialog-filter-grid {
         flex: 0 0 auto;
+        margin-bottom: 0;
       }
 
       .example-list {
@@ -413,7 +431,14 @@ function config(): ConfigurableCrudConfig {
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
-        padding: 0.1rem 0.25rem 0.35rem 0;
+        padding: 0.1rem 0 0.35rem;
+        scrollbar-gutter: stable;
+      }
+
+      .dial-pattern-examples-dialog .form-actions {
+        margin-top: 0 !important;
+        padding-left: var(--dial-pattern-dialog-inset) !important;
+        padding-right: var(--dial-pattern-dialog-inset) !important;
       }
 
       .example-card {
@@ -480,6 +505,10 @@ function config(): ConfigurableCrudConfig {
       }
 
       @media (max-width: 760px) {
+        .dial-pattern-examples-dialog {
+          --dial-pattern-dialog-inset: 0.35rem;
+        }
+
         .example-heading,
         .example-actions {
           align-items: stretch;
