@@ -510,8 +510,6 @@ function config(): ConfigurableCrudConfig {
       .dial-pattern-examples-dialog .form-actions {
         width: 100%;
         margin: 0 !important;
-        padding-right: 0 !important;
-        padding-left: 0 !important;
       }
 
       .regex-text {
