@@ -447,6 +447,7 @@ function config(): ConfigurableCrudConfig {
             [pageSize]="pageSize"
             [pageIndex]="pageIndex"
             [pageSizeOptions]="pageSizeOptions"
+            showFirstLastButtons
             (page)="handlePage($event)"
           ></mat-paginator>
         </div>
@@ -468,13 +469,26 @@ function config(): ConfigurableCrudConfig {
         min-height: 0;
       }
 
+      .dial-pattern-examples-dialog,
+      .dial-pattern-examples-dialog .dialog-content,
+      .examples-content-shell,
+      .dialog-filter-grid,
+      .dial-pattern-examples-dialog .table-wrapper,
+      .dial-pattern-examples-dialog .dialog-paginator,
+      .dial-pattern-examples-dialog .form-actions {
+        box-sizing: border-box;
+        min-width: 0;
+        max-width: 100%;
+      }
+
       .examples-content-shell {
         display: flex;
         flex: 1 1 auto;
         flex-direction: column;
         gap: 0.75rem;
         min-height: 0;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
         padding: 0.65rem 0 0.25rem;
         scrollbar-gutter: stable;
       }
@@ -488,12 +502,16 @@ function config(): ConfigurableCrudConfig {
 
       .dial-pattern-examples-dialog .table-wrapper {
         flex: 0 0 auto;
+        width: 100%;
         overflow-x: auto;
         overflow-y: hidden;
       }
 
       .dial-pattern-examples-dialog .form-actions {
-        margin-top: 0 !important;
+        width: 100%;
+        margin: 0 !important;
+        padding-right: 0 !important;
+        padding-left: 0 !important;
       }
 
       .regex-text {
@@ -527,7 +545,39 @@ function config(): ConfigurableCrudConfig {
 
       .dialog-paginator {
         flex: 0 0 auto;
+        width: 100%;
         margin-top: 0;
+        overflow: hidden;
+      }
+
+      .dialog-paginator ::ng-deep .mat-mdc-paginator-container {
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        min-height: 48px;
+        padding: 0;
+        gap: 0.35rem;
+      }
+
+      .dialog-paginator ::ng-deep .mat-mdc-paginator-page-size {
+        width: auto;
+        justify-content: flex-end;
+        margin-right: 0.75rem;
+      }
+
+      .dialog-paginator ::ng-deep .mat-mdc-paginator-range-actions {
+        width: auto;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+      }
+
+      .dialog-paginator ::ng-deep .mat-mdc-paginator-range-label {
+        margin: 0 0.75rem;
+        white-space: nowrap;
+      }
+
+      .dialog-paginator ::ng-deep .mat-mdc-paginator-page-size-select {
+        width: 84px;
       }
 
       @media (max-width: 760px) {
