@@ -49,7 +49,13 @@ type HostingDnsProvider = {
   HdpUUID: string;
   HdpName: string;
   HdpProvider: string;
-  HdpConfig?: Record<string, unknown> | null;
+  HdpApiEndpoint?: string | null;
+  HdpAccessKey?: string | null;
+  HdpRegion?: string | null;
+  HdpHostedZoneID?: string | null;
+  HdpDefaultTtl?: number | null;
+  HdpVerifyTls?: number | null;
+  HdpHasSecret?: number | null;
   HdpIsDefault: number;
   HdpStatus: ProviderStatus;
   HdpNotes?: string | null;
@@ -149,8 +155,13 @@ export class HostingDnsProvidersPage {
     provider: 'manual',
     isDefault: false,
     status: 1 as ProviderStatus,
-    configJson: '',
-    credentialsJson: '',
+    apiEndpoint: '',
+    accessKey: '',
+    secret: '',
+    region: '',
+    hostedZoneID: '',
+    defaultTtl: null as number | null,
+    verifyTls: true,
     notes: '',
   });
   readonly providerForm = createForm(this.providerFormModel, (schema) => {
@@ -230,8 +241,13 @@ export class HostingDnsProvidersPage {
       provider: 'manual',
       isDefault: false,
       status: 1,
-      configJson: '',
-      credentialsJson: '',
+      apiEndpoint: '',
+      accessKey: '',
+      secret: '',
+      region: '',
+      hostedZoneID: '',
+      defaultTtl: null,
+      verifyTls: true,
       notes: '',
     });
     this.openProviderDialog();
@@ -244,8 +260,13 @@ export class HostingDnsProvidersPage {
       provider: provider.HdpProvider ?? 'manual',
       isDefault: Boolean(provider.HdpIsDefault),
       status: (provider.HdpStatus ?? 1) as ProviderStatus,
-      configJson: provider.HdpConfig ? JSON.stringify(provider.HdpConfig, null, 2) : '',
-      credentialsJson: '',
+      apiEndpoint: provider.HdpApiEndpoint ?? '',
+      accessKey: provider.HdpAccessKey ?? '',
+      secret: '',
+      region: provider.HdpRegion ?? '',
+      hostedZoneID: provider.HdpHostedZoneID ?? '',
+      defaultTtl: provider.HdpDefaultTtl ?? null,
+      verifyTls: provider.HdpVerifyTls !== 0,
       notes: provider.HdpNotes ?? '',
     });
     this.openProviderDialog();
@@ -269,22 +290,17 @@ export class HostingDnsProvidersPage {
       return;
     }
 
-    let config: Record<string, unknown> | null = null;
-    let credentials: Record<string, unknown> | null = null;
-    try {
-      config = this.parseJsonObject(values.configJson, 'Config');
-      credentials = this.parseJsonObject(values.credentialsJson, 'Credentials');
-    } catch (err) {
-      this.snack.warning(err instanceof Error ? err.message : 'Invalid JSON data.');
-      return;
-    }
-
     this.saving.set(true);
     const payload = {
       name,
       provider: values.provider,
-      config,
-      credentials,
+      apiEndpoint: values.apiEndpoint.trim() || null,
+      accessKey: values.accessKey.trim() || null,
+      secret: values.secret.trim() || null,
+      region: values.region.trim() || null,
+      hostedZoneID: values.hostedZoneID.trim() || null,
+      defaultTtl: this.optionalNumber(values.defaultTtl),
+      verifyTls: values.verifyTls,
       isDefault: values.isDefault,
       status: values.status,
       notes: values.notes.trim() || null,
@@ -310,8 +326,13 @@ export class HostingDnsProvidersPage {
           provider: 'manual',
           isDefault: false,
           status: 1,
-          configJson: '',
-          credentialsJson: '',
+          apiEndpoint: '',
+          accessKey: '',
+          secret: '',
+          region: '',
+          hostedZoneID: '',
+          defaultTtl: null,
+          verifyTls: true,
           notes: '',
         });
       }
@@ -435,14 +456,10 @@ export class HostingDnsProvidersPage {
     return this.catalog().find((item) => item.value === value)?.label ?? value;
   }
 
-  private parseJsonObject(value: string, label: string): Record<string, unknown> | null {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    const parsed = JSON.parse(trimmed);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new Error(`${label} must be a JSON object.`);
-    }
-    return parsed as Record<string, unknown>;
+  private optionalNumber(value: number | string | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   private resetForm() {
@@ -452,8 +469,13 @@ export class HostingDnsProvidersPage {
       provider: 'manual',
       isDefault: false,
       status: 1,
-      configJson: '',
-      credentialsJson: '',
+      apiEndpoint: '',
+      accessKey: '',
+      secret: '',
+      region: '',
+      hostedZoneID: '',
+      defaultTtl: null,
+      verifyTls: true,
       notes: '',
     });
   }

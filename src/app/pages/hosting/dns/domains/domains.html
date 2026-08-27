@@ -18,7 +18,7 @@
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Domain' | transloco }}</mat-label>
-        <input matInput placeholder="Search by domain" [formField]="filterForm.name" />
+        <input matInput [placeholder]="'Search by domain' | transloco" [formField]="filterForm.name" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
@@ -160,7 +160,7 @@
               [class.is-active]="row.HddStatus === 1"
               [class.is-inactive]="row.HddStatus !== 1"
             >
-              {{ statusLabel(row.HddStatus) }}
+              {{ statusLabel(row.HddStatus) | transloco }}
             </mat-chip>
           </td>
         </ng-container>
@@ -230,12 +230,15 @@
         <mat-tab [label]="'Record' | transloco">
           <div class="tab-content">
             <form class="form-grid">
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Domain' | transloco }}</mat-label>
-                <input matInput placeholder="example.com" [formField]="domainForm.name" />
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Status' | transloco }}</mat-label>
+                <mat-select [formField]="domainForm.status">
+                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
+                </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Customer' | transloco }}</mat-label>
                 <mat-select
                   [formField]="domainForm.customerUUID"
@@ -258,14 +261,12 @@
                     </mat-form-field>
                   </mat-option>
                   @for (customer of filteredCustomerOptions(); track customer.CustomerUUID) {
-                    <mat-option [value]="customer.CustomerUUID">{{
-                      customerLabel(customer)
-                    }}</mat-option>
+                    <mat-option [value]="customer.CustomerUUID">{{ customerLabel(customer) }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Provider' | transloco }}</mat-label>
                 <mat-select
                   [formField]="domainForm.providerUUID"
@@ -294,18 +295,35 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Status' | transloco }}</mat-label>
-                <mat-select [formField]="domainForm.status">
-                  <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
-                  <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
-                </mat-select>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Domain' | transloco }}</mat-label>
+                <input matInput placeholder="example.com" [formField]="domainForm.name" />
               </mat-form-field>
             </form>
           </div>
         </mat-tab>
 
-        <mat-tab label="Notes">
+        <mat-tab [label]="'DNS settings' | transloco">
+          <div class="tab-content">
+            <form class="form-grid">
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Provider zone ID' | transloco }}</mat-label>
+                <input matInput placeholder="Z1234567890" [formField]="domainForm.providerZoneID" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Default TTL' | transloco }}</mat-label>
+                <input matInput type="number" [formField]="domainForm.defaultTtl" />
+              </mat-form-field>
+
+              <div class="checkbox-wrap span-1">
+                <mat-checkbox [formField]="domainForm.autoSync">{{ 'Auto sync' | transloco }}</mat-checkbox>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+
+        <mat-tab [label]="'Notes' | transloco">
           <div class="tab-content notes-tab-content">
             <form>
               <mat-form-field appearance="outline" class="notes-field">
@@ -313,7 +331,7 @@
                 <textarea
                   matInput
                   rows="12"
-                  placeholder="Optional notes"
+                  [placeholder]="'Optional notes' | transloco"
                   [formField]="domainForm.notes"
                 ></textarea>
               </mat-form-field>
