@@ -406,17 +406,17 @@ function config(): ConfigurableCrudConfig {
       }
 
       .dial-pattern-examples-dialog .dialog-content {
-        gap: 0.75rem;
+        padding-top: 0.85rem !important;
       }
 
       .examples-content-shell {
         display: flex;
         flex: 1 1 auto;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.9rem;
         min-height: 0;
         overflow: hidden;
-        padding: 0 var(--dial-pattern-dialog-inset);
+        padding: 0 var(--dial-pattern-dialog-inset) 0.9rem;
       }
 
       .dialog-filter-grid {
@@ -431,7 +431,7 @@ function config(): ConfigurableCrudConfig {
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
-        padding: 0.1rem 0 0.35rem;
+        padding: 0.1rem 0 1rem;
         scrollbar-gutter: stable;
       }
 
