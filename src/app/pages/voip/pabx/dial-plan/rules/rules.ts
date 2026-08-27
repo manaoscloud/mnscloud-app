@@ -350,7 +350,7 @@ function config(): ConfigurableCrudConfig {
                 <th mat-header-cell *matHeaderCellDef>{{ 'Regex' | transloco }}</th>
                 <td mat-cell *matCellDef="let template">
                   <div class="record-stack">
-                    <code class="regex-inline">{{ template.regex }}</code>
+                    <span class="record-main regex-text">{{ template.regex }}</span>
                     <span class="record-uuid">{{ template.description || '-' }}</span>
                   </div>
                 </td>
@@ -376,8 +376,10 @@ function config(): ConfigurableCrudConfig {
               </ng-container>
 
               <ng-container matColumnDef="test">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Test' | transloco }}</th>
-                <td mat-cell *matCellDef="let template">
+                <th mat-header-cell *matHeaderCellDef class="status-col">
+                  {{ 'Test' | transloco }}
+                </th>
+                <td mat-cell *matCellDef="let template" class="status-col">
                   @if (testNumber.trim()) {
                     <span
                       class="status-pill status-chip state-chip"
@@ -463,56 +465,40 @@ function config(): ConfigurableCrudConfig {
   styles: [
     `
       .dial-pattern-examples-dialog {
-        --dial-pattern-dialog-inset: 0;
         min-height: 0;
-      }
-
-      .dial-pattern-examples-dialog .dialog-content {
-        padding-top: 0.65rem !important;
       }
 
       .examples-content-shell {
         display: flex;
         flex: 1 1 auto;
         flex-direction: column;
-        gap: 0.9rem;
+        gap: 0.75rem;
         min-height: 0;
-        overflow: hidden;
-        padding: 0 var(--dial-pattern-dialog-inset) 0.9rem;
+        overflow: auto;
+        padding: 0.65rem 0 0.25rem;
+        scrollbar-gutter: stable;
       }
 
       .dialog-filter-grid {
         flex: 0 0 auto;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         margin-bottom: 0;
-        padding-top: 0.45rem;
+        padding-top: 0;
       }
 
       .dial-pattern-examples-dialog .table-wrapper {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow: auto;
-        scrollbar-gutter: stable;
+        flex: 0 0 auto;
+        overflow-x: auto;
+        overflow-y: hidden;
       }
 
       .dial-pattern-examples-dialog .form-actions {
-        box-sizing: border-box;
-        margin: 0 var(--dial-pattern-dialog-inset) 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        width: auto;
+        margin-top: 0 !important;
       }
 
-      .regex-inline {
-        background: color-mix(in srgb, currentColor 8%, transparent);
-        border-radius: 0.45rem;
-        display: inline-block;
-        line-height: 1.25;
-        max-width: 100%;
-        overflow: hidden;
-        padding: 0.32rem 0.48rem;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+      .regex-text {
+        font-family: var(--mns-mono-font, 'Roboto Mono', monospace);
+        font-size: 0.82rem;
       }
 
       .dial-pattern-examples-dialog .state-chip.status-active {
@@ -541,13 +527,10 @@ function config(): ConfigurableCrudConfig {
 
       .dialog-paginator {
         flex: 0 0 auto;
+        margin-top: 0;
       }
 
       @media (max-width: 760px) {
-        .dial-pattern-examples-dialog {
-          --dial-pattern-dialog-inset: 0;
-        }
-
         .dial-pattern-examples-dialog .erp-table {
           min-width: 980px;
         }
