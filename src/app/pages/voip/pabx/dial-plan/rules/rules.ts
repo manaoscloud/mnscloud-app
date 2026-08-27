@@ -330,58 +330,83 @@ function config(): ConfigurableCrudConfig {
             </mat-form-field>
           </div>
 
-          <div class="example-list">
-            @for (template of filteredTemplates(); track template.templateUUID) {
-              <article class="example-card">
-                <div class="example-heading">
-                  <div class="example-title">
-                    <strong>{{ template.name }}</strong>
-                    <span>{{ template.profileName || profileName(template.profileUUID) }}</span>
-                  </div>
-                  <mat-chip class="status-pill status-chip">{{
-                    template.safeRegexStatus || 'safe'
-                  }}</mat-chip>
-                </div>
+          <div class="example-list table-scroll-shell">
+            @if (filteredTemplates().length) {
+              <table mat-table [dataSource]="filteredTemplates()" class="crud-table example-table">
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'Name' | transloco }}</th>
+                  <td mat-cell *matCellDef="let template">
+                    <div class="example-title">
+                      <strong>{{ template.name }}</strong>
+                      <span>{{ template.profileName || profileName(template.profileUUID) }}</span>
+                    </div>
+                  </td>
+                </ng-container>
 
-                <code>{{ template.regex }}</code>
+                <ng-container matColumnDef="regex">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'Regex' | transloco }}</th>
+                  <td mat-cell *matCellDef="let template">
+                    <code>{{ template.regex }}</code>
+                    <span class="example-description">{{ template.description || '-' }}</span>
+                  </td>
+                </ng-container>
 
-                <p class="example-description">{{ template.description || '-' }}</p>
-
-                <div class="example-meta">
-                  <span>
-                    {{ 'Direction' | transloco }}:
+                <ng-container matColumnDef="direction">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'Direction' | transloco }}</th>
+                  <td mat-cell *matCellDef="let template">
                     {{ optionLabel(directions, template.direction) | transloco }}
-                  </span>
-                  <span>{{ 'Category' | transloco }}: {{ template.category }}</span>
-                  @if (testNumber.trim()) {
-                    <span>
-                      {{ 'Test' | transloco }}:
-                      {{
-                        matches(template.regex)
-                          ? ('Matches' | transloco)
-                          : ('Does not match' | transloco)
-                      }}
-                    </span>
-                  }
-                </div>
+                  </td>
+                </ng-container>
 
-                <div class="example-samples">
-                  <span>{{ 'Examples' | transloco }}:</span>
-                  <span>{{ (template.exampleMatches ?? []).join(', ') || '-' }}</span>
-                </div>
+                <ng-container matColumnDef="category">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'Category' | transloco }}</th>
+                  <td mat-cell *matCellDef="let template">
+                    <div class="example-meta">
+                      <span>{{ template.category || '-' }}</span>
+                      <span>{{ (template.exampleMatches ?? []).join(', ') || '-' }}</span>
+                    </div>
+                  </td>
+                </ng-container>
 
-                <div class="example-actions">
-                  <button mat-stroked-button type="button" (click)="copy(template.regex)">
-                    <mat-icon>content_copy</mat-icon>
-                    {{ 'Copy regex' | transloco }}
-                  </button>
-                  <button mat-flat-button color="primary" type="button" (click)="apply(template)">
-                    <mat-icon>check</mat-icon>
-                    {{ 'Apply regex' | transloco }}
-                  </button>
-                </div>
-              </article>
-            } @empty {
+                <ng-container matColumnDef="test">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'Test' | transloco }}</th>
+                  <td mat-cell *matCellDef="let template">
+                    @if (testNumber.trim()) {
+                      <mat-chip class="status-pill status-chip">
+                        {{
+                          matches(template.regex)
+                            ? ('Matches' | transloco)
+                            : ('Does not match' | transloco)
+                        }}
+                      </mat-chip>
+                    } @else {
+                      <mat-chip class="status-pill status-chip">{{
+                        template.safeRegexStatus || 'safe'
+                      }}</mat-chip>
+                    }
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
+                  <td mat-cell *matCellDef="let template">
+                    <div class="table-actions">
+                      <button mat-stroked-button type="button" (click)="copy(template.regex)">
+                        <mat-icon>content_copy</mat-icon>
+                        {{ 'Copy regex' | transloco }}
+                      </button>
+                      <button mat-flat-button color="primary" type="button" (click)="apply(template)">
+                        <mat-icon>check</mat-icon>
+                        {{ 'Apply regex' | transloco }}
+                      </button>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="exampleColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: exampleColumns"></tr>
+              </table>
+            } @else {
               <div class="empty-state">{{ 'No regex examples found.' | transloco }}</div>
             }
           </div>
@@ -426,68 +451,96 @@ function config(): ConfigurableCrudConfig {
       }
 
       .example-list {
-        display: grid;
-        align-content: start;
-        gap: 0.75rem;
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
-        padding: 0.1rem 0 1.4rem;
+        padding: 0 0 1.4rem;
         scrollbar-gutter: stable;
       }
 
       .dial-pattern-examples-dialog .form-actions {
         margin-top: 0 !important;
-        padding-left: var(--dial-pattern-dialog-inset) !important;
-        padding-right: var(--dial-pattern-dialog-inset) !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
       }
 
-      .example-card {
+      .example-table {
         border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
         border-radius: 1rem;
-        display: grid;
-        gap: 0.65rem;
-        min-width: 0;
-        padding: 0.9rem;
+        overflow: hidden;
+        width: 100%;
       }
 
-      .example-heading,
-      .example-meta,
-      .example-actions {
-        align-items: center;
+      .example-table th,
+      .example-table td {
+        vertical-align: top;
+      }
+
+      .example-table th:last-child,
+      .example-table td:last-child {
+        text-align: right;
+      }
+
+      .example-table .mat-column-name {
+        width: 18%;
+      }
+
+      .example-table .mat-column-regex {
+        width: 34%;
+      }
+
+      .example-table .mat-column-direction,
+      .example-table .mat-column-test {
+        width: 11%;
+      }
+
+      .example-table .mat-column-category {
+        width: 14%;
+      }
+
+      .example-table .mat-column-actions {
+        width: 12%;
+      }
+
+      .table-actions {
+        align-items: flex-end;
         display: flex;
-        gap: 12px;
-        justify-content: space-between;
+        flex-direction: column;
+        gap: 0.45rem;
       }
 
-      .example-title {
+      .table-actions button {
+        min-width: 148px;
+      }
+
+      .example-title,
+      .example-meta {
         display: grid;
         gap: 0.2rem;
         min-width: 0;
       }
 
+      .example-description {
+        display: block;
+        margin-top: 0.35rem;
+      }
+
       .example-title strong,
-      .example-title span {
+      .example-title span,
+      .example-description,
+      .example-meta span {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
-      .example-heading span,
       .example-meta,
-      .example-samples,
       .example-description {
         opacity: 0.78;
       }
 
-      .example-meta,
-      .example-samples {
-        flex-wrap: wrap;
+      .example-meta {
         font-size: 0.88rem;
-      }
-
-      .example-description {
-        margin: 0;
       }
 
       code {
@@ -510,14 +563,12 @@ function config(): ConfigurableCrudConfig {
           --dial-pattern-dialog-inset: 0;
         }
 
-        .example-heading,
-        .example-actions {
-          align-items: stretch;
-          flex-direction: column;
+        .table-scroll-shell {
+          overflow-x: auto;
         }
 
-        .example-actions button {
-          width: 100%;
+        .example-table {
+          min-width: 980px;
         }
       }
     `,
@@ -531,6 +582,7 @@ export class VoipDialPatternExamplesDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<VoipDialPatternExamplesDialogComponent>);
 
   readonly directions = directions;
+  readonly exampleColumns = ['name', 'regex', 'direction', 'category', 'test', 'actions'];
   selectedProfile = '';
   search = '';
   testNumber = '';
