@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudField,
@@ -315,7 +316,7 @@ function config(): ConfigurableCrudConfig {
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="span-2">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Search examples' | transloco }}</mat-label>
               <input matInput [value]="search" (input)="search = $any($event.target).value" />
             </mat-form-field>
@@ -377,7 +378,11 @@ function config(): ConfigurableCrudConfig {
                 <th mat-header-cell *matHeaderCellDef>{{ 'Test' | transloco }}</th>
                 <td mat-cell *matCellDef="let template">
                   @if (testNumber.trim()) {
-                    <span class="status-pill status-chip state-chip">
+                    <span
+                      class="status-pill status-chip state-chip"
+                      [class.status-active]="matches(template.regex)"
+                      [class.status-inactive]="!matches(template.regex)"
+                    >
                       {{
                         matches(template.regex)
                           ? ('Matches' | transloco)
@@ -385,8 +390,12 @@ function config(): ConfigurableCrudConfig {
                       }}
                     </span>
                   } @else {
-                    <span class="status-pill status-chip state-chip">
-                      {{ template.safeRegexStatus || 'safe' }}
+                    <span
+                      class="status-pill status-chip state-chip"
+                      [class.status-active]="safeRegexStatus(template) === 'safe'"
+                      [class.status-warning]="safeRegexStatus(template) !== 'safe'"
+                    >
+                      {{ safeRegexStatus(template) | transloco }}
                     </span>
                   }
                 </td>
@@ -410,7 +419,7 @@ function config(): ConfigurableCrudConfig {
                       mat-icon-button
                       color="primary"
                       type="button"
-                      [matTooltip]="'Apply regex' | transloco"
+                      [matTooltip]="'Open new rule with this regex' | transloco"
                       (click)="apply(template)"
                     >
                       <mat-icon>check</mat-icon>
@@ -464,6 +473,7 @@ function config(): ConfigurableCrudConfig {
 
       .dialog-filter-grid {
         flex: 0 0 auto;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         margin-bottom: 0;
         padding-top: 0.45rem;
       }
@@ -495,6 +505,24 @@ function config(): ConfigurableCrudConfig {
         white-space: nowrap;
       }
 
+      .dial-pattern-examples-dialog .state-chip.status-active {
+        background: color-mix(in srgb, #1db954 34%, transparent);
+        border-color: color-mix(in srgb, #1db954 82%, transparent);
+        color: #d8ffe5;
+      }
+
+      .dial-pattern-examples-dialog .state-chip.status-inactive {
+        background: color-mix(in srgb, #ff5252 22%, transparent);
+        border-color: color-mix(in srgb, #ff5252 72%, transparent);
+        color: #ffdada;
+      }
+
+      .dial-pattern-examples-dialog .state-chip.status-warning {
+        background: color-mix(in srgb, #ffb020 24%, transparent);
+        border-color: color-mix(in srgb, #ffb020 78%, transparent);
+        color: #ffe8b3;
+      }
+
       @media (max-width: 760px) {
         .dial-pattern-examples-dialog {
           --dial-pattern-dialog-inset: 0;
@@ -502,6 +530,10 @@ function config(): ConfigurableCrudConfig {
 
         .dial-pattern-examples-dialog .erp-table {
           min-width: 980px;
+        }
+
+        .dialog-filter-grid {
+          grid-template-columns: 1fr;
         }
       }
     `,
@@ -513,6 +545,7 @@ export class VoipDialPatternExamplesDialogComponent {
     templates: DialPatternTemplate[];
   }>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<VoipDialPatternExamplesDialogComponent>);
+  private readonly snack = inject(SnackbarService);
 
   readonly directions = directions;
   readonly exampleColumns = ['name', 'regex', 'direction', 'category', 'test', 'actions'];
@@ -554,8 +587,17 @@ export class VoipDialPatternExamplesDialogComponent {
     }
   }
 
-  copy(regex: string): void {
-    void navigator.clipboard?.writeText(regex);
+  safeRegexStatus(template: DialPatternTemplate): string {
+    return String(template.safeRegexStatus || 'safe').toLowerCase();
+  }
+
+  async copy(regex: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(regex);
+      this.snack.success('Regex copied.');
+    } catch {
+      this.snack.error('Failed to copy regex.');
+    }
   }
 
   apply(template: DialPatternTemplate): void {
@@ -624,19 +666,22 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
       const template = (await firstValueFrom(binding.ref.afterClosed())) as
         DialPatternTemplate | undefined;
       if (!template) return;
-      this.setFieldValue('operator', 'regex');
-      this.setFieldValue('pattern', template.regex);
-      if (!String(this.formValues()['name'] ?? '').trim()) {
-        this.setFieldValue('name', template.name);
-      }
+      this.startCreate();
+      const nextValues: ConfigurableCrudRecord = {
+        operator: 'regex',
+        pattern: template.regex,
+        name: template.name,
+      };
       if (template.direction && template.direction !== 'any') {
-        this.setFieldValue('direction', template.direction);
+        nextValues['direction'] = template.direction;
       }
       if (template.category === 'emergency') {
-        this.setFieldValue('resultType', 'emergency');
+        nextValues['resultType'] = 'emergency';
       } else if (template.category === 'service') {
-        this.setFieldValue('resultType', 'feature_code');
+        nextValues['resultType'] = 'feature_code';
       }
+      this.patchFormValues(nextValues);
+      this.snack.success(this.t('Regex applied to a new dial plan rule.'));
     } finally {
       binding.stop();
     }
