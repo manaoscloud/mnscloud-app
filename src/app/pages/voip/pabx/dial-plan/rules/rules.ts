@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { PageEvent } from '@angular/material/paginator';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
@@ -307,7 +308,7 @@ function config(): ConfigurableCrudConfig {
               <mat-label>{{ 'Pattern profile' | transloco }}</mat-label>
               <mat-select
                 [value]="selectedProfile"
-                (selectionChange)="selectedProfile = $event.value"
+                (selectionChange)="setSelectedProfile($event.value)"
               >
                 <mat-option value="">{{ 'All profiles' | transloco }}</mat-option>
                 @for (profile of data.profiles; track profile.profileUUID) {
@@ -318,7 +319,7 @@ function config(): ConfigurableCrudConfig {
 
             <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Search examples' | transloco }}</mat-label>
-              <input matInput [value]="search" (input)="search = $any($event.target).value" />
+              <input matInput [value]="search" (input)="setSearch($any($event.target).value)" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-1">
@@ -326,13 +327,13 @@ function config(): ConfigurableCrudConfig {
               <input
                 matInput
                 [value]="testNumber"
-                (input)="testNumber = $any($event.target).value"
+                (input)="setTestNumber($any($event.target).value)"
               />
             </mat-form-field>
           </div>
 
           <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="filteredTemplates()" class="erp-table">
+            <table mat-table [dataSource]="pagedTemplates()" class="erp-table">
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>{{ 'Name' | transloco }}</th>
                 <td mat-cell *matCellDef="let template">
@@ -392,7 +393,7 @@ function config(): ConfigurableCrudConfig {
                   } @else {
                     <span
                       class="status-pill status-chip state-chip"
-                      [class.status-active]="safeRegexStatus(template) === 'safe'"
+                      [class.status-neutral]="safeRegexStatus(template) === 'safe'"
                       [class.status-warning]="safeRegexStatus(template) !== 'safe'"
                     >
                       {{ safeRegexStatus(template) | transloco }}
@@ -437,6 +438,15 @@ function config(): ConfigurableCrudConfig {
               </tr>
             </table>
           </div>
+
+          <mat-paginator
+            class="mobile-paginator dialog-paginator"
+            [length]="filteredTemplates().length"
+            [pageSize]="pageSize"
+            [pageIndex]="pageIndex"
+            [pageSizeOptions]="pageSizeOptions"
+            (page)="handlePage($event)"
+          ></mat-paginator>
         </div>
       </mat-dialog-content>
 
@@ -473,7 +483,7 @@ function config(): ConfigurableCrudConfig {
 
       .dialog-filter-grid {
         flex: 0 0 auto;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         margin-bottom: 0;
         padding-top: 0.45rem;
       }
@@ -523,6 +533,16 @@ function config(): ConfigurableCrudConfig {
         color: #ffe8b3;
       }
 
+      .dial-pattern-examples-dialog .state-chip.status-neutral {
+        background: color-mix(in srgb, currentColor 6%, transparent);
+        border-color: color-mix(in srgb, currentColor 32%, transparent);
+        color: color-mix(in srgb, currentColor 82%, transparent);
+      }
+
+      .dialog-paginator {
+        flex: 0 0 auto;
+      }
+
       @media (max-width: 760px) {
         .dial-pattern-examples-dialog {
           --dial-pattern-dialog-inset: 0;
@@ -549,9 +569,12 @@ export class VoipDialPatternExamplesDialogComponent {
 
   readonly directions = directions;
   readonly exampleColumns = ['name', 'regex', 'direction', 'category', 'test', 'actions'];
+  readonly pageSizeOptions = [5, 10, 25];
   selectedProfile = '';
   search = '';
   testNumber = '';
+  pageIndex = 0;
+  pageSize = 5;
 
   filteredTemplates(): DialPatternTemplate[] {
     const term = this.search.trim().toLowerCase();
@@ -566,6 +589,35 @@ export class VoipDialPatternExamplesDialogComponent {
       const testMatches = !test || this.matches(template.regex);
       return profileMatches && textMatches && testMatches;
     });
+  }
+
+  pagedTemplates(): DialPatternTemplate[] {
+    const start = this.pageIndex * this.pageSize;
+    return this.filteredTemplates().slice(start, start + this.pageSize);
+  }
+
+  setSelectedProfile(value: string): void {
+    this.selectedProfile = value;
+    this.resetPage();
+  }
+
+  setSearch(value: string): void {
+    this.search = value;
+    this.resetPage();
+  }
+
+  setTestNumber(value: string): void {
+    this.testNumber = value;
+    this.resetPage();
+  }
+
+  handlePage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+  }
+
+  resetPage(): void {
+    this.pageIndex = 0;
   }
 
   profileName(profileUUID: string): string {
