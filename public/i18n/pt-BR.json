@@ -2236,7 +2236,6 @@
   "All profiles": "Todos os perfis",
   "Search examples": "Pesquisar exemplos",
   "Test number": "Número de teste",
-  "Category": "Categoria",
   "Test": "Teste",
   "Matches": "Combina",
   "Does not match": "Não combina",
@@ -2256,7 +2255,6 @@
   "Prefix": "Prefixo",
   "Exact": "Exato",
   "Emergency": "Emergência",
-  "Service": "Serviço",
   "Feature code": "Código de recurso",
   "Strip digits": "Remover dígitos",
   "Prepend": "Prefixar",
@@ -3852,5 +3850,6 @@
   "London, United Kingdom": "Londres, Reino Unido",
   "Madrid, Spain": "Madri, Espanha",
   "Paris, France": "Paris, França",
-  "Berlin, Germany": "Berlim, Alemanha"
+  "Berlin, Germany": "Berlim, Alemanha",
+  "Regex applied to a new dial plan rule.": "Regex aplicada a uma nova regra de plano de discagem."
 }
