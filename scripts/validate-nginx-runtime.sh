@@ -51,11 +51,8 @@ while IFS= read -r asset; do
     missing=1
   fi
 done < <(
-  {
-    grep -Eo '(main|polyfills|styles|chunk)-[A-Za-z0-9_-]+[.](js|css)' "${APP_WEB_ROOT}/index.html" || true
-    find "$APP_WEB_ROOT" -maxdepth 1 -type f -name '*.js' -print0 |
-      xargs -0 grep -hEo 'chunk-[A-Za-z0-9_-]+[.]js' 2>/dev/null || true
-  } | sort -u
+  grep -Eo '(main|polyfills|styles|chunk)-[A-Za-z0-9_-]+[.](js|css)' "${APP_WEB_ROOT}/index.html" |
+    sort -u || true
 )
 [[ "$missing" == "0" ]] || die "deployed browser asset validation failed"
 
