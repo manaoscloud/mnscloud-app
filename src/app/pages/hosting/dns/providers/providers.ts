@@ -47,6 +47,13 @@ const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 0, label: 'No' },
 ];
 
+type HostingDnsDomainTemplateItem = {
+  HdtUUID: string;
+  HdtName: string;
+  HdtCode?: string | null;
+  HdtScope?: string | null;
+};
+
 const TEST_PROVIDER_ACTION: ConfigurableCrudRowAction = {
   key: 'test',
   label: 'Test',
@@ -89,6 +96,7 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   ],
   tabLabels: {
     authentication: 'Credentials',
+    record: 'DNS records',
     notes: 'Notes',
   },
   initialValues: {
@@ -103,6 +111,7 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     hostedZoneID: '',
     defaultTtl: null,
     verifyTls: 1,
+    templateUUID: '',
     notes: '',
   },
   columns: [
@@ -242,6 +251,16 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       hiddenWhen: ({ values }) => !providerUsesField('verifyTls', values['provider']),
     },
     {
+      key: 'templateUUID',
+      source: 'HostingDnsDomainTemplateHdtUUID',
+      payloadKey: 'templateUUID',
+      label: 'Default DNS template',
+      type: 'search-select',
+      placeholder: 'Search',
+      tab: 'record',
+      span: 1,
+    },
+    {
       key: 'notes',
       source: 'HdpNotes',
       payloadKey: 'notes',
@@ -263,6 +282,7 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
 })
 export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly catalog = signal<HostingDnsProviderCatalogItem[]>([]);
+  private readonly templates = signal<HostingDnsDomainTemplateItem[]>([]);
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.catalog().map((item) => ({
       value: item.value,
@@ -271,19 +291,30 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       searchText: `${item.value} ${item.label}`,
     })),
   );
+  private readonly templateOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.templates().map((item) => ({
+      value: item.HdtUUID,
+      label: item.HdtName,
+      description: item.HdtCode || item.HdtScope || undefined,
+      searchText: `${item.HdtName} ${item.HdtCode ?? ''} ${item.HdtScope ?? ''}`,
+    })),
+  );
 
   constructor() {
     super(HOSTING_DNS_PROVIDER_CONFIG);
     void this.fetchCatalog();
+    void this.fetchTemplates();
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
     if (!this.catalog().length) await this.fetchCatalog();
+    if (!this.templates().length) await this.fetchTemplates();
     return super.fetchItems(filters);
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'provider') return this.providerOptions();
+    if (key === 'templateUUID') return this.templateOptions();
     return [];
   }
 
@@ -300,6 +331,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       hostedZoneID: providerUsesField('hostedZoneID', provider) ? payload['hostedZoneID'] : null,
       defaultTtl: providerUsesField('defaultTtl', provider) ? payload['defaultTtl'] : null,
       verifyTls: providerUsesField('verifyTls', provider) ? truthyNumber(payload['verifyTls']) : 1,
+      templateUUID: payload['templateUUID'] || null,
       isDefault: truthyNumber(payload['isDefault']),
       status: payload['status'],
       notes: payload['notes'],
@@ -320,6 +352,18 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     } catch (error) {
       this.catalog.set(fallbackCatalog());
       this.snack.error(this.errorMessage(error) || 'Failed to load provider catalog.');
+    }
+  }
+
+  private async fetchTemplates() {
+    try {
+      const response = await this.api.get<{ data?: { items?: HostingDnsDomainTemplateItem[] } }>(
+        'hosting/dns/domains/templates?status=1&limit=500&offset=0',
+      );
+      this.templates.set(response?.data?.items ?? []);
+    } catch (error) {
+      this.templates.set([]);
+      this.snack.error(this.errorMessage(error) || 'Failed to load DNS templates.');
     }
   }
 
