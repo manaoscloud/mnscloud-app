@@ -36,6 +36,13 @@ import { RefreshButtonComponent } from '../../../../shared/refresh-button/refres
 import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 
 type DomainStatus = 0 | 1;
+type DomainProvisionStatus =
+  | 'not_configured'
+  | 'pending'
+  | 'running'
+  | 'active'
+  | 'failed'
+  | 'unsupported';
 
 type HostingDnsDomain = {
   HddUUID: string;
@@ -48,8 +55,14 @@ type HostingDnsDomain = {
   ProviderPlatform?: string | null;
   HddProvider?: string | null;
   HddProviderZoneID?: string | null;
+  HddZoneIP?: string | null;
   HddDefaultTtl?: number | null;
   HddAutoSync?: number | null;
+  HddProvisionStatus?: DomainProvisionStatus | string | null;
+  HddProvisionMessage?: string | null;
+  HddLastProvisionedAt?: string | null;
+  HddLastProvisionError?: string | null;
+  HddLastProvisionJobUUID?: string | null;
   HddStatus: DomainStatus;
   HddNotes?: string | null;
 };
@@ -136,6 +149,7 @@ export class HostingDnsDomainsPage {
 
   readonly loading = this.domainsResource.isLoading;
   readonly saving = signal(false);
+  readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
   readonly domains = signal<HostingDnsDomain[]>([]);
   readonly customers = signal<CustomerOption[]>([]);
   readonly providers = signal<DomainProviderOption[]>([]);
@@ -156,7 +170,7 @@ export class HostingDnsDomainsPage {
     return this.sortedDomains().slice(start, start + this.pageSize());
   });
 
-  readonly displayedColumns = ['select', 'name', 'customer', 'provider', 'status', 'actions'];
+  readonly displayedColumns = ['select', 'name', 'customer', 'provider', 'provision', 'status', 'actions'];
 
   readonly filterFormModel = signal({
     name: '',
@@ -172,6 +186,7 @@ export class HostingDnsDomainsPage {
     providerUUID: '',
     status: 1 as DomainStatus,
     providerZoneID: '',
+    zoneIP: '',
     defaultTtl: null as number | null,
     autoSync: false,
     notes: '',
@@ -194,6 +209,13 @@ export class HostingDnsDomainsPage {
   );
   readonly filteredCustomerFilterOptions = computed(() =>
     this.filterCustomers(this.customerFilterSearch()),
+  );
+  readonly selectedProvider = computed(() => {
+    const providerUUID = this.domainFormModel().providerUUID;
+    return this.providers().find((provider) => provider.HdpUUID === providerUUID) ?? null;
+  });
+  readonly isCpanelDnsOnlyProvider = computed(
+    () => this.selectedProvider()?.HdpProvider === 'cpanel_dnsonly',
   );
 
   private readonly syncDomains = effect(() => {
@@ -281,6 +303,7 @@ export class HostingDnsDomainsPage {
       providerUUID: '',
       status: 1,
       providerZoneID: '',
+      zoneIP: '',
       defaultTtl: null,
       autoSync: false,
       notes: '',
@@ -298,6 +321,7 @@ export class HostingDnsDomainsPage {
       providerUUID: domain.HostingDnsProviderHdpUUID ?? '',
       status: (domain.HddStatus ?? 1) as DomainStatus,
       providerZoneID: domain.HddProviderZoneID ?? '',
+      zoneIP: domain.HddZoneIP ?? '',
       defaultTtl: domain.HddDefaultTtl ?? null,
       autoSync: domain.HddAutoSync === 1,
       notes: domain.HddNotes ?? '',
@@ -324,6 +348,7 @@ export class HostingDnsDomainsPage {
       customerUUID: values.customerUUID.trim(),
       providerUUID: values.providerUUID.trim() || null,
       providerZoneID: values.providerZoneID.trim() || null,
+      zoneIP: values.zoneIP.trim() || null,
       defaultTtl: this.optionalNumber(values.defaultTtl),
       autoSync: values.autoSync,
       status: values.status,
@@ -332,6 +357,11 @@ export class HostingDnsDomainsPage {
 
     if (!payload.name) {
       this.snack.warning('Domain name is required.');
+      return;
+    }
+
+    if (this.isCpanelDnsOnlyProvider() && payload.autoSync && !payload.zoneIP) {
+      this.snack.warning('Zone IP is required for cPanel DNSOnly automatic provisioning.');
       return;
     }
 
@@ -358,6 +388,7 @@ export class HostingDnsDomainsPage {
           providerUUID: '',
           status: 1,
           providerZoneID: '',
+          zoneIP: '',
           defaultTtl: null,
           autoSync: false,
           notes: '',
@@ -487,6 +518,68 @@ export class HostingDnsDomainsPage {
     return status === 1 ? 'Active' : 'Inactive';
   }
 
+  provisionLabel(status: HostingDnsDomain['HddProvisionStatus']) {
+    switch (status) {
+      case 'active':
+        return 'Provisioned';
+      case 'pending':
+        return 'Pending';
+      case 'running':
+        return 'Provisioning';
+      case 'failed':
+        return 'Failed';
+      case 'unsupported':
+        return 'Unsupported';
+      default:
+        return 'Not configured';
+    }
+  }
+
+  provisionTooltip(domain: HostingDnsDomain) {
+    return (
+      domain.HddLastProvisionError ||
+      domain.HddProvisionMessage ||
+      this.provisionLabel(domain.HddProvisionStatus)
+    );
+  }
+
+  canProvisionDomain(domain: HostingDnsDomain) {
+    const provider = String(domain.ProviderPlatform ?? domain.HddProvider ?? '').toLowerCase();
+    return domain.HddStatus === 1 && ['route53', 'cpanel_dnsonly'].includes(provider);
+  }
+
+  isProvisioning(domain: HostingDnsDomain) {
+    return this.provisioningDomainUUIDs().has(domain.HddUUID) || domain.HddProvisionStatus === 'running';
+  }
+
+  async provisionDomain(domain: HostingDnsDomain) {
+    if (!this.canProvisionDomain(domain) || this.isProvisioning(domain)) return;
+
+    this.provisioningDomainUUIDs.update((current) => new Set(current).add(domain.HddUUID));
+    try {
+      const response = await this.api.post<{
+        status?: string;
+        message?: string;
+        data?: { provision?: { message?: string; status?: string } };
+      }>(`hosting/dns/domains/${domain.HddUUID}/provision`, {});
+      const message = response?.data?.provision?.message || response?.message || 'DNS domain provisioned.';
+      if (response?.status === 'failed' || response?.data?.provision?.status === 'failed') {
+        this.snack.error(message);
+      } else {
+        this.snack.success(message);
+      }
+      this.domainsResource.reload();
+    } catch (err) {
+      this.snack.error(this.extractErrorMessage(err, 'Failed to provision DNS domain.'));
+    } finally {
+      this.provisioningDomainUUIDs.update((current) => {
+        const next = new Set(current);
+        next.delete(domain.HddUUID);
+        return next;
+      });
+    }
+  }
+
   providerDisplay(domain: HostingDnsDomain) {
     return domain.ProviderName || domain.HddProvider || '-';
   }
@@ -549,6 +642,7 @@ export class HostingDnsDomainsPage {
       providerUUID: '',
       status: 1,
       providerZoneID: '',
+      zoneIP: '',
       defaultTtl: null,
       autoSync: false,
       notes: '',
@@ -588,6 +682,8 @@ export class HostingDnsDomainsPage {
         return this.providerDisplay(domain);
       case 'customer':
         return this.customerDisplay(domain);
+      case 'provision':
+        return this.provisionLabel(domain.HddProvisionStatus);
       case 'status':
         return domain.HddStatus;
       default:
