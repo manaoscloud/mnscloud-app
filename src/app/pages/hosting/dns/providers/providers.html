@@ -220,39 +220,55 @@
         <mat-tab [label]="'Credentials' | transloco">
           <div class="tab-content">
             <form class="form-grid">
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'API endpoint' | transloco }}</mat-label>
-                <input matInput placeholder="https://dns.example.com:2087" [formField]="providerForm.apiEndpoint" />
-              </mat-form-field>
+              @if (providerUsesField('apiEndpoint')) {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ providerFieldLabel('apiEndpoint') | transloco }}</mat-label>
+                  <input matInput placeholder="https://dns.example.com:2087" [formField]="providerForm.apiEndpoint" />
+                </mat-form-field>
+              }
 
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Access key' | transloco }}</mat-label>
-                <input matInput [formField]="providerForm.accessKey" />
-              </mat-form-field>
+              @if (providerUsesField('accessKey')) {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ providerFieldLabel('accessKey') | transloco }}</mat-label>
+                  <input matInput [formField]="providerForm.accessKey" />
+                </mat-form-field>
+              }
 
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Secret / API token' | transloco }}</mat-label>
-                <input matInput type="password" autocomplete="new-password" [formField]="providerForm.secret" />
-              </mat-form-field>
+              @if (providerUsesField('secret')) {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ providerFieldLabel('secret') | transloco }}</mat-label>
+                  <input matInput type="password" autocomplete="new-password" [formField]="providerForm.secret" />
+                </mat-form-field>
+              }
 
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Region' | transloco }}</mat-label>
-                <input matInput placeholder="us-east-1" [formField]="providerForm.region" />
-              </mat-form-field>
+              @if (providerUsesField('region')) {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ providerFieldLabel('region') | transloco }}</mat-label>
+                  <input matInput placeholder="us-east-1" [formField]="providerForm.region" />
+                </mat-form-field>
+              }
 
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Hosted zone ID' | transloco }}</mat-label>
-                <input matInput placeholder="Z1234567890" [formField]="providerForm.hostedZoneID" />
-              </mat-form-field>
+              @if (providerUsesField('hostedZoneID')) {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ providerFieldLabel('hostedZoneID') | transloco }}</mat-label>
+                  <input matInput placeholder="Z1234567890" [formField]="providerForm.hostedZoneID" />
+                </mat-form-field>
+              }
 
-              <mat-form-field appearance="outline" class="span-1">
-                <mat-label>{{ 'Default TTL' | transloco }}</mat-label>
-                <input matInput type="number" [formField]="providerForm.defaultTtl" />
-              </mat-form-field>
+              @if (providerUsesField('defaultTtl')) {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ providerFieldLabel('defaultTtl') | transloco }}</mat-label>
+                  <input matInput type="number" [formField]="providerForm.defaultTtl" />
+                </mat-form-field>
+              }
 
-              <div class="checkbox-wrap span-1">
-                <mat-checkbox [formField]="providerForm.verifyTls">{{ 'Verify TLS' | transloco }}</mat-checkbox>
-              </div>
+              @if (providerUsesField('verifyTls')) {
+                <div class="checkbox-wrap span-1">
+                  <mat-checkbox [formField]="providerForm.verifyTls">{{
+                    providerFieldLabel('verifyTls') | transloco
+                  }}</mat-checkbox>
+                </div>
+              }
             </form>
           </div>
         </mat-tab>
@@ -262,7 +278,7 @@
             <form>
               <mat-form-field appearance="outline" class="notes-field">
                 <mat-label>{{ 'Notes' | transloco }}</mat-label>
-                <textarea matInput rows="12" [formField]="providerForm.notes"></textarea>
+                <textarea matInput rows="4" [formField]="providerForm.notes"></textarea>
               </mat-form-field>
             </form>
           </div>

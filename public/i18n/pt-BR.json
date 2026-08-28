@@ -3865,5 +3865,11 @@
   "Madrid, Spain": "Madri, Espanha",
   "Paris, France": "Paris, França",
   "Berlin, Germany": "Berlim, Alemanha",
-  "Regex applied to a new dial plan rule.": "Regex aplicada a uma nova regra de plano de discagem."
+  "Regex applied to a new dial plan rule.": "Regex aplicada a uma nova regra de plano de discagem.",
+  "AWS access key ID": "ID da chave de acesso AWS",
+  "AWS secret access key": "Chave secreta de acesso AWS",
+  "WHM API endpoint": "Endpoint da API WHM",
+  "WHM user": "Usuário WHM",
+  "WHM API token": "Token da API WHM",
+  "Please fill required provider field(s): {{fields}}.": "Preencha os campos obrigatórios do provedor: {{fields}}."
 }

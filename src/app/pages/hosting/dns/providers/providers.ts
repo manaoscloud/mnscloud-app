@@ -43,7 +43,18 @@ type DomainProviderCatalogItem = {
   supportsApi: boolean;
   supportsDns: boolean;
   supportsRegistration: boolean;
+  credentialFields?: HostingDnsProviderCredentialField[];
+  requiredCredentialFields?: HostingDnsProviderCredentialField[];
 };
+
+type HostingDnsProviderCredentialField =
+  | 'apiEndpoint'
+  | 'accessKey'
+  | 'secret'
+  | 'region'
+  | 'hostedZoneID'
+  | 'defaultTtl'
+  | 'verifyTls';
 
 type HostingDnsProvider = {
   HdpUUID: string;
@@ -290,17 +301,32 @@ export class HostingDnsProvidersPage {
       return;
     }
 
+    const missingFields = this.missingRequiredProviderFields(values);
+    if (missingFields.length) {
+      this.snack.warning('Please fill required provider field(s): {{fields}}.', 3000, {
+        fields: missingFields.join(', '),
+      });
+      return;
+    }
+
     this.saving.set(true);
+    const provider = values.provider;
     const payload = {
       name,
-      provider: values.provider,
-      apiEndpoint: values.apiEndpoint.trim() || null,
-      accessKey: values.accessKey.trim() || null,
-      secret: values.secret.trim() || null,
-      region: values.region.trim() || null,
-      hostedZoneID: values.hostedZoneID.trim() || null,
-      defaultTtl: this.optionalNumber(values.defaultTtl),
-      verifyTls: values.verifyTls,
+      provider,
+      apiEndpoint: this.providerUsesField('apiEndpoint', provider)
+        ? values.apiEndpoint.trim() || null
+        : null,
+      accessKey: this.providerUsesField('accessKey', provider) ? values.accessKey.trim() || null : null,
+      secret: this.providerUsesField('secret', provider) ? values.secret.trim() || null : null,
+      region: this.providerUsesField('region', provider) ? values.region.trim() || null : null,
+      hostedZoneID: this.providerUsesField('hostedZoneID', provider)
+        ? values.hostedZoneID.trim() || null
+        : null,
+      defaultTtl: this.providerUsesField('defaultTtl', provider)
+        ? this.optionalNumber(values.defaultTtl)
+        : null,
+      verifyTls: this.providerUsesField('verifyTls', provider) ? values.verifyTls : true,
       isDefault: values.isDefault,
       status: values.status,
       notes: values.notes.trim() || null,
@@ -456,10 +482,130 @@ export class HostingDnsProvidersPage {
     return this.catalog().find((item) => item.value === value)?.label ?? value;
   }
 
+  providerUsesField(field: HostingDnsProviderCredentialField, provider?: string | null) {
+    const platform = provider ?? this.providerFormModel().provider;
+    const catalogItem = this.catalog().find((item) => item.value === platform);
+    if (catalogItem?.credentialFields?.length) {
+      return catalogItem.credentialFields.includes(field);
+    }
+
+    return this.fallbackCredentialFields(platform).includes(field);
+  }
+
+  providerFieldLabel(field: HostingDnsProviderCredentialField) {
+    const provider = this.providerFormModel().provider;
+    if (provider === 'route53') {
+      const labels: Partial<Record<HostingDnsProviderCredentialField, string>> = {
+        accessKey: 'AWS access key ID',
+        secret: 'AWS secret access key',
+        hostedZoneID: 'Hosted zone ID',
+      };
+      return labels[field] ?? this.genericProviderFieldLabel(field);
+    }
+
+    if (provider === 'cpanel_dnsonly') {
+      const labels: Partial<Record<HostingDnsProviderCredentialField, string>> = {
+        apiEndpoint: 'WHM API endpoint',
+        accessKey: 'WHM user',
+        secret: 'WHM API token',
+      };
+      return labels[field] ?? this.genericProviderFieldLabel(field);
+    }
+
+    return this.genericProviderFieldLabel(field);
+  }
+
   private optionalNumber(value: number | string | null | undefined): number | null {
     if (value === null || value === undefined || value === '') return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private genericProviderFieldLabel(field: HostingDnsProviderCredentialField) {
+    const labels: Record<HostingDnsProviderCredentialField, string> = {
+      apiEndpoint: 'API endpoint',
+      accessKey: 'Access key',
+      secret: 'Secret / API token',
+      region: 'Region',
+      hostedZoneID: 'Hosted zone ID',
+      defaultTtl: 'Default TTL',
+      verifyTls: 'Verify TLS',
+    };
+    return labels[field];
+  }
+
+  private missingRequiredProviderFields(values: ReturnType<typeof this.providerFormModel>) {
+    const catalogItem = this.catalog().find((item) => item.value === values.provider);
+    const requiredFields = catalogItem?.requiredCredentialFields?.length
+      ? catalogItem.requiredCredentialFields
+      : this.fallbackRequiredCredentialFields(values.provider);
+
+    return requiredFields
+      .filter((field) => this.providerUsesField(field, values.provider))
+      .filter((field) => {
+        const value = values[field];
+        if (typeof value === 'boolean') return false;
+        if (value === null || value === undefined) return true;
+        return String(value).trim().length === 0;
+      })
+      .map((field) => this.providerFieldLabel(field));
+  }
+
+  private fallbackCredentialFields(provider?: string | null): HostingDnsProviderCredentialField[] {
+    switch (provider) {
+      case 'route53':
+        return ['accessKey', 'secret', 'region', 'hostedZoneID', 'defaultTtl'];
+      case 'cpanel_dnsonly':
+        return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
+      case 'manual':
+      case 'google_domains':
+        return ['defaultTtl'];
+      case 'cloudflare':
+        return ['secret', 'defaultTtl', 'verifyTls'];
+      case 'godaddy':
+      case 'locaweb':
+      case 'hostinger':
+        return ['accessKey', 'secret', 'defaultTtl'];
+      case 'namecheap':
+        return ['apiEndpoint', 'accessKey', 'secret'];
+      case 'hostgator':
+      case 'kinghost':
+      case 'bluehost':
+        return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
+      case 'registro_br':
+      case 'enom':
+      case 'resellerclub':
+        return ['accessKey', 'secret'];
+      default:
+        return ['apiEndpoint', 'accessKey', 'secret', 'region', 'hostedZoneID', 'defaultTtl', 'verifyTls'];
+    }
+  }
+
+  private fallbackRequiredCredentialFields(provider?: string | null): HostingDnsProviderCredentialField[] {
+    switch (provider) {
+      case 'route53':
+        return ['accessKey', 'secret', 'hostedZoneID'];
+      case 'cpanel_dnsonly':
+        return ['apiEndpoint', 'accessKey', 'secret'];
+      case 'manual':
+      case 'google_domains':
+      case 'hostgator':
+      case 'kinghost':
+      case 'bluehost':
+        return [];
+      case 'cloudflare':
+        return ['secret'];
+      case 'namecheap':
+      case 'godaddy':
+      case 'locaweb':
+      case 'hostinger':
+      case 'registro_br':
+      case 'enom':
+      case 'resellerclub':
+        return ['accessKey', 'secret'];
+      default:
+        return [];
+    }
   }
 
   private resetForm() {
