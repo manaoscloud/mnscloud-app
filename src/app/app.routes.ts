@@ -625,6 +625,7 @@ export const routes: Routes = [
                     (m) => m.HostingDnsDomainsPage,
                   ),
                 title: 'Hosting • DNS • Domains | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
               },
               {
                 path: 'hosting/dns/providers',
@@ -633,6 +634,7 @@ export const routes: Routes = [
                     (m) => m.HostingDnsProvidersPage,
                   ),
                 title: 'Hosting • DNS • Providers | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
               },
               {
                 path: 'hosting/dns/templates',
@@ -641,6 +643,7 @@ export const routes: Routes = [
                     (m) => m.HostingDnsTemplatesPage,
                   ),
                 title: 'Hosting • DNS • Templates | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
               },
               {
                 path: 'hosting/smtp',

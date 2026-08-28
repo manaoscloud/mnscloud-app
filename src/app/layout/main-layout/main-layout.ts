@@ -624,9 +624,19 @@ export class MainLayout {
     if (this.isMasterUser() && this.effectiveContextMode() === 'master') return true;
 
     const normalizedRequired = required.toLowerCase();
+    const requiredModulePrefix = normalizedRequired.endsWith('.*')
+      ? normalizedRequired.slice(0, -1)
+      : null;
     return this.commercialEntitlements().some((grant) => {
       const normalizedGrant = grant.toLowerCase();
       if (normalizedGrant === normalizedRequired) return true;
+      if (
+        requiredModulePrefix &&
+        !normalizedGrant.includes('*') &&
+        normalizedGrant.startsWith(requiredModulePrefix)
+      ) {
+        return true;
+      }
       if (!normalizedGrant.includes('*')) return false;
       const pattern = `^${normalizedGrant
         .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
@@ -1766,24 +1776,28 @@ export class MainLayout {
           id: 'hosting/dns',
           label: 'DNS',
           icon: 'language',
+          entitlementCode: 'module.hosting.dns.zone',
           children: [
             {
               id: 'hosting/dns/providers',
               label: 'Providers',
               icon: 'manage_accounts',
               route: '/hosting/dns/providers',
+              entitlementCode: 'module.hosting.dns.zone',
             },
             {
               id: 'hosting/dns/templates',
               label: 'Templates',
               icon: 'dynamic_form',
               route: '/hosting/dns/templates',
+              entitlementCode: 'module.hosting.dns.zone',
             },
             {
               id: 'hosting/dns/domains',
               label: 'Domains',
               icon: 'language',
               route: '/hosting/dns/domains',
+              entitlementCode: 'module.hosting.dns.zone',
             },
           ],
         },
