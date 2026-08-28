@@ -1774,6 +1774,12 @@ export class MainLayout {
               route: '/hosting/dns/providers',
             },
             {
+              id: 'hosting/dns/templates',
+              label: 'Templates',
+              icon: 'dynamic_form',
+              route: '/hosting/dns/templates',
+            },
+            {
               id: 'hosting/dns/domains',
               label: 'Domains',
               icon: 'language',
