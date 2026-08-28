@@ -34,6 +34,7 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import { DataViewerDialogComponent } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 type ProviderStatus = 0 | 1;
 
@@ -70,6 +71,24 @@ type HostingDnsProvider = {
   HdpIsDefault: number;
   HdpStatus: ProviderStatus;
   HdpNotes?: string | null;
+};
+
+type HostingDnsProviderTestResult = {
+  providerUUID: string;
+  provider: string;
+  providerName: string;
+  status: 'success' | 'warning' | 'error' | 'skipped';
+  supported: boolean;
+  checkedAt: string;
+  endpoint?: string | null;
+  hostedZoneID?: string | null;
+  message: string;
+  checks: {
+    name: string;
+    status: 'success' | 'warning' | 'error' | 'skipped';
+    message: string;
+    details?: Record<string, unknown>;
+  }[];
 };
 
 @Component({
@@ -137,6 +156,7 @@ export class HostingDnsProvidersPage {
 
   readonly loading = this.providersResource.isLoading;
   readonly saving = signal(false);
+  readonly testingProviderUUID = signal<string | null>(null);
   readonly providers = signal<HostingDnsProvider[]>([]);
   readonly catalog = signal<DomainProviderCatalogItem[]>([]);
   readonly editing = signal<HostingDnsProvider | null>(null);
@@ -395,6 +415,88 @@ export class HostingDnsProvidersPage {
     }
   }
 
+  async testProvider(provider: HostingDnsProvider) {
+    this.testingProviderUUID.set(provider.HdpUUID);
+
+    try {
+      const response = await this.api.post<{
+        data?: { test?: HostingDnsProviderTestResult };
+        message?: string;
+      }>(`hosting/dns/providers/${provider.HdpUUID}/test`, {});
+      const test = response?.data?.test;
+      if (!test) {
+        this.snack.warning('DNS provider test returned no details.');
+        return;
+      }
+
+      if (test.status === 'success') {
+        this.snack.success('DNS provider test completed successfully.');
+      } else if (test.status === 'warning' || test.status === 'skipped') {
+        this.snack.warning('DNS provider test completed with warnings.');
+      } else {
+        this.snack.error('DNS provider test failed.');
+      }
+
+      this.dialog.open(DataViewerDialogComponent, {
+        data: {
+          title: 'DNS provider test',
+          description: 'Read-only communication test for the selected DNS provider.',
+          status: {
+            value: this.testStatusLabel(test.status),
+            tone: this.testStatusTone(test.status),
+          },
+          details: [
+            { label: 'Provider', value: this.providerLabel(test.provider) },
+            { label: 'Name', value: test.providerName },
+            { label: 'Supported', value: test.supported ? 'Yes' : 'No' },
+            { label: 'Checked at', value: test.checkedAt },
+            { label: 'Endpoint', value: test.endpoint ?? '-' },
+            { label: 'Hosted zone ID', value: test.hostedZoneID ?? '-' },
+          ],
+          sections: [
+            {
+              title: 'Checks',
+              table: {
+                columns: [
+                  { key: 'name', label: 'Check' },
+                  { key: 'status', label: 'Status', translate: true },
+                  { key: 'message', label: 'Message' },
+                ],
+                rows: test.checks.map((check) => ({
+                  name: check.name,
+                  status: this.testStatusLabel(check.status),
+                  message: check.message,
+                })),
+                emptyLabel: 'No records found.',
+              },
+            },
+            {
+              title: 'Raw result',
+              code: {
+                value: test,
+                format: 'json',
+                copy: true,
+                download: {
+                  filename: `dns-provider-test-${provider.HdpUUID}.json`,
+                  label: 'Download',
+                  mimeType: 'application/json',
+                },
+              },
+            },
+          ],
+        },
+        panelClass: 'data-viewer-dialog-panel',
+        width: 'min(1100px, calc(100vw - 24px))',
+        maxWidth: 'calc(100vw - 24px)',
+        maxHeight: 'calc(100dvh - 24px)',
+      });
+    } catch (err) {
+      this.snack.error(this.extractErrorMessage(err, 'DNS provider test failed.'));
+    } finally {
+      this.testingProviderUUID.set(null);
+    }
+  }
+
   isSelected(provider: HostingDnsProvider) {
     return this.selectedProviderUUIDs().has(provider.HdpUUID);
   }
@@ -480,6 +582,23 @@ export class HostingDnsProvidersPage {
 
   providerLabel(value: string) {
     return this.catalog().find((item) => item.value === value)?.label ?? value;
+  }
+
+  testStatusLabel(status: HostingDnsProviderTestResult['status']) {
+    const labels: Record<HostingDnsProviderTestResult['status'], string> = {
+      success: 'Success',
+      warning: 'Warning',
+      error: 'Error',
+      skipped: 'Skipped',
+    };
+    return labels[status] ?? status;
+  }
+
+  testStatusTone(status: HostingDnsProviderTestResult['status']) {
+    if (status === 'success') return 'success';
+    if (status === 'warning') return 'warning';
+    if (status === 'error') return 'danger';
+    return 'neutral';
   }
 
   providerUsesField(field: HostingDnsProviderCredentialField, provider?: string | null) {
