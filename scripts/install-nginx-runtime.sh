@@ -245,6 +245,21 @@ validate_browser_assets() {
   [[ "$missing" == "0" ]] || die "artifact asset validation failed"
 }
 
+validate_embedded_version() {
+  local root="$1"
+  local expected_version="$2"
+  local index_file="${root}/index.html"
+  local main_asset
+
+  main_asset="$(grep -Eo 'main-[A-Za-z0-9_-]+[.]js' "$index_file" | head -n1 || true)"
+  [[ -n "$main_asset" ]] || die "artifact index.html does not reference a main bundle"
+  [[ -f "${root}/${main_asset}" ]] || die "artifact main bundle is missing: ${main_asset}"
+
+  if ! grep -Fq "$expected_version" "${root}/${main_asset}"; then
+    die "artifact main bundle ${main_asset} does not contain release version ${expected_version}"
+  fi
+}
+
 publish_artifact() {
   local artifact_path extract_dir artifact_name
   APP_ARTIFACT_TMP_DIR="$(mktemp -d)"
@@ -260,6 +275,7 @@ publish_artifact() {
   log "extracting browser artifact"
   tar -xzf "$artifact_path" -C "$extract_dir"
   validate_browser_assets "$extract_dir"
+  validate_embedded_version "$extract_dir" "$(tr -d '[:space:]' < "${REPO_ROOT}/VERSION")"
   # Release artifacts are packaged with deterministic mtimes for reproducible
   # checksums. Normalize the extracted files before rsync so the stale asset
   # cleanup does not delete the freshly deployed hashed bundles.
