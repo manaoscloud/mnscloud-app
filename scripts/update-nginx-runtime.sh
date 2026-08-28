@@ -75,19 +75,49 @@ restore_previous() {
   checkout_detached_ref "$PREVIOUS_COMMIT"
   if [[ -d "$WEB_ROOT_BACKUP" ]]; then
     install -d -m 0755 "$APP_WEB_ROOT"
-    rsync -a --delete "${WEB_ROOT_BACKUP}/" "${APP_WEB_ROOT}/"
+    rsync -a "${WEB_ROOT_BACKUP}/" "${APP_WEB_ROOT}/"
   fi
   "$REPO_ROOT/scripts/validate-nginx-runtime.sh" || true
+}
+
+backup_current_web_root() {
+  local source_root="$1"
+  local backup_root="$2"
+  local asset
+
+  mkdir -p "$backup_root"
+  [[ -d "$source_root" ]] || return 0
+
+  for asset in index.html env.js build.json favicon.ico; do
+    if [[ -f "${source_root}/${asset}" ]]; then
+      install -D -m 0644 "${source_root}/${asset}" "${backup_root}/${asset}"
+    fi
+  done
+
+  if [[ -d "${source_root}/i18n" ]]; then
+    rsync -a "${source_root}/i18n/" "${backup_root}/i18n/"
+  fi
+
+  if [[ -f "${source_root}/index.html" ]]; then
+    while IFS= read -r asset; do
+      [[ -n "$asset" ]] || continue
+      if [[ -f "${source_root}/${asset}" ]]; then
+        install -D -m 0644 "${source_root}/${asset}" "${backup_root}/${asset}"
+      fi
+    done < <(
+      {
+        grep -Eo '(main|polyfills|styles|chunk)-[A-Za-z0-9_-]+[.](js|css)' "${source_root}/index.html" || true
+        grep -Eo 'assets/[^"'\'' )]+[.][A-Za-z0-9]+' "${source_root}/index.html" || true
+      } | sort -u
+    )
+  fi
 }
 
 APP_WEB_ROOT="${APP_WEB_ROOT:-/var/www/mnscloud-app}"
 ROLLBACK_DIR="$(mktemp -d)"
 WEB_ROOT_BACKUP="${ROLLBACK_DIR}/web-root"
 trap 'rm -rf "$ROLLBACK_DIR"' EXIT
-mkdir -p "$WEB_ROOT_BACKUP"
-if [[ -d "$APP_WEB_ROOT" ]]; then
-  rsync -a --delete "${APP_WEB_ROOT}/" "${WEB_ROOT_BACKUP}/"
-fi
+backup_current_web_root "$APP_WEB_ROOT" "$WEB_ROOT_BACKUP"
 
 checkout_detached_ref "$TARGET_COMMIT"
 
