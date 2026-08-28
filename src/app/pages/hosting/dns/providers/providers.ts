@@ -34,7 +34,7 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
-import { DataViewerDialogComponent } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 type ProviderStatus = 0 | 1;
 
@@ -437,58 +437,52 @@ export class HostingDnsProvidersPage {
         this.snack.error('DNS provider test failed.');
       }
 
-      this.dialog.open(DataViewerDialogComponent, {
-        data: {
-          title: 'DNS provider test',
-          description: 'Read-only communication test for the selected DNS provider.',
-          status: {
-            value: this.testStatusLabel(test.status),
-            tone: this.testStatusTone(test.status),
-          },
-          details: [
-            { label: 'Provider', value: this.providerLabel(test.provider) },
-            { label: 'Name', value: test.providerName },
-            { label: 'Supported', value: test.supported ? 'Yes' : 'No' },
-            { label: 'Checked at', value: test.checkedAt },
-            { label: 'Endpoint', value: test.endpoint ?? '-' },
-            { label: 'Hosted zone ID', value: test.hostedZoneID ?? '-' },
-          ],
-          sections: [
-            {
-              title: 'Checks',
-              table: {
-                columns: [
-                  { key: 'name', label: 'Check' },
-                  { key: 'status', label: 'Status', translate: true },
-                  { key: 'message', label: 'Message' },
-                ],
-                rows: test.checks.map((check) => ({
-                  name: check.name,
-                  status: this.testStatusLabel(check.status),
-                  message: check.message,
-                })),
-                emptyLabel: 'No records found.',
-              },
-            },
-            {
-              title: 'Raw result',
-              code: {
-                value: test,
-                format: 'json',
-                copy: true,
-                download: {
-                  filename: `dns-provider-test-${provider.HdpUUID}.json`,
-                  label: 'Download',
-                  mimeType: 'application/json',
-                },
-              },
-            },
-          ],
+      openDataViewerDialog(this.dialog, {
+        title: 'DNS provider test',
+        description: 'Read-only communication test for the selected DNS provider.',
+        status: {
+          value: this.testStatusLabel(test.status),
+          tone: this.testStatusTone(test.status),
         },
-        panelClass: 'data-viewer-dialog-panel',
-        width: 'min(1100px, calc(100vw - 24px))',
-        maxWidth: 'calc(100vw - 24px)',
-        maxHeight: 'calc(100dvh - 24px)',
+        details: [
+          { label: 'Provider', value: this.providerLabel(test.provider) },
+          { label: 'Name', value: test.providerName },
+          { label: 'Supported', value: test.supported ? 'Yes' : 'No', translate: true },
+          { label: 'Checked at', value: test.checkedAt, kind: 'datetime' },
+          { label: 'Endpoint', value: test.endpoint ?? '-' },
+          { label: 'Hosted zone ID', value: test.hostedZoneID ?? '-' },
+        ],
+        sections: [
+          {
+            title: 'Checks',
+            table: {
+              columns: [
+                { key: 'name', label: 'Check', translate: true },
+                { key: 'status', label: 'Status', translate: true },
+                { key: 'message', label: 'Message', translate: true },
+              ],
+              rows: test.checks.map((check) => ({
+                name: check.name,
+                status: this.testStatusLabel(check.status),
+                message: check.message,
+              })),
+              emptyLabel: 'No records found.',
+            },
+          },
+          {
+            title: 'Raw result',
+            code: {
+              value: test,
+              format: 'json',
+              copy: true,
+              download: {
+                filename: `dns-provider-test-${provider.HdpUUID}.json`,
+                label: 'Download',
+                mimeType: 'application/json',
+              },
+            },
+          },
+        ],
       });
     } catch (err) {
       this.snack.error(this.extractErrorMessage(err, 'DNS provider test failed.'));

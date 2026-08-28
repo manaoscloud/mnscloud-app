@@ -21,7 +21,7 @@
     }
   </header>
 
-  <mat-dialog-content class="dialog-content">
+  <div class="dialog-content">
     <div class="data-viewer-content">
       @if (details().length) {
         <section class="data-viewer-section">
@@ -29,7 +29,13 @@
             @for (detail of details(); track detail.label) {
               <div class="data-viewer-detail" [class.is-wide]="detail.wide">
                 <dt>{{ detail.label | transloco }}</dt>
-                <dd [class.monospace]="detail.monospace">{{ detailValue(detail) }}</dd>
+                <dd [class.monospace]="detail.monospace">
+                  @if (detail.translate) {
+                    {{ detailValue(detail) | transloco }}
+                  } @else {
+                    {{ detailValue(detail) }}
+                  }
+                </dd>
               </div>
             }
           </div>
@@ -45,7 +51,13 @@
               @for (detail of section.details; track detail.label) {
                 <div class="data-viewer-detail" [class.is-wide]="detail.wide">
                   <dt>{{ detail.label | transloco }}</dt>
-                  <dd [class.monospace]="detail.monospace">{{ detailValue(detail) }}</dd>
+                  <dd [class.monospace]="detail.monospace">
+                    @if (detail.translate) {
+                      {{ detailValue(detail) | transloco }}
+                    } @else {
+                      {{ detailValue(detail) }}
+                    }
+                  </dd>
                 </div>
               }
             </div>
@@ -141,14 +153,14 @@
         </section>
       }
     </div>
-  </mat-dialog-content>
+  </div>
 
-  <mat-dialog-actions class="form-actions">
+  <div class="form-actions">
     <div class="secondary-actions">
       <button mat-stroked-button type="button" mat-dialog-close>
         {{ closeLabel() | transloco }}
       </button>
     </div>
     <div class="primary-actions"></div>
-  </mat-dialog-actions>
+  </div>
 </div>

@@ -3891,5 +3891,12 @@
   "Success": "Success",
   "Warning": "Warning",
   "Error": "Error",
-  "Skipped": "Skipped"
+  "Skipped": "Skipped",
+  "credential_shape": "Credential shape",
+  "listzones": "List zones",
+  "route53_identity": "Route 53 identity",
+  "Required cPanel DNSOnly credential fields are present.": "Required cPanel DNSOnly credential fields are present.",
+  "cPanel DNSOnly WHM listzones API responded successfully.": "cPanel DNSOnly WHM listzones API responded successfully.",
+  "Required Amazon Route 53 credential fields are present.": "Required Amazon Route 53 credential fields are present.",
+  "Amazon Route 53 API responded successfully.": "Amazon Route 53 API responded successfully."
 }

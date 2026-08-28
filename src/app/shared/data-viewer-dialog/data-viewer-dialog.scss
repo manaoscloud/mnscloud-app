@@ -7,6 +7,7 @@
 .data-viewer-dialog {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -25,7 +26,7 @@
   gap: 1rem;
   min-height: 0;
   overflow: auto;
-  padding: 0.25rem 0 1.25rem;
+  padding: 0.65rem 0 1.25rem;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
@@ -208,6 +209,10 @@
 @media (max-width: 900px) {
   .data-viewer-dialog .dialog-content {
     max-height: none;
+  }
+
+  .data-viewer-content {
+    padding-top: 0.75rem;
   }
 
   .data-viewer-grid {
