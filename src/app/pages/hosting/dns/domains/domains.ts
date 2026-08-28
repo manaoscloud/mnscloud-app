@@ -1,77 +1,24 @@
+import { Component, computed, signal } from '@angular/core';
+
 import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom, takeUntil } from 'rxjs';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
-
-type DomainStatus = 0 | 1;
 type DomainProvisionStatus =
-  | 'not_configured'
-  | 'pending'
-  | 'running'
-  | 'active'
-  | 'failed'
-  | 'unsupported';
-
-type HostingDnsDomain = {
-  HddUUID: string;
-  HddID: string;
-  HddName: string;
-  CustomerCusUUID?: string | null;
-  CustomerName?: string | null;
-  HostingDnsProviderHdpUUID?: string | null;
-  ProviderName?: string | null;
-  ProviderPlatform?: string | null;
-  HddProvider?: string | null;
-  HddProviderZoneID?: string | null;
-  HddZoneIP?: string | null;
-  HddDefaultTtl?: number | null;
-  HddAutoSync?: number | null;
-  HddProvisionStatus?: DomainProvisionStatus | string | null;
-  HddProvisionMessage?: string | null;
-  HddLastProvisionedAt?: string | null;
-  HddLastProvisionError?: string | null;
-  HddLastProvisionJobUUID?: string | null;
-  HddStatus: DomainStatus;
-  HddNotes?: string | null;
-};
+  'not_configured' | 'pending' | 'running' | 'active' | 'failed' | 'unsupported';
 
 type DomainProviderOption = {
   HdpUUID: string;
   HdpName: string;
   HdpProvider: string;
   HdpStatus: number;
+  HdpIsDefault?: number | null;
 };
 
 type CustomerOption = {
@@ -81,755 +28,351 @@ type CustomerOption = {
   Status?: number | null;
 };
 
+type DomainTemplateOption = {
+  HdtUUID: string;
+  HdtName: string;
+  HdtCode?: string | null;
+  HdtDescription?: string | null;
+  HdtStatus?: number | null;
+};
+
+const PROVISION_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'not_configured', label: 'Not configured' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'running', label: 'Provisioning' },
+  { value: 'active', label: 'Provisioned' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'unsupported', label: 'Unsupported' },
+];
+
+const PROVISION_DOMAIN_ACTION: ConfigurableCrudRowAction = {
+  key: 'provision',
+  label: 'Provision',
+  icon: 'cloud_sync',
+  tooltip: 'Provision DNS domain',
+};
+
+const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/dns/domains',
+  uuidField: 'HddUUID',
+  pageTitle: 'Domains',
+  pageDescription: 'Register domains and registrar metadata.',
+  createTitle: 'New domain',
+  editTitle: 'Edit domain',
+  dialogDescription: 'Store domain ownership, provider metadata and DNS defaults.',
+  searchPlaceholder: 'Search by domain',
+  emptyLabel: 'No domains found.',
+  deleteTitle: 'Delete domain',
+  deleteMessage: 'Are you sure you want to delete this domain?',
+  deleteSelectedTitle: 'Delete selected domains',
+  deleteSelectedMessage: 'Delete {count} selected domains?',
+  savedMessage: 'Domain saved successfully.',
+  deletedMessage: 'Domain deleted successfully.',
+  deleteFailedMessage: 'Failed to delete domain.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  rowActions: [PROVISION_DOMAIN_ACTION],
+  listFilters: [
+    {
+      key: 'customerUUID',
+      label: 'Customer',
+      paramKey: 'customerUUID',
+      type: 'search-select',
+      placeholder: 'Search customers',
+      emptyLabel: 'No records found.',
+    },
+    {
+      key: 'providerUUID',
+      label: 'Provider',
+      paramKey: 'providerUUID',
+      type: 'search-select',
+      placeholder: 'Search providers',
+      emptyLabel: 'No records found.',
+    },
+  ],
+  tabLabels: {
+    storage: 'DNS settings',
+    notes: 'Notes',
+  },
+  initialValues: {
+    name: '',
+    customerUUID: '',
+    providerUUID: '',
+    templateUUID: '',
+    status: 1,
+    providerZoneID: '',
+    zoneIP: '',
+    defaultTtl: null,
+    notes: '',
+  },
+  columns: [
+    { id: 'name', label: 'Domain', kind: 'identity', field: 'HddName', uuidField: 'HddUUID' },
+    {
+      id: 'customer',
+      label: 'Customer',
+      kind: 'related',
+      field: 'CustomerName',
+      uuidField: 'CustomerCusUUID',
+    },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      field: 'ProviderName',
+      uuidField: 'HostingDnsProviderHdpUUID',
+    },
+    {
+      id: 'provision',
+      label: 'Provisioning',
+      field: 'HddProvisionStatus',
+      lookupKey: 'provisionStatus',
+      className: 'status-col',
+    },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HddStatus', className: 'status-col' },
+  ],
+  fields: [
+    {
+      key: 'status',
+      source: 'HddStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'customerUUID',
+      source: 'CustomerCusUUID',
+      payloadKey: 'customerUUID',
+      label: 'Customer',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'providerUUID',
+      source: 'HostingDnsProviderHdpUUID',
+      payloadKey: 'providerUUID',
+      label: 'Provider',
+      type: 'search-select',
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'HddName',
+      payloadKey: 'name',
+      label: 'Domain',
+      placeholder: 'example.com',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'templateUUID',
+      source: 'HostingDnsDomainTemplateHdtUUID',
+      payloadKey: 'templateUUID',
+      label: 'DNS template',
+      type: 'search-select',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'providerZoneID',
+      source: 'HddProviderZoneID',
+      payloadKey: 'providerZoneID',
+      label: 'Provider zone ID',
+      placeholder: 'Z1234567890',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'defaultTtl',
+      source: 'HddDefaultTtl',
+      payloadKey: 'defaultTtl',
+      label: 'Default TTL',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'zoneIP',
+      source: 'HddZoneIP',
+      payloadKey: 'zoneIP',
+      label: 'Zone IP',
+      placeholder: '203.0.113.10',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'notes',
+      source: 'HddNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+      placeholder: 'Optional notes',
+    },
+  ],
+};
+
 @Component({
   selector: 'app-hosting-dns-domains',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-  ],
-  templateUrl: './domains.html',
-  styleUrls: ['./domains.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HostingDnsDomainsPage {
-  private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
+export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly customers = signal<CustomerOption[]>([]);
+  private readonly providers = signal<DomainProviderOption[]>([]);
+  private readonly templates = signal<DomainTemplateOption[]>([]);
+  private readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
 
-  readonly domainFormDialog = viewChild<TemplateRef<unknown>>('domainFormDialog');
-
-  private domainDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-  readonly appliedName = signal('');
-  readonly appliedCustomerUUID = signal('');
-  readonly appliedProviderUUID = signal('');
-  readonly appliedStatus = signal('');
-
-  private readonly domainsResource = resource({
-    params: () => ({
-      name: this.appliedName().trim(),
-      customerUUID: this.appliedCustomerUUID().trim(),
-      providerUUID: this.appliedProviderUUID().trim(),
-      status: this.appliedStatus(),
-    }),
-    defaultValue: [] as HostingDnsDomain[],
-    loader: async ({ params }) => {
-      const query = new URLSearchParams();
-      if (params.name) query.set('name', params.name);
-      if (params.customerUUID) query.set('customerUUID', params.customerUUID);
-      if (params.providerUUID) query.set('providerUUID', params.providerUUID);
-      if (params.status === '0' || params.status === '1') query.set('status', params.status);
-      query.set('limit', '500');
-      query.set('offset', '0');
-
-      const response = await this.api.get<{ data?: { items?: HostingDnsDomain[] } }>(
-        `hosting/dns/domains?${query.toString()}`,
-      );
-      return response?.data?.items ?? [];
-    },
-  });
-
-  readonly loading = this.domainsResource.isLoading;
-  readonly saving = signal(false);
-  readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
-  readonly domains = signal<HostingDnsDomain[]>([]);
-  readonly customers = signal<CustomerOption[]>([]);
-  readonly providers = signal<DomainProviderOption[]>([]);
-  readonly customerFilterSearch = signal('');
-  readonly customerFormSearch = signal('');
-  readonly providerFilterSearch = signal('');
-  readonly providerFormSearch = signal('');
-  readonly editing = signal<HostingDnsDomain | null>(null);
-  readonly selectedDomainUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedDomainUUIDs().size);
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly sortedDomains = computed(() => this.sortDomains(this.domains()));
-  readonly pagedDomains = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedDomains().slice(start, start + this.pageSize());
-  });
-
-  readonly displayedColumns = ['select', 'name', 'customer', 'provider', 'provision', 'status', 'actions'];
-
-  readonly filterFormModel = signal({
-    name: '',
-    customerUUID: '',
-    providerUUID: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly domainFormModel = signal({
-    name: '',
-    customerUUID: '',
-    providerUUID: '',
-    status: 1 as DomainStatus,
-    providerZoneID: '',
-    zoneIP: '',
-    defaultTtl: null as number | null,
-    autoSync: false,
-    notes: '',
-  });
-  readonly domainForm = createForm(this.domainFormModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.customerUUID);
-    required(schema.status);
-  });
-
-  readonly filteredProviderOptions = computed(() =>
-    this.filterProviders(this.providerFormSearch()),
+  private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.customers().map((customer) => ({
+      value: customer.CustomerUUID,
+      label: customer.Name,
+      description: customer.Document ?? undefined,
+      searchText: [customer.Name, customer.Document].filter(Boolean).join(' '),
+    })),
   );
-  readonly filteredProviderFilterOptions = computed(() =>
-    this.filterProviders(this.providerFilterSearch()),
+  private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.providers().map((provider) => ({
+      value: provider.HdpUUID,
+      label: provider.HdpName,
+      description: provider.HdpProvider,
+      searchText: `${provider.HdpName} ${provider.HdpProvider}`,
+    })),
   );
-  readonly filteredCustomerOptions = computed(() =>
-    this.filterCustomers(this.customerFormSearch()),
+  private readonly templateOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.templates().map((template) => ({
+      value: template.HdtUUID,
+      label: template.HdtName,
+      description: template.HdtDescription ?? template.HdtCode ?? undefined,
+      searchText: [template.HdtName, template.HdtCode, template.HdtDescription]
+        .filter(Boolean)
+        .join(' '),
+    })),
   );
-  readonly filteredCustomerFilterOptions = computed(() =>
-    this.filterCustomers(this.customerFilterSearch()),
-  );
-  readonly selectedProvider = computed(() => {
-    const providerUUID = this.domainFormModel().providerUUID;
-    return this.providers().find((provider) => provider.HdpUUID === providerUUID) ?? null;
-  });
-  readonly isCpanelDnsOnlyProvider = computed(
-    () => this.selectedProvider()?.HdpProvider === 'cpanel_dnsonly',
-  );
-
-  private readonly syncDomains = effect(() => {
-    this.domains.set(this.domainsResource.value());
-    this.pageIndex.set(0);
-    this.reconcileDomainSelection();
-  });
-
-  private readonly reportDomainsError = effect(() => {
-    const error = this.domainsResource.error();
-    if (error) {
-      this.snack.error(this.extractErrorMessage(error, 'Failed to load domains.'));
-    }
-  });
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDomainDialog();
-      this.stopDialogViewportObserver();
-    });
-    void this.fetchCustomers();
-    void this.fetchDomainProviders();
+    super(HOSTING_DNS_DOMAIN_CONFIG);
+    void Promise.all([this.fetchCustomers(), this.fetchDomainProviders(), this.fetchTemplates()]);
   }
 
-  refreshList() {
-    this.domainsResource.reload();
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    await Promise.all([
+      this.customers().length ? Promise.resolve() : this.fetchCustomers(),
+      this.providers().length ? Promise.resolve() : this.fetchDomainProviders(),
+      this.templates().length ? Promise.resolve() : this.fetchTemplates(),
+    ]);
+    return super.fetchItems(filters);
   }
 
-  async fetchDomainProviders() {
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'customerUUID') return this.customerOptions();
+    if (key === 'providerUUID') return this.providerOptions();
+    if (key === 'templateUUID') return this.templateOptions();
+    if (key === 'provisionStatus') return PROVISION_STATUS_OPTIONS;
+    return [];
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return {
+      name: payload['name'],
+      customerUUID: payload['customerUUID'],
+      providerUUID: payload['providerUUID'],
+      templateUUID: payload['templateUUID'],
+      providerZoneID: payload['providerZoneID'],
+      zoneIP: payload['zoneIP'],
+      defaultTtl: payload['defaultTtl'],
+      status: payload['status'],
+      notes: payload['notes'],
+    };
+  }
+
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    const status = String(row['HddProvisionStatus'] ?? '');
+    return [
+      {
+        ...PROVISION_DOMAIN_ACTION,
+        icon:
+          this.provisioningDomainUUIDs().has(this.recordUUID(row)) || status === 'running'
+            ? 'hourglass_top'
+            : 'cloud_sync',
+      },
+    ];
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'provision') await this.provisionDomain(row);
+  }
+
+  private async fetchDomainProviders() {
     try {
       const response = await this.api.get<{ data?: { items?: DomainProviderOption[] } }>(
         'hosting/dns/providers?status=1&limit=500&offset=0',
       );
       this.providers.set(response?.data?.items ?? []);
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load domain providers.'));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to load domain providers.');
     }
   }
 
-  async fetchCustomers() {
+  private async fetchCustomers() {
     try {
       const response = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
         'erp/customers?status=1&limit=500&offset=0',
       );
       this.customers.set(response?.data?.items ?? []);
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to load customers.'));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to load customers.');
     }
   }
 
-  applyFilters() {
-    const { name, customerUUID, providerUUID, status } = this.filterFormModel();
-    this.appliedName.set(name);
-    this.appliedCustomerUUID.set(customerUUID);
-    this.appliedProviderUUID.set(providerUUID);
-    this.appliedStatus.set(status);
-    this.domainsResource.reload();
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({ name: '', customerUUID: '', providerUUID: '', status: '' });
-    this.appliedName.set('');
-    this.appliedCustomerUUID.set('');
-    this.appliedProviderUUID.set('');
-    this.appliedStatus.set('');
-    this.domainsResource.reload();
-  }
-
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
-
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.pageIndex.set(0);
-  }
-
-  startCreate() {
-    this.editing.set(null);
-    this.domainFormModel.set({
-      name: '',
-      customerUUID: '',
-      providerUUID: '',
-      status: 1,
-      providerZoneID: '',
-      zoneIP: '',
-      defaultTtl: null,
-      autoSync: false,
-      notes: '',
-    });
-    this.customerFormSearch.set('');
-    this.providerFormSearch.set('');
-    this.openDomainDialog();
-  }
-
-  startEdit(domain: HostingDnsDomain) {
-    this.editing.set(domain);
-    this.domainFormModel.set({
-      name: domain.HddName ?? '',
-      customerUUID: domain.CustomerCusUUID ?? '',
-      providerUUID: domain.HostingDnsProviderHdpUUID ?? '',
-      status: (domain.HddStatus ?? 1) as DomainStatus,
-      providerZoneID: domain.HddProviderZoneID ?? '',
-      zoneIP: domain.HddZoneIP ?? '',
-      defaultTtl: domain.HddDefaultTtl ?? null,
-      autoSync: domain.HddAutoSync === 1,
-      notes: domain.HddNotes ?? '',
-    });
-    this.customerFormSearch.set('');
-    this.providerFormSearch.set('');
-    this.openDomainDialog();
-  }
-
-  cancelForm() {
-    this.closeDomainDialog();
-    this.resetForm();
-  }
-
-  async saveDomain(closeAfterSave = true) {
-    if (!this.domainForm().valid()) {
-      this.snack.warning('Please fill all required fields.');
-      return;
-    }
-
-    const values = this.domainFormModel();
-    const payload = {
-      name: values.name.trim(),
-      customerUUID: values.customerUUID.trim(),
-      providerUUID: values.providerUUID.trim() || null,
-      providerZoneID: values.providerZoneID.trim() || null,
-      zoneIP: values.zoneIP.trim() || null,
-      defaultTtl: this.optionalNumber(values.defaultTtl),
-      autoSync: values.autoSync,
-      status: values.status,
-      notes: values.notes.trim() || null,
-    };
-
-    if (!payload.name) {
-      this.snack.warning('Domain name is required.');
-      return;
-    }
-
-    if (this.isCpanelDnsOnlyProvider() && payload.autoSync && !payload.zoneIP) {
-      this.snack.warning('Zone IP is required for cPanel DNSOnly automatic provisioning.');
-      return;
-    }
-
-    this.saving.set(true);
-
+  private async fetchTemplates() {
     try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`hosting/dns/domains/${editing.HddUUID}`, payload);
-        this.snack.success('Domain updated successfully.');
-      } else {
-        await this.api.post('hosting/dns/domains', payload);
-        this.snack.success('Domain created successfully.');
-      }
-
-      this.domainsResource.reload();
-      if (closeAfterSave || editing) {
-        this.closeDomainDialog();
-        this.resetForm();
-      } else {
-        this.domainFormModel.set({
-          name: '',
-          customerUUID: '',
-          providerUUID: '',
-          status: 1,
-          providerZoneID: '',
-          zoneIP: '',
-          defaultTtl: null,
-          autoSync: false,
-          notes: '',
-        });
-      }
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to save domain.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNewDomain() {
-    void this.saveDomain(false);
-  }
-
-  async deleteDomain(domain: HostingDnsDomain) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete domain',
-        message: `Are you sure you want to delete "${domain.HddName}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`hosting/dns/domains/${domain.HddUUID}`);
-      this.snack.success('Domain deleted successfully.');
-      this.domainsResource.reload();
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to delete domain.'));
-    }
-  }
-
-  isSelected(domain: HostingDnsDomain) {
-    return this.selectedDomainUUIDs().has(domain.HddUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedDomains();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedDomains();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleDomainSelection(domain: HostingDnsDomain, checked: boolean) {
-    this.selectedDomainUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) {
-        next.add(domain.HddUUID);
-      } else {
-        next.delete(domain.HddUUID);
-      }
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedDomainUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.pagedDomains()) {
-        if (checked) {
-          next.add(row.HddUUID);
-        } else {
-          next.delete(row.HddUUID);
-        }
-      }
-      return next;
-    });
-  }
-
-  async deleteSelectedDomains() {
-    const ids = Array.from(this.selectedDomainUUIDs());
-    if (!ids.length) return;
-
-    const labels = this.domains()
-      .filter((domain) => ids.includes(domain.HddUUID))
-      .slice(0, 3)
-      .map((domain) => domain.HddName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected domains',
-        message: `Are you sure you want to delete ${ids.length} selected domain(s)?${suffix}`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        data?: {
-          deleted?: string[];
-          failed?: { HostingDnsDomainUUID?: string; HddUUID?: string; message: string }[];
-        };
-      }>('hosting/dns/domains/bulk', { ids });
-      const deleted = new Set(response?.data?.deleted ?? []);
-      const failed = new Set(
-        (response?.data?.failed ?? []).map(
-          (item) => item.HostingDnsDomainUUID ?? item.HddUUID ?? '',
-        ),
+      const response = await this.api.get<{ data?: { items?: DomainTemplateOption[] } }>(
+        'hosting/dns/domains/templates?status=1&limit=500&offset=0',
       );
-      this.domains.update((rows) => rows.filter((row) => !deleted.has(row.HddUUID)));
-      this.domainsResource.reload();
-      this.selectedDomainUUIDs.set(failed);
-      if (failed.size) {
-        this.snack.warning(`${failed.size} domain(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${deleted.size || ids.length} domain(s) deleted.`);
-      }
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to delete selected domains.'));
+      this.templates.set(response?.data?.items ?? []);
+    } catch {
+      this.templates.set([]);
     }
   }
 
-  statusLabel(status: DomainStatus) {
-    return status === 1 ? 'Active' : 'Inactive';
-  }
+  private async provisionDomain(domain: ConfigurableCrudRecord) {
+    const domainUUID = this.recordUUID(domain);
+    if (!domainUUID || this.provisioningDomainUUIDs().has(domainUUID)) return;
 
-  provisionLabel(status: HostingDnsDomain['HddProvisionStatus']) {
-    switch (status) {
-      case 'active':
-        return 'Provisioned';
-      case 'pending':
-        return 'Pending';
-      case 'running':
-        return 'Provisioning';
-      case 'failed':
-        return 'Failed';
-      case 'unsupported':
-        return 'Unsupported';
-      default:
-        return 'Not configured';
-    }
-  }
-
-  provisionTooltip(domain: HostingDnsDomain) {
-    return (
-      domain.HddLastProvisionError ||
-      domain.HddProvisionMessage ||
-      this.provisionLabel(domain.HddProvisionStatus)
-    );
-  }
-
-  canProvisionDomain(domain: HostingDnsDomain) {
-    const provider = String(domain.ProviderPlatform ?? domain.HddProvider ?? '').toLowerCase();
-    return domain.HddStatus === 1 && ['route53', 'cpanel_dnsonly'].includes(provider);
-  }
-
-  isProvisioning(domain: HostingDnsDomain) {
-    return this.provisioningDomainUUIDs().has(domain.HddUUID) || domain.HddProvisionStatus === 'running';
-  }
-
-  async provisionDomain(domain: HostingDnsDomain) {
-    if (!this.canProvisionDomain(domain) || this.isProvisioning(domain)) return;
-
-    this.provisioningDomainUUIDs.update((current) => new Set(current).add(domain.HddUUID));
+    this.provisioningDomainUUIDs.update((current) => new Set(current).add(domainUUID));
+    this.mutating.set(true);
     try {
       const response = await this.api.post<{
         status?: string;
         message?: string;
         data?: { provision?: { message?: string; status?: string } };
-      }>(`hosting/dns/domains/${domain.HddUUID}/provision`, {});
-      const message = response?.data?.provision?.message || response?.message || 'DNS domain provisioned.';
+      }>(`hosting/dns/domains/${domainUUID}/provision`, {});
+      const message =
+        response?.data?.provision?.message || response?.message || 'DNS domain provisioned.';
       if (response?.status === 'failed' || response?.data?.provision?.status === 'failed') {
-        this.snack.error(message);
+        this.snack.error(this.t(message));
       } else {
-        this.snack.success(message);
+        this.snack.success(this.t(message));
       }
-      this.domainsResource.reload();
-    } catch (err) {
-      this.snack.error(this.extractErrorMessage(err, 'Failed to provision DNS domain.'));
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to provision DNS domain.');
     } finally {
       this.provisioningDomainUUIDs.update((current) => {
         const next = new Set(current);
-        next.delete(domain.HddUUID);
+        next.delete(domainUUID);
         return next;
       });
+      this.mutating.set(false);
     }
-  }
-
-  providerDisplay(domain: HostingDnsDomain) {
-    return domain.ProviderName || domain.HddProvider || '-';
-  }
-
-  customerDisplay(domain: HostingDnsDomain) {
-    return domain.CustomerName || '-';
-  }
-
-  customerLabel(customer: CustomerOption) {
-    return [customer.Name, customer.Document].filter(Boolean).join(' · ');
-  }
-
-  onCustomerFilterOpened(opened: boolean) {
-    if (!opened) this.customerFilterSearch.set('');
-  }
-
-  onCustomerFormOpened(opened: boolean) {
-    if (!opened) this.customerFormSearch.set('');
-  }
-
-  updateCustomerFilterSearch(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.customerFilterSearch.set(input.value);
-  }
-
-  updateCustomerFormSearch(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.customerFormSearch.set(input.value);
-  }
-
-  onProviderFilterOpened(opened: boolean) {
-    if (!opened) this.providerFilterSearch.set('');
-  }
-
-  onProviderFormOpened(opened: boolean) {
-    if (!opened) this.providerFormSearch.set('');
-  }
-
-  updateProviderFilterSearch(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.providerFilterSearch.set(input.value);
-  }
-
-  updateProviderFormSearch(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.providerFormSearch.set(input.value);
-  }
-
-  private optionalNumber(value: number | string | null | undefined): number | null {
-    if (value === null || value === undefined || value === '') return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-
-  private resetForm() {
-    this.editing.set(null);
-    this.domainFormModel.set({
-      name: '',
-      customerUUID: '',
-      providerUUID: '',
-      status: 1,
-      providerZoneID: '',
-      zoneIP: '',
-      defaultTtl: null,
-      autoSync: false,
-      notes: '',
-    });
-  }
-
-  private reconcileDomainSelection() {
-    const available = new Set(this.domains().map((domain) => domain.HddUUID));
-    this.selectedDomainUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
-
-  private sortDomains(rows: HostingDnsDomain[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-
-    return [...rows].sort((a, b) => {
-      const compared = this.compareValues(
-        this.domainSortValue(a, active),
-        this.domainSortValue(b, active),
-      );
-      return direction === 'asc' ? compared : -compared;
-    });
-  }
-
-  private domainSortValue(domain: HostingDnsDomain, column: string) {
-    switch (column) {
-      case 'name':
-        return domain.HddName;
-      case 'provider':
-        return this.providerDisplay(domain);
-      case 'customer':
-        return this.customerDisplay(domain);
-      case 'provision':
-        return this.provisionLabel(domain.HddProvisionStatus);
-      case 'status':
-        return domain.HddStatus;
-      default:
-        return '';
-    }
-  }
-
-  private compareValues(
-    a: string | number | null | undefined,
-    b: string | number | null | undefined,
-  ) {
-    const left = a ?? '';
-    const right = b ?? '';
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, {
-      numeric: true,
-      sensitivity: 'base',
-    });
-  }
-
-  private filterProviders(search: string) {
-    const term = search.trim().toLowerCase();
-    const rows = this.providers();
-    if (!term) return rows;
-    return rows.filter((provider) =>
-      [provider.HdpName, provider.HdpProvider]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term)),
-    );
-  }
-
-  private filterCustomers(search: string) {
-    const term = search.trim().toLowerCase();
-    const rows = this.customers();
-    if (!term) return rows;
-    return rows.filter((customer) =>
-      [customer.Name, customer.Document]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term)),
-    );
-  }
-
-  private openDomainDialog() {
-    const domainFormDialog = this.domainFormDialog();
-    if (!domainFormDialog || this.domainDialogRef) return;
-    this.domainDialogRef = this.dialog.open(domainFormDialog, {
-      ...this.getDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-dns-domain-form-dialog',
-    });
-    bindDialogEscape(this.domainDialogRef, () => {
-      this.cancelForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.domainDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.domainDialogRef = null;
-    });
-  }
-
-  private closeDomainDialog() {
-    if (!this.domainDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.domainDialogRef.close();
-    this.domainDialogRef = null;
-  }
-
-  private getDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: 'calc(100vw - 24px)',
-        maxWidth: 'calc(100vw - 24px)',
-        height: 'calc(100dvh - 24px)',
-        maxHeight: 'calc(100dvh - 24px)',
-        position: { left: '12px', top: '12px' },
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${Math.max(0, Math.floor(rect.left + spacing))}px`,
-        top: `${Math.max(0, Math.floor(rect.top + spacing))}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.domainDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => this.updateDialogViewport());
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateDialogViewport() {
-    if (!this.domainDialogRef) return;
-    const config = this.getDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const height =
-      typeof config.height === 'string'
-        ? config.height
-        : typeof config.maxHeight === 'string'
-          ? config.maxHeight
-          : '';
-    this.domainDialogRef.updateSize(width, height);
-    if (config.position) {
-      this.domainDialogRef.updatePosition(config.position);
-    } else {
-      this.domainDialogRef.updatePosition();
-    }
-  }
-
-  private extractErrorMessage(err: unknown, fallback: string) {
-    if (err && typeof err === 'object' && 'error' in err) {
-      const payload = (err as { error?: { error?: string; message?: string } }).error;
-      return payload?.error || payload?.message || fallback;
-    }
-    if (err instanceof Error) return err.message;
-    return fallback;
   }
 }
