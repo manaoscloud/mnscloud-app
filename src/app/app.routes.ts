@@ -1657,6 +1657,33 @@ export const routes: Routes = [
                 data: { scope: 'master', context: 'system' },
               },
               {
+                path: 'hosting/dns/domains',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/domains/domains').then(
+                    (m) => m.HostingDnsDomainsPage,
+                  ),
+                title: 'System Hosting • DNS • Domains | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
+                path: 'hosting/dns/providers',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/providers/providers').then(
+                    (m) => m.HostingDnsProvidersPage,
+                  ),
+                title: 'System Hosting • DNS • Providers | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
+                path: 'hosting/dns/templates',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/templates/templates').then(
+                    (m) => m.HostingDnsTemplatesPage,
+                  ),
+                title: 'System Hosting • DNS • Templates | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
                 path: 'hosting/smtp',
                 title: 'System SMTP | mnscloud',
                 data: { scope: 'master', context: 'system' },
