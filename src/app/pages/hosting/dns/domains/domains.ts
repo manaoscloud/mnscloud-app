@@ -28,14 +28,6 @@ type CustomerOption = {
   Status?: number | null;
 };
 
-type DomainTemplateOption = {
-  HdtUUID: string;
-  HdtName: string;
-  HdtCode?: string | null;
-  HdtDescription?: string | null;
-  HdtStatus?: number | null;
-};
-
 const PROVISION_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'not_configured', label: 'Not configured' },
   { value: 'pending', label: 'Pending' },
@@ -93,15 +85,11 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
   ],
-  tabLabels: {
-    storage: 'DNS settings',
-    notes: 'Notes',
-  },
+  tabLabels: { storage: 'DNS settings', notes: 'Notes' },
   initialValues: {
     name: '',
     customerUUID: '',
     providerUUID: '',
-    templateUUID: '',
     status: 1,
     providerZoneID: '',
     zoneIP: '',
@@ -143,6 +131,14 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'providerUUID',
+      source: 'HostingDnsProviderHdpUUID',
+      payloadKey: 'providerUUID',
+      label: 'Provider',
+      type: 'search-select',
+      span: 1,
+    },
+    {
       key: 'customerUUID',
       source: 'CustomerCusUUID',
       payloadKey: 'customerUUID',
@@ -152,29 +148,12 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'providerUUID',
-      source: 'HostingDnsProviderHdpUUID',
-      payloadKey: 'providerUUID',
-      label: 'Provider',
-      type: 'search-select',
-      span: 1,
-    },
-    {
       key: 'name',
       source: 'HddName',
       payloadKey: 'name',
       label: 'Domain',
       placeholder: 'example.com',
       required: true,
-      span: 1,
-    },
-    {
-      key: 'templateUUID',
-      source: 'HostingDnsDomainTemplateHdtUUID',
-      payloadKey: 'templateUUID',
-      label: 'DNS template',
-      type: 'search-select',
-      tab: 'storage',
       span: 1,
     },
     {
@@ -228,7 +207,6 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
 export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly customers = signal<CustomerOption[]>([]);
   private readonly providers = signal<DomainProviderOption[]>([]);
-  private readonly templates = signal<DomainTemplateOption[]>([]);
   private readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
 
   private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -247,27 +225,15 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       searchText: `${provider.HdpName} ${provider.HdpProvider}`,
     })),
   );
-  private readonly templateOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.templates().map((template) => ({
-      value: template.HdtUUID,
-      label: template.HdtName,
-      description: template.HdtDescription ?? template.HdtCode ?? undefined,
-      searchText: [template.HdtName, template.HdtCode, template.HdtDescription]
-        .filter(Boolean)
-        .join(' '),
-    })),
-  );
-
   constructor() {
     super(HOSTING_DNS_DOMAIN_CONFIG);
-    void Promise.all([this.fetchCustomers(), this.fetchDomainProviders(), this.fetchTemplates()]);
+    void Promise.all([this.fetchCustomers(), this.fetchDomainProviders()]);
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
     await Promise.all([
       this.customers().length ? Promise.resolve() : this.fetchCustomers(),
       this.providers().length ? Promise.resolve() : this.fetchDomainProviders(),
-      this.templates().length ? Promise.resolve() : this.fetchTemplates(),
     ]);
     return super.fetchItems(filters);
   }
@@ -275,7 +241,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'customerUUID') return this.customerOptions();
     if (key === 'providerUUID') return this.providerOptions();
-    if (key === 'templateUUID') return this.templateOptions();
     if (key === 'provisionStatus') return PROVISION_STATUS_OPTIONS;
     return [];
   }
@@ -285,7 +250,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       name: payload['name'],
       customerUUID: payload['customerUUID'],
       providerUUID: payload['providerUUID'],
-      templateUUID: payload['templateUUID'],
       providerZoneID: payload['providerZoneID'],
       zoneIP: payload['zoneIP'],
       defaultTtl: payload['defaultTtl'],
@@ -330,17 +294,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       this.customers.set(response?.data?.items ?? []);
     } catch (error) {
       this.snack.error(this.errorMessage(error) || 'Failed to load customers.');
-    }
-  }
-
-  private async fetchTemplates() {
-    try {
-      const response = await this.api.get<{ data?: { items?: DomainTemplateOption[] } }>(
-        'hosting/dns/domains/templates?status=1&limit=500&offset=0',
-      );
-      this.templates.set(response?.data?.items ?? []);
-    } catch {
-      this.templates.set([]);
     }
   }
 

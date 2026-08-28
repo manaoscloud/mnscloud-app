@@ -635,6 +635,14 @@ export const routes: Routes = [
                 title: 'Hosting • DNS • Providers | mnscloud',
               },
               {
+                path: 'hosting/dns/templates',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/templates/templates').then(
+                    (m) => m.HostingDnsTemplatesPage,
+                  ),
+                title: 'Hosting • DNS • Templates | mnscloud',
+              },
+              {
                 path: 'hosting/smtp',
                 title: 'Hosting • SMTP | mnscloud',
                 data: { scope: 'tenant', context: 'hosting' },

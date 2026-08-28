@@ -47,6 +47,11 @@ const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 0, label: 'No' },
 ];
 
+const SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'TENANT', label: 'Tenant' },
+  { value: 'MASTER', label: 'Master' },
+];
+
 type HostingDnsDomainTemplateItem = {
   HdtUUID: string;
   HdtName: string;
@@ -96,11 +101,11 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   ],
   tabLabels: {
     authentication: 'Credentials',
-    record: 'DNS records',
     notes: 'Notes',
   },
   initialValues: {
     name: '',
+    scope: 'TENANT',
     provider: 'manual',
     isDefault: 0,
     status: 1,
@@ -116,6 +121,7 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'HdpName', uuidField: 'HdpUUID' },
+    { id: 'scope', label: 'Scope', field: 'HdpScope', lookupKey: 'scope' },
     {
       id: 'provider',
       label: 'Platform',
@@ -151,12 +157,12 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       required: true,
     },
     {
-      key: 'name',
-      source: 'HdpName',
-      payloadKey: 'name',
-      label: 'Name',
-      placeholder: 'ROUTE53 MAIN',
-      required: true,
+      key: 'templateUUID',
+      source: 'HostingDnsDomainTemplateHdtUUID',
+      payloadKey: 'templateUUID',
+      label: 'Default DNS template',
+      type: 'search-select',
+      placeholder: 'Search',
       span: 1,
     },
     {
@@ -166,6 +172,24 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       label: 'Default provider',
       type: 'search-select',
       options: YES_NO_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'HdpName',
+      payloadKey: 'name',
+      label: 'Name',
+      placeholder: 'ROUTE53 MAIN',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'scope',
+      source: 'HdpScope',
+      payloadKey: 'scope',
+      label: 'Scope',
+      type: 'search-select',
+      options: SCOPE_OPTIONS,
       span: 1,
     },
     {
@@ -251,16 +275,6 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       hiddenWhen: ({ values }) => !providerUsesField('verifyTls', values['provider']),
     },
     {
-      key: 'templateUUID',
-      source: 'HostingDnsDomainTemplateHdtUUID',
-      payloadKey: 'templateUUID',
-      label: 'Default DNS template',
-      type: 'search-select',
-      placeholder: 'Search',
-      tab: 'record',
-      span: 1,
-    },
-    {
       key: 'notes',
       source: 'HdpNotes',
       payloadKey: 'notes',
@@ -315,6 +329,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'provider') return this.providerOptions();
     if (key === 'templateUUID') return this.templateOptions();
+    if (key === 'scope') return SCOPE_OPTIONS;
     return [];
   }
 
@@ -323,6 +338,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
 
     return {
       name: payload['name'],
+      scope: payload['scope'],
       provider,
       apiEndpoint: providerUsesField('apiEndpoint', provider) ? payload['apiEndpoint'] : null,
       accessKey: providerUsesField('accessKey', provider) ? payload['accessKey'] : null,
@@ -358,7 +374,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   private async fetchTemplates() {
     try {
       const response = await this.api.get<{ data?: { items?: HostingDnsDomainTemplateItem[] } }>(
-        'hosting/dns/domains/templates?status=1&limit=500&offset=0',
+        'hosting/dns/templates?status=1&limit=500&offset=0',
       );
       this.templates.set(response?.data?.items ?? []);
     } catch (error) {
