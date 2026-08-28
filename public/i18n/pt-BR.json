@@ -3891,5 +3891,12 @@
   "Success": "Sucesso",
   "Warning": "Alerta",
   "Error": "Erro",
-  "Skipped": "Ignorado"
+  "Skipped": "Ignorado",
+  "credential_shape": "Formato das credenciais",
+  "listzones": "Listar zonas",
+  "route53_identity": "Identidade Route 53",
+  "Required cPanel DNSOnly credential fields are present.": "Os campos obrigatórios de credencial do cPanel DNSOnly estão preenchidos.",
+  "cPanel DNSOnly WHM listzones API responded successfully.": "A API WHM listzones do cPanel DNSOnly respondeu com sucesso.",
+  "Required Amazon Route 53 credential fields are present.": "Os campos obrigatórios de credencial do Amazon Route 53 estão preenchidos.",
+  "Amazon Route 53 API responded successfully.": "A API do Amazon Route 53 respondeu com sucesso."
 }

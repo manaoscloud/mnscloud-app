@@ -21,7 +21,9 @@ export type DataViewerStatus = {
 export type DataViewerDetail = {
   label: string;
   value: unknown;
+  kind?: 'text' | 'datetime';
   monospace?: boolean;
+  translate?: boolean;
   wide?: boolean;
 };
 
@@ -106,6 +108,9 @@ export class DataViewerDialogComponent {
   }
 
   detailValue(detail: DataViewerDetail): string {
+    if (detail.kind === 'datetime') {
+      return this.dateTime.formatDateTime(this.dateValue(detail.value)) || '-';
+    }
     return this.displayValue(detail.value);
   }
 
