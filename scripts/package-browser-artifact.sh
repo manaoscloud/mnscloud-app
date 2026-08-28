@@ -36,6 +36,23 @@ validate_browser_assets() {
 
 validate_browser_assets "$BUILD_DIR"
 
+validate_embedded_version() {
+  local root="$1"
+  local expected_version="$2"
+  local index_file="${root}/index.html"
+  local main_asset
+
+  main_asset="$(grep -Eo 'main-[A-Za-z0-9_-]+[.]js' "$index_file" | head -n1 || true)"
+  [[ -n "$main_asset" ]] || die "browser build index.html does not reference a main bundle"
+  [[ -f "${root}/${main_asset}" ]] || die "browser build main bundle is missing: ${main_asset}"
+
+  if ! grep -Fq "$expected_version" "${root}/${main_asset}"; then
+    die "browser build main bundle ${main_asset} does not contain release version ${expected_version}; run scripts/write-app-build-info.ts before ng build"
+  fi
+}
+
+validate_embedded_version "$BUILD_DIR" "$version"
+
 mkdir -p "$RELEASES_DIR"
 rm -f "${RELEASES_DIR}"/mnscloud-app-browser-v*.tar.gz \
   "${RELEASES_DIR}"/mnscloud-app-browser-v*.tar.gz.sha256
