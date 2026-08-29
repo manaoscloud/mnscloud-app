@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -248,8 +250,24 @@ const HOSTING_DNS_TEMPLATE_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingDnsTemplatesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+
   constructor() {
     super(HOSTING_DNS_TEMPLATE_CONFIG);
+  }
+
+  override isFieldVisible(field: ConfigurableCrudField): boolean {
+    if (field.key === 'scope') return this.isMaster();
+    return super.isFieldVisible(field);
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return {
+      ...payload,
+      scope: this.isMaster() ? 'MASTER' : 'TENANT',
+    };
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {

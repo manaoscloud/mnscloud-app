@@ -640,12 +640,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       const current = this.editingRecord();
       let response: unknown;
       if (current) {
-        response = await this.api.put(
-          `${this.config.updateEndpoint ?? this.config.endpoint}/${this.recordUUID(current)}`,
-          payload,
-        );
+        response = await this.api.put(`${this.updateEndpoint()}/${this.recordUUID(current)}`, payload);
       } else {
-        response = await this.api.post(this.config.createEndpoint ?? this.config.endpoint, payload);
+        response = await this.api.post(this.createEndpoint(), payload);
       }
       this.snack.success(this.t(this.config.savedMessage));
       if (current) this.reflectSavedRecord(current, payload);
@@ -859,7 +856,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
     this.mutating.set(true);
     try {
-      await this.api.delete(this.config.bulkDeleteEndpoint ?? `${this.config.endpoint}/bulk`, {
+      await this.api.delete(this.bulkDeleteEndpoint(), {
         ids,
       });
       this.selectedUUIDs.set(new Set());
@@ -1323,6 +1320,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return typeof endpoint === 'function' ? endpoint(row) : (endpoint ?? this.config.endpoint);
   }
 
+  protected listEndpoint(): string {
+    return this.config.endpoint;
+  }
+
+  protected createEndpoint(): string {
+    return this.config.createEndpoint ?? this.config.endpoint;
+  }
+
+  protected updateEndpoint(): string {
+    return this.config.updateEndpoint ?? this.config.endpoint;
+  }
+
+  protected bulkDeleteEndpoint(): string {
+    return this.config.bulkDeleteEndpoint ?? `${this.config.endpoint}/bulk`;
+  }
+
   protected patchFormValues(values: ConfigurableCrudRecord): void {
     this.formValues.update((current) => ({ ...current, ...values }));
     for (const key of Object.keys(values)) {
@@ -1481,7 +1494,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       params.set(filter.paramKey ?? filter.key, String(value));
     }
 
-    const response = await this.api.get(`${this.config.endpoint}?${params.toString()}`);
+    const response = await this.api.get(`${this.listEndpoint()}?${params.toString()}`);
     const data = (response as { data?: unknown })?.data;
     if (Array.isArray(data)) return data as T[];
     if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown }).items)) {

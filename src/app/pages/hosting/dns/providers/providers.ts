@@ -1,8 +1,10 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -295,8 +297,11 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
   private readonly catalog = signal<HostingDnsProviderCatalogItem[]>([]);
   private readonly templates = signal<HostingDnsDomainTemplateItem[]>([]);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.catalog().map((item) => ({
       value: item.value,
@@ -333,12 +338,17 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     return [];
   }
 
+  override isFieldVisible(field: ConfigurableCrudField): boolean {
+    if (field.key === 'scope') return this.isMaster();
+    return super.isFieldVisible(field);
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const provider = String(payload['provider'] ?? 'manual');
 
     return {
       name: payload['name'],
-      scope: payload['scope'],
+      scope: this.isMaster() ? 'MASTER' : 'TENANT',
       provider,
       apiEndpoint: providerUsesField('apiEndpoint', provider) ? payload['apiEndpoint'] : null,
       accessKey: providerUsesField('accessKey', provider) ? payload['accessKey'] : null,
@@ -361,7 +371,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   private async fetchCatalog() {
     try {
       const response = await this.api.get<{ data?: { items?: HostingDnsProviderCatalogItem[] } }>(
-        'hosting/dns/providers/catalog',
+        `${HOSTING_DNS_PROVIDER_CONFIG.endpoint}/catalog`,
       );
       const items = response?.data?.items ?? [];
       this.catalog.set(items.length ? items : fallbackCatalog());
@@ -391,7 +401,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     try {
       const response = await this.api.post<{
         data?: { test?: HostingDnsProviderTestResult };
-      }>(`hosting/dns/providers/${providerUUID}/test`, {});
+      }>(`${HOSTING_DNS_PROVIDER_CONFIG.endpoint}/${providerUUID}/test`, {});
       const test = response?.data?.test;
       if (!test) {
         this.snack.warning(this.t('DNS provider test returned no details.'));
