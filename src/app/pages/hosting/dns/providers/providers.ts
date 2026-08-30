@@ -292,6 +292,12 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   private readonly templates = signal<HostingDnsDomainTemplateItem[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly endpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/dns/providers' : HOSTING_DNS_PROVIDER_CONFIG.endpoint,
+  );
+  private readonly templateEndpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/dns/templates' : 'hosting/dns/templates',
+  );
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.catalog().map((item) => ({
       value: item.value,
@@ -328,6 +334,26 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     return [];
   }
 
+  protected override listEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override createEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override updateEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
+  }
+
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const provider = String(payload['provider'] ?? 'manual');
 
@@ -356,7 +382,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   private async fetchCatalog() {
     try {
       const response = await this.api.get<{ data?: { items?: HostingDnsProviderCatalogItem[] } }>(
-        `${HOSTING_DNS_PROVIDER_CONFIG.endpoint}/catalog`,
+        `${this.endpoint()}/catalog`,
       );
       const items = response?.data?.items ?? [];
       this.catalog.set(items.length ? items : fallbackCatalog());
@@ -369,7 +395,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   private async fetchTemplates() {
     try {
       const response = await this.api.get<{ data?: { items?: HostingDnsDomainTemplateItem[] } }>(
-        'hosting/dns/templates?status=1&limit=500&offset=0',
+        `${this.templateEndpoint()}?status=1&limit=500&offset=0`,
       );
       this.templates.set(response?.data?.items ?? []);
     } catch (error) {
@@ -386,7 +412,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     try {
       const response = await this.api.post<{
         data?: { test?: HostingDnsProviderTestResult };
-      }>(`${HOSTING_DNS_PROVIDER_CONFIG.endpoint}/${providerUUID}/test`, {});
+      }>(`${this.endpoint()}/${providerUUID}/test`, {});
       const test = response?.data?.test;
       if (!test) {
         this.snack.warning(this.t('DNS provider test returned no details.'));

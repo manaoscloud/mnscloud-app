@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudRelatedCollection,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -243,9 +244,43 @@ export class HostingDnsTemplatesPage extends ConfigurableCrudPageBase<Configurab
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly endpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/dns/templates' : HOSTING_DNS_TEMPLATE_CONFIG.endpoint,
+  );
 
   constructor() {
     super(HOSTING_DNS_TEMPLATE_CONFIG);
+  }
+
+  protected override listEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override createEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override updateEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
+  }
+
+  protected override relatedCollectionEndpoint(
+    _collection: ConfigurableCrudRelatedCollection,
+    parentUUID: string,
+  ): string {
+    return `${this.endpoint()}/${parentUUID}/records`;
+  }
+
+  protected override relatedCollectionDeleteEndpoint(
+    _collection: ConfigurableCrudRelatedCollection,
+    parentUUID: string,
+    row: ConfigurableCrudRecord,
+  ): string {
+    return `${this.endpoint()}/${parentUUID}/records/${row['HtrUUID']}`;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {

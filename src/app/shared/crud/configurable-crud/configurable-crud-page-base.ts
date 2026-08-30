@@ -770,7 +770,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       : this.relatedPayload(values, collection.fields);
     this.setRelatedSaving(collection.key, true);
     try {
-      const response = await this.api.post(collection.endpoint(parentUUID), payload);
+      const response = await this.api.post(this.relatedCollectionEndpoint(collection, parentUUID), payload);
       const rows = extractCrudItems(response);
       this.relatedRows.update((current) => ({
         ...current,
@@ -798,7 +798,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (!confirmed) return;
     this.setRelatedSaving(collection.key, true);
     try {
-      await this.api.delete(collection.deleteEndpoint(parentUUID, row));
+      await this.api.delete(this.relatedCollectionDeleteEndpoint(collection, parentUUID, row));
       this.relatedRows.update((current) => ({
         ...current,
         [collection.key]: this.relatedCollectionRows(collection).filter(
@@ -1334,6 +1334,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   protected bulkDeleteEndpoint(): string {
     return this.config.bulkDeleteEndpoint ?? `${this.config.endpoint}/bulk`;
+  }
+
+  protected relatedCollectionEndpoint(
+    collection: ConfigurableCrudRelatedCollection,
+    parentUUID: string,
+  ): string {
+    return collection.endpoint(parentUUID);
+  }
+
+  protected relatedCollectionDeleteEndpoint(
+    collection: ConfigurableCrudRelatedCollection,
+    parentUUID: string,
+    row: ConfigurableCrudRecord,
+  ): string {
+    return collection.deleteEndpoint(parentUUID, row);
   }
 
   protected patchFormValues(values: ConfigurableCrudRecord): void {
