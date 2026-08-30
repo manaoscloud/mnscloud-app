@@ -1,4 +1,5 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -205,9 +206,15 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
   private readonly customers = signal<CustomerOption[]>([]);
   private readonly providers = signal<DomainProviderOption[]>([]);
   private readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly providerEndpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/dns/providers' : 'hosting/dns/providers',
+  );
 
   private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.customers().map((customer) => ({
@@ -278,7 +285,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   private async fetchDomainProviders() {
     try {
       const response = await this.api.get<{ data?: { items?: DomainProviderOption[] } }>(
-        'hosting/dns/providers?status=1&limit=500&offset=0',
+        `${this.providerEndpoint()}?status=1&limit=500&offset=0`,
       );
       this.providers.set(response?.data?.items ?? []);
     } catch (error) {
