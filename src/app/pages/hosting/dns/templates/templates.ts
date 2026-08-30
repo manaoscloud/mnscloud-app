@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
-  ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -67,15 +66,6 @@ const HOSTING_DNS_TEMPLATE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'status',
       label: 'Status',
       type: 'status',
-      span: 1,
-    },
-    {
-      key: 'scope',
-      source: 'HdtScope',
-      payloadKey: 'scope',
-      label: 'Scope',
-      type: 'search-select',
-      options: SCOPE_OPTIONS,
       span: 1,
     },
     {
@@ -256,11 +246,6 @@ export class HostingDnsTemplatesPage extends ConfigurableCrudPageBase<Configurab
 
   constructor() {
     super(HOSTING_DNS_TEMPLATE_CONFIG);
-  }
-
-  override isFieldVisible(field: ConfigurableCrudField): boolean {
-    if (field.key === 'scope') return this.isMaster();
-    return super.isFieldVisible(field);
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
