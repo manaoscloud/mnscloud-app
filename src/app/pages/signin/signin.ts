@@ -153,6 +153,7 @@ export class Signin {
         this.api,
         result?.data?.rememberMe === true,
         result?.data?.jwt ?? null,
+        { deferProfileLoad: true },
       );
       if (!loginOk) {
         throw new Error(this.i18n.t('signin.error.invalidCredentials'));
