@@ -54,4 +54,18 @@ describe('apiInterceptor', () => {
     expect(auth.expireSession).toHaveBeenCalled();
     expect(snack.error).toHaveBeenCalledWith('Your session has expired. Please sign in again.');
   });
+
+  it('adds CSRF header to mutating same-origin requests when the csrf cookie exists', async () => {
+    document.cookie = 'mnscloud_csrf=csrf-token; path=/';
+
+    const promise = httpClient.post('/api/v1/settings/themes', {}).toPromise();
+    const req = http.expectOne('/api/v1/settings/themes');
+
+    expect(req.request.withCredentials).toBeTrue();
+    expect(req.request.headers.get('X-CSRF-Token')).toBe('csrf-token');
+
+    req.flush({ status: 'success' });
+    await promise;
+    document.cookie = 'mnscloud_csrf=; path=/; max-age=0';
+  });
 });
