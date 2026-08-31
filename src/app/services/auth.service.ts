@@ -77,6 +77,7 @@ export class AuthService {
 
   private _user = signal<AuthUser | null>(this.getUser());
   readonly user = this._user.asReadonly();
+  private bootstrapBearerToken: string | null = null;
 
   constructor() {}
 
@@ -87,7 +88,14 @@ export class AuthService {
   // ---------------------------------------------------------
   // LOGIN – sessão em cookie HttpOnly + perfil completo + role (/user/me)
   // ---------------------------------------------------------
-  async login(initialUser: any, api: ApiService, rememberMe = false) {
+  async login(
+    initialUser: any,
+    api: ApiService,
+    rememberMe = false,
+    bootstrapToken?: string | null,
+  ) {
+    this.bootstrapBearerToken =
+      typeof bootstrapToken === 'string' && bootstrapToken.trim() ? bootstrapToken.trim() : null;
     writeAuthValue(AUTH_STATE, 'true', rememberMe);
     this._loggedIn.set(true);
 
@@ -110,11 +118,21 @@ export class AuthService {
       this._user.set(seedUser);
     }
 
-    // 1) Perfil (inclui avatar)
-    await this.loadUserFromApi(api);
+    try {
+      // 1) Perfil (inclui avatar)
+      const profileLoaded = await this.loadUserFromApi(api);
+      if (!profileLoaded) return false;
 
-    // 2) Complementa com role/env (menus/guards)
-    await this.loadMeFromApi(api);
+      // 2) Complementa com role/env (menus/guards)
+      const meLoaded = await this.loadMeFromApi(api);
+      return meLoaded;
+    } finally {
+      this.bootstrapBearerToken = null;
+    }
+  }
+
+  sessionBootstrapToken(): string | null {
+    return this.bootstrapBearerToken;
   }
 
   // ---------------------------------------------------------

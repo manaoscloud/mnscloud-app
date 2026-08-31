@@ -15,6 +15,7 @@ describe('apiInterceptor', () => {
 
   beforeEach(() => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['isLoggedIn', 'expireSession']);
+    auth.sessionBootstrapToken = jasmine.createSpy('sessionBootstrapToken').and.returnValue(null);
     snack = jasmine.createSpyObj<SnackbarService>('SnackbarService', ['error']);
     auth.isLoggedIn.and.returnValue(true);
 
@@ -67,5 +68,18 @@ describe('apiInterceptor', () => {
     req.flush({ status: 'success' });
     await promise;
     document.cookie = 'mnscloud_csrf=; path=/; max-age=0';
+  });
+
+  it('uses the in-memory bootstrap bearer while the sign-in session is being verified', async () => {
+    auth.sessionBootstrapToken.and.returnValue('fresh-jwt');
+
+    const promise = httpClient.get('/api/v1/user/profile').toPromise();
+    const req = http.expectOne('/api/v1/user/profile');
+
+    expect(req.request.withCredentials).toBeTrue();
+    expect(req.request.headers.get('Authorization')).toBe('Bearer fresh-jwt');
+
+    req.flush({ status: 'success' });
+    await promise;
   });
 });
