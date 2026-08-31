@@ -15,6 +15,20 @@ function isExternalRequest(url: string) {
   }
 }
 
+function cookieValue(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const prefix = `${encodeURIComponent(name)}=`;
+  const match = document.cookie
+    .split(';')
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(prefix));
+  return match ? decodeURIComponent(match.slice(prefix.length)) : null;
+}
+
+function isMutatingRequest(method: string): boolean {
+  return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase());
+}
+
 function valueAsString(value: unknown): string | null {
   if (typeof value === 'string' && value.trim()) return value.trim();
   return null;
@@ -83,7 +97,11 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const snack = inject(SnackbarService);
 
-  const authReq = req.clone({ withCredentials: true });
+  const csrfToken = isMutatingRequest(req.method) ? cookieValue('mnscloud_csrf') : null;
+  const authReq = req.clone({
+    withCredentials: true,
+    ...(csrfToken ? { setHeaders: { 'X-CSRF-Token': csrfToken } } : {}),
+  });
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
