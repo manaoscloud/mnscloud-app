@@ -49,7 +49,7 @@ describe('AuthService cookie session state', () => {
       },
     });
 
-    await service.login(
+    const ok = await service.login(
       {
         uuid: 'user-1',
         email: 'user@example.com',
@@ -60,13 +60,16 @@ describe('AuthService cookie session state', () => {
       },
       api,
       true,
+      'transient-jwt',
     );
 
+    expect(ok).toBeTrue();
     expect(service.isLoggedIn()).toBeTrue();
     expect(localStorage.getItem('mnscloud_auth')).toBe('true');
     expect(localStorage.getItem('mnscloud_jwt')).toBeNull();
     expect(sessionStorage.getItem('mnscloud_jwt')).toBeNull();
     expect(service.user()?.role).toBe('MASTER');
+    expect(service.sessionBootstrapToken()).toBeNull();
   });
 
   it('clears auth UI state and tenant context on logout', () => {

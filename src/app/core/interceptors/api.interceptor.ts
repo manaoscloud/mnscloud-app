@@ -98,9 +98,16 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const snack = inject(SnackbarService);
 
   const csrfToken = isMutatingRequest(req.method) ? cookieValue('mnscloud_csrf') : null;
+  const bootstrapToken = auth.sessionBootstrapToken();
+  const setHeaders: Record<string, string> = {};
+  if (csrfToken) setHeaders['X-CSRF-Token'] = csrfToken;
+  if (bootstrapToken && !req.headers.has('Authorization')) {
+    setHeaders['Authorization'] = `Bearer ${bootstrapToken}`;
+  }
+
   const authReq = req.clone({
     withCredentials: true,
-    ...(csrfToken ? { setHeaders: { 'X-CSRF-Token': csrfToken } } : {}),
+    ...(Object.keys(setHeaders).length ? { setHeaders } : {}),
   });
 
   return next(authReq).pipe(

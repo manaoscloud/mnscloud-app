@@ -148,11 +148,15 @@ export class Signin {
         captchaToken: this.captchaToken(),
       });
 
-      await this.auth.login(
+      const loginOk = await this.auth.login(
         result?.data?.user ?? null,
         this.api,
         result?.data?.rememberMe === true,
+        result?.data?.jwt ?? null,
       );
+      if (!loginOk) {
+        throw new Error(this.i18n.t('signin.error.invalidCredentials'));
+      }
 
       this.snack.success(this.i18n.t('signin.success.welcomeBack'));
 
