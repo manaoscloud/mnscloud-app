@@ -148,13 +148,7 @@ export class Signin {
         captchaToken: this.captchaToken(),
       });
 
-      const jwt = result?.data?.jwt;
-      if (!jwt) {
-        throw new Error(this.i18n.t('signin.error.invalidResponse'));
-      }
-
       await this.auth.login(
-        jwt,
         result?.data?.user ?? null,
         this.api,
         result?.data?.rememberMe === true,

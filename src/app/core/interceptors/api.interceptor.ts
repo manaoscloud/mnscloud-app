@@ -83,14 +83,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const snack = inject(SnackbarService);
 
-  const token = auth.getToken();
-  const authReq = token
-    ? req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-    : req;
+  const authReq = req.clone({ withCredentials: true });
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
