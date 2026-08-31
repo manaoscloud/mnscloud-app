@@ -15,11 +15,6 @@ const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 0, label: 'No' },
 ];
 
-const SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'TENANT', label: 'Tenant' },
-  { value: 'MASTER', label: 'Master' },
-];
-
 const RECORD_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'A', label: 'A' },
   { value: 'AAAA', label: 'AAAA' },
@@ -53,10 +48,13 @@ const HOSTING_DNS_TEMPLATE_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   bulkDelete: false,
   statusFilter: true,
+  tabLabels: {
+    record: 'Record',
+    notes: 'Notes',
+  },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'HdtName', uuidField: 'HdtUUID' },
     { id: 'code', label: 'Code', field: 'HdtCode' },
-    { id: 'scope', label: 'Scope', field: 'HdtScope', lookupKey: 'scope' },
     { id: 'default', label: 'Default', kind: 'boolean', field: 'HdtIsDefault' },
     { id: 'status', label: 'Status', kind: 'status', field: 'HdtStatus', className: 'status-col' },
   ],
@@ -100,7 +98,7 @@ const HOSTING_DNS_TEMPLATE_CONFIG: ConfigurableCrudConfig = {
       source: 'HdtDescription',
       payloadKey: 'description',
       label: 'Description',
-      span: 3,
+      span: 4,
     },
     {
       key: 'notes',
@@ -115,7 +113,6 @@ const HOSTING_DNS_TEMPLATE_CONFIG: ConfigurableCrudConfig = {
   ],
   initialValues: {
     status: 1,
-    scope: 'TENANT',
     isDefault: 0,
     name: '',
     code: '',
@@ -291,7 +288,6 @@ export class HostingDnsTemplatesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'scope') return SCOPE_OPTIONS;
     if (key === 'type') return RECORD_TYPE_OPTIONS;
     return [];
   }
