@@ -93,6 +93,7 @@ export class AuthService {
     api: ApiService,
     rememberMe = false,
     bootstrapToken?: string | null,
+    options?: { deferProfileLoad?: boolean },
   ) {
     this.bootstrapBearerToken =
       typeof bootstrapToken === 'string' && bootstrapToken.trim() ? bootstrapToken.trim() : null;
@@ -116,6 +117,11 @@ export class AuthService {
 
       writeAuthValue(USER_KEY, JSON.stringify(seedUser), rememberMe);
       this._user.set(seedUser);
+    }
+
+    if (options?.deferProfileLoad) {
+      this.bootstrapBearerToken = null;
+      return !!initialUser;
     }
 
     try {

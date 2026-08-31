@@ -86,4 +86,29 @@ describe('AuthService cookie session state', () => {
     expect(localStorage.getItem('mnscloud_jwt')).toBeNull();
     expect(localStorage.getItem('mc_current_env')).toBeNull();
   });
+
+  it('can defer profile loading during signin bootstrap without persisting JWT', async () => {
+    const ok = await service.login(
+      {
+        uuid: 'user-1',
+        email: 'user@example.com',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        role: 'MASTER',
+        EnvironmentUUID: '11111111-1111-1111-1111-111111111111',
+      },
+      api,
+      true,
+      'transient-jwt',
+      { deferProfileLoad: true },
+    );
+
+    expect(ok).toBeTrue();
+    expect(api.get).not.toHaveBeenCalled();
+    expect(service.isLoggedIn()).toBeTrue();
+    expect(service.user()?.email).toBe('user@example.com');
+    expect(localStorage.getItem('mnscloud_jwt')).toBeNull();
+    expect(sessionStorage.getItem('mnscloud_jwt')).toBeNull();
+    expect(service.sessionBootstrapToken()).toBeNull();
+  });
 });
