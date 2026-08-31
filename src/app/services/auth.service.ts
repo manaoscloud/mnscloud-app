@@ -9,7 +9,7 @@ import {
 } from '../core/environment/environment-context';
 
 const AUTH_STATE = 'mnscloud_auth';
-const JWT_KEY = 'mnscloud_jwt';
+const LEGACY_JWT_KEY = 'mnscloud_jwt';
 const USER_KEY = 'mnscloud_user';
 
 function storageAvailable(storage: Storage | undefined): storage is Storage {
@@ -42,7 +42,7 @@ function removeAuthValue(key: string) {
 
 function isRememberedSession(): boolean {
   const localStore = globalThis.localStorage;
-  return storageAvailable(localStore) && localStore.getItem(JWT_KEY) !== null;
+  return storageAvailable(localStore) && localStore.getItem(AUTH_STATE) !== null;
 }
 
 export type AppRole = 'MASTER' | 'OWNER' | 'ADMIN' | 'USER';
@@ -52,7 +52,6 @@ export interface AuthUser {
   email: string;
   firstName: string;
   lastName: string;
-  token: string;
   avatarUrl?: string | null;
   avatarVersion?: number | null;
 
@@ -82,14 +81,13 @@ export class AuthService {
   constructor() {}
 
   private readInitialState(): boolean {
-    return readAuthValue(JWT_KEY) !== null;
+    return readAuthValue(AUTH_STATE) === 'true';
   }
 
   // ---------------------------------------------------------
-  // LOGIN – salva JWT e carrega perfil completo + role (/user/me)
+  // LOGIN – sessão em cookie HttpOnly + perfil completo + role (/user/me)
   // ---------------------------------------------------------
-  async login(jwt: string, initialUser: any, api: ApiService, rememberMe = false) {
-    writeAuthValue(JWT_KEY, jwt, rememberMe);
+  async login(initialUser: any, api: ApiService, rememberMe = false) {
     writeAuthValue(AUTH_STATE, 'true', rememberMe);
     this._loggedIn.set(true);
 
@@ -102,7 +100,6 @@ export class AuthService {
       const seedUser: AuthUser = {
         uuid: initialUser.uuid ?? initialUser.UserUUID ?? '',
         email: initialUser.email ?? initialUser.Email ?? '',
-        token: jwt,
         firstName: initialUser.firstName ?? initialUser.FirstName ?? initialUser.name ?? '',
         lastName: initialUser.lastName ?? initialUser.LastName ?? '',
         role: normalizeAppRole(initialUser.role),
@@ -126,7 +123,7 @@ export class AuthService {
   logout() {
     this.sessionUiCleanup.closeSessionUi();
 
-    removeAuthValue(JWT_KEY);
+    removeAuthValue(LEGACY_JWT_KEY);
     removeAuthValue(USER_KEY);
     removeAuthValue(AUTH_STATE);
     writeStoredEnvironmentUUID(null);
@@ -143,17 +140,6 @@ export class AuthService {
   }
 
   // ---------------------------------------------------------
-  // TOKEN
-  // ---------------------------------------------------------
-  getJwt(): string | null {
-    return readAuthValue(JWT_KEY);
-  }
-
-  getToken(): string | null {
-    return this.getJwt();
-  }
-
-  // ---------------------------------------------------------
   // USER (LOCAL)
   // ---------------------------------------------------------
   getUser(): AuthUser | null {
@@ -165,12 +151,6 @@ export class AuthService {
   // CARREGAR PERFIL VIA API (user/profile)
   // ---------------------------------------------------------
   async loadUserFromApi(api: ApiService): Promise<boolean> {
-    const jwt = this.getJwt();
-    if (!jwt) {
-      this.expireSession();
-      return false;
-    }
-
     try {
       const response = await api.get<any>('user/profile');
       const raw = response.data;
@@ -190,7 +170,6 @@ export class AuthService {
       const updated: AuthUser = {
         uuid: raw.UserUUID,
         email: raw.Email ?? '',
-        token: jwt,
         firstName: raw.FirstName ?? '',
         lastName: raw.LastName ?? '',
         avatarUrl: serverAvatar,
@@ -218,9 +197,6 @@ export class AuthService {
   // ✅ CARREGAR /user/me (role + EnvironmentUUID)
   // ---------------------------------------------------------
   async loadMeFromApi(api: ApiService): Promise<boolean> {
-    const jwt = this.getJwt();
-    if (!jwt) return false;
-
     try {
       const resp = await api.get<any>('user/me');
       const raw = resp?.data;

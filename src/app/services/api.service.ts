@@ -25,12 +25,10 @@ export class ApiService {
   }
 
   private getHeaders(endpoint: string, isFormData = false): HttpHeaders {
-    const token = this.auth.getToken();
     const environmentUUID = this.currentEnvironmentUUID();
 
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
     // 🔹 Environment atual (multi-tenant)
@@ -48,8 +46,7 @@ export class ApiService {
   }
 
   private requiresEnvironment(endpoint: string): boolean {
-    const token = this.auth.getToken();
-    if (!token) return false;
+    if (!this.auth.isLoggedIn()) return false;
 
     const normalized = endpoint.replace(/^\//, '');
     const allowPrefixes = ['auth', 'user', 'health', 'openapi.yaml', 'docs', 'system'];
@@ -91,7 +88,10 @@ export class ApiService {
   async get<T>(endpoint: string): Promise<T> {
     this.assertEnvironment(endpoint);
     return await firstValueFrom(
-      this.http.get<T>(this.url(endpoint), { headers: this.getHeaders(endpoint) }),
+      this.http.get<T>(this.url(endpoint), {
+        headers: this.getHeaders(endpoint),
+        withCredentials: true,
+      }),
     );
   }
 
@@ -101,6 +101,7 @@ export class ApiService {
       this.http.get(this.url(endpoint), {
         headers: this.getHeaders(endpoint),
         responseType: 'blob',
+        withCredentials: true,
       }),
     );
   }
@@ -111,6 +112,7 @@ export class ApiService {
     return await firstValueFrom(
       this.http.post<T>(this.url(endpoint), body, {
         headers: this.getHeaders(endpoint, isFormData),
+        withCredentials: true,
       }),
     );
   }
@@ -131,6 +133,7 @@ export class ApiService {
         headers: this.getHeaders(endpoint, true),
         observe: 'events',
         reportUploadProgress: true,
+        withCredentials: true,
       })
       .pipe(
         map((event): FileUploadProgress<T> => {
@@ -210,6 +213,7 @@ export class ApiService {
     return await firstValueFrom(
       this.http.put<T>(this.url(endpoint), body, {
         headers: this.getHeaders(endpoint, isFormData),
+        withCredentials: true,
       }),
     );
   }
@@ -217,7 +221,11 @@ export class ApiService {
   async delete<T>(endpoint: string, body?: any): Promise<T> {
     this.assertEnvironment(endpoint);
     return await firstValueFrom(
-      this.http.delete<T>(this.url(endpoint), { headers: this.getHeaders(endpoint), body }),
+      this.http.delete<T>(this.url(endpoint), {
+        headers: this.getHeaders(endpoint),
+        body,
+        withCredentials: true,
+      }),
     );
   }
 

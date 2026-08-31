@@ -920,6 +920,11 @@ export class MainLayout {
     this.commercialEntitlements.set([]);
     this.activeEnvironmentId.set(null);
     this.environments.set([]);
+    try {
+      await this.api.post('auth/signout', {});
+    } catch (error) {
+      console.warn('Failed to revoke remote session during logout.', error);
+    }
     this.auth.logout();
     await new Promise((r) => setTimeout(r, 120));
     this.router.navigate(['/signin']);

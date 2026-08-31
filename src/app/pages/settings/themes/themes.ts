@@ -336,7 +336,7 @@ export class SettingsThemesPage {
       return;
     }
 
-    if (!this.auth.getToken()) {
+    if (!this.auth.isLoggedIn()) {
       this.snack.error('Session expired. Please sign in again.');
       return;
     }
@@ -538,7 +538,7 @@ export class SettingsThemesPage {
   private async queueAction(item: ThemeDomain, action: 'web' | 'cert') {
     if (this.isActionBusy(item, action) || this.saving()) return;
 
-    if (!this.auth.getToken()) {
+    if (!this.auth.isLoggedIn()) {
       this.snack.error('Session expired. Please sign in again.');
       return;
     }

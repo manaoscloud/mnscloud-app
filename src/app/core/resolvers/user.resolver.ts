@@ -8,8 +8,7 @@ export const userResolver: ResolveFn<Promise<boolean>> = async () => {
   const api = inject(ApiService);
   const router = inject(Router);
 
-  const jwt = auth.getJwt();
-  if (!jwt) {
+  if (!auth.isLoggedIn()) {
     router.navigate(['/signin']);
     return false;
   }
