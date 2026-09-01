@@ -510,11 +510,15 @@ export class HostingSmtpRoutesPage {
   }
 
   private sortValue(route: SmtpRoute, column: string) {
-    if (column === 'event') return route.HsrEventType;
+    if (column === 'event') return this.eventLabel(route.HsrEventType);
     if (column === 'account') return this.accountLabel(route);
     if (column === 'from') return this.fromLabel(route);
     if (column === 'status') return this.statusLabel(route.HsrIsActive);
     return '';
+  }
+
+  eventLabel(code: string) {
+    return this.eventTypes().find((event) => event.code === code)?.label ?? code;
   }
 
   private reconcileSelection() {
