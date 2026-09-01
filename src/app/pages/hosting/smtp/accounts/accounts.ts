@@ -431,7 +431,7 @@ export class HostingSmtpAccountsPage {
   }
 
   canValidate(item: HostingSmtpAccount) {
-    return item.HspProvider === 's3' || item.HspProvider === 'spaces';
+    return item.HspProvider === 'smtp';
   }
 
   private sortRows(rows: HostingSmtpAccount[]) {
