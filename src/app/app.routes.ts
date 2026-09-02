@@ -107,6 +107,13 @@ export const routes: Routes = [
             path: '',
             canActivateChild: [environmentGuard],
             children: [
+              {
+                path: 'user/api-tokens',
+                loadComponent: () =>
+                  import('./pages/user/api-tokens/api-tokens').then((m) => m.UserApiTokensPage),
+                title: 'API Tokens | mnscloud',
+                data: { scope: 'tenant' },
+              },
               // Tenants (tenant)
               {
                 path: 'settings/tenants',
@@ -1335,6 +1342,13 @@ export const routes: Routes = [
                     (m) => m.SystemGovernanceUsersPage,
                   ),
                 title: 'System Governance • Users | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'security/api-tokens',
+                loadComponent: () =>
+                  import('./pages/user/api-tokens/api-tokens').then((m) => m.UserApiTokensPage),
+                title: 'System Security • API Tokens | mnscloud',
                 data: { scope: 'master' },
               },
               {

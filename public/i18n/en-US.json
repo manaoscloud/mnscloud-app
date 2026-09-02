@@ -3946,5 +3946,7 @@
   "Send test": "Send test",
   "SMTP route test email sent.": "SMTP route test email sent.",
   "Failed to send SMTP route test email.": "Failed to send SMTP route test email.",
-  "Failed to load SMTP routes.": "Failed to load SMTP routes."
+  "Failed to load SMTP routes.": "Failed to load SMTP routes.",
+  "API token rotated successfully.": "API token rotated successfully.",
+  "Failed to rotate API token.": "Failed to rotate API token."
 }

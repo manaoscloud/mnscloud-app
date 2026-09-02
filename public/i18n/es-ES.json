@@ -3946,5 +3946,7 @@
   "Send test": "Enviar prueba",
   "SMTP route test email sent.": "Correo de prueba de la ruta SMTP enviado.",
   "Failed to send SMTP route test email.": "Error al enviar el correo de prueba de la ruta SMTP.",
-  "Failed to load SMTP routes.": "Error al cargar rutas SMTP."
+  "Failed to load SMTP routes.": "Error al cargar rutas SMTP.",
+  "API token rotated successfully.": "TokenApi rotado correctamente.",
+  "Failed to rotate API token.": "Error al rotar TokenApi."
 }
