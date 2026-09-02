@@ -284,9 +284,7 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
         return { value: uuid, label, searchText: `${label} ${uuid}` };
       }),
     );
-    const storageRows = Array.isArray(storageResponse?.data)
-      ? storageResponse.data
-      : (storageResponse?.data?.items ?? []);
+    const storageRows = storageResponse?.data?.items ?? [];
     this.storageAccountOptions.set([
       { value: '', label: 'Default storage account' },
       ...((storageRows as ConfigurableCrudRecord[]).map((row) => {

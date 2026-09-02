@@ -164,8 +164,10 @@ export class HostingStorageProvidersPage {
     params: () => ({ endpoint: this.endpoint() }),
     defaultValue: [] as HostingStorageProvider[],
     loader: async ({ params }) => {
-      const result = await this.api.get<ApiResponse<HostingStorageProvider[]>>(params.endpoint);
-      return Array.isArray(result.data) ? result.data : [];
+      const result = await this.api.get<ApiResponse<{ items?: HostingStorageProvider[] }>>(
+        params.endpoint,
+      );
+      return result.data?.items ?? [];
     },
   });
 

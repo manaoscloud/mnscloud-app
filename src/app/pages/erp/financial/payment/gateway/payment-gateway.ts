@@ -256,11 +256,7 @@ export class FinancialPaymentGatewayPage {
     defaultValue: [] as PaymentGatewayAccount[],
     loader: async ({ params }) => {
       const result = await this.api.get<unknown>(params.endpoint);
-      const list = Array.isArray(result)
-        ? result
-        : Array.isArray((result as any)?.data?.items)
-          ? (result as any).data.items
-          : [];
+      const list = Array.isArray((result as any)?.data?.items) ? (result as any).data.items : [];
 
       return list.map((item: any) => ({
         ...item,

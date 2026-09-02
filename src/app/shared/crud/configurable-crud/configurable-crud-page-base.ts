@@ -1510,9 +1510,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
 
     const response = await this.api.get(`${this.listEndpoint()}?${params.toString()}`);
-    if (Array.isArray(response)) return response as T[];
     const data = (response as { data?: unknown })?.data;
-    if (Array.isArray(data)) return data as T[];
     if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown }).items)) {
       return (data as { items: T[] }).items;
     }

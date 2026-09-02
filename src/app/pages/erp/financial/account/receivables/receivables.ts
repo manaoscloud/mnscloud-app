@@ -635,8 +635,6 @@ export class FinancialReceivablesPage {
 
   private extractItems<T>(response: any): T[] {
     if (Array.isArray(response?.data?.items)) return response.data.items;
-    if (Array.isArray(response?.data)) return response.data;
-    if (Array.isArray(response)) return response;
     return [];
   }
 

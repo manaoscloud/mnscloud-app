@@ -219,8 +219,10 @@ export class HostingSmtpAccountsPage extends ConfigurableCrudPageBase<Configurab
 
   private async fetchProviders(): Promise<void> {
     try {
-      const response = await this.api.get<HostingSmtpProvider[]>(`${this.rootEndpoint()}/providers`);
-      this.providers.set(Array.isArray(response) ? response : []);
+      const response = await this.api.get<{ data?: { items?: HostingSmtpProvider[] } }>(
+        `${this.rootEndpoint()}/providers?limit=500&offset=0`,
+      );
+      this.providers.set(response?.data?.items ?? []);
     } catch (error) {
       this.providers.set([]);
       this.snack.error(this.errorMessage(error) || this.t('Failed to load SMTP providers.'));

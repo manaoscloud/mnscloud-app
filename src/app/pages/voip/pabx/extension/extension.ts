@@ -713,9 +713,7 @@ function parseParams(value: unknown): Record<string, unknown> | null | undefined
 }
 
 function readRows(response: unknown): ConfigurableCrudRecord[] {
-  if (Array.isArray(response)) return response as ConfigurableCrudRecord[];
   const payload = response as { data?: unknown } | null;
-  if (Array.isArray(payload?.data)) return payload.data as ConfigurableCrudRecord[];
   if (payload?.data && typeof payload.data === 'object') {
     const data = payload.data as { items?: unknown; rows?: unknown };
     if (Array.isArray(data.items)) return data.items as ConfigurableCrudRecord[];

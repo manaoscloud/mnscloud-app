@@ -27,6 +27,10 @@ How to use:
    `loading/error/items` signals, `MatTableDataSource`, or constructor lifecycle work.
    Router events, route data, and read-model events must use `toSignal()`/`resource()`/`effect()`,
    not scattered long-lived `.subscribe()` calls.
+   The list API contract is the canonical envelope
+   `{ status: 'success', message, data: { items, total, limit, offset }, duration }`. Do not add
+   compatibility parsing for bare arrays or `data` arrays in CRUD pages; migrate the API endpoint
+   instead.
 5. Keep mutations explicit in event handlers/service calls (`POST`, `PUT`, `DELETE`, uploads,
    queue/provision actions). Mutations may call `resource.reload()` after success, but must not be
    hidden inside a resource loader.
