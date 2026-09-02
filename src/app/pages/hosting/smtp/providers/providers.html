@@ -176,7 +176,7 @@
 </section>
 
 <ng-template #providerDialog>
-  <div class="smtp-provider-dialog crud-dialog">
+  <div class="crud-dialog">
     <div class="dialog-header">
       <div>
         <h2>{{ (editing() ? 'Edit SMTP provider' : 'New SMTP provider') | transloco }}</h2>
@@ -221,7 +221,7 @@
             </form>
           </div>
         </mat-tab>
-        <mat-tab label="Credentials">
+        <mat-tab [label]="'Credentials' | transloco">
           <div class="tab-content">
             <form class="form-grid">
               @if (selectedProvider() === 'smtp') {

@@ -27,14 +27,18 @@
         >
           <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option class="select-search-option" disabled>
-            <input
-              matInput
-              class="select-search-field"
-              placeholder="Search provider"
-              [value]="providerSearch()"
-              (input)="providerSearch.set($any($event.target).value)"
-              (click)="$event.stopPropagation()"
-            />
+            <mat-form-field appearance="outline" class="select-search-field">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                [placeholder]="'Search provider' | transloco"
+                [value]="providerSearch()"
+                (input)="providerSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                autocomplete="off"
+              />
+            </mat-form-field>
           </mat-option>
           @for (provider of filteredProviderOptions(); track provider.HspUUID) {
             <mat-option [value]="provider.HspUUID">{{ provider.HspName }}</mat-option>
@@ -194,7 +198,7 @@
 </section>
 
 <ng-template #accountDialog>
-  <div class="smtp-account-dialog crud-dialog">
+  <div class="crud-dialog">
     <div class="dialog-header">
       <div>
         <h2>{{ (editing() ? 'Edit SMTP account' : 'New SMTP account') | transloco }}</h2>
@@ -211,27 +215,15 @@
                 <mat-label>{{ 'Name' | transloco }}</mat-label>
                 <input matInput [formField]="form.name" />
               </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Provider' | transloco }}</mat-label>
-                <mat-select
-                  [formField]="form.providerUuid"
-                  (openedChange)="resetProviderSearch($event)"
-                >
-                  <mat-option class="select-search-option" disabled>
-                    <input
-                      matInput
-                      class="select-search-field"
-                      placeholder="Search provider"
-                      [value]="providerSearch()"
-                      (input)="providerSearch.set($any($event.target).value)"
-                      (click)="$event.stopPropagation()"
-                    />
-                  </mat-option>
-                  @for (provider of filteredProviderOptions(); track provider.HspUUID) {
-                    <mat-option [value]="provider.HspUUID">{{ provider.HspName }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                class="span-2"
+                [field]="form.providerUuid"
+                [label]="'Provider' | transloco"
+                [placeholder]="'Search provider' | transloco"
+                [emptyLabel]="'No records found.' | transloco"
+                [options]="providerSelectOptions()"
+                [translateOptions]="false"
+              />
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Status' | transloco }}</mat-label>
                 <mat-select [formField]="form.isActive">
@@ -245,7 +237,7 @@
             </form>
           </div>
         </mat-tab>
-        <mat-tab label="Sender">
+        <mat-tab [label]="'Sender' | transloco">
           <div class="tab-content">
             <form class="form-grid">
               <mat-form-field appearance="outline" class="span-2">

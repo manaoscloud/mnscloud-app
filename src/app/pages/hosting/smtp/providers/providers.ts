@@ -25,7 +25,7 @@ import { MatPaginator, MatPaginatorModule, type PageEvent } from '@angular/mater
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
@@ -111,7 +111,6 @@ export class HostingSmtpProvidersPage {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
-  readonly dataSource = new MatTableDataSource<HostingSmtpProvider>([]);
 
   readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
   readonly endpoint = computed(() =>
@@ -158,7 +157,6 @@ export class HostingSmtpProvidersPage {
   readonly providers = this.providersResource.value;
 
   private readonly syncTableData = effect(() => {
-    this.dataSource.data = this.providers();
     this.pageIndex.set(0);
     this.reconcileSelection();
   });
@@ -209,7 +207,6 @@ export class HostingSmtpProvidersPage {
   });
 
   constructor() {
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
@@ -579,7 +576,7 @@ export class HostingSmtpProvidersPage {
   }
 
   private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.HspUUID));
+    const valid = new Set(this.providers().map((row) => row.HspUUID));
     const current = untracked(() => this.selectedIds());
     const next = new Set([...current].filter((id) => valid.has(id)));
     if (next.size === current.size && [...next].every((id) => current.has(id))) return;

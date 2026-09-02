@@ -25,7 +25,7 @@ import { MatPaginator, MatPaginatorModule, type PageEvent } from '@angular/mater
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
@@ -40,6 +40,10 @@ import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dial
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import {
+  MnsSearchSelectFieldComponent,
+  type MnsSearchSelectFieldOption,
+} from '../../../../shared/forms';
 
 type HostingSmtpProvider = {
   HspUUID: string;
@@ -83,6 +87,7 @@ type HostingSmtpAccount = {
     MatTabsModule,
     TranslocoPipe,
     MatTooltipModule,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './accounts.html',
   styleUrls: ['./accounts.scss'],
@@ -99,7 +104,6 @@ export class HostingSmtpAccountsPage {
   readonly sort = viewChild(MatSort);
 
   private dialogBinding: CrudDialogBinding | null = null;
-  readonly dataSource = new MatTableDataSource<HostingSmtpAccount>([]);
 
   readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
   readonly rootEndpoint = computed(() =>
@@ -177,7 +181,6 @@ export class HostingSmtpAccountsPage {
     const snapshot = this.accountsResource.value();
     this.providers.set(snapshot.providers);
     this.accounts.set(snapshot.accounts);
-    this.dataSource.data = snapshot.accounts;
     this.pageIndex.set(0);
     this.reconcileSelection();
   });
@@ -194,6 +197,14 @@ export class HostingSmtpAccountsPage {
         !term || `${provider.HspName} ${provider.HspProvider}`.toLowerCase().includes(term),
     );
   });
+  readonly providerSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+    this.providers().map((provider) => ({
+      value: provider.HspUUID,
+      label: provider.HspName,
+      description: provider.HspProvider,
+      searchText: `${provider.HspName} ${provider.HspProvider} ${provider.HspUUID}`,
+    })),
+  );
 
   readonly filteredAccounts = computed(() => {
     const { search, providerUuid, status } = this.filterFormModel();
@@ -217,7 +228,6 @@ export class HostingSmtpAccountsPage {
   });
 
   constructor() {
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
     this.destroyRef.onDestroy(() => this.closeDialog());
   }
 
@@ -369,7 +379,6 @@ export class HostingSmtpAccountsPage {
       const response = await this.api.delete<any>(`${this.endpoint()}/bulk`, { ids });
       const result = this.parseBulkDeleteResult(response, ids);
       this.accounts.set(this.accounts().filter((row) => !result.deleted.has(row.HsaUUID)));
-      this.dataSource.data = this.accounts();
       this.selectedIds.set(result.failed);
       if (result.failed.size) {
         this.snack.error(`${result.failed.size} selected SMTP account(s) could not be deleted.`);
@@ -457,7 +466,7 @@ export class HostingSmtpAccountsPage {
   }
 
   private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.HsaUUID));
+    const valid = new Set(this.accounts().map((row) => row.HsaUUID));
     const current = untracked(() => this.selectedIds());
     const next = new Set([...current].filter((id) => valid.has(id)));
     if (next.size === current.size && [...next].every((id) => current.has(id))) return;

@@ -28,14 +28,18 @@
         >
           <mat-option value="">{{ 'All' | transloco }}</mat-option>
           <mat-option class="select-search-option" disabled>
-            <input
-              matInput
-              class="select-search-field"
-              placeholder="Search account"
-              [value]="accountSearch()"
-              (input)="accountSearch.set($any($event.target).value)"
-              (click)="$event.stopPropagation()"
-            />
+            <mat-form-field appearance="outline" class="select-search-field">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                [placeholder]="'Search account' | transloco"
+                [value]="accountSearch()"
+                (input)="accountSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                autocomplete="off"
+              />
+            </mat-form-field>
           </mat-option>
           @for (account of filteredAccountOptions(); track account.HsaUUID) {
             <mat-option [value]="account.HsaUUID">{{ account.HsaName }}</mat-option>
@@ -183,7 +187,7 @@
 </section>
 
 <ng-template #routeDialog>
-  <div class="smtp-route-dialog crud-dialog">
+  <div class="crud-dialog">
     <div class="dialog-header">
       <div>
         <h2>{{ (editing() ? 'Edit SMTP route' : 'New SMTP route') | transloco }}</h2>
@@ -204,27 +208,15 @@
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="span-2">
-              <mat-label>{{ 'Account' | transloco }}</mat-label>
-              <mat-select
-                [formField]="form.accountUuid"
-                (openedChange)="resetAccountSearch($event)"
-              >
-                <mat-option class="select-search-option" disabled>
-                  <input
-                    matInput
-                    class="select-search-field"
-                    placeholder="Search account"
-                    [value]="accountSearch()"
-                    (input)="accountSearch.set($any($event.target).value)"
-                    (click)="$event.stopPropagation()"
-                  />
-                </mat-option>
-                @for (account of filteredAccountOptions(); track account.HsaUUID) {
-                  <mat-option [value]="account.HsaUUID">{{ account.HsaName }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <mns-search-select-field
+              class="span-2"
+              [field]="form.accountUuid"
+              [label]="'Account' | transloco"
+              [placeholder]="'Search account' | transloco"
+              [emptyLabel]="'No records found.' | transloco"
+              [options]="accountSelectOptions()"
+              [translateOptions]="false"
+            />
 
             <mat-form-field appearance="outline" class="span-2">
               <mat-label>{{ 'From Name' | transloco }}</mat-label>
@@ -297,7 +289,7 @@
 </ng-template>
 
 <ng-template #testDialog>
-  <div class="smtp-route-dialog crud-dialog">
+  <div class="crud-dialog">
     <div class="dialog-header">
       <div>
         <h2>{{ 'Send test email' | transloco }}</h2>
@@ -339,7 +331,7 @@
           (click)="sendTestEmail()"
         >
           <mat-icon>send</mat-icon>
-          Send
+          {{ 'Send' | transloco }}
         </button>
       </div>
     </mat-dialog-actions>
