@@ -88,6 +88,7 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       label: 'Account',
       kind: 'related',
       field: 'HostingSmtpAccountHsaUUID',
+      displayField: 'HsaName',
       lookupKey: 'accountUuid',
     },
     { id: 'from', label: 'From', field: 'HsrFromEmail' },
