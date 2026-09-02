@@ -1027,6 +1027,10 @@ mat-chip.status-pill.is-inactive,
   padding: 0.65rem 0 0.25rem;
 }
 
+.crud-dialog .dialog-content > .form-grid {
+  padding: 0.65rem 0 0.25rem;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

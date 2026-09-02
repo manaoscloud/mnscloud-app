@@ -76,7 +76,7 @@ type ApiTokenSecretDialogData = {
       </header>
 
       <mat-dialog-content class="dialog-content">
-        <div class="tab-content form-grid">
+        <div class="form-grid">
           <mat-form-field appearance="outline" class="span-2">
             <mat-label>{{ 'Name' | transloco }}</mat-label>
             <input matInput [value]="data.name" readonly />
