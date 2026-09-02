@@ -3933,5 +3933,13 @@
   "Required cPanel DNSOnly credential fields are present.": "Los campos obligatorios de credenciales de cPanel DNSOnly están completos.",
   "cPanel DNSOnly WHM listzones API responded successfully.": "La API WHM listzones de cPanel DNSOnly respondió correctamente.",
   "Required Amazon Route 53 credential fields are present.": "Los campos obligatorios de credenciales de Amazon Route 53 están completos.",
-  "Amazon Route 53 API responded successfully.": "La API de Amazon Route 53 respondió correctamente."
+  "Amazon Route 53 API responded successfully.": "La API de Amazon Route 53 respondió correctamente.",
+  "SMTP provider validated.": "Proveedor SMTP validado.",
+  "Failed to validate SMTP provider.": "Error al validar el proveedor SMTP.",
+  "SMTP account validated.": "Cuenta SMTP validada.",
+  "Failed to validate SMTP account.": "Error al validar la cuenta SMTP.",
+  "Failed to load SMTP providers.": "Error al cargar proveedores SMTP.",
+  "SMTP route test email sent.": "Correo de prueba de la ruta SMTP enviado.",
+  "Failed to send SMTP route test email.": "Error al enviar el correo de prueba de la ruta SMTP.",
+  "Failed to load SMTP routes.": "Error al cargar rutas SMTP."
 }

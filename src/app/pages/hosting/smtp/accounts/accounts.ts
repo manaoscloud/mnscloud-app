@@ -1,203 +1,149 @@
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  untracked,
-  viewChild,
-} from '@angular/core';
-import { FormField, email, form as createForm, minLength, required } from '@angular/forms/signals';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
 import {
-  CrudDialogBinding,
-  openCrudTemplateDialog,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
-import {
-  MnsSearchSelectFieldComponent,
-  type MnsSearchSelectFieldOption,
-} from '../../../../shared/forms';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type HostingSmtpProvider = {
   HspUUID: string;
   HspName: string;
   HspProvider: string;
-  HspIsActive: number;
 };
 
-type HostingSmtpAccount = {
-  HsaUUID: string;
-  HsaName: string;
-  HostingSmtpProviderHspUUID: string;
-  HsaDefaultFromName?: string | null;
-  HsaDefaultFromEmail?: string | null;
-  HsaIsActive: number;
-  HsaIsDefault: number;
-  HspName?: string;
-  HspProvider?: string;
+const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const VALIDATE_ACTION: ConfigurableCrudRowAction = {
+  key: 'validate',
+  label: 'Validate',
+  icon: 'fact_check',
+  tooltip: 'Validate',
+};
+
+const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/smtp/accounts',
+  uuidField: 'HsaUUID',
+  pageTitle: 'SMTP Accounts',
+  pageDescription: 'Manage sender accounts linked to SMTP providers.',
+  createTitle: 'New SMTP account',
+  editTitle: 'Edit SMTP account',
+  dialogDescription: 'Configure SMTP account identity, provider and sender defaults.',
+  searchPlaceholder: 'Name, provider or sender',
+  emptyLabel: 'No SMTP accounts found.',
+  deleteTitle: 'Delete SMTP account',
+  deleteMessage: 'Are you sure you want to delete this SMTP account?',
+  deleteSelectedTitle: 'Delete selected SMTP accounts',
+  deleteSelectedMessage: 'Delete {count} selected SMTP accounts?',
+  savedMessage: 'SMTP account saved successfully.',
+  deletedMessage: 'SMTP account deleted successfully.',
+  deleteFailedMessage: 'Failed to delete SMTP account.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  rowActions: [VALIDATE_ACTION],
+  listFilters: [
+    {
+      key: 'providerUuid',
+      label: 'Provider',
+      paramKey: 'providerUuid',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
+    },
+  ],
+  tabLabels: {
+    authentication: 'Sender',
+  },
+  initialValues: {
+    name: '',
+    providerUuid: '',
+    status: 1,
+    isDefault: 0,
+    defaultFromName: '',
+    defaultFromEmail: '',
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HsaName', uuidField: 'HsaUUID' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      field: 'HostingSmtpProviderHspUUID',
+      lookupKey: 'providerUuid',
+    },
+    { id: 'from', label: 'From', field: 'HsaDefaultFromEmail' },
+    { id: 'default', label: 'Default', kind: 'boolean', field: 'HsaIsDefault', className: 'status-col' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HsaIsActive', className: 'status-col' },
+  ],
+  fields: [
+    { key: 'status', source: 'HsaIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'providerUuid',
+      source: 'HostingSmtpProviderHspUUID',
+      payloadKey: 'providerUuid',
+      label: 'Provider',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'isDefault',
+      source: 'HsaIsDefault',
+      payloadKey: 'isDefault',
+      label: 'Default account',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      span: 1,
+    },
+    { key: 'name', source: 'HsaName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'defaultFromName',
+      source: 'HsaDefaultFromName',
+      payloadKey: 'defaultFromName',
+      label: 'Default from name',
+      tab: 'authentication',
+      span: 2,
+    },
+    {
+      key: 'defaultFromEmail',
+      source: 'HsaDefaultFromEmail',
+      payloadKey: 'defaultFromEmail',
+      label: 'Default from email',
+      type: 'email',
+      tab: 'authentication',
+      span: 2,
+    },
+  ],
 };
 
 @Component({
   selector: 'app-hosting-smtp-accounts',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-    MnsSearchSelectFieldComponent,
-  ],
-  templateUrl: './accounts.html',
-  styleUrls: ['./accounts.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HostingSmtpAccountsPage {
-  private readonly api = inject(ApiService);
+export class HostingSmtpAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly accountDialog = viewChild<TemplateRef<unknown>>('accountDialog');
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-
-  private dialogBinding: CrudDialogBinding | null = null;
-
-  readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
-  readonly rootEndpoint = computed(() =>
+  private readonly providers = signal<HostingSmtpProvider[]>([]);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly rootEndpoint = computed(() =>
     this.isMaster() ? 'system/hosting/smtp' : 'hosting/smtp',
   );
-  readonly endpoint = computed(() => `${this.rootEndpoint()}/accounts`);
-
-  readonly saving = signal(false);
-  readonly accounts = signal<HostingSmtpAccount[]>([]);
-  readonly providers = signal<HostingSmtpProvider[]>([]);
-  readonly editing = signal<HostingSmtpAccount | null>(null);
-  readonly selectedIds = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedIds().size);
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly providerSearch = signal('');
-  readonly validatingId = signal<string | null>(null);
-
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'provider',
-    'from',
-    'default',
-    'status',
-    'actions',
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    providerUuid: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly accountFormModel = signal({
-    name: '',
-    providerUuid: '',
-    isActive: 1,
-    isDefault: false,
-    defaultFromName: '',
-    defaultFromEmail: '',
-  });
-  readonly form = createForm(this.accountFormModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.providerUuid);
-    email(schema.defaultFromEmail);
-  });
-
-  private readonly accountsResource = resource({
-    params: () => ({
-      rootEndpoint: this.rootEndpoint(),
-      endpoint: this.endpoint(),
-    }),
-    defaultValue: {
-      providers: [] as HostingSmtpProvider[],
-      accounts: [] as HostingSmtpAccount[],
-    },
-    loader: async ({ params }) => {
-      const [providers, accounts] = await Promise.all([
-        this.api.get<HostingSmtpProvider[]>(`${params.rootEndpoint}/providers`),
-        this.api.get<HostingSmtpAccount[]>(params.endpoint),
-      ]);
-      return {
-        providers: Array.isArray(providers) ? providers : [],
-        accounts: Array.isArray(accounts) ? accounts : [],
-      };
-    },
-  });
-  readonly loading = this.accountsResource.isLoading;
-  private readonly syncAccounts = effect(() => {
-    const snapshot = this.accountsResource.value();
-    this.providers.set(snapshot.providers);
-    this.accounts.set(snapshot.accounts);
-    this.pageIndex.set(0);
-    this.reconcileSelection();
-  });
-  private readonly reportLoadError = effect(() => {
-    const error = this.accountsResource.error();
-    if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load SMTP accounts.'));
-  });
-
-  readonly filteredProviderOptions = computed(() => {
-    const term = this.providerSearch().trim().toLowerCase();
-    return this.providers().filter(
-      (provider) =>
-        !term || `${provider.HspName} ${provider.HspProvider}`.toLowerCase().includes(term),
-    );
-  });
-  readonly providerSelectOptions = computed<MnsSearchSelectFieldOption[]>(() =>
+  private readonly endpoint = computed(() => `${this.rootEndpoint()}/accounts`);
+  private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.providers().map((provider) => ({
       value: provider.HspUUID,
       label: provider.HspName,
@@ -206,318 +152,82 @@ export class HostingSmtpAccountsPage {
     })),
   );
 
-  readonly filteredAccounts = computed(() => {
-    const { search, providerUuid, status } = this.filterFormModel();
-    const term = search.trim().toLowerCase();
-    const rows = this.accounts().filter((item) => {
-      const matchesTerm =
-        !term ||
-        `${item.HsaName} ${item.HspName ?? ''} ${item.HspProvider ?? ''} ${item.HsaDefaultFromName ?? ''} ${item.HsaDefaultFromEmail ?? ''}`
-          .toLowerCase()
-          .includes(term);
-      const matchesProvider = !providerUuid || item.HostingSmtpProviderHspUUID === providerUuid;
-      const matchesStatus = status === '' || String(item.HsaIsActive) === status;
-      return matchesTerm && matchesProvider && matchesStatus;
-    });
-    return this.sortRows(rows);
-  });
-
-  readonly pagedAccounts = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.filteredAccounts().slice(start, start + this.pageSize());
-  });
-
   constructor() {
-    this.destroyRef.onDestroy(() => this.closeDialog());
+    super(ACCOUNT_CONFIG);
+    void this.fetchProviders();
   }
 
-  refreshList() {
-    this.accountsResource.reload();
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    if (!this.providers().length) await this.fetchProviders();
+    return super.fetchItems(filters);
   }
 
-  applyFilters() {
-    this.pageIndex.set(0);
-    this.reconcileSelection();
+  protected override listEndpoint(): string {
+    return this.endpoint();
   }
 
-  clearFilters() {
-    this.filterFormModel.set({ search: '', providerUuid: '', status: '' });
-    this.pageIndex.set(0);
-    this.reconcileSelection();
+  protected override createEndpoint(): string {
+    return this.endpoint();
   }
 
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+  protected override updateEndpoint(): string {
+    return this.endpoint();
   }
 
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.pageIndex.set(0);
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
   }
 
-  resetProviderSearch(opened: boolean) {
-    if (!opened) this.providerSearch.set('');
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
   }
 
-  startCreate() {
-    this.editing.set(null);
-    this.accountFormModel.set({
-      name: '',
-      providerUuid: '',
-      isActive: 1,
-      isDefault: false,
-      defaultFromName: '',
-      defaultFromEmail: '',
-    });
-    this.openDialog();
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'providerUuid') return this.providerOptions();
+    return [];
   }
 
-  startEdit(item: HostingSmtpAccount) {
-    this.editing.set(item);
-    this.accountFormModel.set({
-      name: item.HsaName,
-      providerUuid: item.HostingSmtpProviderHspUUID,
-      isActive: item.HsaIsActive ? 1 : 0,
-      isDefault: item.HsaIsDefault === 1,
-      defaultFromName: item.HsaDefaultFromName ?? '',
-      defaultFromEmail: item.HsaDefaultFromEmail ?? '',
-    });
-    this.openDialog();
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    return String(row['HspProvider'] ?? '') === 'smtp' ? [VALIDATE_ACTION] : [];
   }
 
-  private openDialog() {
-    const accountDialog = this.accountDialog();
-    if (!accountDialog || this.dialogBinding) return;
-    this.dialogBinding = openCrudTemplateDialog(this.dialog, accountDialog, 'crud-form-dialog', {
-      onEscape: () => this.closeDialog(),
-    });
-    bindDialogClosed(this.dialogBinding.ref, () => {
-      this.dialogBinding?.stop();
-      this.dialogBinding = null;
-    });
-  }
-
-  openCrudTemplateDialog() {
-    this.openDialog();
-  }
-
-  closeDialog() {
-    if (!this.dialogBinding) return;
-    this.dialogBinding.ref.close();
-    this.dialogBinding.stop();
-    this.dialogBinding = null;
-    this.editing.set(null);
-  }
-
-  async save(keepOpen = false) {
-    if (!this.form().valid()) {
-      return;
-    }
-
-    const raw = this.accountFormModel();
-    const payload = {
-      name: raw.name,
-      providerUuid: raw.providerUuid,
-      defaultFromName: raw.defaultFromName,
-      defaultFromEmail: raw.defaultFromEmail,
-      isActive: raw.isActive === 1,
-      isDefault: raw.isDefault,
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return {
+      name: payload['name'],
+      providerUuid: payload['providerUuid'],
+      defaultFromName: payload['defaultFromName'],
+      defaultFromEmail: payload['defaultFromEmail'],
+      isActive: truthyNumber(payload['status']) === 1,
+      isDefault: truthyNumber(payload['isDefault']) === 1,
     };
+  }
 
-    this.saving.set(true);
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'validate') return;
+    const uuid = String(row['HsaUUID'] ?? '');
+    if (!uuid) return;
+    this.mutating.set(true);
     try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.endpoint()}/${editing.HsaUUID}`, payload);
-        this.snack.success('SMTP account updated.');
-      } else {
-        await this.api.post(this.endpoint(), payload);
-        this.snack.success('SMTP account created.');
-      }
-      this.accountsResource.reload();
-      if (keepOpen && !editing) this.startCreate();
-      else this.closeDialog();
+      await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
+      this.snack.success(this.t('SMTP account validated.'));
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to save SMTP account.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to validate SMTP account.'));
     } finally {
-      this.saving.set(false);
+      this.mutating.set(false);
     }
   }
 
-  async validateAccount(item: HostingSmtpAccount) {
-    this.validatingId.set(item.HsaUUID);
+  private async fetchProviders(): Promise<void> {
     try {
-      await this.api.post(`${this.endpoint()}/${item.HsaUUID}/validate`, {});
-      this.snack.success('SMTP account validated.');
+      const response = await this.api.get<HostingSmtpProvider[]>(`${this.rootEndpoint()}/providers`);
+      this.providers.set(Array.isArray(response) ? response : []);
     } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to validate SMTP account.'));
-    } finally {
-      this.validatingId.set(null);
+      this.providers.set([]);
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load SMTP providers.'));
     }
   }
+}
 
-  async deleteAccount(item: HostingSmtpAccount) {
-    const ok = await this.confirm(`Delete SMTP account ${item.HsaName}?`);
-    if (!ok) return;
-    try {
-      await this.api.delete(`${this.endpoint()}/${item.HsaUUID}`);
-      this.snack.success('SMTP account deleted.');
-      this.accountsResource.reload();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete SMTP account.'));
-    }
-  }
-
-  async deleteSelectedAccounts() {
-    const ids = [...this.selectedIds()];
-    if (!ids.length) return;
-    const ok = await this.confirm(this.bulkDeleteMessage(ids));
-    if (!ok) return;
-    try {
-      const response = await this.api.delete<any>(`${this.endpoint()}/bulk`, { ids });
-      const result = this.parseBulkDeleteResult(response, ids);
-      this.accounts.set(this.accounts().filter((row) => !result.deleted.has(row.HsaUUID)));
-      this.selectedIds.set(result.failed);
-      if (result.failed.size) {
-        this.snack.error(`${result.failed.size} selected SMTP account(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${result.deleted.size} selected SMTP account(s) deleted.`);
-      }
-      this.accountsResource.reload();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete selected SMTP accounts.'));
-    }
-  }
-
-  isSelected(row: HostingSmtpAccount) {
-    return this.selectedIds().has(row.HsaUUID);
-  }
-
-  toggleSelection(row: HostingSmtpAccount, checked: boolean) {
-    const next = new Set(this.selectedIds());
-    checked ? next.add(row.HsaUUID) : next.delete(row.HsaUUID);
-    this.selectedIds.set(next);
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    const next = new Set(this.selectedIds());
-    for (const row of this.pagedAccounts()) {
-      checked ? next.add(row.HsaUUID) : next.delete(row.HsaUUID);
-    }
-    this.selectedIds.set(next);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedAccounts();
-    return rows.length > 0 && rows.every((row) => this.selectedIds().has(row.HsaUUID));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedAccounts();
-    return rows.some((row) => this.selectedIds().has(row.HsaUUID)) && !this.isAllVisibleSelected();
-  }
-
-  providerLabel(item: HostingSmtpAccount) {
-    const name =
-      item.HspName ||
-      this.providers().find((provider) => provider.HspUUID === item.HostingSmtpProviderHspUUID)
-        ?.HspName;
-    return name ?? '-';
-  }
-
-  fromLabel(item: HostingSmtpAccount) {
-    return item.HsaDefaultFromEmail || '-';
-  }
-
-  statusLabel(value: number) {
-    return value === 1 ? 'Active' : 'Inactive';
-  }
-
-  statusChipClass(value: number) {
-    return value === 1 ? 'chip-success' : 'chip-skipped';
-  }
-
-  canValidate(item: HostingSmtpAccount) {
-    return item.HspProvider === 'smtp';
-  }
-
-  private sortRows(rows: HostingSmtpAccount[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-    return [...rows].sort((a, b) => {
-      const result = this.sortValue(a, active).localeCompare(this.sortValue(b, active), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-      return direction === 'asc' ? result : -result;
-    });
-  }
-
-  private sortValue(row: HostingSmtpAccount, column: string) {
-    if (column === 'name') return row.HsaName ?? '';
-    if (column === 'provider') return this.providerLabel(row);
-    if (column === 'from') return this.fromLabel(row);
-    if (column === 'default') return String(row.HsaIsDefault ?? 0);
-    if (column === 'status') return this.statusLabel(row.HsaIsActive);
-    return '';
-  }
-
-  private reconcileSelection() {
-    const valid = new Set(this.accounts().map((row) => row.HsaUUID));
-    const current = untracked(() => this.selectedIds());
-    const next = new Set([...current].filter((id) => valid.has(id)));
-    if (next.size === current.size && [...next].every((id) => current.has(id))) return;
-    this.selectedIds.set(next);
-  }
-
-  private async confirm(message: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: { title: 'Confirm delete', message, confirmText: 'Delete', color: 'warn' },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    return !!(await firstValueFrom(ref.afterClosed()));
-  }
-
-  private bulkDeleteMessage(ids: string[]) {
-    const labels = this.accounts()
-      .filter((item) => ids.includes(item.HsaUUID))
-      .slice(0, 3)
-      .map((item) => item.HsaName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    return `Delete ${ids.length} selected SMTP account(s)?${suffix}`;
-  }
-
-  private parseBulkDeleteResult(response: any, requestedIds: string[]) {
-    const payload = response?.data ?? response ?? {};
-    const failedItems = Array.isArray(payload.failed) ? payload.failed : [];
-    const failed = new Set<string>(
-      failedItems
-        .map((item: any) => this.extractBulkFailureUUID(item))
-        .filter((uuid: string | null): uuid is string => !!uuid),
-    );
-    const deletedItems = Array.isArray(payload.deleted) ? payload.deleted : [];
-    const deleted = new Set<string>(
-      deletedItems.length
-        ? deletedItems.filter((uuid: unknown): uuid is string => typeof uuid === 'string')
-        : requestedIds.filter((uuid) => !failed.has(uuid)),
-    );
-    return { deleted, failed };
-  }
-
-  private extractBulkFailureUUID(item: any): string | null {
-    if (!item || typeof item !== 'object') return null;
-    if (typeof item.HsaUUID === 'string') return item.HsaUUID;
-    if (typeof item.UUID === 'string') return item.UUID;
-    const uuidKey = Object.keys(item).find((key) => key.endsWith('UUID'));
-    return uuidKey && typeof item[uuidKey] === 'string' ? item[uuidKey] : null;
-  }
-
-  private errorMessage(error: unknown, fallback: string) {
-    const maybe = error as { error?: { error?: string }; message?: string };
-    return maybe?.error?.error || maybe?.message || fallback;
-  }
+function truthyNumber(value: unknown): number {
+  return value === true || value === 1 || value === '1' ? 1 : 0;
 }
