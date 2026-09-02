@@ -1,633 +1,422 @@
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  untracked,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
 import {
-  CrudDialogBinding,
-  openCrudTemplateDialog,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudField,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type SmtpProvider = 'smtp' | 'sendgrid' | 'ses' | 'mailersend';
 
-type HostingSmtpProvider = {
-  HspUUID: string;
-  HspName: string;
-  HspProvider: SmtpProvider;
-  HspHost?: string | null;
-  HspPort?: number | null;
-  HspSecure?: number | null;
-  HspUsername?: string | null;
-  HspConfig?: Record<string, unknown> | null;
-  HspIsActive: number;
-  HspIsDefault: number;
+const PROVIDER_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'smtp', label: 'SMTP' },
+  { value: 'sendgrid', label: 'Twilio SendGrid' },
+  { value: 'ses', label: 'Amazon SES' },
+  { value: 'mailersend', label: 'MailerSend' },
+];
+
+const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const SECURE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 0, label: 'STARTTLS / Plain (587)' },
+  { value: 1, label: 'Direct TLS / SSL (465)' },
+];
+
+const VALIDATE_ACTION: ConfigurableCrudRowAction = {
+  key: 'validate',
+  label: 'Validate',
+  icon: 'fact_check',
+  tooltip: 'Validate',
 };
 
-type ProviderFormValue = {
-  name: string;
-  provider: SmtpProvider;
-  isActive: number;
-  isDefault: number;
-  host: string;
-  port: number;
-  secure: boolean;
-  username: string;
-  password: string;
-  apiKey: string;
-  region: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-};
-
-@Component({
-  selector: 'app-hosting-smtp-providers',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-  ],
-  templateUrl: './providers.html',
-  styleUrls: ['./providers.scss'],
-})
-export class HostingSmtpProvidersPage {
-  private readonly api = inject(ApiService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly providerDialog = viewChild<TemplateRef<unknown>>('providerDialog');
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-
-  private dialogBinding: CrudDialogBinding | null = null;
-
-  readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
-  readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/smtp/providers' : 'hosting/smtp/providers',
-  );
-
-  readonly saving = signal(false);
-  readonly editing = signal<HostingSmtpProvider | null>(null);
-  readonly selectedIds = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedIds().size);
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly validatingId = signal<string | null>(null);
-  readonly selectedProvider = signal<SmtpProvider>('smtp');
-
-  readonly displayedColumns = ['select', 'name', 'provider', 'default', 'status', 'actions'];
-
-  readonly providerOptions: { value: SmtpProvider; label: string }[] = [
-    { value: 'smtp', label: 'SMTP' },
-    { value: 'sendgrid', label: 'Twilio SendGrid' },
-    { value: 'ses', label: 'Amazon SES' },
-    { value: 'mailersend', label: 'MailerSend' },
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    provider: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  private readonly providersResource = resource({
-    params: () => ({ endpoint: this.endpoint() }),
-    defaultValue: [] as HostingSmtpProvider[],
-    loader: async ({ params }) => {
-      const result = await this.api.get<HostingSmtpProvider[]>(params.endpoint);
-      return Array.isArray(result) ? result : [];
+const PROVIDER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/smtp/providers',
+  uuidField: 'HspUUID',
+  pageTitle: 'SMTP Providers',
+  pageDescription: 'Manage SMTP platforms and credentials.',
+  createTitle: 'New SMTP provider',
+  editTitle: 'Edit SMTP provider',
+  dialogDescription: 'Configure SMTP provider identity, transport and credentials.',
+  searchPlaceholder: 'Name or provider',
+  emptyLabel: 'No SMTP providers found.',
+  deleteTitle: 'Delete SMTP provider',
+  deleteMessage: 'Are you sure you want to delete this SMTP provider?',
+  deleteSelectedTitle: 'Delete selected SMTP providers',
+  deleteSelectedMessage: 'Delete {count} selected SMTP providers?',
+  savedMessage: 'SMTP provider saved successfully.',
+  deletedMessage: 'SMTP provider deleted successfully.',
+  deleteFailedMessage: 'Failed to delete SMTP provider.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  authenticationTabAfterRecord: true,
+  tabLabels: {
+    authentication: 'Credentials',
+  },
+  rowActions: [VALIDATE_ACTION],
+  listFilters: [
+    {
+      key: 'provider',
+      label: 'Provider',
+      paramKey: 'provider',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
     },
-  });
-
-  readonly loading = this.providersResource.isLoading;
-  readonly providers = this.providersResource.value;
-
-  private readonly syncTableData = effect(() => {
-    this.pageIndex.set(0);
-    this.reconcileSelection();
-  });
-
-  private readonly reportLoadError = effect(() => {
-    const error = this.providersResource.error();
-    if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load SMTP providers.'));
-  });
-
-  readonly formModel = signal<ProviderFormValue>({
+  ],
+  initialValues: {
     name: '',
     provider: 'smtp',
-    isActive: 1,
+    status: 1,
     isDefault: 0,
     host: '',
     port: 587,
-    secure: false,
+    secure: 0,
     username: '',
     password: '',
     apiKey: '',
     region: '',
     accessKeyId: '',
     secretAccessKey: '',
-  });
-  readonly form = createForm(this.formModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.provider);
-  });
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HspName', uuidField: 'HspUUID' },
+    { id: 'provider', label: 'Provider', kind: 'related', field: 'HspProvider', lookupKey: 'provider' },
+    { id: 'default', label: 'Default', kind: 'boolean', field: 'HspIsDefault', className: 'status-col' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HspIsActive', className: 'status-col' },
+  ],
+  fields: [
+    { key: 'status', source: 'HspIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'provider',
+      source: 'HspProvider',
+      payloadKey: 'provider',
+      label: 'Provider',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'isDefault',
+      source: 'HspIsDefault',
+      payloadKey: 'isDefault',
+      label: 'Default provider',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      span: 1,
+    },
+    { key: 'name', source: 'HspName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'host',
+      source: 'HspHost',
+      payloadKey: 'host',
+      label: 'Host',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'smtp',
+      requiredWhen: ({ values }) => provider(values['provider']) === 'smtp',
+    },
+    {
+      key: 'port',
+      source: 'HspPort',
+      payloadKey: 'port',
+      label: 'Port',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'smtp',
+      requiredWhen: ({ values }) => provider(values['provider']) === 'smtp',
+    },
+    {
+      key: 'secure',
+      source: 'HspSecure',
+      payloadKey: 'secure',
+      label: 'Security',
+      type: 'search-select',
+      options: SECURE_OPTIONS,
+      translateOptions: false,
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'smtp',
+    },
+    {
+      key: 'username',
+      source: 'HspUsername',
+      payloadKey: 'username',
+      label: 'Username',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'smtp',
+      requiredWhen: ({ values }) => provider(values['provider']) === 'smtp',
+    },
+    {
+      key: 'password',
+      payloadKey: 'password',
+      label: 'Password',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current password',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'smtp',
+      requiredWhen: ({ editing, values }) => !editing && provider(values['provider']) === 'smtp',
+    },
+    {
+      key: 'apiKey',
+      payloadKey: 'apiKey',
+      label: 'API key',
+      labelWhen: ({ values }) =>
+        provider(values['provider']) === 'mailersend' ? 'API token' : 'API key',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current token',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => !['sendgrid', 'mailersend'].includes(provider(values['provider'])),
+      requiredWhen: ({ editing, values }) =>
+        !editing && ['sendgrid', 'mailersend'].includes(provider(values['provider'])),
+    },
+    {
+      key: 'region',
+      payloadKey: 'region',
+      label: 'Region',
+      placeholder: 'us-east-1',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'ses',
+      requiredWhen: ({ values }) => provider(values['provider']) === 'ses',
+    },
+    {
+      key: 'accessKeyId',
+      payloadKey: 'accessKeyId',
+      label: 'Access key ID',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'ses',
+      requiredWhen: ({ values }) => provider(values['provider']) === 'ses',
+    },
+    {
+      key: 'secretAccessKey',
+      payloadKey: 'secretAccessKey',
+      label: 'Secret access key',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current secret access key',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => provider(values['provider']) !== 'ses',
+      requiredWhen: ({ editing, values }) => !editing && provider(values['provider']) === 'ses',
+    },
+  ],
+};
 
-  readonly filteredProviders = computed(() => {
-    const { search, provider, status } = this.filterFormModel();
-    const term = search.trim().toLowerCase();
-    const rows = this.providers().filter((item) => {
-      const matchesTerm =
-        !term || `${item.HspName} ${item.HspProvider}`.toLowerCase().includes(term);
-      const matchesProvider = !provider || item.HspProvider === provider;
-      const matchesStatus = status === '' || String(item.HspIsActive) === status;
-      return matchesTerm && matchesProvider && matchesStatus;
-    });
-    return this.sortRows(rows);
-  });
-
-  readonly pagedProviders = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.filteredProviders().slice(start, start + this.pageSize());
-  });
+@Component({
+  selector: 'app-hosting-smtp-providers',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class HostingSmtpProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly endpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/smtp/providers' : PROVIDER_CONFIG.endpoint,
+  );
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.closeDialog());
+    super(PROVIDER_CONFIG);
   }
 
-  refreshList() {
-    this.providersResource.reload();
+  protected override listEndpoint(): string {
+    return this.endpoint();
   }
 
-  applyFilters() {
-    this.pageIndex.set(0);
-    this.reconcileSelection();
+  protected override createEndpoint(): string {
+    return this.endpoint();
   }
 
-  clearFilters() {
-    this.filterFormModel.set({ search: '', provider: '', status: '' });
-    this.pageIndex.set(0);
-    this.reconcileSelection();
+  protected override updateEndpoint(): string {
+    return this.endpoint();
   }
 
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
   }
 
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.pageIndex.set(0);
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
   }
 
-  startCreate() {
-    this.editing.set(null);
-    this.formModel.set({
-      name: '',
-      provider: 'smtp',
-      isActive: 1,
-      isDefault: 0,
-      host: '',
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'provider') return PROVIDER_OPTIONS;
+    return [];
+  }
+
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    return provider(row['HspProvider']) === 'smtp' ? [VALIDATE_ACTION] : [];
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'provider') return;
+    const nextProvider = provider(value);
+    const defaults = providerDefaults(nextProvider, true, this.formValues());
+    this.patchFormValues(defaults);
+  }
+
+  protected override patchFormValues(values: ConfigurableCrudRecord): void {
+    const normalized = { ...values };
+    normalized['provider'] = provider(normalized['provider']);
+    normalized['secure'] = truthyNumber(normalized['secure']);
+    normalized['isDefault'] = truthyNumber(normalized['isDefault']);
+    normalized['status'] = truthyNumber(normalized['status'] ?? normalized['isActive'] ?? 1);
+    const config = normalized['HspConfig'];
+    if (config && typeof config === 'object') {
+      const itemConfig = config as Record<string, unknown>;
+      normalized['host'] = normalized['host'] ?? itemConfig['host'] ?? '';
+      normalized['port'] = normalized['port'] ?? itemConfig['port'] ?? defaultPort(provider(normalized['provider']));
+      normalized['secure'] = truthyNumber(normalized['secure'] ?? itemConfig['secure']);
+      normalized['username'] = normalized['username'] ?? itemConfig['username'] ?? '';
+      normalized['region'] = normalized['region'] ?? itemConfig['region'] ?? '';
+      normalized['accessKeyId'] = normalized['accessKeyId'] ?? itemConfig['accessKeyId'] ?? '';
+    }
+    super.patchFormValues({ ...providerDefaults(provider(normalized['provider']), false, normalized), ...normalized });
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const selectedProvider = provider(payload['provider']);
+    return {
+      name: payload['name'],
+      provider: selectedProvider,
+      config: buildProviderConfig(selectedProvider, payload),
+      credentials: buildProviderCredentials(selectedProvider, payload),
+      isActive: truthyNumber(payload['status']) === 1,
+      isDefault: truthyNumber(payload['isDefault']) === 1,
+    };
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'validate') return;
+    const uuid = String(row['HspUUID'] ?? '');
+    if (!uuid) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
+      this.snack.success(this.t('SMTP provider validated.'));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to validate SMTP provider.'));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    return super.fetchItems(filters);
+  }
+}
+
+function provider(value: unknown): SmtpProvider {
+  const normalized = String(value ?? 'smtp') as SmtpProvider;
+  return ['smtp', 'sendgrid', 'ses', 'mailersend'].includes(normalized) ? normalized : 'smtp';
+}
+
+function defaultPort(value: SmtpProvider): number {
+  return value === 'mailersend' ? 443 : 587;
+}
+
+function truthyNumber(value: unknown): number {
+  return value === true || value === 1 || value === '1' ? 1 : 0;
+}
+
+function providerDefaults(
+  value: SmtpProvider,
+  force: boolean,
+  current: ConfigurableCrudRecord,
+): ConfigurableCrudRecord {
+  if (value === 'sendgrid') {
+    return {
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: 0,
+      username: 'apikey',
+      ...(force ? { password: '', apiKey: '' } : {}),
+    };
+  }
+  if (value === 'ses') {
+    const region = String(current['region'] ?? '').trim();
+    return {
+      host: region ? `email-smtp.${region}.amazonaws.com` : '',
+      port: 587,
+      secure: 0,
+    };
+  }
+  if (value === 'mailersend') {
+    return {
+      host: 'api.mailersend.com',
+      port: 443,
+      secure: 1,
+      username: '',
+      ...(force ? { apiKey: '' } : {}),
+    };
+  }
+  return {
+    port: force || !current['port'] ? 587 : current['port'],
+    secure: force ? 0 : truthyNumber(current['secure']),
+  };
+}
+
+function buildProviderConfig(
+  value: SmtpProvider,
+  payload: ConfigurableCrudRecord,
+): Record<string, unknown> {
+  if (value === 'sendgrid') {
+    return { service: 'sendgrid', host: 'smtp.sendgrid.net', port: 587, secure: false };
+  }
+  if (value === 'ses') {
+    const region = String(payload['region'] ?? '').trim();
+    return {
+      region,
+      accessKeyId: String(payload['accessKeyId'] ?? '').trim(),
+      host: `email-smtp.${region}.amazonaws.com`,
       port: 587,
       secure: false,
-      username: '',
-      password: '',
-      apiKey: '',
-      region: '',
-      accessKeyId: '',
-      secretAccessKey: '',
-    });
-    this.selectedProvider.set('smtp');
-    this.applyProviderDefaults('smtp', true);
-    this.openDialog();
-  }
-
-  startEdit(item: HostingSmtpProvider) {
-    const config = this.normalizedConfig(item);
-    this.editing.set(item);
-    this.selectedProvider.set(item.HspProvider);
-    this.formModel.set({
-      name: item.HspName,
-      provider: item.HspProvider,
-      isActive: item.HspIsActive ? 1 : 0,
-      isDefault: item.HspIsDefault ? 1 : 0,
-      host: String(config['host'] ?? ''),
-      port: Number(config['port'] ?? this.defaultPort(item.HspProvider)),
-      secure: this.normalizeSecure(config['secure'] ?? item.HspSecure),
-      username: String(config['username'] ?? item.HspUsername ?? ''),
-      password: '',
-      apiKey: '',
-      region: String(config['region'] ?? ''),
-      accessKeyId: String(config['accessKeyId'] ?? ''),
-      secretAccessKey: '',
-    });
-    this.applyProviderDefaults(item.HspProvider, false);
-    this.openDialog();
-  }
-
-  private openDialog() {
-    const providerDialog = this.providerDialog();
-    if (!providerDialog || this.dialogBinding) return;
-    this.dialogBinding = openCrudTemplateDialog(this.dialog, providerDialog, 'crud-form-dialog', {
-      onEscape: () => this.closeDialog(),
-    });
-    bindDialogClosed(this.dialogBinding.ref, () => {
-      this.dialogBinding?.stop();
-      this.dialogBinding = null;
-    });
-  }
-
-  openCrudTemplateDialog() {
-    this.openDialog();
-  }
-
-  closeDialog() {
-    if (!this.dialogBinding) return;
-    this.dialogBinding.ref.close();
-    this.dialogBinding.stop();
-    this.dialogBinding = null;
-    this.editing.set(null);
-  }
-
-  async save(keepOpen = false) {
-    if (!this.form().valid()) {
-      return;
-    }
-
-    const raw = this.formModel();
-    const provider = raw.provider;
-    const missing = this.requiredProviderFields(raw);
-    if (missing.length) {
-      this.snack.error(`Required provider fields: ${missing.join(', ')}.`);
-      return;
-    }
-
-    const config = this.buildProviderConfig(raw);
-    const credentials = this.buildProviderCredentials(raw);
-    const payload = {
-      name: raw.name,
-      provider,
-      config,
-      credentials,
-      isActive: raw.isActive === 1,
-      isDefault: Boolean(raw.isDefault),
-    };
-
-    this.saving.set(true);
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.endpoint()}/${editing.HspUUID}`, payload);
-        this.snack.success('SMTP provider updated.');
-      } else {
-        await this.api.post(this.endpoint(), payload);
-        this.snack.success('SMTP provider created.');
-      }
-      this.providersResource.reload();
-      if (keepOpen && !editing) this.startCreate();
-      else this.closeDialog();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to save SMTP provider.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async validateProvider(item: HostingSmtpProvider) {
-    this.validatingId.set(item.HspUUID);
-    try {
-      await this.api.post(`${this.endpoint()}/${item.HspUUID}/validate`, {});
-      this.snack.success('SMTP provider validated.');
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to validate SMTP provider.'));
-    } finally {
-      this.validatingId.set(null);
-    }
-  }
-
-  async deleteProvider(item: HostingSmtpProvider) {
-    const ok = await this.confirm(`Delete SMTP provider ${item.HspName}?`);
-    if (!ok) return;
-    try {
-      await this.api.delete(`${this.endpoint()}/${item.HspUUID}`);
-      this.snack.success('SMTP provider deleted.');
-      this.providersResource.reload();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete SMTP provider.'));
-    }
-  }
-
-  async deleteSelectedProviders() {
-    const ids = [...this.selectedIds()];
-    if (!ids.length) return;
-    const ok = await this.confirm(this.bulkDeleteMessage(ids));
-    if (!ok) return;
-    try {
-      const response = await this.api.delete<any>(`${this.endpoint()}/bulk`, { ids });
-      const result = this.parseBulkDeleteResult(response, ids);
-      this.selectedIds.set(result.failed);
-      if (result.failed.size) {
-        this.snack.error(`${result.failed.size} selected SMTP provider(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${result.deleted.size} selected SMTP provider(s) deleted.`);
-      }
-      this.providersResource.reload();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete selected SMTP providers.'));
-    }
-  }
-
-  isSelected(row: HostingSmtpProvider) {
-    return this.selectedIds().has(row.HspUUID);
-  }
-
-  toggleSelection(row: HostingSmtpProvider, checked: boolean) {
-    const next = new Set(this.selectedIds());
-    checked ? next.add(row.HspUUID) : next.delete(row.HspUUID);
-    this.selectedIds.set(next);
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    const next = new Set(this.selectedIds());
-    for (const row of this.pagedProviders()) {
-      checked ? next.add(row.HspUUID) : next.delete(row.HspUUID);
-    }
-    this.selectedIds.set(next);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedProviders();
-    return rows.length > 0 && rows.every((row) => this.selectedIds().has(row.HspUUID));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedProviders();
-    return rows.some((row) => this.selectedIds().has(row.HspUUID)) && !this.isAllVisibleSelected();
-  }
-
-  providerLabel(value: string) {
-    return this.providerOptions.find((item) => item.value === value)?.label ?? value;
-  }
-
-  onProviderChange(provider: SmtpProvider) {
-    this.selectedProvider.set(provider);
-    this.applyProviderDefaults(provider, true);
-  }
-
-  onRegionInput() {
-    if (this.selectedProvider() !== 'ses') return;
-    const region = this.formModel().region.trim();
-    if (!region) return;
-    this.formModel.update((current) => ({
-      ...current,
-      host: `email-smtp.${region}.amazonaws.com`,
-    }));
-  }
-
-  secretHint(label: string) {
-    return this.editing() ? `Leave blank to keep current ${label}.` : `${label} is required.`;
-  }
-
-  private applyProviderDefaults(provider: SmtpProvider, force: boolean) {
-    const current = this.formModel();
-    const patch: Partial<typeof current> = {};
-    if (provider === 'smtp') {
-      if (force || !current.port) patch.port = 587;
-      if (force) patch.secure = false;
-    } else if (provider === 'sendgrid') {
-      patch.host = 'smtp.sendgrid.net';
-      patch.port = 587;
-      patch.secure = false;
-      patch.username = 'apikey';
-      if (force) patch.password = '';
-    } else if (provider === 'ses') {
-      patch.port = 587;
-      patch.secure = false;
-      if (current.region) patch.host = `email-smtp.${current.region.trim()}.amazonaws.com`;
-    } else if (provider === 'mailersend') {
-      patch.host = 'api.mailersend.com';
-      patch.port = 443;
-      patch.secure = true;
-      if (force) patch.username = '';
-    }
-    this.formModel.update((value) => ({ ...value, ...patch }));
-  }
-
-  private defaultPort(provider: SmtpProvider) {
-    if (provider === 'mailersend') return 443;
-    return 587;
-  }
-
-  private normalizedConfig(item: HostingSmtpProvider) {
-    return {
-      ...(item.HspConfig ?? {}),
-      host: item.HspConfig?.['host'] ?? item.HspHost ?? undefined,
-      port: item.HspConfig?.['port'] ?? item.HspPort ?? undefined,
-      secure: item.HspConfig?.['secure'] ?? item.HspSecure ?? undefined,
-      username: item.HspConfig?.['username'] ?? item.HspUsername ?? undefined,
-    } as Record<string, unknown>;
-  }
-
-  private normalizeSecure(value: unknown) {
-    return value === true || value === 1 || value === '1';
-  }
-
-  private requiredProviderFields(raw: ProviderFormValue) {
-    const missing: string[] = [];
-    const isEdit = !!this.editing();
-    if (raw.provider === 'smtp') {
-      if (!raw.host.trim()) missing.push('Host');
-      if (!Number(raw.port)) missing.push('Port');
-      if (!raw.username.trim()) missing.push('Username');
-      if (!isEdit && !raw.password.trim()) missing.push('Password');
-    } else if (raw.provider === 'sendgrid') {
-      if (!isEdit && !raw.apiKey.trim()) missing.push('API key');
-    } else if (raw.provider === 'ses') {
-      if (!raw.region.trim()) missing.push('Region');
-      if (!raw.accessKeyId.trim()) missing.push('Access key ID');
-      if (!isEdit && !raw.secretAccessKey.trim()) missing.push('Secret access key');
-    } else if (raw.provider === 'mailersend') {
-      if (!isEdit && !raw.apiKey.trim()) missing.push('API token');
-    }
-    return missing;
-  }
-
-  private buildProviderConfig(raw: ProviderFormValue) {
-    if (raw.provider === 'sendgrid') {
-      return { service: 'sendgrid', host: 'smtp.sendgrid.net', port: 587, secure: false };
-    }
-    if (raw.provider === 'ses') {
-      const region = raw.region.trim();
-      return {
-        region,
-        accessKeyId: raw.accessKeyId.trim(),
-        host: `email-smtp.${region}.amazonaws.com`,
-        port: 587,
-        secure: false,
-      };
-    }
-    if (raw.provider === 'mailersend') {
-      return { service: 'mailersend', host: 'api.mailersend.com', port: 443, secure: true };
-    }
-    return {
-      host: raw.host.trim(),
-      port: Number(raw.port),
-      secure: !!raw.secure,
-      username: raw.username.trim(),
     };
   }
-
-  private buildProviderCredentials(raw: ProviderFormValue) {
-    if (raw.provider === 'sendgrid') {
-      return raw.apiKey.trim() ? { apiKey: raw.apiKey.trim() } : {};
-    }
-    if (raw.provider === 'ses') {
-      return raw.secretAccessKey.trim() ? { secretAccessKey: raw.secretAccessKey.trim() } : {};
-    }
-    if (raw.provider === 'mailersend') {
-      return raw.apiKey.trim() ? { apiKey: raw.apiKey.trim() } : {};
-    }
-    return raw.password.trim() ? { password: raw.password.trim() } : {};
+  if (value === 'mailersend') {
+    return { service: 'mailersend', host: 'api.mailersend.com', port: 443, secure: true };
   }
+  return {
+    host: String(payload['host'] ?? '').trim(),
+    port: Number(payload['port'] ?? 587),
+    secure: truthyNumber(payload['secure']) === 1,
+    username: String(payload['username'] ?? '').trim(),
+  };
+}
 
-  statusLabel(value: number) {
-    return value === 1 ? 'Active' : 'Inactive';
+function buildProviderCredentials(
+  value: SmtpProvider,
+  payload: ConfigurableCrudRecord,
+): Record<string, unknown> {
+  if (value === 'sendgrid' || value === 'mailersend') {
+    const apiKey = String(payload['apiKey'] ?? '').trim();
+    return apiKey ? { apiKey } : {};
   }
-
-  statusChipClass(value: number) {
-    return value === 1 ? 'chip-success' : 'chip-skipped';
+  if (value === 'ses') {
+    const secretAccessKey = String(payload['secretAccessKey'] ?? '').trim();
+    return secretAccessKey ? { secretAccessKey } : {};
   }
-
-  private sortRows(rows: HostingSmtpProvider[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-
-    return [...rows].sort((a, b) => {
-      const av = this.sortValue(a, active);
-      const bv = this.sortValue(b, active);
-      const result = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' });
-      return direction === 'asc' ? result : -result;
-    });
-  }
-
-  private sortValue(row: HostingSmtpProvider, column: string) {
-    if (column === 'name') return row.HspName ?? '';
-    if (column === 'provider') return this.providerLabel(row.HspProvider);
-    if (column === 'default') return String(row.HspIsDefault ?? 0);
-    if (column === 'status') return this.statusLabel(row.HspIsActive);
-    return '';
-  }
-
-  private reconcileSelection() {
-    const valid = new Set(this.providers().map((row) => row.HspUUID));
-    const current = untracked(() => this.selectedIds());
-    const next = new Set([...current].filter((id) => valid.has(id)));
-    if (next.size === current.size && [...next].every((id) => current.has(id))) return;
-    this.selectedIds.set(next);
-  }
-
-  private async confirm(message: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: { title: 'Confirm delete', message, confirmText: 'Delete', color: 'warn' },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    return !!(await firstValueFrom(ref.afterClosed()));
-  }
-
-  private bulkDeleteMessage(ids: string[]) {
-    const labels = this.providers()
-      .filter((item) => ids.includes(item.HspUUID))
-      .slice(0, 3)
-      .map((item) => item.HspName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    return `Delete ${ids.length} selected SMTP provider(s)?${suffix}`;
-  }
-
-  private parseBulkDeleteResult(response: any, requestedIds: string[]) {
-    const payload = response?.data ?? response ?? {};
-    const failedItems = Array.isArray(payload.failed) ? payload.failed : [];
-    const failed = new Set<string>(
-      failedItems
-        .map((item: any) => this.extractBulkFailureUUID(item))
-        .filter((uuid: string | null): uuid is string => !!uuid),
-    );
-    const deletedItems = Array.isArray(payload.deleted) ? payload.deleted : [];
-    const deleted = new Set<string>(
-      deletedItems.length
-        ? deletedItems.filter((uuid: unknown): uuid is string => typeof uuid === 'string')
-        : requestedIds.filter((uuid) => !failed.has(uuid)),
-    );
-    return { deleted, failed };
-  }
-
-  private extractBulkFailureUUID(item: any): string | null {
-    if (!item || typeof item !== 'object') return null;
-    if (typeof item.HspUUID === 'string') return item.HspUUID;
-    if (typeof item.UUID === 'string') return item.UUID;
-    const uuidKey = Object.keys(item).find((key) => key.endsWith('UUID'));
-    return uuidKey && typeof item[uuidKey] === 'string' ? item[uuidKey] : null;
-  }
-
-  private errorMessage(error: unknown, fallback: string) {
-    const maybe = error as { error?: { error?: string }; message?: string };
-    return maybe?.error?.error || maybe?.message || fallback;
-  }
+  const password = String(payload['password'] ?? '').trim();
+  return password ? { password } : {};
 }
