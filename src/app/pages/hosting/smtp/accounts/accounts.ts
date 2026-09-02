@@ -80,6 +80,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       label: 'Provider',
       kind: 'related',
       field: 'HostingSmtpProviderHspUUID',
+      displayField: 'HspName',
       lookupKey: 'providerUuid',
     },
     { id: 'from', label: 'From', field: 'HsaDefaultFromEmail' },
