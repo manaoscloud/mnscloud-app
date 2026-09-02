@@ -367,9 +367,6 @@ export class VoipPabxDashboardPage {
   private items<T>(result: PromiseSettledResult<any>): T[] {
     if (result.status !== 'fulfilled') return [];
     const response = result.value;
-    if (Array.isArray(response)) return response as T[];
-    if (Array.isArray(response?.items)) return response.items as T[];
-    if (Array.isArray(response?.data)) return response.data as T[];
     if (Array.isArray(response?.data?.items)) return response.data.items as T[];
     return [];
   }

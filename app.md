@@ -26,6 +26,10 @@
 - When the API returns an authorized artifact such as a short-lived signed URL, the app must consume
   it as-is. Do not mutate signed URLs, storage object keys, tenant-scoped paths, or authorization
   material in frontend code; ask the API for a new authorized value instead.
+- CRUD/list clients must consume the canonical collection envelope only:
+  `{ status: 'success', message, data: { items, total, limit, offset }, duration }`. Do not add
+  frontend compatibility branches for bare arrays or `data` arrays; endpoints using those shapes
+  must be migrated in the API instead.
 - Tokens stored by the app are user/session tokens obtained after login. Do not add permanent service
   credentials, storage credentials, signing secrets, or master tokens to frontend code, assets, docs,
   examples, or build-time environment files.

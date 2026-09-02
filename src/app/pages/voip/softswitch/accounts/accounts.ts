@@ -229,7 +229,6 @@ function extractItems(response: unknown): ConfigurableCrudRecord[] {
   if (value?.data && Array.isArray((value.data as { items?: unknown }).items)) {
     return (value.data as { items: ConfigurableCrudRecord[] }).items;
   }
-  if (Array.isArray(value?.data)) return value.data as ConfigurableCrudRecord[];
   if (Array.isArray(value?.items)) return value.items as ConfigurableCrudRecord[];
   return [];
 }

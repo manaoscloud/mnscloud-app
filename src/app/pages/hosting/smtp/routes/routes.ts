@@ -26,7 +26,9 @@ type SmtpEventType = {
 
 type SmtpEventTypeResponse = {
   status: string;
-  data: SmtpEventType[];
+  data: {
+    items: SmtpEventType[];
+  };
 };
 
 const TEST_ACTION: ConfigurableCrudRowAction = {
@@ -242,14 +244,13 @@ export class HostingSmtpRoutesPage extends ConfigurableCrudPageBase<Configurable
   private async fetchLookups(): Promise<void> {
     try {
       const [accounts, eventTypesResponse] = await Promise.all([
-        this.api.get<SmtpAccount[]>(`${this.rootEndpoint()}/accounts`),
-        this.api.get<SmtpEventTypeResponse | SmtpEventType[]>(`${this.rootEndpoint()}/event-types`),
+        this.api.get<{ data?: { items?: SmtpAccount[] } }>(
+          `${this.rootEndpoint()}/accounts?limit=500&offset=0`,
+        ),
+        this.api.get<SmtpEventTypeResponse>(`${this.rootEndpoint()}/event-types`),
       ]);
-      const eventTypes = Array.isArray(eventTypesResponse)
-        ? eventTypesResponse
-        : eventTypesResponse.data;
-      this.accounts.set(Array.isArray(accounts) ? accounts : []);
-      this.eventTypes.set(Array.isArray(eventTypes) ? eventTypes : []);
+      this.accounts.set(accounts?.data?.items ?? []);
+      this.eventTypes.set(eventTypesResponse?.data?.items ?? []);
     } catch (error) {
       this.accounts.set([]);
       this.eventTypes.set([]);

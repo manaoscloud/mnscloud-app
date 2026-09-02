@@ -407,11 +407,7 @@ export class SettingsParametersPage {
       return this.normalizeIncoming(direct);
     }
 
-    const items = Array.isArray(result?.data?.items)
-      ? result.data.items
-      : Array.isArray(result)
-        ? result
-        : [];
+    const items = Array.isArray(result?.data?.items) ? result.data.items : [];
 
     return this.fromLegacyItems(items);
   }
@@ -692,7 +688,7 @@ export class SettingsParametersPage {
     const endpoint = isMaster ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts';
     try {
       const response = await this.api.get<any>(endpoint);
-      const rows = Array.isArray(response?.data) ? response.data : (response?.data?.items ?? []);
+      const rows = response?.data?.items ?? [];
       return rows as StorageAccountItem[];
     } catch {
       return [];

@@ -493,7 +493,5 @@ export class VoipPabxCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
 
 function extractItems(response: any): any[] {
   if (Array.isArray(response?.data?.items)) return response.data.items;
-  if (Array.isArray(response?.data)) return response.data;
-  if (Array.isArray(response?.items)) return response.items;
   return [];
 }

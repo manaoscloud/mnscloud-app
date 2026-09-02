@@ -280,7 +280,6 @@ export class VoipPabxQueuePage extends ConfigurableCrudPageBase<ConfigurableCrud
 
 function extractItems(response: any): any[] {
   if (Array.isArray(response?.data?.items)) return response.data.items;
-  if (Array.isArray(response?.data)) return response.data;
   return [];
 }
 

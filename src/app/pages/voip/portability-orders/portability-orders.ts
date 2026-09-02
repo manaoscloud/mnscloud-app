@@ -349,11 +349,7 @@ async function fetchOptions(
   const response = await api.get<any>(
     `${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=500&offset=0`,
   );
-  const rows = Array.isArray(response?.data?.items)
-    ? response.data.items
-    : Array.isArray(response?.data)
-      ? response.data
-      : [];
+  const rows = Array.isArray(response?.data?.items) ? response.data.items : [];
   return rows
     .map((row: any) => ({
       value: String(row[id] ?? ''),

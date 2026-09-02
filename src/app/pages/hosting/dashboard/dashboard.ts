@@ -423,10 +423,8 @@ export class HostingDashboardPage {
   }
 
   private responseItems(response: unknown): GenericRow[] {
-    if (Array.isArray(response)) return response as GenericRow[];
     const body = response as { data?: unknown; items?: unknown };
     if (Array.isArray(body?.items)) return body.items as GenericRow[];
-    if (Array.isArray(body?.data)) return body.data as GenericRow[];
 
     const data = body?.data as { items?: unknown } | undefined;
     if (Array.isArray(data?.items)) return data.items as GenericRow[];

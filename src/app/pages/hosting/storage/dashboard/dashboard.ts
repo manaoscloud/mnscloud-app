@@ -487,10 +487,7 @@ export class HostingStorageDashboardPage {
   }
 
   private items<T>(response: unknown): T[] {
-    if (Array.isArray(response)) return response as T[];
     const wrapped = response as { data?: { items?: T[] } | T[]; items?: T[] };
-    if (Array.isArray(wrapped?.items)) return wrapped.items;
-    if (Array.isArray(wrapped?.data)) return wrapped.data;
     if (Array.isArray((wrapped?.data as { items?: T[] } | undefined)?.items)) {
       return (wrapped.data as { items: T[] }).items;
     }

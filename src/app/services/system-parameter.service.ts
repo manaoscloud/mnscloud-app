@@ -71,7 +71,6 @@ export class SystemParameterService {
   }
 
   private readRow(response: unknown): unknown {
-    if (Array.isArray(response)) return response[0] ?? null;
     if (!response || typeof response !== 'object') return null;
 
     const data = (response as { data?: unknown }).data;
