@@ -13,6 +13,8 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
 import { SnackbarService } from '../../../services/snackbar.service';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
@@ -335,17 +337,19 @@ export class UserApiTokensPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   private openTokenDialog(token: string, item: ConfigurableCrudRecord): void {
-    this.dialog.open(ApiTokenSecretDialogComponent, {
-      width: '760px',
-      maxWidth: 'calc(100vw - 32px)',
-      panelClass: 'crud-form-dialog',
-      disableClose: true,
-      data: {
-        token,
-        name: String(item['name'] ?? ''),
-        prefix: String(item['prefix'] ?? ''),
-      } satisfies ApiTokenSecretDialogData,
-    });
+    const binding = openCrudComponentDialog(
+      this.dialog,
+      ApiTokenSecretDialogComponent,
+      'crud-form-dialog',
+      {
+        data: {
+          token,
+          name: String(item['name'] ?? ''),
+          prefix: String(item['prefix'] ?? ''),
+        } satisfies ApiTokenSecretDialogData,
+      },
+    );
+    bindDialogClosed(binding.ref, () => binding.stop(), this.destroyRef);
   }
 }
 
