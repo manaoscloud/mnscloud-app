@@ -20,6 +20,41 @@ const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 0, label: 'Inactive' },
 ];
 
+const EXPIRATION_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'never', label: 'Never' },
+  { value: '30d', label: '30 days' },
+  { value: '90d', label: '90 days' },
+  { value: '180d', label: '180 days' },
+  { value: '365d', label: '365 days' },
+  { value: 'custom', label: 'Custom date' },
+];
+
+const PERMISSION_RESOURCE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'email.messages', label: 'Email messages' },
+  { value: 'hosting.smtp.providers', label: 'SMTP providers' },
+  { value: 'hosting.smtp.accounts', label: 'SMTP accounts' },
+  { value: 'hosting.smtp.routes', label: 'SMTP routes' },
+  { value: 'hosting.smtp.*', label: 'SMTP full module' },
+  { value: 'hosting.dns.*', label: 'DNS full module' },
+  { value: 'hosting.webhost.*', label: 'Web hosting full module' },
+  { value: 'hosting.vps.*', label: 'VPS full module' },
+  { value: 'erp.*', label: 'ERP full module' },
+  { value: 'billing.*', label: 'Billing full module' },
+  { value: 'voip.*', label: 'VoIP full module' },
+  { value: 'support.*', label: 'Support full module' },
+  { value: 'settings.themes', label: 'Themes' },
+  { value: 'cyber-security.*', label: 'Cyber security full module' },
+  { value: 'system.*', label: 'System full module' },
+  { value: '*', label: 'All resources' },
+];
+
+const PERMISSION_ACTION_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'read', label: 'Read' },
+  { value: 'write', label: 'Create and update' },
+  { value: 'delete', label: 'Delete' },
+  { value: '*', label: 'All actions' },
+];
+
 const ROTATE_ACTION: ConfigurableCrudRowAction = {
   key: 'rotate',
   label: 'Rotate',
@@ -129,8 +164,10 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     name: '',
     status: 1,
-    expiresAt: '',
-    permissionsText: '',
+    expirationPreset: 'never',
+    customExpirationDate: '',
+    permissionResources: [],
+    permissionActions: ['read'],
     allowedIpsText: '',
     description: '',
   },
@@ -161,25 +198,49 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'expiresAt',
+      key: 'expirationPreset',
       source: 'expiresAt',
-      payloadKey: 'expiresAt',
+      payloadKey: 'expirationPreset',
       label: 'Expiration',
-      placeholder: 'YYYY-MM-DDTHH:mm:ssZ',
+      type: 'select',
+      options: EXPIRATION_OPTIONS,
       span: 1,
+      fromRecord: (value) => (value ? 'custom' : 'never'),
     },
     {
-      key: 'permissionsText',
+      key: 'customExpirationDate',
+      source: 'expiresAt',
+      payloadKey: 'expiresAt',
+      label: 'Custom expiration date',
+      type: 'date',
+      span: 1,
+      hiddenWhen: ({ values }) => values['expirationPreset'] !== 'custom',
+      requiredWhen: ({ values }) => values['expirationPreset'] === 'custom',
+      fromRecord: (value) => dateOnly(value),
+    },
+    {
+      key: 'permissionResources',
       source: 'permissions',
-      payloadKey: 'permissions',
-      label: 'Permissions',
-      type: 'textarea',
+      payloadKey: 'permissionResources',
+      label: 'Resources',
+      type: 'multi-select',
       tab: 'authentication',
       required: true,
-      rows: 7,
-      span: 4,
-      placeholder: 'email.messages:write\nhosting.smtp.routes:read',
-      fromRecord: (value) => listToLines(value),
+      span: 2,
+      options: PERMISSION_RESOURCE_OPTIONS,
+      fromRecord: (value) => permissionsToResources(value),
+    },
+    {
+      key: 'permissionActions',
+      source: 'permissions',
+      payloadKey: 'permissionActions',
+      label: 'Permission types',
+      type: 'multi-select',
+      tab: 'authentication',
+      required: true,
+      span: 2,
+      options: PERMISSION_ACTION_OPTIONS,
+      fromRecord: (value) => permissionsToActions(value),
     },
     {
       key: 'allowedIpsText',
@@ -242,19 +303,15 @@ export class UserApiTokensPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
-    const rows = await super.fetchItems(filters);
-    return rows.map((row) => ({
-      ...row,
-      permissions: listToInline(row['permissions']),
-    }));
+    return await super.fetchItems(filters);
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       name: payload['name'],
       status: toStatus(payload['status']),
-      expiresAt: payload['expiresAt'] || null,
-      permissions: linesToList(payload['permissions']),
+      expiresAt: expirationToDateTime(payload['expirationPreset'], payload['expiresAt']),
+      permissions: buildPermissions(payload['permissionResources'], payload['permissionActions']),
       allowedIps: linesToList(payload['allowedIps']),
       description: payload['description'] || null,
     };
@@ -316,11 +373,6 @@ function listToLines(value: unknown): string {
   return String(value ?? '');
 }
 
-function listToInline(value: unknown): string {
-  if (Array.isArray(value)) return value.map((item) => String(item).trim()).join(', ');
-  return String(value ?? '');
-}
-
 function linesToList(value: unknown): string[] {
   return String(value ?? '')
     .split(/[\n,]/)
@@ -330,4 +382,63 @@ function linesToList(value: unknown): string[] {
 
 function toStatus(value: unknown): number {
   return value === true || value === 1 || value === '1' ? 1 : 0;
+}
+
+function permissionList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return String(value ?? '')
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function permissionsToResources(value: unknown): string[] {
+  const resources = new Set<string>();
+  for (const permission of permissionList(value)) {
+    if (permission === '*') {
+      resources.add('*');
+      continue;
+    }
+    resources.add(permission.split(':')[0] ?? '');
+  }
+  return [...resources].filter(Boolean);
+}
+
+function permissionsToActions(value: unknown): string[] {
+  const actions = new Set<string>();
+  for (const permission of permissionList(value)) {
+    if (permission === '*') {
+      actions.add('*');
+      continue;
+    }
+    actions.add(permission.split(':')[1] ?? '*');
+  }
+  return [...actions].filter(Boolean);
+}
+
+function buildPermissions(resourcesValue: unknown, actionsValue: unknown): string[] {
+  const resources = Array.isArray(resourcesValue) ? resourcesValue.map(String) : [];
+  const actions = Array.isArray(actionsValue) ? actionsValue.map(String) : [];
+  if (resources.includes('*') || actions.includes('*')) return ['*'];
+  return resources.flatMap((resource) => actions.map((action) => `${resource}:${action}`));
+}
+
+function expirationToDateTime(presetValue: unknown, customDateValue: unknown): string | null {
+  const preset = String(presetValue ?? 'never');
+  if (preset === 'never') return null;
+  if (preset === 'custom') {
+    const customDate = String(customDateValue ?? '').trim();
+    return customDate ? `${customDate}T23:59:59Z` : null;
+  }
+  const days = Number(preset.replace(/d$/, ''));
+  if (!Number.isFinite(days) || days <= 0) return null;
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+  date.setUTCHours(23, 59, 59, 0);
+  return date.toISOString();
+}
+
+function dateOnly(value: unknown): string {
+  const text = String(value ?? '').trim();
+  return text ? text.slice(0, 10) : '';
 }
