@@ -3939,6 +3939,11 @@
   "SMTP account validated.": "SMTP account validated.",
   "Failed to validate SMTP account.": "Failed to validate SMTP account.",
   "Failed to load SMTP providers.": "Failed to load SMTP providers.",
+  "Test SMTP route": "Test SMTP route",
+  "Send a transactional test using the selected route.": "Send a transactional test using the selected route.",
+  "Recipient": "Recipient",
+  "HTML": "HTML",
+  "Send test": "Send test",
   "SMTP route test email sent.": "SMTP route test email sent.",
   "Failed to send SMTP route test email.": "Failed to send SMTP route test email.",
   "Failed to load SMTP routes.": "Failed to load SMTP routes."
