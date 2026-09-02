@@ -29,31 +29,23 @@ const EXPIRATION_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'custom', label: 'Custom date' },
 ];
 
-const PERMISSION_RESOURCE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'email.messages', label: 'Email messages' },
-  { value: 'hosting.smtp.providers', label: 'SMTP providers' },
-  { value: 'hosting.smtp.accounts', label: 'SMTP accounts' },
-  { value: 'hosting.smtp.routes', label: 'SMTP routes' },
-  { value: 'hosting.smtp.*', label: 'SMTP full module' },
-  { value: 'hosting.dns.*', label: 'DNS full module' },
-  { value: 'hosting.webhost.*', label: 'Web hosting full module' },
-  { value: 'hosting.vps.*', label: 'VPS full module' },
-  { value: 'erp.*', label: 'ERP full module' },
-  { value: 'billing.*', label: 'Billing full module' },
-  { value: 'voip.*', label: 'VoIP full module' },
-  { value: 'support.*', label: 'Support full module' },
-  { value: 'settings.themes', label: 'Themes' },
-  { value: 'cyber-security.*', label: 'Cyber security full module' },
-  { value: 'system.*', label: 'System full module' },
-  { value: '*', label: 'All resources' },
-];
-
-const PERMISSION_ACTION_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'read', label: 'Read' },
-  { value: 'write', label: 'Create and update' },
-  { value: 'delete', label: 'Delete' },
-  { value: '*', label: 'All actions' },
-];
+const PERMISSION_OPTIONS: readonly ConfigurableCrudOption[] = buildPermissionOptions([
+  ['email.messages', 'Email messages'],
+  ['hosting.smtp.providers', 'SMTP providers'],
+  ['hosting.smtp.accounts', 'SMTP accounts'],
+  ['hosting.smtp.routes', 'SMTP routes'],
+  ['hosting.smtp.*', 'SMTP full module'],
+  ['hosting.dns.*', 'DNS full module'],
+  ['hosting.webhost.*', 'Web hosting full module'],
+  ['hosting.vps.*', 'VPS full module'],
+  ['erp.*', 'ERP full module'],
+  ['billing.*', 'Billing full module'],
+  ['voip.*', 'VoIP full module'],
+  ['support.*', 'Support full module'],
+  ['settings.themes', 'Themes'],
+  ['cyber-security.*', 'Cyber security full module'],
+  ['system.*', 'System full module'],
+]);
 
 const ROTATE_ACTION: ConfigurableCrudRowAction = {
   key: 'rotate',
@@ -166,8 +158,7 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
     status: 1,
     expirationPreset: 'never',
     customExpirationDate: '',
-    permissionResources: [],
-    permissionActions: ['read'],
+    permissions: [],
     allowedIpsText: '',
     description: '',
   },
@@ -219,28 +210,16 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
       fromRecord: (value) => dateOnly(value),
     },
     {
-      key: 'permissionResources',
+      key: 'permissions',
       source: 'permissions',
-      payloadKey: 'permissionResources',
-      label: 'Resources',
+      payloadKey: 'permissions',
+      label: 'Permissions',
       type: 'multi-select',
       tab: 'authentication',
       required: true,
-      span: 2,
-      options: PERMISSION_RESOURCE_OPTIONS,
-      fromRecord: (value) => permissionsToResources(value),
-    },
-    {
-      key: 'permissionActions',
-      source: 'permissions',
-      payloadKey: 'permissionActions',
-      label: 'Permission types',
-      type: 'multi-select',
-      tab: 'authentication',
-      required: true,
-      span: 2,
-      options: PERMISSION_ACTION_OPTIONS,
-      fromRecord: (value) => permissionsToActions(value),
+      span: 4,
+      options: PERMISSION_OPTIONS,
+      fromRecord: (value) => permissionList(value),
     },
     {
       key: 'allowedIpsText',
@@ -311,7 +290,7 @@ export class UserApiTokensPage extends ConfigurableCrudPageBase<ConfigurableCrud
       name: payload['name'],
       status: toStatus(payload['status']),
       expiresAt: expirationToDateTime(payload['expirationPreset'], payload['expiresAt']),
-      permissions: buildPermissions(payload['permissionResources'], payload['permissionActions']),
+      permissions: permissionList(payload['permissions']),
       allowedIps: linesToList(payload['allowedIps']),
       description: payload['description'] || null,
     };
@@ -392,37 +371,6 @@ function permissionList(value: unknown): string[] {
     .filter(Boolean);
 }
 
-function permissionsToResources(value: unknown): string[] {
-  const resources = new Set<string>();
-  for (const permission of permissionList(value)) {
-    if (permission === '*') {
-      resources.add('*');
-      continue;
-    }
-    resources.add(permission.split(':')[0] ?? '');
-  }
-  return [...resources].filter(Boolean);
-}
-
-function permissionsToActions(value: unknown): string[] {
-  const actions = new Set<string>();
-  for (const permission of permissionList(value)) {
-    if (permission === '*') {
-      actions.add('*');
-      continue;
-    }
-    actions.add(permission.split(':')[1] ?? '*');
-  }
-  return [...actions].filter(Boolean);
-}
-
-function buildPermissions(resourcesValue: unknown, actionsValue: unknown): string[] {
-  const resources = Array.isArray(resourcesValue) ? resourcesValue.map(String) : [];
-  const actions = Array.isArray(actionsValue) ? actionsValue.map(String) : [];
-  if (resources.includes('*') || actions.includes('*')) return ['*'];
-  return resources.flatMap((resource) => actions.map((action) => `${resource}:${action}`));
-}
-
 function expirationToDateTime(presetValue: unknown, customDateValue: unknown): string | null {
   const preset = String(presetValue ?? 'never');
   if (preset === 'never') return null;
@@ -441,4 +389,21 @@ function expirationToDateTime(presetValue: unknown, customDateValue: unknown): s
 function dateOnly(value: unknown): string {
   const text = String(value ?? '').trim();
   return text ? text.slice(0, 10) : '';
+}
+
+function buildPermissionOptions(resources: readonly (readonly [string, string])[]) {
+  const actions = [
+    ['read', 'Read'],
+    ['write', 'Create and update'],
+    ['delete', 'Delete'],
+  ] as const;
+  return [
+    { value: '*', label: 'All resources and actions' },
+    ...resources.flatMap(([resource, label]) =>
+      actions.map(([action, actionLabel]) => ({
+        value: `${resource}:${action}`,
+        label: `${label} - ${actionLabel}`,
+      })),
+    ),
+  ];
 }
