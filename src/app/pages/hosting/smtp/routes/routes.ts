@@ -104,19 +104,26 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
       </div>
 
       <mat-dialog-actions class="form-actions">
-        <button mat-button type="button" class="btn-outline" (click)="cancel()">
-          {{ 'Cancel' | transloco }}
-        </button>
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          [disabled]="!canSubmit()"
-          (click)="submit()"
-        >
-          <mat-icon>outgoing_mail</mat-icon>
-          {{ 'Send test' | transloco }}
-        </button>
+        <div class="secondary-actions">
+          <button mat-stroked-button type="button" (click)="cancel()">
+            {{ 'Cancel' | transloco }}
+          </button>
+        </div>
+        <div class="primary-actions">
+          <div class="save-split-action is-single-action">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="save-main-button"
+              [disabled]="!canSubmit()"
+              (click)="submit()"
+            >
+              <mat-icon>outgoing_mail</mat-icon>
+              {{ 'Send test' | transloco }}
+            </button>
+          </div>
+        </div>
       </mat-dialog-actions>
     </div>
   `,
