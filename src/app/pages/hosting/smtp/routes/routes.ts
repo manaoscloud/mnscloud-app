@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -10,6 +12,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
 
 type SmtpAccount = {
   HsaUUID: string;
@@ -31,12 +34,118 @@ type SmtpEventTypeResponse = {
   };
 };
 
+type SmtpRouteTestDialogData = {
+  eventType: string;
+  subject: string;
+  html: string;
+};
+
+type SmtpRouteTestPayload = {
+  to: string;
+  subject: string;
+  html: string;
+};
+
 const TEST_ACTION: ConfigurableCrudRowAction = {
   key: 'test',
   label: 'Test SMTP',
   icon: 'outgoing_mail',
   tooltip: 'Test SMTP',
 };
+
+@Component({
+  selector: 'app-hosting-smtp-route-test-dialog',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  template: `
+    <div class="crud-dialog">
+      <header class="dialog-header">
+        <div>
+          <h2>{{ 'Test SMTP route' | transloco }}</h2>
+          <p>{{ 'Send a transactional test using the selected route.' | transloco }}</p>
+        </div>
+      </header>
+
+      <div class="dialog-body">
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Recipient' | transloco }}</mat-label>
+            <input
+              matInput
+              type="email"
+              autocomplete="email"
+              [value]="to()"
+              (input)="to.set($any($event.target).value)"
+              required
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Subject' | transloco }}</mat-label>
+            <input
+              matInput
+              [value]="subject()"
+              (input)="subject.set($any($event.target).value)"
+              required
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-4">
+            <mat-label>{{ 'HTML' | transloco }}</mat-label>
+            <textarea
+              matInput
+              rows="8"
+              [value]="html()"
+              (input)="html.set($any($event.target).value)"
+              required
+            ></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <mat-dialog-actions class="form-actions">
+        <button mat-button type="button" class="btn-outline" (click)="cancel()">
+          {{ 'Cancel' | transloco }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="!canSubmit()"
+          (click)="submit()"
+        >
+          <mat-icon>outgoing_mail</mat-icon>
+          {{ 'Send test' | transloco }}
+        </button>
+      </mat-dialog-actions>
+    </div>
+  `,
+})
+export class HostingSmtpRouteTestDialogComponent {
+  private readonly dialogRef = inject(MatDialogRef<HostingSmtpRouteTestDialogComponent>);
+  private readonly data = inject<SmtpRouteTestDialogData>(MAT_DIALOG_DATA);
+
+  readonly to = signal('');
+  readonly subject = signal(this.data.subject);
+  readonly html = signal(this.data.html);
+  readonly canSubmit = computed(
+    () =>
+      Boolean(this.to().trim()) && Boolean(this.subject().trim()) && Boolean(this.html().trim()),
+  );
+
+  cancel(): void {
+    this.dialogRef.close(null);
+  }
+
+  submit(): void {
+    if (!this.canSubmit()) return;
+    this.dialogRef.close({
+      to: this.to().trim(),
+      subject: this.subject().trim(),
+      html: this.html().trim(),
+    } satisfies SmtpRouteTestPayload);
+  }
+}
 
 const ROUTE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/smtp/routes',
@@ -91,7 +200,13 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'HostingSmtpAccountHsaUUID',
     },
     { id: 'from', label: 'From', field: 'HsrFromEmail' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HsrIsActive', className: 'status-col' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HsrIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
     {
@@ -224,15 +339,27 @@ export class HostingSmtpRoutesPage extends ConfigurableCrudPageBase<Configurable
     if (action.key !== 'test') return;
     const uuid = String(row['HsrUUID'] ?? '');
     if (!uuid) return;
-    const to = globalThis.prompt?.(this.t('Test email'))?.trim();
-    if (!to) return;
+    const eventType = String(row['HsrEventType'] ?? 'general');
+    const binding = openCrudComponentDialog(
+      this.dialog,
+      HostingSmtpRouteTestDialogComponent,
+      'crud-form-dialog',
+      {
+        data: {
+          eventType,
+          subject: `MNSCloud SMTP route test: ${eventType}`,
+          html: `<p>This is a test email sent from the ${eventType} SMTP route.</p>`,
+        } satisfies SmtpRouteTestDialogData,
+      },
+    );
+    const payload = (await firstValueFrom(
+      binding.ref.afterClosed(),
+    )) as SmtpRouteTestPayload | null;
+    binding.stop();
+    if (!payload) return;
     this.mutating.set(true);
     try {
-      await this.api.post(`${this.endpoint()}/${uuid}/test`, {
-        to,
-        subject: `MNSCloud SMTP route test: ${String(row['HsrEventType'] ?? 'general')}`,
-        html: `<p>This is a test email sent from the ${String(row['HsrEventType'] ?? 'general')} SMTP route.</p>`,
-      });
+      await this.api.post(`${this.endpoint()}/${uuid}/test`, payload);
       this.snack.success(this.t('SMTP route test email sent.'));
     } catch (error) {
       this.snack.error(this.errorMessage(error) || this.t('Failed to send SMTP route test email.'));
