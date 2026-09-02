@@ -1,5 +1,5 @@
-<section class="erp-page smtp-dashboard" animate.enter="app-fade-in">
-  <mat-card class="erp-card">
+<section class="erp-page dashboard-page smtp-dashboard" animate.enter="app-fade-in">
+  <mat-card class="erp-card dashboard-shell">
     <header class="erp-header">
       <div>
         <h1>{{ 'SMTP Dashboard' | transloco }}</h1>
@@ -41,13 +41,13 @@
         </div>
       }
 
-      <div class="kpi-grid">
+      <div class="dashboard-grid kpi-grid">
         @for (item of kpis(); track item.label) {
-          <article class="kpi-tile" [ngClass]="'state-' + item.state">
+          <article class="dashboard-metric kpi-tile" [ngClass]="'state-' + item.state">
             <mat-icon>{{ item.icon }}</mat-icon>
-            <span>{{ item.label | transloco }}</span>
-            <strong>{{ item.value }}</strong>
-            <small>{{ item.detailValue }} {{ item.detailLabel | transloco }}</small>
+            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ item.value }}</strong>
+            <small class="dashboard-metric-hint">{{ item.detailValue }} {{ item.detailLabel | transloco }}</small>
           </article>
         }
       </div>
