@@ -30,7 +30,7 @@ const EXPIRATION_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 
 const PERMISSION_OPTIONS: readonly ConfigurableCrudOption[] = buildPermissionOptions([
-  ['email.messages', 'Email messages'],
+  ['hosting.smtp.messages', 'Hosting SMTP messages'],
   ['hosting.smtp.providers', 'SMTP providers'],
   ['hosting.smtp.accounts', 'SMTP accounts'],
   ['hosting.smtp.routes', 'SMTP routes'],
