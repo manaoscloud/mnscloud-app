@@ -216,7 +216,6 @@ export type ConfigurableCrudColumn = {
   id: string;
   label: string;
   field?: string;
-  displayField?: string;
   uuidField?: string;
   kind?:
     | 'identity'
@@ -1245,15 +1244,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   columnMain(row: T, column: ConfigurableCrudColumn): string {
-    if (column.displayField) {
-      const display = this.displayValue(row[column.displayField]);
-      if (display !== '-') return display;
-    }
     if (column.lookupKey && column.uuidField) {
       return this.lookupLabel(column.lookupKey, row[column.uuidField]) || '-';
-    }
-    if (column.lookupKey && column.field) {
-      return this.lookupLabel(column.lookupKey, row[column.field]) || this.displayValue(row[column.field]);
     }
     const field = column.field ?? column.id;
     const value = this.displayValue(row[field]);
