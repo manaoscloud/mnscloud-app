@@ -214,10 +214,12 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
       source: 'permissions',
       payloadKey: 'permissions',
       label: 'Permissions',
-      type: 'multi-select',
+      type: 'search-select',
       tab: 'authentication',
       required: true,
       span: 4,
+      multiple: true,
+      placeholder: 'Search',
       options: PERMISSION_OPTIONS,
       fromRecord: (value) => permissionList(value),
     },
@@ -403,6 +405,7 @@ function buildPermissionOptions(resources: readonly (readonly [string, string])[
       actions.map(([action, actionLabel]) => ({
         value: `${resource}:${action}`,
         label: `${label} - ${actionLabel}`,
+        searchText: `${resource} ${label} ${action} ${actionLabel}`,
       })),
     ),
   ];
