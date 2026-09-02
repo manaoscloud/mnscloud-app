@@ -1013,6 +1013,14 @@ export class MainLayout {
       children: [
         { id: 'user/profile', label: 'My Profile', icon: 'badge', route: '/user/profile' },
         {
+          id: 'user/api-tokens',
+          label: 'API Tokens',
+          icon: 'vpn_key',
+          route: '/user/api-tokens',
+          masterRoute: '/system/security/api-tokens',
+          requiresEnvironment: true,
+        },
+        {
           id: 'user/governance',
           label: 'Governance',
           icon: 'manage_accounts',
