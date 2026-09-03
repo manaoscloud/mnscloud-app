@@ -35,6 +35,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   savedMessage: 'Secret server saved successfully.',
   deletedMessage: 'Secret server deleted successfully.',
   deleteFailedMessage: 'Failed to delete secret server.',
+  rowActions: [{ key: 'test-connection', label: 'Test connection', icon: 'health_and_safety' }],
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
@@ -159,6 +160,33 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
 export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(SERVER_CONFIG);
+  }
+
+  override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
+    if (action.key !== 'test-connection') return;
+    try {
+      const uuid = this.recordUUID(row);
+      const response = await this.api.post<{
+        data?: {
+          reachable?: boolean;
+          state?: string | null;
+          httpStatus?: number | null;
+          version?: string | null;
+          tlsVerified?: boolean;
+          error?: string | null;
+        };
+      }>(`${SERVER_CONFIG.endpoint}/${uuid}/test`, {});
+      const data = response.data ?? {};
+      if (data.reachable) {
+        const state = data.state ? ` (${data.state})` : '';
+        const version = data.version ? ` - OpenBao ${data.version}` : '';
+        this.snack.success(`Connection reachable${state}${version}.`);
+        return;
+      }
+      this.snack.error(data.error || 'Secret server connection failed.');
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Secret server connection failed.');
+    }
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
