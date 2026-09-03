@@ -1,7 +1,6 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { ActivatedRoute } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -167,7 +166,6 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
     { id: 'prefix', label: 'Prefix', field: 'prefix', copyable: true },
-    { id: 'scope', label: 'Scope', field: 'scope' },
     { id: 'permissions', label: 'Permissions', field: 'permissions' },
     { id: 'lastUsedAt', label: 'Last used', kind: 'datetime', field: 'lastUsedAt' },
     { id: 'expiresAt', label: 'Expires', kind: 'datetime', field: 'expiresAt' },
@@ -258,31 +256,8 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class UserApiTokensPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly route = inject(ActivatedRoute);
-  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/security/api-tokens' : 'security/api-tokens',
-  );
-
   constructor() {
     super(API_TOKEN_CONFIG);
-  }
-
-  protected override listEndpoint(): string {
-    return this.endpoint();
-  }
-
-  protected override createEndpoint(): string {
-    return this.endpoint();
-  }
-
-  protected override updateEndpoint(): string {
-    return this.endpoint();
-  }
-
-  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
-    return this.endpoint();
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
@@ -324,7 +299,7 @@ export class UserApiTokensPage extends ConfigurableCrudPageBase<ConfigurableCrud
     try {
       const response = await this.api.post<{
         data?: { token?: string; item?: ConfigurableCrudRecord };
-      }>(`${this.endpoint()}/${uuid}/rotate`, {});
+      }>(`${API_TOKEN_CONFIG.endpoint}/${uuid}/rotate`, {});
       this.itemsResource.reload();
       const token = response?.data?.token;
       if (token) this.openTokenDialog(token, response?.data?.item ?? row);
