@@ -1017,7 +1017,7 @@ export class MainLayout {
           label: 'API Tokens',
           icon: 'vpn_key',
           route: '/user/api-tokens',
-          masterRoute: '/system/security/api-tokens',
+          scope: 'tenant',
           requiresEnvironment: true,
         },
         {

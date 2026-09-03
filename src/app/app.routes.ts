@@ -1361,13 +1361,6 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
-                path: 'security/api-tokens',
-                loadComponent: () =>
-                  import('./pages/user/api-tokens/api-tokens').then((m) => m.UserApiTokensPage),
-                title: 'System Security • API Tokens | mnscloud',
-                data: { scope: 'master' },
-              },
-              {
                 path: 'cyber-security',
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
