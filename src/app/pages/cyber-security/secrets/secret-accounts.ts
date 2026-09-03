@@ -22,195 +22,196 @@ const SECRET_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'database', label: 'Database' },
 ];
 
-const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
-
-const SECRET_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'cyber-security/secrets',
-  uuidField: 'CstUUID',
-  pageTitle: 'Secrets Manager',
-  pageDescription: 'Manage tenant secrets backed by MNSCloud OpenVault.',
-  createTitle: 'New secret',
-  editTitle: 'Edit secret',
-  dialogDescription: 'Configure secret identity, OpenVault path and rotation policy.',
-  searchPlaceholder: 'Name, key or path',
-  emptyLabel: 'No secrets found.',
-  deleteTitle: 'Delete secret',
-  deleteMessage: 'Are you sure you want to delete this secret?',
-  deleteSelectedTitle: 'Delete selected secrets',
-  deleteSelectedMessage: 'Delete {count} selected secrets?',
-  savedMessage: 'Secret saved successfully.',
-  deletedMessage: 'Secret deleted successfully.',
-  deleteFailedMessage: 'Failed to delete secret.',
+const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'cyber-security/secret-accounts',
+  uuidField: 'CxaUUID',
+  pageTitle: 'Secret Accounts',
+  pageDescription: 'Bind customers to Master OpenVault servers for Secrets Manager.',
+  createTitle: 'New secret account',
+  editTitle: 'Edit secret account',
+  dialogDescription: 'Configure customer ownership and OpenVault server placement.',
+  searchPlaceholder: 'Name, key, customer or server',
+  emptyLabel: 'No secret accounts found.',
+  deleteTitle: 'Delete secret account',
+  deleteMessage: 'Delete this secret account?',
+  deleteSelectedTitle: 'Delete selected secret accounts',
+  deleteSelectedMessage: 'Delete {count} selected secret accounts?',
+  savedMessage: 'Secret account saved successfully.',
+  deletedMessage: 'Secret account deleted successfully.',
+  deleteFailedMessage: 'Failed to delete secret account.',
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
   statusFilter: true,
   tabLabels: {
-    authentication: 'Vault',
+    record: 'Registro',
     notes: 'Observações',
   },
   listFilters: [
     {
-      key: 'accountUUID',
-      label: 'Account',
-      paramKey: 'accountUUID',
+      key: 'serverUUID',
+      label: 'Server',
+      paramKey: 'serverUUID',
       type: 'search-select',
       span: 1,
-      placeholder: 'Search account',
-      emptyLabel: 'No accounts found.',
+      placeholder: 'Search server',
+      emptyLabel: 'No servers found.',
     },
     {
-      key: 'secretType',
-      label: 'Type',
-      paramKey: 'secretType',
+      key: 'customerUUID',
+      label: 'Customer',
+      paramKey: 'customerUUID',
       type: 'search-select',
-      placeholder: 'Search',
-      emptyLabel: 'No records found.',
-      options: SECRET_TYPE_OPTIONS,
+      span: 1,
+      placeholder: 'Search customer',
+      emptyLabel: 'No customers found.',
     },
   ],
   initialValues: {
     status: 1,
-    accountUUID: '',
+    serverUUID: '',
+    customerUUID: '',
     name: '',
     key: '',
-    secretType: 'generic',
-    vaultPath: '',
-    rotationEnabled: 0,
-    rotationIntervalDays: null,
-    expiresAt: '',
+    defaultSecretType: 'generic',
+    description: '',
     notes: '',
   },
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'CstName', uuidField: 'CstUUID' },
+    { id: 'name', label: 'Name', kind: 'identity', field: 'CxaName', uuidField: 'CxaUUID' },
     {
-      id: 'account',
-      label: 'Account',
+      id: 'customer',
+      label: 'Customer',
       kind: 'related',
-      uuidField: 'CyberSecuritySecretAccountCxaUUID',
-      lookupKey: 'accountUUID',
+      uuidField: 'CustomerCusUUID',
+      lookupKey: 'customerUUID',
     },
-    { id: 'customer', label: 'Customer', field: 'CustomerName' },
-    { id: 'key', label: 'Key', field: 'CstKey' },
-    { id: 'type', label: 'Type', kind: 'related', field: 'CstSecretType', lookupKey: 'secretType' },
-    { id: 'server', label: 'Server', field: 'ResolvedServerName' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'CstStatus', className: 'status-col' },
+    {
+      id: 'server',
+      label: 'Server',
+      kind: 'related',
+      uuidField: 'CyberSecuritySecretServerCsrUUID',
+      lookupKey: 'serverUUID',
+    },
+    { id: 'key', label: 'Key', field: 'CxaKey' },
+    {
+      id: 'type',
+      label: 'Default type',
+      kind: 'related',
+      field: 'CxaDefaultSecretType',
+      lookupKey: 'defaultSecretType',
+    },
+    { id: 'status', label: 'Status', kind: 'status', field: 'CxaStatus', className: 'status-col' },
   ],
   fields: [
     {
       key: 'status',
-      source: 'CstStatus',
+      source: 'CxaStatus',
       payloadKey: 'status',
       label: 'Status',
       type: 'status',
       span: 1,
+      tab: 'record',
     },
     {
-      key: 'accountUUID',
-      source: 'CyberSecuritySecretAccountCxaUUID',
-      payloadKey: 'accountUUID',
-      label: 'Account',
+      key: 'serverUUID',
+      source: 'CyberSecuritySecretServerCsrUUID',
+      payloadKey: 'serverUUID',
+      label: 'Server',
       type: 'search-select',
       required: true,
       span: 1,
+      tab: 'record',
     },
     {
-      key: 'secretType',
-      source: 'CstSecretType',
-      payloadKey: 'secretType',
-      label: 'Type',
+      key: 'customerUUID',
+      source: 'CustomerCusUUID',
+      payloadKey: 'customerUUID',
+      label: 'Customer',
       type: 'search-select',
       required: true,
       span: 1,
+      tab: 'record',
     },
     {
-      key: 'rotationEnabled',
-      source: 'CstRotationEnabled',
-      payloadKey: 'rotationEnabled',
-      label: 'Rotation',
-      type: 'search-select',
-      options: YES_NO_OPTIONS,
+      key: 'name',
+      source: 'CxaName',
+      payloadKey: 'name',
+      label: 'Name',
+      required: true,
       span: 1,
+      tab: 'record',
     },
-    { key: 'name', source: 'CstName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     {
       key: 'key',
-      source: 'CstKey',
+      source: 'CxaKey',
       payloadKey: 'key',
       label: 'Key',
       required: true,
-      tab: 'authentication',
-      span: 2,
-    },
-    {
-      key: 'vaultPath',
-      source: 'CstVaultPath',
-      payloadKey: 'vaultPath',
-      label: 'Vault path',
-      tab: 'authentication',
-      span: 2,
-    },
-    {
-      key: 'rotationIntervalDays',
-      source: 'CstRotationIntervalDays',
-      payloadKey: 'rotationIntervalDays',
-      label: 'Rotation interval days',
-      type: 'number',
-      tab: 'authentication',
       span: 1,
+      tab: 'record',
     },
     {
-      key: 'expiresAt',
-      source: 'CstExpiresAt',
-      payloadKey: 'expiresAt',
-      label: 'Expires at',
-      type: 'date',
-      tab: 'authentication',
+      key: 'defaultSecretType',
+      source: 'CxaDefaultSecretType',
+      payloadKey: 'defaultSecretType',
+      label: 'Default type',
+      type: 'search-select',
+      required: true,
       span: 1,
+      tab: 'record',
+    },
+    {
+      key: 'description',
+      source: 'CxaDescription',
+      payloadKey: 'description',
+      label: 'Description',
+      span: 2,
+      tab: 'record',
     },
     {
       key: 'notes',
-      source: 'CstNotes',
+      source: 'CxaNotes',
       payloadKey: 'notes',
       label: 'Observações',
       type: 'textarea',
-      tab: 'notes',
       span: 4,
+      rows: 4,
+      tab: 'notes',
     },
   ],
 };
 
 @Component({
-  selector: 'app-cyber-security-secrets',
+  selector: 'app-cyber-security-secret-accounts',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/cyber-security/secrets' : SECRET_CONFIG.endpoint,
+    this.isMaster() ? 'system/cyber-security/secret-accounts' : ACCOUNT_CONFIG.endpoint,
   );
-  private readonly accountEndpoint = computed(() =>
-    this.isMaster() ? 'system/cyber-security/secret-accounts' : 'cyber-security/secret-accounts',
+  private readonly serverLookupEndpoint = computed(() =>
+    this.isMaster() ? 'system/cyber-security/secret-servers' : 'cyber-security/secret-servers',
   );
-  readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
+
+  readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
-    super(SECRET_CONFIG);
-    void this.loadAccounts();
+    super(ACCOUNT_CONFIG);
+    void this.loadLookups();
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return field.key === 'accountUUID' && this.lookupsLoading();
+    return ['serverUUID', 'customerUUID'].includes(field.key) && this.lookupsLoading();
   }
 
   protected override listEndpoint(): string {
@@ -230,13 +231,17 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'accountUUID') return this.accountOptions();
-    if (key === 'secretType') return SECRET_TYPE_OPTIONS;
+    if (key === 'serverUUID') return this.serverOptions();
+    if (key === 'customerUUID') return this.customerOptions();
+    if (key === 'defaultSecretType') return SECRET_TYPE_OPTIONS;
     return [];
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
-    if (!this.accountOptions().length) await this.loadAccounts();
+    await Promise.all([
+      this.serverOptions().length ? Promise.resolve() : this.loadServers(),
+      this.customerOptions().length ? Promise.resolve() : this.loadCustomers(),
+    ]);
     return super.fetchItems(filters);
   }
 
@@ -244,28 +249,39 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
     return {
       name: payload['name'],
       key: payload['key'],
-      accountUUID: payload['accountUUID'],
+      serverUUID: payload['serverUUID'],
+      customerUUID: payload['customerUUID'],
       description: payload['description'],
-      secretType: payload['secretType'],
-      vaultPath: payload['vaultPath'],
-      rotationEnabled: payload['rotationEnabled'],
-      rotationIntervalDays: payload['rotationIntervalDays'],
-      expiresAt: payload['expiresAt'],
+      defaultSecretType: payload['defaultSecretType'],
       status: payload['status'],
       notes: payload['notes'],
     };
   }
 
-  private async loadAccounts(): Promise<void> {
+  private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const options = await this.fetchPaged(`${this.accountEndpoint()}?status=1`, (row) =>
-        option(row.CxaUUID, row.CxaName, [row.CustomerName, row.SecretServerName, row.CxaKey]),
-      );
-      this.accountOptions.set(options);
+      await Promise.all([this.loadServers(), this.loadCustomers()]);
     } finally {
       this.lookupsLoading.set(false);
     }
+  }
+
+  private async loadServers(): Promise<void> {
+    const options = await this.fetchPaged(`${this.serverLookupEndpoint()}?status=1`, (row) =>
+      option(row.CsrUUID, row.CsrName, [row.CsrEngine, row.CsrClusterMode]),
+    );
+    this.serverOptions.set(options);
+  }
+
+  private async loadCustomers(): Promise<void> {
+    const options = await this.fetchPaged('erp/customers?status=1', (row) =>
+      option(row.CustomerUUID ?? row.CusUUID, row.Name ?? row.CustomerName ?? row.CusName, [
+        row.Document,
+        row.Email,
+      ]),
+    );
+    this.customerOptions.set(options);
   }
 
   private async fetchPaged(
