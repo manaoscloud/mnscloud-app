@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -35,7 +35,11 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   savedMessage: 'Secret server saved successfully.',
   deletedMessage: 'Secret server deleted successfully.',
   deleteFailedMessage: 'Failed to delete secret server.',
-  rowActions: [{ key: 'test-connection', label: 'Test connection', icon: 'health_and_safety' }],
+  rowActions: [
+    { key: 'test-connection', label: 'Test connection', icon: 'health_and_safety' },
+    { key: 'generate-tls', label: 'Generate TLS', icon: 'verified_user' },
+    { key: 'rotate-tls', label: 'Rotate TLS', icon: 'sync_lock' },
+  ],
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
@@ -47,6 +51,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     status: 1,
     name: '',
+    agentUUID: '',
     endpoint: '',
     namespace: '',
     mountPath: 'kv/mnscloud',
@@ -57,6 +62,13 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'CsrName', uuidField: 'CsrUUID' },
+    {
+      id: 'agent',
+      label: 'Agent',
+      kind: 'related',
+      field: 'MonitoringAgentMagUUID',
+      lookupKey: 'agents',
+    },
     { id: 'endpoint', label: 'Endpoint', field: 'CsrEndpoint' },
     {
       id: 'clusterMode',
@@ -71,6 +83,12 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       kind: 'boolean',
       field: 'CsrIsDefault',
       className: 'status-col',
+    },
+    {
+      id: 'tlsFingerprint',
+      label: 'TLS valid until',
+      kind: 'datetime',
+      field: 'CsrTlsNotAfter',
     },
     { id: 'status', label: 'Status', kind: 'status', field: 'CsrStatus', className: 'status-col' },
   ],
@@ -91,6 +109,17 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       options: YES_NO_OPTIONS,
       span: 1,
+    },
+    {
+      key: 'agentUUID',
+      source: 'MonitoringAgentMagUUID',
+      payloadKey: 'agentUUID',
+      label: 'Agent',
+      type: 'search-select',
+      required: true,
+      options: [],
+      span: 1,
+      placeholder: 'Search OpenVault agent',
     },
     {
       key: 'verifyTLS',
@@ -158,11 +187,18 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly agentOptions = signal<readonly ConfigurableCrudOption[]>([]);
+
   constructor() {
     super(SERVER_CONFIG);
+    void this.fetchAgentOptions();
   }
 
   override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
+    if (action.key === 'generate-tls' || action.key === 'rotate-tls') {
+      await this.queueTlsJob(row, action.key === 'rotate-tls');
+      return;
+    }
     if (action.key !== 'test-connection') return;
     try {
       const uuid = this.recordUUID(row);
@@ -190,7 +226,49 @@ export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<Con
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'agents') return this.agentOptions();
     if (key === 'clusterMode') return CLUSTER_OPTIONS;
     return [];
+  }
+
+  private async queueTlsJob(row: ConfigurableCrudRecord, rotate: boolean) {
+    try {
+      const uuid = this.recordUUID(row);
+      const endpoint = rotate ? 'rotate-tls' : 'generate-tls';
+      await this.api.post(`${SERVER_CONFIG.endpoint}/${uuid}/${endpoint}`, {});
+      this.snack.success(rotate ? 'TLS rotation queued.' : 'TLS generation queued.');
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to queue TLS job.');
+    }
+  }
+
+  private async fetchAgentOptions() {
+    try {
+      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        'monitoring/agents?limit=1000',
+      );
+      const items = response.data?.items ?? [];
+      const options = items
+        .filter((item) =>
+          String(item['capabilities'] ?? '').includes('mnscloud.openvault.update') ||
+          (Array.isArray(item['runtimeUpdates']) &&
+            item['runtimeUpdates'].some(
+              (target) =>
+                target &&
+                typeof target === 'object' &&
+                String((target as Record<string, unknown>)['product']) === 'mnscloud-openvault',
+            ))
+        )
+        .map((item) => ({
+          value: String(item['uuid'] ?? ''),
+          label: String(item['name'] ?? item['hostname'] ?? item['uuid'] ?? ''),
+          description: String(item['hostname'] ?? item['uuid'] ?? ''),
+          searchText: `${item['name'] ?? ''} ${item['hostname'] ?? ''} ${item['uuid'] ?? ''}`,
+        }))
+        .filter((option) => option.value && option.label);
+      this.agentOptions.set(options);
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to load OpenVault agents.');
+    }
   }
 }
