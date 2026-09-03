@@ -191,7 +191,7 @@ export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<Con
 
   constructor() {
     super(SERVER_CONFIG);
-    void this.loadAgentOptions();
+    void this.fetchAgentOptions();
   }
 
   override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
@@ -242,7 +242,7 @@ export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<Con
     }
   }
 
-  private async loadAgentOptions() {
+  private async fetchAgentOptions() {
     try {
       const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
         'monitoring/agents?limit=1000',
