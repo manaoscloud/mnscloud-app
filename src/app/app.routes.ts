@@ -292,6 +292,14 @@ export const routes: Routes = [
                 title: 'Cyber Security • Secrets Manager | mnscloud',
               },
               {
+                path: 'cyber-security/secret-accounts',
+                loadComponent: () =>
+                  import('./pages/cyber-security/secrets/secret-accounts').then(
+                    (m) => m.CyberSecuritySecretAccountsPage,
+                  ),
+                title: 'Cyber Security • Secret Accounts | mnscloud',
+              },
+              {
                 path: 'cyber-security/:section',
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
@@ -1409,6 +1417,15 @@ export const routes: Routes = [
                     (m) => m.CyberSecuritySecretsPage,
                   ),
                 title: 'System Cyber Security • Secrets Manager | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'cyber-security/secret-accounts',
+                loadComponent: () =>
+                  import('./pages/cyber-security/secrets/secret-accounts').then(
+                    (m) => m.CyberSecuritySecretAccountsPage,
+                  ),
+                title: 'System Cyber Security • Secret Accounts | mnscloud',
                 data: { scope: 'master' },
               },
               {

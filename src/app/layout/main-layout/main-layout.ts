@@ -2185,6 +2185,16 @@ export class MainLayout {
           requiresEnvironment: true,
           children: [
             {
+              id: 'cyber-security/secret-accounts',
+              label: 'Accounts',
+              icon: 'manage_accounts',
+              route: '/cyber-security/secret-accounts',
+              masterRoute: '/system/cyber-security/secret-accounts',
+              entitlementCode: 'module.cyber-security.secret-accounts',
+              roles: ['OWNER', 'ADMIN'],
+              requiresEnvironment: true,
+            },
+            {
               id: 'cyber-security/secrets',
               label: 'Manager',
               icon: 'key',
