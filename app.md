@@ -921,7 +921,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 ## Auth/Guards
 
 - Tenant routes use `environmentGuard`.
-- Master-only routes use `masterGuard`.
+- Platform routes use `permissionGuard` with `data.permission`; `platform.master.access` is the
+  root platform permission and is not sourced from `UserAccess`.
 - Tenant routes require an active environment stored as a real UUID in `mc_current_env` or in the
   authenticated user state. Do not treat empty strings, `null`, `undefined`, or any non-UUID value
   as a selected tenant.
