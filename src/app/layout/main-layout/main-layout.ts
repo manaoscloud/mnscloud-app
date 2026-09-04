@@ -1004,6 +1004,7 @@ export class MainLayout {
           icon: 'vpn_key',
           route: '/user/api-tokens',
           scope: 'tenant',
+          permissions: ['tenant.security.api-tokens.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2037,7 +2038,7 @@ export class MainLayout {
           icon: 'dashboard',
           route: '/monitoring',
           masterRoute: '/system/monitoring',
-          permissions: ['tenant.access.manage'],
+          permissions: ['tenant.monitoring.activity.read'],
           requiresEnvironment: true,
         },
         {
@@ -2046,7 +2047,7 @@ export class MainLayout {
           icon: 'sensors',
           route: '/monitoring/agents',
           masterRoute: '/system/monitoring/agents',
-          permissions: ['tenant.access.manage'],
+          permissions: ['tenant.monitoring.agents.read'],
           requiresEnvironment: true,
         },
         {
@@ -2055,7 +2056,7 @@ export class MainLayout {
           icon: 'fact_check',
           route: '/monitoring/activity-logs',
           masterRoute: '/system/monitoring/activity-logs',
-          permissions: ['tenant.access.manage'],
+          permissions: ['tenant.monitoring.activity.read'],
           requiresEnvironment: true,
         },
       ],
