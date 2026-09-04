@@ -169,7 +169,10 @@ export class MainLayout {
   readonly commercialEntitlements = signal<string[]>([]);
   readonly loadingEnvironments = signal<boolean>(false);
   readonly contextMode = signal<ContextMode>(this.readInitialContextMode());
-  readonly isMasterUser = computed(() => this.user()?.role === 'MASTER');
+  readonly isMasterUser = computed(() => {
+    const user = this.user();
+    return user?.role === 'MASTER' || (user?.permissions ?? []).includes('platform.master.access');
+  });
   readonly effectiveContextMode = computed<ContextMode>(() =>
     this.isMasterUser() ? this.contextMode() : 'tenant',
   );
@@ -1012,6 +1015,12 @@ export class MainLayout {
       icon: 'person',
       children: [
         { id: 'user/profile', label: 'My Profile', icon: 'badge', route: '/user/profile' },
+        {
+          id: 'user/permissions',
+          label: 'Permissions',
+          icon: 'admin_panel_settings',
+          route: '/user/permissions',
+        },
         {
           id: 'user/api-tokens',
           label: 'API Tokens',

@@ -6,6 +6,9 @@ export const masterGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  const role = auth.user()?.role;
-  return role === 'MASTER' ? true : router.parseUrl('/dashboard');
+  const user = auth.user();
+  const permissions = user?.permissions ?? [];
+  return user?.role === 'MASTER' || permissions.includes('platform.master.access')
+    ? true
+    : router.parseUrl('/dashboard');
 };

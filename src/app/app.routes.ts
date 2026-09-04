@@ -88,6 +88,12 @@ export const routes: Routes = [
             title: 'My Profile | mnscloud',
           },
           {
+            path: 'user/permissions',
+            loadComponent: () =>
+              import('./pages/user/permissions/permissions').then((m) => m.UserPermissionsPage),
+            title: 'Permissions | mnscloud',
+          },
+          {
             path: 'settings',
             loadComponent: () =>
               import('./pages/settings/settings').then((m) => m.SettingsComponent),
