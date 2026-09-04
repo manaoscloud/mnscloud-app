@@ -2178,7 +2178,7 @@ export class MainLayout {
         },
         {
           id: 'cyber-security/secrets-manager',
-          label: 'Secrets Manager',
+          label: 'Segredos',
           icon: 'key',
           entitlementCode: 'module.cyber-security.secrets',
           roles: ['OWNER', 'ADMIN'],
@@ -2196,7 +2196,7 @@ export class MainLayout {
             },
             {
               id: 'cyber-security/secrets',
-              label: 'Manager',
+              label: 'Gerenciar',
               icon: 'key',
               route: '/cyber-security/secrets',
               masterRoute: '/system/cyber-security/secrets',
