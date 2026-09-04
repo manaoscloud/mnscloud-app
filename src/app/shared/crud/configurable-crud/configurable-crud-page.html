@@ -205,11 +205,18 @@
                 </div>
               } @else if (column.kind === 'status') {
                 <span
-                  class="status-pill status-chip state-chip chip-success"
-                  [class.is-active]="isActiveStatus(row[column.field ?? column.id])"
-                  [class.is-inactive]="!isActiveStatus(row[column.field ?? column.id])"
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="statusChipClass(row, column)"
+                  [class.is-active]="
+                    !hasCustomStatusChipClass(column) &&
+                    isActiveStatus(row[column.field ?? column.id])
+                  "
+                  [class.is-inactive]="
+                    !hasCustomStatusChipClass(column) &&
+                    !isActiveStatus(row[column.field ?? column.id])
+                  "
                 >
-                  {{ statusLabel(row[column.field ?? column.id]) | transloco }}
+                  {{ statusLabelForColumn(row, column) | transloco }}
                 </span>
               } @else if (column.kind === 'boolean') {
                 <span
