@@ -3,7 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { userResolver } from './core/resolvers/user.resolver';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { redirectIfLoggedGuard } from './core/guards/redirectIfLogged.guard';
-import { masterGuard } from './core/guards/master.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 import { environmentGuard } from './core/guards/environment.guard';
 
 export const routes: Routes = [
@@ -1329,11 +1329,12 @@ export const routes: Routes = [
           },
 
           // =================================================
-          // 👑 MASTER AREA
+          // SYSTEM AREA
           // =================================================
           {
             path: 'system',
-            canActivate: [masterGuard],
+            canActivate: [permissionGuard],
+            data: { permission: 'platform.master.access' },
             children: [
               {
                 path: 'monitoring',
