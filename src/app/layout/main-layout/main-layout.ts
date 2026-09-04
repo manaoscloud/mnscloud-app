@@ -171,7 +171,7 @@ export class MainLayout {
   readonly contextMode = signal<ContextMode>(this.readInitialContextMode());
   readonly isMasterUser = computed(() => {
     const user = this.user();
-    return user?.role === 'MASTER' || (user?.permissions ?? []).includes('platform.master.access');
+    return (user?.permissions ?? []).includes('platform.master.access');
   });
   readonly effectiveContextMode = computed<ContextMode>(() =>
     this.isMasterUser() ? this.contextMode() : 'tenant',
@@ -575,6 +575,8 @@ export class MainLayout {
   }
 
   private currentRole(): AppRole | null {
+    if (this.isMasterUser()) return 'MASTER';
+
     const role = String(this.user()?.role ?? '').toUpperCase();
     if (role === 'MASTER' || role === 'OWNER' || role === 'ADMIN' || role === 'USER') {
       return role;
@@ -802,7 +804,7 @@ export class MainLayout {
       this.auth.updateUser({
         EnvironmentUUID: finalEnv,
         role:
-          (this.auth.user()?.role === 'MASTER'
+          (this.isMasterUser()
             ? 'MASTER'
             : (selectedRole as AppRole | undefined)) ??
           this.auth.user()?.role ??
@@ -843,7 +845,7 @@ export class MainLayout {
     this.auth.updateUser({
       EnvironmentUUID: environmentUUID,
       role:
-        (this.auth.user()?.role === 'MASTER'
+        (this.isMasterUser()
           ? 'MASTER'
           : ((Number(env.Master ?? 0) === 1 ? 'MASTER' : env.Role) as AppRole | undefined)) ??
         this.auth.user()?.role ??

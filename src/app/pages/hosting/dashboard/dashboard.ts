@@ -339,8 +339,12 @@ export class HostingDashboardPage {
     };
   }
 
+  private hasPlatformMasterAccess() {
+    return (this.auth.user()?.permissions ?? []).includes('platform.master.access');
+  }
+
   hostingRoute(route: string[]) {
-    const isMaster = this.auth.user()?.role === 'MASTER';
+    const isMaster = this.hasPlatformMasterAccess();
     const routePath = route.join('/');
 
     if (!isMaster) return ['/', ...route];
@@ -394,19 +398,19 @@ export class HostingDashboardPage {
   }
 
   private smtpRoot() {
-    return this.auth.user()?.role === 'MASTER' ? 'system/hosting/smtp' : 'hosting/smtp';
+    return this.hasPlatformMasterAccess() ? 'system/hosting/smtp' : 'hosting/smtp';
   }
 
   private storageRoot() {
-    return this.auth.user()?.role === 'MASTER' ? 'system/hosting/storage' : 'hosting/storage';
+    return this.hasPlatformMasterAccess() ? 'system/hosting/storage' : 'hosting/storage';
   }
 
   private vpsRoot() {
-    return this.auth.user()?.role === 'MASTER' ? 'system/hosting/vps' : 'hosting/vps';
+    return this.hasPlatformMasterAccess() ? 'system/hosting/vps' : 'hosting/vps';
   }
 
   private containerRoot() {
-    return this.auth.user()?.role === 'MASTER'
+    return this.hasPlatformMasterAccess()
       ? 'system/hosting/vps-container'
       : 'hosting/vps-container';
   }
