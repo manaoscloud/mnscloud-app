@@ -150,7 +150,9 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
   ]);
   private readonly loadingTenants = signal(false);
 
-  private readonly isMaster = computed(() => this.authRole() === 'MASTER');
+  private readonly isMaster = computed(() =>
+    (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
+  );
 
   constructor() {
     super(ACTIVITY_LOGS_CONFIG);
@@ -297,10 +299,6 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
         },
       ],
     });
-  }
-
-  private authRole(): string {
-    return String(this.auth.user()?.role ?? '');
   }
 
   private environmentLabel(row: ConfigurableCrudRecord): string {

@@ -44,8 +44,8 @@ describe('AuthService cookie session state', () => {
     });
     api.get.withArgs('user/me').and.resolveTo({
       data: {
-        role: 'MASTER',
         EnvironmentUUID: '11111111-1111-1111-1111-111111111111',
+        permissions: ['platform.master.access'],
       },
     });
 
@@ -55,8 +55,8 @@ describe('AuthService cookie session state', () => {
         email: 'user@example.com',
         firstName: 'Ada',
         lastName: 'Lovelace',
-        role: 'MASTER',
         EnvironmentUUID: '11111111-1111-1111-1111-111111111111',
+        permissions: ['platform.master.access'],
       },
       api,
       true,
@@ -68,7 +68,7 @@ describe('AuthService cookie session state', () => {
     expect(localStorage.getItem('mnscloud_auth')).toBe('true');
     expect(localStorage.getItem('mnscloud_jwt')).toBeNull();
     expect(sessionStorage.getItem('mnscloud_jwt')).toBeNull();
-    expect(service.user()?.role).toBe('MASTER');
+    expect(service.user()?.permissions).toContain('platform.master.access');
     expect(service.sessionBootstrapToken()).toBeNull();
   });
 
@@ -94,8 +94,8 @@ describe('AuthService cookie session state', () => {
         email: 'user@example.com',
         firstName: 'Ada',
         lastName: 'Lovelace',
-        role: 'MASTER',
         EnvironmentUUID: '11111111-1111-1111-1111-111111111111',
+        permissions: ['platform.master.access'],
       },
       api,
       true,

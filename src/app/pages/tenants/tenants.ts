@@ -17,14 +17,16 @@ type TenantAccessEntry = ConfigurableCrudRecord & {
   EntryType: 'MEMBER' | 'INVITE';
   Name: string;
   Email: string;
-  Role: 'ADMIN' | 'USER';
+  RoleCode: string;
+  RoleName: string;
+  Protected: number;
   Status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'ACCEPTED' | 'CANCELED';
   DateCreated: string | null;
 };
 
 const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'ADMIN', label: 'Administrator' },
-  { value: 'USER', label: 'User' },
+  { value: 'tenant.admin', label: 'Tenant Admin' },
+  { value: 'tenant.user', label: 'Tenant User' },
 ];
 
 const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
@@ -57,11 +59,11 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
     { value: 'ACCEPTED', label: 'Accepted' },
     { value: 'CANCELED', label: 'Canceled' },
   ],
-  initialValues: { email: '', role: 'USER' },
+  initialValues: { email: '', roleCode: 'tenant.user' },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'EntryUUID' },
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
-    { id: 'role', label: 'Access level', field: 'Role', lookupKey: 'role' },
+    { id: 'role', label: 'Access profile', field: 'RoleName', lookupKey: 'roleCode' },
     { id: 'createdAt', label: 'Created at', kind: 'datetime', field: 'DateCreated' },
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ],
@@ -77,10 +79,10 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
       autocomplete: 'email',
     },
     {
-      key: 'role',
-      source: 'Role',
-      payloadKey: 'role',
-      label: 'Access level',
+      key: 'roleCode',
+      source: 'RoleCode',
+      payloadKey: 'roleCode',
+      label: 'Access profile',
       type: 'select',
       options: ROLE_OPTIONS,
       required: true,
@@ -91,7 +93,7 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
   canDeleteRow: (row) => {
     const entryType = String(row['EntryType'] ?? '').toUpperCase();
     if (entryType === 'INVITE') return String(row['Status'] ?? '').toUpperCase() === 'PENDING';
-    return String(row['Role'] ?? '').toUpperCase() !== 'OWNER';
+    return Number(row['Protected'] ?? 0) !== 1;
   },
   // Revocation and invitation cancellation use distinct, stateful API endpoints.
   bulkDelete: false,
@@ -161,7 +163,9 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
       EntryType: 'MEMBER' as const,
       Name: String(member.Name ?? member.Email ?? '-'),
       Email: String(member.Email ?? ''),
-      Role: String(member.Role ?? 'USER').toUpperCase() as 'ADMIN' | 'USER',
+      RoleCode: String(member.RoleCode ?? ''),
+      RoleName: String(member.RoleName ?? member.RoleCode ?? '-'),
+      Protected: Number(member.Protected ?? 0),
       Status: Number(member.Status ?? 0) === 1 ? ('ACTIVE' as const) : ('INACTIVE' as const),
       DateCreated: member.DateCreated ?? null,
     }));
@@ -172,7 +176,9 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
         EntryType: 'INVITE' as const,
         Name: String(invite.UsiEmail ?? '-'),
         Email: String(invite.UsiEmail ?? ''),
-        Role: String(invite.UsiRole ?? 'USER').toUpperCase() as 'ADMIN' | 'USER',
+        RoleCode: String(invite.RoleCode ?? ''),
+        RoleName: String(invite.RoleName ?? invite.RoleCode ?? '-'),
+        Protected: 0,
         Status:
           inviteStatus === 0
             ? ('PENDING' as const)
@@ -186,7 +192,8 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
     const search = filters.search.trim().toLocaleLowerCase();
     return [...members, ...invites].filter((entry) => {
       const matchesStatus = !filters.status || entry.Status === filters.status;
-      const haystack = `${entry.Name} ${entry.Email} ${entry.Role} ${entry.Status}`.toLowerCase();
+      const haystack =
+        `${entry.Name} ${entry.Email} ${entry.RoleCode} ${entry.RoleName} ${entry.Status}`.toLowerCase();
       return matchesStatus && (!search || haystack.includes(search));
     });
   }

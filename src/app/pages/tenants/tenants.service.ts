@@ -3,7 +3,8 @@ import { ApiService } from '../../services/api.service';
 
 export interface InviteValidateData {
   InviteEmail: string;
-  InviteRole: string;
+  RoleCode: string;
+  RoleName: string;
   EnvironmentUUID: string;
   EnvironmentName: string;
   token?: string;

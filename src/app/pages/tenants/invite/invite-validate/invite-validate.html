@@ -30,7 +30,7 @@
         [details]="[
           { label: ('Environment' | transloco), value: i.EnvironmentName || '-' },
           { label: ('Email' | transloco), value: i.InviteEmail || '-' },
-          { label: ('Access level' | transloco), value: i.InviteRole || '-' },
+          { label: ('Access profile' | transloco), value: i.RoleName || i.RoleCode || '-' },
         ]"
         [primaryLabel]="'Continue' | transloco"
         [primaryAction]="goToCurrentInvite"

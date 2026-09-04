@@ -57,7 +57,8 @@ export class InviteValidatePage {
       // Mantém o que você já exibia (modelo InviteValidateData em PascalCase)
       this.invite.set({
         InviteEmail: data.InviteEmail,
-        InviteRole: data.InviteRole,
+        RoleCode: data.RoleCode,
+        RoleName: data.RoleName,
         EnvironmentUUID: data.EnvironmentUUID,
         EnvironmentName: data.EnvironmentName,
         token,
@@ -71,7 +72,8 @@ export class InviteValidatePage {
         token,
         userUUID,
         inviteEmail: data.InviteEmail ?? null,
-        inviteRole: data.InviteRole ?? null,
+        roleCode: data.RoleCode ?? null,
+        roleName: data.RoleName ?? null,
         environmentUUID: data.EnvironmentUUID ?? null,
         environmentName: data.EnvironmentName ?? null,
         userExists,

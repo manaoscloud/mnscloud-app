@@ -45,8 +45,6 @@ function isRememberedSession(): boolean {
   return storageAvailable(localStore) && localStore.getItem(AUTH_STATE) !== null;
 }
 
-export type AppRole = 'MASTER' | 'OWNER' | 'ADMIN' | 'USER';
-
 export interface AuthUser {
   uuid: string;
   email: string;
@@ -54,18 +52,8 @@ export interface AuthUser {
   lastName: string;
   avatarUrl?: string | null;
   avatarVersion?: number | null;
-
-  // ✅ (menu/guards)
-  role?: AppRole;
   EnvironmentUUID?: string | null;
   permissions?: string[];
-}
-
-function normalizeAppRole(value: unknown): AppRole | undefined {
-  const role = String(value ?? '').toUpperCase();
-  return role === 'MASTER' || role === 'OWNER' || role === 'ADMIN' || role === 'USER'
-    ? role
-    : undefined;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -87,7 +75,7 @@ export class AuthService {
   }
 
   // ---------------------------------------------------------
-  // LOGIN – sessão em cookie HttpOnly + perfil completo + role (/user/me)
+  // LOGIN – sessão em cookie HttpOnly + perfil completo + permissões (/user/me)
   // ---------------------------------------------------------
   async login(
     initialUser: any,
@@ -112,7 +100,6 @@ export class AuthService {
         email: initialUser.email ?? initialUser.Email ?? '',
         firstName: initialUser.firstName ?? initialUser.FirstName ?? initialUser.name ?? '',
         lastName: initialUser.lastName ?? initialUser.LastName ?? '',
-        role: normalizeAppRole(initialUser.role),
         EnvironmentUUID: initialEnvironmentUUID,
         permissions: Array.isArray(initialUser.permissions) ? initialUser.permissions : [],
       };
@@ -131,7 +118,7 @@ export class AuthService {
       const profileLoaded = await this.loadUserFromApi(api);
       if (!profileLoaded) return false;
 
-      // 2) Complementa com role/env (menus/guards)
+      // 2) Complementa com permissões/env (menus/guards)
       const meLoaded = await this.loadMeFromApi(api);
       return meLoaded;
     } finally {
@@ -201,8 +188,6 @@ export class AuthService {
         avatarUrl: serverAvatar,
         avatarVersion,
 
-        // ✅ preserva role/env
-        role: normalizeAppRole(prev?.role),
         EnvironmentUUID:
           readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(prev?.EnvironmentUUID) ?? null,
         permissions: prev?.permissions ?? [],
@@ -221,7 +206,7 @@ export class AuthService {
   }
 
   // ---------------------------------------------------------
-  // ✅ CARREGAR /user/me (role + EnvironmentUUID)
+  // ✅ CARREGAR /user/me (permissions + EnvironmentUUID)
   // ---------------------------------------------------------
   async loadMeFromApi(api: ApiService): Promise<boolean> {
     try {
@@ -233,20 +218,21 @@ export class AuthService {
 
       const merged: AuthUser = {
         ...current,
-        role: normalizeAppRole(raw?.role) ?? normalizeAppRole(current.role) ?? 'ADMIN',
         EnvironmentUUID:
           normalizeEnvironmentUUID(raw?.EnvironmentUUID) ??
           readStoredEnvironmentUUID() ??
           normalizeEnvironmentUUID(current.EnvironmentUUID) ??
           null,
-        permissions: Array.isArray(raw?.permissions) ? raw.permissions : current.permissions ?? [],
+        permissions: Array.isArray(raw?.permissions)
+          ? raw.permissions
+          : (current.permissions ?? []),
       };
 
       writeAuthValue(USER_KEY, JSON.stringify(merged), isRememberedSession());
       this._user.set(merged);
       return true;
     } catch (err) {
-      console.warn('⚠️ Failed to load user/me (role/env)', err);
+      console.warn('⚠️ Failed to load user/me (permissions/env)', err);
       return false;
     }
   }

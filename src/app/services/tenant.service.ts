@@ -12,7 +12,8 @@ import { ApiService } from './api.service';
 export interface TenantAccess {
   EnvironmentUUID: string;
   EnvironmentName: string;
-  Role: string;
+  RoleCode?: string | null;
+  RoleName?: string | null;
   Status: number;
   IsDefault?: number;
 }

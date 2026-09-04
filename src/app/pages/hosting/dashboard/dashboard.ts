@@ -158,7 +158,7 @@ export class HostingDashboardPage {
   readonly issuePaginator = viewChild<MatPaginator>('issuePaginator');
 
   private readonly dashboardResource = resource({
-    params: () => ({ role: this.auth.user()?.role ?? 'TENANT' }),
+    params: () => ({ environmentUUID: this.auth.user()?.EnvironmentUUID ?? null }),
     defaultValue: EMPTY_HOSTING_DASHBOARD,
     loader: () => this.loadDashboardSnapshot(),
   });
@@ -170,7 +170,6 @@ export class HostingDashboardPage {
   readonly dashboardSearchInput = signal('');
   readonly statusInput = signal('');
   private readonly dashboardSearch = signal('');
-
 
   readonly workloadDataSource = new MatTableDataSource<WorkloadRow>([]);
   readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
@@ -661,11 +660,11 @@ export class HostingDashboardPage {
   private matchesDashboardFilter(row: object, filter: string) {
     const term = filter.trim().toLowerCase();
     if (!term) return true;
-    return Object.values(row).some((value) =>
-      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
+    return Object.values(row).some(
+      (value) =>
+        value !== null && value !== undefined && String(value).toLowerCase().includes(term),
     );
   }
-
 
   private issueRows(
     type: string,

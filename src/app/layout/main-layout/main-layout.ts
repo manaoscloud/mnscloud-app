@@ -34,7 +34,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 // Services
 import { ThemeService } from '../../services/theme.service';
-import { AppRole, AuthService } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { NetworkService } from '../../services/network.service';
 import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
@@ -77,7 +77,8 @@ type MenuScope = 'public' | 'tenant' | 'master' | 'both';
 export interface UserEnvironment {
   EnvironmentUUID: string;
   EnvironmentName: string;
-  Role: string;
+  RoleCode: string;
+  RoleName: string;
   Status: number;
   IsDefault?: number;
   Master?: number;
@@ -787,20 +788,9 @@ export class MainLayout {
       this.activeEnvironmentId.set(finalEnv);
       writeStoredEnvironmentUUID(finalEnv);
 
-      const selectedEnv = list.find((t) => t.EnvironmentUUID === finalEnv) ?? null;
-      const selectedRole = selectedEnv
-        ? Number(selectedEnv.Master ?? 0) === 1
-          ? 'MASTER'
-          : selectedEnv.Role
-        : undefined;
-
-      // ✅ mantém AuthService coerente (menu/guards)
+      // Keeps AuthService coherent with the selected environment for guards.
       this.auth.updateUser({
         EnvironmentUUID: finalEnv,
-        role:
-          (this.isMasterUser() ? 'MASTER' : (selectedRole as AppRole | undefined)) ??
-          this.auth.user()?.role ??
-          'USER',
       });
       await this.syncEnvironmentLanguage();
       await this.refreshCommercialEntitlements();
@@ -833,15 +823,9 @@ export class MainLayout {
       this.setContextMode('tenant');
     }
 
-    // ✅ Mantém AuthService sincronizado (guards/menu)
+    // Mantém AuthService sincronizado (guards/menu)
     this.auth.updateUser({
       EnvironmentUUID: environmentUUID,
-      role:
-        (this.isMasterUser()
-          ? 'MASTER'
-          : ((Number(env.Master ?? 0) === 1 ? 'MASTER' : env.Role) as AppRole | undefined)) ??
-        this.auth.user()?.role ??
-        'USER',
     });
     await this.syncEnvironmentLanguage();
     await this.refreshCommercialEntitlements();

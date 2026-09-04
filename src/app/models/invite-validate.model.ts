@@ -1,6 +1,7 @@
 export interface InviteValidateData {
   InviteEmail: string;
-  InviteRole: string;
+  RoleCode: string;
+  RoleName: string;
   EnvironmentUUID: string;
   EnvironmentName: string;
   token: string;
