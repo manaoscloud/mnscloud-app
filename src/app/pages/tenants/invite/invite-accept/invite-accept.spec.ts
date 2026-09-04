@@ -28,7 +28,8 @@ describe('InviteAcceptPage', () => {
     tenantsService.validateInviteToken.and.resolveTo({
       data: {
         InviteEmail: 'user@example.com',
-        InviteRole: 'ADMIN',
+        RoleCode: 'tenant.admin',
+        RoleName: 'Tenant Admin',
         EnvironmentUUID: '11111111-1111-1111-1111-111111111111',
         EnvironmentName: 'Tenant A',
         UserUUID: '22222222-2222-2222-2222-222222222222',

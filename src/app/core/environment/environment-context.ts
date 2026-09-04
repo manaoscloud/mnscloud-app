@@ -3,7 +3,8 @@ export const ENV_STORAGE_KEY = 'mc_current_env';
 export type EnvironmentAccess = {
   EnvironmentUUID?: string | null;
   EnvironmentName?: string | null;
-  Role?: string | null;
+  RoleCode?: string | null;
+  RoleName?: string | null;
   Status?: number | string | null;
   IsDefault?: number | string | null;
   Master?: number | string | null;
@@ -12,7 +13,8 @@ export type EnvironmentAccess = {
 export type NormalizedEnvironmentAccess = {
   EnvironmentUUID: string;
   EnvironmentName: string;
-  Role: string;
+  RoleCode: string;
+  RoleName: string;
   Status: number;
   IsDefault: number;
   Master: number;
@@ -79,7 +81,8 @@ export function extractEnvironmentAccess(response: EnvironmentAccessResponse | n
         ...raw,
         EnvironmentUUID,
         EnvironmentName: raw.EnvironmentName ?? '',
-        Role: raw.Role ?? 'USER',
+        RoleCode: raw.RoleCode ?? '',
+        RoleName: raw.RoleName ?? raw.RoleCode ?? '',
         Status: Number(raw.Status ?? 0),
         IsDefault: Number(raw.IsDefault ?? 0),
         Master: Number(raw.Master ?? 0),

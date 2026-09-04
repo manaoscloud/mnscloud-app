@@ -128,7 +128,8 @@ export class InviteAcceptPage {
 
     this.invite.set({
       InviteEmail: inviteData?.InviteEmail,
-      InviteRole: inviteData?.InviteRole,
+      RoleCode: inviteData?.RoleCode,
+      RoleName: inviteData?.RoleName,
       EnvironmentUUID: inviteData?.EnvironmentUUID,
       EnvironmentName: inviteData?.EnvironmentName,
       token: this.token,

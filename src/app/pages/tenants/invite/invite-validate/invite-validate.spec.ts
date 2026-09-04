@@ -27,7 +27,8 @@ describe('InviteValidatePage', () => {
       status: 'success',
       data: {
         InviteEmail: 'user@example.com',
-        InviteRole: 'ADMIN',
+        RoleCode: 'tenant.admin',
+        RoleName: 'Tenant Admin',
         EnvironmentUUID: '11111111-1111-1111-1111-111111111111',
         EnvironmentName: 'Tenant A',
       },

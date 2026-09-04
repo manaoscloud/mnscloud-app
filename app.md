@@ -932,9 +932,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   request is sent.
 - Menu items must declare or inherit one explicit navigation scope: `public`, `tenant`, `master`,
   or `both`. Do not infer global access from the user role alone.
-- `MASTER` users have an explicit context mode: `master` for global `/system/...` routes and
-  `tenant` for tenant routes using the selected `EnvironmentUUID`. `MASTER` in `master` mode must
-  not fall through to tenant routes when a `masterRoute` is missing.
+- Users with `platform.master.access` have an explicit context mode: `master` for global
+  `/system/...` routes and `tenant` for tenant routes using the selected `EnvironmentUUID`. Master
+  context mode must not fall through to tenant routes when a `masterRoute` is missing.
 - Mixed master/tenant resources use `scope: 'both'`, `route`, and `masterRoute`. Tenant-only
   resources, such as Webhost until a `/system/hosting/webhost` API exists, must stay
   `scope: 'tenant'` and only appear in tenant context.
