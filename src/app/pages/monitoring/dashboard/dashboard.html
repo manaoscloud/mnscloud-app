@@ -35,7 +35,6 @@
       </div>
     </div>
 
-
     <div class="dashboard-content" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading" aria-live="polite" aria-busy="true">
@@ -128,8 +127,12 @@
                 <div>
                   <strong>{{ product.label }}</strong>
                   <small>
-                    {{ product.latestVersion || '-' }} · {{ shortBuildRef(product.latestBuildRef) }} ·
-                    {{ (product.strategy === 'rolling' ? 'Rolling' : product.strategy || 'Rolling') | transloco }}
+                    {{ product.latestVersion || '-' }} ·
+                    {{ shortBuildRef(product.latestBuildRef) }} ·
+                    {{
+                      (product.strategy === 'rolling' ? 'Rolling' : product.strategy || 'Rolling')
+                        | transloco
+                    }}
                     · {{ 'batch' | transloco }} {{ product.batchSize || 1 }}
                   </small>
                 </div>
@@ -161,73 +164,73 @@
         </div>
 
         <div class="table-wrapper mat-elevation-z8">
-          <table mat-table [dataSource]="activityDataSource" matSort>
-            <ng-container matColumnDef="created">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Created' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                {{ row.dateCreated ? (row.dateCreated | mnsDateTime) : '-' }}
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="level">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Level' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">
-                  {{ row.level || '-' }}
-                </span>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">
-                  {{ row.status || '-' }}
-                </span>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="action">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Action' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <strong>{{ row.action || '-' }}</strong>
-                <small>{{ row.category || row.hostname || '-' }}</small>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="resource">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Resource' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">{{ resourceLabel(row) }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="message">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Message' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <span>{{ row.message || row.errorCode || '-' }}</span>
-                <small>{{ formatDuration(row.durationMs) }}</small>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="activityColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: activityColumns"></tr>
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="activityColumns.length">
-                {{
-                  loading()
-                    ? ('Loading activity logs...' | transloco)
-                    : ('No activity logs found.' | transloco)
-                }}
-              </td>
-            </tr>
+          <table class="activity-table">
+            <thead>
+              <tr>
+                @for (column of activityColumns; track column.id) {
+                  <th [class.mat-column-message]="column.id === 'message'">
+                    <button
+                      mat-button
+                      type="button"
+                      class="sort-button"
+                      (click)="changeActivitySort(column.id)"
+                    >
+                      <span>{{ column.label | transloco }}</span>
+                      <mat-icon>{{ activitySortIcon(column.id) }}</mat-icon>
+                    </button>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of pagedActivityLogs(); track row.uuid) {
+                <tr>
+                  <td class="mat-column-created">
+                    {{ row.dateCreated ? (row.dateCreated | mnsDateTime) : '-' }}
+                  </td>
+                  <td class="mat-column-level">
+                    <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">
+                      {{ row.level || '-' }}
+                    </span>
+                  </td>
+                  <td class="mat-column-status">
+                    <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">
+                      {{ row.status || '-' }}
+                    </span>
+                  </td>
+                  <td class="mat-column-action">
+                    <strong>{{ row.action || '-' }}</strong>
+                    <small>{{ row.category || row.hostname || '-' }}</small>
+                  </td>
+                  <td class="mat-column-resource">{{ resourceLabel(row) }}</td>
+                  <td class="mat-column-message">
+                    <span>{{ row.message || row.errorCode || '-' }}</span>
+                    <small>{{ formatDuration(row.durationMs) }}</small>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td class="empty-state" [attr.colspan]="activityColumns.length">
+                    {{
+                      loading()
+                        ? ('Loading activity logs...' | transloco)
+                        : ('No activity logs found.' | transloco)
+                    }}
+                  </td>
+                </tr>
+              }
+            </tbody>
           </table>
         </div>
 
         <mat-paginator
           class="mobile-paginator"
+          [length]="filteredActivityLogs().length"
+          [pageIndex]="activityPageIndex()"
+          [pageSize]="activityPageSize()"
           [pageSizeOptions]="[5, 10, 25, 100]"
           showFirstLastButtons
+          (page)="onActivityPageChange($event)"
         />
       </section>
     </div>

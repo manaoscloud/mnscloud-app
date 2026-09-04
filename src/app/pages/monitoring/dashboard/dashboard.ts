@@ -1,24 +1,13 @@
 import { NgClass } from '@angular/common';
-import {
-  afterNextRender,
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
@@ -82,6 +71,9 @@ type KpiTile = {
   state: 'good' | 'warn' | 'bad' | 'neutral';
 };
 
+type ActivitySortColumn = 'created' | 'level' | 'status' | 'action' | 'resource' | 'message';
+type SortDirection = 'asc' | 'desc';
+
 type MonitoringDashboardSnapshot = {
   agents: MonitoringAgent[];
   runtimeProducts: RuntimeProductFleet[];
@@ -114,8 +106,6 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
     MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
@@ -126,9 +116,6 @@ export class MonitoringDashboardPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
-
-  readonly activitySort = viewChild(MatSort);
-  readonly activityPaginator = viewChild(MatPaginator);
 
   private readonly dashboardResource = resource({
     defaultValue: EMPTY_DASHBOARD,
@@ -145,14 +132,18 @@ export class MonitoringDashboardPage {
   readonly generatedAt = computed(() => this.dashboard().generatedAt);
   readonly dashboardSearchInput = signal('');
   private readonly dashboardSearch = signal('');
-
-
-  readonly activityDataSource = new MatTableDataSource<ActivityLog>([]);
-  readonly activityColumns = ['created', 'level', 'status', 'action', 'resource', 'message'];
-
-  private readonly syncActivityTable = effect(() => {
-    this.activityDataSource.data = this.latestLogs();
-  });
+  readonly activityPageIndex = signal(0);
+  readonly activityPageSize = signal(5);
+  readonly activitySortColumn = signal<ActivitySortColumn>('created');
+  readonly activitySortDirection = signal<SortDirection>('desc');
+  readonly activityColumns = [
+    { id: 'created' as const, label: 'Created' },
+    { id: 'level' as const, label: 'Level' },
+    { id: 'status' as const, label: 'Status' },
+    { id: 'action' as const, label: 'Action' },
+    { id: 'resource' as const, label: 'Resource' },
+    { id: 'message' as const, label: 'Message' },
+  ];
 
   private readonly reportDashboardError = effect(() => {
     const error = this.dashboardResource.error();
@@ -223,14 +214,17 @@ export class MonitoringDashboardPage {
     ];
   });
 
-  private readonly setupTable = afterNextRender(() => {
-    this.activityDataSource.sortingDataAccessor = (row, column) =>
-      this.activitySortValue(row, column);
-    this.activityDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.activityDataSource.sort = this.activitySort() ?? null;
-    this.activityDataSource.paginator = this.activityPaginator() ?? null;
-    this.applyTableFilters();
+  readonly filteredActivityLogs = computed(() => {
+    const filter = this.dashboardSearch().trim().toLowerCase();
+    const rows = filter
+      ? this.latestLogs().filter((row) => this.matchesDashboardFilter(row, filter))
+      : this.latestLogs();
+    return [...rows].sort((left, right) => this.compareActivityRows(left, right));
+  });
+
+  readonly pagedActivityLogs = computed(() => {
+    const start = this.activityPageIndex() * this.activityPageSize();
+    return this.filteredActivityLogs().slice(start, start + this.activityPageSize());
   });
 
   refreshList() {
@@ -243,13 +237,13 @@ export class MonitoringDashboardPage {
 
   applyDashboardFilters() {
     this.dashboardSearch.set(this.dashboardSearchInput().trim());
-    this.applyTableFilters();
+    this.activityPageIndex.set(0);
   }
 
   clearDashboardFilters() {
     this.dashboardSearchInput.set('');
     this.dashboardSearch.set('');
-    this.applyTableFilters();
+    this.activityPageIndex.set(0);
   }
 
   monitoringRoute(path: 'agents' | 'activity-logs') {
@@ -301,25 +295,52 @@ export class MonitoringDashboardPage {
     return value ? value.slice(0, 12) : '-';
   }
 
+  changeActivitySort(column: ActivitySortColumn) {
+    if (this.activitySortColumn() === column) {
+      this.activitySortDirection.update((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    this.activitySortColumn.set(column);
+    this.activitySortDirection.set(column === 'created' ? 'desc' : 'asc');
+  }
+
+  activitySortIcon(column: ActivitySortColumn) {
+    if (this.activitySortColumn() !== column) return 'unfold_more';
+    return this.activitySortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward';
+  }
+
+  onActivityPageChange(event: PageEvent) {
+    this.activityPageIndex.set(event.pageIndex);
+    this.activityPageSize.set(event.pageSize);
+  }
+
   private ratio(value: number, total: number) {
     return `${Number(value || 0)} / ${Number(total || 0)}`;
-  }
-  private applyTableFilters() {
-    const filter = this.dashboardSearch().trim().toLowerCase();
-    this.activityDataSource.filter = filter;
-    this.activityDataSource.paginator?.firstPage();
   }
 
   private matchesDashboardFilter(row: object, filter: string) {
     const term = filter.trim().toLowerCase();
     if (!term) return true;
-    return Object.values(row).some((value) =>
-      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
+    return Object.values(row).some(
+      (value) =>
+        value !== null && value !== undefined && String(value).toLowerCase().includes(term),
     );
   }
 
+  private compareActivityRows(left: ActivityLog, right: ActivityLog) {
+    const column = this.activitySortColumn();
+    const direction = this.activitySortDirection() === 'asc' ? 1 : -1;
+    const leftValue = this.activitySortValue(left, column);
+    const rightValue = this.activitySortValue(right, column);
+    return (
+      leftValue.localeCompare(rightValue, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      }) * direction
+    );
+  }
 
-  private activitySortValue(row: ActivityLog, column: string) {
+  private activitySortValue(row: ActivityLog, column: ActivitySortColumn) {
     if (column === 'created') return row.dateCreated ?? '';
     if (column === 'level') return row.level ?? '';
     if (column === 'status') return row.status ?? '';
