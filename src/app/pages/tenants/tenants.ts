@@ -11,7 +11,6 @@ import {
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { TenantsService } from './tenants.service';
 import { AuthService } from '../../services/auth.service';
-import { TenantService } from '../../services/tenant.service';
 
 type TenantAccessEntry = ConfigurableCrudRecord & {
   EntryUUID: string;
@@ -109,14 +108,16 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
 export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEntry> {
   private readonly tenantsService = inject(TenantsService);
   private readonly auth = inject(AuthService);
-  private readonly tenantService = inject(TenantService);
   private readonly canManageTenant = computed(() => {
-    const environmentRole = String(this.tenantService.selectedTenant()?.Role ?? '').toUpperCase();
-    const accountRole = String(this.auth.user()?.role ?? '').toUpperCase();
-    return (
-      ['MASTER', 'OWNER', 'ADMIN'].includes(environmentRole) ||
-      ['MASTER', 'OWNER', 'ADMIN'].includes(accountRole)
-    );
+    const permissions = this.auth.user()?.permissions ?? [];
+    return permissions.some((permission) => {
+      const normalized = String(permission ?? '').toLowerCase();
+      return (
+        normalized === 'tenant.access.manage' ||
+        normalized === 'tenant.*' ||
+        normalized === 'platform.master.access'
+      );
+    });
   });
 
   override readonly canCreate = computed(() => this.canManageTenant());
