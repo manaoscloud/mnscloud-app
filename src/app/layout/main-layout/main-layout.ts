@@ -81,7 +81,6 @@ export interface UserEnvironment {
   RoleName: string;
   Status: number;
   IsDefault?: number;
-  Master?: number;
 }
 
 interface UserAccessResponse {

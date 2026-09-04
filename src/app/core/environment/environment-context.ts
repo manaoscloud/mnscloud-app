@@ -7,7 +7,6 @@ export type EnvironmentAccess = {
   RoleName?: string | null;
   Status?: number | string | null;
   IsDefault?: number | string | null;
-  Master?: number | string | null;
 };
 
 export type NormalizedEnvironmentAccess = {
@@ -17,7 +16,6 @@ export type NormalizedEnvironmentAccess = {
   RoleName: string;
   Status: number;
   IsDefault: number;
-  Master: number;
 };
 
 type EnvironmentAccessResponse = {
@@ -85,7 +83,6 @@ export function extractEnvironmentAccess(response: EnvironmentAccessResponse | n
         RoleName: raw.RoleName ?? raw.RoleCode ?? '',
         Status: Number(raw.Status ?? 0),
         IsDefault: Number(raw.IsDefault ?? 0),
-        Master: Number(raw.Master ?? 0),
       };
     })
     .filter((item): item is NormalizedEnvironmentAccess => !!item);
