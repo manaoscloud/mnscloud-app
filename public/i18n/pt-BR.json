@@ -4049,5 +4049,6 @@
   "Runtime env": "Env de runtime",
   "API token": "Token de API",
   "SSH key": "Chave SSH",
-  "All actions": "Todas as ações"
+  "All actions": "Todas as ações",
+  "Name is required.": "Nome é obrigatório."
 }
