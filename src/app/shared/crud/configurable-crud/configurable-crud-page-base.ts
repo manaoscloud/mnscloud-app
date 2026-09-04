@@ -1728,7 +1728,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return { ...this.config.initialValues };
   }
 
-  private formValuesFromRecord(row: T): ConfigurableCrudRecord {
+  protected formValuesFromRecord(row: T): ConfigurableCrudRecord {
     const next: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
       const value = row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
@@ -1818,7 +1818,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
   }
 
-  private validatePayload(payload: ConfigurableCrudRecord): boolean {
+  protected validatePayload(payload: ConfigurableCrudRecord): boolean {
     for (const field of this.config.fields) {
       const value = payload[field.payloadKey ?? field.key];
       if (this.isFieldVisible(field) && field.type === 'date' && value !== null && value !== '') {
