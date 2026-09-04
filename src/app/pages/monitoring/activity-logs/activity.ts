@@ -74,9 +74,22 @@ const ACTIVITY_LOGS_CONFIG: ConfigurableCrudConfig = {
   fields: [],
   columns: [
     { id: 'created', label: 'Created', field: 'dateCreated', kind: 'datetime' },
-    { id: 'tenant', label: 'Tenant', field: 'environmentName', uuidField: 'environmentUUID' },
-    { id: 'level', label: 'Level', field: 'level', translateValue: true },
-    { id: 'status', label: 'Status', field: 'status', translateValue: true },
+    {
+      id: 'level',
+      label: 'Level',
+      field: 'level',
+      kind: 'status',
+      options: LEVEL_OPTIONS,
+      chipClass: (value) => activityChipClass(value),
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      field: 'status',
+      kind: 'status',
+      options: STATUS_OPTIONS,
+      chipClass: (value) => activityChipClass(value),
+    },
     { id: 'action', label: 'Action', field: 'action' },
     { id: 'resource', label: 'Resource', field: 'resourceLabel' },
     { id: 'message', label: 'Message', field: 'message' },
@@ -141,8 +154,6 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
 
   constructor() {
     super(ACTIVITY_LOGS_CONFIG);
-    const tenantColumn = ACTIVITY_LOGS_CONFIG.columns.find((column) => column.id === 'tenant');
-    if (tenantColumn) tenantColumn.hiddenWhen = () => !this.isMaster();
     const tenantFilter = ACTIVITY_LOGS_CONFIG.listFilters?.find(
       (filter) => filter.key === 'environmentUUID',
     );
@@ -193,15 +204,15 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
   private async fetchTenantOptions() {
     this.loadingTenants.set(true);
     try {
-      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
-        'system/billing/tenants?limit=50&offset=0',
-      );
+      const response = await this.fetchTenantLookup();
       const tenants: ConfigurableCrudOption[] = [];
-      for (const row of response.data?.items ?? []) {
-        const value = String(row['EnvironmentUUID'] ?? '').trim();
+      for (const row of response) {
+        const value = String(row['EnvironmentUUID'] ?? row['environmentUUID'] ?? '').trim();
         if (!value) continue;
-        const name = String(row['EnvironmentName'] ?? row['TenantEmail'] ?? value).trim();
-        const email = String(row['TenantEmail'] ?? '').trim();
+        const name = String(
+          row['EnvironmentName'] ?? row['environmentName'] ?? row['TenantEmail'] ?? value,
+        ).trim();
+        const email = String(row['TenantEmail'] ?? row['tenantEmail'] ?? '').trim();
         tenants.push({
           value,
           label: name || value,
@@ -219,6 +230,23 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
     } finally {
       this.loadingTenants.set(false);
     }
+  }
+
+  private async fetchTenantLookup(): Promise<ConfigurableCrudRecord[]> {
+    try {
+      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        'system/billing/tenants?search=&limit=50&offset=0',
+      );
+      const items = response.data?.items ?? [];
+      if (items.length) return items;
+    } catch {
+      // The billing lookup is master-only; fall back to the environment access contract below.
+    }
+
+    const accessResponse = await this.api.get<{ data?: { access?: ConfigurableCrudRecord[] } }>(
+      'user/access',
+    );
+    return accessResponse.data?.access ?? [];
   }
 
   private decorateRow(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -305,4 +333,15 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
     }
     return 'neutral';
   }
+}
+
+function activityChipClass(value: unknown): string {
+  const normalized = String(value ?? '').toLowerCase();
+  if (['success', 'completed'].includes(normalized)) return 'chip-success';
+  if (['failed', 'error', 'critical'].includes(normalized)) return 'chip-danger';
+  if (['warn', 'warning', 'skipped'].includes(normalized)) return 'chip-warning';
+  if (['running', 'processing', 'queued', 'pending', 'waiting', 'info'].includes(normalized)) {
+    return 'chip-running';
+  }
+  return 'chip-skipped';
 }

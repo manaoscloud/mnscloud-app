@@ -937,6 +937,13 @@ mat-chip.status-pill.is-inactive,
   --activity-chip-color: #bfdbfe;
 }
 
+.status-pill.status-chip.chip-warning {
+  --activity-chip-bg: rgba(245, 158, 11, 0.2);
+  --activity-chip-border: #f59e0b;
+  --activity-chip-color: #fde68a;
+}
+
+.status-pill.status-chip.chip-danger,
 .status-pill.status-chip.chip-failed {
   --activity-chip-bg: rgba(239, 68, 68, 0.2);
   --activity-chip-border: #ef4444;

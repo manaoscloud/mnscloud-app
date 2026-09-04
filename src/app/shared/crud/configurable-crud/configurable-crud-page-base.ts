@@ -11,7 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 
 import { firstValueFrom } from 'rxjs';
 
@@ -76,6 +76,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatTabsModule,
   MatTooltipModule,
   NgTemplateOutlet,
+  NgClass,
   MnsSearchSelectFieldComponent,
   TranslocoPipe,
   CurrencyMaskDirective,
@@ -229,6 +230,8 @@ export type ConfigurableCrudColumn = {
     | 'number';
   lookupKey?: string;
   className?: string;
+  options?: readonly ConfigurableCrudOption[];
+  chipClass?: (value: unknown, row: ConfigurableCrudRecord) => string;
   currencyField?: string;
   currencyCode?: string;
   minimumFractionDigits?: number;
@@ -1252,6 +1255,26 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       (candidate) => String(candidate.value ?? '') === String(value ?? ''),
     );
     return option?.label ?? (this.isActiveStatus(value) ? 'Active' : 'Inactive');
+  }
+
+  statusLabelForColumn(row: T, column: ConfigurableCrudColumn): string {
+    const value = row[column.field ?? column.id];
+    const options = column.options ?? this.statusOptions();
+    const option = options.find(
+      (candidate) => String(candidate.value ?? '') === String(value ?? ''),
+    );
+    return option?.label ?? this.statusLabel(value);
+  }
+
+  statusChipClass(row: T, column: ConfigurableCrudColumn): string {
+    const value = row[column.field ?? column.id];
+    const customClass = column.chipClass?.(value, row);
+    if (customClass) return customClass;
+    return this.isActiveStatus(value) ? 'chip-success' : 'chip-skipped';
+  }
+
+  hasCustomStatusChipClass(column: ConfigurableCrudColumn): boolean {
+    return typeof column.chipClass === 'function';
   }
 
   isActiveStatus(value: unknown): boolean {
