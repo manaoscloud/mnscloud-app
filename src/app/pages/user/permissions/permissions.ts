@@ -133,7 +133,6 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
   private readonly auth = inject(AuthService);
   private readonly permissionOptions = signal<ConfigurableCrudOption[]>([]);
   private readonly isMaster = computed(() =>
-    this.auth.user()?.role === 'MASTER' ||
     (this.auth.user()?.permissions ?? []).includes('platform.master.access')
   );
 

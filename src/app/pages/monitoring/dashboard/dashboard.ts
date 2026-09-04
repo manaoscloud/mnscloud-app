@@ -247,7 +247,7 @@ export class MonitoringDashboardPage {
   }
 
   monitoringRoute(path: 'agents' | 'activity-logs') {
-    return this.auth.user()?.role === 'MASTER'
+    return (this.auth.user()?.permissions ?? []).includes('platform.master.access')
       ? ['/system/monitoring', path]
       : ['/monitoring', path];
   }

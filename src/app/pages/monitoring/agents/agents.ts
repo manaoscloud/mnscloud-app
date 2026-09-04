@@ -246,9 +246,12 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   readonly updatingIds = signal(new Set<string>());
   readonly updatingProducts = signal(new Set<string>());
 
-  private readonly isMaster = computed(() => this.auth.user()?.role === 'MASTER');
+  private readonly isMaster = computed(() =>
+    (this.auth.user()?.permissions ?? []).includes('platform.master.access')
+  );
   private readonly canUpdateTenantAgent = computed(() =>
-    ['MASTER', 'OWNER', 'ADMIN'].includes(this.auth.user()?.role ?? ''),
+    this.isMaster() ||
+    (this.auth.user()?.permissions ?? []).includes('tenant.access.manage'),
   );
 
   constructor() {
