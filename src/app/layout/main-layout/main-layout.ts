@@ -65,8 +65,7 @@ interface NavItem {
   entitlementCode?: string;
   children?: NavItem[];
 
-  // ✅ Controle de visibilidade por role
-  roles?: AppRole[];
+  permissions?: string[];
 
   // ✅ Controle de visibilidade por TENANT (exige EnvironmentUUID selecionado)
   requiresEnvironment?: boolean;
@@ -574,30 +573,26 @@ export class MainLayout {
     return this.effectiveContextMode() === 'master' ? 'System' : 'Tenant';
   }
 
-  private currentRole(): AppRole | null {
-    if (this.isMasterUser()) return 'MASTER';
-
-    const role = String(this.user()?.role ?? '').toUpperCase();
-    if (role === 'MASTER' || role === 'OWNER' || role === 'ADMIN' || role === 'USER') {
-      return role;
-    }
-
-    return this.auth.isLoggedIn() ? 'USER' : null;
+  private hasPermission(required: string): boolean {
+    const normalizedRequired = required.toLowerCase();
+    const permissions = this.user()?.permissions ?? [];
+    return permissions.some((permission) => {
+      const normalizedPermission = String(permission ?? '').toLowerCase();
+      if (normalizedPermission === normalizedRequired) return true;
+      if (normalizedPermission === 'platform.master.access') return true;
+      if (normalizedPermission === 'tenant.*' && normalizedRequired.startsWith('tenant.'))
+        return true;
+      if (!normalizedPermission.includes('*')) return false;
+      const pattern = `^${normalizedPermission
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*')}$`;
+      return new RegExp(pattern).test(normalizedRequired);
+    });
   }
 
-  private hasRole(item: NavItem): boolean {
-    const role = this.currentRole();
-
-    // MASTER enxerga tudo
-    if (role === 'MASTER') return true;
-
-    // Se não tem roles, aparece para todos
-    if (!item.roles || item.roles.length === 0) return true;
-
-    // Se o user ainda não carregou role, esconde itens restritos
-    if (!role) return false;
-
-    return item.roles.includes(role);
+  private hasPermissions(item: NavItem): boolean {
+    if (!item.permissions || item.permissions.length === 0) return true;
+    return item.permissions.every((permission) => this.hasPermission(permission));
   }
 
   private canShowByEnvironment(item: NavItem): boolean {
@@ -661,8 +656,7 @@ export class MainLayout {
         const entitlementCode = i.entitlementCode ?? inheritedEntitlement;
         const scopedItem = { ...i, scope };
 
-        // 1) Role
-        if (!this.hasRole(scopedItem)) return null;
+        if (!this.hasPermissions(scopedItem)) return null;
 
         // 2) Commercial entitlement projection. API remains the source of truth.
         if (scope === 'tenant' || scope === 'both') {
@@ -804,9 +798,7 @@ export class MainLayout {
       this.auth.updateUser({
         EnvironmentUUID: finalEnv,
         role:
-          (this.isMasterUser()
-            ? 'MASTER'
-            : (selectedRole as AppRole | undefined)) ??
+          (this.isMasterUser() ? 'MASTER' : (selectedRole as AppRole | undefined)) ??
           this.auth.user()?.role ??
           'USER',
       });
@@ -998,7 +990,6 @@ export class MainLayout {
           label: 'Top-ups',
           icon: 'add_card',
           route: '/billing/topups',
-          roles: ['OWNER', 'ADMIN', 'USER'],
           requiresEnvironment: true,
         },
         {
@@ -1046,7 +1037,6 @@ export class MainLayout {
       label: 'ERP',
       icon: 'apps',
       entitlementCode: 'module.erp.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         {
@@ -1184,7 +1174,6 @@ export class MainLayout {
       label: 'ISP',
       icon: 'network_check',
       entitlementCode: 'module.isp.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         { id: 'isp/pop', label: 'POP', icon: 'location_on', route: '/isp/pop' },
@@ -1260,7 +1249,6 @@ export class MainLayout {
       icon: 'map',
       route: '/infragis',
       entitlementCode: 'module.infragis.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
     },
 
@@ -1270,7 +1258,6 @@ export class MainLayout {
       label: 'VoIP',
       icon: 'call',
       entitlementCode: 'module.voip.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         {
@@ -1306,7 +1293,7 @@ export class MainLayout {
               label: 'Reasons',
               icon: 'format_list_bulleted',
               route: '/voip/portability-reasons',
-              roles: ['OWNER', 'ADMIN'],
+              permissions: ['tenant.access.manage'],
             },
           ],
         },
@@ -1328,7 +1315,7 @@ export class MainLayout {
               icon: 'badge',
               route: '/voip/did/operator',
               masterRoute: '/system/did/operator',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'voip/did/number',
@@ -1364,7 +1351,7 @@ export class MainLayout {
               icon: 'dns',
               masterRoute: '/system/sbc/server',
               scope: 'master',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'voip/sbc/domains',
@@ -1384,7 +1371,7 @@ export class MainLayout {
               icon: 'settings_input_component',
               masterRoute: '/system/sbc/interface',
               scope: 'master',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'voip/sbc/peer',
@@ -1430,7 +1417,7 @@ export class MainLayout {
               icon: 'dns',
               masterRoute: '/system/softswitch/server',
               scope: 'master',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'voip/softswitch/domains',
@@ -1540,7 +1527,7 @@ export class MainLayout {
               icon: 'dns',
               route: '/voip/pabx/server',
               masterRoute: '/system/pabx/server',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'voip/pabx/domains',
@@ -1659,7 +1646,6 @@ export class MainLayout {
       label: 'Realtime',
       icon: 'cell_tower',
       entitlementCode: 'module.realtime.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         {
@@ -1667,7 +1653,7 @@ export class MainLayout {
           label: 'Dashboard',
           icon: 'dashboard',
           masterRoute: '/system/realtime',
-          roles: ['MASTER'],
+          permissions: ['platform.master.access'],
         },
         {
           id: 'realtime/domain',
@@ -1700,7 +1686,7 @@ export class MainLayout {
               label: 'Servers',
               icon: 'dns',
               masterRoute: '/system/realtime/webrtc/server',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'realtime/webrtc/sip-target',
@@ -1713,7 +1699,7 @@ export class MainLayout {
               label: 'Parameters',
               icon: 'tune',
               masterRoute: '/system/realtime/webrtc/parameter',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
           ],
         },
@@ -1728,21 +1714,21 @@ export class MainLayout {
               label: 'Dashboard',
               icon: 'dashboard',
               masterRoute: '/system/realtime/media',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'realtime/media/domains',
               label: 'Domains',
               icon: 'language',
               masterRoute: '/system/realtime/media/domains',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'realtime/media/server',
               label: 'Servers',
               icon: 'dns',
               masterRoute: '/system/realtime/media/server',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
           ],
         },
@@ -1757,21 +1743,21 @@ export class MainLayout {
               label: 'Dashboard',
               icon: 'dashboard',
               masterRoute: '/system/realtime/turn',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'realtime/turn/domains',
               label: 'Domains',
               icon: 'language',
               masterRoute: '/system/realtime/turn/domains',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
             {
               id: 'realtime/turn/server',
               label: 'Servers',
               icon: 'dns',
               masterRoute: '/system/realtime/turn/server',
-              roles: ['MASTER'],
+              permissions: ['platform.master.access'],
             },
           ],
         },
@@ -1784,7 +1770,6 @@ export class MainLayout {
       label: 'Hosting',
       icon: 'dns',
       entitlementCode: 'module.hosting.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         {
@@ -1793,7 +1778,6 @@ export class MainLayout {
           icon: 'dashboard',
           route: '/hosting',
           masterRoute: '/system/hosting',
-          roles: ['OWNER', 'ADMIN', 'USER'],
           requiresEnvironment: true,
         },
         {
@@ -1802,7 +1786,6 @@ export class MainLayout {
           icon: 'language',
           entitlementCode: 'module.hosting.dns.zone',
           scope: 'both',
-          roles: ['MASTER', 'OWNER', 'ADMIN', 'USER'],
           children: [
             {
               id: 'hosting/dns/providers',
@@ -1811,7 +1794,6 @@ export class MainLayout {
               route: '/hosting/dns/providers',
               masterRoute: '/system/hosting/dns/providers',
               scope: 'both',
-              roles: ['MASTER', 'OWNER', 'ADMIN', 'USER'],
             },
             {
               id: 'hosting/dns/templates',
@@ -1820,7 +1802,6 @@ export class MainLayout {
               route: '/hosting/dns/templates',
               masterRoute: '/system/hosting/dns/templates',
               scope: 'both',
-              roles: ['MASTER', 'OWNER', 'ADMIN', 'USER'],
             },
             {
               id: 'hosting/dns/domains',
@@ -1829,7 +1810,6 @@ export class MainLayout {
               route: '/hosting/dns/domains',
               masterRoute: '/system/hosting/dns/domains',
               scope: 'both',
-              roles: ['MASTER', 'OWNER', 'ADMIN', 'USER'],
             },
           ],
         },
@@ -2024,7 +2004,6 @@ export class MainLayout {
       label: 'Support',
       icon: 'support_agent',
       entitlementCode: 'module.support.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         {
@@ -2074,7 +2053,7 @@ export class MainLayout {
           icon: 'dashboard',
           route: '/monitoring',
           masterRoute: '/system/monitoring',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2083,7 +2062,7 @@ export class MainLayout {
           icon: 'sensors',
           route: '/monitoring/agents',
           masterRoute: '/system/monitoring/agents',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2092,7 +2071,7 @@ export class MainLayout {
           icon: 'fact_check',
           route: '/monitoring/activity-logs',
           masterRoute: '/system/monitoring/activity-logs',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
       ],
@@ -2102,7 +2081,7 @@ export class MainLayout {
       label: 'Cyber Security',
       icon: 'security',
       entitlementCode: 'module.cyber-security.*',
-      roles: ['OWNER', 'ADMIN'],
+      permissions: ['tenant.access.manage'],
       requiresEnvironment: true,
       masterRoute: '/system/cyber-security',
       children: [
@@ -2112,7 +2091,7 @@ export class MainLayout {
           icon: 'dashboard',
           route: '/cyber-security',
           masterRoute: '/system/cyber-security',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2121,7 +2100,7 @@ export class MainLayout {
           icon: 'dns',
           route: '/cyber-security/servers',
           masterRoute: '/system/cyber-security/servers',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2130,7 +2109,7 @@ export class MainLayout {
           icon: 'shield',
           route: '/cyber-security/profiles',
           masterRoute: '/system/cyber-security/profiles',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2139,7 +2118,7 @@ export class MainLayout {
           icon: 'settings_applications',
           route: '/cyber-security/services',
           masterRoute: '/system/cyber-security/services',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2148,7 +2127,7 @@ export class MainLayout {
           icon: 'gavel',
           route: '/cyber-security/decisions',
           masterRoute: '/system/cyber-security/decisions',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2157,7 +2136,7 @@ export class MainLayout {
           icon: 'notification_important',
           route: '/cyber-security/alerts',
           masterRoute: '/system/cyber-security/alerts',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2166,7 +2145,7 @@ export class MainLayout {
           icon: 'rule',
           route: '/cyber-security/lists',
           masterRoute: '/system/cyber-security/lists',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2175,7 +2154,7 @@ export class MainLayout {
           icon: 'hub',
           route: '/cyber-security/trusted-nodes',
           masterRoute: '/system/cyber-security/trusted-nodes',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2184,7 +2163,7 @@ export class MainLayout {
           icon: 'policy',
           route: '/cyber-security/network-policies',
           masterRoute: '/system/cyber-security/network-policies',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2192,7 +2171,7 @@ export class MainLayout {
           label: 'Segredos',
           icon: 'key',
           entitlementCode: 'module.cyber-security.secrets',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
           children: [
             {
@@ -2202,7 +2181,7 @@ export class MainLayout {
               route: '/cyber-security/secret-accounts',
               masterRoute: '/system/cyber-security/secret-accounts',
               entitlementCode: 'module.cyber-security.secret-accounts',
-              roles: ['OWNER', 'ADMIN'],
+              permissions: ['tenant.access.manage'],
               requiresEnvironment: true,
             },
             {
@@ -2212,7 +2191,7 @@ export class MainLayout {
               route: '/cyber-security/secrets',
               masterRoute: '/system/cyber-security/secrets',
               entitlementCode: 'module.cyber-security.secrets',
-              roles: ['OWNER', 'ADMIN'],
+              permissions: ['tenant.access.manage'],
               requiresEnvironment: true,
             },
             {
@@ -2221,7 +2200,7 @@ export class MainLayout {
               icon: 'admin_panel_settings',
               masterRoute: '/system/cyber-security/secret-servers',
               scope: 'master',
-              roles: ['OWNER', 'ADMIN'],
+              permissions: ['tenant.access.manage'],
               requiresEnvironment: false,
             },
           ],
@@ -2232,7 +2211,7 @@ export class MainLayout {
           icon: 'manage_search',
           route: '/cyber-security/security-events',
           masterRoute: '/system/cyber-security/security-events',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
       ],
@@ -2244,7 +2223,6 @@ export class MainLayout {
       label: 'Sale',
       icon: 'point_of_sale',
       entitlementCode: 'module.sale.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         {
@@ -2275,7 +2253,6 @@ export class MainLayout {
       label: 'Clinica',
       icon: 'local_hospital',
       entitlementCode: 'module.clinic.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         {
@@ -2337,7 +2314,6 @@ export class MainLayout {
       label: 'Laboratório',
       icon: 'biotech',
       entitlementCode: 'module.laboratory.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
     },
 
@@ -2347,7 +2323,6 @@ export class MainLayout {
       label: 'CRM',
       icon: 'contact_page',
       entitlementCode: 'module.erp.*',
-      roles: ['OWNER', 'ADMIN', 'USER'],
       requiresEnvironment: true,
       children: [
         { id: 'crm/leads', label: 'Leads', icon: 'person_add', route: '/erp/crm/leads' },
@@ -2370,13 +2345,13 @@ export class MainLayout {
         { id: 'settings/general', label: 'General', icon: 'tune', route: '/settings' },
         { id: 'settings/themes', label: 'Themes', icon: 'palette', route: '/settings/themes' },
 
-        // ✅ TENANT (exige env) + só OWNER/ADMIN
+        // Tenant access management.
         {
           id: 'settings/tenants',
           label: 'Tenants',
           icon: 'apartment',
           route: '/settings/tenants',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
         {
@@ -2385,7 +2360,7 @@ export class MainLayout {
           icon: 'tune',
           route: '/settings/parameters',
           masterRoute: '/system/parameters',
-          roles: ['OWNER', 'ADMIN'],
+          permissions: ['tenant.access.manage'],
           requiresEnvironment: true,
         },
       ],

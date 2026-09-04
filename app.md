@@ -16,8 +16,9 @@
   so every tenant/domain calls its own same-origin `/api/v1` path.
 - The app must not contain server-side secrets, provider credentials, database credentials, master
   keys, private business rules, or hidden API bypasses.
-- Browser-side authorization is UX only. The API remains the source of truth for roles, tenant scope,
-  environment scope, billing, routing ownership, policy decisions, and secret resolution.
+- Browser-side authorization is UX only. The API remains the source of truth for RBAC/ABAC
+  permissions, tenant scope, environment scope, billing, routing ownership, policy decisions, and
+  secret resolution.
 - Business rules must not live in the Angular app. The app may format values, validate obvious form
   shape before submit, show/hide actions for UX, and render API-provided URLs/data safely; it must
   not decide whether a user/tenant can access a resource, whether credit is sufficient, which
