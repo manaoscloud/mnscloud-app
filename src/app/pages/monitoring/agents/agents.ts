@@ -247,15 +247,30 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   readonly updatingProducts = signal(new Set<string>());
 
   private readonly isMaster = computed(() =>
-    (this.auth.user()?.permissions ?? []).includes('platform.master.access')
+    (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
   );
-  private readonly canUpdateTenantAgent = computed(() =>
-    this.isMaster() ||
-    (this.auth.user()?.permissions ?? []).includes('tenant.access.manage'),
+  private readonly canUpdateTenantAgent = computed(
+    () => this.isMaster() || this.hasPermission('tenant.monitoring.agents.update'),
   );
 
   constructor() {
     super(AGENTS_CONFIG);
+  }
+
+  private hasPermission(required: string): boolean {
+    const normalizedRequired = required.toLowerCase();
+    return (this.auth.user()?.permissions ?? []).some((permission) => {
+      const normalizedPermission = String(permission ?? '').toLowerCase();
+      if (normalizedPermission === normalizedRequired) return true;
+      if (normalizedPermission === 'tenant.*' && normalizedRequired.startsWith('tenant.')) {
+        return true;
+      }
+      if (!normalizedPermission.includes('*')) return false;
+      const pattern = `^${normalizedPermission
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*')}$`;
+      return new RegExp(pattern).test(normalizedRequired);
+    });
   }
 
   override filterActionMenu(): ConfigurableCrudFilterActionMenu | null {
