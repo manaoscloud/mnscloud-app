@@ -1,264 +1,268 @@
-import { NgClass } from '@angular/common';
-import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
-import { FormField, form as createForm } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Component, computed, inject, signal } from '@angular/core';
 
-import { ApiService } from '../../../services/api.service';
-import { AuthService } from '../../../services/auth.service';
-import { SnackbarService } from '../../../services/snackbar.service';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudListFilter,
+  ConfigurableCrudListParams,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import {
   DataViewerTone,
   openDataViewerDialog,
 } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { AuthService } from '../../../services/auth.service';
 
-type ActivityLog = {
-  uuid: string;
-  environmentUUID?: string | null;
-  correlationID?: string | null;
-  jobUUID?: string | null;
-  actorType?: string | null;
-  actorName?: string | null;
-  source?: string | null;
-  category?: string | null;
-  action?: string | null;
-  level?: string | null;
-  status?: string | null;
-  resourceType?: string | null;
-  resourceUUID?: string | null;
-  resourceLabel?: string | null;
-  message?: string | null;
-  suggestion?: string | null;
-  details?: unknown;
-  errorCode?: string | null;
-  errorMessage?: string | null;
-  hostname?: string | null;
-  durationMs?: number | null;
-  dateCreated?: string | null;
+const LEVEL_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'info', label: 'Info' },
+  { value: 'warning', label: 'Warning' },
+  { value: 'error', label: 'Error' },
+  { value: 'critical', label: 'Critical' },
+];
+
+const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'queued', label: 'Queued' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'waiting', label: 'Waiting' },
+  { value: 'running', label: 'Running' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'success', label: 'Success' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'skipped', label: 'Skipped' },
+];
+
+const CATEGORY_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'agent', label: 'Agent' },
+  { value: 'api', label: 'API' },
+  { value: 'crud', label: 'CRUD' },
+  { value: 'pabx', label: 'PABX' },
+  { value: 'security', label: 'Security' },
+  { value: 'system', label: 'System' },
+  { value: 'voip', label: 'VoIP' },
+  { value: 'worker', label: 'Worker' },
+];
+
+const VIEW_DETAILS_ACTION: ConfigurableCrudRowAction = {
+  key: 'view-details',
+  label: 'View details',
+  icon: 'visibility',
+  tooltip: 'View details',
 };
 
-type ActivityLogFilters = {
-  search: string;
-  environmentUUID: string;
-  level: string;
-  status: string;
-  category: string;
-  correlationID: string;
-};
-
-type ActivityLogsSnapshot = {
-  items: ActivityLog[];
-  total: number;
-};
-
-const EMPTY_ACTIVITY_FILTERS: ActivityLogFilters = {
-  search: '',
-  environmentUUID: '',
-  level: '',
-  status: '',
-  category: '',
-  correlationID: '',
-};
-
-const EMPTY_ACTIVITY_LOGS: ActivityLogsSnapshot = {
-  items: [],
-  total: 0,
+const ACTIVITY_LOGS_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'monitoring/activity-logs',
+  uuidField: 'uuid',
+  pageTitle: 'Activity Logs',
+  pageDescription: 'Operational events, process results, and system failures.',
+  createTitle: 'New activity log',
+  editTitle: 'Activity log',
+  dialogDescription: 'Review activity log details.',
+  searchPlaceholder: 'Message, action, resource, error',
+  emptyLabel: 'No activity logs found.',
+  deleteTitle: 'Delete activity log',
+  deleteMessage: 'Delete this activity log?',
+  deleteSelectedTitle: 'Delete activity logs',
+  deleteSelectedMessage: 'Delete {count} activity logs?',
+  savedMessage: 'Activity log saved successfully.',
+  deletedMessage: 'Activity log deleted successfully.',
+  deleteFailedMessage: 'Unable to delete activity log.',
+  fields: [],
+  columns: [
+    { id: 'created', label: 'Created', field: 'dateCreated', kind: 'datetime' },
+    { id: 'tenant', label: 'Tenant', field: 'environmentName', uuidField: 'environmentUUID' },
+    { id: 'level', label: 'Level', field: 'level', translateValue: true },
+    { id: 'status', label: 'Status', field: 'status', translateValue: true },
+    { id: 'action', label: 'Action', field: 'action' },
+    { id: 'resource', label: 'Resource', field: 'resourceLabel' },
+    { id: 'message', label: 'Message', field: 'message' },
+    { id: 'duration', label: 'Duration', field: 'durationText' },
+  ],
+  initialValues: {},
+  statusMode: 'string',
+  activeValue: 'success',
+  inactiveValue: 'failed',
+  statusOptions: STATUS_OPTIONS,
+  statusFilter: true,
+  canCreate: false,
+  canEdit: false,
+  canDelete: false,
+  rowActions: [VIEW_DETAILS_ACTION],
+  listFilters: [
+    {
+      key: 'environmentUUID',
+      label: 'Tenant',
+      paramKey: 'environmentUUID',
+      type: 'search-select',
+      options: [],
+      placeholder: 'Search tenant',
+      emptyLabel: 'No tenants found.',
+    },
+    {
+      key: 'level',
+      label: 'Level',
+      type: 'select',
+      options: LEVEL_OPTIONS,
+      translateOptions: true,
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      type: 'select',
+      options: CATEGORY_OPTIONS,
+      translateOptions: true,
+    },
+  ],
+  serverSidePagination: true,
+  initialPageSize: 25,
+  pageSizeOptions: [10, 25, 50, 100],
 };
 
 @Component({
   selector: 'app-monitoring-activity-logs',
   standalone: true,
-  imports: [
-    MnsDateTimePipe,
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTooltipModule,
-    TranslocoPipe,
-    NgClass,
-  ],
-  templateUrl: './activity.html',
-  styleUrls: ['./activity.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class MonitoringActivityLogsPage {
-  private readonly api = inject(ApiService);
+export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly auth = inject(AuthService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
+  private readonly tenantLookup = signal<readonly ConfigurableCrudOption[]>([
+    { value: '', label: 'All' },
+    { value: 'global', label: 'Global/System', searchText: 'global system' },
+  ]);
+  private readonly loadingTenants = signal(false);
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(25);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  private readonly appliedFilters = signal<ActivityLogFilters>({ ...EMPTY_ACTIVITY_FILTERS });
-  readonly dataSource = new MatTableDataSource<ActivityLog>([]);
-
-  readonly isMaster = this.auth.user()?.role === 'MASTER';
-  readonly displayedColumns = [
-    'created',
-    'level',
-    'status',
-    'action',
-    'resource',
-    'message',
-    'duration',
-    'actions',
-  ];
-  readonly levelOptions = ['', 'info', 'warn', 'warning', 'error', 'critical'];
-  readonly statusOptions = [
-    '',
-    'queued',
-    'pending',
-    'waiting',
-    'running',
-    'processing',
-    'success',
-    'completed',
-    'failed',
-    'skipped',
-  ];
-  readonly categoryOptions = [
-    '',
-    'agent',
-    'api',
-    'crud',
-    'pabx',
-    'security',
-    'system',
-    'voip',
-    'worker',
-  ];
-
-  readonly filterFormModel = signal<ActivityLogFilters>({ ...EMPTY_ACTIVITY_FILTERS });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  private readonly activityLogsResource = resource({
-    params: () => ({
-      filters: this.appliedFilters(),
-      pageIndex: this.pageIndex(),
-      pageSize: this.pageSize(),
-    }),
-    defaultValue: EMPTY_ACTIVITY_LOGS,
-    loader: ({ params }) => this.loadActivityLogsSnapshot(params.filters),
-  });
-
-  readonly loading = this.activityLogsResource.isLoading;
-  readonly logsSnapshot = computed(() => this.activityLogsResource.value());
-  readonly total = computed(() => this.logsSnapshot().total);
-
-  private readonly syncTable = effect(() => {
-    this.dataSource.data = this.sortRows(this.logsSnapshot().items);
-  });
-
-  private readonly reportLoadError = effect(() => {
-    const error = this.activityLogsResource.error();
-    if (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load activity logs.'));
-    }
-  });
+  private readonly isMaster = computed(() => this.authRole() === 'MASTER');
 
   constructor() {
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
+    super(ACTIVITY_LOGS_CONFIG);
+    const tenantColumn = ACTIVITY_LOGS_CONFIG.columns.find((column) => column.id === 'tenant');
+    if (tenantColumn) tenantColumn.hiddenWhen = () => !this.isMaster();
+    const tenantFilter = ACTIVITY_LOGS_CONFIG.listFilters?.find(
+      (filter) => filter.key === 'environmentUUID',
+    );
+    if (tenantFilter) tenantFilter.hiddenWhen = () => !this.isMaster();
+    if (this.isMaster()) void this.fetchTenantOptions();
   }
 
-  refreshList() {
-    this.pageIndex.set(0);
-    this.sortActive.set('');
-    this.sortDirection.set('');
-    const paginator = this.paginator();
-    if (paginator) {
-      paginator.firstPage();
+  override rowActions(_row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    return [VIEW_DETAILS_ACTION];
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'view-details') return;
+    this.openDetails(row);
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'environmentUUID') return this.isMaster() ? this.tenantLookup() : [];
+    return [];
+  }
+
+  override listFilterLoading(filter: ConfigurableCrudListFilter): boolean {
+    return filter.key === 'environmentUUID' ? this.loadingTenants() : false;
+  }
+
+  protected override async fetchItems(
+    filters: ConfigurableCrudFilters | ConfigurableCrudListParams,
+  ): Promise<ConfigurableCrudRecord[]> {
+    const params = new URLSearchParams();
+    params.set('limit', String((filters as ConfigurableCrudListParams).limit ?? 25));
+    params.set('offset', String((filters as ConfigurableCrudListParams).offset ?? 0));
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status) params.set('status', String(filters.status));
+    for (const [key, value] of Object.entries(filters.extra ?? {})) {
+      if (value === null || value === undefined || value === '') continue;
+      if (key === 'environmentUUID' && !this.isMaster()) continue;
+      params.set(key, String(value));
     }
-    const sort = this.sort();
-    if (sort) {
-      sort.active = '';
-      sort.direction = '';
+
+    const response = await this.api.get<{
+      data?: { items?: ConfigurableCrudRecord[]; total?: number };
+    }>(`${this.listEndpoint()}?${params.toString()}`);
+    const data = response.data ?? {};
+    this.serverTotal.set(Number(data.total ?? 0));
+    return (data.items ?? []).map((row) => this.decorateRow(row));
+  }
+
+  private async fetchTenantOptions() {
+    this.loadingTenants.set(true);
+    try {
+      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        'system/billing/tenants?limit=50&offset=0',
+      );
+      const tenants: ConfigurableCrudOption[] = [];
+      for (const row of response.data?.items ?? []) {
+        const value = String(row['EnvironmentUUID'] ?? '').trim();
+        if (!value) continue;
+        const name = String(row['EnvironmentName'] ?? row['TenantEmail'] ?? value).trim();
+        const email = String(row['TenantEmail'] ?? '').trim();
+        tenants.push({
+          value,
+          label: name || value,
+          description: email || value,
+          searchText: `${name} ${email} ${value}`,
+        });
+      }
+      this.tenantLookup.set([
+        { value: '', label: 'All' },
+        { value: 'global', label: 'Global/System', searchText: 'global system' },
+        ...tenants,
+      ]);
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to load tenants.');
+    } finally {
+      this.loadingTenants.set(false);
     }
-    this.activityLogsResource.reload();
   }
 
-  applyFilters() {
-    this.pageIndex.set(0);
-    this.appliedFilters.set(this.normalizedFilters());
+  private decorateRow(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return {
+      ...row,
+      environmentName: this.environmentLabel(row),
+      resourceLabel: row['resourceLabel'] || row['resourceUUID'] || row['resourceType'] || '-',
+      durationText: this.formatDuration(row['durationMs']),
+    };
   }
 
-  clearFilters() {
-    this.filterFormModel.set({ ...EMPTY_ACTIVITY_FILTERS });
-    this.pageIndex.set(0);
-    this.appliedFilters.set({ ...EMPTY_ACTIVITY_FILTERS });
-  }
-
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
-
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.dataSource.data = this.sortRows([...this.logsSnapshot().items]);
-  }
-
-  openDetails(row: ActivityLog) {
+  private openDetails(row: ConfigurableCrudRecord) {
     openDataViewerDialog(this.dialog, {
-      title: row.action || 'Activity log',
-      description: row.message || 'No message available.',
+      title: String(row['action'] || 'Activity log'),
+      description: String(row['message'] || 'No message available.'),
       status: {
         label: 'Status',
-        value: row.status || '-',
-        tone: this.viewerTone(row.status || row.level),
+        value: String(row['status'] || '-'),
+        tone: this.viewerTone(row['status'] || row['level']),
       },
       details: [
-        { label: 'Created', value: this.formatDate(row.dateCreated) },
-        {
-          label: 'Environment',
-          value: row.environmentUUID || 'global',
-          monospace: true,
-          wide: true,
-        },
-        { label: 'Correlation ID', value: row.correlationID, monospace: true, wide: true },
-        { label: 'Job UUID', value: row.jobUUID, monospace: true, wide: true },
+        { label: 'Created', value: row['dateCreated'], kind: 'datetime' },
+        { label: 'Tenant', value: this.environmentLabel(row), wide: true },
+        { label: 'Environment UUID', value: row['environmentUUID'], monospace: true, wide: true },
+        { label: 'Correlation ID', value: row['correlationID'], monospace: true, wide: true },
+        { label: 'Job UUID', value: row['jobUUID'], monospace: true, wide: true },
         { label: 'Actor', value: this.actorLabel(row) },
-        { label: 'Source', value: row.source },
-        { label: 'Category', value: row.category },
-        { label: 'Resource', value: `${row.resourceType || '-'} / ${this.resourceLabel(row)}` },
-        { label: 'Host', value: row.hostname },
-        { label: 'Duration', value: this.formatDuration(row.durationMs) },
+        { label: 'Source', value: row['source'] },
+        { label: 'Category', value: row['category'] },
+        {
+          label: 'Resource',
+          value: `${row['resourceType'] || '-'} / ${row['resourceLabel'] || '-'}`,
+        },
+        { label: 'Host', value: row['hostname'] },
+        { label: 'Duration', value: this.formatDuration(row['durationMs']) },
         { label: 'Error', value: this.errorDetail(row) },
-        { label: 'Suggestion', value: row.suggestion, wide: true },
+        { label: 'Suggestion', value: row['suggestion'], wide: true },
       ],
       sections: [
         {
           title: 'Record',
           code: {
             title: 'Record',
-            value: row.details ?? row,
+            value: row['details'] ?? row,
             format: 'json',
             copy: true,
           },
@@ -267,66 +271,31 @@ export class MonitoringActivityLogsPage {
     });
   }
 
-  chipClass(value: string | null | undefined) {
-    return `chip-${value || 'none'}`;
+  private authRole(): string {
+    return String(this.auth.user()?.role ?? '');
   }
 
-  formatDuration(value: number | null | undefined) {
+  private environmentLabel(row: ConfigurableCrudRecord): string {
+    const name = String(row['environmentName'] ?? row['EnvironmentName'] ?? '').trim();
+    if (name) return name;
+    return row['environmentUUID'] ? String(row['environmentUUID']) : 'Global/System';
+  }
+
+  private actorLabel(row: ConfigurableCrudRecord): string {
+    return [row['actorType'], row['actorName']].filter(Boolean).join(' / ') || '-';
+  }
+
+  private formatDuration(value: unknown): string {
     if (value === null || value === undefined || !Number.isFinite(Number(value))) return '-';
     const ms = Number(value);
     return ms < 1000 ? `${ms.toFixed(0)} ms` : `${(ms / 1000).toFixed(2)} s`;
   }
 
-  actorLabel(row: ActivityLog) {
-    const parts = [row.actorType, row.actorName].filter(Boolean);
-    return parts.length ? parts.join(' / ') : '-';
+  private errorDetail(row: ConfigurableCrudRecord): string {
+    return [row['errorCode'], row['errorMessage']].filter(Boolean).join(' ') || '-';
   }
 
-  resourceLabel(row: ActivityLog) {
-    return row.resourceLabel || row.resourceUUID || '-';
-  }
-
-  private sortRows(rows: ActivityLog[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-    const multiplier = direction === 'asc' ? 1 : -1;
-    return [...rows].sort((a, b) => {
-      const left = this.sortValue(a, active);
-      const right = this.sortValue(b, active);
-      return (
-        left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' }) * multiplier
-      );
-    });
-  }
-
-  private sortValue(row: ActivityLog, column: string) {
-    switch (column) {
-      case 'created':
-        return row.dateCreated ?? '';
-      case 'level':
-        return row.level ?? '';
-      case 'status':
-        return row.status ?? '';
-      case 'action':
-        return row.action ?? '';
-      case 'resource':
-        return `${row.resourceType ?? ''} ${this.resourceLabel(row)}`;
-      case 'message':
-        return row.message ?? '';
-      case 'duration':
-        return String(row.durationMs ?? '');
-      default:
-        return String((row as Record<string, unknown>)[column] ?? '');
-    }
-  }
-
-  private errorMessage(error: unknown, fallback: string) {
-    const value = error as { error?: { error?: string }; message?: string };
-    return value?.error?.error || value?.message || fallback;
-  }
-
-  private viewerTone(value: string | null | undefined): DataViewerTone {
+  private viewerTone(value: unknown): DataViewerTone {
     const normalized = String(value ?? '').toLowerCase();
     if (['success', 'completed'].includes(normalized)) return 'success';
     if (['failed', 'error', 'critical'].includes(normalized)) return 'danger';
@@ -335,51 +304,5 @@ export class MonitoringActivityLogsPage {
       return 'info';
     }
     return 'neutral';
-  }
-
-  private formatDate(value: string | null | undefined): string {
-    if (!value) return '-';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-  }
-
-  private errorDetail(row: ActivityLog): string {
-    return [row.errorCode, row.errorMessage].filter(Boolean).join(' ') || '-';
-  }
-
-  private async loadActivityLogsSnapshot(
-    filters: ActivityLogFilters,
-  ): Promise<ActivityLogsSnapshot> {
-    const params = this.buildQuery(filters);
-    const response = await this.api.get<any>(`monitoring/activity-logs${params}`);
-    return {
-      items: response?.data?.items ?? [],
-      total: Number(response?.data?.total ?? 0),
-    };
-  }
-
-  private normalizedFilters(): ActivityLogFilters {
-    const value = this.filterFormModel();
-    return {
-      search: value.search.trim(),
-      environmentUUID: value.environmentUUID.trim(),
-      level: value.level.trim(),
-      status: value.status.trim(),
-      category: value.category.trim(),
-      correlationID: value.correlationID.trim(),
-    };
-  }
-
-  private buildQuery(value: ActivityLogFilters) {
-    const params = new URLSearchParams();
-    for (const [key, item] of Object.entries(value)) {
-      if (item !== null && item !== undefined && String(item).trim()) {
-        params.set(key, String(item).trim());
-      }
-    }
-    params.set('limit', String(this.pageSize()));
-    params.set('offset', String(this.pageIndex() * this.pageSize()));
-    const query = params.toString();
-    return query ? `?${query}` : '';
   }
 }

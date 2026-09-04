@@ -74,7 +74,9 @@
       }
 
       <div class="filter-actions">
-        @if (filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())) {
+        @if (
+          filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())
+        ) {
           <div class="filter-actions-start">
             @if (filterActionMenu(); as actionMenu) {
               <button
@@ -118,13 +120,10 @@
               </button>
             }
             @if (bulkDeleteEnabled() && selectedCount()) {
-              <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
-              <button
-                mat-stroked-button
-                color="warn"
-                type="button"
-                (click)="deleteSelectedItems()"
+              <span class="selection-count"
+                >{{ selectedCount() }} {{ 'selected' | transloco }}</span
               >
+              <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
                 <mat-icon>delete</mat-icon>
                 {{ 'Delete selected' | transloco }}
               </button>
@@ -173,7 +172,7 @@
           </ng-container>
         }
 
-        @for (column of config.columns; track column.id) {
+        @for (column of columns(); track column.id) {
           <ng-container [matColumnDef]="column.id">
             <th mat-header-cell *matHeaderCellDef mat-sort-header [class]="column.className ?? ''">
               {{ column.label | transloco }}
@@ -296,10 +295,10 @@
 
     <mat-paginator
       class="mobile-paginator"
-      [length]="sortedRows().length"
+      [length]="paginatorLength()"
       [pageIndex]="pageIndex()"
       [pageSize]="pageSize()"
-      [pageSizeOptions]="[5, 10, 25, 50]"
+      [pageSizeOptions]="pageSizeOptions()"
       showFirstLastButtons
       (page)="setPage($event)"
     />
@@ -1774,7 +1773,7 @@
                       (click)="addRelatedCollectionRow(collection)"
                     >
                       <mat-icon>add</mat-icon>
-                      {{ (collection.addLabel ?? 'Add') | transloco }}
+                      {{ collection.addLabel ?? 'Add' | transloco }}
                     </button>
                   </div>
                 </div>

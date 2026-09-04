@@ -236,6 +236,7 @@ export type ConfigurableCrudColumn = {
   translateValue?: boolean;
   /** Renders a copy action beside the displayed value when the record has a value. */
   copyable?: boolean;
+  hiddenWhen?: () => boolean;
 };
 
 export type ConfigurableCrudListFilter = {
@@ -250,6 +251,7 @@ export type ConfigurableCrudListFilter = {
   loading?: () => boolean;
   options?: readonly ConfigurableCrudOption[];
   translateOptions?: boolean;
+  hiddenWhen?: () => boolean;
 };
 
 export type ConfigurableCrudRowAction = {
@@ -353,6 +355,10 @@ export type ConfigurableCrudConfig = {
   tabLabels?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
   /** Places Authentication directly after Record without changing the default tab sequence. */
   authenticationTabAfterRecord?: boolean;
+  /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
+  serverSidePagination?: boolean;
+  pageSizeOptions?: readonly number[];
+  initialPageSize?: number;
 };
 
 export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
@@ -367,6 +373,13 @@ export type ConfigurableCrudFilters = {
   search: string;
   status: '' | string | number;
   extra: Record<string, string | number | boolean | null>;
+};
+
+export type ConfigurableCrudListParams = ConfigurableCrudFilters & {
+  limit: number;
+  offset: number;
+  pageIndex: number;
+  pageSize: number;
 };
 
 @Directive()
@@ -396,6 +409,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly sortDirection = signal<SortDirection>('');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(5);
+  readonly serverTotal = signal(0);
   readonly saving = signal(false);
   readonly mutating = signal(false);
   readonly relatedRows = signal<Record<string, ConfigurableCrudRecord[]>>({});
@@ -416,17 +430,23 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   readonly itemsResource;
 
+  readonly columns = computed(() => this.config.columns.filter((column) => !column.hiddenWhen?.()));
   readonly displayedColumns = computed(() => [
     ...(this.bulkDeleteEnabled() ? ['select'] : []),
-    ...this.config.columns.map((column) => column.id),
+    ...this.columns().map((column) => column.id),
     ...(this.hasRowActions() ? ['actions'] : []),
   ]);
   readonly rows = computed(() => this.normalizeRows(this.itemsResource.value() as T[]));
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
   readonly visibleRows = computed(() => {
+    if (this.serverSidePagination()) return this.sortedRows();
     const start = this.pageIndex() * this.pageSize();
     return this.sortedRows().slice(start, start + this.pageSize());
   });
+  readonly paginatorLength = computed(() =>
+    this.serverSidePagination() ? this.serverTotal() : this.sortedRows().length,
+  );
+  readonly pageSizeOptions = computed(() => this.config.pageSizeOptions ?? [5, 10, 25, 50]);
   readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
   readonly selectedCount = computed(() => this.selectedUUIDs().size);
   readonly allVisibleSelected = computed(() => {
@@ -502,6 +522,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly notesFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'notes'),
   );
+  readonly listFilters = computed(() =>
+    (this.config.listFilters ?? []).filter((filter) => !filter.hiddenWhen?.()),
+  );
   readonly relatedCollections = computed(() => this.config.relatedCollections ?? []);
   readonly showRelatedCollections = computed(
     () => Boolean(this.editingRecord()) && this.relatedCollections().length > 0,
@@ -517,16 +540,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly hasRowActions = computed(
     () => this.canEdit() || this.canDelete() || Boolean(this.config.rowActions?.length),
   );
-  readonly listFilters = computed(() => this.config.listFilters ?? []);
 
   protected constructor(config: ConfigurableCrudConfig) {
     this.config = config;
+    this.pageSize.set(config.initialPageSize ?? 5);
     void this.parameters
       .resolveDefaultCurrency('BRL')
       .then((currency) => this.defaultCurrency.set(currency));
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
-      params: () => this.appliedFilters(),
+      params: () => this.listResourceParams(),
       defaultValue: [] as T[],
       loader: ({ params }) => this.fetchItems(params),
     });
@@ -569,6 +592,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   setPage(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
+  }
+
+  serverSidePagination(): boolean {
+    return this.config.serverSidePagination === true;
   }
 
   toggleVisibleRows(checked: boolean): void {
@@ -640,7 +667,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       const current = this.editingRecord();
       let response: unknown;
       if (current) {
-        response = await this.api.put(`${this.updateEndpoint()}/${this.recordUUID(current)}`, payload);
+        response = await this.api.put(
+          `${this.updateEndpoint()}/${this.recordUUID(current)}`,
+          payload,
+        );
       } else {
         response = await this.api.post(this.createEndpoint(), payload);
       }
@@ -770,7 +800,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       : this.relatedPayload(values, collection.fields);
     this.setRelatedSaving(collection.key, true);
     try {
-      const response = await this.api.post(this.relatedCollectionEndpoint(collection, parentUUID), payload);
+      const response = await this.api.post(
+        this.relatedCollectionEndpoint(collection, parentUUID),
+        payload,
+      );
       const rows = extractCrudItems(response);
       this.relatedRows.update((current) => ({
         ...current,
@@ -1496,10 +1529,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     });
   }
 
-  protected async fetchItems(filters: ConfigurableCrudFilters): Promise<T[]> {
+  protected async fetchItems(
+    filters: ConfigurableCrudFilters | ConfigurableCrudListParams,
+  ): Promise<T[]> {
     const params = new URLSearchParams();
-    params.set('limit', String(this.listLimit));
-    params.set('offset', '0');
+    const limit = this.serverSidePagination()
+      ? (filters as ConfigurableCrudListParams).limit
+      : this.listLimit;
+    const offset = this.serverSidePagination() ? (filters as ConfigurableCrudListParams).offset : 0;
+    params.set('limit', String(limit));
+    params.set('offset', String(offset));
     if (filters.search) params.set('search', filters.search);
     if (this.statusFilterEnabled() && filters.status !== '')
       params.set('status', String(filters.status));
@@ -1512,9 +1551,28 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const response = await this.api.get(`${this.listEndpoint()}?${params.toString()}`);
     const data = (response as { data?: unknown })?.data;
     if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown }).items)) {
+      if (this.serverSidePagination()) {
+        const total = Number((data as { total?: unknown }).total ?? 0);
+        this.serverTotal.set(Number.isFinite(total) ? total : 0);
+      }
       return (data as { items: T[] }).items;
     }
+    if (this.serverSidePagination()) this.serverTotal.set(0);
     return [];
+  }
+
+  private listResourceParams(): ConfigurableCrudFilters | ConfigurableCrudListParams {
+    const filters = this.appliedFilters();
+    if (!this.serverSidePagination()) return filters;
+    const pageSize = this.pageSize();
+    const pageIndex = this.pageIndex();
+    return {
+      ...filters,
+      pageSize,
+      pageIndex,
+      limit: pageSize,
+      offset: pageIndex * pageSize,
+    };
   }
 
   private normalizeRows(rows: T[] | undefined): T[] {
@@ -1526,7 +1584,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const direction = this.sortDirection();
     if (!active || !direction) return rows;
 
-    const column = this.config.columns.find((item) => item.id === active);
+    const column = this.columns().find((item) => item.id === active);
     return [...rows].sort((left, right) => {
       const leftValue = this.sortValue(left, column);
       const rightValue = this.sortValue(right, column);
