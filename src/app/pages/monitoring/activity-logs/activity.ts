@@ -147,7 +147,7 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
       (filter) => filter.key === 'environmentUUID',
     );
     if (tenantFilter) tenantFilter.hiddenWhen = () => !this.isMaster();
-    if (this.isMaster()) void this.loadTenants();
+    if (this.isMaster()) void this.fetchTenantOptions();
   }
 
   override rowActions(_row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
@@ -190,7 +190,7 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
     return (data.items ?? []).map((row) => this.decorateRow(row));
   }
 
-  private async loadTenants() {
+  private async fetchTenantOptions() {
     this.loadingTenants.set(true);
     try {
       const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
