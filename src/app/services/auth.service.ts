@@ -58,6 +58,7 @@ export interface AuthUser {
   // ✅ (menu/guards)
   role?: AppRole;
   EnvironmentUUID?: string | null;
+  permissions?: string[];
 }
 
 function normalizeAppRole(value: unknown): AppRole | undefined {
@@ -113,6 +114,7 @@ export class AuthService {
         lastName: initialUser.lastName ?? initialUser.LastName ?? '',
         role: normalizeAppRole(initialUser.role),
         EnvironmentUUID: initialEnvironmentUUID,
+        permissions: Array.isArray(initialUser.permissions) ? initialUser.permissions : [],
       };
 
       writeAuthValue(USER_KEY, JSON.stringify(seedUser), rememberMe);
@@ -203,6 +205,7 @@ export class AuthService {
         role: normalizeAppRole(prev?.role),
         EnvironmentUUID:
           readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(prev?.EnvironmentUUID) ?? null,
+        permissions: prev?.permissions ?? [],
       };
 
       writeAuthValue(USER_KEY, JSON.stringify(updated), isRememberedSession());
@@ -236,6 +239,7 @@ export class AuthService {
           readStoredEnvironmentUUID() ??
           normalizeEnvironmentUUID(current.EnvironmentUUID) ??
           null,
+        permissions: Array.isArray(raw?.permissions) ? raw.permissions : current.permissions ?? [],
       };
 
       writeAuthValue(USER_KEY, JSON.stringify(merged), isRememberedSession());
