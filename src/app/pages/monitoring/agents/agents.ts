@@ -152,7 +152,7 @@ const AGENTS_CONFIG: ConfigurableCrudConfig = {
       key: 'type',
       label: 'Type',
       type: 'select',
-      options: [{ value: '', label: 'All' }, ...TYPE_OPTIONS],
+      options: TYPE_OPTIONS,
     },
   ],
   fields: [
