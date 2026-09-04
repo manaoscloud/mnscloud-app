@@ -8,6 +8,7 @@ import {
   ConfigurableCrudPageBase,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { AuthService } from '../../../services/auth.service';
+import { TenantAccess, TenantService } from '../../../services/tenant.service';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -68,7 +69,17 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
   ],
   fields: [
-    { key: 'userUUID', source: 'userUUID', payloadKey: 'userUUID', label: 'User UUID', required: true, span: 2 },
+    {
+      key: 'userUUID',
+      source: 'userUUID',
+      payloadKey: 'userUUID',
+      label: 'User',
+      type: 'search-select',
+      required: true,
+      span: 2,
+      tab: 'authentication',
+      placeholder: 'Search user',
+    },
     {
       key: 'permissionCode',
       source: 'permissionCode',
@@ -95,10 +106,12 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       key: 'environmentUUID',
       source: 'environmentUUID',
       payloadKey: 'environmentUUID',
-      label: 'Tenant UUID',
-      span: 3,
+      label: 'Tenant',
+      type: 'search-select',
+      span: 2,
       tab: 'authentication',
-      placeholder: 'Blank for current tenant or platform permissions',
+      placeholder: 'Search tenant',
+      hiddenWhen: ({ values }) => String(values['permissionCode'] ?? '').startsWith('platform.'),
     },
     {
       key: 'expiresAt',
@@ -131,14 +144,22 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
 })
 export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly auth = inject(AuthService);
+  private readonly tenantService = inject(TenantService);
   private readonly permissionOptions = signal<ConfigurableCrudOption[]>([]);
+  private readonly userOptions = signal<ConfigurableCrudOption[]>([]);
+  private readonly tenantOptions = signal<ConfigurableCrudOption[]>([]);
+  private readonly tenantRecords = signal<TenantAccess[]>([]);
+  private readonly loadingUsers = signal(false);
+  private readonly loadingTenants = signal(false);
   private readonly isMaster = computed(() =>
-    (this.auth.user()?.permissions ?? []).includes('platform.master.access')
+    (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
   );
 
   constructor() {
     super(PERMISSION_CONFIG);
     void this.loadCatalog();
+    void this.loadTenants();
+    void this.loadUsers();
   }
 
   protected override listEndpoint(): string {
@@ -154,7 +175,43 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    return key === 'permissionCode' ? this.permissionOptions() : [];
+    if (key === 'permissionCode') return this.permissionOptions();
+    if (key === 'userUUID') return this.userOptions();
+    if (key === 'environmentUUID') return this.tenantOptions();
+    return [];
+  }
+
+  override fieldLoading(field: { key: string }): boolean {
+    if (field.key === 'userUUID') return this.loadingUsers();
+    if (field.key === 'environmentUUID') return this.loadingTenants();
+    return super.fieldLoading(field as never);
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key === 'permissionCode' && String(value ?? '').startsWith('platform.')) {
+      this.setFieldValue('environmentUUID', '');
+      return;
+    }
+
+    if (key === 'environmentUUID') {
+      const tenant = this.tenantRecords().find(
+        (item) => item.EnvironmentUUID === String(value ?? ''),
+      );
+      if (tenant) this.selectTenantContext(tenant);
+      void this.loadUsers();
+    }
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const permissionCode = String(payload['permissionCode'] ?? '');
+    const environmentUUID = String(payload['environmentUUID'] ?? '').trim();
+    return {
+      ...payload,
+      permissionCode,
+      environmentUUID: permissionCode.startsWith('platform.')
+        ? null
+        : environmentUUID || this.tenantService.selectedTenant()?.EnvironmentUUID || null,
+    };
   }
 
   private async loadCatalog(): Promise<void> {
@@ -163,10 +220,115 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
     );
     const items = response?.data?.items ?? [];
     this.permissionOptions.set(
-      items.map((item) => ({
-        value: String(item['code'] ?? ''),
-        label: `${item['name'] ?? item['code']} (${item['code']})`,
-      })).filter((item) => item.value),
+      items
+        .filter((item) => this.isMaster() || String(item['scope'] ?? '') !== 'platform')
+        .map((item) => this.permissionOption(item))
+        .filter((item) => item.value),
     );
+  }
+
+  private async loadTenants(): Promise<void> {
+    this.loadingTenants.set(true);
+    try {
+      if (this.tenantService.tenants().length === 0) await this.tenantService.loadTenants();
+      let tenants = this.tenantService.tenants();
+      if (this.isMaster()) {
+        const masterLookup = await this.fetchMasterTenantLookup();
+        if (masterLookup.length) tenants = masterLookup;
+      }
+      this.tenantRecords.set(tenants);
+      this.tenantOptions.set(tenants.map((tenant) => this.tenantOption(tenant)));
+      const selected = this.tenantService.selectedTenant()?.EnvironmentUUID;
+      if (selected && !this.fieldValueString('environmentUUID')) {
+        this.setFieldValue('environmentUUID', selected);
+      }
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to load tenants.');
+    } finally {
+      this.loadingTenants.set(false);
+    }
+  }
+
+  private async fetchMasterTenantLookup(): Promise<TenantAccess[]> {
+    try {
+      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        'system/billing/tenants?search=&limit=500&offset=0',
+      );
+      return (response.data?.items ?? [])
+        .map((row) => ({
+          EnvironmentUUID: String(row['EnvironmentUUID'] ?? row['environmentUUID'] ?? ''),
+          EnvironmentName: String(
+            row['EnvironmentName'] ?? row['environmentName'] ?? row['TenantEmail'] ?? '',
+          ),
+          Status: Number(row['TenantStatus'] ?? row['status'] ?? 1),
+        }))
+        .filter((tenant) => tenant.EnvironmentUUID);
+    } catch {
+      return [];
+    }
+  }
+
+  private async loadUsers(): Promise<void> {
+    this.loadingUsers.set(true);
+    try {
+      const response = await this.api.get<{ data?: { members?: ConfigurableCrudRecord[] } }>(
+        'user/access/members',
+      );
+      this.userOptions.set((response.data?.members ?? []).map((member) => this.userOption(member)));
+    } catch (error) {
+      this.userOptions.set([]);
+      this.snack.error(this.errorMessage(error) || 'Failed to load users.');
+    } finally {
+      this.loadingUsers.set(false);
+    }
+  }
+
+  private tenantOption(tenant: TenantAccess): ConfigurableCrudOption {
+    return {
+      value: tenant.EnvironmentUUID,
+      label: tenant.EnvironmentName || tenant.EnvironmentUUID,
+      description: tenant.EnvironmentUUID,
+      searchText: `${tenant.EnvironmentName} ${tenant.EnvironmentUUID}`,
+    };
+  }
+
+  private selectTenantContext(tenant: TenantAccess): void {
+    this.tenantService.selectedTenant.set(tenant);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('mc_current_env', tenant.EnvironmentUUID);
+    }
+  }
+
+  private userOption(member: ConfigurableCrudRecord): ConfigurableCrudOption {
+    const uuid = String(member['UserUUID'] ?? member['userUUID'] ?? '');
+    const name = String(member['Name'] ?? member['name'] ?? '').trim();
+    const email = String(member['Email'] ?? member['email'] ?? '').trim();
+    return {
+      value: uuid,
+      label: name || email || uuid,
+      description: email || uuid,
+      searchText: `${name} ${email} ${uuid}`,
+    };
+  }
+
+  private permissionOption(item: Record<string, unknown>): ConfigurableCrudOption {
+    const code = String(item['code'] ?? '').trim();
+    const scope = String(item['scope'] ?? '').trim();
+    const action = code.split('.').at(-1) ?? '';
+    const tag = String(item['tag'] ?? '').trim();
+    const name = String(item['name'] ?? code).trim();
+    const label = [
+      scope ? scope.toUpperCase() : '',
+      tag || name,
+      action ? action.toUpperCase() : '',
+    ]
+      .filter(Boolean)
+      .join(' / ');
+    return {
+      value: code,
+      label,
+      description: code,
+      searchText: `${label} ${name} ${code} ${item['description'] ?? ''}`,
+    };
   }
 }
