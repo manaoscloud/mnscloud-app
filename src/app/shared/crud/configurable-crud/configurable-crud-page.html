@@ -1416,6 +1416,7 @@
                       [placeholder]="field.placeholder ?? 'Search permissions' | transloco"
                       [options]="fieldOptions(field)"
                       [loading]="fieldLoading(field)"
+                      [rows]="field.rows ?? 6"
                       [value]="fieldValueArray(field.key)"
                       (valueChange)="setFieldValue(field.key, $event)"
                     />
@@ -1654,6 +1655,21 @@
             <div class="tab-content form-grid">
               @for (field of diagnosticsFields(); track field.key) {
                 @switch (field.type) {
+                  @case ('search-select') {
+                    <mns-search-select-field
+                      [fieldClass]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
+                      [placeholder]="field.placeholder ?? 'Search' | transloco"
+                      [options]="fieldOptions(field)"
+                      [loading]="fieldLoading(field)"
+                      [multiple]="field.multiple ?? false"
+                      [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
+                      [canCreate]="canQuickCreate(field)"
+                      [createLabel]="quickCreateLabel(field)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                      (createRecord)="quickCreateField(field)"
+                    />
+                  }
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
