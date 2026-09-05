@@ -537,7 +537,7 @@ export class MainLayout {
   }
 
   // =======================================================
-  // ✅ MENU: MASTER vs TENANT
+  // ✅ MENU: autoridade de plataforma vs tenant
   // =======================================================
   private currentKnownEnvironmentUUID(): string | null {
     return (
@@ -1015,7 +1015,7 @@ export class MainLayout {
       ],
     },
 
-    // ✅ ERP (tenant; MASTER usa rotas globais quando disponível)
+    // ✅ ERP (tenant; plataforma usa rotas globais quando disponível)
     {
       id: 'erp',
       label: 'ERP',
@@ -1152,7 +1152,7 @@ export class MainLayout {
       ],
     },
 
-    // ✅ ISP (tenant; MASTER usa rotas globais quando disponível)
+    // ✅ ISP (tenant; plataforma usa rotas globais quando disponível)
     {
       id: 'isp',
       label: 'ISP',
@@ -1236,7 +1236,7 @@ export class MainLayout {
       requiresEnvironment: true,
     },
 
-    // ✅ VoIP (tenant; MASTER usa rotas globais quando disponível)
+    // ✅ VoIP (tenant; plataforma usa rotas globais quando disponível)
     {
       id: 'voip',
       label: 'VoIP',
@@ -1748,7 +1748,7 @@ export class MainLayout {
       ],
     },
 
-    // ✅ Hosting (tenant; MASTER usa rotas globais quando disponível)
+    // ✅ Hosting (tenant; plataforma usa rotas globais quando disponível)
     {
       id: 'hosting',
       label: 'Hosting',
