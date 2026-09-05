@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -5,7 +6,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTreeModule } from '@angular/material/tree';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { MnsSearchSelectFieldOption } from '../mns-search-select-field/mns-search-select-field';
@@ -44,7 +44,7 @@ const ACTION_LABELS: Record<string, string> = {
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
-    MatTreeModule,
+    NgTemplateOutlet,
     TranslocoPipe,
   ],
   template: `
@@ -69,53 +69,62 @@ const ACTION_LABELS: Record<string, string> = {
             <span>{{ loadingLabel() | transloco }}</span>
           </div>
         } @else {
-          <mat-tree
-            #tree
-            [dataSource]="filteredTree()"
-            [childrenAccessor]="childrenAccessor"
-            [trackBy]="trackByNode"
-          >
-            <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild" [isExpandable]="true">
-              <div class="permission-tree-node permission-tree-node-branch">
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTreeNodeToggle
-                  [attr.aria-label]="node.label"
-                >
-                  <mat-icon>{{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}</mat-icon>
-                </button>
-                <mat-checkbox
-                  [checked]="isNodeChecked(node)"
-                  [indeterminate]="isNodeIndeterminate(node)"
-                  (change)="toggleNode(node)"
-                >
-                  {{ node.label }}
-                </mat-checkbox>
-              </div>
-              <div class="permission-tree-children" [class.is-collapsed]="!tree.isExpanded(node)">
-                <ng-container matTreeNodeOutlet />
-              </div>
-            </mat-nested-tree-node>
-
-            <mat-tree-node *matTreeNodeDef="let node" class="permission-tree-node-leaf">
-              <div class="permission-tree-node">
-                <span class="permission-tree-spacer"></span>
-                <mat-checkbox [checked]="isNodeChecked(node)" (change)="toggleNode(node)">
-                  <span class="permission-tree-action">{{ node.label }}</span>
-                  @if (node.description) {
-                    <span class="permission-tree-code">{{ node.description }}</span>
-                  }
-                </mat-checkbox>
-              </div>
-            </mat-tree-node>
-          </mat-tree>
+          <ng-container
+            [ngTemplateOutlet]="nodeList"
+            [ngTemplateOutletContext]="{ nodes: filteredTree() }"
+          />
 
           @if (!filteredTree().length) {
             <div class="permission-tree-state">{{ emptyLabel() | transloco }}</div>
           }
         }
       </div>
+
+      <ng-template #nodeList let-nodes="nodes">
+        <div class="permission-tree-list">
+          @for (node of nodes; track trackNode(node)) {
+            <div class="permission-tree-item">
+              <div
+                class="permission-tree-node"
+                [class.permission-tree-node-branch]="hasChildren(node)"
+              >
+                @if (hasChildren(node)) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="node.label"
+                    (click)="toggleExpanded(node)"
+                  >
+                    <mat-icon>{{ isExpanded(node) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                  </button>
+                } @else {
+                  <span class="permission-tree-spacer"></span>
+                }
+
+                <mat-checkbox
+                  [checked]="isNodeChecked(node)"
+                  [indeterminate]="isNodeIndeterminate(node)"
+                  (change)="toggleNode(node, $event.source.checked)"
+                >
+                  <span class="permission-tree-action">{{ node.label }}</span>
+                  @if (node.description) {
+                    <span class="permission-tree-code">{{ node.description }}</span>
+                  }
+                </mat-checkbox>
+              </div>
+
+              @if (hasChildren(node) && isExpanded(node)) {
+                <div class="permission-tree-children">
+                  <ng-container
+                    [ngTemplateOutlet]="nodeList"
+                    [ngTemplateOutletContext]="{ nodes: childrenAccessor(node) }"
+                  />
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </ng-template>
     </section>
   `,
   styles: [
@@ -151,11 +160,6 @@ const ACTION_LABELS: Record<string, string> = {
         padding: 0.45rem 0.25rem 0.7rem;
       }
 
-      mat-tree {
-        background: transparent;
-        color: inherit;
-      }
-
       .permission-tree-node {
         align-items: center;
         display: flex;
@@ -167,22 +171,13 @@ const ACTION_LABELS: Record<string, string> = {
         font-weight: 700;
       }
 
-      .permission-tree-node-leaf {
-        display: block;
-        margin-left: 2.5rem;
-      }
-
       .permission-tree-children {
         margin-left: 2.05rem;
       }
 
-      .permission-tree-children.is-collapsed {
-        display: none;
-      }
-
       .permission-tree-spacer {
         display: inline-block;
-        width: 0.65rem;
+        width: 3rem;
       }
 
       .permission-tree-action {
@@ -220,6 +215,7 @@ export class MnsPermissionTreeFieldComponent {
   readonly loading = input(false);
 
   readonly search = signal('');
+  readonly expandedKeys = signal<ReadonlySet<string>>(new Set(['platform', 'tenant']));
 
   readonly treeData = computed(() => this.buildTree(this.options()));
   readonly filteredTree = computed(() => {
@@ -238,8 +234,14 @@ export class MnsPermissionTreeFieldComponent {
   );
 
   readonly childrenAccessor = (node: PermissionTreeNode) => node.children;
-  readonly hasChild = (_: number, node: PermissionTreeNode) => node.children.length > 0;
-  readonly trackByNode = (_: number, node: PermissionTreeNode) => node.key;
+
+  trackNode(node: PermissionTreeNode): string {
+    return node.key;
+  }
+
+  hasChildren(node: PermissionTreeNode): boolean {
+    return this.childrenAccessor(node).length > 0;
+  }
 
   isNodeChecked(node: PermissionTreeNode): boolean {
     const leafValues = this.nodeLeafValues(node);
@@ -254,7 +256,23 @@ export class MnsPermissionTreeFieldComponent {
     return selectedCount > 0 && selectedCount < leafValues.length;
   }
 
-  toggleNode(node: PermissionTreeNode): void {
+  isExpanded(node: PermissionTreeNode): boolean {
+    return Boolean(this.search()) || this.expandedKeys().has(node.key);
+  }
+
+  toggleExpanded(node: PermissionTreeNode): void {
+    this.expandedKeys.update((current) => {
+      const next = new Set(current);
+      if (next.has(node.key)) {
+        next.delete(node.key);
+      } else {
+        next.add(node.key);
+      }
+      return next;
+    });
+  }
+
+  toggleNode(node: PermissionTreeNode, checked: boolean): void {
     const leafValues = this.nodeLeafValues(node);
     if (!leafValues.length) return;
 
@@ -263,8 +281,7 @@ export class MnsPermissionTreeFieldComponent {
         .map((item) => String(item ?? ''))
         .filter(Boolean),
     );
-    const shouldSelect = leafValues.some((item) => !selected.has(item));
-    if (shouldSelect) {
+    if (checked) {
       leafValues.forEach((item) => selected.add(item));
     } else {
       leafValues.forEach((item) => selected.delete(item));
