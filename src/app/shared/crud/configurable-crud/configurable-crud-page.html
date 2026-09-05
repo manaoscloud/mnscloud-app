@@ -1409,6 +1409,17 @@
                       (createRecord)="quickCreateField(field)"
                     />
                   }
+                  @case ('permission-tree') {
+                    <mns-permission-tree-field
+                      [fieldClass]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
+                      [placeholder]="field.placeholder ?? 'Search permissions' | transloco"
+                      [options]="fieldOptions(field)"
+                      [loading]="fieldLoading(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
                   @case ('select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
