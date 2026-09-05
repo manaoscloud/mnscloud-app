@@ -94,6 +94,14 @@ export const routes: Routes = [
             title: 'Permissions | mnscloud',
           },
           {
+            path: 'user/access-profiles',
+            loadComponent: () =>
+              import('./pages/user/access-profiles/access-profiles').then(
+                (m) => m.UserAccessProfilesPage,
+              ),
+            title: 'Access Profiles | mnscloud',
+          },
+          {
             path: 'settings',
             loadComponent: () =>
               import('./pages/settings/settings').then((m) => m.SettingsComponent),

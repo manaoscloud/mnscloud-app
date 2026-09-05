@@ -998,6 +998,13 @@ export class MainLayout {
           route: '/user/permissions',
         },
         {
+          id: 'user/access-profiles',
+          label: 'Access profiles',
+          icon: 'groups',
+          route: '/user/access-profiles',
+          permissions: ['tenant.permissions.manage'],
+        },
+        {
           id: 'user/api-tokens',
           label: 'API Tokens',
           icon: 'vpn_key',
