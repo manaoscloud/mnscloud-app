@@ -16,8 +16,8 @@ const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 
 const EFFECT_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'allow', label: 'Allow' },
-  { value: 'deny', label: 'Deny' },
+  { value: 'allow', label: 'Allow access' },
+  { value: 'deny', label: 'Block access' },
 ];
 
 const PERMISSION_CONFIG: ConfigurableCrudConfig = {
@@ -25,11 +25,12 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
   createEndpoint: 'user/permissions/grants',
   deleteEndpoint: 'user/permissions/grants',
   uuidField: 'uuid',
-  pageTitle: 'Permissions',
-  pageDescription: 'Manage user access grants with RBAC/ABAC controls.',
-  createTitle: 'New permission grant',
-  editTitle: 'Edit permission grant',
-  dialogDescription: 'Configure target user, permission, effect and scope.',
+  pageTitle: 'Special permissions',
+  pageDescription: 'Create user-specific exceptions outside access profiles.',
+  createTitle: 'New special permission',
+  editTitle: 'Edit special permission',
+  dialogDescription:
+    'Choose a user, select the permission and define whether it allows or blocks access.',
   searchPlaceholder: 'User, e-mail or permission',
   emptyLabel: 'No permission grants found.',
   deleteTitle: 'Revoke permission grant',
@@ -48,7 +49,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   bulkDelete: false,
   tabLabels: {
-    authentication: 'Permission',
+    authentication: 'Access rule',
     notes: 'Notes',
   },
   initialValues: {
@@ -62,8 +63,8 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'userName', label: 'User', kind: 'identity', field: 'userName', uuidField: 'userUUID' },
     { id: 'permissionCode', label: 'Permission', field: 'permissionCode' },
-    { id: 'scope', label: 'Scope', field: 'scope' },
-    { id: 'effect', label: 'Effect', field: 'effect' },
+    { id: 'scope', label: 'Scope', field: 'scope', translateValue: true },
+    { id: 'effect', label: 'Effect', field: 'effect', translateValue: true },
     { id: 'environmentName', label: 'Tenant', field: 'environmentName' },
     { id: 'expiresAt', label: 'Expires', kind: 'datetime', field: 'expiresAt' },
     { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
@@ -76,7 +77,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       label: 'User',
       type: 'search-select',
       required: true,
-      span: 2,
+      span: 4,
       tab: 'authentication',
       placeholder: 'Search user',
     },
@@ -87,7 +88,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       label: 'Permission',
       type: 'search-select',
       required: true,
-      span: 2,
+      span: 4,
       tab: 'authentication',
       placeholder: 'Search permission',
     },
@@ -99,7 +100,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       type: 'select',
       options: EFFECT_OPTIONS,
       required: true,
-      span: 1,
+      span: 2,
       tab: 'authentication',
     },
     {
@@ -128,6 +129,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'reason',
       label: 'Reason',
       type: 'textarea',
+      placeholder: 'Explain why this exception is needed.',
       rows: 4,
       span: 4,
       tab: 'notes',
@@ -318,9 +320,9 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
     const tag = String(item['tag'] ?? '').trim();
     const name = String(item['name'] ?? code).trim();
     const label = [
-      scope ? scope.toUpperCase() : '',
+      this.transloco.translate(this.scopeLabel(scope)),
       tag || name,
-      action ? action.toUpperCase() : '',
+      this.transloco.translate(this.actionLabel(action)),
     ]
       .filter(Boolean)
       .join(' / ');
@@ -330,5 +332,22 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
       description: code,
       searchText: `${label} ${name} ${code} ${item['description'] ?? ''}`,
     };
+  }
+
+  private scopeLabel(scope: string): string {
+    if (scope === 'platform') return 'Platform';
+    return 'Tenant';
+  }
+
+  private actionLabel(action: string): string {
+    const labels: Record<string, string> = {
+      access: 'Access',
+      create: 'Create',
+      delete: 'Delete',
+      manage: 'Manage',
+      read: 'Read',
+      update: 'Update',
+    };
+    return labels[action] ?? action.toUpperCase();
   }
 }
