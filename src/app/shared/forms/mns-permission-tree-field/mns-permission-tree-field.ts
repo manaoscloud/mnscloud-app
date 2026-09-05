@@ -62,7 +62,7 @@ const ACTION_LABELS: Record<string, string> = {
         />
       </mat-form-field>
 
-      <div class="permission-tree-panel">
+      <div class="permission-tree-panel" [style.--permission-tree-visible-rows]="visibleRows()">
         @if (loading()) {
           <div class="permission-tree-state">
             <mat-spinner diameter="22" />
@@ -147,15 +147,16 @@ const ACTION_LABELS: Record<string, string> = {
 
       .permission-tree-search {
         display: block;
-        width: 100%;
+        max-width: 24rem;
+        width: min(100%, 24rem);
       }
 
       .permission-tree-panel {
         background: rgba(0, 0, 0, 0.16);
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 8px;
-        max-height: min(48vh, 460px);
-        min-height: 280px;
+        height: min(calc(var(--permission-tree-visible-rows, 6) * 3.2rem), 48vh);
+        min-height: 10rem;
         overflow: auto;
         padding: 0.45rem 0.25rem 0.7rem;
       }
@@ -213,9 +214,11 @@ export class MnsPermissionTreeFieldComponent {
   readonly emptyLabel = input('No permissions found.');
   readonly loadingLabel = input('Loading permissions...');
   readonly loading = input(false);
+  readonly rows = input(6);
 
   readonly search = signal('');
   readonly expandedKeys = signal<ReadonlySet<string>>(new Set(['platform', 'tenant']));
+  readonly visibleRows = computed(() => Math.max(2, Math.min(12, Math.trunc(this.rows()))));
 
   readonly treeData = computed(() => this.buildTree(this.options()));
   readonly filteredTree = computed(() => {
