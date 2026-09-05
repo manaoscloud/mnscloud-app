@@ -992,19 +992,6 @@ export class MainLayout {
       children: [
         { id: 'user/profile', label: 'My Profile', icon: 'badge', route: '/user/profile' },
         {
-          id: 'user/permissions',
-          label: 'Permissions',
-          icon: 'admin_panel_settings',
-          route: '/user/permissions',
-        },
-        {
-          id: 'user/access-profiles',
-          label: 'Access profiles',
-          icon: 'groups',
-          route: '/user/access-profiles',
-          permissions: ['tenant.permissions.manage'],
-        },
-        {
           id: 'user/api-tokens',
           label: 'API Tokens',
           icon: 'vpn_key',
@@ -1018,6 +1005,27 @@ export class MainLayout {
           label: 'Governance',
           icon: 'manage_accounts',
           masterRoute: '/system/governance/users',
+        },
+      ],
+    },
+
+    {
+      id: 'permissions',
+      label: 'Permissions',
+      icon: 'admin_panel_settings',
+      permissions: ['tenant.permissions.manage'],
+      children: [
+        {
+          id: 'permissions/access-profiles',
+          label: 'Access profiles',
+          icon: 'groups',
+          route: '/user/access-profiles',
+        },
+        {
+          id: 'permissions/special-permissions',
+          label: 'Special permissions',
+          icon: 'shield_person',
+          route: '/user/permissions',
         },
       ],
     },

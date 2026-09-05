@@ -17,8 +17,16 @@ const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 
 const SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'tenant', label: 'Tenant' },
-  { value: 'platform', label: 'Platform' },
+  {
+    value: 'tenant',
+    label: 'Tenant access profile',
+    searchText: 'tenant ambiente cliente usuario',
+  },
+  {
+    value: 'platform',
+    label: 'Platform access profile',
+    searchText: 'platform master plataforma administrador',
+  },
 ];
 
 const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
@@ -28,11 +36,11 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
   deleteEndpoint: 'user/permissions/roles',
   uuidField: 'uuid',
   pageTitle: 'Access profiles',
-  pageDescription: 'Create reusable permission profiles and assign users once.',
+  pageDescription: 'Group permissions once and assign them to many users.',
   createTitle: 'New access profile',
   editTitle: 'Edit access profile',
-  dialogDescription: 'Configure the profile, permissions and users that inherit it.',
-  searchPlaceholder: 'Name, code or description',
+  dialogDescription: 'Name the profile, choose permissions, then select who receives them.',
+  searchPlaceholder: 'Profile name or description',
   emptyLabel: 'No access profiles found.',
   deleteTitle: 'Delete access profile',
   deleteMessage: 'Are you sure you want to delete this access profile?',
@@ -61,12 +69,11 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
   tabLabels: {
     record: 'Profile',
     authentication: 'Permissions',
-    notes: 'Users',
+    notes: 'Assigned users',
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
-    { id: 'code', label: 'Code', field: 'code' },
-    { id: 'scope', label: 'Scope', field: 'scope' },
+    { id: 'scope', label: 'Profile type', field: 'scope', translateValue: true },
     { id: 'permissionCount', label: 'Permissions', kind: 'number', field: 'permissionCount' },
     { id: 'assignmentCount', label: 'Users', kind: 'number', field: 'assignmentCount' },
     { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
@@ -83,20 +90,10 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       tab: 'record',
     },
     {
-      key: 'code',
-      source: 'code',
-      payloadKey: 'code',
-      label: 'Code',
-      type: 'text',
-      required: true,
-      span: 2,
-      tab: 'record',
-    },
-    {
       key: 'scope',
       source: 'scope',
       payloadKey: 'scope',
-      label: 'Scope',
+      label: 'Profile type',
       type: 'select',
       options: SCOPE_OPTIONS,
       required: true,
@@ -119,6 +116,7 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'description',
       label: 'Description',
       type: 'textarea',
+      placeholder: 'Describe when this access profile should be used.',
       rows: 3,
       span: 4,
       tab: 'record',
@@ -128,7 +126,9 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       source: 'permissionCodes',
       payloadKey: 'permissions',
       label: 'Permissions',
-      type: 'multi-select',
+      type: 'search-select',
+      placeholder: 'Search permissions',
+      multiple: true,
       options: [],
       span: 4,
       tab: 'authentication',
@@ -139,7 +139,8 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'environmentUUID',
       label: 'Tenant',
       type: 'search-select',
-      span: 2,
+      required: true,
+      span: 4,
       tab: 'notes',
       placeholder: 'Search tenant',
       hiddenWhen: ({ values }) => String(values['scope'] ?? '') === 'platform',
@@ -149,7 +150,9 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       source: 'users',
       payloadKey: 'users',
       label: 'Users',
-      type: 'multi-select',
+      type: 'search-select',
+      placeholder: 'Search users',
+      multiple: true,
       options: [],
       span: 4,
       tab: 'notes',
@@ -214,12 +217,14 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key === 'name' && !this.editingRecord()) {
+      this.setFieldValue('code', this.generatedProfileCode(String(value ?? '')));
+    }
+
     if (key === 'scope') {
       const scope = String(value ?? 'tenant');
-      const code = this.fieldValueString('code');
-      if (scope === 'tenant' && !code.startsWith('tenant.')) this.setFieldValue('code', 'tenant.');
-      if (scope === 'platform' && !code.startsWith('platform.')) {
-        this.setFieldValue('code', 'platform.');
+      this.setFieldValue('code', this.generatedProfileCode(this.fieldValueString('name'), scope));
+      if (scope === 'platform') {
         this.setFieldValue('environmentUUID', '');
       }
     }
@@ -243,11 +248,12 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const scope = String(payload['scope'] ?? 'tenant');
     return {
-      code: payload['code'],
+      code: this.generatedProfileCode(String(payload['name'] ?? ''), scope),
       name: payload['name'],
       description: payload['description'],
-      scope: payload['scope'] ?? 'tenant',
+      scope,
       status: payload['status'] ?? 1,
     };
   }
@@ -407,7 +413,11 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
     const action = code.split('.').at(-1) ?? '';
     const tag = String(item['tag'] ?? '').trim();
     const name = String(item['name'] ?? code).trim();
-    const label = [scope ? scope.toUpperCase() : '', tag || name, action ? action.toUpperCase() : '']
+    const label = [
+      this.transloco.translate(this.scopeLabel(scope)),
+      tag || name,
+      this.transloco.translate(this.actionLabel(action)),
+    ]
       .filter(Boolean)
       .join(' / ');
     return {
@@ -416,5 +426,37 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
       description: code,
       searchText: `${label} ${name} ${code} ${item['description'] ?? ''}`,
     };
+  }
+
+  private generatedProfileCode(
+    name: string,
+    scope = String(this.formValues()['scope'] ?? 'tenant'),
+  ): string {
+    const prefix = scope === 'platform' ? 'platform.profile.' : 'tenant.profile.';
+    const slug = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.')
+      .replace(/^\.+|\.+$/g, '')
+      .slice(0, 80);
+    return `${prefix}${slug || 'novo'}`;
+  }
+
+  private scopeLabel(scope: string): string {
+    if (scope === 'platform') return 'Platform';
+    return 'Tenant';
+  }
+
+  private actionLabel(action: string): string {
+    const labels: Record<string, string> = {
+      access: 'Access',
+      create: 'Create',
+      delete: 'Delete',
+      manage: 'Manage',
+      read: 'Read',
+      update: 'Update',
+    };
+    return labels[action] ?? action.toUpperCase();
   }
 }
