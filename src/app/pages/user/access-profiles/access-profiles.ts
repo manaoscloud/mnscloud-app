@@ -16,18 +16,12 @@ const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 0, label: 'Inactive' },
 ];
 
-const SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  {
-    value: 'tenant',
-    label: 'Tenant access profile',
-    searchText: 'tenant ambiente cliente usuario',
-  },
-  {
-    value: 'platform',
-    label: 'Platform access profile',
-    searchText: 'platform master plataforma administrador',
-  },
-];
+function scopeFromPermissionValues(value: unknown): 'platform' | 'tenant' {
+  const permissions = Array.isArray(value) ? value : [];
+  return permissions.some((permission) => String(permission).startsWith('platform.'))
+    ? 'platform'
+    : 'tenant';
+}
 
 const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'user/permissions/roles',
@@ -67,13 +61,12 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
     environmentUUID: '',
   },
   tabLabels: {
-    record: 'Profile',
+    record: 'Record',
     authentication: 'Permissions',
     notes: 'Assigned users',
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
-    { id: 'scope', label: 'Profile type', field: 'scope', translateValue: true },
     { id: 'permissionCount', label: 'Permissions', kind: 'number', field: 'permissionCount' },
     { id: 'assignmentCount', label: 'Users', kind: 'number', field: 'assignmentCount' },
     { id: 'status', label: 'Status', kind: 'status', field: 'status', className: 'status-col' },
@@ -87,17 +80,6 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       type: 'text',
       required: true,
       span: 2,
-      tab: 'record',
-    },
-    {
-      key: 'scope',
-      source: 'scope',
-      payloadKey: 'scope',
-      label: 'Profile type',
-      type: 'select',
-      options: SCOPE_OPTIONS,
-      required: true,
-      span: 1,
       tab: 'record',
     },
     {
@@ -129,7 +111,6 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       placeholder: 'Search permissions',
       multiple: true,
-      options: [],
       span: 4,
       tab: 'authentication',
     },
@@ -143,7 +124,7 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       span: 4,
       tab: 'notes',
       placeholder: 'Search tenant',
-      hiddenWhen: ({ values }) => String(values['scope'] ?? '') === 'platform',
+      hiddenWhen: ({ values }) => scopeFromPermissionValues(values['permissions']) === 'platform',
     },
     {
       key: 'users',
@@ -153,7 +134,6 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       placeholder: 'Search users',
       multiple: true,
-      options: [],
       span: 4,
       tab: 'notes',
     },
@@ -221,8 +201,9 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
       this.setFieldValue('code', this.generatedProfileCode(String(value ?? '')));
     }
 
-    if (key === 'scope') {
-      const scope = String(value ?? 'tenant');
+    if (key === 'permissions') {
+      const scope = this.scopeFromPermissions(value);
+      this.setFieldValue('scope', scope);
       this.setFieldValue('code', this.generatedProfileCode(this.fieldValueString('name'), scope));
       if (scope === 'platform') {
         this.setFieldValue('environmentUUID', '');
@@ -248,7 +229,7 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    const scope = String(payload['scope'] ?? 'tenant');
+    const scope = this.scopeFromPermissions(payload['permissions']);
     return {
       code: this.generatedProfileCode(String(payload['name'] ?? ''), scope),
       name: payload['name'],
@@ -360,10 +341,8 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   private permissionOptionsForScope(): readonly ConfigurableCrudOption[] {
-    const scope = String(this.formValues()['scope'] ?? 'tenant');
     return this.permissionOptions().filter(
-      (option) =>
-        this.isMaster() || scope !== 'tenant' || !String(option.value).startsWith('platform.'),
+      (option) => this.isMaster() || !String(option.value).startsWith('platform.'),
     );
   }
 
@@ -430,7 +409,7 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
 
   private generatedProfileCode(
     name: string,
-    scope = String(this.formValues()['scope'] ?? 'tenant'),
+    scope = this.scopeFromPermissions(this.formValues()['permissions']),
   ): string {
     const prefix = scope === 'platform' ? 'platform.profile.' : 'tenant.profile.';
     const slug = name
@@ -441,6 +420,10 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
       .replace(/^\.+|\.+$/g, '')
       .slice(0, 80);
     return `${prefix}${slug || 'novo'}`;
+  }
+
+  private scopeFromPermissions(value: unknown): 'platform' | 'tenant' {
+    return scopeFromPermissionValues(value);
   }
 
   private scopeLabel(scope: string): string {
