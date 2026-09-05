@@ -108,7 +108,7 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       source: 'permissionCodes',
       payloadKey: 'permissions',
       label: 'Permissions',
-      type: 'search-select',
+      type: 'permission-tree',
       placeholder: 'Search permissions',
       multiple: true,
       span: 4,
@@ -154,6 +154,7 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   private readonly userOptions = signal<ConfigurableCrudOption[]>([]);
   private readonly tenantOptions = signal<ConfigurableCrudOption[]>([]);
   private readonly tenantRecords = signal<TenantAccess[]>([]);
+  private readonly loadingPermissions = signal(false);
   private readonly loadingUsers = signal(false);
   private readonly loadingTenants = signal(false);
   private readonly isMaster = computed(() =>
@@ -191,6 +192,7 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   override fieldLoading(field: { key: string }): boolean {
+    if (field.key === 'permissions') return this.loadingPermissions();
     if (field.key === 'users') return this.loadingUsers();
     if (field.key === 'environmentUUID') return this.loadingTenants();
     return super.fieldLoading(field as never);
@@ -275,13 +277,21 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   private async loadCatalog(): Promise<void> {
-    const response = await this.api.get<{ data?: { items?: Record<string, unknown>[] } }>(
-      'user/permissions/catalog',
-    );
-    const items = response?.data?.items ?? [];
-    this.permissionOptions.set(
-      items.map((item) => this.permissionOption(item)).filter((item) => item.value),
-    );
+    this.loadingPermissions.set(true);
+    try {
+      const response = await this.api.get<{ data?: { items?: Record<string, unknown>[] } }>(
+        'user/permissions/catalog',
+      );
+      const items = response?.data?.items ?? [];
+      this.permissionOptions.set(
+        items.map((item) => this.permissionOption(item)).filter((item) => item.value),
+      );
+    } catch (error) {
+      this.permissionOptions.set([]);
+      this.snack.error(this.errorMessage(error) || 'Failed to load permissions.');
+    } finally {
+      this.loadingPermissions.set(false);
+    }
   }
 
   private async loadTenants(): Promise<void> {

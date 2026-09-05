@@ -53,6 +53,7 @@ import {
   MnsSearchSelectFieldComponent,
   MnsSearchSelectFieldOption,
 } from '../../forms/mns-search-select-field/mns-search-select-field';
+import { MnsPermissionTreeFieldComponent } from '../../forms/mns-permission-tree-field/mns-permission-tree-field';
 import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
 
@@ -78,6 +79,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   NgTemplateOutlet,
   NgClass,
   MnsSearchSelectFieldComponent,
+  MnsPermissionTreeFieldComponent,
   TranslocoPipe,
   CurrencyMaskDirective,
   DateMaskDirective,
@@ -119,6 +121,7 @@ export type ConfigurableCrudFieldType =
   | 'select'
   | 'multi-select'
   | 'search-select'
+  | 'permission-tree'
   | 'status'
   | 'textarea'
   | 'file';
