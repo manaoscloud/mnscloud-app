@@ -44,7 +44,7 @@ export const environmentGuard: CanActivateFn = async () => {
   const envFromStorage = readStoredEnvironmentUUID();
   const env = envFromStorage || envFromUser;
 
-  // ✅ Acesso ao tenant exige EnvironmentUUID ativo (até mesmo para MASTER)
+  // ✅ Acesso ao tenant exige EnvironmentUUID ativo (até mesmo para usuários com autoridade de plataforma)
   if (env) return true;
 
   const recovered = await recoverEnvironment(api, auth);
