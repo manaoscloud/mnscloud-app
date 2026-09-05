@@ -878,10 +878,10 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - mobile CRUD dialogs keep the 12px viewport inset from `openCrudTemplateDialog` instead of forcing edge-to-edge `100vw`
   - avoid `Name` or `Street` full-width by default when 4-column grid is available; use `span-2` unless business context requires full row.
 - Notes/anotações rule:
-  - whenever a CRUD dialog has a free-text observations/annotations field, the canonical name is `Notes`.
+  - whenever a CRUD dialog has a free-text annotation field, the canonical technical name is `Notes`.
   - use `notes` in frontend form keys, API payloads, DTOs, and response fields; use `<TablePrefix>Notes` in database columns when the value is a free-text operational observation.
   - keep `Description` only for business descriptions that are part of the resource identity, commercial meaning, or public/API documentation text, not for operational observations.
-  - render notes fields in their own `mat-tab label="Notes"`.
+  - render notes fields in their own `mat-tab label="Notes"`; the PT-BR translation for `Notes` is `Anotações`.
   - do not place notes fields in `Record`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
   - the notes field must use a full-row textarea (`mat-form-field.span-4`) with `rows: 4` inside that tab unless a documented exception exists.
 - Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`):
