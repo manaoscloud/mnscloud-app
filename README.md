@@ -161,6 +161,8 @@ so `main` never needs a release-metadata commit merely to advance a version.
 
 GitHub-driven deployment automation for the DB -> API -> App cascade is documented in
 `docs/deployment-automation.md`.
+Production bare-metal installation and lifecycle commands are documented in
+`docs/installation.md`.
 
 Recommended build choices:
 
