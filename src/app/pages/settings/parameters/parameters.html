@@ -1,24 +1,7 @@
-<section class="erp-page" animate.enter="app-fade-in">
-  <mat-card class="erp-card">
-    <header class="erp-header">
-      <div>
-        <h1>{{ pageTitle() }}</h1>
-        <p>{{ pageSubtitle() }}</p>
-      </div>
-
-      <div class="header-actions">
-        <app-refresh-button [loading]="loading() || saving()" (refresh)="refreshItems()" />
-      </div>
-    </header>
-
-    <div class="parameters-form crud-dialog" [class.is-loading]="loading()">
-      @if (loading()) {
-        <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate" />
-        </div>
-      }
-
-      <div class="dialog-content">
+<mns-settings-page [title]="pageTitle()" [description]="pageSubtitle()"
+  [loading]="loading()" [saving]="saving()" [dirty]="hasChanges()"
+  [error]="feedback()" [success]="success()"
+  (refresh)="refreshItems()" (cancel)="cancelChanges()" (save)="saveAll()">
         <mat-tab-group class="form-tabs">
           <mat-tab [label]="'Record' | transloco">
             <form class="tab-content form-grid">
@@ -488,46 +471,4 @@
             </mat-tab-group>
           </mat-tab>
         </mat-tab-group>
-      </div>
-
-      <footer class="form-actions">
-        <div class="secondary-actions">
-          <button
-            class="dialog-action-button dialog-action-secondary"
-            mat-stroked-button
-            type="button"
-            (click)="cancelChanges()"
-            [disabled]="!hasChanges() || saving()"
-          >
-            {{ 'Cancel' | transloco }}
-          </button>
-        </div>
-
-        <div class="primary-actions">
-          <button
-            class="dialog-action-button save-main-button"
-            mat-flat-button
-            color="primary"
-            type="button"
-            (click)="saveAll()"
-            [disabled]="!hasChanges() || saving()"
-          >
-            @if (saving()) {
-              <mat-progress-spinner diameter="18" mode="indeterminate" />
-            } @else {
-              <mat-icon>save</mat-icon>
-            }
-            {{ 'Save' | transloco }}
-          </button>
-        </div>
-
-        @if (feedback()) {
-          <p class="form-message error">{{ feedback() }}</p>
-        }
-        @if (success()) {
-          <p class="form-message success">{{ success() }}</p>
-        }
-      </footer>
-    </div>
-  </mat-card>
-</section>
+</mns-settings-page>

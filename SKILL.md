@@ -144,3 +144,12 @@ table is available for accessibility. Read polling pauses in hidden tabs, stops 
 component destruction and backs off after failures. No SSH or runtime jobs are sent
 when opening a visualization. Raw measurements remain authoritative; displayed bucket
 averages are not claimed as instantaneous values.
+
+## Detail and settings pages
+
+Use DetailPageComponent for read-only resource pages and SettingsPageComponent for
+singleton configuration pages. Both inherit PageShellComponent. Follow app.md and
+templates/detail-page or templates/settings-page; shared styles belong in
+src/styles/_content-page.scss. Never style a routed configuration page as a dialog.
+Run node scripts/validate-content-pages.mjs and the build; verify both responsive
+layouts and settings dirty/cancel/save behavior before release.

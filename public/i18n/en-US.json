@@ -4125,5 +4125,9 @@
   "Map preview: up to 1,000 authorized assets.": "Map preview: up to 1,000 authorized assets.",
   "InfraGIS asset map": "InfraGIS asset map",
   "Loaded inventory; API limits apply.": "Loaded inventory; API limits apply.",
-  "Management": "Management"
+  "Management": "Management",
+  "System Parameters": "System Parameters",
+  "Single master record with global default values.": "Single master record with global default values.",
+  "Single tenant record. Empty tenant values fallback to master defaults.": "Single tenant record. Empty tenant values fallback to master defaults.",
+  "Parameters saved successfully.": "Parameters saved successfully."
 }

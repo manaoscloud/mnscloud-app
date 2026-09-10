@@ -1049,3 +1049,30 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   than healthy zero counters. Label retained data and unavailable optional counts.
   Dashboard HTTP reads use a bounded timeout (30 seconds) so users can retry via
   the shared refresh button; do not add automatic retry storms.
+
+
+## Detail and settings pages
+
+Use `DetailPageComponent` (`mns-detail-page`) for a focused read-only resource view,
+and `SettingsPageComponent` (`mns-settings-page`) for singleton configuration forms.
+Both instantiate `PageShellComponent`; changes to its header, spacing and content
+structure propagate to both consumers. Scaffolds in `templates/detail-page` and
+`templates/settings-page` are starting examples, not independent shell implementations.
+
+- Detail pages have Refresh and contextual selectors/sections; no Save/Cancel footer.
+  Agent telemetry full-page uses this template; modal telemetry retains the generic dialog.
+- Settings pages own a shared Cancel/Save footer. Callers provide loading, saving, dirty,
+  valid and feedback state, and handle refresh/save/cancel events. No Save-and-new exists.
+  Refresh is disabled while dirty/saving; fields and actions are locked while loading/saving.
+  Cancel restores the confirmed baseline. Domain validation and API permissions stay in the page/API.
+- Headings accept translated title/description; raw entity identity is rendered as text.
+  Use authorized names in breadcrumbs, preserving UUID routes.
+- Shared styles live in `src/styles/_content-page.scss` and reuse the existing ERP shell,
+  form controls, theme tokens and grids. Do not use `crud-dialog` to style an inline page.
+  Do not redefine shared grids, tabs or action footers in page-local SCSS.
+- The normal page owns vertical scrolling. Wide tables may scroll horizontally inside their
+  own container. Content/footer spacing must remain visible at desktop and mobile widths.
+- Preserve existing API scope, fields, tabs, masking and submission behavior when adopting
+  these templates. Schema/API changes and production deployment are separate scopes.
+- Validate both consumers at desktop/mobile widths, translated labels and light/dark themes;
+  verify no detail edit footer, settings dirty/cancel/save/refresh behavior and unchanged dialog.

@@ -9,7 +9,7 @@ import {
 } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
+import { DetailPageComponent } from '../../../shared/pages/detail-page';
 import { firstValueFrom } from 'rxjs';
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
@@ -43,7 +43,7 @@ type Snapshot = { resources: Resource[]; points: Point[]; selected: Resource | u
     MnsDateTimePipe,
     RefreshButtonComponent,
     MnsSearchSelectFieldComponent,
-    MatCardModule,
+    DetailPageComponent,
     DecimalPipe,
     MatDialogModule,
     MatButtonModule,
