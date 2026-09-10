@@ -91,8 +91,10 @@ must not use the source SHA from `main`, because Agents report the installed rel
 
 ## Resource telemetry visualization
 
-The Agent monitoring panel is available as a shared dialog and full page, with a
-paginated fleet overview. API/DB enforce effective master authority or tenant Agent
+The Metrics menu opens a paginated fleet dashboard with cards, list and compact
+views. The selected view is a local display preference only. The icon-only Monitor
+action opens the shared read-only dialog; its full-page view preserves resource and
+period selection. Both surfaces follow the generic app.md dashboard/dialog contract. API/DB enforce effective master authority or tenant Agent
 read permission and persisted ownership; resource names are private scoped data.
 Network counter deltas provide receive/send bits per second, packets per second,
 errors/drops per second and optional Linux interface link state. Warmup, counter
@@ -120,7 +122,8 @@ bounds reads. Cleanup remains bounded per resource on ingestion; disconnected
 resources do not trigger cleanup. A global retention worker and persistent rollups
 remain future work; do not claim unlimited scale or offline-resource cleanup.
 
-Fleet pages contain at most 25 Agents; the App requests 12 in one SQL-backed request.
+Fleet pages contain at most 25 Agents; the App requests 12 or 24 in one SQL-backed request. List sorting applies to the
+current server page and is labeled explicitly; no local fleet-wide filter is implied.
 Latest host observations older than three minutes are visibly stale; samples older
 than 15 minutes are omitted in the fleet view. Interface sums use recent observations
 and may count traffic on both physical and virtual interfaces. Network/detail history

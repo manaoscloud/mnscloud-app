@@ -1,0 +1,230 @@
+<section class="erp-page dashboard-page">
+  <mat-card class="erp-card dashboard-shell">
+    <header class="erp-header">
+      <div>
+        <h1>{{ 'Metrics' | transloco }}</h1>
+        <p>{{ 'Host and interface observations' | transloco }}</p>
+      </div>
+      <div class="header-actions">
+        <div
+          class="dashboard-view-switch"
+          role="group"
+          [attr.aria-label]="'Display mode' | transloco"
+        >
+          @for (item of modes; track item.value) {
+            <button
+              mat-icon-button
+              type="button"
+              [class.is-selected]="mode() === item.value"
+              [attr.aria-pressed]="mode() === item.value"
+              [attr.aria-label]="item.label | transloco"
+              [matTooltip]="item.label | transloco"
+              (click)="setMode(item.value)"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+            </button>
+          }
+        </div>
+        <app-refresh-button [loading]="page.isLoading()" (refresh)="page.reload()" />
+      </div>
+    </header>
+    @if (page.error()) {
+      <p role="alert">{{ 'Unable to load monitoring data' | transloco }}</p>
+    }
+    @if (page.isLoading() && !view().items.length) {
+      <p role="status">{{ 'Loading' | transloco }}…</p>
+    }
+    @if (mode() === 'list') {
+      <p class="dashboard-metric-hint">{{ 'Sort the current page' | transloco }}</p>
+      <div class="table-wrapper mat-elevation-z8" [class.is-loading]="page.isLoading()">
+        <table
+          mat-table
+          [dataSource]="rows()"
+          matSort
+          [matSortActive]="sort().active"
+          [matSortDirection]="sort().direction"
+          (matSortChange)="sort.set($event)"
+        >
+          <ng-container matColumnDef="name"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Agent' | transloco }}</th>
+            <td mat-cell *matCellDef="let a">
+              <div class="record-main">{{ a.name || a.hostname }}</div>
+              <div class="record-uuid">{{ a.uuid }}</div>
+            </td></ng-container
+          >
+          <ng-container matColumnDef="status"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+              {{ 'Status' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let a" class="status-col">
+              <ng-container
+                [ngTemplateOutlet]="health"
+                [ngTemplateOutletContext]="{ $implicit: a }"
+              /></td
+          ></ng-container>
+          @for (field of fields; track field.key) {
+            <ng-container [matColumnDef]="field.key"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ field.label | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let a">
+                <span
+                  [class.stale]="stale(a.observedAt)"
+                  [matTooltip]="
+                    (stale(a.observedAt) ? 'Stale data' : 'Latest observation') | transloco
+                  "
+                  >{{ a[field.key] === null ? '—' : (a[field.key] | number: '1.0-1') + '%' }}</span
+                >
+              </td></ng-container
+            >
+          }
+          <ng-container matColumnDef="network"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Interface traffic' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let a">
+              <ng-container
+                [ngTemplateOutlet]="traffic"
+                [ngTemplateOutletContext]="{ $implicit: a }"
+              /></td
+          ></ng-container>
+          <ng-container matColumnDef="heartbeat"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Heartbeat' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let a">
+              {{
+                a.heartbeat
+                  ? (utc(a.heartbeat) | mnsDateTime: 'short' : 'short')
+                  : ('No data' | transloco)
+              }}
+            </td></ng-container
+          >
+          <ng-container matColumnDef="actions"
+            ><th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              {{ 'Actions' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let a" class="actions-col-cell">
+              <div class="actions-col">
+                <ng-container
+                  [ngTemplateOutlet]="monitorAction"
+                  [ngTemplateOutletContext]="{ $implicit: a }"
+                />
+              </div></td
+          ></ng-container>
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="columns.length">
+              {{ 'No monitoring samples available' | transloco }}
+            </td>
+          </tr>
+        </table>
+      </div>
+    } @else {
+      <div class="dashboard-grid" [class.dashboard-grid-compact]="mode() === 'compact'">
+        @for (a of rows(); track a.uuid) {
+          <article
+            class="dashboard-metric dashboard-panel"
+            [class.metric-compact]="mode() === 'compact'"
+          >
+            <div class="metric-heading">
+              <div class="record-main">{{ a.name || a.hostname }}</div>
+              <ng-container
+                [ngTemplateOutlet]="monitorAction"
+                [ngTemplateOutletContext]="{ $implicit: a }"
+              />
+            </div>
+            <div class="metric-meta">
+              <ng-container
+                [ngTemplateOutlet]="health"
+                [ngTemplateOutletContext]="{ $implicit: a }"
+              /><span class="dashboard-metric-hint">{{
+                (stale(a.observedAt) ? 'Stale data' : 'Latest observation') | transloco
+              }}</span>
+            </div>
+            <div class="metric-readings" [class.metric-chips]="mode() === 'compact'">
+              @for (field of fields; track field.key) {
+                <div class="metric-reading">
+                  <span>{{ field.label | transloco }}</span
+                  ><strong>{{
+                    a[field.key] === null ? '—' : (a[field.key] | number: '1.0-1') + '%'
+                  }}</strong>
+                  @if (mode() === 'cards' && a[field.key] !== null) {
+                    <meter
+                      min="0"
+                      max="100"
+                      [value]="a[field.key]"
+                      [attr.aria-label]="field.label | transloco"
+                    ></meter>
+                  }
+                </div>
+              }
+            </div>
+            <div
+              class="dashboard-metric-hint metric-traffic"
+              [matTooltip]="'Interface traffic' | transloco"
+            >
+              <ng-container
+                [ngTemplateOutlet]="traffic"
+                [ngTemplateOutletContext]="{ $implicit: a }"
+              />
+            </div>
+            <div class="dashboard-metric-hint metric-time">
+              {{ 'Heartbeat' | transloco }}:
+              {{
+                a.heartbeat
+                  ? (utc(a.heartbeat) | mnsDateTime: 'short' : 'short')
+                  : ('No data' | transloco)
+              }}
+            </div>
+          </article>
+        } @empty {
+          @if (!page.isLoading() && !page.error()) {
+            <p>{{ 'No monitoring samples available' | transloco }}</p>
+          }
+        }
+      </div>
+    }
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="view().total"
+      [pageSize]="pageSize()"
+      [pageIndex]="index()"
+      [pageSizeOptions]="[12, 24]"
+      showFirstLastButtons
+      (page)="setPage($event)"
+      [attr.aria-label]="'Agents' | transloco"
+    />
+  </mat-card>
+</section>
+<ng-template #monitorAction let-a
+  ><button
+    mat-icon-button
+    type="button"
+    (click)="monitor(a)"
+    [matTooltip]="'Monitor' | transloco"
+    [attr.aria-label]="('Monitor' | transloco) + ' ' + (a.name || a.hostname)"
+  >
+    <mat-icon>show_chart</mat-icon>
+  </button></ng-template
+>
+<ng-template #health let-a
+  ><span
+    class="status-pill status-chip state-chip"
+    [class.is-active]="!stale(a.heartbeat)"
+    [class.is-inactive]="stale(a.heartbeat)"
+    [class.chip-success]="!stale(a.heartbeat)"
+    [class.chip-skipped]="stale(a.heartbeat)"
+    [matTooltip]="
+      (stale(a.heartbeat) ? 'Offline or stale heartbeat' : 'Recent heartbeat') | transloco
+    "
+    >{{ (stale(a.heartbeat) ? 'Offline' : 'Online') | transloco }}</span
+  ></ng-template
+>
+<ng-template #traffic let-a
+  ><span class="metric-network"
+    >↓ {{ a.receiveBps === null ? '—' : (a.receiveBps / 1000000 | number: '1.0-2') }} / ↑
+    {{ a.transmitBps === null ? '—' : (a.transmitBps / 1000000 | number: '1.0-2') }} Mbps</span
+  ></ng-template
+>

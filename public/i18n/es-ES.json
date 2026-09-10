@@ -58,7 +58,7 @@
   "Add record": "Agregar registro",
   "Address": "DIRECCIÓN",
   "Advanced": "Avanzado",
-  "Agent": "Agente",
+  "Agent": "Agent",
   "Agent Connectivity": "Conectividad de Agentes",
   "Agent job history": "Historial de jobs del agente",
   "Agent Jobs": "Jobs de Agentes",
@@ -787,7 +787,7 @@
   "Groups": "Grupos",
   "Group members": "Miembros del grupo",
   "headset_mic": "micrófono_auricular",
-  "Host": "Anfitrión",
+  "Host": "Host",
   "Hosting": "Hosting",
   "Hosting Dashboard": "Panel de Hosting",
   "Hosting Workloads": "Cargas de Hosting",
@@ -4109,5 +4109,14 @@
   "Physical memory usage": "Uso de memoria física",
   "System filesystem total": "Capacidad del disco del sistema",
   "System filesystem available": "Espacio disponible del sistema",
-  "System filesystem usage": "Uso del disco del sistema"
+  "System filesystem usage": "Uso del disco del sistema",
+  "Metrics": "Métricas",
+  "Display mode": "Modo de visualización",
+  "Cards": "Tarjetas",
+  "List": "Lista",
+  "Compact": "Compacto",
+  "Sort the current page": "Ordenación de registros de esta página",
+  "Memory": "Memoria",
+  "Average": "Promedio",
+  "Network interface": "Interfaz de red"
 }

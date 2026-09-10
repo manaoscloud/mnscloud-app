@@ -98,6 +98,7 @@
                     type="button"
                     [disabled]="isFilterActionDisabled(action)"
                     [matTooltip]="action.tooltip ?? action.label | transloco"
+                    [attr.aria-label]="action.label | transloco"
                     (click)="handleFilterAction(action)"
                   >
                     <mat-icon>{{ action.icon }}</mat-icon>
@@ -113,6 +114,7 @@
                 type="button"
                 [disabled]="isFilterActionDisabled(action)"
                 [matTooltip]="action.tooltip ?? action.label | transloco"
+                [attr.aria-label]="action.label | transloco"
                 (click)="handleFilterAction(action)"
               >
                 <mat-icon>{{ action.icon }}</mat-icon>
@@ -270,6 +272,7 @@
                     mat-icon-button
                     type="button"
                     [matTooltip]="action.tooltip ?? action.label | transloco"
+                    [attr.aria-label]="action.label | transloco"
                     (click)="handleRowAction(action, row)"
                   >
                     <mat-icon>{{ action.icon }}</mat-icon>

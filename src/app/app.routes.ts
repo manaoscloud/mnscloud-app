@@ -219,7 +219,8 @@ export const routes: Routes = [
                   import('./pages/monitoring/telemetry/overview').then(
                     (m) => m.TelemetryOverviewPage,
                   ),
-                title: 'Metrics Overview | mnscloud',
+                title: 'Metrics | mnscloud',
+                data: { breadcrumb: 'Metrics' },
               },
               {
                 path: 'monitoring/agents/:uuid/telemetry',
@@ -228,6 +229,7 @@ export const routes: Routes = [
                     (m) => m.AgentTelemetryPage,
                   ),
                 title: 'Agent Monitoring | mnscloud',
+                data: { breadcrumb: 'Agent monitoring' },
               },
               {
                 path: 'monitoring/agents',
@@ -1382,7 +1384,8 @@ export const routes: Routes = [
                   import('./pages/monitoring/telemetry/overview').then(
                     (m) => m.TelemetryOverviewPage,
                   ),
-                title: 'Metrics Overview | mnscloud',
+                title: 'Metrics | mnscloud',
+                data: { breadcrumb: 'Metrics' },
               },
               {
                 path: 'monitoring/agents/:uuid/telemetry',
@@ -1391,6 +1394,7 @@ export const routes: Routes = [
                     (m) => m.AgentTelemetryPage,
                   ),
                 title: 'Agent Monitoring | mnscloud',
+                data: { breadcrumb: 'Agent monitoring' },
               },
               {
                 path: 'monitoring/agents',

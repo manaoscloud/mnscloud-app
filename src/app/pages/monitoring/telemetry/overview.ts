@@ -1,11 +1,18 @@
 import { Component, computed, DestroyRef, inject, resource, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
-import { AgentTelemetryPage } from './telemetry';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import { openAgentTelemetry } from './telemetry';
 
 type Agent = {
   uuid: string;
@@ -19,93 +26,53 @@ type Agent = {
   receiveBps: number | null;
   transmitBps: number | null;
 };
+type DisplayMode = 'cards' | 'list' | 'compact';
+// Read-only paginated dashboard: no create/delete or local filters over an incomplete fleet.
 @Component({
   selector: 'mns-telemetry-overview',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, MatButtonModule, MatPaginatorModule, TranslocoPipe],
+  imports: [
+    DecimalPipe,
+    NgTemplateOutlet,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatTooltipModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    TranslocoPipe,
+    RefreshButtonComponent,
+    MnsDateTimePipe,
+  ],
   styleUrl: './telemetry.scss',
-  template: `<section class="telemetry-panel">
-    <header>
-      <div>
-        <h2>{{ 'Metrics overview' | transloco }}</h2>
-        <p>{{ 'Host and interface observations' | transloco }}</p>
-      </div>
-      <button mat-stroked-button (click)="page.reload()" [disabled]="page.isLoading()">
-        {{ 'Refresh' | transloco }}
-      </button>
-    </header>
-    @if (page.error()) {
-      <p role="alert">{{ 'Unable to load monitoring data' | transloco }}</p>
-    } @else if (page.isLoading()) {
-      <p role="status">{{ 'Loading' | transloco }}…</p>
-    } @else {
-      <div class="charts">
-        @for (a of view().items; track a.uuid) {
-          <article>
-            <h3>{{ a.name || a.hostname }}</h3>
-            <p>
-              {{
-                (stale(a.heartbeat) ? 'Offline or stale heartbeat' : 'Recent heartbeat') | transloco
-              }}
-            </p>
-            <p>
-              {{ 'Heartbeat' | transloco }}:
-              {{ a.heartbeat ? (utc(a.heartbeat) | date: 'short') : ('No data' | transloco) }}
-            </p>
-            <p>{{ (stale(a.observedAt) ? 'Stale data' : 'Latest observation') | transloco }}</p>
-            @for (field of fields; track field.key) {
-              <div class="overview-meter">
-                <span>{{ field.label | transloco }}</span>
-                @if (a[field.key] !== null) {
-                  <strong>{{ a[field.key] | number: '1.0-1' }}%</strong
-                  ><meter
-                    min="0"
-                    max="100"
-                    [value]="a[field.key]"
-                    [attr.aria-label]="field.label | transloco"
-                  ></meter>
-                } @else {
-                  <span>{{ 'No data' | transloco }}</span>
-                }
-              </div>
-            }
-            <p>
-              {{ 'Interface traffic' | transloco }}: ↓
-              {{ a.receiveBps === null ? '—' : (a.receiveBps / 1000000 | number: '1.0-2') }} / ↑
-              {{ a.transmitBps === null ? '—' : (a.transmitBps / 1000000 | number: '1.0-2') }} Mbps
-            </p>
-            <button mat-flat-button (click)="monitor(a)">{{ 'Monitor' | transloco }}</button>
-          </article>
-        } @empty {
-          <p>{{ 'No monitoring samples available' | transloco }}</p>
-        }
-      </div>
-    }
-    <mat-paginator
-      [length]="view().total"
-      [pageSize]="12"
-      [pageIndex]="index()"
-      (page)="index.set($event.pageIndex)"
-      [attr.aria-label]="'Agents' | transloco"
-    ></mat-paginator>
-  </section>`,
+  templateUrl: './overview.html',
 })
 export class TelemetryOverviewPage {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   readonly index = signal(0);
+  readonly pageSize = signal(12);
   readonly now = signal(Date.now());
+  readonly mode = signal<DisplayMode>(this.savedMode());
+  readonly modes = [
+    { value: 'cards' as const, label: 'Cards', icon: 'view_module' },
+    { value: 'list' as const, label: 'List', icon: 'view_list' },
+    { value: 'compact' as const, label: 'Compact', icon: 'apps' },
+  ];
   readonly fields: { key: 'cpu' | 'memory' | 'disk'; label: string }[] = [
     { key: 'cpu', label: 'CPU' },
     { key: 'memory', label: 'Memory' },
     { key: 'disk', label: 'System disk' },
   ];
+  readonly columns = ['name', 'status', 'cpu', 'memory', 'disk', 'network', 'heartbeat', 'actions'];
+  readonly sort = signal<Sort>({ active: 'name', direction: 'asc' });
   readonly page = resource({
     defaultValue: { items: [] as Agent[], total: 0 },
-    params: () => this.index(),
+    params: () => ({ index: this.index(), size: this.pageSize() }),
     loader: async ({ params }) => {
       const response = await this.api.get<{ data: { items: Agent[]; total: number } }>(
-        `monitoring/agents/telemetry-overview?limit=12&offset=${params * 12}`,
+        `monitoring/agents/telemetry-overview?limit=${params.size}&offset=${params.index * params.size}`,
       );
       return response.data;
     },
@@ -113,6 +80,16 @@ export class TelemetryOverviewPage {
   readonly view = computed(() =>
     this.page.hasValue() ? this.page.value() : { items: [] as Agent[], total: 0 },
   );
+  readonly rows = computed(() => {
+    const { active, direction } = this.sort();
+    return [...this.view().items].sort((a, b) => {
+      const x = this.sortValue(a, active),
+        y = this.sortValue(b, active);
+      const result =
+        typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y));
+      return direction === 'desc' ? -result : direction === 'asc' ? result : 0;
+    });
+  });
   constructor() {
     let failures = 0;
     let timer: ReturnType<typeof setTimeout>;
@@ -127,6 +104,32 @@ export class TelemetryOverviewPage {
     timer = setTimeout(tick, 30000);
     inject(DestroyRef).onDestroy(() => clearTimeout(timer));
   }
+  private savedMode(): DisplayMode {
+    try {
+      const value = localStorage.getItem('mnscloud_metrics_view');
+      return value === 'list' || value === 'compact' ? value : 'cards';
+    } catch {
+      return 'cards';
+    }
+  }
+  setMode(mode: DisplayMode) {
+    this.mode.set(mode);
+    try {
+      localStorage.setItem('mnscloud_metrics_view', mode);
+    } catch {
+      /* Optional display preference. */
+    }
+  }
+  setPage(event: PageEvent) {
+    this.pageSize.set(event.pageSize);
+    this.index.set(event.pageIndex);
+  }
+  private sortValue(agent: Agent, field: string): string | number {
+    if (field === 'status') return this.stale(agent.heartbeat) ? 0 : 1;
+    if (field === 'network') return agent.receiveBps ?? -1;
+    if (field === 'name') return agent.name || agent.hostname || '';
+    return agent[field as keyof Agent] ?? -1;
+  }
   utc(value: string) {
     return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : value.replace(' ', 'T') + 'Z');
   }
@@ -134,12 +137,6 @@ export class TelemetryOverviewPage {
     return !value || this.now() - this.utc(value).getTime() > 180000;
   }
   monitor(agent: Agent) {
-    this.dialog.open(AgentTelemetryPage, {
-      data: { uuid: agent.uuid, name: agent.name || agent.hostname },
-      width: '1200px',
-      maxWidth: '96vw',
-      height: '90vh',
-      maxHeight: '94dvh',
-    });
+    void openAgentTelemetry(this.dialog, { uuid: agent.uuid, name: agent.name || agent.hostname });
   }
 }

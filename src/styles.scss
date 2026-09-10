@@ -4264,3 +4264,40 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   padding-top: 8px !important;
   padding-bottom: 8px !important;
 }
+
+// Read-only dashboard panels share the same shell, density and dialog geometry as CRUD.
+.dashboard-metric.dashboard-panel {
+  display: block;
+  min-height: 0;
+  padding: 0.75rem;
+}
+.dashboard-grid.dashboard-grid-compact {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 0.5rem;
+}
+.dashboard-view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 999px;
+  padding: 0.125rem;
+}
+.dashboard-view-switch button {
+  min-width: var(--form-icon-button);
+  flex: 0 0 var(--form-icon-button);
+}
+.dashboard-view-switch button mat-icon {
+  margin: 0;
+}
+.dashboard-view-switch button.is-selected {
+  background: var(--mat-sys-color-primary-container);
+  color: var(--mat-sys-color-on-primary-container);
+}
+.read-panel-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 0.65rem 0 0.75rem;
+  overscroll-behavior: contain;
+}
