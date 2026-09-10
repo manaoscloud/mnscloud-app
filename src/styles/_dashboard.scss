@@ -118,16 +118,6 @@ mns-dashboard-page {
   .dashboard-body[hidden] {
     display: none;
   }
-  .dashboard-context {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1rem;
-    color: var(--mat-sys-color-on-surface-variant);
-    font-size: 0.78rem;
-  }
-  .dashboard-context:empty {
-    display: none;
-  }
   .dashboard-message {
     margin: 0;
     padding: 0.75rem;

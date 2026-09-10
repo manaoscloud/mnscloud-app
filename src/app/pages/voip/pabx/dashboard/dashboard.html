@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Today"
   class="pabx-dashboard"
   [title]="'PABX Dashboard'"
   [description]="'Operational health, capacity, queues, agents, trunks and call activity.'"
   [loading]="dashboardResource.isLoading()"
   [error]="dashboardResource.error()"
   [hasData]="dashboardResource.hasData()"
-  [updatedAt]="dashboardResource.updatedAt()"
   (refresh)="refreshList()"
 >
   <div class="dashboard-content">

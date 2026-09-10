@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Today"
   class="voip-dashboard"
   [title]="'VoIP Dashboard'"
   [description]="'Unified operational view for domains, DID, PABX, SBC and Softswitch.'"
   [loading]="dashboardResource.isLoading()"
   [error]="dashboardResource.error()"
   [hasData]="dashboardResource.hasData()"
-  [updatedAt]="dashboardResource.updatedAt()"
   (refresh)="refreshList()"
 >
   <div class="dashboard-content">

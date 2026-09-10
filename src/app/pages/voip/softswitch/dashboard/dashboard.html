@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Loaded inventory; API limits apply."
   class="softswitch-dashboard"
   [title]="'Softswitch Dashboard'"
   [description]="'Operational health, accounts, subscribers, trunks and routing.'"
   [loading]="dashboardResource.isLoading()"
   [error]="dashboardResource.error()"
   [hasData]="dashboardResource.hasData()"
-  [updatedAt]="dashboardResource.updatedAt()"
   (refresh)="refreshList()"
 >
   <div class="dashboard-content">

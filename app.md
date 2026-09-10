@@ -295,12 +295,15 @@
 - Dashboard visual baseline:
   - Summary dashboards MUST instantiate `DashboardPageComponent` (`mns-dashboard-page`) and
     `dashboardResource` from `src/app/shared/dashboard`. Start new pages from `templates/dashboard`.
-  - The shell owns the title, subtitle, last successful update, explicit informational scope/period,
-    and exactly one action: the shared Refresh button. Do not project competing headers/toolbars.
+  - The shell owns the title, subtitle and exactly one action: the shared Refresh button.
+    Do not project competing headers/toolbars.
+    Do not render a metadata strip with last update, period or inventory-limit notices between
+    the header and indicators. Internal snapshot timestamps remain part of the read model.
   - No Search/Status forms, Apply/Clear, New/Edit/Delete, bulk actions or commercial action buttons
     belong in summary dashboards. Use the existing authorized management/detail routes. A plain
     contextual navigation link is permitted; it is not a mutation or a second action toolbar.
-  - Fixed history windows must be visibly labeled. Resource/period selection belongs to an analysis
+  - Fixed history windows belong in the relevant indicator/section description, not a generic
+    metadata strip. Resource/period selection belongs to an analysis
     page. The Metrics fleet explorer is an analysis surface, retains its Cards/List/Compact modes,
     pagination and Monitor action, and is not classified as a summary dashboard.
   - Shared visual identity is mandatory across the application: a screen must look like the same
@@ -328,7 +331,8 @@
   - Required inventory reads fail the snapshot if unavailable. Optional observations must use
     explicit unavailable/null states, never silently convert a failed request to a successful zero.
   - Real totals should come from authorized aggregate endpoints. Existing bounded inventory reads
-    must identify their scope/limit and must not be presented as complete global totals. Removing a
+    must not be presented as complete global totals; document their limits with the relevant
+    module contract rather than adding a generic dashboard metadata strip. Removing a
     filter must not cause an unbounded download. Do not change server API contracts just to remove
     an unused frontend filter; remove the page fields, handlers, option requests and dependencies.
   - Keep all indicators, business data, sorting, pagination and authorized navigation. Tables use
@@ -336,6 +340,9 @@
   - Validate `npm run check:dashboard`, dashboard state tests and `npm run build`; verify desktop and
     mobile, light/dark themes, PT/EN/ES, empty/populated/error/reload and master/tenant behavior.
     The dashboard validator is separate from the CRUD filter contract and runs in changed-app CI.
+  - Current adoption: the 17 `pages/**/dashboard/dashboard.ts` summary pages use this shell.
+    `pages/cyber-security/cyber-security.ts` still mixes its legacy summary and operational sections
+    and does not yet inherit `DashboardPageComponent`; do not report it as migrated.
 - Table behavior:
   - Standard list pages use signal-first tables:
     `<table mat-table [dataSource]="visibleRows()" matSort ...>`.

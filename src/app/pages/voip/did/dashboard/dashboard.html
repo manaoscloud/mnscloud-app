@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Loaded inventory; API limits apply."
   class="did-dashboard"
   [title]="'DID Dashboard'"
   [description]="'DID inventory, operator readiness, and external DID ownership health.'"
   [loading]="dashboardResource.isLoading()"
   [error]="dashboardResource.error()"
   [hasData]="dashboardResource.hasData()"
-  [updatedAt]="dashboardResource.updatedAt()"
   (refresh)="refreshList()"
 >
   <div class="dashboard-content">

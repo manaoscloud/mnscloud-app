@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Today"
   class="webrtc-dashboard"
   [title]="'WebRTC Dashboard'"
   [description]="'Operational health, domains, certificates, edge sync jobs and server activity.'"
   [loading]="dashboardResource.isLoading()"
   [error]="dashboardResource.error()"
   [hasData]="dashboardResource.hasData()"
-  [updatedAt]="dashboardResource.updatedAt()"
   (refresh)="refreshList()"
 >
   <div class="dashboard-content">

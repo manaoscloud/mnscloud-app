@@ -2,12 +2,11 @@ import { Component, input, output } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../refresh-button/refresh-button';
-import { MnsDateTimePipe } from '../date-time/date-time.pipe';
 
 @Component({
   selector: 'mns-dashboard-page',
   standalone: true,
-  imports: [MatCardModule, TranslocoPipe, RefreshButtonComponent, MnsDateTimePipe],
+  imports: [MatCardModule, TranslocoPipe, RefreshButtonComponent],
   template: `
     <section class="erp-page dashboard-page" animate.enter="app-fade-in">
       <mat-card class="erp-card dashboard-shell">
@@ -20,14 +19,6 @@ import { MnsDateTimePipe } from '../date-time/date-time.pipe';
             <app-refresh-button [loading]="loading()" (refresh)="refresh.emit()" />
           </div>
         </header>
-        <div class="dashboard-context">
-          @if (updatedAt()) {
-            <span>{{ 'Last updated' | transloco }} · {{ updatedAt() | mnsDateTime }}</span>
-          }
-          @if (context()) {
-            <span>{{ context() | transloco }}</span>
-          }
-        </div>
         @if (error()) {
           <p class="dashboard-message" role="alert">
             {{ 'Unable to refresh dashboard.' | transloco }}
@@ -53,10 +44,8 @@ import { MnsDateTimePipe } from '../date-time/date-time.pipe';
 export class DashboardPageComponent {
   readonly title = input.required<string>();
   readonly description = input('');
-  readonly context = input('');
   readonly loading = input(false);
   readonly error = input<unknown>(undefined);
   readonly hasData = input(false);
-  readonly updatedAt = input<string | null>(null);
   readonly refresh = output<void>();
 }

@@ -8,7 +8,8 @@ future improvements. Domain geometry may use data-driven CSS variables, never a 
 page-local copy of the shell, grid, card, typography, colors or responsive behavior.
 
 Use DashboardPageComponent and dashboardResource. The shell owns its only action,
-Refresh, plus loading/error/freshness states. Do not project search, Apply/Clear,
+Refresh, plus loading/error states. Do not add a metadata strip below the header;
+snapshot timestamps stay internal to the read model. Do not project search, Apply/Clear,
 mutation buttons or a competing toolbar. Links to authorized details are permitted;
 management forms and selectable history belong on separate routes. Metrics fleet
 exploration is not a summary dashboard and retains its existing display modes.
@@ -17,7 +18,7 @@ The adapter retains a successful snapshot on failure, clears it when user/enviro
 changes, and ignores stale results from earlier loads. Required reads reject; optional
 panels must represent unavailable values explicitly, not successful zero counts.
 Use bounded API calls and aggregate endpoints for actual totals. If existing endpoints
-return a bounded inventory window, label that limitation; do not claim a global total.
+return a bounded inventory window, document that limitation in the module contract; do not claim a global total.
 
 Run npm run check:dashboard, npm run build and the dashboard state tests. Validate
 light/dark themes, PT/EN/ES, desktop/mobile, populated/empty/error/reload states and

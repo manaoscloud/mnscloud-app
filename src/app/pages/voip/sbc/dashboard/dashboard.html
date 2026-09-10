@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Loaded inventory; API limits apply."
   class="sbc-dashboard"
   [title]="'SBC dashboard'"
   [description]="'Operational SBC statistics for runtime readiness, SIP topology and routing coverage.'"
   [loading]="snapshotResource.isLoading()"
   [error]="snapshotResource.error()"
   [hasData]="snapshotResource.hasData()"
-  [updatedAt]="snapshotResource.updatedAt()"
   (refresh)="refresh()"
 >
   <div class="dashboard-content">
