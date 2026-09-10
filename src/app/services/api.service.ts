@@ -51,6 +51,7 @@ export class ApiService {
     const normalized = endpoint.replace(/^\//, '');
     const allowPrefixes = ['auth', 'user', 'health', 'openapi.yaml', 'docs', 'system'];
 
+    if (this.systemTelemetryContext(endpoint)) return false;
     if (this.environmentOptional(endpoint)) return false;
 
     return !allowPrefixes.some(
@@ -59,8 +60,18 @@ export class ApiService {
   }
 
   private sendsEnvironment(endpoint: string): boolean {
-    if (this.systemCyberSecurityContext(endpoint)) return false;
+    if (this.systemCyberSecurityContext(endpoint) || this.systemTelemetryContext(endpoint))
+      return false;
     return this.requiresEnvironment(endpoint) || this.environmentOptional(endpoint);
+  }
+
+  private systemTelemetryContext(endpoint: string): boolean {
+    if (typeof window === 'undefined') return false;
+    const path = endpoint.replace(/^\//, '').split('?')[0];
+    const telemetry =
+      path === 'monitoring/agents/telemetry-overview' ||
+      /^monitoring\/agents\/[^/]+\/resources$/.test(path);
+    return telemetry && window.location.pathname.startsWith('/system/monitoring/');
   }
 
   private environmentOptional(endpoint: string): boolean {

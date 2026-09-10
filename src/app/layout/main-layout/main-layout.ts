@@ -2055,6 +2055,15 @@ export class MainLayout {
           requiresEnvironment: true,
         },
         {
+          id: 'monitoring/overview',
+          label: 'Metrics overview',
+          icon: 'monitoring',
+          route: '/monitoring/overview',
+          masterRoute: '/system/monitoring/overview',
+          permissions: ['tenant.monitoring.agents.read'],
+          requiresEnvironment: true,
+        },
+        {
           id: 'monitoring/agents',
           label: 'Agents',
           icon: 'sensors',
