@@ -609,9 +609,14 @@
   - create/edit dialogs must be opened with `openCrudTemplateDialog(..., 'crud-form-dialog')` by default
   - dialog template root must be `<div class="crud-dialog">`; do not add resource-specific root classes such as `<thing>-dialog` for normal CRUD layout
   - dialog root uses `width: 100%`, `max-width: 100%`, `max-height: min(92vh, 1100px)`, desktop `height: 100%`, and padding `1.5rem 1.75rem 1.25rem`
+  - `.crud-dialog` owns `--dialog-section-gap: 0.5rem` and `row-gap` between header, scrolling
+    content and action footer, on desktop and mobile. The header has no extra bottom margin.
+    Keep this spacing outside the scrolling element so its vertical scrollbar stops before the
+    action footer; content padding alone does not create that separation. Consumers inherit this
+    rule without local footer/content margins.
   - dialog surface uses the global CRUD surface: outline border, `1.2rem` radius, `surface-container-high` background, and hidden overflow
   - `.dialog-content` uses `position: relative`, flex column layout, `flex: 1 1 auto`, `min-height: 0`, `max-height: min(82vh, 980px)`, `overflow: hidden`, and zero Material margin/padding
-  - `.form-tabs` is a flex column with `height: 100%`, `flex: 1 1 auto`, `min-height: 0`, `overflow: hidden`, and `margin-bottom: 1.25rem`
+  - `.form-tabs` is a flex column with `height: 100%`, `flex: 1 1 auto`, `min-height: 0`, `overflow: hidden`, and zero bottom margin (the dialog owns section spacing)
   - tab headers stay sticky inside the dialog content, and the tab body wrapper owns vertical scroll with `overflow: auto`
   - `.tab-content` starts compactly with `padding: 0.65rem 0 0.25rem`
   - `.form-grid` uses compact density: `gap: 0.5rem 0.75rem` and `margin-bottom: 0.35rem`; every field/control inside the grid must be `min-width: 0` and fill its grid track

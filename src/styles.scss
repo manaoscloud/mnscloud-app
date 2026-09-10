@@ -890,6 +890,8 @@ mat-chip.status-pill.is-inactive,
 }
 
 .crud-dialog {
+  --dialog-section-gap: 0.5rem;
+  row-gap: var(--dialog-section-gap);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -904,7 +906,7 @@ mat-chip.status-pill.is-inactive,
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
 
   h2 {
     margin: 0;
@@ -938,7 +940,7 @@ mat-chip.status-pill.is-inactive,
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0;
   overflow: hidden;
 }
 
