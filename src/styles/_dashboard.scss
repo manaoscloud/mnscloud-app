@@ -86,11 +86,11 @@
   border-radius: 999px;
   padding: 0.125rem;
 }
-.dashboard-view-switch button {
+.dashboard-view-switch button[mat-icon-button] {
   min-width: var(--form-icon-button);
   flex: 0 0 var(--form-icon-button);
 }
-.dashboard-view-switch button mat-icon {
+.dashboard-view-switch button[mat-icon-button] mat-icon {
   margin: 0;
 }
 .dashboard-view-switch button.is-selected {
