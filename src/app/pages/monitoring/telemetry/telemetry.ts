@@ -109,7 +109,8 @@ export class AgentTelemetryPage {
           .map((point) => {
             const x = 8 + (584 * (point.bucketEpoch - start)) / (end - start);
             const y = 152 - (136 * point.average) / max;
-            const command = point.bucketEpoch - previous > this.hours() * 45 ? 'M' : 'L';
+            const command =
+              point.bucketEpoch - previous > Math.max(180, this.hours() * 90) ? 'M' : 'L';
             previous = point.bucketEpoch;
             return `${command}${Math.max(8, x)},${y}`;
           })
