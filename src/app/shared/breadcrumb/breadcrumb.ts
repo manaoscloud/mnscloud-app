@@ -1,8 +1,10 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon'; // ✅ IMPORT NECESSÁRIO
+import { BreadcrumbLabelsService } from './breadcrumb-labels.service';
 import { AppI18nService } from '../../services/app-i18n.service';
 
 interface Crumb {
@@ -19,8 +21,12 @@ interface Crumb {
 })
 export class BreadcrumbComponent {
   private router = inject(Router);
+  private readonly labels = inject(BreadcrumbLabelsService);
   private readonly i18n = inject(AppI18nService);
-  private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
+  private readonly navigationEvent = toSignal(
+    this.router.events.pipe(filter((event) => event instanceof NavigationEnd)),
+    { initialValue: null },
+  );
 
   readonly crumbs = signal<Crumb[]>([]);
 
@@ -48,9 +54,10 @@ export class BreadcrumbComponent {
 
       items.push({
         label:
-          index === parts.length - 1 && currentBreadcrumb
+          this.labels.labelFor(path) ??
+          (index === parts.length - 1 && currentBreadcrumb
             ? this.i18n.t(currentBreadcrumb)
-            : this.formatLabel(part),
+            : this.formatLabel(part)),
         url: path,
       });
     }

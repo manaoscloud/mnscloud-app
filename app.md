@@ -985,3 +985,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - Icon-only actions need translated tooltips and accessible names. Use icon names
   available in the loaded Material Icons font (for example show_chart for metrics),
   rather than names exclusive to a different Material Symbols family.
+
+- Dynamic entity breadcrumb segments use `BreadcrumbLabelsService` with the exact
+  segment URL. Register only names already loaded through the authorized page API;
+  retain UUIDs in navigation. Page effects must unregister on cleanup/destroy, and
+  dialogs must not override the underlying page breadcrumb. Labels are in memory
+  only and rendered as text; unavailable names retain the normal segment fallback.

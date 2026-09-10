@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, resource, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, resource, signal } from '@angular/core';
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -17,6 +17,7 @@ import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-b
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { BreadcrumbLabelsService } from '../../../shared/breadcrumb/breadcrumb-labels.service';
 import { ApiService } from '../../../services/api.service';
 
 type Resource = { uuid: string; kind: string; name: string; observedAt: string | null };
@@ -54,6 +55,7 @@ type Snapshot = { resources: Resource[]; points: Point[]; selected: Resource | u
 })
 export class AgentTelemetryPage {
   private readonly api = inject(ApiService);
+  private readonly breadcrumbLabels = inject(BreadcrumbLabelsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly dialog = inject(MatDialogRef<AgentTelemetryPage>, { optional: true });
@@ -179,6 +181,13 @@ export class AgentTelemetryPage {
     });
   });
   constructor() {
+    effect((onCleanup) => {
+      if (this.dialog) return;
+      const name = this.name().trim();
+      if (!name) return;
+      const prefix = this.router.url.startsWith('/system') ? '/system' : '';
+      onCleanup(this.breadcrumbLabels.register(`${prefix}/monitoring/agents/${this.uuid}`, name));
+    });
     let failures = 0;
     let timer: ReturnType<typeof setTimeout>;
     const refresh = () => {
