@@ -1,29 +1,17 @@
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import {
-  afterNextRender,
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 
 type SmtpProvider = {
   HspUUID: string;
@@ -114,39 +102,26 @@ const EMPTY_SMTP_DASHBOARD: SmtpDashboardSnapshot = {
   selector: 'app-hosting-smtp-dashboard',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
+    DashboardPageComponent,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class HostingSmtpDashboardPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
 
-  readonly providerSort = viewChild<MatSort>('providerSort');
-  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
-  readonly accountSort = viewChild<MatSort>('accountSort');
-  readonly accountPaginator = viewChild<MatPaginator>('accountPaginator');
-  readonly routeSort = viewChild<MatSort>('routeSort');
-  readonly routePaginator = viewChild<MatPaginator>('routePaginator');
-
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
 
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     params: () => ({ scope: this.scope() }),
     defaultValue: EMPTY_SMTP_DASHBOARD,
     loader: () => this.loadDashboardSnapshot(),
@@ -157,13 +132,19 @@ export class HostingSmtpDashboardPage {
   readonly providers = computed(() => this.dashboard().providers);
   readonly accounts = computed(() => this.dashboard().accounts);
   readonly routes = computed(() => this.dashboard().routes);
-  readonly dashboardSearchInput = signal('');
-  private readonly dashboardSearch = signal('');
 
-
-  readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
-  readonly accountDataSource = new MatTableDataSource<AccountRow>([]);
-  readonly routeDataSource = new MatTableDataSource<RouteRow>([]);
+  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
+    computed(() => this.providerRows()),
+    (row, column) => this.providerSortValue(row, column),
+  );
+  readonly accountDataSource = createSignalCrudTable<AccountRow>(
+    computed(() => this.accountRows()),
+    (row, column) => this.accountSortValue(row, column),
+  );
+  readonly routeDataSource = createSignalCrudTable<RouteRow>(
+    computed(() => this.routeRows()),
+    (row, column) => this.routeSortValue(row, column),
+  );
 
   readonly providerColumns = [
     'provider',
@@ -185,12 +166,6 @@ export class HostingSmtpDashboardPage {
     'actions',
   ];
   readonly routeColumns = ['event', 'account', 'provider', 'from', 'active', 'actions'];
-
-  private readonly syncDashboardTables = effect(() => {
-    this.providerDataSource.data = this.providerRows();
-    this.accountDataSource.data = this.accountRows();
-    this.routeDataSource.data = this.routeRows();
-  });
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
@@ -280,58 +255,21 @@ export class HostingSmtpDashboardPage {
     },
   ]);
 
-  private readonly setupTables = afterNextRender(() => {
-    this.providerDataSource.sortingDataAccessor = (row, column) =>
-      this.providerSortValue(row, column);
-    this.accountDataSource.sortingDataAccessor = (row, column) =>
-      this.accountSortValue(row, column);
-    this.routeDataSource.sortingDataAccessor = (row, column) => this.routeSortValue(row, column);
-    this.providerDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.accountDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.routeDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-
-    this.providerDataSource.sort = this.providerSort() ?? null;
-    this.providerDataSource.paginator = this.providerPaginator() ?? null;
-    this.accountDataSource.sort = this.accountSort() ?? null;
-    this.accountDataSource.paginator = this.accountPaginator() ?? null;
-    this.routeDataSource.sort = this.routeSort() ?? null;
-    this.routeDataSource.paginator = this.routePaginator() ?? null;
-    this.applyTableFilters();
-  });
-
   refreshList() {
     this.dashboardResource.reload();
   }
 
-  onDashboardSearchChange(value: string) {
-    this.dashboardSearchInput.set(value);
-  }
-
-  applyDashboardFilters() {
-    this.dashboardSearch.set(this.dashboardSearchInput().trim());
-    this.applyTableFilters();
-  }
-
-  clearDashboardFilters() {
-    this.dashboardSearchInput.set('');
-    this.dashboardSearch.set('');
-    this.applyTableFilters();
-  }
-
   async loadDashboardSnapshot(): Promise<SmtpDashboardSnapshot> {
     const [providersResult, accountsResult, routesResult] = await Promise.allSettled([
-      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`),
-      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`),
-      this.api.get<unknown>(`${this.routeEndpoint()}?limit=500&offset=0`),
+      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
+      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
+      this.api.get<unknown>(`${this.routeEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
     ]);
 
     const results = [providersResult, accountsResult, routesResult];
     const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-    if (failedSections === results.length) {
+    if (failedSections > 0) {
       throw new Error('Failed to load SMTP dashboard.');
     }
 
@@ -370,24 +308,6 @@ export class HostingSmtpDashboardPage {
   private routeEndpoint() {
     return this.isMaster() ? 'system/hosting/smtp/routes' : 'hosting/smtp/routes';
   }
-  private applyTableFilters() {
-    const filter = this.dashboardSearch().trim().toLowerCase();
-    this.providerDataSource.filter = filter;
-    this.accountDataSource.filter = filter;
-    this.routeDataSource.filter = filter;
-    this.providerDataSource.paginator?.firstPage();
-    this.accountDataSource.paginator?.firstPage();
-    this.routeDataSource.paginator?.firstPage();
-  }
-
-  private matchesDashboardFilter(row: object, filter: string) {
-    const term = filter.trim().toLowerCase();
-    if (!term) return true;
-    return Object.values(row).some((value) =>
-      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
-    );
-  }
-
 
   private providerRows(): ProviderRow[] {
     return this.providers().map((provider) => {

@@ -1,0 +1,476 @@
+// Canonical dashboard primitives, shared by summaries and read-only exploration.
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-metric {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 96px;
+  padding: 1rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.75rem;
+  background: var(--mat-sys-color-surface-container);
+}
+
+.dashboard-metric mat-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--mat-sys-color-primary);
+  font-size: 28px;
+  line-height: 28px;
+}
+
+.dashboard-metric-label,
+.dashboard-metric-value,
+.dashboard-metric-hint {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-metric-label {
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dashboard-metric-value {
+  margin-top: 0.15rem;
+  color: var(--mat-sys-color-on-surface);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.dashboard-metric-hint {
+  margin-top: 0.2rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+// Read-only dashboard panels share the same shell, density and dialog geometry as CRUD.
+.dashboard-metric.dashboard-panel {
+  display: block;
+  min-height: 0;
+  padding: 0.75rem;
+}
+.dashboard-grid.dashboard-grid-compact {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 0.5rem;
+}
+.dashboard-view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 999px;
+  padding: 0.125rem;
+}
+.dashboard-view-switch button {
+  min-width: var(--form-icon-button);
+  flex: 0 0 var(--form-icon-button);
+}
+.dashboard-view-switch button mat-icon {
+  margin: 0;
+}
+.dashboard-view-switch button.is-selected {
+  background: var(--mat-sys-color-primary-container);
+  color: var(--mat-sys-color-on-primary-container);
+}
+
+// One application identity. Add reusable primitives here, never in dashboard page SCSS.
+mns-dashboard-page {
+  display: block;
+  min-width: 0;
+  --dashboard-gap: 1rem;
+  --dashboard-radius: 0.75rem;
+  --dashboard-good: var(--mat-sys-color-primary);
+  --dashboard-warning: var(--mat-sys-color-tertiary);
+  --dashboard-danger: var(--mat-sys-color-error);
+
+  .dashboard-body,
+  .dashboard-content,
+  .monitoring-content {
+    display: grid;
+    min-width: 0;
+    gap: var(--dashboard-gap);
+  }
+  .dashboard-body[hidden] {
+    display: none;
+  }
+  .dashboard-context {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.78rem;
+  }
+  .dashboard-context:empty {
+    display: none;
+  }
+  .dashboard-message {
+    margin: 0;
+    padding: 0.75rem;
+    border-inline-start: 3px solid var(--dashboard-danger);
+  }
+  .dashboard-skeleton {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--dashboard-gap);
+  }
+  .dashboard-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--dashboard-gap);
+    align-items: start;
+  }
+  .dashboard-panel,
+  .summary-panel,
+  .hero-panel {
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    border-radius: var(--dashboard-radius);
+    background: var(--mat-sys-color-surface-container);
+    min-width: 0;
+    padding: 1rem;
+  }
+  .dashboard-metric {
+    text-decoration: none;
+    color: inherit;
+    > div:only-child {
+      grid-column: 1 / -1;
+    }
+    mat-icon {
+      color: var(--dashboard-state-color, var(--mat-sys-color-primary));
+    }
+    p {
+      margin: 0.35rem 0 0;
+      font-size: 0.78rem;
+      color: var(--mat-sys-color-on-surface-variant);
+    }
+  }
+  .dashboard-panel {
+    display: grid;
+    align-content: start;
+    gap: 0.85rem;
+  }
+  .dashboard-panel.dashboard-metric {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard-panel h2,
+  .panel-header h2,
+  .monitoring-panel-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+  .dashboard-panel p,
+  .panel-header p,
+  .monitoring-panel-header p {
+    margin: 0.25rem 0 0;
+    font-size: 0.82rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+  .panel-header,
+  .monitoring-panel-header,
+  .summary-panel,
+  .hero-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .state-good {
+    --dashboard-state-color: var(--dashboard-good);
+  }
+  .state-warn {
+    --dashboard-state-color: var(--dashboard-warning);
+  }
+  .state-bad {
+    --dashboard-state-color: var(--dashboard-danger);
+  }
+  .state-neutral {
+    --dashboard-state-color: var(--mat-sys-color-primary);
+  }
+  .dashboard-skeleton > div {
+    min-height: 96px;
+    border-radius: var(--dashboard-radius);
+    background: var(--mat-sys-color-surface-container-highest);
+  }
+  .resource-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .resource-cell mat-icon {
+    flex: 0 0 auto;
+    color: var(--mat-sys-color-primary);
+  }
+  .resource-cell span,
+  td {
+    overflow-wrap: anywhere;
+  }
+  .table-wrapper {
+    min-width: 0;
+    overflow-x: auto;
+  }
+  .table-wrapper table {
+    width: 100%;
+  }
+  .runtime-list,
+  .alert-list,
+  .dashboard-record-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .module-row,
+  .runtime-row,
+  .activity-item,
+  .dashboard-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+  }
+  .module-row strong,
+  .module-row small,
+  .runtime-row strong,
+  .runtime-row small,
+  .activity-item span {
+    display: block;
+  }
+  .runtime-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .dashboard-record-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+  }
+  .dashboard-record-row small,
+  .dashboard-record-identity span {
+    display: block;
+  }
+  .panel-count {
+    color: var(--mat-sys-color-primary);
+    font-weight: 700;
+  }
+  .alert-warning mat-icon,
+  .activity-item .debit {
+    color: var(--dashboard-warning);
+  }
+  .alert-error mat-icon {
+    color: var(--dashboard-danger);
+  }
+  .activity-item .credit {
+    color: var(--dashboard-good);
+  }
+  .metric-stack,
+  .readiness-list,
+  .inventory-list,
+  .module-list,
+  .activity-list,
+  .event-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .metric-row {
+    display: grid;
+    grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 34px;
+  }
+  .metric-row span {
+    font-size: 0.78rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+  .metric-track {
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--mat-sys-color-surface-container-highest);
+  }
+  .metric-track i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--mat-sys-color-primary);
+  }
+  .metric-track.is-warning i {
+    background: var(--dashboard-warning);
+  }
+  .metric-track.is-danger i {
+    background: var(--dashboard-danger);
+  }
+  .readiness-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+    padding: 0.75rem 0;
+  }
+  .readiness-item span,
+  .readiness-item strong {
+    display: block;
+  }
+  .readiness-item mat-icon {
+    color: var(--dashboard-danger);
+  }
+  .readiness-item.is-ready mat-icon {
+    color: var(--dashboard-good);
+  }
+  .inventory-title {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .inventory-title strong,
+  .inventory-title span {
+    display: block;
+  }
+  .inventory-row {
+    min-width: 0;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+  }
+  .inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--dashboard-gap);
+  }
+  .inventory-table {
+    overflow-x: auto;
+  }
+  .inventory-table .inventory-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1.4fr) repeat(3, minmax(60px, 0.55fr));
+    gap: 0.5rem;
+  }
+  .inventory-head {
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  dl,
+  .definition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+  }
+  dt,
+  small,
+  .empty-state,
+  .eyebrow {
+    color: var(--mat-sys-color-on-surface-variant);
+    font-size: 0.78rem;
+  }
+  dd {
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+  }
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+    gap: 0.75rem;
+  }
+  .module-item {
+    display: grid;
+    gap: 0.3rem;
+    text-decoration: none;
+    color: inherit;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+  }
+  .dashboard-map-canvas {
+    position: relative;
+    min-height: 240px;
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    border-radius: var(--dashboard-radius);
+    background: var(--mat-sys-color-surface-container-highest);
+  }
+  .dashboard-map-point {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--mat-sys-color-primary);
+  }
+  a:focus-visible {
+    outline: 2px solid var(--mat-sys-color-primary);
+    outline-offset: 3px;
+  }
+  @media (max-width: 1200px) {
+    .dashboard-grid,
+    .dashboard-skeleton {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 900px) {
+    .dashboard-sections,
+    .inventory-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .panel-header,
+    .monitoring-panel-header,
+    .hero-panel {
+      align-items: start;
+      flex-direction: column;
+    }
+    .span-2,
+    .span-3,
+    .span-4 {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 600px) {
+    .dashboard-grid,
+    .dashboard-skeleton,
+    dl,
+    .definition-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .inventory-table .inventory-row {
+      min-width: 360px;
+    }
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

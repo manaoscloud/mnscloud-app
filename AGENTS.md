@@ -29,3 +29,11 @@ window.MNSCLOUD_APP_CONFIG = {
 - Runtime API URL resolution lives in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD page, dialog, table, upload, and filter behavior must follow `app.md`.
 - Use Angular Material and existing shared helpers before introducing new UI patterns.
+
+## Shared visual identity
+
+Every screen inherits the project identity from shared components and styles. If a reusable
+style is missing, create it in the shared layer first; future improvements must propagate to
+all consumers. Do not duplicate the shared shell, cards, spacing, typography, colors or
+responsive rules inside a page. Summary dashboards use templates/dashboard and the app.md
+refresh-only contract. Run npm run check:dashboard; CRUD filter rules do not apply to them.

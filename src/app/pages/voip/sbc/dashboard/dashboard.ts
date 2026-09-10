@@ -1,15 +1,14 @@
-import { Component, computed, inject, resource } from '@angular/core';
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
+import { Component, computed, inject } from '@angular/core';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute } from '@angular/router';
 
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 
 type SbcMetric = {
   key: string;
@@ -60,15 +59,8 @@ const EMPTY_SNAPSHOT: SbcSnapshot = {
 @Component({
   selector: 'app-voip-sbc-dashboard',
   standalone: true,
-  imports: [
-    MatCardModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    RefreshButtonComponent,
-    TranslocoPipe,
-  ],
+  imports: [MatIconModule, DashboardPageComponent, TranslocoPipe],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
 })
 export class VoipSbcDashboardPage {
   private readonly api = inject(ApiService);
@@ -77,7 +69,7 @@ export class VoipSbcDashboardPage {
   private readonly endpointPrefix =
     this.route.snapshot.data['scope'] === 'master' ? 'system/voip/sbc' : 'voip/sbc';
 
-  readonly snapshotResource = resource({
+  readonly snapshotResource = dashboardResource({
     loader: async () => this.loadSnapshot(),
   });
 
@@ -212,7 +204,7 @@ export class VoipSbcDashboardPage {
   }
 
   private async fetchItems(endpoint: string): Promise<any[]> {
-    const response = await this.api.get<any>(endpoint);
+    const response = await this.api.get<any>(endpoint, { timeout: 30000 });
     return extractItems(response);
   }
 

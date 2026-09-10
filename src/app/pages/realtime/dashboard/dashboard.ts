@@ -1,25 +1,18 @@
-import { Component, computed, effect, inject, resource, signal } from '@angular/core';
+import { dashboardResource } from '../../../shared/dashboard/dashboard-resource';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../shared/dashboard/dashboard-page';
 import { RealtimeDashboardRecord, RealtimeDashboardService } from './dashboard.service';
 
 type DashboardMode = 'overview' | 'media' | 'turn';
 
 type DashboardFilters = {
   mode: DashboardMode;
-  search: string;
-  status: string;
 };
 
 type DashboardSnapshot = {
@@ -37,9 +30,9 @@ type KpiTile = {
 };
 
 type InventoryRow = {
+  status: string;
   name: string;
   meta: string;
-  status: string;
   statusClass: string;
   details: { label: string; value: string }[];
 };
@@ -54,21 +47,8 @@ const EMPTY_SNAPSHOT: DashboardSnapshot = {
 @Component({
   selector: 'app-realtime-dashboard',
   standalone: true,
-  imports: [
-    MnsDateTimePipe,
-    RefreshButtonComponent,
-    RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    TranslocoPipe,
-  ],
+  imports: [MnsDateTimePipe, DashboardPageComponent, RouterModule, MatIconModule, TranslocoPipe],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class RealtimeDashboardPage {
   private readonly api = inject(RealtimeDashboardService);
@@ -77,16 +57,12 @@ export class RealtimeDashboardPage {
   private readonly listLimit = 5000;
 
   readonly mode = signal<DashboardMode>(this.route.snapshot.data?.['dashboardMode'] ?? 'overview');
-  readonly searchInput = signal('');
-  readonly statusInput = signal('');
-  private readonly appliedFilters = signal<DashboardFilters>({
+  private readonly summaryRequest = computed<DashboardFilters>(() => ({
     mode: this.mode(),
-    search: '',
-    status: '',
-  });
+  }));
 
-  private readonly snapshotResource = resource({
-    params: () => this.appliedFilters(),
+  readonly snapshotResource = dashboardResource({
+    params: () => this.summaryRequest(),
     defaultValue: EMPTY_SNAPSHOT,
     loader: ({ params }) => this.loadSnapshot(params),
   });
@@ -213,7 +189,12 @@ export class RealtimeDashboardPage {
         'Certificates',
         'verified',
       ),
-      this.tile('Certificate Failed', String(failedTurnDomains), 'Requires review', 'error_outline'),
+      this.tile(
+        'Certificate Failed',
+        String(failedTurnDomains),
+        'Requires review',
+        'error_outline',
+      ),
     ];
   });
 
@@ -247,7 +228,8 @@ export class RealtimeDashboardPage {
   readonly secondaryRows = computed(() => {
     const snapshot = this.snapshot();
     if (this.mode() === 'turn') return snapshot.turnDomains.map((item) => this.turnDomainRow(item));
-    if (this.mode() === 'media') return snapshot.domains.map((item) => this.realtimeDomainRow(item));
+    if (this.mode() === 'media')
+      return snapshot.domains.map((item) => this.realtimeDomainRow(item));
     return snapshot.turnDomains.map((item) => this.turnDomainRow(item));
   });
 
@@ -277,20 +259,6 @@ export class RealtimeDashboardPage {
     this.snapshotResource.reload();
   }
 
-  applySearchFilters() {
-    this.appliedFilters.set({
-      mode: this.mode(),
-      search: this.searchInput().trim(),
-      status: this.statusInput(),
-    });
-  }
-
-  clearSearchFilters() {
-    this.searchInput.set('');
-    this.statusInput.set('');
-    this.applySearchFilters();
-  }
-
   rowTrack(_: number, row: InventoryRow) {
     return `${row.name}:${row.meta}`;
   }
@@ -311,8 +279,6 @@ export class RealtimeDashboardPage {
   private params(filters: DashboardFilters) {
     return {
       limit: this.listLimit,
-      search: filters.search || undefined,
-      status: filters.status === '' ? null : Number(filters.status),
     };
   }
 
@@ -348,11 +314,17 @@ export class RealtimeDashboardPage {
         { label: 'Private IP', value: this.text(this.field(item, 'RmsPrivateIP') || '-') },
         {
           label: 'Control Endpoint',
-          value: this.endpoint(this.field(item, 'RmsControlIP'), this.field(item, 'RmsControlPort')),
+          value: this.endpoint(
+            this.field(item, 'RmsControlIP'),
+            this.field(item, 'RmsControlPort'),
+          ),
         },
         {
           label: 'Media Port Range',
-          value: this.range(this.field(item, 'RmsMinMediaPort'), this.field(item, 'RmsMaxMediaPort')),
+          value: this.range(
+            this.field(item, 'RmsMinMediaPort'),
+            this.field(item, 'RmsMaxMediaPort'),
+          ),
         },
         { label: 'Version', value: this.text(this.field(item, 'RmsVersion') || '-') },
         { label: 'Last Seen', value: this.field(item, 'RmsLastSeenAt') || '' },
@@ -381,7 +353,10 @@ export class RealtimeDashboardPage {
         { label: 'Private IP', value: this.text(this.field(item, 'RtsPrivateIP') || '-') },
         {
           label: 'Relay Port Range',
-          value: this.range(this.field(item, 'RtsMinRelayPort'), this.field(item, 'RtsMaxRelayPort')),
+          value: this.range(
+            this.field(item, 'RtsMinRelayPort'),
+            this.field(item, 'RtsMaxRelayPort'),
+          ),
         },
         { label: 'TLS Port', value: this.text(this.field(item, 'RtsTlsListeningPort') || '-') },
         { label: 'Version', value: this.text(this.field(item, 'RtsVersion') || '-') },

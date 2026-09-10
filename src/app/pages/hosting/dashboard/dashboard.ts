@@ -1,31 +1,18 @@
+import { createSignalCrudTable } from '../../../shared/crud/signal-crud-table';
+import { dashboardResource } from '../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import {
-  afterNextRender,
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../shared/dashboard/dashboard-page';
 
 type HostingDatasetKey =
   | 'dnsDomains'
@@ -127,37 +114,23 @@ const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
   selector: 'app-hosting-dashboard',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
+    DashboardPageComponent,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class HostingDashboardPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
 
-  readonly workloadSort = viewChild<MatSort>('workloadSort');
-  readonly workloadPaginator = viewChild<MatPaginator>('workloadPaginator');
-  readonly providerSort = viewChild<MatSort>('providerSort');
-  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
-  readonly issueSort = viewChild<MatSort>('issueSort');
-  readonly issuePaginator = viewChild<MatPaginator>('issuePaginator');
-
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     params: () => ({ environmentUUID: this.auth.user()?.EnvironmentUUID ?? null }),
     defaultValue: EMPTY_HOSTING_DASHBOARD,
     loader: () => this.loadDashboardSnapshot(),
@@ -167,23 +140,23 @@ export class HostingDashboardPage {
   readonly dashboard = computed(() => this.dashboardResource.value());
   readonly data = computed(() => this.dashboard().data);
   readonly generatedAt = computed(() => this.dashboard().generatedAt);
-  readonly dashboardSearchInput = signal('');
-  readonly statusInput = signal('');
-  private readonly dashboardSearch = signal('');
 
-  readonly workloadDataSource = new MatTableDataSource<WorkloadRow>([]);
-  readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
-  readonly issueDataSource = new MatTableDataSource<IssueRow>([]);
+  readonly workloadDataSource = createSignalCrudTable<WorkloadRow>(
+    computed(() => this.workloads()),
+    (row, column) => this.workloadSortValue(row, column),
+  );
+  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
+    computed(() => this.providers()),
+    (row, column) => this.providerSortValue(row, column),
+  );
+  readonly issueDataSource = createSignalCrudTable<IssueRow>(
+    computed(() => this.issues()),
+    (row, column) => this.issueSortValue(row, column),
+  );
 
   readonly workloadColumns = ['resource', 'total', 'active', 'issues', 'actions'];
   readonly providerColumns = ['provider', 'total', 'active', 'defaults', 'actions'];
   readonly issueColumns = ['type', 'name', 'status', 'message', 'actions'];
-
-  private readonly syncDashboardTables = effect(() => {
-    this.workloadDataSource.data = this.workloads();
-    this.providerDataSource.data = this.providers();
-    this.issueDataSource.data = this.issues();
-  });
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
@@ -270,46 +243,8 @@ export class HostingDashboardPage {
     },
   ]);
 
-  private readonly setupTables = afterNextRender(() => {
-    this.workloadDataSource.sortingDataAccessor = (row, column) =>
-      this.workloadSortValue(row, column);
-    this.providerDataSource.sortingDataAccessor = (row, column) =>
-      this.providerSortValue(row, column);
-    this.issueDataSource.sortingDataAccessor = (row, column) => this.issueSortValue(row, column);
-    this.workloadDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.providerDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.issueDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-
-    this.workloadDataSource.sort = this.workloadSort() ?? null;
-    this.workloadDataSource.paginator = this.workloadPaginator() ?? null;
-    this.providerDataSource.sort = this.providerSort() ?? null;
-    this.providerDataSource.paginator = this.providerPaginator() ?? null;
-    this.issueDataSource.sort = this.issueSort() ?? null;
-    this.issueDataSource.paginator = this.issuePaginator() ?? null;
-    this.applyTableFilters();
-  });
-
   refreshList() {
     this.dashboardResource.reload();
-  }
-
-  onDashboardSearchChange(value: string) {
-    this.dashboardSearchInput.set(value);
-  }
-
-  applyDashboardFilters() {
-    this.dashboardSearch.set(this.dashboardSearchInput().trim());
-    this.applyTableFilters();
-  }
-
-  clearDashboardFilters() {
-    this.dashboardSearchInput.set('');
-    this.statusInput.set('');
-    this.dashboardSearch.set('');
-    this.applyTableFilters();
   }
 
   async loadDashboardSnapshot(): Promise<HostingDashboardSnapshot> {
@@ -327,7 +262,7 @@ export class HostingDashboardPage {
       nextData[key] = result.status === 'fulfilled' ? result.value : [];
     });
 
-    if (failedSections === entries.length) {
+    if (failedSections > 0) {
       throw new Error('Failed to load hosting dashboard.');
     }
 
@@ -415,7 +350,7 @@ export class HostingDashboardPage {
   }
 
   private async fetchItems(endpoint: string) {
-    const response = await this.api.get<unknown>(this.withLimit(endpoint));
+    const response = await this.api.get<unknown>(this.withLimit(endpoint), { timeout: 30000 });
     return this.responseItems(response);
   }
 
@@ -646,24 +581,6 @@ export class HostingDashboardPage {
       defaults: rows.filter((row) => this.truthyField(row, defaultFields)).length,
       route,
     };
-  }
-  private applyTableFilters() {
-    const filter = this.dashboardSearch().trim().toLowerCase();
-    this.workloadDataSource.filter = filter;
-    this.providerDataSource.filter = filter;
-    this.issueDataSource.filter = filter;
-    this.workloadDataSource.paginator?.firstPage();
-    this.providerDataSource.paginator?.firstPage();
-    this.issueDataSource.paginator?.firstPage();
-  }
-
-  private matchesDashboardFilter(row: object, filter: string) {
-    const term = filter.trim().toLowerCase();
-    if (!term) return true;
-    return Object.values(row).some(
-      (value) =>
-        value !== null && value !== undefined && String(value).toLowerCase().includes(term),
-    );
   }
 
   private issueRows(

@@ -69,6 +69,8 @@ export class VoipDashboardService {
     const query = new URLSearchParams();
     query.set('period', period);
     const basePath = system ? 'system/voip/dashboard' : 'voip/dashboard';
-    return this.api.get<{ data: VoipDashboardData }>(`${basePath}?${query.toString()}`);
+    return this.api.get<{ data: VoipDashboardData }>(`${basePath}?${query.toString()}`, {
+      timeout: 30000,
+    });
   }
 }

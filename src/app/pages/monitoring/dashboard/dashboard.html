@@ -1,222 +1,200 @@
-<section class="erp-page dashboard-page monitoring-dashboard" animate.enter="app-fade-in">
-  <mat-card class="erp-card dashboard-shell">
-    <header class="erp-header">
-      <div>
-        <h1>{{ 'Monitoring Dashboard' | transloco }}</h1>
-        <p>
-          {{ 'Operational health, runtime readiness, and recent platform events.' | transloco }}
-        </p>
+<mns-dashboard-page
+  class="monitoring-dashboard"
+  [title]="'Monitoring Dashboard'"
+  [description]="'Operational health, runtime readiness, and recent platform events.'"
+  [loading]="dashboardResource.isLoading()"
+  [error]="dashboardResource.error()"
+  [hasData]="dashboardResource.hasData()"
+  [updatedAt]="dashboardResource.updatedAt()"
+  (refresh)="refreshList()"
+>
+  <div class="monitoring-content">
+    @if (generatedAt()) {
+      <div class="dashboard-grid">
+        @for (item of kpis(); track item.label) {
+          <article class="dashboard-metric" [ngClass]="'state-' + item.state">
+            <mat-icon class="monitoring-state-icon">{{ item.icon }}</mat-icon>
+            <div>
+              <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+              <strong class="dashboard-metric-value">{{ item.value }}</strong>
+              <small class="dashboard-metric-hint"
+                >{{ item.detailValue }} {{ item.detailLabel | transloco }}</small
+              >
+            </div>
+          </article>
+        }
       </div>
 
-      <div class="header-actions">
-        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
-      </div>
-    </header>
-    @if (loadError()) {
-      <p role="alert">{{ 'Failed to load monitoring dashboard.' | transloco }}</p>
-      @if (generatedAt()) {
-        <p class="dashboard-metric-hint">
-          {{ 'Showing the last successful update.' | transloco }} {{ generatedAt() | mnsDateTime }}
-        </p>
-      }
-    }
-
-    <div class="monitoring-content">
-      @if (loading() && !generatedAt()) {
-        <p role="status">{{ 'Loading' | transloco }}…</p>
-      }
-
-      @if (generatedAt()) {
-        <div class="dashboard-grid">
-          @for (item of kpis(); track item.label) {
-            <article class="dashboard-metric" [ngClass]="'state-' + item.state">
-              <mat-icon class="monitoring-state-icon">{{ item.icon }}</mat-icon>
-              <div>
-                <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
-                <strong class="dashboard-metric-value">{{ item.value }}</strong>
-                <small class="dashboard-metric-hint"
-                  >{{ item.detailValue }} {{ item.detailLabel | transloco }}</small
-                >
-              </div>
-            </article>
-          }
-        </div>
-
-        <div class="dashboard-grid">
-          <section class="dashboard-metric dashboard-panel span-2">
-            <div class="monitoring-panel-header">
-              <div>
-                <h2>{{ 'Agent Connectivity' | transloco }}</h2>
-                <p>
-                  {{ 'Online and offline inventory reported by registered agents.' | transloco }}
-                </p>
-              </div>
-            </div>
-
-            <div class="metric-stack">
-              <div class="metric-row">
-                <span>{{ 'Online' | transloco }}</span>
-                <div class="metric-track">
-                  <i
-                    [style.width.%]="metricPercent(agentSummary().online, agentSummary().total)"
-                  ></i>
-                </div>
-                <strong>{{ agentSummary().online }}</strong>
-              </div>
-              <div class="metric-row">
-                <span>{{ 'Degraded' | transloco }}</span>
-                <div class="metric-track is-warning">
-                  <i
-                    [style.width.%]="metricPercent(agentSummary().degraded, agentSummary().total)"
-                  ></i>
-                </div>
-                <strong>{{ agentSummary().degraded }}</strong>
-              </div>
-              <div class="metric-row">
-                <span>{{ 'Offline' | transloco }}</span>
-                <div class="metric-track is-warning">
-                  <i
-                    [style.width.%]="metricPercent(agentSummary().offline, agentSummary().total)"
-                  ></i>
-                </div>
-                <strong>{{ agentSummary().offline }}</strong>
-              </div>
-              <div class="metric-row">
-                <span>{{ 'Outdated' | transloco }}</span>
-                <div class="metric-track is-warning">
-                  <i
-                    [style.width.%]="metricPercent(agentSummary().outdated, agentSummary().total)"
-                  ></i>
-                </div>
-                <strong>{{ agentSummary().outdated }}</strong>
-              </div>
-              <div class="metric-row">
-                <span>{{ 'Unsupported' | transloco }}</span>
-                <div class="metric-track is-danger">
-                  <i
-                    [style.width.%]="
-                      metricPercent(agentSummary().unsupported, agentSummary().total)
-                    "
-                  ></i>
-                </div>
-                <strong>{{ agentSummary().unsupported }}</strong>
-              </div>
-            </div>
-          </section>
-
-          <section class="dashboard-metric dashboard-panel span-2">
-            <div class="monitoring-panel-header">
-              <div>
-                <h2>{{ 'Runtime Products' | transloco }}</h2>
-                <p>{{ 'Release state across Agent, API, and App runtimes.' | transloco }}</p>
-              </div>
-            </div>
-
-            <div class="runtime-list">
-              @for (product of runtimeProducts(); track product.product) {
-                <article class="runtime-row">
-                  <div>
-                    <strong>{{ product.label }}</strong>
-                    <small>
-                      {{ product.latestVersion || '-' }} ·
-                      {{ shortBuildRef(product.latestBuildRef) }} ·
-                      {{
-                        (product.strategy === 'rolling' ? 'Rolling' : product.strategy || 'Rolling')
-                          | transloco
-                      }}
-                      · {{ 'batch' | transloco }} {{ product.batchSize || 1 }}
-                    </small>
-                  </div>
-                  <div class="runtime-counts">
-                    <span>{{ product.currentCount }} {{ 'current' | transloco }}</span>
-                    <span>{{ product.outdatedCount }} {{ 'outdated' | transloco }}</span>
-                  </div>
-                  <span class="status-pill status-chip" [ngClass]="runtimeProductClass(product)">
-                    {{ runtimeProductStatus(product) | transloco }}
-                  </span>
-                </article>
-              } @empty {
-                <div class="empty-state">{{ 'No runtime products found.' | transloco }}</div>
-              }
-            </div>
-          </section>
-        </div>
-
-        <section class="dashboard-metric dashboard-panel">
+      <div class="dashboard-grid">
+        <section class="dashboard-metric dashboard-panel span-2">
           <div class="monitoring-panel-header">
             <div>
-              <h2>{{ 'Recent Activity' | transloco }}</h2>
-              <p>{{ 'Latest operational events from the activity log stream.' | transloco }}</p>
+              <h2>{{ 'Agent Connectivity' | transloco }}</h2>
+              <p>
+                {{ 'Online and offline inventory reported by registered agents.' | transloco }}
+              </p>
             </div>
           </div>
 
-          <div class="table-wrapper mat-elevation-z8">
-            <table
-              mat-table
-              class="activity-table"
-              [dataSource]="pagedActivityLogs()"
-              matSort
-              [matSortActive]="activitySortColumn()"
-              [matSortDirection]="activitySortDirection()"
-              matSortDisableClear
-              (matSortChange)="changeActivitySort($event)"
-            >
-              @for (column of activityColumns; track column.id) {
-                <ng-container [matColumnDef]="column.id">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ column.label | transloco }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">
-                    @switch (column.id) {
-                      @case ('created') {
-                        {{ row.dateCreated ? (row.dateCreated | mnsDateTime) : '-' }}
-                      }
-                      @case ('level') {
-                        <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">{{
-                          activityLabel(row.level)
-                        }}</span>
-                      }
-                      @case ('status') {
-                        <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">{{
-                          activityLabel(row.status)
-                        }}</span>
-                      }
-                      @case ('action') {
-                        <strong>{{ row.action || '-' }}</strong
-                        ><small>{{ row.category || row.hostname || '-' }}</small>
-                      }
-                      @case ('resource') {
-                        {{ resourceLabel(row) }}
-                      }
-                      @case ('message') {
-                        <span>{{ row.message || row.errorCode || '-' }}</span
-                        ><small>{{ formatDuration(row.durationMs) }}</small>
-                      }
-                    }
-                  </td>
-                </ng-container>
-              }
-              <tr mat-header-row *matHeaderRowDef="displayedActivityColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedActivityColumns"></tr>
-              <tr *matNoDataRow>
-                <td class="empty-state" [attr.colspan]="activityColumns.length">
-                  {{ 'No activity logs found.' | transloco }}
-                </td>
-              </tr>
-            </table>
+          <div class="metric-stack">
+            <div class="metric-row">
+              <span>{{ 'Online' | transloco }}</span>
+              <div class="metric-track">
+                <i [style.width.%]="metricPercent(agentSummary().online, agentSummary().total)"></i>
+              </div>
+              <strong>{{ agentSummary().online }}</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ 'Degraded' | transloco }}</span>
+              <div class="metric-track is-warning">
+                <i
+                  [style.width.%]="metricPercent(agentSummary().degraded, agentSummary().total)"
+                ></i>
+              </div>
+              <strong>{{ agentSummary().degraded }}</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ 'Offline' | transloco }}</span>
+              <div class="metric-track is-warning">
+                <i
+                  [style.width.%]="metricPercent(agentSummary().offline, agentSummary().total)"
+                ></i>
+              </div>
+              <strong>{{ agentSummary().offline }}</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ 'Outdated' | transloco }}</span>
+              <div class="metric-track is-warning">
+                <i
+                  [style.width.%]="metricPercent(agentSummary().outdated, agentSummary().total)"
+                ></i>
+              </div>
+              <strong>{{ agentSummary().outdated }}</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ 'Unsupported' | transloco }}</span>
+              <div class="metric-track is-danger">
+                <i
+                  [style.width.%]="metricPercent(agentSummary().unsupported, agentSummary().total)"
+                ></i>
+              </div>
+              <strong>{{ agentSummary().unsupported }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-metric dashboard-panel span-2">
+          <div class="monitoring-panel-header">
+            <div>
+              <h2>{{ 'Runtime Products' | transloco }}</h2>
+              <p>{{ 'Release state across Agent, API, and App runtimes.' | transloco }}</p>
+            </div>
           </div>
 
-          <mat-paginator
-            class="mobile-paginator"
-            [length]="sortedActivityLogs().length"
-            [pageIndex]="activityPageIndex()"
-            [pageSize]="activityPageSize()"
-            [pageSizeOptions]="[5, 10, 25, 100]"
-            showFirstLastButtons
-            (page)="onActivityPageChange($event)"
-          />
+          <div class="runtime-list">
+            @for (product of runtimeProducts(); track product.product) {
+              <article class="runtime-row">
+                <div>
+                  <strong>{{ product.label }}</strong>
+                  <small>
+                    {{ product.latestVersion || '-' }} ·
+                    {{ shortBuildRef(product.latestBuildRef) }} ·
+                    {{
+                      (product.strategy === 'rolling' ? 'Rolling' : product.strategy || 'Rolling')
+                        | transloco
+                    }}
+                    · {{ 'batch' | transloco }} {{ product.batchSize || 1 }}
+                  </small>
+                </div>
+                <div class="runtime-counts">
+                  <span>{{ product.currentCount }} {{ 'current' | transloco }}</span>
+                  <span>{{ product.outdatedCount }} {{ 'outdated' | transloco }}</span>
+                </div>
+                <span class="status-pill status-chip" [ngClass]="runtimeProductClass(product)">
+                  {{ runtimeProductStatus(product) | transloco }}
+                </span>
+              </article>
+            } @empty {
+              <div class="empty-state">{{ 'No runtime products found.' | transloco }}</div>
+            }
+          </div>
         </section>
-      }
-    </div>
-  </mat-card>
-</section>
+      </div>
+
+      <section class="dashboard-metric dashboard-panel">
+        <div class="monitoring-panel-header">
+          <div>
+            <h2>{{ 'Recent Activity' | transloco }}</h2>
+            <p>{{ 'Latest operational events from the activity log stream.' | transloco }}</p>
+          </div>
+        </div>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table
+            mat-table
+            class="activity-table"
+            [dataSource]="pagedActivityLogs()"
+            matSort
+            [matSortActive]="activitySortColumn()"
+            [matSortDirection]="activitySortDirection()"
+            matSortDisableClear
+            (matSortChange)="changeActivitySort($event)"
+          >
+            @for (column of activityColumns; track column.id) {
+              <ng-container [matColumnDef]="column.id">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ column.label | transloco }}
+                </th>
+                <td mat-cell *matCellDef="let row">
+                  @switch (column.id) {
+                    @case ('created') {
+                      {{ row.dateCreated ? (row.dateCreated | mnsDateTime) : '-' }}
+                    }
+                    @case ('level') {
+                      <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">{{
+                        activityLabel(row.level)
+                      }}</span>
+                    }
+                    @case ('status') {
+                      <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">{{
+                        activityLabel(row.status)
+                      }}</span>
+                    }
+                    @case ('action') {
+                      <strong>{{ row.action || '-' }}</strong
+                      ><small>{{ row.category || row.hostname || '-' }}</small>
+                    }
+                    @case ('resource') {
+                      {{ resourceLabel(row) }}
+                    }
+                    @case ('message') {
+                      <span>{{ row.message || row.errorCode || '-' }}</span
+                      ><small>{{ formatDuration(row.durationMs) }}</small>
+                    }
+                  }
+                </td>
+              </ng-container>
+            }
+            <tr mat-header-row *matHeaderRowDef="displayedActivityColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedActivityColumns"></tr>
+            <tr *matNoDataRow>
+              <td class="empty-state" [attr.colspan]="activityColumns.length">
+                {{ 'No activity logs found.' | transloco }}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          class="mobile-paginator"
+          [length]="sortedActivityLogs().length"
+          [pageIndex]="activityPageIndex()"
+          [pageSize]="activityPageSize()"
+          [pageSizeOptions]="[5, 10, 25, 100]"
+          showFirstLastButtons
+          (page)="onActivityPageChange($event)"
+        />
+      </section>
+    }
+  </div>
+</mns-dashboard-page>

@@ -1,15 +1,13 @@
+import { dashboardResource } from '../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import { Component, computed, inject, resource } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { AppI18nService } from '../../services/app-i18n.service';
-import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../shared/dashboard/dashboard-page';
 import { MnsDateTimePipe } from '../../shared/date-time/date-time.pipe';
 
 type ApiResponse<T> = {
@@ -102,24 +100,20 @@ const EMPTY_DASHBOARD: TenantDashboardSnapshot = {
   standalone: true,
   imports: [
     MnsDateTimePipe,
-    RefreshButtonComponent,
+    DashboardPageComponent,
     NgClass,
     RouterLink,
     TranslocoPipe,
-    MatButtonModule,
-    MatCardModule,
     MatIconModule,
-    MatProgressSpinnerModule,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class Dashboard {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly i18n = inject(AppI18nService);
 
-  readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     defaultValue: EMPTY_DASHBOARD,
     loader: () => this.loadDashboard(),
   });
@@ -188,7 +182,9 @@ export class Dashboard {
   }
 
   private async loadDashboard(): Promise<TenantDashboardSnapshot> {
-    const response = await this.api.get<ApiResponse<TenantDashboardSnapshot>>('dashboard/tenant');
+    const response = await this.api.get<ApiResponse<TenantDashboardSnapshot>>('dashboard/tenant', {
+      timeout: 30000,
+    });
     return response.data ?? EMPTY_DASHBOARD;
   }
 }

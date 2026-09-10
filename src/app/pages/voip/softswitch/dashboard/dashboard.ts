@@ -1,11 +1,9 @@
-import { Component, computed, effect, inject, resource } from '@angular/core';
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
+import { Component, computed, effect, inject } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -13,7 +11,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import { SoftswitchDashboardServer, VoipSoftswitchDashboardService } from './dashboard.service';
 
 @Component({
@@ -21,20 +19,16 @@ import { SoftswitchDashboardServer, VoipSoftswitchDashboardService } from './das
   standalone: true,
   imports: [
     MnsDateTimePipe,
-    RefreshButtonComponent,
+    DashboardPageComponent,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
     MatChipsModule,
     MatIconModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
 })
 export class VoipSoftswitchDashboardPage {
   private readonly api = inject(VoipSoftswitchDashboardService);
@@ -42,7 +36,7 @@ export class VoipSoftswitchDashboardPage {
   private readonly snack = inject(SnackbarService);
 
   readonly isMaster = computed(() => this.route.snapshot.data?.['scope'] === 'master');
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     params: () => ({ isMaster: this.isMaster() }),
     loader: ({ params }) => this.api.get(params.isMaster),
   });

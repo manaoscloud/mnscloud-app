@@ -4120,5 +4120,11 @@
   "Memory": "Memória",
   "Average": "Média",
   "Network interface": "Interface de rede",
-  "Showing the last successful update.": "Exibindo a última atualização concluída."
+  "Showing the last successful update.": "Exibindo a última atualização concluída.",
+  "Unable to refresh dashboard.": "Não foi possível atualizar o dashboard.",
+  "Last updated": "Última atualização",
+  "Map preview: up to 1,000 authorized assets.": "Prévia do mapa: até 1.000 ativos autorizados.",
+  "InfraGIS asset map": "Mapa de ativos do InfraGIS",
+  "Loaded inventory; API limits apply.": "Inventário carregado; sujeito aos limites da API.",
+  "Management": "Cadastros"
 }

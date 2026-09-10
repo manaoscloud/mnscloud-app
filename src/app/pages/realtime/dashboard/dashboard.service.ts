@@ -16,19 +16,25 @@ export class RealtimeDashboardService {
   private readonly api = inject(ApiService);
 
   listDomains(params: ListParams & { purpose?: string } = {}) {
-    return this.api.get<any>(`system/realtime/domains${this.query(params)}`);
+    return this.api.get<any>(`system/realtime/domains${this.query(params)}`, { timeout: 30000 });
   }
 
   listMediaServers(params: ListParams = {}) {
-    return this.api.get<any>(`system/realtime/media/servers${this.query(params)}`);
+    return this.api.get<any>(`system/realtime/media/servers${this.query(params)}`, {
+      timeout: 30000,
+    });
   }
 
   listTurnServers(params: ListParams = {}) {
-    return this.api.get<any>(`system/realtime/turn/servers${this.query(params)}`);
+    return this.api.get<any>(`system/realtime/turn/servers${this.query(params)}`, {
+      timeout: 30000,
+    });
   }
 
   listTurnDomains(params: ListParams = {}) {
-    return this.api.get<any>(`system/realtime/turn/domains${this.query(params)}`);
+    return this.api.get<any>(`system/realtime/turn/domains${this.query(params)}`, {
+      timeout: 30000,
+    });
   }
 
   private query(params: ListParams & { purpose?: string }) {

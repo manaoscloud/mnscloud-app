@@ -1,10 +1,10 @@
-import { Component, computed, inject, resource } from '@angular/core';
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
+import { Component, computed, inject } from '@angular/core';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import { BillingService } from '../../shared/billing.service';
 
 type BillingDashboardSnapshot = {
@@ -26,41 +26,35 @@ const EMPTY_DASHBOARD: BillingDashboardSnapshot = {
 @Component({
   selector: 'app-billing-system-dashboard',
   standalone: true,
-  imports: [MatCardModule, MatIconModule, RefreshButtonComponent, TranslocoPipe],
-  template: `
-    <section class="erp-page dashboard-page">
-      <mat-card class="erp-card dashboard-shell">
-        <div class="erp-header">
+  imports: [MatIconModule, DashboardPageComponent, TranslocoPipe],
+  template: `<mns-dashboard-page
+    context="Loaded inventory; API limits apply."
+    class=""
+    [title]="'Billing dashboard'"
+    [description]="'Monitor products, prices, packages, promotions and subscriptions.'"
+    [loading]="dashboard.isLoading()"
+    [error]="dashboard.error()"
+    [hasData]="dashboard.hasData()"
+    [updatedAt]="dashboard.updatedAt()"
+    (refresh)="dashboard.reload()"
+  >
+    <div class="dashboard-grid">
+      @for (item of summary(); track item.label) {
+        <div class="dashboard-metric">
+          <mat-icon>{{ item.icon }}</mat-icon>
           <div>
-            <h1>{{ 'Billing dashboard' | transloco }}</h1>
-            <p>
-              {{ 'Monitor products, prices, packages, promotions and subscriptions.' | transloco }}
-            </p>
-          </div>
-          <div class="header-actions">
-            <app-refresh-button [loading]="loading()" (refresh)="dashboard.reload()" />
+            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ item.value }}</strong>
           </div>
         </div>
-
-        <div class="dashboard-grid">
-          @for (item of summary(); track item.label) {
-            <div class="dashboard-metric">
-              <mat-icon>{{ item.icon }}</mat-icon>
-              <div>
-                <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
-                <strong class="dashboard-metric-value">{{ item.value }}</strong>
-              </div>
-            </div>
-          }
-        </div>
-      </mat-card>
-    </section>
-  `,
+      }
+    </div>
+  </mns-dashboard-page>`,
 })
 export class BillingSystemDashboardPage {
   private readonly billing = inject(BillingService);
 
-  readonly dashboard = resource({
+  readonly dashboard = dashboardResource({
     defaultValue: EMPTY_DASHBOARD,
     loader: async () => {
       const [products, prices, packages, promotions, subscriptions] = await Promise.all([

@@ -13,7 +13,9 @@
     "check:crud:layout": "node scripts/validate-crud-layout.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "build-watch": "ng build --configuration production --watch"
+    "build-watch": "ng build --configuration production --watch",
+    "check:dashboard": "node scripts/validate-dashboard-template.mjs",
+    "test:dashboard": "ng test --watch=false --include='src/app/shared/dashboard/*.spec.ts' --karma-config=karma.dashboard.cjs"
   },
   "prettier": {
     "printWidth": 100,

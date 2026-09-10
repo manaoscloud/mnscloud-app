@@ -17,6 +17,15 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - API calls must go through `src/app/services/api.service.ts`.
 - Runtime URL resolution must stay in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD pages must follow `app.md`.
+- Summary dashboards must use `templates/dashboard`, `DashboardPageComponent` and
+  `dashboardResource`; their only action is Refresh. Management forms and analysis selectors
+  belong on their own routes. The Metrics fleet explorer retains its established analysis controls.
+- Shared visual identity is mandatory. Reuse the shared style/component layer; when a reusable
+  primitive is missing, add it there first so every consumer inherits later improvements. Never
+  create a page-local duplicate. Dashboards have no local SCSS or inline styles; use
+  `src/styles/_dashboard.scss` and existing shared helpers.
+- Run `npm run check:dashboard` for dashboard work, plus the state tests and visual checks specified
+  in app.md. Never treat missing/failed data as a healthy zero or reuse a snapshot across tenants.
 - CRUD list filters must use the canonical filter row from `app.md`: `Search` as the first
   explicit `span-1` control, `Status` present when the resource has a status field/column, no
   implicit widths or custom fractional widths, and `filter-actions` as the only full-row element.

@@ -80,6 +80,7 @@ export class RealtimeWebRtcDashboardService {
     const suffix = query.toString();
     return this.api.get<{ data: WebRtcDashboardData }>(
       `${this.basePath(system)}${suffix ? `?${suffix}` : ''}`,
+      { timeout: 30000 },
     );
   }
 }

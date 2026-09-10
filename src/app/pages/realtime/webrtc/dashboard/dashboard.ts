@@ -1,29 +1,15 @@
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RealtimeWebRtcService, WebRtcRecord } from '../webrtc.service';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
 import {
   RealtimeWebRtcDashboardService,
@@ -34,22 +20,10 @@ import {
   WebRtcDashboardServer,
 } from './dashboard.service';
 
-type SelectOption = {
-  value: string;
-  label: string;
-};
-
 type WebRtcDashboardRequest = Required<Pick<WebRtcDashboardFilters, 'period'>> &
   Omit<WebRtcDashboardFilters, 'period'> & {
     scope: string;
-    search: string;
-    status: string;
   };
-
-type DashboardFilterOptions = {
-  servers: SelectOption[];
-  domains: SelectOption[];
-};
 
 const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   period: 'today',
@@ -62,48 +36,29 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   jobBreakdown: [],
 };
 
-const EMPTY_FILTER_OPTIONS: DashboardFilterOptions = {
-  servers: [],
-  domains: [],
-};
-
 @Component({
   selector: 'app-realtime-webrtc-dashboard',
   standalone: true,
   imports: [
     MnsDateTimePipe,
-    RefreshButtonComponent,
+    DashboardPageComponent,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
     MatSortModule,
     MatTableModule,
-    MatTooltipModule,
     TranslocoPipe,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class RealtimeWebRtcDashboardPage {
   private readonly api = inject(RealtimeWebRtcDashboardService);
-  private readonly webrtcApi = inject(RealtimeWebRtcService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
-  private readonly listLimit = 5000;
 
-  readonly period = signal('today');
-  readonly searchInput = signal('');
-  readonly statusInput = signal('');
-  readonly serverUUID = signal('');
-  readonly domainUUID = signal('');
-  readonly serverSearch = signal('');
-  readonly domainSearch = signal('');
+  readonly period = () => 'today';
+  readonly serverUUID = () => '';
+  readonly domainUUID = () => '';
   readonly serverSortActive = signal('');
   readonly serverSortDirection = signal<Sort['direction']>('');
   readonly serverPageIndex = signal(0);
@@ -114,25 +69,17 @@ export class RealtimeWebRtcDashboardPage {
   readonly domainPageSize = signal(5);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly appliedFilters = signal<WebRtcDashboardRequest>({
+  private readonly summaryRequest = computed<WebRtcDashboardRequest>(() => ({
     period: 'today',
     serverUUID: '',
     domainUUID: '',
     scope: this.scope(),
-    search: '',
-    status: '',
-  });
+  }));
 
-  private readonly dashboardResource = resource({
-    params: () => this.appliedFilters(),
+  readonly dashboardResource = dashboardResource({
+    params: () => this.summaryRequest(),
     defaultValue: EMPTY_WEBRTC_DASHBOARD,
     loader: ({ params }) => this.fetchDashboardSnapshot(params),
-  });
-
-  private readonly filterOptionsResource = resource({
-    params: () => ({ scope: this.scope(), master: this.isMaster() }),
-    defaultValue: EMPTY_FILTER_OPTIONS,
-    loader: ({ params }) => this.fetchFilterOptions(params.master),
   });
 
   readonly loading = this.dashboardResource.isLoading;
@@ -159,19 +106,6 @@ export class RealtimeWebRtcDashboardPage {
     'autoProvision',
     'lastSyncedAt',
     'lastError',
-  ];
-
-  readonly filteredServerOptions = computed(() =>
-    this.filterOptions(this.filterOptionsResource.value().servers, this.serverSearch()),
-  );
-  readonly filteredDomainOptions = computed(() =>
-    this.filterOptions(this.filterOptionsResource.value().domains, this.domainSearch()),
-  );
-  readonly periodOptions = [
-    { value: 'today', label: 'Today' },
-    { value: '24h', label: 'Last 24h' },
-    { value: '7d', label: 'Last 7d' },
-    { value: '30d', label: 'Last 30d' },
   ];
   readonly kpis = computed(() => {
     const item = this.summary();
@@ -209,23 +143,13 @@ export class RealtimeWebRtcDashboardPage {
     ];
   });
 
-  readonly filteredServers = computed(() => {
-    const dashboard = this.dashboard();
-    const search = this.appliedFilters().search.trim().toLowerCase();
-    const status = this.appliedFilters().status;
-    return dashboard.servers.filter((item) => this.matchesTableFilters(item, search, status));
-  });
-  readonly filteredDomains = computed(() => {
-    const dashboard = this.dashboard();
-    const search = this.appliedFilters().search.trim().toLowerCase();
-    const status = this.appliedFilters().status;
-    return dashboard.domains.filter((item) => this.matchesTableFilters(item, search, status));
-  });
+  readonly serverRows = computed(() => this.dashboard().servers);
+  readonly domainRows = computed(() => this.dashboard().domains);
   readonly sortedServers = computed(() =>
-    this.sortRows(this.filteredServers(), this.serverSortActive(), this.serverSortDirection()),
+    this.sortRows(this.serverRows(), this.serverSortActive(), this.serverSortDirection()),
   );
   readonly sortedDomains = computed(() =>
-    this.sortRows(this.filteredDomains(), this.domainSortActive(), this.domainSortDirection()),
+    this.sortRows(this.domainRows(), this.domainSortActive(), this.domainSortDirection()),
   );
   readonly visibleServers = computed(() => {
     const start = this.serverPageIndex() * this.serverPageSize();
@@ -234,18 +158,6 @@ export class RealtimeWebRtcDashboardPage {
   readonly visibleDomains = computed(() => {
     const start = this.domainPageIndex() * this.domainPageSize();
     return this.sortedDomains().slice(start, start + this.domainPageSize());
-  });
-
-  private readonly resetPagesOnDashboardFilter = effect(() => {
-    this.appliedFilters();
-    this.serverPageIndex.set(0);
-    this.domainPageIndex.set(0);
-  });
-
-  private readonly reportFilterOptionsError = effect(() => {
-    const error = this.filterOptionsResource.error();
-    if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load WebRTC dashboard filters.'));
   });
 
   private readonly reportDashboardError = effect(() => {
@@ -293,29 +205,6 @@ export class RealtimeWebRtcDashboardPage {
 
   refreshList() {
     this.dashboardResource.reload();
-    this.filterOptionsResource.reload();
-  }
-
-  applySearchFilters() {
-    this.appliedFilters.set({
-      period: this.period(),
-      serverUUID: this.serverUUID(),
-      domainUUID: this.domainUUID(),
-      scope: this.scope(),
-      search: this.searchInput().trim(),
-      status: this.statusInput(),
-    });
-  }
-
-  clearSearchFilters() {
-    this.period.set('today');
-    this.searchInput.set('');
-    this.statusInput.set('');
-    this.serverUUID.set('');
-    this.domainUUID.set('');
-    this.serverSearch.set('');
-    this.domainSearch.set('');
-    this.applySearchFilters();
   }
 
   metricPercent(item: WebRtcDashboardMetric, items: WebRtcDashboardMetric[]) {
@@ -341,14 +230,6 @@ export class RealtimeWebRtcDashboardPage {
     return Number(value) === 1 || value === true ? 'Yes' : 'No';
   }
 
-  onServerSelectOpened(open: boolean) {
-    if (!open) this.serverSearch.set('');
-  }
-
-  onDomainSelectOpened(open: boolean) {
-    if (!open) this.domainSearch.set('');
-  }
-
   private async fetchDashboardSnapshot(
     params: WebRtcDashboardRequest,
   ): Promise<WebRtcDashboardData> {
@@ -361,53 +242,6 @@ export class RealtimeWebRtcDashboardPage {
       params.scope === 'master',
     );
     return response?.data ?? EMPTY_WEBRTC_DASHBOARD;
-  }
-
-  private async fetchFilterOptions(master: boolean): Promise<DashboardFilterOptions> {
-    try {
-      const [serverResponse, domainResponse] = await Promise.allSettled([
-        master
-          ? this.webrtcApi.list('servers', { limit: this.listLimit }, 'master')
-          : this.webrtcApi.list('servers', { status: 1, limit: this.listLimit }, 'tenant'),
-        this.webrtcApi.list(
-          'domains',
-          { limit: this.listLimit },
-          master ? 'master' : 'tenant',
-        ),
-      ]);
-
-      return {
-        servers: this.items<WebRtcRecord>(serverResponse).map((item) => ({
-          value: item['RwsUUID'],
-          label: `${item['RwsName'] ?? item['label'] ?? item['name'] ?? '-'}${
-            item['RwsEngine'] ? ` (${item['RwsEngine']})` : ''
-          }`,
-        })),
-        domains: this.items<WebRtcRecord>(domainResponse).map((item) => ({
-          value: item['RwdUUID'] ?? item['RealtimeDomainRtdUUID'] ?? item['RtdUUID'],
-          label: item['RtdName'] ?? item['domainName'] ?? item['label'] ?? '-',
-        })),
-      };
-    } catch (error: any) {
-      this.snack.error(error?.error?.error || 'Failed to load WebRTC dashboard filters.');
-      return EMPTY_FILTER_OPTIONS;
-    }
-  }
-
-  private filterOptions(options: SelectOption[], search: string) {
-    const term = search.trim().toLowerCase();
-    return term ? options.filter((option) => option.label.toLowerCase().includes(term)) : options;
-  }
-
-  private matchesTableFilters(
-    item: WebRtcDashboardServer | WebRtcDashboardDomain,
-    search: string,
-    status: string,
-  ) {
-    const itemStatus = Number((item as any).status ?? 0);
-    if (status !== '' && itemStatus !== Number(status)) return false;
-    if (!search) return true;
-    return JSON.stringify(item).toLowerCase().includes(search);
   }
 
   private ratio(value?: number, total?: number) {
