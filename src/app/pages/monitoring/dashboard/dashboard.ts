@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 
+import { AppI18nService } from '../../../services/app-i18n.service';
 import { ApiService } from '../../../services/api.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
@@ -108,6 +109,7 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
 })
 export class MonitoringDashboardPage {
   private readonly api = inject(ApiService);
+  private readonly i18n = inject(AppI18nService);
 
   private readonly dashboardResource = resource({
     defaultValue: EMPTY_DASHBOARD,
@@ -240,6 +242,24 @@ export class MonitoringDashboardPage {
     return 'chip-warning';
   }
 
+  activityLabel(value: string | null | undefined) {
+    const labels: Readonly<Record<string, string>> = {
+      success: 'Success',
+      completed: 'Completed',
+      failed: 'Failed',
+      pending: 'Pending',
+      cancelled: 'Cancelled',
+      info: 'Info',
+      warn: 'Warning',
+      warning: 'Warning',
+      error: 'Error',
+      critical: 'Critical',
+    };
+    this.i18n.language();
+    const key = String(value ?? '').toLowerCase();
+    return this.i18n.t(labels[key] ?? value ?? '-');
+  }
+
   chipClass(value: string | null | undefined) {
     const normalized = String(value ?? 'unknown').toLowerCase();
     if (['success', 'completed', 'online', 'info'].includes(normalized))
@@ -296,8 +316,8 @@ export class MonitoringDashboardPage {
 
   private activitySortValue(row: ActivityLog, column: ActivitySortColumn) {
     if (column === 'created') return row.dateCreated ?? '';
-    if (column === 'level') return row.level ?? '';
-    if (column === 'status') return row.status ?? '';
+    if (column === 'level') return this.activityLabel(row.level);
+    if (column === 'status') return this.activityLabel(row.status);
     if (column === 'action') return row.action ?? '';
     if (column === 'resource') return this.resourceLabel(row);
     if (column === 'message') return row.message ?? '';
