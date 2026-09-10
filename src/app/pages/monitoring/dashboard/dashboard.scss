@@ -1,52 +1,12 @@
 .monitoring-dashboard {
-  .dashboard-content {
+  .monitoring-content {
     position: relative;
     display: grid;
     gap: 1rem;
   }
 
-  .kpi-grid,
-  .dashboard-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .kpi-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .dashboard-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .kpi-tile,
-  .dashboard-panel {
-    border: 1px solid var(--mat-sys-color-outline-variant);
-    border-radius: 8px;
-    background: var(--mat-sys-color-surface);
-  }
-
-  .kpi-tile {
-    display: grid;
-    min-width: 0;
-    gap: 0.35rem;
-    padding: 0.9rem;
-
-    mat-icon {
-      color: var(--dashboard-state-color, var(--mat-sys-color-primary));
-    }
-
-    span,
-    small {
-      color: var(--mat-sys-color-on-surface-variant);
-      font-size: 0.78rem;
-      line-height: 1.1rem;
-    }
-
-    strong {
-      font-size: 1.35rem;
-      line-height: 1.45rem;
-    }
+  .monitoring-state-icon {
+    color: var(--dashboard-state-color);
   }
 
   .state-good {
@@ -65,12 +25,7 @@
     --dashboard-state-color: #93c5fd;
   }
 
-  .dashboard-panel {
-    min-width: 0;
-    padding: 1rem;
-  }
-
-  .panel-header {
+  .monitoring-panel-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -169,109 +124,42 @@
     justify-content: center;
   }
 
-  .table-wrapper {
-    overflow-x: auto;
-
-    .activity-table {
-      width: 100%;
-      min-width: 960px;
-      border-collapse: collapse;
-      color: var(--mat-sys-color-on-surface);
-      background: var(--mat-sys-color-surface-container-lowest);
-
-      th,
-      td {
-        padding: 0.85rem 1rem;
-        border-bottom: 1px solid var(--mat-sys-color-outline-variant);
-        text-align: left;
-        vertical-align: middle;
-      }
-
-      th {
-        color: var(--mat-sys-color-on-surface-variant);
-        font-size: 0.78rem;
-        font-weight: 700;
-      }
-
-      tr:last-child td {
-        border-bottom: 0;
-      }
-    }
-
-    .sort-button {
-      min-width: 0;
-      padding: 0;
-      color: inherit;
-      font: inherit;
-
-      .mdc-button__label {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-      }
-
-      mat-icon {
-        width: 18px;
-        height: 18px;
-        font-size: 18px;
-      }
-    }
-
+  .activity-table {
+    min-width: 800px;
     .mat-column-created {
       width: 150px;
     }
-
     .mat-column-level,
     .mat-column-status {
       width: 112px;
     }
-
     .mat-column-action,
     .mat-column-resource {
-      min-width: 180px;
+      min-width: 150px;
     }
-
     .mat-column-message {
-      min-width: 280px;
+      min-width: 240px;
     }
-
     small {
       display: block;
       margin-top: 0.2rem;
       color: var(--mat-sys-color-on-surface-variant);
       font-size: 0.78rem;
-      line-height: 1.1rem;
-      overflow-wrap: anywhere;
     }
-
     td {
       overflow-wrap: anywhere;
     }
   }
 }
-
-@media (max-width: 1200px) {
-  .monitoring-dashboard {
-    .kpi-grid,
-    .dashboard-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-}
-
 @media (max-width: 900px) {
   .monitoring-dashboard {
-    .kpi-grid,
-    .dashboard-grid,
     .runtime-row {
       grid-template-columns: 1fr;
     }
-
-    .panel-header {
+    .monitoring-panel-header {
       align-items: stretch;
       flex-direction: column;
     }
-
     .metric-row {
       grid-template-columns: 96px minmax(0, 1fr) 40px;
     }

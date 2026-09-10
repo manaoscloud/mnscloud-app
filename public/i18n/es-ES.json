@@ -4118,5 +4118,6 @@
   "Sort the current page": "Ordenación de registros de esta página",
   "Memory": "Memoria",
   "Average": "Promedio",
-  "Network interface": "Interfaz de red"
+  "Network interface": "Interfaz de red",
+  "Showing the last successful update.": "Mostrando la última actualización completada."
 }

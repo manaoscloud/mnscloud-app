@@ -991,3 +991,11 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   retain UUIDs in navigation. Page effects must unregister on cleanup/destroy, and
   dialogs must not override the underlying page breadcrumb. Labels are in memory
   only and rendered as text; unavailable names retain the normal segment fallback.
+
+- The Monitoring Dashboard is refresh-only: no search form or Apply/Clear actions.
+  Keep its operational summaries and sortable/paginated recent activity table.
+  Guard resource values with hasValue(); a derived linkedSignal may retain the last
+  successful snapshot on refresh errors. Initial failures must show an error rather
+  than healthy zero counters. Label retained data and unavailable optional counts.
+  Dashboard HTTP reads use a bounded timeout (30 seconds) so users can retry via
+  the shared refresh button; do not add automatic retry storms.
