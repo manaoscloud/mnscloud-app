@@ -11,203 +11,145 @@
       </div>
     </header>
 
-    @if (activeSection() !== 'dashboard') {
-      <div class="filter-grid">
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
+        <input
+          matInput
+          [formField]="filterForm.search"
+          [placeholder]="'IP, agent, service, profile' | transloco"
+        />
+      </mat-form-field>
+
+      @if (activeSection() === 'alerts' || activeSection() === 'decisions') {
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'Search' | transloco }}</mat-label>
+          <mat-label>{{ 'Server' | transloco }}</mat-label>
+          <mat-select
+            [formField]="filterForm.serverUUID"
+            (openedChange)="clearAlertServerSearch($event)"
+          >
+            <mat-option class="select-search-option" disabled>
+              <input
+                matInput
+                class="select-search-field"
+                [placeholder]="'Search server' | transloco"
+                [value]="alertServerSearch()"
+                (input)="alertServerSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+              />
+            </mat-option>
+            <mat-option value="">{{ 'All servers' | transloco }}</mat-option>
+            @for (server of filteredAlertServers(); track serverOptionValue(server)) {
+              <mat-option [value]="serverOptionValue(server)">
+                {{ serverLabel(server) }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Status' | transloco }}</mat-label>
+          <mat-select [formField]="filterForm.status">
+            <mat-option value="">{{ 'All statuses' | transloco }}</mat-option>
+            @if (activeSection() === 'alerts') {
+              <mat-option value="open">{{ 'Open' | transloco }}</mat-option>
+              <mat-option value="acknowledged">{{ 'Acknowledged' | transloco }}</mat-option>
+              <mat-option value="resolved">{{ 'Resolved' | transloco }}</mat-option>
+              <mat-option value="ignored">{{ 'Ignored' | transloco }}</mat-option>
+            } @else {
+              <mat-option value="active">{{ 'Active' | transloco }}</mat-option>
+              <mat-option value="expired">{{ 'Expired' | transloco }}</mat-option>
+              <mat-option value="removed">{{ 'Removed' | transloco }}</mat-option>
+              <mat-option value="pending">{{ 'Pending' | transloco }}</mat-option>
+              <mat-option value="failed">{{ 'Failed' | transloco }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (activeSection() === 'alerts') {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Level' | transloco }}</mat-label>
+            <mat-select [formField]="filterForm.level">
+              <mat-option value="">{{ 'All levels' | transloco }}</mat-option>
+              <mat-option value="info">{{ 'Info' | transloco }}</mat-option>
+              <mat-option value="warning">{{ 'Warning' | transloco }}</mat-option>
+              <mat-option value="error">{{ 'Error' | transloco }}</mat-option>
+              <mat-option value="critical">{{ 'Critical' | transloco }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        } @else {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Action' | transloco }}</mat-label>
+            <mat-select [formField]="filterForm.action">
+              <mat-option value="">{{ 'All actions' | transloco }}</mat-option>
+              <mat-option value="ban">{{ 'Ban' | transloco }}</mat-option>
+              <mat-option value="allow">{{ 'Allow' | transloco }}</mat-option>
+              <mat-option value="captcha">{{ 'Captcha' | transloco }}</mat-option>
+              <mat-option value="none">{{ 'None' | transloco }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Service' | transloco }}</mat-label>
+          <mat-select
+            [formField]="filterForm.serviceSlug"
+            (openedChange)="clearAlertServiceSearch($event)"
+          >
+            <mat-option class="select-search-option" disabled>
+              <input
+                matInput
+                class="select-search-field"
+                [placeholder]="'Search service' | transloco"
+                [value]="alertServiceSearch()"
+                (input)="alertServiceSearch.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+              />
+            </mat-option>
+            <mat-option value="">{{ 'All services' | transloco }}</mat-option>
+            @for (service of filteredAlertServices(); track service.uuid || service.slug) {
+              <mat-option [value]="service.slug">{{ service.name || service.slug }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Origin' | transloco }}</mat-label>
           <input
             matInput
-            [formField]="filterForm.search"
-            [placeholder]="'IP, agent, service, profile' | transloco"
+            [formField]="filterForm.sourceIP"
+            [placeholder]="'Source IP' | transloco"
           />
         </mat-form-field>
 
-        @if (activeSection() === 'alerts' || activeSection() === 'decisions') {
+        @if (activeSection() === 'decisions') {
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'Server' | transloco }}</mat-label>
-            <mat-select
-              [formField]="filterForm.serverUUID"
-              (openedChange)="clearAlertServerSearch($event)"
-            >
-              <mat-option class="select-search-option" disabled>
-                <input
-                  matInput
-                  class="select-search-field"
-                  [placeholder]="'Search server' | transloco"
-                  [value]="alertServerSearch()"
-                  (input)="alertServerSearch.set($any($event.target).value)"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                />
-              </mat-option>
-              <mat-option value="">{{ 'All servers' | transloco }}</mat-option>
-              @for (server of filteredAlertServers(); track serverOptionValue(server)) {
-                <mat-option [value]="serverOptionValue(server)">
-                  {{ serverLabel(server) }}
-                </mat-option>
-              }
+            <mat-label>{{ 'Source' | transloco }}</mat-label>
+            <mat-select [formField]="filterForm.origin">
+              <mat-option value="">{{ 'All sources' | transloco }}</mat-option>
+              <mat-option value="crowdsec">CrowdSec</mat-option>
+              <mat-option value="manual">{{ 'Manual' | transloco }}</mat-option>
+              <mat-option value="import">{{ 'Import' | transloco }}</mat-option>
+              <mat-option value="system">{{ 'System' | transloco }}</mat-option>
             </mat-select>
           </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'Status' | transloco }}</mat-label>
-            <mat-select [formField]="filterForm.status">
-              <mat-option value="">{{ 'All statuses' | transloco }}</mat-option>
-              @if (activeSection() === 'alerts') {
-                <mat-option value="open">{{ 'Open' | transloco }}</mat-option>
-                <mat-option value="acknowledged">{{ 'Acknowledged' | transloco }}</mat-option>
-                <mat-option value="resolved">{{ 'Resolved' | transloco }}</mat-option>
-                <mat-option value="ignored">{{ 'Ignored' | transloco }}</mat-option>
-              } @else {
-                <mat-option value="active">{{ 'Active' | transloco }}</mat-option>
-                <mat-option value="expired">{{ 'Expired' | transloco }}</mat-option>
-                <mat-option value="removed">{{ 'Removed' | transloco }}</mat-option>
-                <mat-option value="pending">{{ 'Pending' | transloco }}</mat-option>
-                <mat-option value="failed">{{ 'Failed' | transloco }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          @if (activeSection() === 'alerts') {
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'Level' | transloco }}</mat-label>
-              <mat-select [formField]="filterForm.level">
-                <mat-option value="">{{ 'All levels' | transloco }}</mat-option>
-                <mat-option value="info">{{ 'Info' | transloco }}</mat-option>
-                <mat-option value="warning">{{ 'Warning' | transloco }}</mat-option>
-                <mat-option value="error">{{ 'Error' | transloco }}</mat-option>
-                <mat-option value="critical">{{ 'Critical' | transloco }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          } @else {
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'Action' | transloco }}</mat-label>
-              <mat-select [formField]="filterForm.action">
-                <mat-option value="">{{ 'All actions' | transloco }}</mat-option>
-                <mat-option value="ban">{{ 'Ban' | transloco }}</mat-option>
-                <mat-option value="allow">{{ 'Allow' | transloco }}</mat-option>
-                <mat-option value="captcha">{{ 'Captcha' | transloco }}</mat-option>
-                <mat-option value="none">{{ 'None' | transloco }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          }
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'Service' | transloco }}</mat-label>
-            <mat-select
-              [formField]="filterForm.serviceSlug"
-              (openedChange)="clearAlertServiceSearch($event)"
-            >
-              <mat-option class="select-search-option" disabled>
-                <input
-                  matInput
-                  class="select-search-field"
-                  [placeholder]="'Search service' | transloco"
-                  [value]="alertServiceSearch()"
-                  (input)="alertServiceSearch.set($any($event.target).value)"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                />
-              </mat-option>
-              <mat-option value="">{{ 'All services' | transloco }}</mat-option>
-              @for (service of filteredAlertServices(); track service.uuid || service.slug) {
-                <mat-option [value]="service.slug">{{ service.name || service.slug }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'Origin' | transloco }}</mat-label>
-            <input
-              matInput
-              [formField]="filterForm.sourceIP"
-              [placeholder]="'Source IP' | transloco"
-            />
-          </mat-form-field>
-
-          @if (activeSection() === 'decisions') {
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'Source' | transloco }}</mat-label>
-              <mat-select [formField]="filterForm.origin">
-                <mat-option value="">{{ 'All sources' | transloco }}</mat-option>
-                <mat-option value="crowdsec">CrowdSec</mat-option>
-                <mat-option value="manual">{{ 'Manual' | transloco }}</mat-option>
-                <mat-option value="import">{{ 'Import' | transloco }}</mat-option>
-                <mat-option value="system">{{ 'System' | transloco }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          }
         }
+      }
 
-        <div class="filter-actions">
-          <button mat-stroked-button type="button" (click)="applyFilters()">
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applyFilters()">
           <mat-icon>filter_alt</mat-icon>
           {{ 'Apply' | transloco }}
         </button>
-          <button mat-stroked-button type="button" (click)="clearFilters()">
+        <button mat-stroked-button type="button" (click)="clearFilters()">
           <mat-icon>backspace</mat-icon>
           {{ 'Clear' | transloco }}
         </button>
-        </div>
       </div>
-    }
+    </div>
     @switch (activeSection()) {
-      @case ('dashboard') {
-        <div class="dashboard-content" [class.is-loading]="loading()">
-          @if (loading()) {
-            <div class="table-loading" aria-live="polite" aria-busy="true">
-              <mat-progress-spinner diameter="36" mode="indeterminate" />
-            </div>
-          }
-
-          <div class="kpi-grid">
-            @for (item of dashboardKpis(); track item.label) {
-              <article class="kpi-tile">
-                <mat-icon>{{ item.icon }}</mat-icon>
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-              </article>
-            }
-          </div>
-
-          <div class="dashboard-grid">
-            <section class="dashboard-panel">
-              <h2>Operational posture</h2>
-              @for (item of postureMetrics(); track item.label) {
-                <div class="metric-row">
-                  <span>{{ item.label }}</span>
-                  <div class="metric-track">
-                    <i [style.width.%]="item.percent"></i>
-                  </div>
-                  <strong>{{ item.value }}</strong>
-                </div>
-              }
-            </section>
-
-            <section class="dashboard-panel">
-              <h2>Next actions</h2>
-              <div class="action-list">
-                <a [routerLink]="routeFor('servers')">
-                  <mat-icon>dns</mat-icon>
-                  <span>Review server protection</span>
-                </a>
-                <a [routerLink]="routeFor('profiles')">
-                  <mat-icon>shield</mat-icon>
-                  <span>Maintain security profiles</span>
-                </a>
-                <a [routerLink]="routeFor('alerts')">
-                  <mat-icon>notification_important</mat-icon>
-                  <span>Investigate open alerts</span>
-                </a>
-                <a [routerLink]="routeFor('trusted-nodes')">
-                  <mat-icon>hub</mat-icon>
-                  <span>Review trusted nodes</span>
-                </a>
-              </div>
-            </section>
-          </div>
-        </div>
-      }
       @case ('servers') {
         <section class="activity-panel">
           <div class="section-toolbar">
@@ -417,7 +359,7 @@
                 <td mat-cell *matCellDef="let row">
                   {{
                     row.startedAt || row.dateCreated
-                      ? ((row.startedAt || row.dateCreated) | mnsDateTime)
+                      ? (row.startedAt || row.dateCreated | mnsDateTime)
                       : '-'
                   }}
                 </td>
@@ -532,7 +474,7 @@
                 <td mat-cell *matCellDef="let row">
                   {{
                     row.detectedAt || row.dateCreated
-                      ? ((row.detectedAt || row.dateCreated) | mnsDateTime)
+                      ? (row.detectedAt || row.dateCreated | mnsDateTime)
                       : '-'
                   }}
                 </td>
@@ -752,7 +694,9 @@
           <header>
             <div>
               <strong>{{ job.command }}</strong>
-              <small>{{ job.dateCreated ? (job.dateCreated | mnsDateTime: 'medium': 'medium') : '-' }}</small>
+              <small>{{
+                job.dateCreated ? (job.dateCreated | mnsDateTime: 'medium' : 'medium') : '-'
+              }}</small>
             </div>
             <span class="status-chip" [ngClass]="chipClass(job.status)">
               {{ job.status }}
@@ -842,14 +786,16 @@
             <strong>
               {{
                 decision.startedAt || decision.dateCreated
-                  ? ((decision.startedAt || decision.dateCreated) | mnsDateTime: 'medium': 'medium')
+                  ? (decision.startedAt || decision.dateCreated | mnsDateTime: 'medium' : 'medium')
                   : '-'
               }}
             </strong>
           </div>
           <div>
             <span>Expires</span>
-            <strong>{{ decision.expiresAt ? (decision.expiresAt | mnsDateTime: 'medium': 'medium') : '-' }}</strong>
+            <strong>{{
+              decision.expiresAt ? (decision.expiresAt | mnsDateTime: 'medium' : 'medium') : '-'
+            }}</strong>
           </div>
           <div class="full">
             <span>Scenario</span>
@@ -893,7 +839,7 @@
               alert.enforcementAction || alert.enforcementStatus || '-' | transloco
             }}</strong>
             @if (alert.enforcementExpiresAt) {
-              <small>{{ alert.enforcementExpiresAt | mnsDateTime: 'medium': 'medium' }}</small>
+              <small>{{ alert.enforcementExpiresAt | mnsDateTime: 'medium' : 'medium' }}</small>
             }
           </div>
           <div>

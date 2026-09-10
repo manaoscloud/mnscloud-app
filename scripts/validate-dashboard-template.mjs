@@ -48,6 +48,17 @@ for (const file of files) {
   if (/\bstyleUrls?\s*:|\bstyles\s*:/.test(source) || existsSync(file.replace(/\.ts$/, '.scss')))
     errors.push(`${name}: reusable presentation belongs in shared styles`);
 }
+const realtime = readFileSync(
+  join(root, 'src/app/pages/realtime/dashboard/dashboard.html'),
+  'utf8',
+);
+if (
+  (realtime.match(/<mns-dashboard-record-list\b/g) || []).length !== 2 ||
+  /inventory-row|<dl\b/.test(realtime)
+)
+  errors.push(
+    'Realtime inventory and certificate panels must consume the shared record-list component',
+  );
 const shell = readFileSync(join(root, 'src/app/shared/dashboard/dashboard-page.ts'), 'utf8');
 if (/dashboard-context|Last updated|readonly context|readonly updatedAt/.test(shell))
   errors.push('Dashboard shell must not render a metadata/context strip');

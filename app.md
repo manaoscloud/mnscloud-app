@@ -340,9 +340,17 @@
   - Validate `npm run check:dashboard`, dashboard state tests and `npm run build`; verify desktop and
     mobile, light/dark themes, PT/EN/ES, empty/populated/error/reload and master/tenant behavior.
     The dashboard validator is separate from the CRUD filter contract and runs in changed-app CI.
-  - Current adoption: the 17 `pages/**/dashboard/dashboard.ts` summary pages use this shell.
-    `pages/cyber-security/cyber-security.ts` still mixes its legacy summary and operational sections
-    and does not yet inherit `DashboardPageComponent`; do not report it as migrated.
+  - Current adoption: all 18 `pages/**/dashboard/dashboard.ts` summary pages use this shell,
+    including tenant/master Cyber Security. Operational Cyber Security sections retain their own
+    routes and controls; their forms are not projected into the dashboard.
+  - Read-only record inventories use `DashboardRecordListComponent` from `shared/dashboard`.
+    Pass a title, items and empty label; each item provides identity, status/tone and typed details.
+    Dates declare `format: 'datetime'`; only enum values declare `translate: true`. Never infer
+    formatting from a label or translate hostnames, addresses, versions or other raw data.
+    The component owns markup and shared styles own presentation; pages only map authorized data.
+    Realtime overview, Media and TURN share this component for inventory/certificate/domain panels.
+  - Editing the shared shell updates every consumer automatically. Only remove obsolete bindings
+    when its public inputs change; never copy a shell into pages to apply a visual adjustment.
 - Table behavior:
   - Standard list pages use signal-first tables:
     `<table mat-table [dataSource]="visibleRows()" matSort ...>`.

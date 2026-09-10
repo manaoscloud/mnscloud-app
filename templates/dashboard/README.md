@@ -23,3 +23,7 @@ return a bounded inventory window, document that limitation in the module contra
 Run npm run check:dashboard, npm run build and the dashboard state tests. Validate
 light/dark themes, PT/EN/ES, desktop/mobile, populated/empty/error/reload states and
 master/tenant isolation. Development rollout precedes production approval.
+
+Use DashboardRecordListComponent for record inventories and status/detail panels. Supply typed
+details (text/datetime), explicit enum translation and semantic status tones. Keep API requests
+and domain mapping in the page/service; reuse component markup and shared styles.
