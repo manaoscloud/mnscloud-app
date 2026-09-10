@@ -1076,3 +1076,11 @@ structure propagate to both consumers. Scaffolds in `templates/detail-page` and
   these templates. Schema/API changes and production deployment are separate scopes.
 - Validate both consumers at desktop/mobile widths, translated labels and light/dark themes;
   verify no detail edit footer, settings dirty/cancel/save/refresh behavior and unchanged dialog.
+
+## Supported Hosting DNS platforms
+
+Create/edit and platform filters expose only cPanel DNSOnly (`cpanel_dnsonly`) and
+Amazon Route 53 (`route53`). Consume the authorized API catalog; the bounded fallback
+catalog contains these same two options. Unsupported values from an older API must not
+reappear in dropdowns. cPanel is the explicit initial form selection; API/DB validate the
+submitted platform. Preserve scope, required credentials, templates and connection tests.
