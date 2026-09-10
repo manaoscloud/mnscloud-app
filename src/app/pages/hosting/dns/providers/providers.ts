@@ -107,7 +107,7 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     name: '',
     scope: 'TENANT',
-    provider: 'manual',
+    provider: 'cpanel_dnsonly',
     isDefault: 0,
     status: 1,
     apiEndpoint: '',
@@ -355,7 +355,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    const provider = String(payload['provider'] ?? 'manual');
+    const provider = String(payload['provider'] ?? '');
 
     return {
       name: payload['name'],
@@ -384,7 +384,8 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       const response = await this.api.get<{ data?: { items?: HostingDnsProviderCatalogItem[] } }>(
         `${this.endpoint()}/catalog`,
       );
-      const items = response?.data?.items ?? [];
+      const items = (response?.data?.items ?? []).filter((item) =>
+        item.value === 'route53' || item.value === 'cpanel_dnsonly');
       this.catalog.set(items.length ? items : fallbackCatalog());
     } catch (error) {
       this.catalog.set(fallbackCatalog());
@@ -495,18 +496,18 @@ function providerCatalogDescription(item: HostingDnsProviderCatalogItem): string
 }
 
 function providerUsesField(field: HostingDnsProviderCredentialField, provider: unknown): boolean {
-  return fallbackCredentialFields(String(provider ?? 'manual')).includes(field);
+  return fallbackCredentialFields(String(provider ?? '')).includes(field);
 }
 
 function providerRequiresField(
   field: HostingDnsProviderCredentialField,
   provider: unknown,
 ): boolean {
-  return fallbackRequiredCredentialFields(String(provider ?? 'manual')).includes(field);
+  return fallbackRequiredCredentialFields(String(provider ?? '')).includes(field);
 }
 
 function providerFieldLabel(field: HostingDnsProviderCredentialField, provider: unknown): string {
-  const normalizedProvider = String(provider ?? 'manual');
+  const normalizedProvider = String(provider ?? '');
   if (normalizedProvider === 'route53') {
     const labels: Partial<Record<HostingDnsProviderCredentialField, string>> = {
       accessKey: 'AWS access key ID',
@@ -543,94 +544,31 @@ function genericProviderFieldLabel(field: HostingDnsProviderCredentialField): st
 
 function fallbackCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53':
-      return ['accessKey', 'secret', 'region', 'hostedZoneID', 'defaultTtl'];
-    case 'cpanel_dnsonly':
-      return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
-    case 'manual':
-    case 'google_domains':
-      return ['defaultTtl'];
-    case 'cloudflare':
-      return ['secret', 'defaultTtl', 'verifyTls'];
-    case 'godaddy':
-    case 'locaweb':
-    case 'hostinger':
-      return ['accessKey', 'secret', 'defaultTtl'];
-    case 'namecheap':
-      return ['apiEndpoint', 'accessKey', 'secret'];
-    case 'hostgator':
-    case 'kinghost':
-    case 'bluehost':
-      return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
-    case 'registro_br':
-    case 'enom':
-    case 'resellerclub':
-      return ['accessKey', 'secret'];
-    default:
-      return [
-        'apiEndpoint',
-        'accessKey',
-        'secret',
-        'region',
-        'hostedZoneID',
-        'defaultTtl',
-        'verifyTls',
-      ];
+    case 'route53': return ['accessKey', 'secret', 'region', 'hostedZoneID', 'defaultTtl'];
+    case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
+    default: return [];
   }
 }
 
 function fallbackRequiredCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53':
-      return ['accessKey', 'secret', 'hostedZoneID'];
-    case 'cpanel_dnsonly':
-      return ['apiEndpoint', 'accessKey', 'secret'];
-    case 'manual':
-    case 'google_domains':
-    case 'hostgator':
-    case 'kinghost':
-    case 'bluehost':
-      return [];
-    case 'cloudflare':
-      return ['secret'];
-    case 'namecheap':
-    case 'godaddy':
-    case 'locaweb':
-    case 'hostinger':
-    case 'registro_br':
-    case 'enom':
-    case 'resellerclub':
-      return ['accessKey', 'secret'];
-    default:
-      return [];
+    case 'route53': return ['accessKey', 'secret', 'hostedZoneID'];
+    case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret'];
+    default: return [];
   }
 }
 
 function fallbackCatalog(): HostingDnsProviderCatalogItem[] {
   return [
-    'registro_br',
-    'cloudflare',
-    'godaddy',
-    'namecheap',
-    'enom',
-    'resellerclub',
-    'hostgator',
-    'locaweb',
-    'kinghost',
-    'hostinger',
-    'bluehost',
-    'route53',
-    'cpanel_dnsonly',
-    'google_domains',
-    'manual',
-  ].map((value) => ({
-    value,
-    label: value,
-    supportsApi: value !== 'manual',
+    { value: 'cpanel_dnsonly', label: 'cPanel DNSOnly' },
+    { value: 'route53', label: 'Amazon Route 53' },
+  ].map((item) => ({
+    ...item,
+    supportsApi: true,
     supportsDns: true,
-    supportsRegistration: false,
-    credentialFields: fallbackCredentialFields(value),
-    requiredCredentialFields: fallbackRequiredCredentialFields(value),
+    supportsRegistration: item.value === 'route53',
+    credentialFields: fallbackCredentialFields(item.value),
+    requiredCredentialFields: fallbackRequiredCredentialFields(item.value),
   }));
 }
 
