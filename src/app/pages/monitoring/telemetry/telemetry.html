@@ -27,10 +27,11 @@
         <mat-option class="select-search-option" disabled>
           <input
             class="select-search-field"
+            aria-disabled="false"
             [placeholder]="'Search' | transloco"
             [value]="resourceSearch()"
             (input)="resourceSearch.set($any($event.target).value)"
-            (keydown)="$event.stopPropagation()"
+            (keydown)="$event.key !== 'Escape' && $event.stopPropagation()"
             (click)="$event.stopPropagation()"
           />
         </mat-option>
