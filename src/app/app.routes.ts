@@ -280,7 +280,9 @@ export const routes: Routes = [
               {
                 path: 'cyber-security',
                 loadComponent: () =>
-                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
+                  import('./pages/cyber-security/dashboard/dashboard').then(
+                    (m) => m.CyberSecurityDashboardPage,
+                  ),
                 title: 'Cyber Security | mnscloud',
               },
               {
@@ -330,6 +332,11 @@ export const routes: Routes = [
                     (m) => m.CyberSecuritySecretAccountsPage,
                   ),
                 title: 'Cyber Security • Secret Accounts | mnscloud',
+              },
+              {
+                path: 'cyber-security/dashboard',
+                redirectTo: 'cyber-security',
+                pathMatch: 'full',
               },
               {
                 path: 'cyber-security/:section',
@@ -1423,7 +1430,9 @@ export const routes: Routes = [
               {
                 path: 'cyber-security',
                 loadComponent: () =>
-                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
+                  import('./pages/cyber-security/dashboard/dashboard').then(
+                    (m) => m.CyberSecurityDashboardPage,
+                  ),
                 title: 'System Cyber Security | mnscloud',
                 data: { scope: 'master' },
               },
@@ -1489,6 +1498,11 @@ export const routes: Routes = [
                   ),
                 title: 'System Cyber Security • Secret Servers | mnscloud',
                 data: { scope: 'master' },
+              },
+              {
+                path: 'cyber-security/dashboard',
+                redirectTo: 'cyber-security',
+                pathMatch: 'full',
               },
               {
                 path: 'cyber-security/:section',

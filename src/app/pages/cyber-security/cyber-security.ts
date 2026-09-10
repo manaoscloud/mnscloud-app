@@ -146,7 +146,6 @@ type CyberFilters = {
 };
 
 type CyberSnapshot = {
-  dashboard: CyberRecord;
   servers: CyberRecord[];
   services: CyberRecord[];
   profiles: CyberRecord[];
@@ -163,7 +162,6 @@ type CyberResourceParams = {
 };
 
 const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
-  dashboard: {},
   servers: [],
   services: [],
   profiles: [],
@@ -227,7 +225,7 @@ export class CyberSecurityPage {
     action: '',
     origin: '',
   });
-  readonly activeSection = signal<CyberSection>('dashboard');
+  readonly activeSection = signal<CyberSection>('servers');
   private readonly cyberResource = resource({
     params: (): CyberResourceParams => ({
       section: this.activeSection(),
@@ -238,7 +236,6 @@ export class CyberSecurityPage {
   });
 
   readonly loading = this.cyberResource.isLoading;
-  readonly dashboard = signal<CyberRecord>({});
   readonly servers = signal<CyberRecord[]>([]);
   readonly services = signal<CyberRecord[]>([]);
   readonly profiles = signal<CyberRecord[]>([]);
@@ -271,7 +268,6 @@ export class CyberSecurityPage {
 
   private readonly syncCyberData = effect(() => {
     const snapshot = this.cyberResource.value();
-    this.dashboard.set(snapshot.dashboard);
     this.servers.set(snapshot.servers);
     this.services.set(snapshot.services);
     this.profiles.set(snapshot.profiles);
@@ -296,12 +292,6 @@ export class CyberSecurityPage {
     icon: string;
     description: string;
   }> = [
-    {
-      key: 'dashboard',
-      label: 'Dashboard',
-      icon: 'dashboard',
-      description: 'Security posture and operational priorities.',
-    },
     {
       key: 'servers',
       label: 'Servers',
@@ -355,67 +345,6 @@ export class CyberSecurityPage {
   readonly currentSection = computed(
     () => this.sections.find((section) => section.key === this.activeSection()) ?? this.sections[0],
   );
-  readonly dashboardKpis = computed(() => {
-    const item = this.dashboard();
-    return [
-      {
-        label: 'Protected coverage',
-        value: this.ratio(item.protectedServers, item.servers),
-        icon: 'admin_panel_settings',
-      },
-      {
-        label: 'Needs attention',
-        value: this.number(item.attentionServers),
-        icon: 'report_problem',
-      },
-      {
-        label: 'Open alerts',
-        value: this.number(item.openAlerts),
-        icon: 'notification_important',
-      },
-      {
-        label: 'Active decisions',
-        value: this.number(item.activeDecisions),
-        icon: 'gavel',
-      },
-      {
-        label: 'Trusted nodes',
-        value: this.number(item.trustedNodes),
-        icon: 'hub',
-      },
-      {
-        label: 'Events 24h',
-        value: this.number(item.securityEvents24h),
-        icon: 'manage_search',
-      },
-    ];
-  });
-  readonly postureMetrics = computed(() => {
-    const item = this.dashboard();
-    const total = Number(item.servers ?? 0);
-    return [
-      {
-        label: 'Servers enrolled',
-        value: this.number(item.servers),
-        percent: total > 0 ? 100 : 0,
-      },
-      {
-        label: 'Protected servers',
-        value: this.number(item.protectedServers),
-        percent: this.percent(item.protectedServers, item.servers),
-      },
-      {
-        label: 'Needs attention',
-        value: this.number(item.attentionServers),
-        percent: this.percent(item.attentionServers, item.servers),
-      },
-      {
-        label: 'Open alerts',
-        value: this.number(item.openAlerts),
-        percent: this.percent(item.openAlerts, item.servers || item.openAlerts),
-      },
-    ];
-  });
   readonly filteredProfiles = computed(() => {
     const search = this.serverProfileSearch().trim().toLowerCase();
     if (!search) return this.profiles();
@@ -550,7 +479,7 @@ export class CyberSecurityPage {
     const base = this.router.url.startsWith('/system/cyber-security')
       ? '/system/cyber-security'
       : '/cyber-security';
-    return section === 'dashboard' ? base : `${base}/${section}`;
+    return `${base}/${section}`;
   }
 
   refreshList() {
@@ -559,7 +488,6 @@ export class CyberSecurityPage {
 
   private emptyCyberSnapshot(): CyberSnapshot {
     return {
-      dashboard: {},
       servers: [],
       services: [],
       profiles: [],
@@ -581,11 +509,6 @@ export class CyberSecurityPage {
     const alertQuery = this.alertQueryString(filters);
 
     switch (section) {
-      case 'dashboard': {
-        const dashboard = await this.api.get<any>('cyber-security/dashboard');
-        snapshot.dashboard = dashboard?.data ?? {};
-        return snapshot;
-      }
       case 'servers': {
         const [servers, profiles] = await Promise.all([
           this.api.get<any>(`cyber-security/servers${query}`),
@@ -997,29 +920,14 @@ export class CyberSecurityPage {
   }
 
   private normalizeSection(value: string | null): CyberSection {
-    const section = value || 'dashboard';
+    const section = value || 'servers';
     return this.sections.some((item) => item.key === section)
       ? (section as CyberSection)
-      : 'dashboard';
-  }
-
-  private number(value: unknown) {
-    return String(Number(value ?? 0));
-  }
-
-  private ratio(value: unknown, total: unknown) {
-    return `${Number(value ?? 0)}/${Number(total ?? 0)}`;
-  }
-
-  private percent(value: unknown, total: unknown) {
-    const denominator = Number(total ?? 0);
-    if (!denominator) return 0;
-    return Math.min(100, Math.round((Number(value ?? 0) / denominator) * 100));
+      : 'servers';
   }
 }
 
 type CyberSection =
-  | 'dashboard'
   | 'servers'
   | 'profiles'
   | 'decisions'

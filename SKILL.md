@@ -24,6 +24,9 @@ Use this repository as an independent public frontend client for the MNSCloud AP
   primitive is missing, add it there first so every consumer inherits later improvements. Never
   create a page-local duplicate. Dashboards have no local SCSS or inline styles; use
   `src/styles/_dashboard.scss` and existing shared helpers.
+- Dashboard record inventories must reuse `DashboardRecordListComponent`; provide typed dates and
+  explicit enum translation while keeping raw names/addresses unchanged. Realtime inventory and
+  certificate panels share this renderer. Cyber Security summary routes use the shared shell.
 - Run `npm run check:dashboard` for dashboard work, plus the state tests and visual checks specified
   in app.md. Never treat missing/failed data as a healthy zero or reuse a snapshot across tenants.
 - CRUD list filters must use the canonical filter row from `app.md`: `Search` as the first

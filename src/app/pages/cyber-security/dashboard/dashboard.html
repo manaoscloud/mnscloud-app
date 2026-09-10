@@ -1,0 +1,43 @@
+<mns-dashboard-page
+  [title]="'Cyber Security'"
+  [description]="'Security posture and operational priorities.'"
+  [loading]="snapshot.isLoading()"
+  [error]="snapshot.error()"
+  [hasData]="snapshot.hasData()"
+  (refresh)="snapshot.reload()"
+>
+  <div class="dashboard-grid">
+    @for (item of dashboardKpis(); track item.label) {
+      <article class="dashboard-metric">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <div>
+          <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+          <strong class="dashboard-metric-value">{{ item.value }}</strong>
+        </div>
+      </article>
+    }
+  </div>
+  <div class="dashboard-sections">
+    <section class="dashboard-panel">
+      <h2>{{ 'Operational posture' | transloco }}</h2>
+      @for (item of postureMetrics(); track item.label) {
+        <div class="metric-row">
+          <span>{{ item.label | transloco }}</span>
+          <div class="metric-track" aria-hidden="true"><i [style.width.%]="item.percent"></i></div>
+          <strong>{{ item.value }}</strong>
+        </div>
+      }
+    </section>
+    <section class="dashboard-panel">
+      <h2>{{ 'Next actions' | transloco }}</h2>
+      <nav class="dashboard-navigation" [attr.aria-label]="'Next actions' | transloco">
+        @for (action of actions; track action.section) {
+          <a [routerLink]="routeFor(action.section)"
+            ><mat-icon>{{ action.icon }}</mat-icon
+            ><span>{{ action.label | transloco }}</span></a
+          >
+        }
+      </nav>
+    </section>
+  </div>
+</mns-dashboard-page>

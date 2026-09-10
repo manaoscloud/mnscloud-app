@@ -21,100 +21,17 @@
       }
     </div>
 
-    <div class="inventory-grid">
-      <section class="dashboard-panel">
-        <h2>{{ primaryTitle() | transloco }}</h2>
-        @if (primaryRows().length) {
-          <div class="inventory-list">
-            @for (row of primaryRows(); track rowTrack($index, row)) {
-              <article class="inventory-row">
-                <div class="inventory-title">
-                  <div>
-                    <strong>{{ row.name }}</strong>
-                    <span>{{ row.meta }}</span>
-                  </div>
-                  <span
-                    class="status-pill status-chip state-chip"
-                    [class]="row.statusClass"
-                    [class.is-active]="row.statusClass === 'chip-success'"
-                    [class.is-inactive]="row.statusClass !== 'chip-success'"
-                  >
-                    {{ row.status | transloco }}
-                  </span>
-                </div>
-
-                <dl>
-                  @for (detail of row.details; track detail.label) {
-                    <div>
-                      <dt>{{ detail.label | transloco }}</dt>
-                      <dd>
-                        @if (
-                          detail.label === 'Last Seen' ||
-                          detail.label === 'Last Sync' ||
-                          detail.label === 'Updated'
-                        ) {
-                          {{ detail.value ? (detail.value | mnsDateTime) : '-' }}
-                        } @else {
-                          {{ detail.value | transloco }}
-                        }
-                      </dd>
-                    </div>
-                  }
-                </dl>
-              </article>
-            }
-          </div>
-        } @else {
-          <p class="empty-state">{{ noPrimaryLabel() | transloco }}</p>
-        }
-      </section>
-
-      <section class="dashboard-panel">
-        <h2>{{ secondaryTitle() | transloco }}</h2>
-        @if (secondaryRows().length) {
-          <div class="inventory-list">
-            @for (row of secondaryRows(); track rowTrack($index, row)) {
-              <article class="inventory-row">
-                <div class="inventory-title">
-                  <div>
-                    <strong>{{ row.name }}</strong>
-                    <span>{{ row.meta | transloco }}</span>
-                  </div>
-                  <span
-                    class="status-pill status-chip state-chip"
-                    [class]="row.statusClass"
-                    [class.is-active]="row.statusClass === 'chip-success'"
-                    [class.is-inactive]="row.statusClass !== 'chip-success'"
-                  >
-                    {{ row.status | transloco }}
-                  </span>
-                </div>
-
-                <dl>
-                  @for (detail of row.details; track detail.label) {
-                    <div>
-                      <dt>{{ detail.label | transloco }}</dt>
-                      <dd>
-                        @if (
-                          detail.label === 'Last Seen' ||
-                          detail.label === 'Last Sync' ||
-                          detail.label === 'Updated'
-                        ) {
-                          {{ detail.value ? (detail.value | mnsDateTime) : '-' }}
-                        } @else {
-                          {{ detail.value | transloco }}
-                        }
-                      </dd>
-                    </div>
-                  }
-                </dl>
-              </article>
-            }
-          </div>
-        } @else {
-          <p class="empty-state">{{ noSecondaryLabel() | transloco }}</p>
-        }
-      </section>
+    <div class="dashboard-sections">
+      <mns-dashboard-record-list
+        [title]="primaryTitle()"
+        [items]="primaryRows()"
+        [emptyLabel]="noPrimaryLabel()"
+      />
+      <mns-dashboard-record-list
+        [title]="secondaryTitle()"
+        [items]="secondaryRows()"
+        [emptyLabel]="noSecondaryLabel()"
+      />
     </div>
   </div>
 </mns-dashboard-page>

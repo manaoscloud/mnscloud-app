@@ -5,7 +5,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { SnackbarService } from '../../../services/snackbar.service';
-import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import {
+  DashboardRecordListComponent,
+  type DashboardRecord,
+} from '../../../shared/dashboard/dashboard-record-list';
 import { DashboardPageComponent } from '../../../shared/dashboard/dashboard-page';
 import { RealtimeDashboardRecord, RealtimeDashboardService } from './dashboard.service';
 
@@ -29,13 +32,7 @@ type KpiTile = {
   icon: string;
 };
 
-type InventoryRow = {
-  status: string;
-  name: string;
-  meta: string;
-  statusClass: string;
-  details: { label: string; value: string }[];
-};
+type InventoryRow = DashboardRecord;
 
 const EMPTY_SNAPSHOT: DashboardSnapshot = {
   domains: [],
@@ -47,7 +44,13 @@ const EMPTY_SNAPSHOT: DashboardSnapshot = {
 @Component({
   selector: 'app-realtime-dashboard',
   standalone: true,
-  imports: [MnsDateTimePipe, DashboardPageComponent, RouterModule, MatIconModule, TranslocoPipe],
+  imports: [
+    DashboardRecordListComponent,
+    DashboardPageComponent,
+    RouterModule,
+    MatIconModule,
+    TranslocoPipe,
+  ],
   templateUrl: './dashboard.html',
 })
 export class RealtimeDashboardPage {
@@ -259,10 +262,6 @@ export class RealtimeDashboardPage {
     this.snapshotResource.reload();
   }
 
-  rowTrack(_: number, row: InventoryRow) {
-    return `${row.name}:${row.meta}`;
-  }
-
   private async loadSnapshot(filters: DashboardFilters): Promise<DashboardSnapshot> {
     const params = this.params(filters);
     const [domains, mediaServers, turnServers, turnDomains] = await Promise.all([
@@ -307,7 +306,7 @@ export class RealtimeDashboardPage {
       name: this.text(this.field(item, 'RmsName')),
       meta: this.text(this.field(item, 'RmsEngine') || 'rtpengine'),
       status: online ? 'Online' : 'Offline',
-      statusClass: online ? 'chip-success' : 'chip-skipped',
+      tone: online ? 'success' : 'skipped',
       details: [
         { label: 'Domain', value: this.text(this.field(item, 'RtdName') || '-') },
         { label: 'Public IP', value: this.text(this.field(item, 'RmsPublicIP') || '-') },
@@ -327,7 +326,7 @@ export class RealtimeDashboardPage {
           ),
         },
         { label: 'Version', value: this.text(this.field(item, 'RmsVersion') || '-') },
-        { label: 'Last Seen', value: this.field(item, 'RmsLastSeenAt') || '' },
+        { label: 'Last Seen', format: 'datetime', value: this.field(item, 'RmsLastSeenAt') || '' },
       ],
     };
   }
@@ -338,7 +337,7 @@ export class RealtimeDashboardPage {
       name: this.text(this.field(item, 'RtsName')),
       meta: this.text(this.field(item, 'RtsHostname') || this.field(item, 'RtdName') || '-'),
       status: online ? 'Online' : 'Offline',
-      statusClass: online ? 'chip-success' : 'chip-skipped',
+      tone: online ? 'success' : 'skipped',
       details: [
         {
           label: 'Domain',
@@ -360,7 +359,7 @@ export class RealtimeDashboardPage {
         },
         { label: 'TLS Port', value: this.text(this.field(item, 'RtsTlsListeningPort') || '-') },
         { label: 'Version', value: this.text(this.field(item, 'RtsVersion') || '-') },
-        { label: 'Last Seen', value: this.field(item, 'RtsLastSeenAt') || '' },
+        { label: 'Last Seen', format: 'datetime', value: this.field(item, 'RtsLastSeenAt') || '' },
       ],
     };
   }
@@ -371,16 +370,19 @@ export class RealtimeDashboardPage {
       name: this.text(this.field(item, 'DomainName') || this.field(item, 'RtdName')),
       meta: this.text(this.field(item, 'RtsName') || this.field(item, 'RtdPurpose') || 'turn'),
       status: this.certificateLabel(status),
-      statusClass:
-        status === 'ready' ? 'chip-success' : status === 'failed' ? 'chip-danger' : 'chip-running',
+      tone: status === 'ready' ? 'success' : status === 'failed' ? 'danger' : 'running',
       details: [
         { label: 'Server', value: this.text(this.field(item, 'RtsName') || '-') },
         {
           label: 'Certificate Provider',
           value: this.text(this.field(item, 'RtnCertificateProvider') || '-'),
         },
-        { label: 'Certificate Status', value: this.certificateLabel(status) },
-        { label: 'Last Sync', value: this.field(item, 'RtnLastSyncedAt') || '' },
+        { label: 'Certificate Status', translate: true, value: this.certificateLabel(status) },
+        {
+          label: 'Last Sync',
+          format: 'datetime',
+          value: this.field(item, 'RtnLastSyncedAt') || '',
+        },
       ],
     };
   }
@@ -390,12 +392,17 @@ export class RealtimeDashboardPage {
     return {
       name: this.text(this.field(item, 'RtdName')),
       meta: this.purposeLabel(this.field(item, 'RtdPurpose')),
+      translateMeta: true,
       status: active ? 'Active' : 'Inactive',
-      statusClass: active ? 'chip-success' : 'chip-skipped',
+      tone: active ? 'success' : 'skipped',
       details: [
-        { label: 'Purpose', value: this.purposeLabel(this.field(item, 'RtdPurpose')) },
-        { label: 'Status', value: active ? 'Active' : 'Inactive' },
-        { label: 'Updated', value: this.field(item, 'DateUpdated') || '' },
+        {
+          label: 'Purpose',
+          translate: true,
+          value: this.purposeLabel(this.field(item, 'RtdPurpose')),
+        },
+        { label: 'Status', translate: true, value: active ? 'Active' : 'Inactive' },
+        { label: 'Updated', format: 'datetime', value: this.field(item, 'DateUpdated') || '' },
       ],
     };
   }

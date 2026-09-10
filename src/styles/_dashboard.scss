@@ -464,3 +464,24 @@ mns-dashboard-page {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+// Reusable read-only record panels and dashboard navigation.
+mns-dashboard-record-list {
+  display: block;
+  min-width: 0;
+}
+mns-dashboard-page .dashboard-navigation {
+  display: grid;
+  gap: 0.75rem;
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    color: var(--mat-sys-color-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+}
