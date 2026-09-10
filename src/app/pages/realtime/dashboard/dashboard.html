@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Loaded inventory; API limits apply."
   class="realtime-dashboard"
   [title]="title()"
   [description]="subtitle()"
   [loading]="snapshotResource.isLoading()"
   [error]="snapshotResource.error()"
   [hasData]="snapshotResource.hasData()"
-  [updatedAt]="snapshotResource.updatedAt()"
   (refresh)="refreshList()"
 >
   <div class="dashboard-content">

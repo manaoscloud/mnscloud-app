@@ -1,12 +1,10 @@
 <mns-dashboard-page
-  context="Loaded inventory; API limits apply."
   class="vps-container-dashboard"
   [title]="'VPS Container Dashboard'"
   [description]="'Container instance health, provider readiness, and plan capacity for container operations.'"
   [loading]="dashboardResource.isLoading()"
   [error]="dashboardResource.error()"
   [hasData]="dashboardResource.hasData()"
-  [updatedAt]="dashboardResource.updatedAt()"
   (refresh)="refreshList()"
 >
   <div class="dashboard-content">

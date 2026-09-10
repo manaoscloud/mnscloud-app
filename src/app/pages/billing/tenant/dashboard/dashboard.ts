@@ -45,7 +45,6 @@ const EMPTY_TENANT_DASHBOARD: BillingTenantDashboard = {
     [loading]="dashboard.isLoading()"
     [error]="dashboard.error()"
     [hasData]="dashboard.hasData()"
-    [updatedAt]="dashboard.updatedAt()"
     (refresh)="dashboard.reload()"
   >
     <div class="dashboard-grid">

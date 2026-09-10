@@ -25,7 +25,7 @@ for (const file of files) {
   for (const error of parsed.errors || []) errors.push(`${name}: ${error.msg}`);
   if ((html.match(/<mns-dashboard-page\b/g) || []).length !== 1)
     errors.push(`${name}: use exactly one shared dashboard shell`);
-  for (const binding of ['[loading]', '[error]', '[hasData]', '[updatedAt]', '(refresh)']) {
+  for (const binding of ['[loading]', '[error]', '[hasData]', '(refresh)']) {
     if (!html.includes(binding)) errors.push(`${name}: missing ${binding}`);
   }
   if (
@@ -48,6 +48,9 @@ for (const file of files) {
   if (/\bstyleUrls?\s*:|\bstyles\s*:/.test(source) || existsSync(file.replace(/\.ts$/, '.scss')))
     errors.push(`${name}: reusable presentation belongs in shared styles`);
 }
+const shell = readFileSync(join(root, 'src/app/shared/dashboard/dashboard-page.ts'), 'utf8');
+if (/dashboard-context|Last updated|readonly context|readonly updatedAt/.test(shell))
+  errors.push('Dashboard shell must not render a metadata/context strip');
 const scaffold = readFileSync(join(root, 'templates/dashboard/page.html'), 'utf8');
 if (!scaffold.includes('<mns-dashboard-page'))
   errors.push('Dashboard scaffold must use the shared shell');

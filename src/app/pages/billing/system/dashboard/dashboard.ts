@@ -28,14 +28,12 @@ const EMPTY_DASHBOARD: BillingDashboardSnapshot = {
   standalone: true,
   imports: [MatIconModule, DashboardPageComponent, TranslocoPipe],
   template: `<mns-dashboard-page
-    context="Loaded inventory; API limits apply."
     class=""
     [title]="'Billing dashboard'"
     [description]="'Monitor products, prices, packages, promotions and subscriptions.'"
     [loading]="dashboard.isLoading()"
     [error]="dashboard.error()"
     [hasData]="dashboard.hasData()"
-    [updatedAt]="dashboard.updatedAt()"
     (refresh)="dashboard.reload()"
   >
     <div class="dashboard-grid">
