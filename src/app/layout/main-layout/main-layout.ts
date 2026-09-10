@@ -2056,8 +2056,8 @@ export class MainLayout {
         },
         {
           id: 'monitoring/overview',
-          label: 'Metrics overview',
-          icon: 'monitoring',
+          label: 'Metrics',
+          icon: 'show_chart',
           route: '/monitoring/overview',
           masterRoute: '/system/monitoring/overview',
           permissions: ['tenant.monitoring.agents.read'],

@@ -1,12 +1,22 @@
 import { Component, computed, DestroyRef, inject, resource, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+  MatDialogModule,
+  MatDialog,
+} from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { MatCardModule } from '@angular/material/card';
+import { firstValueFrom } from 'rxjs';
+import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
+import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import { AppI18nService } from '../../../services/app-i18n.service';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 
 type Resource = { uuid: string; kind: string; name: string; observedAt: string | null };
@@ -28,13 +38,15 @@ type Snapshot = { resources: Resource[]; points: Point[]; selected: Resource | u
   selector: 'mns-agent-telemetry',
   standalone: true,
   imports: [
-    DatePipe,
+    NgTemplateOutlet,
+    MnsDateTimePipe,
+    RefreshButtonComponent,
+    MnsSearchSelectFieldComponent,
+    MatCardModule,
     DecimalPipe,
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
-    MatSelectModule,
-    MatFormFieldModule,
     TranslocoPipe,
   ],
   templateUrl: './telemetry.html',
@@ -47,10 +59,22 @@ export class AgentTelemetryPage {
   readonly dialog = inject(MatDialogRef<AgentTelemetryPage>, { optional: true });
   readonly data = inject<{ uuid: string; name: string }>(MAT_DIALOG_DATA, { optional: true });
   readonly uuid = this.data?.uuid ?? this.route.snapshot.paramMap.get('uuid') ?? '';
-  readonly name = this.data?.name ?? this.uuid;
-  readonly hours = signal(1);
-  readonly selectedUUID = signal('');
-  readonly resourceSearch = signal('');
+  readonly name = computed(
+    () => this.data?.name || this.view().resources.find((r) => r.kind === 'host')?.name || '',
+  );
+  private readonly i18n = inject(AppI18nService);
+  private readonly translate = inject(TranslocoService);
+  readonly hours = signal(
+    [1, 24, 168].includes(Number(this.route.snapshot.queryParamMap.get('hours')))
+      ? Number(this.route.snapshot.queryParamMap.get('hours'))
+      : 1,
+  );
+  readonly selectedUUID = signal(this.route.snapshot.queryParamMap.get('resource') ?? '');
+  readonly periods = [
+    { value: 1, label: 'Last hour' },
+    { value: 24, label: 'Last 24 hours' },
+    { value: 168, label: 'Last 7 days' },
+  ];
   readonly now = signal(Date.now());
   readonly snapshot = resource<Snapshot, { uuid: string; selected: string; hours: number }>({
     defaultValue: { resources: [], points: [], selected: undefined },
@@ -86,10 +110,20 @@ export class AgentTelemetryPage {
       : { resources: [], points: [], selected: undefined },
   );
   readonly options = computed(() =>
-    this.view().resources.filter((r) =>
-      `${r.kind} ${r.name}`.toLowerCase().includes(this.resourceSearch().toLowerCase()),
-    ),
+    this.view().resources.map((r) => ({
+      value: r.uuid,
+      label: r.name,
+      description: (this.i18n.language(), this.translate.translate(this.kindLabel(r.kind))),
+      searchText: r.kind + ' ' + r.name,
+    })),
   );
+  kindLabel(kind: string) {
+    return kind === 'host.network'
+      ? 'Network interface'
+      : kind === 'host.filesystem'
+        ? 'Filesystem'
+        : 'Host';
+  }
   readonly series = computed(() => {
     const groups = new Map<string, Map<string, Point[]>>();
     for (const point of this.view().points) {
@@ -165,17 +199,28 @@ export class AgentTelemetryPage {
         ? ['B', 'KiB', 'MiB', 'GiB', 'TiB']
         : unit === 'bps'
           ? ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps']
-          : [unit];
+          : [this.unitLabel(unit)];
     let index = 0;
     while (value >= base && index < labels.length - 1) {
       value /= base;
       index++;
     }
     return (
-      new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value) +
+      new Intl.NumberFormat(this.i18n.language(), { maximumFractionDigits: 2 }).format(value) +
       ' ' +
       labels[index]
     );
+  }
+  unitLabel(unit: string) {
+    return unit === 'percent'
+      ? '%'
+      : unit === 'per_second'
+        ? '/s'
+        : unit === 'state'
+          ? this.translate.translate('State')
+          : unit === 'bytes'
+            ? 'B'
+            : unit;
   }
   utc(value: string) {
     return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : value.replace(' ', 'T') + 'Z');
@@ -187,6 +232,18 @@ export class AgentTelemetryPage {
   fullPage() {
     const prefix = this.router.url.startsWith('/system') ? '/system' : '';
     this.dialog?.close();
-    void this.router.navigateByUrl(`${prefix}/monitoring/agents/${this.uuid}/telemetry`);
+    void this.router.navigate([`${prefix}/monitoring/agents/${this.uuid}/telemetry`], {
+      queryParams: { resource: this.view().selected?.uuid, hours: this.hours() },
+    });
+  }
+}
+
+/** Read-only charts use the generic operation-dialog viewport, surface and cleanup. */
+export async function openAgentTelemetry(dialog: MatDialog, data: { uuid: string; name?: string }) {
+  const binding = openCrudComponentDialog(dialog, AgentTelemetryPage, 'crud-form-dialog', { data });
+  try {
+    await firstValueFrom(binding.ref.afterClosed());
+  } finally {
+    binding.stop();
   }
 }

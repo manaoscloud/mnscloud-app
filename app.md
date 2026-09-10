@@ -952,3 +952,36 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   pipes, generated auto dictionaries, or DOM translation observers.
 - CRUD TypeScript feedback/confirmation text must use `TranslocoService` (or the shared app i18n
   service) and must be checked by `npm run check:crud:i18n -- <component-folder-or-html>`.
+
+
+## Read-only metrics dashboards
+
+- Read-only monitoring uses the dashboard baseline (`erp-page dashboard-page`,
+  `erp-card dashboard-shell`, `erp-header`, `header-actions`), not a create/edit CRUD.
+  Do not add New/Save/Delete/bulk actions or artificial Search/Status filters to a
+  read-only summary whose API does not support those mutations or filters.
+- Header display modes may offer Cards, List and Compact as icon buttons with
+  translated tooltips, accessible labels and `aria-pressed`. The shared
+  `dashboard-view-switch` owns their styling; preferences may store only the mode,
+  never telemetry/customer data. All modes retain the same server pagination.
+- List mode uses a real Material table/paginator, identity plus UUID, status chips,
+  sortable data columns and icon-only actions. If sorting is limited to the current
+  server page, label that scope explicitly. Do not present local sorting/filtering as
+  a fleet-wide query. Cards and compact mode must retain freshness, metrics, network
+  rates and the same Monitor action; detailed history stays available in every mode.
+- `dashboard-metric dashboard-panel` is the shared compact chart/panel surface.
+  `dashboard-grid-compact` is the denser dashboard grid. Do not repeat these generic
+  grid/panel definitions in component SCSS.
+- Read-only operation dialogs use `openCrudComponentDialog` with `crud-form-dialog`,
+  `crud-dialog`, `dialog-header`, `dialog-content`, `read-panel-scroll`, and the fixed
+  `mat-dialog-actions.form-actions` footer. Close is the secondary action; an optional
+  full-page action occupies the primary group. No Save action is invented. Escape,
+  viewport positioning, mobile 12px inset and responsive observer cleanup come from
+  the shared dialog helper. Full-page navigation preserves resource/period selection.
+- Use shared searchable-select adapters for Resource/Period with explicit span-1,
+  shared refresh buttons with loading feedback, configured date/time formatting and
+  translated labels/units. Keep a meaningful snapshot visible during reload, and
+  guard resource.value() reads with hasValue() on error.
+- Icon-only actions need translated tooltips and accessible names. Use icon names
+  available in the loaded Material Icons font (for example show_chart for metrics),
+  rather than names exclusive to a different Material Symbols family.

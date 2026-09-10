@@ -4109,5 +4109,14 @@
   "Physical memory usage": "Physical memory usage",
   "System filesystem total": "System filesystem total",
   "System filesystem available": "System filesystem available",
-  "System filesystem usage": "System filesystem usage"
+  "System filesystem usage": "System filesystem usage",
+  "Metrics": "Metrics",
+  "Display mode": "Display mode",
+  "Cards": "Cards",
+  "List": "List",
+  "Compact": "Compact",
+  "Sort the current page": "Sort the current page",
+  "Memory": "Memory",
+  "Average": "Average",
+  "Network interface": "Network interface"
 }

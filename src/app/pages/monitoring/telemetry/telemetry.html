@@ -1,65 +1,80 @@
-<section class="telemetry-panel">
-  <header>
-    <div>
-      <h2>{{ 'Agent monitoring' | transloco }}</h2>
-      <p>{{ name }}</p>
+@if (dialog) {
+  <div class="crud-dialog">
+    <header class="dialog-header">
+      <div>
+        <h2>{{ 'Agent monitoring' | transloco }}</h2>
+        <p>{{ name() }}</p>
+      </div>
+    </header>
+    <div class="dialog-content">
+      <div class="read-panel-scroll"><ng-container [ngTemplateOutlet]="content" /></div>
     </div>
-    <div class="toolbar">
-      <button mat-stroked-button (click)="refresh()" [disabled]="snapshot.isLoading()">
-        {{ 'Refresh' | transloco }}
-      </button>
-      @if (dialog) {
-        <button mat-button (click)="fullPage()">{{ 'Open full page' | transloco }}</button>
-        <button mat-icon-button (click)="dialog.close()" [attr.aria-label]="'Close' | transloco">
-          <mat-icon>close</mat-icon>
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="dialog.close()">
+          {{ 'Close' | transloco }}
         </button>
-      }
-    </div>
-  </header>
-  <div class="toolbar filters">
-    <mat-form-field appearance="outline">
-      <mat-label>{{ 'Resource' | transloco }}</mat-label>
-      <mat-select
-        [value]="view().selected?.uuid"
-        (selectionChange)="selectedUUID.set($event.value)"
-        (openedChange)="resourceSearch.set('')"
-      >
-        <mat-option class="select-search-option" disabled>
-          <input
-            class="select-search-field"
-            aria-disabled="false"
-            [placeholder]="'Search' | transloco"
-            [value]="resourceSearch()"
-            (input)="resourceSearch.set($any($event.target).value)"
-            (keydown)="$event.key !== 'Escape' && $event.stopPropagation()"
-            (click)="$event.stopPropagation()"
-          />
-        </mat-option>
-        @for (r of options(); track r.uuid) {
-          <mat-option [value]="r.uuid">{{ r.name }} · {{ r.kind }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>{{ 'Period' | transloco }}</mat-label>
-      <mat-select [value]="hours()" (selectionChange)="hours.set($event.value)">
-        <mat-option [value]="1">{{ 'Last hour' | transloco }}</mat-option>
-        <mat-option [value]="24">{{ 'Last 24 hours' | transloco }}</mat-option>
-        <mat-option [value]="168">{{ 'Last 7 days' | transloco }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+      </div>
+      <div class="primary-actions">
+        <button mat-stroked-button type="button" (click)="fullPage()">
+          <mat-icon>open_in_full</mat-icon>{{ 'Open full page' | transloco }}
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+} @else {
+  <section class="erp-page dashboard-page">
+    <mat-card class="erp-card dashboard-shell">
+      <header class="erp-header">
+        <div>
+          <h1>{{ 'Agent monitoring' | transloco }}</h1>
+          <p>
+            {{ name() }}<span class="record-uuid">{{ uuid }}</span>
+          </p>
+        </div>
+        <div class="header-actions">
+          <app-refresh-button [loading]="snapshot.isLoading()" (refresh)="refresh()" />
+        </div>
+      </header>
+      <ng-container [ngTemplateOutlet]="content" />
+    </mat-card>
+  </section>
+}
+<ng-template #content>
+  <div class="form-grid">
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Resource' | transloco"
+      [value]="view().selected?.uuid ?? ''"
+      [options]="options()"
+      (valueChange)="selectedUUID.set($any($event))"
+    />
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Period' | transloco"
+      [value]="hours()"
+      [options]="periods"
+      [translateOptions]="true"
+      (valueChange)="hours.set($any($event))"
+    />
+    @if (dialog) {
+      <div class="span-1">
+        <app-refresh-button [loading]="snapshot.isLoading()" (refresh)="refresh()" />
+      </div>
+    }
   </div>
   @if (snapshot.error()) {
     <p role="alert">{{ 'Unable to load monitoring data' | transloco }}</p>
-  } @else if (snapshot.isLoading()) {
+  }
+  @if (snapshot.isLoading() && !view().points.length) {
     <p role="status">{{ 'Loading' | transloco }}…</p>
   } @else {
-    <div class="charts">
+    <div class="dashboard-grid">
       @for (s of series(); track s.key) {
-        <article>
+        <article class="dashboard-metric dashboard-panel metric-chart">
           <h3>
             {{ (s.lines.length > 1 ? 'Receive and send' : s.last.label) | transloco }} ·
-            {{ s.last.unit }}
+            {{ unitLabel(s.last.unit) }}
           </h3>
           <p>{{ 'Average' | transloco }}</p>
           @for (line of s.lines; track line.metricKey) {
@@ -70,7 +85,7 @@
           }
           <p [class.stale]="s.stale">
             {{ (s.stale ? 'Stale data' : 'Latest observation') | transloco }} ·
-            {{ utc(s.last.observedAt) | date: 'short' }}
+            {{ utc(s.last.observedAt) | mnsDateTime: 'short' : 'short' }}
           </p>
           <svg
             viewBox="0 0 600 170"
@@ -85,8 +100,11 @@
             }
           </svg>
           <div class="axis-labels">
-            <span>{{ s.start | date: 'short' }}</span
-            ><span>{{ s.end | date: 'short' }} · {{ display(s.max, s.last.unit) }}</span>
+            <span>{{ s.start | mnsDateTime: 'short' : 'short' }}</span
+            ><span
+              >{{ s.end | mnsDateTime: 'short' : 'short' }} ·
+              {{ display(s.max, s.last.unit) }}</span
+            >
           </div>
           <details>
             <summary>{{ 'View measurements' | transloco }}</summary>
@@ -105,7 +123,7 @@
                   @for (p of s.points; track p.metricKey + p.bucketEpoch) {
                     <tr>
                       <td>{{ p.label | transloco }}</td>
-                      <td>{{ utc(p.observedAt) | date: 'short' }}</td>
+                      <td>{{ utc(p.observedAt) | mnsDateTime: 'short' : 'short' }}</td>
                       <td>{{ p.average | number: '1.0-2' }}</td>
                       <td>{{ p.minimum | number: '1.0-2' }}</td>
                       <td>{{ p.maximum | number: '1.0-2' }}</td>
@@ -121,4 +139,4 @@
       }
     </div>
   }
-</section>
+</ng-template>

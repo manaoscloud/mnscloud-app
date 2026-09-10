@@ -58,7 +58,7 @@
   "Add record": "Adicionar registro",
   "Address": "Endereço",
   "Advanced": "Avançado",
-  "Agent": "Agente",
+  "Agent": "Agent",
   "Agent Connectivity": "Conectividade dos Agentes",
   "Agent job history": "Histórico de jobs do agente",
   "Agent Jobs": "Jobs dos Agentes",
@@ -4110,5 +4110,14 @@
   "Physical memory usage": "Uso da memória física",
   "System filesystem total": "Capacidade do disco do sistema",
   "System filesystem available": "Espaço disponível no sistema",
-  "System filesystem usage": "Uso do disco do sistema"
+  "System filesystem usage": "Uso do disco do sistema",
+  "Metrics": "Métricas",
+  "Display mode": "Modo de visualização",
+  "Cards": "Cards",
+  "List": "Lista",
+  "Compact": "Compacto",
+  "Sort the current page": "Ordenação dos registros desta página",
+  "Memory": "Memória",
+  "Average": "Média",
+  "Network interface": "Interface de rede"
 }
