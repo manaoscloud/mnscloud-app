@@ -96,10 +96,11 @@ export class ApiService {
     }
   }
 
-  async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string, options: { timeout?: number } = {}): Promise<T> {
     this.assertEnvironment(endpoint);
     return await firstValueFrom(
       this.http.get<T>(this.url(endpoint), {
+        timeout: options.timeout,
         headers: this.getHeaders(endpoint),
         withCredentials: true,
       }),
