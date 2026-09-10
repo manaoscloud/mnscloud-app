@@ -1,315 +1,252 @@
-<section class="erp-page pabx-dashboard" animate.enter="app-fade-in">
-  <mat-card class="erp-card">
-    <header class="erp-header">
-      <div>
-        <h1>{{ 'PABX Dashboard' | transloco }}</h1>
-        <p>
-          {{
-            'Operational health, capacity, queues, agents, trunks and call activity.' | transloco
-          }}
-        </p>
-      </div>
-
-      <div class="header-actions">
-        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
-      </div>
-    </header>
-
-    <div class="filter-grid dashboard-filters">
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Period' | transloco }}</mat-label>
-        <mat-select [value]="period()" (selectionChange)="period.set($event.value)">
-          @for (option of periodOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mns-search-select-field
-        fieldClass="span-1"
-        [value]="pabxUUID()"
-        (valueChange)="pabxUUID.set($any($event))"
-        [label]="'PABX' | transloco"
-        [options]="pabxSelectOptions()"
-        [placeholder]="'Search PABX' | transloco"
-        [emptyLabel]="'No PABX accounts found.' | transloco"
-      />
-
-      <mns-search-select-field
-        fieldClass="span-1"
-        [value]="serverUUID()"
-        (valueChange)="serverUUID.set($any($event))"
-        [label]="'Server' | transloco"
-        [options]="serverSelectOptions()"
-        [placeholder]="'Search server' | transloco"
-        [emptyLabel]="'No servers found.' | transloco"
-      />
-
-      <mns-search-select-field
-        fieldClass="span-1"
-        [value]="domainUUID()"
-        (valueChange)="domainUUID.set($any($event))"
-        [label]="'Domain' | transloco"
-        [options]="domainSelectOptions()"
-        [placeholder]="'Search domain' | transloco"
-        [emptyLabel]="'No domains found.' | transloco"
-      />
-
-      <div class="filter-actions">
-        <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | transloco }}
-        </button>
-        <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
-          <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | transloco }}
-        </button>
-      </div>
+<mns-dashboard-page
+  context="Today"
+  class="pabx-dashboard"
+  [title]="'PABX Dashboard'"
+  [description]="'Operational health, capacity, queues, agents, trunks and call activity.'"
+  [loading]="dashboardResource.isLoading()"
+  [error]="dashboardResource.error()"
+  [hasData]="dashboardResource.hasData()"
+  [updatedAt]="dashboardResource.updatedAt()"
+  (refresh)="refreshList()"
+>
+  <div class="dashboard-content">
+    <div class="dashboard-grid">
+      @for (item of kpis(); track item.label) {
+        <article class="dashboard-metric">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <div>
+            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ item.value }}</strong>
+          </div>
+        </article>
+      }
     </div>
 
-    <div class="dashboard-content" [class.is-loading]="loading()">
-      @if (loading()) {
-        <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate" />
-        </div>
-      }
-
-      <div class="kpi-grid">
-        @for (item of kpis(); track item.label) {
-          <article class="kpi-tile">
-            <mat-icon>{{ item.icon }}</mat-icon>
+    <div class="dashboard-sections">
+      <section class="dashboard-panel">
+        <h2>{{ 'Agent Status' | transloco }}</h2>
+        @for (item of agentBreakdown(); track item.label) {
+          <div class="metric-row">
             <span>{{ item.label | transloco }}</span>
-            <strong>{{ item.value }}</strong>
-          </article>
+            <div class="metric-track">
+              <i [style.width.%]="metricPercent(item, agentBreakdown())"></i>
+            </div>
+            <strong>{{ item.value || 0 }}</strong>
+          </div>
         }
-      </div>
-
-      <div class="dashboard-grid">
-        <section class="dashboard-panel">
-          <h2>{{ 'Agent Status' | transloco }}</h2>
-          @for (item of agentBreakdown(); track item.label) {
-            <div class="metric-row">
-              <span>{{ item.label | transloco }}</span>
-              <div class="metric-track">
-                <i [style.width.%]="metricPercent(item, agentBreakdown())"></i>
-              </div>
-              <strong>{{ item.value || 0 }}</strong>
-            </div>
-          }
-        </section>
-
-        <section class="dashboard-panel">
-          <h2>{{ 'Call Outcome' | transloco }}</h2>
-          @for (item of callBreakdown(); track item.label) {
-            <div class="metric-row">
-              <span>{{ item.label | transloco }}</span>
-              <div class="metric-track">
-                <i [style.width.%]="metricPercent(item, callBreakdown())"></i>
-              </div>
-              <strong>{{ item.value || 0 }}</strong>
-            </div>
-          }
-        </section>
-      </div>
+      </section>
 
       <section class="dashboard-panel">
-        <h2>{{ 'Server Health' | transloco }}</h2>
+        <h2>{{ 'Call Outcome' | transloco }}</h2>
+        @for (item of callBreakdown(); track item.label) {
+          <div class="metric-row">
+            <span>{{ item.label | transloco }}</span>
+            <div class="metric-track">
+              <i [style.width.%]="metricPercent(item, callBreakdown())"></i>
+            </div>
+            <strong>{{ item.value || 0 }}</strong>
+          </div>
+        }
+      </section>
+    </div>
+
+    <section class="dashboard-panel">
+      <h2>{{ 'Server Health' | transloco }}</h2>
+      <div class="table-wrapper mat-elevation-z8">
+        <table
+          mat-table
+          [dataSource]="serverTable.visibleRows()"
+          matSort
+          [matSortActive]="serverTable.sortActive()"
+          [matSortDirection]="serverTable.sortDirection()"
+          (matSortChange)="setServerSort($event)"
+        >
+          <ng-container matColumnDef="health">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              <span
+                class="status-pill status-chip state-chip"
+                [class.chip-success]="row.health === 'online'"
+                [class.chip-running]="row.health === 'unknown'"
+                [class.chip-skipped]="row.health !== 'online' && row.health !== 'unknown'"
+                [class.is-active]="row.health === 'online'"
+                [class.is-inactive]="row.health !== 'online'"
+                >{{ healthLabel(row.health) }}</span
+              >
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="name"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
+          >
+          <ng-container matColumnDef="engine"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Engine' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.engine }}</td></ng-container
+          >
+          <ng-container matColumnDef="hostname"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.hostname || '-' }}</td></ng-container
+          >
+          <ng-container matColumnDef="pabxAccounts"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.pabxAccounts || 0 }}</td></ng-container
+          >
+          <ng-container matColumnDef="lastSeenAt"
+            ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Last Seen' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.lastSeenAt ? (row.lastSeenAt | mnsDateTime) : '-' }}
+            </td></ng-container
+          >
+          <tr mat-header-row *matHeaderRowDef="serverColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: serverColumns"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="serverColumns.length">
+              {{ 'No servers found.' | transloco }}
+            </td>
+          </tr>
+        </table>
+      </div>
+      <mat-paginator
+        class="mobile-paginator"
+        [length]="serverTable.sortedRows().length"
+        [pageIndex]="serverTable.pageIndex()"
+        [pageSize]="serverTable.pageSize()"
+        [pageSizeOptions]="[5, 10, 25, 100]"
+        (page)="setServerPage($event)"
+        showFirstLastButtons
+      />
+    </section>
+
+    <div class="dashboard-sections">
+      <section class="dashboard-panel">
+        <h2>{{ 'Queues' | transloco }}</h2>
         <div class="table-wrapper mat-elevation-z8">
           <table
             mat-table
-            [dataSource]="serverTable.visibleRows()"
+            [dataSource]="queueTable.visibleRows()"
             matSort
-            [matSortActive]="serverTable.sortActive()"
-            [matSortDirection]="serverTable.sortDirection()"
-            (matSortChange)="setServerSort($event)"
+            [matSortActive]="queueTable.sortActive()"
+            [matSortDirection]="queueTable.sortDirection()"
+            (matSortChange)="setQueueSort($event)"
           >
-            <ng-container matColumnDef="health">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <span
-                  class="status-pill status-chip state-chip"
-                  [class.chip-success]="row.health === 'online'"
-                  [class.chip-running]="row.health === 'unknown'"
-                  [class.chip-skipped]="row.health !== 'online' && row.health !== 'unknown'"
-                  [class.is-active]="row.health === 'online'"
-                  [class.is-inactive]="row.health !== 'online'"
-                  >{{ healthLabel(row.health) }}</span
-                >
-              </td>
-            </ng-container>
             <ng-container matColumnDef="name"
               ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
               <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
             >
-            <ng-container matColumnDef="engine"
-              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Engine' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.engine }}</td></ng-container
-            >
-            <ng-container matColumnDef="hostname"
-              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.hostname || '-' }}</td></ng-container
-            >
-            <ng-container matColumnDef="pabxAccounts"
+            <ng-container matColumnDef="pabxName"
               ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.pabxAccounts || 0 }}</td></ng-container
+              <td mat-cell *matCellDef="let row">{{ row.pabxName }}</td></ng-container
             >
-            <ng-container matColumnDef="lastSeenAt"
+            <ng-container matColumnDef="strategy"
               ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Last Seen' | transloco }}
+                {{ 'Strategy' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.strategy }}</td></ng-container
+            >
+            <ng-container matColumnDef="members"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Members' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.members || 0 }}</td></ng-container
+            >
+            <ng-container matColumnDef="availableAgents"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Available' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.availableAgents || 0 }}</td></ng-container
+            >
+            <ng-container matColumnDef="status"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Status' | transloco }}
               </th>
               <td mat-cell *matCellDef="let row">
-                {{ row.lastSeenAt ? (row.lastSeenAt | mnsDateTime) : '-' }}
+                {{ (row.status === 1 ? 'Active' : 'Inactive') | transloco }}
               </td></ng-container
             >
-            <tr mat-header-row *matHeaderRowDef="serverColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: serverColumns"></tr>
+            <tr mat-header-row *matHeaderRowDef="queueColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: queueColumns"></tr>
             <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="serverColumns.length">
-                {{ 'No servers found.' | transloco }}
+              <td class="mat-cell" [attr.colspan]="queueColumns.length">
+                {{ 'No queues found.' | transloco }}
               </td>
             </tr>
           </table>
         </div>
         <mat-paginator
           class="mobile-paginator"
-          [length]="serverTable.sortedRows().length"
-          [pageIndex]="serverTable.pageIndex()"
-          [pageSize]="serverTable.pageSize()"
+          [length]="queueTable.sortedRows().length"
+          [pageIndex]="queueTable.pageIndex()"
+          [pageSize]="queueTable.pageSize()"
           [pageSizeOptions]="[5, 10, 25, 100]"
-          (page)="setServerPage($event)"
+          (page)="setQueuePage($event)"
           showFirstLastButtons
         />
       </section>
 
-      <div class="dashboard-grid">
-        <section class="dashboard-panel">
-          <h2>{{ 'Queues' | transloco }}</h2>
-          <div class="table-wrapper mat-elevation-z8">
-            <table
-              mat-table
-              [dataSource]="queueTable.visibleRows()"
-              matSort
-              [matSortActive]="queueTable.sortActive()"
-              [matSortDirection]="queueTable.sortDirection()"
-              (matSortChange)="setQueueSort($event)"
+      <section class="dashboard-panel">
+        <h2>{{ 'Trunks' | transloco }}</h2>
+        <div class="table-wrapper mat-elevation-z8">
+          <table
+            mat-table
+            [dataSource]="trunkTable.visibleRows()"
+            matSort
+            [matSortActive]="trunkTable.sortActive()"
+            [matSortDirection]="trunkTable.sortDirection()"
+            (matSortChange)="setTrunkSort($event)"
+          >
+            <ng-container matColumnDef="name"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
             >
-              <ng-container matColumnDef="name"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
-              >
-              <ng-container matColumnDef="pabxName"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.pabxName }}</td></ng-container
-              >
-              <ng-container matColumnDef="strategy"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Strategy' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.strategy }}</td></ng-container
-              >
-              <ng-container matColumnDef="members"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Members' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.members || 0 }}</td></ng-container
-              >
-              <ng-container matColumnDef="availableAgents"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Available' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.availableAgents || 0 }}</td></ng-container
-              >
-              <ng-container matColumnDef="status"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Status' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  {{ (row.status === 1 ? 'Active' : 'Inactive') | transloco }}
-                </td></ng-container
-              >
-              <tr mat-header-row *matHeaderRowDef="queueColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: queueColumns"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="queueColumns.length">
-                  {{ 'No queues found.' | transloco }}
-                </td>
-              </tr>
-            </table>
-          </div>
-          <mat-paginator
-            class="mobile-paginator"
-            [length]="queueTable.sortedRows().length"
-            [pageIndex]="queueTable.pageIndex()"
-            [pageSize]="queueTable.pageSize()"
-            [pageSizeOptions]="[5, 10, 25, 100]"
-            (page)="setQueuePage($event)"
-            showFirstLastButtons
-          />
-        </section>
-
-        <section class="dashboard-panel">
-          <h2>{{ 'Trunks' | transloco }}</h2>
-          <div class="table-wrapper mat-elevation-z8">
-            <table
-              mat-table
-              [dataSource]="trunkTable.visibleRows()"
-              matSort
-              [matSortActive]="trunkTable.sortActive()"
-              [matSortDirection]="trunkTable.sortDirection()"
-              (matSortChange)="setTrunkSort($event)"
+            <ng-container matColumnDef="pabxName"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.pabxName }}</td></ng-container
             >
-              <ng-container matColumnDef="name"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container
-              >
-              <ng-container matColumnDef="pabxName"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'PABX' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.pabxName }}</td></ng-container
-              >
-              <ng-container matColumnDef="direction"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Direction' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.direction }}</td></ng-container
-              >
-              <ng-container matColumnDef="host"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.host }}</td></ng-container
-              >
-              <ng-container matColumnDef="transport"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Transport' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.transport }}</td></ng-container
-              >
-              <ng-container matColumnDef="status"
-                ><th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Status' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  {{ (row.status === 1 ? 'Active' : 'Inactive') | transloco }}
-                </td></ng-container
-              >
-              <tr mat-header-row *matHeaderRowDef="trunkColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: trunkColumns"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="trunkColumns.length">
-                  {{ 'No trunks found.' | transloco }}
-                </td>
-              </tr>
-            </table>
-          </div>
-          <mat-paginator
-            class="mobile-paginator"
-            [length]="trunkTable.sortedRows().length"
-            [pageIndex]="trunkTable.pageIndex()"
-            [pageSize]="trunkTable.pageSize()"
-            [pageSizeOptions]="[5, 10, 25, 100]"
-            (page)="setTrunkPage($event)"
-            showFirstLastButtons
-          />
-        </section>
-      </div>
+            <ng-container matColumnDef="direction"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Direction' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.direction }}</td></ng-container
+            >
+            <ng-container matColumnDef="host"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Host' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.host }}</td></ng-container
+            >
+            <ng-container matColumnDef="transport"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Transport' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.transport }}</td></ng-container
+            >
+            <ng-container matColumnDef="status"
+              ><th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Status' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                {{ (row.status === 1 ? 'Active' : 'Inactive') | transloco }}
+              </td></ng-container
+            >
+            <tr mat-header-row *matHeaderRowDef="trunkColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: trunkColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="trunkColumns.length">
+                {{ 'No trunks found.' | transloco }}
+              </td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator
+          class="mobile-paginator"
+          [length]="trunkTable.sortedRows().length"
+          [pageIndex]="trunkTable.pageIndex()"
+          [pageSize]="trunkTable.pageSize()"
+          [pageSizeOptions]="[5, 10, 25, 100]"
+          (page)="setTrunkPage($event)"
+          showFirstLastButtons
+        />
+      </section>
     </div>
-  </mat-card>
-</section>
+  </div>
+</mns-dashboard-page>

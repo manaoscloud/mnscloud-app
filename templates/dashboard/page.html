@@ -1,0 +1,18 @@
+<mns-dashboard-page
+  title="Dashboard"
+  description="Overview"
+  [loading]="dashboard.isLoading()"
+  [error]="dashboard.error()"
+  [hasData]="dashboard.hasData()"
+  [updatedAt]="dashboard.updatedAt()"
+  (refresh)="dashboard.reload()"
+>
+  <div class="dashboard-grid">
+    <article class="dashboard-metric">
+      <div>
+        <span class="dashboard-metric-label">{{ 'Total' | transloco }}</span>
+        <strong class="dashboard-metric-value">{{ dashboard.value().total ?? '—' }}</strong>
+      </div>
+    </article>
+  </div>
+</mns-dashboard-page>

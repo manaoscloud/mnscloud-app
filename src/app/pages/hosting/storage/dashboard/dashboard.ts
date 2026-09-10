@@ -1,29 +1,17 @@
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import {
-  afterNextRender,
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 
 type StorageProviderType = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
 
@@ -101,39 +89,26 @@ const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
   selector: 'app-hosting-storage-dashboard',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
+    DashboardPageComponent,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class HostingStorageDashboardPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
 
-  readonly providerSort = viewChild<MatSort>('providerSort');
-  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
-  readonly accountSort = viewChild<MatSort>('accountSort');
-  readonly accountPaginator = viewChild<MatPaginator>('accountPaginator');
-  readonly typeSort = viewChild<MatSort>('typeSort');
-  readonly typePaginator = viewChild<MatPaginator>('typePaginator');
-
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
 
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     params: () => ({ scope: this.scope() }),
     defaultValue: EMPTY_STORAGE_DASHBOARD,
     loader: () => this.loadDashboardSnapshot(),
@@ -143,13 +118,19 @@ export class HostingStorageDashboardPage {
   readonly dashboard = computed(() => this.dashboardResource.value());
   readonly providers = computed(() => this.dashboard().providers);
   readonly accounts = computed(() => this.dashboard().accounts);
-  readonly dashboardSearchInput = signal('');
-  private readonly dashboardSearch = signal('');
 
-
-  readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
-  readonly accountDataSource = new MatTableDataSource<AccountRow>([]);
-  readonly typeDataSource = new MatTableDataSource<ProviderTypeRow>([]);
+  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
+    computed(() => this.providerRows()),
+    (row, column) => this.providerSortValue(row, column),
+  );
+  readonly accountDataSource = createSignalCrudTable<AccountRow>(
+    computed(() => this.accountRows()),
+    (row, column) => this.accountSortValue(row, column),
+  );
+  readonly typeDataSource = createSignalCrudTable<ProviderTypeRow>(
+    computed(() => this.typeRows()),
+    (row, column) => this.typeSortValue(row, column),
+  );
 
   readonly providerColumns = [
     'provider',
@@ -171,12 +152,6 @@ export class HostingStorageDashboardPage {
     'actions',
   ];
   readonly typeColumns = ['type', 'providers', 'accounts', 'activeAccounts', 'issues', 'actions'];
-
-  private readonly syncDashboardTables = effect(() => {
-    this.providerDataSource.data = this.providerRows();
-    this.accountDataSource.data = this.accountRows();
-    this.typeDataSource.data = this.typeRows();
-  });
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
@@ -265,57 +240,20 @@ export class HostingStorageDashboardPage {
     },
   ]);
 
-  private readonly setupTables = afterNextRender(() => {
-    this.providerDataSource.sortingDataAccessor = (row, column) =>
-      this.providerSortValue(row, column);
-    this.accountDataSource.sortingDataAccessor = (row, column) =>
-      this.accountSortValue(row, column);
-    this.typeDataSource.sortingDataAccessor = (row, column) => this.typeSortValue(row, column);
-    this.providerDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.accountDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.typeDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-
-    this.providerDataSource.sort = this.providerSort() ?? null;
-    this.providerDataSource.paginator = this.providerPaginator() ?? null;
-    this.accountDataSource.sort = this.accountSort() ?? null;
-    this.accountDataSource.paginator = this.accountPaginator() ?? null;
-    this.typeDataSource.sort = this.typeSort() ?? null;
-    this.typeDataSource.paginator = this.typePaginator() ?? null;
-    this.applyTableFilters();
-  });
-
   refreshList() {
     this.dashboardResource.reload();
   }
 
-  onDashboardSearchChange(value: string) {
-    this.dashboardSearchInput.set(value);
-  }
-
-  applyDashboardFilters() {
-    this.dashboardSearch.set(this.dashboardSearchInput().trim());
-    this.applyTableFilters();
-  }
-
-  clearDashboardFilters() {
-    this.dashboardSearchInput.set('');
-    this.dashboardSearch.set('');
-    this.applyTableFilters();
-  }
-
   async loadDashboardSnapshot(): Promise<StorageDashboardSnapshot> {
     const [providersResult, accountsResult] = await Promise.allSettled([
-      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`),
-      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`),
+      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
+      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
     ]);
 
     const results = [providersResult, accountsResult];
     const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-    if (failedSections === results.length) {
+    if (failedSections > 0) {
       throw new Error('Failed to load Storage dashboard.');
     }
 
@@ -357,24 +295,6 @@ export class HostingStorageDashboardPage {
   private accountEndpoint() {
     return this.isMaster() ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts';
   }
-  private applyTableFilters() {
-    const filter = this.dashboardSearch().trim().toLowerCase();
-    this.providerDataSource.filter = filter;
-    this.accountDataSource.filter = filter;
-    this.typeDataSource.filter = filter;
-    this.providerDataSource.paginator?.firstPage();
-    this.accountDataSource.paginator?.firstPage();
-    this.typeDataSource.paginator?.firstPage();
-  }
-
-  private matchesDashboardFilter(row: object, filter: string) {
-    const term = filter.trim().toLowerCase();
-    if (!term) return true;
-    return Object.values(row).some((value) =>
-      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
-    );
-  }
-
 
   private providerRows(): ProviderRow[] {
     return this.providers().map((provider) => {

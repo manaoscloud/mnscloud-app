@@ -1,305 +1,190 @@
-<section class="erp-page vps-dashboard" animate.enter="app-fade-in">
-  <mat-card class="erp-card">
-    <header class="erp-header">
-      <div>
-        <h1>{{ 'VPS Dashboard' | transloco }}</h1>
-        <p>
-          {{
-            'Instance health, provider readiness, and plan capacity for VPS operations.' | transloco
-          }}
-        </p>
-      </div>
-
-      <div class="header-actions">
-        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
-      </div>
-    </header>
-    <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-1">
-        <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input
-          matInput
-          [value]="dashboardSearchInput()"
-          [placeholder]="'Search dashboard' | transloco"
-          (input)="onDashboardSearchChange($any($event.target).value)"
-        />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="span-1">
-        <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [value]="statusInput()" (selectionChange)="statusInput.set($any($event.value))">
-          <mat-option value="">{{ 'All' | transloco }}</mat-option>
-          <mat-option value="1">{{ 'Active' | transloco }}</mat-option>
-          <mat-option value="0">{{ 'Inactive' | transloco }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <div class="filter-actions">
-        <button mat-stroked-button type="button" (click)="applyDashboardFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | transloco }}
-        </button>
-        <button mat-stroked-button type="button" (click)="clearDashboardFilters()">
-          <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | transloco }}
-        </button>
-      </div>
+<mns-dashboard-page
+  context="Loaded inventory; API limits apply."
+  class="vps-dashboard"
+  [title]="'VPS Dashboard'"
+  [description]="'Instance health, provider readiness, and plan capacity for VPS operations.'"
+  [loading]="dashboardResource.isLoading()"
+  [error]="dashboardResource.error()"
+  [hasData]="dashboardResource.hasData()"
+  [updatedAt]="dashboardResource.updatedAt()"
+  (refresh)="refreshList()"
+>
+  <div class="dashboard-content">
+    <div class="dashboard-grid">
+      @for (item of kpis(); track item.label) {
+        <article class="dashboard-metric" [ngClass]="'state-' + item.state">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <div>
+            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ item.value }}</strong>
+            <small class="dashboard-metric-hint"
+              >{{ item.detailValue }} {{ item.detailLabel | transloco }}</small
+            >
+          </div>
+        </article>
+      }
     </div>
 
-
-    <div class="dashboard-content" [class.is-loading]="loading()">
-      @if (loading()) {
-        <div class="table-loading" aria-live="polite" aria-busy="true">
-          <mat-progress-spinner diameter="36" mode="indeterminate" />
-        </div>
-      }
-
-      <div class="kpi-grid">
-        @for (item of kpis(); track item.label) {
-          <article class="kpi-tile" [ngClass]="'state-' + item.state">
-            <mat-icon>{{ item.icon }}</mat-icon>
-            <span>{{ item.label | transloco }}</span>
-            <strong>{{ item.value }}</strong>
-            <small>{{ item.detailValue }} {{ item.detailLabel | transloco }}</small>
-          </article>
-        }
-      </div>
-
-      <div class="dashboard-grid">
-        <section class="dashboard-panel">
-          <div class="panel-header">
-            <div>
-              <h2>{{ 'Instance Status' | transloco }}</h2>
-              <p>{{ 'Current VPS inventory grouped by operational state.' | transloco }}</p>
-            </div>
-            <a mat-stroked-button color="primary" [routerLink]="routeTo('instances')">
-              <mat-icon>open_in_new</mat-icon>
-              {{ 'Instances' | transloco }}
-            </a>
-          </div>
-
-          <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="statusDataSource" matSort #statusSort="matSort">
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Status' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip state-chip" [ngClass]="statusChipClass(row.status)">
-                    {{ row.status | transloco }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="total">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Total' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.total }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="active">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Active' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.active }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="issues">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Issues' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip state-chip" [ngClass]="issueChipClass(row.issues)">
-                    {{ row.issues }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">
-                  <a mat-stroked-button color="primary" [routerLink]="routeTo('instances')">
-                    <mat-icon>open_in_new</mat-icon>
-                    {{ 'View' | transloco }}
-                  </a>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="statusColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: statusColumns"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="statusColumns.length">
-                  {{
-                    loading()
-                      ? ('Loading VPS status...' | transloco)
-                      : ('No VPS instances found.' | transloco)
-                  }}
-                </td>
-              </tr>
-            </table>
-          </div>
-
-          <mat-paginator
-            #statusPaginator
-            class="mobile-paginator"
-            [pageSizeOptions]="[5, 10, 25, 100]"
-            showFirstLastButtons
-          />
-        </section>
-
-        <section class="dashboard-panel">
-          <div class="panel-header">
-            <div>
-              <h2>{{ 'Provider Readiness' | transloco }}</h2>
-              <p>{{ 'Provider accounts, linked plans, and attached instances.' | transloco }}</p>
-            </div>
-            <a mat-stroked-button color="primary" [routerLink]="routeTo('provider')">
-              <mat-icon>open_in_new</mat-icon>
-              {{ 'Provider' | transloco }}
-            </a>
-          </div>
-
-          <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="providerDataSource" matSort #providerSort="matSort">
-              <ng-container matColumnDef="provider">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Provider' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  <strong>{{ row.name }}</strong>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="type">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="active">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Active' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
-                    {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="default">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Default' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.isDefault)">
-                    {{ row.isDefault ? ('Yes' | transloco) : ('No' | transloco) }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="plans">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Plans' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.plans }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="instances">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Instances' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.instances }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="issues">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ 'Issues' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  <span class="status-pill status-chip state-chip" [ngClass]="issueChipClass(row.issues)">
-                    {{ row.issues }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
-                <td mat-cell *matCellDef="let row">
-                  <a mat-stroked-button color="primary" [routerLink]="routeTo('provider')">
-                    <mat-icon>open_in_new</mat-icon>
-                    {{ 'View' | transloco }}
-                  </a>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="providerColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: providerColumns"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="providerColumns.length">
-                  {{
-                    loading()
-                      ? ('Loading VPS providers...' | transloco)
-                      : ('No VPS providers found.' | transloco)
-                  }}
-                </td>
-              </tr>
-            </table>
-          </div>
-
-          <mat-paginator
-            #providerPaginator
-            class="mobile-paginator"
-            [pageSizeOptions]="[5, 10, 25, 100]"
-            showFirstLastButtons
-          />
-        </section>
-      </div>
-
+    <div class="dashboard-sections">
       <section class="dashboard-panel">
         <div class="panel-header">
           <div>
-            <h2>{{ 'Plan Capacity' | transloco }}</h2>
-            <p>
-              {{ 'Commercial VPS plans with provider capacity defaults and adoption.' | transloco }}
-            </p>
+            <h2>{{ 'Instance Status' | transloco }}</h2>
+            <p>{{ 'Current VPS inventory grouped by operational state.' | transloco }}</p>
           </div>
-          <a mat-stroked-button color="primary" [routerLink]="routeTo('plans')">
+          <a [routerLink]="routeTo('instances')">
             <mat-icon>open_in_new</mat-icon>
-            {{ 'Plans' | transloco }}
+            {{ 'Instances' | transloco }}
           </a>
         </div>
 
         <div class="table-wrapper mat-elevation-z8">
-          <table mat-table [dataSource]="planDataSource" matSort #planSort="matSort">
-            <ng-container matColumnDef="plan">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Plan' | transloco }}</th>
+          <table
+            mat-table
+            [dataSource]="statusDataSource.visibleRows()"
+            matSort
+            [matSortActive]="statusDataSource.sortActive()"
+            [matSortDirection]="statusDataSource.sortDirection()"
+            (matSortChange)="statusDataSource.setSort($event)"
+          >
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Status' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="statusChipClass(row.status)"
+                >
+                  {{ row.status | transloco }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="total">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Total' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.total }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Active' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.active }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="issues">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Issues' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="issueChipClass(row.issues)"
+                >
+                  {{ row.issues }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">
+                <a [routerLink]="routeTo('instances')">
+                  <mat-icon>open_in_new</mat-icon>
+                  {{ 'View' | transloco }}
+                </a>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="statusColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: statusColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="statusColumns.length">
+                {{
+                  loading()
+                    ? ('Loading VPS status...' | transloco)
+                    : ('No VPS instances found.' | transloco)
+                }}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          class="mobile-paginator"
+          [length]="statusDataSource.sortedRows().length"
+          [pageIndex]="statusDataSource.pageIndex()"
+          [pageSize]="statusDataSource.pageSize()"
+          [pageSizeOptions]="[5, 10, 25]"
+          (page)="statusDataSource.setPage($event)"
+          showFirstLastButtons
+        />
+      </section>
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'Provider Readiness' | transloco }}</h2>
+            <p>{{ 'Provider accounts, linked plans, and attached instances.' | transloco }}</p>
+          </div>
+          <a [routerLink]="routeTo('provider')">
+            <mat-icon>open_in_new</mat-icon>
+            {{ 'Provider' | transloco }}
+          </a>
+        </div>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table
+            mat-table
+            [dataSource]="providerDataSource.visibleRows()"
+            matSort
+            [matSortActive]="providerDataSource.sortActive()"
+            [matSortDirection]="providerDataSource.sortDirection()"
+            (matSortChange)="providerDataSource.setSort($event)"
+          >
+            <ng-container matColumnDef="provider">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Provider' | transloco }}
+              </th>
               <td mat-cell *matCellDef="let row">
                 <strong>{{ row.name }}</strong>
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="provider">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Provider' | transloco }}
-              </th>
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | transloco }}</th>
               <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
             </ng-container>
 
-            <ng-container matColumnDef="cpu">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'CPU' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.cpu }}</td>
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Active' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
+                  {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
+                </span>
+              </td>
             </ng-container>
 
-            <ng-container matColumnDef="memory">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Memory' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.memory }}</td>
+            <ng-container matColumnDef="default">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Default' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="chipClass(row.isDefault)"
+                >
+                  {{ row.isDefault ? ('Yes' | transloco) : ('No' | transloco) }}
+                </span>
+              </td>
             </ng-container>
 
-            <ng-container matColumnDef="disk">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Disk' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.disk }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="price">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Price' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.price }}</td>
+            <ng-container matColumnDef="plans">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Plans' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.plans }}</td>
             </ng-container>
 
             <ng-container matColumnDef="instances">
@@ -309,23 +194,38 @@
               <td mat-cell *matCellDef="let row">{{ row.instances }}</td>
             </ng-container>
 
-            <ng-container matColumnDef="active">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
+            <ng-container matColumnDef="issues">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Issues' | transloco }}
+              </th>
               <td mat-cell *matCellDef="let row">
-                <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
-                  {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
+                <span
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="issueChipClass(row.issues)"
+                >
+                  {{ row.issues }}
                 </span>
               </td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="planColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: planColumns"></tr>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">
+                <a [routerLink]="routeTo('provider')">
+                  <mat-icon>open_in_new</mat-icon>
+                  {{ 'View' | transloco }}
+                </a>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="providerColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: providerColumns"></tr>
             <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="planColumns.length">
+              <td class="mat-cell" [attr.colspan]="providerColumns.length">
                 {{
                   loading()
-                    ? ('Loading VPS plans...' | transloco)
-                    : ('No VPS plans found.' | transloco)
+                    ? ('Loading VPS providers...' | transloco)
+                    : ('No VPS providers found.' | transloco)
                 }}
               </td>
             </tr>
@@ -333,12 +233,113 @@
         </div>
 
         <mat-paginator
-          #planPaginator
           class="mobile-paginator"
-          [pageSizeOptions]="[5, 10, 25, 100]"
+          [length]="providerDataSource.sortedRows().length"
+          [pageIndex]="providerDataSource.pageIndex()"
+          [pageSize]="providerDataSource.pageSize()"
+          [pageSizeOptions]="[5, 10, 25]"
+          (page)="providerDataSource.setPage($event)"
           showFirstLastButtons
         />
       </section>
     </div>
-  </mat-card>
-</section>
+
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <div>
+          <h2>{{ 'Plan Capacity' | transloco }}</h2>
+          <p>
+            {{ 'Commercial VPS plans with provider capacity defaults and adoption.' | transloco }}
+          </p>
+        </div>
+        <a [routerLink]="routeTo('plans')">
+          <mat-icon>open_in_new</mat-icon>
+          {{ 'Plans' | transloco }}
+        </a>
+      </div>
+
+      <div class="table-wrapper mat-elevation-z8">
+        <table
+          mat-table
+          [dataSource]="planDataSource.visibleRows()"
+          matSort
+          [matSortActive]="planDataSource.sortActive()"
+          [matSortDirection]="planDataSource.sortDirection()"
+          (matSortChange)="planDataSource.setSort($event)"
+        >
+          <ng-container matColumnDef="plan">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Plan' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              <strong>{{ row.name }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="provider">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Provider' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="cpu">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'CPU' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.cpu }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="memory">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Memory' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.memory }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="disk">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Disk' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.disk }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Price' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.price }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="instances">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Instances' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">{{ row.instances }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="active">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
+                {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="planColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: planColumns"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="planColumns.length">
+              {{
+                loading()
+                  ? ('Loading VPS plans...' | transloco)
+                  : ('No VPS plans found.' | transloco)
+              }}
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        class="mobile-paginator"
+        [length]="planDataSource.sortedRows().length"
+        [pageIndex]="planDataSource.pageIndex()"
+        [pageSize]="planDataSource.pageSize()"
+        [pageSizeOptions]="[5, 10, 25]"
+        (page)="planDataSource.setPage($event)"
+        showFirstLastButtons
+      />
+    </section>
+  </div>
+</mns-dashboard-page>

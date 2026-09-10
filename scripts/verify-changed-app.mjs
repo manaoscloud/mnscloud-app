@@ -54,6 +54,8 @@ if (appFiles.length) {
   run('node', ['scripts/check-angular-baseline.mjs', '--strict', ...appFiles]);
 }
 
+run('node', ['scripts/validate-dashboard-template.mjs']);
+
 const crudRoots = [...new Set(appFiles.map(findCrudRoot).filter(Boolean))].sort();
 for (const crudRoot of crudRoots) {
   run('node', ['scripts/validate-crud-template.mjs', crudRoot]);

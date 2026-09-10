@@ -1245,9 +1245,17 @@ export class MainLayout {
       id: 'infragis',
       label: 'InfraGIS',
       icon: 'map',
-      route: '/infragis',
       entitlementCode: 'module.infragis.*',
       requiresEnvironment: true,
+      children: [
+        { id: 'infragis/dashboard', label: 'Dashboard', icon: 'dashboard', route: '/infragis' },
+        {
+          id: 'infragis/management',
+          label: 'Management',
+          icon: 'map',
+          route: '/infragis/management',
+        },
+      ],
     },
 
     // ✅ VoIP (tenant; plataforma usa rotas globais quando disponível)

@@ -4119,5 +4119,11 @@
   "Memory": "Memory",
   "Average": "Average",
   "Network interface": "Network interface",
-  "Showing the last successful update.": "Showing the last successful update."
+  "Showing the last successful update.": "Showing the last successful update.",
+  "Unable to refresh dashboard.": "Unable to refresh dashboard.",
+  "Last updated": "Last updated",
+  "Map preview: up to 1,000 authorized assets.": "Map preview: up to 1,000 authorized assets.",
+  "InfraGIS asset map": "InfraGIS asset map",
+  "Loaded inventory; API limits apply.": "Loaded inventory; API limits apply.",
+  "Management": "Management"
 }

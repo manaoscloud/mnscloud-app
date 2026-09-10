@@ -1,30 +1,17 @@
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import {
-  afterNextRender,
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import {
   HostingVpsContainerInstance,
   HostingVpsContainerInstanceConfig,
@@ -92,40 +79,26 @@ const EMPTY_VPS_CONTAINER_DASHBOARD: VpsContainerDashboardSnapshot = {
   selector: 'app-hosting-vps-container-dashboard',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
+    DashboardPageComponent,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class HostingVpsContainerDashboardPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
 
-  readonly statusSort = viewChild<MatSort>('statusSort');
-  readonly statusPaginator = viewChild<MatPaginator>('statusPaginator');
-  readonly providerSort = viewChild<MatSort>('providerSort');
-  readonly providerPaginator = viewChild<MatPaginator>('providerPaginator');
-  readonly planSort = viewChild<MatSort>('planSort');
-  readonly planPaginator = viewChild<MatPaginator>('planPaginator');
-
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
 
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     params: () => ({ scope: this.scope() }),
     defaultValue: EMPTY_VPS_CONTAINER_DASHBOARD,
     loader: () => this.loadDashboardSnapshot(),
@@ -136,14 +109,19 @@ export class HostingVpsContainerDashboardPage {
   readonly providers = computed(() => this.dashboard().providers);
   readonly plans = computed(() => this.dashboard().plans);
   readonly instances = computed(() => this.dashboard().instances);
-  readonly dashboardSearchInput = signal('');
-  readonly statusInput = signal('');
-  private readonly dashboardSearch = signal('');
 
-
-  readonly statusDataSource = new MatTableDataSource<StatusRow>([]);
-  readonly providerDataSource = new MatTableDataSource<ProviderRow>([]);
-  readonly planDataSource = new MatTableDataSource<PlanRow>([]);
+  readonly statusDataSource = createSignalCrudTable<StatusRow>(
+    computed(() => this.statusRows()),
+    (row, column) => this.statusSortValue(row, column),
+  );
+  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
+    computed(() => this.providerRows()),
+    (row, column) => this.providerSortValue(row, column),
+  );
+  readonly planDataSource = createSignalCrudTable<PlanRow>(
+    computed(() => this.planRows()),
+    (row, column) => this.planSortValue(row, column),
+  );
 
   readonly statusColumns = ['status', 'total', 'active', 'issues', 'actions'];
   readonly providerColumns = [
@@ -167,12 +145,6 @@ export class HostingVpsContainerDashboardPage {
     'instances',
     'active',
   ];
-
-  private readonly syncDashboardTables = effect(() => {
-    this.statusDataSource.data = this.statusRows();
-    this.providerDataSource.data = this.providerRows();
-    this.planDataSource.data = this.planRows();
-  });
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
@@ -263,64 +235,30 @@ export class HostingVpsContainerDashboardPage {
     },
   ]);
 
-  private readonly setupTables = afterNextRender(() => {
-    this.statusDataSource.sortingDataAccessor = (row, column) => this.statusSortValue(row, column);
-    this.providerDataSource.sortingDataAccessor = (row, column) =>
-      this.providerSortValue(row, column);
-    this.planDataSource.sortingDataAccessor = (row, column) => this.planSortValue(row, column);
-    this.statusDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.providerDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-    this.planDataSource.filterPredicate = (row, filter) =>
-      this.matchesDashboardFilter(row, filter);
-
-    this.statusDataSource.sort = this.statusSort() ?? null;
-    this.statusDataSource.paginator = this.statusPaginator() ?? null;
-    this.providerDataSource.sort = this.providerSort() ?? null;
-    this.providerDataSource.paginator = this.providerPaginator() ?? null;
-    this.planDataSource.sort = this.planSort() ?? null;
-    this.planDataSource.paginator = this.planPaginator() ?? null;
-    this.applyTableFilters();
-  });
-
   refreshList() {
     this.dashboardResource.reload();
-  }
-
-  onDashboardSearchChange(value: string) {
-    this.dashboardSearchInput.set(value);
-  }
-
-  applyDashboardFilters() {
-    this.dashboardSearch.set(this.dashboardSearchInput().trim());
-    this.applyTableFilters();
-  }
-
-  clearDashboardFilters() {
-    this.dashboardSearchInput.set('');
-    this.statusInput.set('');
-    this.dashboardSearch.set('');
-    this.applyTableFilters();
   }
 
   async loadDashboardSnapshot(): Promise<VpsContainerDashboardSnapshot> {
     const [providersResult, plansResult, instancesResult] = await Promise.allSettled([
       this.api.get<{ data?: { items?: HostingVpsContainerProvider[] } }>(
         `${this.providerEndpoint()}?limit=500&offset=0`,
+        { timeout: 30000 },
       ),
       this.api.get<{ data?: { items?: HostingVpsContainerPlan[] } }>(
         `${this.planEndpoint()}?limit=500&offset=0`,
+        { timeout: 30000 },
       ),
       this.api.get<{ data?: { items?: HostingVpsContainerInstance[] } }>(
         `${this.instanceEndpoint()}?limit=500&offset=0`,
+        { timeout: 30000 },
       ),
     ]);
 
     const results = [providersResult, plansResult, instancesResult];
     const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-    if (failedSections === results.length) {
+    if (failedSections > 0) {
       throw new Error('Failed to load VPS Container dashboard.');
     }
 
@@ -402,24 +340,6 @@ export class HostingVpsContainerDashboardPage {
       ? 'system/hosting/vps-container/instances'
       : 'hosting/vps-container/instances';
   }
-  private applyTableFilters() {
-    const filter = this.dashboardSearch().trim().toLowerCase();
-    this.statusDataSource.filter = filter;
-    this.providerDataSource.filter = filter;
-    this.planDataSource.filter = filter;
-    this.statusDataSource.paginator?.firstPage();
-    this.providerDataSource.paginator?.firstPage();
-    this.planDataSource.paginator?.firstPage();
-  }
-
-  private matchesDashboardFilter(row: object, filter: string) {
-    const term = filter.trim().toLowerCase();
-    if (!term) return true;
-    return Object.values(row).some((value) =>
-      value !== null && value !== undefined && String(value).toLowerCase().includes(term),
-    );
-  }
-
 
   private statusRows(): StatusRow[] {
     const map = new Map<string, HostingVpsContainerInstance[]>();

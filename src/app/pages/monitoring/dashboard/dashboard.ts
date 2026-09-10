@@ -1,16 +1,15 @@
+import { dashboardResource } from '../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { ApiService } from '../../../services/api.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../shared/dashboard/dashboard-page';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 
 type MonitoringAgent = {
@@ -94,9 +93,7 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
   standalone: true,
   imports: [
     MnsDateTimePipe,
-    RefreshButtonComponent,
-    MatButtonModule,
-    MatCardModule,
+    DashboardPageComponent,
     MatTableModule,
     MatSortModule,
     MatIconModule,
@@ -105,26 +102,18 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
     NgClass,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class MonitoringDashboardPage {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(AppI18nService);
 
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     defaultValue: EMPTY_DASHBOARD,
     loader: () => this.loadDashboardSnapshot(),
   });
 
   readonly loading = this.dashboardResource.isLoading;
-  readonly loadError = this.dashboardResource.error;
-  readonly dashboard = linkedSignal<
-    MonitoringDashboardSnapshot | null,
-    MonitoringDashboardSnapshot
-  >({
-    source: () => (this.dashboardResource.hasValue() ? this.dashboardResource.value() : null),
-    computation: (value, previous) => value ?? previous?.value ?? EMPTY_DASHBOARD,
-  });
+  readonly dashboard = computed(() => this.dashboardResource.value());
   readonly agents = computed(() => this.dashboard().agents);
   readonly runtimeProducts = computed(() => this.dashboard().runtimeProducts);
   readonly latestLogs = computed(() => this.dashboard().latestLogs);

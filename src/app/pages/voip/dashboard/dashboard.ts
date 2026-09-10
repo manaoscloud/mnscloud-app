@@ -1,16 +1,12 @@
+import { dashboardResource } from '../../../shared/dashboard/dashboard-resource';
 
-import { Component, computed, inject, resource, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../shared/dashboard/dashboard-page';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import {
   VoipDashboardMetric,
@@ -41,30 +37,18 @@ const EMPTY_VOIP_DASHBOARD: VoipDashboardSnapshot = {
 @Component({
   selector: 'app-voip-dashboard',
   standalone: true,
-  imports: [
-    MnsDateTimePipe,
-    RefreshButtonComponent,
-    RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    TranslocoPipe,
-  ],
+  imports: [MnsDateTimePipe, DashboardPageComponent, RouterModule, MatIconModule, TranslocoPipe],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class VoipDashboardPage {
   private readonly api = inject(VoipDashboardService);
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
 
-  readonly period = signal('today');
+  readonly period = () => 'today';
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     params: () => ({ period: this.period(), isMaster: this.isMaster() }),
     defaultValue: EMPTY_VOIP_DASHBOARD,
     loader: ({ params }) => this.loadDashboardSnapshot(params.period, params.isMaster),
@@ -78,13 +62,6 @@ export class VoipDashboardPage {
   readonly modules = computed(() => this.dashboard().modules);
   readonly runtimeBreakdown = computed(() => this.dashboard().runtimeBreakdown);
   readonly callBreakdown = computed(() => this.dashboard().callBreakdown);
-
-  readonly periodOptions = [
-    { value: 'today', label: 'Today' },
-    { value: '24h', label: 'Last 24h' },
-    { value: '7d', label: 'Last 7d' },
-    { value: '30d', label: 'Last 30d' },
-  ];
 
   readonly kpis = computed(() => {
     const item = this.summary();
@@ -118,15 +95,6 @@ export class VoipDashboardPage {
   });
 
   refreshList() {
-    this.dashboardResource.reload();
-  }
-
-  applySearchFilters() {
-    this.dashboardResource.reload();
-  }
-
-  clearSearchFilters() {
-    this.period.set('today');
     this.dashboardResource.reload();
   }
 

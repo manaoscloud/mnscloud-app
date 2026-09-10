@@ -293,19 +293,49 @@
   - Do not render transient CRUD success/error/warning/info messages inline in pages, tables, dialogs, or form footers.
   - Inline state blocks are reserved for persistent empty/error states that require page-level action, not save/delete/load notifications.
 - Dashboard visual baseline:
-  - Dashboard pages must use `.erp-page.dashboard-page` and a compact `.erp-card.dashboard-shell`
-    for the page shell when a single summary section is enough.
-  - Metric summaries must use the global `.dashboard-grid` and `.dashboard-metric` classes, with
-    `.dashboard-metric-label`, `.dashboard-metric-value`, and optional `.dashboard-metric-hint`.
-  - Do not place small metrics as loose content inside one large empty panel. Each primary KPI must
-    be a compact repeated metric tile so the first viewport reads as organized information, not a
-    mostly empty card.
-  - Do not duplicate dashboard grid/tile SCSS inside page components. If the generic dashboard
-    layout needs improvement, update `src/styles.scss`.
-  - Dashboards may include tables, charts, maps, and operational panels below the summary grid, but
-    each section must have a clear purpose and avoid decorative nested cards.
-  - Dashboard refresh actions must use `RefreshButtonComponent` with local inline loading state and
-    must keep the previous snapshot visible while refreshing.
+  - Summary dashboards MUST instantiate `DashboardPageComponent` (`mns-dashboard-page`) and
+    `dashboardResource` from `src/app/shared/dashboard`. Start new pages from `templates/dashboard`.
+  - The shell owns the title, subtitle, last successful update, explicit informational scope/period,
+    and exactly one action: the shared Refresh button. Do not project competing headers/toolbars.
+  - No Search/Status forms, Apply/Clear, New/Edit/Delete, bulk actions or commercial action buttons
+    belong in summary dashboards. Use the existing authorized management/detail routes. A plain
+    contextual navigation link is permitted; it is not a mutation or a second action toolbar.
+  - Fixed history windows must be visibly labeled. Resource/period selection belongs to an analysis
+    page. The Metrics fleet explorer is an analysis surface, retains its Cards/List/Compact modes,
+    pagination and Monitor action, and is not classified as a summary dashboard.
+  - Shared visual identity is mandatory across the application: a screen must look like the same
+    product on first opening. Reuse shared components, theme tokens, typography, surfaces, spacing,
+    density, state colors and responsive rules. If a necessary reusable style does not exist, CREATE
+    it in the shared layer first; then consume it. Future refinements belong there so all consumers
+    inherit them. Never copy styles into a page to create a visually similar private variant.
+  - Dashboard page-local SCSS and inline `styles` are prohibited. Shared dashboard primitives live
+    in `src/styles/_dashboard.scss`, loaded once by `src/styles.scss`; existing shared helpers retain
+    ownership of their own presentation. No per-module shell/grid/card CSS or raw fixed theme colors.
+  - The shared shell uses `erp-page dashboard-page`, `erp-card dashboard-shell`, `erp-header`, and
+    `header-actions`. KPI content uses `dashboard-grid`, `dashboard-metric`, `dashboard-metric-label`,
+    `dashboard-metric-value`, `dashboard-metric-hint`. Use `dashboard-sections` for two-column panels
+    and `dashboard-panel` for their surface. Do not nest decorative cards or force empty grid slots.
+  - KPI columns adapt from four to two to one. Panels collapse to one column. Keep page width within
+    the viewport; wide detail tables scroll within their own wrapper. Charts/maps use shared panel
+    surfaces and data-driven geometry only. States need accessible text/icons, not color alone.
+  - The read-model adapter owns guarded resource reads and retains the last successful snapshot on
+    refresh failure. Initial placeholders are not loaded data and must not imply healthy zeroes.
+    Initial loading uses the shared skeleton; refresh shows progress inside the disabled button and
+    leaves useful content visible. No table-style full-page refresh overlay.
+  - Retained snapshots are page-local memory, never localStorage. Identity/environment changes clear
+    them immediately; a late result from the previous scope must never populate the current scope.
+    API permissions and entitlement checks remain authoritative; the template grants no access.
+  - Required inventory reads fail the snapshot if unavailable. Optional observations must use
+    explicit unavailable/null states, never silently convert a failed request to a successful zero.
+  - Real totals should come from authorized aggregate endpoints. Existing bounded inventory reads
+    must identify their scope/limit and must not be presented as complete global totals. Removing a
+    filter must not cause an unbounded download. Do not change server API contracts just to remove
+    an unused frontend filter; remove the page fields, handlers, option requests and dependencies.
+  - Keep all indicators, business data, sorting, pagination and authorized navigation. Tables use
+    signal-derived rows and the shared sorting/pagination helper, not `MatTableDataSource` adapters.
+  - Validate `npm run check:dashboard`, dashboard state tests and `npm run build`; verify desktop and
+    mobile, light/dark themes, PT/EN/ES, empty/populated/error/reload and master/tenant behavior.
+    The dashboard validator is separate from the CRUD filter contract and runs in changed-app CI.
 - Table behavior:
   - Standard list pages use signal-first tables:
     `<table mat-table [dataSource]="visibleRows()" matSort ...>`.

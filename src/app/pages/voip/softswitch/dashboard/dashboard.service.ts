@@ -91,16 +91,14 @@ export class VoipSoftswitchDashboardService {
   }
 
   private async safeItems(request: Promise<any>) {
-    try {
-      const response = await request;
-      return Array.isArray(response?.data?.items) ? response.data.items : [];
-    } catch {
-      return [];
-    }
+    const response = await request;
+    return Array.isArray(response?.data?.items) ? response.data.items : [];
   }
 
   private safeEndpointItems(endpoint: string) {
-    return this.safeItems(this.api.get<any>(`${endpoint}?limit=${this.listLimit}&offset=0`));
+    return this.safeItems(
+      this.api.get<any>(`${endpoint}?limit=${this.listLimit}&offset=0`, { timeout: 30000 }),
+    );
   }
 
   private serverRow(server: any): SoftswitchDashboardServer {

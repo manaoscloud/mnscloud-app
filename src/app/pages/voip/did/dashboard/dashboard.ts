@@ -1,21 +1,10 @@
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule, type Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 
@@ -24,7 +13,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { VoipDidItem, VoipDidService } from '../did.service';
 import { VoipDidExternalItem, VoipDidExternalService } from '../external/external.service';
 import { VoipDidOperatorItem, VoipDidOperatorService } from '../operator/operator.service';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 
 type KpiTile = {
   label: string;
@@ -80,22 +69,16 @@ const EMPTY_DID_DASHBOARD: DidDashboardSnapshot = {
   selector: 'app-voip-did-dashboard',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
+    DashboardPageComponent,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
 })
 export class VoipDidDashboardPage {
   private readonly didApi = inject(VoipDidService);
@@ -107,7 +90,7 @@ export class VoipDidDashboardPage {
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly dashboardResource = resource({
+  readonly dashboardResource = dashboardResource({
     params: () => this.isMaster(),
     defaultValue: EMPTY_DID_DASHBOARD,
     loader: ({ params }) => this.fetchDashboard(params),
@@ -117,8 +100,6 @@ export class VoipDidDashboardPage {
   readonly operators = signal<VoipDidOperatorItem[]>([]);
   readonly dids = signal<VoipDidItem[]>([]);
   readonly externalDids = signal<VoipDidExternalItem[]>([]);
-  readonly dashboardSearchInput = signal('');
-  private readonly dashboardSearch = signal('');
 
   readonly operatorColumns = [
     'operator',
@@ -153,10 +134,6 @@ export class VoipDidDashboardPage {
       snapshot.failed === 3 ? this.snack.error(message) : this.snack.warning(message);
     }
   });
-
-  private readonly normalizedDashboardSearch = computed(() =>
-    this.dashboardSearch().trim().toLowerCase(),
-  );
 
   readonly operatorRows = computed<OperatorRow[]>(() =>
     this.operators().map((operator) => {
@@ -201,47 +178,14 @@ export class VoipDidDashboardPage {
     })),
   );
 
-  readonly filteredOperatorRows = computed(() =>
-    this.operatorRows().filter((row) =>
-      this.matchesFilter(
-        [row.name, row.nick, row.active ? 'Active' : 'Inactive', row.numbers, row.issues],
-        this.normalizedDashboardSearch(),
-      ),
-    ),
+  readonly operatorTable = createSignalCrudTable<OperatorRow>(this.operatorRows, (row, column) =>
+    this.operatorSortValue(row, column),
   );
-  readonly filteredStatusRows = computed(() =>
-    this.statusRows().filter((row) =>
-      this.matchesFilter(
-        [row.status, row.total, row.available, row.assigned, row.issues],
-        this.normalizedDashboardSearch(),
-      ),
-    ),
+  readonly statusTable = createSignalCrudTable<NumberStatusRow>(this.statusRows, (row, column) =>
+    this.statusSortValue(row, column),
   );
-  readonly filteredExternalRows = computed(() =>
-    this.externalRows().filter((row) =>
-      this.matchesFilter(
-        [
-          row.number,
-          row.provider,
-          row.billing,
-          row.active ? 'Active' : 'Inactive',
-        ],
-        this.normalizedDashboardSearch(),
-      ),
-    ),
-  );
-
-  readonly operatorTable = createSignalCrudTable<OperatorRow>(
-    this.filteredOperatorRows,
-    (row, column) => this.operatorSortValue(row, column),
-  );
-  readonly statusTable = createSignalCrudTable<NumberStatusRow>(
-    this.filteredStatusRows,
-    (row, column) => this.statusSortValue(row, column),
-  );
-  readonly externalTable = createSignalCrudTable<ExternalRow>(
-    this.filteredExternalRows,
-    (row, column) => this.externalSortValue(row, column),
+  readonly externalTable = createSignalCrudTable<ExternalRow>(this.externalRows, (row, column) =>
+    this.externalSortValue(row, column),
   );
 
   private readonly reportDashboardError = effect(() => {
@@ -331,21 +275,6 @@ export class VoipDidDashboardPage {
     this.dashboardResource.reload();
   }
 
-  onDashboardSearchChange(value: string) {
-    this.dashboardSearchInput.set(value);
-  }
-
-  applyDashboardFilters() {
-    this.dashboardSearch.set(this.dashboardSearchInput().trim());
-    this.resetDashboardPages();
-  }
-
-  clearDashboardFilters() {
-    this.dashboardSearchInput.set('');
-    this.dashboardSearch.set('');
-    this.resetDashboardPages();
-  }
-
   setOperatorSort(sort: Sort) {
     this.operatorTable.setSort(sort);
   }
@@ -394,14 +323,6 @@ export class VoipDidDashboardPage {
     return 'chip-success is-active';
   }
 
-  private matchesFilter(values: unknown[], filter: string) {
-    const term = filter.trim().toLowerCase();
-    if (!term) return true;
-    return values
-      .filter((value) => value !== null && value !== undefined)
-      .some((value) => String(value).toLowerCase().includes(term));
-  }
-
   private async fetchDashboard(isMaster: boolean): Promise<DidDashboardSnapshot> {
     const [operatorsResult, didsResult, externalResult] = await Promise.allSettled([
       this.operatorApi.list({ limit: 5000 }, isMaster),
@@ -412,6 +333,8 @@ export class VoipDidDashboardPage {
     const failed = [operatorsResult, didsResult, externalResult].filter(
       (result) => result.status === 'rejected',
     ).length;
+
+    if (failed > 0) throw new Error('Required dashboard inventory is unavailable.');
 
     return {
       operators:
@@ -499,17 +422,17 @@ export class VoipDidDashboardPage {
     this.operatorTable.setPage({
       pageIndex: 0,
       pageSize: this.operatorTable.pageSize(),
-      length: this.filteredOperatorRows().length,
+      length: this.operatorRows().length,
     });
     this.statusTable.setPage({
       pageIndex: 0,
       pageSize: this.statusTable.pageSize(),
-      length: this.filteredStatusRows().length,
+      length: this.statusRows().length,
     });
     this.externalTable.setPage({
       pageIndex: 0,
       pageSize: this.externalTable.pageSize(),
-      length: this.filteredExternalRows().length,
+      length: this.externalRows().length,
     });
   }
 

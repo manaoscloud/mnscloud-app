@@ -1,233 +1,40 @@
-<section class="erp-page infragis-dashboard" animate.enter="app-fade-in">
-  <mat-card class="erp-card">
-    <header class="erp-header">
-      <div>
-        <h1>{{ 'InfraGIS' | transloco }}</h1>
-        <p>
-          {{ 'Corporate GIS control plane for georeferenced infrastructure assets.' | transloco }}
-        </p>
-      </div>
-
-      <div class="header-actions">
-        <app-refresh-button [loading]="loading()" (refresh)="refresh()" />
-      </div>
-    </header>
-
-    <div class="dashboard-grid">
-      <article class="metric-card">
-        <span>{{ 'Projects' | transloco }}</span>
-        <strong>{{ metric('ProjectCount') }}</strong>
-        <small>{{ 'Tenant scoped workspaces' | transloco }}</small>
-      </article>
-      <article class="metric-card">
-        <span>{{ 'Layers' | transloco }}</span>
-        <strong>{{ metric('LayerCount') }}</strong>
-        <small>{{ 'Operational map layers' | transloco }}</small>
-      </article>
-      <article class="metric-card">
-        <span>{{ 'Assets' | transloco }}</span>
-        <strong>{{ metric('AssetCount') }}</strong>
-        <small>{{ 'Registered infrastructure assets' | transloco }}</small>
-      </article>
-      <article class="metric-card">
-        <span>{{ 'Active assets' | transloco }}</span>
-        <strong>{{ metric('ActiveAssetCount') }}</strong>
-        <small>{{ 'Visible in field operations' | transloco }}</small>
-      </article>
-    </div>
-
-    <section class="map-panel">
-      <div class="map-copy">
-        <h2>{{ 'Map' | transloco }}</h2>
-        <p>
-          {{
-            'Initial authorized asset projection. Advanced providers stay behind the API contract.'
-              | transloco
-          }}
-        </p>
-      </div>
-      <div class="map-canvas" aria-label="InfraGIS asset map">
-        @for (asset of mapAssets(); track asset['IgaUUID']) {
-          <button
-            type="button"
-            class="map-point"
-            [ngStyle]="mapPointStyle(asset)"
-            [matTooltip]="asset['IgaName']"
-            aria-label="InfraGIS asset"
-          ></button>
-        }
-      </div>
-    </section>
-
-    <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input matInput [value]="search()" (input)="search.set($any($event.target).value)" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
-          <mat-option [value]="null">{{ 'All' | transloco }}</mat-option>
-          <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
-          <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <div class="filter-actions">
-        <button mat-stroked-button type="button" (click)="applyFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | transloco }}
-        </button>
-        <button mat-stroked-button type="button" (click)="clearFilters()">
-          <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | transloco }}
-        </button>
-      </div>
-    </div>
-
-    <mat-tab-group class="resource-tabs">
-      @for (resource of resources; track resource.key) {
-        <mat-tab [label]="resource.label | transloco">
-          <div class="tab-toolbar">
-            <button mat-stroked-button color="primary" type="button" (click)="openCreate(resource)">
-              <mat-icon>add</mat-icon>
-              {{ 'New' | transloco }}
-            </button>
-          </div>
-
-          <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
-            @if (loading()) {
-              <div class="table-loading" aria-live="polite" aria-busy="true">
-                <mat-progress-spinner diameter="36" mode="indeterminate" />
-              </div>
-            }
-
-            <table mat-table [dataSource]="rows()[resource.key]">
-              @for (column of resource.columns; track column.key) {
-                <ng-container [matColumnDef]="column.key">
-                  <th mat-header-cell *matHeaderCellDef>{{ column.label | transloco }}</th>
-                  <td mat-cell *matCellDef="let row">
-                    @if (column.key.toLowerCase().includes('color')) {
-                      <span
-                        class="color-swatch"
-                        [style.background]="displayValue(row, column.key)"
-                      ></span>
-                    }
-                    {{ displayValue(row, column.key) | transloco }}
-                  </td>
-                </ng-container>
-              }
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-                  {{ 'Actions' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row" class="actions-col-cell">
-                  <div class="actions-col">
-                    <button
-                      mat-icon-button
-                      type="button"
-                      (click)="openEdit(resource, row)"
-                      [matTooltip]="'Edit' | transloco"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      color="warn"
-                      type="button"
-                      (click)="remove(resource, row)"
-                      [matTooltip]="'Delete' | transloco"
-                    >
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns(resource)"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns(resource)"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="displayedColumns(resource).length">
-                  {{ (loading() ? 'Loading records...' : 'No records found.') | transloco }}
-                </td>
-              </tr>
-            </table>
-          </div>
-        </mat-tab>
-      }
-    </mat-tab-group>
-  </mat-card>
-</section>
-
-<ng-template #recordDialog>
-  @if (editingResource(); as resource) {
-    <div class="crud-dialog entity-dialog">
-      <div class="dialog-header">
+<mns-dashboard-page
+  title="InfraGIS"
+  description="Corporate GIS control plane for georeferenced infrastructure assets."
+  [loading]="dashboardResource.isLoading()"
+  [error]="dashboardResource.error()"
+  [hasData]="dashboardResource.hasData()"
+  [updatedAt]="dashboardResource.updatedAt()"
+  (refresh)="dashboardResource.reload()"
+>
+  <div class="dashboard-grid">
+    @for (metric of metrics(); track metric.label) {
+      <article class="dashboard-metric">
         <div>
-          <h2>{{ (editingRecord() ? 'Edit record' : 'New record') | transloco }}</h2>
-          <p>{{ resource.label | transloco }}</p>
+          <span class="dashboard-metric-label">{{ metric.label | transloco }}</span
+          ><strong class="dashboard-metric-value">{{ metric.value ?? '—' }}</strong>
         </div>
-      </div>
-
-      <mat-dialog-content class="dialog-content">
-        <mat-tab-group class="form-tabs">
-          @for (group of resource.fieldGroups; track group.label) {
-            <mat-tab [label]="group.label | transloco">
-              <form class="tab-content form-grid">
-                @for (field of group.fields; track field.key) {
-                  <mat-form-field
-                    appearance="outline"
-                    [class.span-2]="field.span === 'span-2'"
-                    [class.span-4]="field.span === 'span-4'"
-                  >
-                    <mat-label>{{ field.label | transloco }}</mat-label>
-                    @if (field.type === 'select') {
-                      <mat-select [value]="formModel()[field.key]" (selectionChange)="updateField(field.key, $event.value)">
-                        @for (option of field.options?.() ?? []; track option.value) {
-                          <mat-option [value]="option.value">{{
-                            option.label | transloco
-                          }}</mat-option>
-                        }
-                      </mat-select>
-                    } @else if (field.type === 'textarea') {
-                      <textarea
-                        matInput
-                        [rows]="field.rows ?? 3" [value]="formModel()[field.key]" (input)="updateField(field.key, $any($event.target).value)"></textarea>
-                    } @else {
-                      <input
-                        matInput
-                        [type]="
-                          field.type === 'number'
-                            ? 'number'
-                            : field.type === 'color'
-                              ? 'color'
-                              : 'text'
-                        " [value]="formModel()[field.key]" (input)="updateField(field.key, $any($event.target).value)" />
-                    }
-                  </mat-form-field>
-                }
-              </form>
-            </mat-tab>
-          }
-        </mat-tab-group>
-      </mat-dialog-content>
-
-      <mat-dialog-actions class="form-actions" align="end">
-        <button mat-stroked-button type="button" mat-dialog-close>
-          {{ 'Cancel' | transloco }}
-        </button>
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="save()"
-          [disabled]="saving()"
-        >
-          <mat-icon>save</mat-icon>
-          {{ 'Save' | transloco }}
-        </button>
-      </mat-dialog-actions>
+      </article>
+    }
+  </div>
+  <section class="dashboard-panel">
+    <h2>{{ 'Map' | transloco }}</h2>
+    <p>{{ 'Map preview: up to 1,000 authorized assets.' | transloco }}</p>
+    <div
+      class="dashboard-map-canvas"
+      role="img"
+      [attr.aria-label]="'InfraGIS asset map' | transloco"
+    >
+      @for (asset of mapAssets(); track asset.IgaUUID) {
+        <span
+          class="dashboard-map-point"
+          [ngStyle]="mapPointStyle(asset)"
+          [matTooltip]="asset.IgaName"
+        ></span>
+      }
     </div>
-  }
-</ng-template>
+    @if (!mapAssets().length) {
+      <p>{{ 'No records found.' | transloco }}</p>
+    }
+  </section>
+</mns-dashboard-page>

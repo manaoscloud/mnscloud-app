@@ -90,6 +90,7 @@ export class VoipPabxDashboardService {
     const suffix = query.toString();
     return this.api.get<{ data: PabxDashboardData }>(
       `${this.basePath(system)}${suffix ? `?${suffix}` : ''}`,
+      { timeout: 30000 },
     );
   }
 }

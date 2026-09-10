@@ -49,6 +49,8 @@ jobs:
             fi
           fi
           npm run verify:changed -- "$BASE" HEAD
+      - name: Test dashboard state and tenant isolation
+        run: npm run test:dashboard
       - name: Generate runtime config
         run: |
           node -e '
