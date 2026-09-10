@@ -57,6 +57,22 @@ describe('ApiService auth and tenant context', () => {
     await promise;
   });
 
+  it('does not attach a selected tenant to the master telemetry overview', async () => {
+    const previous = window.location.pathname;
+    history.replaceState(null, '', '/system/monitoring/overview');
+    try {
+      const promise = api.get('monitoring/agents/telemetry-overview?limit=12');
+      const req = http.expectOne(
+        'https://dev.publichost.cloud/api/v1/monitoring/agents/telemetry-overview?limit=12',
+      );
+      expect(req.request.headers.has('X-Environment-UUID')).toBeFalse();
+      req.flush({ status: 'success', data: { items: [], total: 0, limit: 12, offset: 0 } });
+      await promise;
+    } finally {
+      history.replaceState(null, '', previous);
+    }
+  });
+
   it('fails closed when a tenant-scoped route has no selected environment', async () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({

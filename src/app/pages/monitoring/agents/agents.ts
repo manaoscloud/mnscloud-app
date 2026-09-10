@@ -1,3 +1,4 @@
+import { AgentTelemetryPage } from '../telemetry/telemetry';
 import { Component, computed, inject, signal } from '@angular/core';
 
 import {
@@ -290,7 +291,7 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   }
 
   override rowActions(row: MonitoringAgent): readonly ConfigurableCrudRowAction[] {
-    const actions = [INSTALL_ACTION];
+    const actions = [INSTALL_ACTION, { key: 'monitor', label: 'Monitor', icon: 'monitoring' }];
     const target = this.agentUpdateTarget(row);
     return target ? [...actions, UPDATE_AGENT_ACTION] : actions;
   }
@@ -309,6 +310,17 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: MonitoringAgent) {
+    if (action.key === 'monitor') {
+      this.dialog.open(AgentTelemetryPage, {
+        data: { uuid: row.uuid, name: row.name ?? row.hostname ?? row.uuid },
+        width: '1200px',
+        maxWidth: '96vw',
+        height: '90vh',
+        maxHeight: '94dvh',
+      });
+      return;
+    }
+
     if (action.key === 'install') {
       await this.generateInstallCommand(row);
       return;

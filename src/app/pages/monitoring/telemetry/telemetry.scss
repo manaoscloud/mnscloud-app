@@ -1,0 +1,124 @@
+:host {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+}
+.telemetry-panel {
+  padding: 24px;
+  max-width: 1600px;
+  margin: auto;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  flex-wrap: wrap;
+}
+h2 {
+  margin: 0;
+}
+p {
+  overflow-wrap: anywhere;
+  opacity: 0.8;
+}
+.toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filters {
+  margin-top: 16px;
+}
+mat-form-field {
+  min-width: 220px;
+}
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 20px;
+}
+article {
+  border: 1px solid var(--mat-sys-outline-variant, #888);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 0;
+}
+h3 {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+.reading {
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+}
+small {
+  font-size: 14px;
+}
+svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.line {
+  stroke: var(--mat-sys-primary, #4582ef);
+  stroke-width: 2.5;
+  fill: none;
+}
+.axis {
+  stroke: #888;
+  fill: none;
+}
+.axis-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+.stale {
+  font-weight: 600;
+}
+summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
+.measurements {
+  overflow: auto;
+  max-height: 240px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+td,
+th {
+  padding: 8px;
+  text-align: start;
+  border-bottom: 1px solid #8884;
+}
+@media (max-width: 600px) {
+  .telemetry-panel {
+    padding: 16px;
+  }
+  .toolbar {
+    width: 100%;
+  }
+  mat-form-field {
+    width: 100%;
+  }
+}
+.overview-meter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 16px 0;
+}
+meter {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 16px;
+}

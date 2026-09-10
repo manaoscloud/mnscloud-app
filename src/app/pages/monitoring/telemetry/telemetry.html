@@ -1,0 +1,124 @@
+<section class="telemetry-panel">
+  <header>
+    <div>
+      <h2>{{ 'Agent monitoring' | transloco }}</h2>
+      <p>{{ name }}</p>
+    </div>
+    <div class="toolbar">
+      <button mat-stroked-button (click)="refresh()" [disabled]="snapshot.isLoading()">
+        {{ 'Refresh' | transloco }}
+      </button>
+      @if (dialog) {
+        <button mat-button (click)="fullPage()">{{ 'Open full page' | transloco }}</button>
+        <button mat-icon-button (click)="dialog.close()" [attr.aria-label]="'Close' | transloco">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  </header>
+  <div class="toolbar filters">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Resource' | transloco }}</mat-label>
+      <mat-select
+        [value]="view().selected?.uuid"
+        (selectionChange)="selectedUUID.set($event.value)"
+        (openedChange)="resourceSearch.set('')"
+      >
+        <mat-option class="select-search-option" disabled>
+          <input
+            class="select-search-field"
+            aria-disabled="false"
+            [placeholder]="'Search' | transloco"
+            [value]="resourceSearch()"
+            (input)="resourceSearch.set($any($event.target).value)"
+            (keydown)="$event.key !== 'Escape' && $event.stopPropagation()"
+            (click)="$event.stopPropagation()"
+          />
+        </mat-option>
+        @for (r of options(); track r.uuid) {
+          <mat-option [value]="r.uuid">{{ r.name }} · {{ r.kind }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Period' | transloco }}</mat-label>
+      <mat-select [value]="hours()" (selectionChange)="hours.set($event.value)">
+        <mat-option [value]="1">{{ 'Last hour' | transloco }}</mat-option>
+        <mat-option [value]="24">{{ 'Last 24 hours' | transloco }}</mat-option>
+        <mat-option [value]="168">{{ 'Last 7 days' | transloco }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  @if (snapshot.error()) {
+    <p role="alert">{{ 'Unable to load monitoring data' | transloco }}</p>
+  } @else if (snapshot.isLoading()) {
+    <p role="status">{{ 'Loading' | transloco }}…</p>
+  } @else {
+    <div class="charts">
+      @for (s of series(); track s.key) {
+        <article>
+          <h3>
+            {{ (s.lines.length > 1 ? 'Receive and send' : s.last.label) | transloco }} ·
+            {{ s.last.unit }}
+          </h3>
+          <p>{{ 'Average' | transloco }}</p>
+          @for (line of s.lines; track line.metricKey) {
+            <div class="legend">
+              <span [style.color]="line.color">●</span> {{ line.latest.label | transloco }}:
+              <strong>{{ display(line.latest.average, line.latest.unit) }}</strong>
+            </div>
+          }
+          <p [class.stale]="s.stale">
+            {{ (s.stale ? 'Stale data' : 'Latest observation') | transloco }} ·
+            {{ utc(s.last.observedAt) | date: 'short' }}
+          </p>
+          <svg
+            viewBox="0 0 600 170"
+            role="img"
+            [attr.aria-label]="s.key + ' (' + s.last.unit + ')'"
+          >
+            <title>{{ s.last.label | transloco }}</title>
+            <path d="M8,16 L8,152 L592,152" class="axis" />
+            @for (line of s.lines; track line.metricKey) {
+              <path [attr.d]="line.path" class="line" [style.stroke]="line.color" />
+              <circle [attr.cx]="line.x" [attr.cy]="line.y" r="3" [attr.fill]="line.color" />
+            }
+          </svg>
+          <div class="axis-labels">
+            <span>{{ s.start | date: 'short' }}</span
+            ><span>{{ s.end | date: 'short' }} · {{ display(s.max, s.last.unit) }}</span>
+          </div>
+          <details>
+            <summary>{{ 'View measurements' | transloco }}</summary>
+            <div class="measurements">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ 'Metric' | transloco }}</th>
+                    <th>{{ 'Time' | transloco }}</th>
+                    <th>{{ 'Average' | transloco }}</th>
+                    <th>{{ 'Minimum' | transloco }}</th>
+                    <th>{{ 'Maximum' | transloco }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of s.points; track p.metricKey + p.bucketEpoch) {
+                    <tr>
+                      <td>{{ p.label | transloco }}</td>
+                      <td>{{ utc(p.observedAt) | date: 'short' }}</td>
+                      <td>{{ p.average | number: '1.0-2' }}</td>
+                      <td>{{ p.minimum | number: '1.0-2' }}</td>
+                      <td>{{ p.maximum | number: '1.0-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </article>
+      } @empty {
+        <p>{{ 'No monitoring samples available' | transloco }}</p>
+      }
+    </div>
+  }
+</section>
