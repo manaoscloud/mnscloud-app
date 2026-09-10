@@ -55,6 +55,7 @@ if (appFiles.length) {
 }
 
 run('node', ['scripts/validate-dashboard-template.mjs']);
+run('node', ['scripts/validate-content-pages.mjs']);
 
 const crudRoots = [...new Set(appFiles.map(findCrudRoot).filter(Boolean))].sort();
 for (const crudRoot of crudRoots) {

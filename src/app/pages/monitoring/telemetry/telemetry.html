@@ -23,22 +23,15 @@
     </mat-dialog-actions>
   </div>
 } @else {
-  <section class="erp-page dashboard-page">
-    <mat-card class="erp-card dashboard-shell">
-      <header class="erp-header">
-        <div>
-          <h1>{{ 'Agent monitoring' | transloco }}</h1>
-          <p>
-            {{ name() }}<span class="record-uuid">{{ uuid }}</span>
-          </p>
-        </div>
-        <div class="header-actions">
-          <app-refresh-button [loading]="snapshot.isLoading()" (refresh)="refresh()" />
-        </div>
-      </header>
-      <ng-container [ngTemplateOutlet]="content" />
-    </mat-card>
-  </section>
+  <mns-detail-page
+    title="Agent monitoring"
+    [identity]="name()"
+    [recordId]="uuid"
+    [loading]="snapshot.isLoading()"
+    (refresh)="refresh()"
+  >
+    <ng-container [ngTemplateOutlet]="content" />
+  </mns-detail-page>
 }
 <ng-template #content>
   <div class="form-grid">

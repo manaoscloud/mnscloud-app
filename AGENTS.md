@@ -37,3 +37,12 @@ style is missing, create it in the shared layer first; future improvements must 
 all consumers. Do not duplicate the shared shell, cards, spacing, typography, colors or
 responsive rules inside a page. Summary dashboards use templates/dashboard and the app.md
 refresh-only contract. Run npm run check:dashboard; CRUD filter rules do not apply to them.
+
+## Detail and settings pages
+
+Use DetailPageComponent for read-only resource pages and SettingsPageComponent for
+singleton configuration pages. Both inherit PageShellComponent. Follow app.md and
+templates/detail-page or templates/settings-page; shared styles belong in
+src/styles/_content-page.scss. Never style a routed configuration page as a dialog.
+Run node scripts/validate-content-pages.mjs and the build; verify both responsive
+layouts and settings dirty/cancel/save behavior before release.

@@ -4125,5 +4125,9 @@
   "Map preview: up to 1,000 authorized assets.": "Vista previa del mapa: hasta 1.000 activos autorizados.",
   "InfraGIS asset map": "Mapa de activos de InfraGIS",
   "Loaded inventory; API limits apply.": "Inventario cargado; sujeto a los límites de la API.",
-  "Management": "Gestión"
+  "Management": "Gestión",
+  "System Parameters": "Parámetros del sistema",
+  "Single master record with global default values.": "Registro único con valores predeterminados globales.",
+  "Single tenant record. Empty tenant values fallback to master defaults.": "Registro único del entorno. Los valores vacíos heredan los valores globales.",
+  "Parameters saved successfully.": "Parámetros guardados correctamente."
 }

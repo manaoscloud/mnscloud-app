@@ -10,12 +10,10 @@ import {
 
 import { ActivatedRoute } from '@angular/router';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
@@ -24,7 +22,7 @@ import { lastValueFrom } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -165,13 +163,11 @@ const DEFAULT_ITEM: SystemParametersItem = {
   selector: 'app-settings-parameters',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
-    MatCardModule,
+    SettingsPageComponent,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
     MatSlideToggleModule,
     MatTabsModule,
     TranslocoPipe,
@@ -264,7 +260,7 @@ export class SettingsParametersPage {
 
   constructor() {
     effect(() => {
-      const snapshot = this.parametersResource.value();
+      const snapshot = this.parametersResource.hasValue() ? this.parametersResource.value() : undefined;
       if (!snapshot) return;
       this.storageAccounts.set(snapshot.storageAccounts);
       this.item.set(snapshot.item);
@@ -274,6 +270,7 @@ export class SettingsParametersPage {
 
     effect(() => {
       if (this.isMaster()) return;
+      if (!this.siadResource.hasValue()) return;
       const item = this.siadResource.value();
       this.siadItem.set(item);
       this.baselineSiad.set({ ...item });
@@ -300,6 +297,7 @@ export class SettingsParametersPage {
   }
 
   refreshItems() {
+    if (this.hasChanges() || this.saving()) return;
     this.feedback.set(null);
     this.success.set(null);
     this.parametersResource.reload();
@@ -343,7 +341,7 @@ export class SettingsParametersPage {
   }
 
   async saveAll() {
-    if (!this.hasChanges()) return;
+    if (!this.hasChanges() || this.saving() || this.loading()) return;
 
     this.saving.set(true);
     this.feedback.set(null);
