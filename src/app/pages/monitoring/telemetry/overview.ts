@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, resource, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, resource, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -40,7 +40,7 @@ type Agent = {
       <p role="status">{{ 'Loading' | transloco }}…</p>
     } @else {
       <div class="charts">
-        @for (a of page.value().items; track a.uuid) {
+        @for (a of view().items; track a.uuid) {
           <article>
             <h3>{{ a.name || a.hostname }}</h3>
             <p>
@@ -82,7 +82,7 @@ type Agent = {
       </div>
     }
     <mat-paginator
-      [length]="page.value().total"
+      [length]="view().total"
       [pageSize]="12"
       [pageIndex]="index()"
       (page)="index.set($event.pageIndex)"
@@ -110,6 +110,9 @@ export class TelemetryOverviewPage {
       return response.data;
     },
   });
+  readonly view = computed(() =>
+    this.page.hasValue() ? this.page.value() : { items: [] as Agent[], total: 0 },
+  );
   constructor() {
     let failures = 0;
     let timer: ReturnType<typeof setTimeout>;

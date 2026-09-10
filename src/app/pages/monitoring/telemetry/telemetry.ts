@@ -80,16 +80,19 @@ export class AgentTelemetryPage {
       return { resources, selected, points };
     },
   });
+  readonly view = computed<Snapshot>(() =>
+    this.snapshot.hasValue()
+      ? this.snapshot.value()
+      : { resources: [], points: [], selected: undefined },
+  );
   readonly options = computed(() =>
-    this.snapshot
-      .value()
-      .resources.filter((r) =>
-        `${r.kind} ${r.name}`.toLowerCase().includes(this.resourceSearch().toLowerCase()),
-      ),
+    this.view().resources.filter((r) =>
+      `${r.kind} ${r.name}`.toLowerCase().includes(this.resourceSearch().toLowerCase()),
+    ),
   );
   readonly series = computed(() => {
     const groups = new Map<string, Map<string, Point[]>>();
-    for (const point of this.snapshot.value().points) {
+    for (const point of this.view().points) {
       const group = point.metricKey.startsWith('host.network.')
         ? point.metricKey.replace(/\.(rx|tx)_/, '.')
         : point.metricKey;

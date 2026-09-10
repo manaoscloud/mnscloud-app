@@ -20,7 +20,7 @@
     <mat-form-field appearance="outline">
       <mat-label>{{ 'Resource' | transloco }}</mat-label>
       <mat-select
-        [value]="snapshot.value().selected?.uuid"
+        [value]="view().selected?.uuid"
         (selectionChange)="selectedUUID.set($event.value)"
         (openedChange)="resourceSearch.set('')"
       >
