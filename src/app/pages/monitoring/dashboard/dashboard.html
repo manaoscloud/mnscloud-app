@@ -173,12 +173,12 @@
                       }
                       @case ('level') {
                         <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">{{
-                          row.level || '-' | transloco
+                          activityLabel(row.level)
                         }}</span>
                       }
                       @case ('status') {
                         <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">{{
-                          row.status || '-' | transloco
+                          activityLabel(row.status)
                         }}</span>
                       }
                       @case ('action') {
