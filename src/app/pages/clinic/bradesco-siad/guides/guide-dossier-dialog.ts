@@ -1,4 +1,6 @@
-import { Component, Inject, inject, signal } from '@angular/core';
+import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
+import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
+import { Component, DestroyRef, Inject, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -45,6 +47,7 @@ type DossierResponse = {
   selector: 'app-clinic-bradesco-siad-guide-dossier-dialog',
   standalone: true,
   imports: [
+    AsyncOperationStatusComponent,
     CommonModule,
     MatDialogModule,
     MatButtonModule,
@@ -66,6 +69,7 @@ type DossierResponse = {
         </div>
       </div>
       <div class="dialog-content">
+        <mns-async-operation-status />
         @if (loading()) {
           <mat-progress-bar mode="indeterminate" />
         }
@@ -220,6 +224,8 @@ type DossierResponse = {
   ],
 })
 export class ClinicBradescoSiadGuideDossierDialogComponent {
+  private readonly operations = inject(AsyncOperationsService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly transloco = inject(TranslocoService);
@@ -272,8 +278,11 @@ export class ClinicBradescoSiadGuideDossierDialogComponent {
   async submit(): Promise<void> {
     this.loading.set(true);
     try {
-      await this.api.post(`clinic/bradesco/siad/guides/${this.data.guideUUID}/submit`, {});
-      this.snack.success(this.transloco.translate('siad.dossier.queued'));
+      const response = await this.api.post(
+        `clinic/bradesco/siad/guides/${this.data.guideUUID}/submit`,
+        {},
+      );
+      this.operations.observe(response, this.destroyRef, () => void this.load());
       await this.load();
     } catch (error) {
       this.snack.error(this.errorMessage(error));

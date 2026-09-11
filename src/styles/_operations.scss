@@ -1,0 +1,18 @@
+mns-async-operation-status {
+  display: block;
+  min-width: 0;
+}
+.operation-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-block: 0.5rem 1rem;
+}
+.operation-status-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  min-width: 0;
+}

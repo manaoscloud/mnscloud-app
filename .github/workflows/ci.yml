@@ -51,6 +51,8 @@ jobs:
           npm run verify:changed -- "$BASE" HEAD
       - name: Test dashboard state and tenant isolation
         run: npm run test:dashboard
+      - name: Test queued operations and cookie session isolation
+        run: npx ng test --watch=false --include='src/app/shared/operations/*.spec.ts' --include='src/app/services/api-session-context.spec.ts' --karma-config=karma.dashboard.cjs
       - name: Generate runtime config
         run: |
           node -e '

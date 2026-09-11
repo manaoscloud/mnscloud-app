@@ -366,8 +366,8 @@ export class HostingSmtpRoutesPage extends ConfigurableCrudPageBase<Configurable
     if (!payload) return;
     this.mutating.set(true);
     try {
-      await this.api.post(`${this.endpoint()}/${uuid}/test`, payload);
-      this.snack.success(this.t('SMTP route test email sent.'));
+      const response = await this.api.post(`${this.endpoint()}/${uuid}/test`, payload);
+      this.trackOperation(response);
     } catch (error) {
       this.snack.error(this.errorMessage(error) || this.t('Failed to send SMTP route test email.'));
     } finally {

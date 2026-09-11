@@ -14,7 +14,8 @@ const config: ConfigurableCrudConfig = {
   endpoint: '',
   uuidField: 'line',
   pageTitle: 'DNS records',
-  pageDescription: 'Live records from the DNS server. Changes are applied immediately.',
+  pageDescription:
+    'Live records from the DNS server. Changes are processed and verified in the background.',
   createTitle: 'New DNS record',
   editTitle: 'Edit DNS record',
   dialogDescription: 'SOA and apex nameservers are managed by the DNS server.',
@@ -121,11 +122,16 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
   private readonly router = inject(Router);
   private readonly breadcrumbLabels = inject(BreadcrumbLabelsService);
   private clearBreadcrumb: (() => void) | undefined;
-  private serial: number | string = 0;
+  private operationPending = false;
+  private observationTimer: ReturnType<typeof setTimeout> | undefined;
+  private serial: number | string | null = null;
   private formSerial: number | string = 0;
   constructor() {
     super(config);
-    this.destroyRef.onDestroy(() => this.clearBreadcrumb?.());
+    this.destroyRef.onDestroy(() => {
+      this.clearBreadcrumb?.();
+      clearTimeout(this.observationTimer);
+    });
   }
   override backLink(): string {
     return this.router.url.split(/[?#]/)[0].replace(/\/domains\/[^/]+\/records$/, '/domains');
@@ -142,9 +148,28 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
   }
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
     const response = await this.api.get<{
-      data: { serial: number | string; items: ConfigurableCrudRecord[] };
+      data: {
+        serial: number | string | null;
+        items: ConfigurableCrudRecord[];
+        operation?: { operationUUID: string; state: string; canPoll?: boolean };
+      };
     }>(this.listEndpoint());
     this.serial = response.data.serial;
+    const operation = response.data.operation;
+    this.operationPending =
+      !!operation &&
+      ['queued', 'running', 'waiting_retry', 'verifying', 'blocked'].includes(operation.state);
+    clearTimeout(this.observationTimer);
+    if (
+      operation &&
+      ['queued', 'running', 'waiting_retry', 'verifying'].includes(operation.state)
+    ) {
+      if (operation.canPoll !== false) {
+        this.operations.watch(operation, this.destroyRef, () => super.refreshList());
+      } else {
+        this.observationTimer = setTimeout(() => super.refreshList(), 5000);
+      }
+    }
     const soa = response.data.items.find((row) => row['type'] === 'SOA');
     this.clearBreadcrumb?.();
     if (soa)
@@ -179,10 +204,18 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
       });
   }
   override startCreate() {
+    if (this.serial === null || this.operationPending) {
+      this.snack.info(this.t('Wait for the DNS zone observation before editing records.'));
+      return;
+    }
     this.formSerial = this.serial;
     super.startCreate();
   }
   override startEdit(row: ConfigurableCrudRecord) {
+    if (this.operationPending || this.serial === null) {
+      this.snack.info(this.t('Wait for the DNS zone observation before editing records.'));
+      return;
+    }
     if (row['editable'] !== true) {
       this.snack.info(this.t('This DNS record is managed by the server.'));
       return;
@@ -210,6 +243,12 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
     };
   }
   protected override validatePayload(_payload: ConfigurableCrudRecord) {
+    if (this.operationPending || this.serial === null || this.formSerial !== this.serial) {
+      this.snack.warning(
+        this.t('The DNS observation changed. Refresh and reopen the record before saving.'),
+      );
+      return false;
+    }
     return true;
   }
   protected override afterSave(context: { response: unknown; saveAndNew: boolean }) {
@@ -220,20 +259,43 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
     }
   }
   override async saveItem(saveAndNew = false) {
-    if (this.saving() || this.mutating()) return;
+    if (this.saving() || this.mutating() || this.operationPending) return;
     await super.saveItem(saveAndNew);
-    if (saveAndNew) this.formSerial = this.serial;
+    if (saveAndNew && this.serial !== null) this.formSerial = this.serial;
+  }
+  override refreshList(): void {
+    void this.requestObservation();
+  }
+  private async requestObservation() {
+    if (this.mutating() || this.operationPending) return;
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post(`${this.listEndpoint()}/refresh`, {});
+      this.operationPending = this.operations.observe(response, this.destroyRef, () =>
+        super.refreshList(),
+      );
+    } catch (error) {
+      this.snack.error(this.errorMessage(error));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+  protected override trackOperation(response: unknown): boolean {
+    this.operationPending = this.operations.observe(response, this.destroyRef, () =>
+      super.refreshList(),
+    );
+    return this.operationPending;
   }
   override async deleteItem(row: ConfigurableCrudRecord) {
-    if (this.mutating() || row['editable'] !== true) return;
+    if (this.mutating() || this.operationPending || row['editable'] !== true) return;
     if (!(await this.confirmAction(config.deleteTitle, config.deleteMessage))) return;
     this.mutating.set(true);
     try {
-      await this.api.delete(`${this.listEndpoint()}/${this.recordUUID(row)}`, {
+      const response = await this.api.delete(`${this.listEndpoint()}/${this.recordUUID(row)}`, {
         serial: row['snapshotSerial'],
       });
-      this.snack.success(this.t(config.deletedMessage));
-      this.refreshList();
+      this.trackOperation(response);
+      super.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error));
     } finally {

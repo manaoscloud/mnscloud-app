@@ -1,3 +1,5 @@
+import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
+import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -79,6 +81,7 @@ type VpsContainerInstanceFormModel = {
   selector: 'app-hosting-vps-container-instances',
   standalone: true,
   imports: [
+    AsyncOperationStatusComponent,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -103,6 +106,7 @@ type VpsContainerInstanceFormModel = {
   styleUrls: ['./instances.scss'],
 })
 export class HostingVpsContainerInstancesPage {
+  private readonly operations = inject(AsyncOperationsService);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
@@ -674,8 +678,8 @@ export class HostingVpsContainerInstancesPage {
         await this.api.put(`${this.instanceEndpoint()}/${editing.HciUUID}`, payload);
         this.snack.success('VPS Container instance updated.');
       } else {
-        await this.api.post(this.instanceEndpoint(), payload);
-        this.snack.success('VPS Container instance queued for provisioning.');
+        const response = await this.api.post(this.instanceEndpoint(), payload);
+        this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
       }
       this.instancesResource.reload();
       if (closeAfterSave || editing) {
@@ -758,7 +762,7 @@ export class HostingVpsContainerInstancesPage {
       if ((updated?.HciStatus ?? '').toLowerCase() === 'queue_failed') {
         this.snack.error('VPS Container provisioning retry could not be queued.');
       } else {
-        this.snack.success('VPS Container provisioning retry queued.');
+        this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
       }
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to retry VPS Container provisioning.'));
@@ -850,7 +854,7 @@ export class HostingVpsContainerInstancesPage {
       }
       this.instancesResource.reload();
       this.closeChangePlanDialog();
-      this.snack.success('VPS Container plan change queued.');
+      this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to change VPS Container plan.'));
     } finally {
