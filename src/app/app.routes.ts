@@ -715,15 +715,6 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'hosting' },
               },
               {
-                path: 'hosting/dns/templates',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/templates/templates').then(
-                    (m) => m.HostingDnsTemplatesPage,
-                  ),
-                title: 'Hosting • DNS • Templates | mnscloud',
-                data: { scope: 'tenant', context: 'hosting' },
-              },
-              {
                 path: 'hosting/smtp',
                 title: 'Hosting • SMTP | mnscloud',
                 data: { scope: 'tenant', context: 'hosting' },
@@ -1810,15 +1801,6 @@ export const routes: Routes = [
                     (m) => m.HostingDnsProvidersPage,
                   ),
                 title: 'System Hosting • DNS • Providers | mnscloud',
-                data: { scope: 'master', context: 'system' },
-              },
-              {
-                path: 'hosting/dns/templates',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/templates/templates').then(
-                    (m) => m.HostingDnsTemplatesPage,
-                  ),
-                title: 'System Hosting • DNS • Templates | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {

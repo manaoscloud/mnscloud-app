@@ -1083,7 +1083,7 @@ Create/edit and platform filters expose only cPanel DNSOnly (`cpanel_dnsonly`) a
 Amazon Route 53 (`route53`). Consume the authorized API catalog; the bounded fallback
 catalog contains these same two options. Unsupported values from an older API must not
 reappear in dropdowns. cPanel is the explicit initial form selection; API/DB validate the
-submitted platform. Preserve scope, required credentials, templates and connection tests.
+submitted platform. Preserve scope, required credentials and connection tests.
 
 ### DNSOnly live zone records
 
@@ -1113,3 +1113,6 @@ Route 53. No region, hosted zone ID or provider TTL belongs in its credential ta
 the local fallback aligned with the API catalog. DNSOnly fields keep their provider-specific
 behavior. Empty secrets on edit preserve saved credentials through the API contract.
 The read-only connectivity test can succeed with no hosted zones and does not verify writes.
+
+DNS providers and domains do not expose blueprint/template selection. DNS record actions
+belong to the domain; provider-generated initial records are read from the provider.

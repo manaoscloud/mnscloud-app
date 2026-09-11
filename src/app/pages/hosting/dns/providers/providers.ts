@@ -52,12 +52,6 @@ const SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'MASTER', label: 'Master' },
 ];
 
-type HostingDnsDomainTemplateItem = {
-  HdtUUID: string;
-  HdtName: string;
-  HdtCode?: string | null;
-  HdtScope?: string | null;
-};
 
 const TEST_PROVIDER_ACTION: ConfigurableCrudRowAction = {
   key: 'test',
@@ -114,7 +108,6 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     secret: '',
     defaultTtl: null,
     verifyTls: 1,
-    templateUUID: '',
     notes: '',
   },
   columns: [
@@ -153,15 +146,6 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       span: 1,
       required: true,
-    },
-    {
-      key: 'templateUUID',
-      source: 'HostingDnsDomainTemplateHdtUUID',
-      payloadKey: 'templateUUID',
-      label: 'Default DNS template',
-      type: 'search-select',
-      placeholder: 'Search',
-      span: 1,
     },
     {
       key: 'isDefault',
@@ -263,14 +247,10 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
 export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
   private readonly catalog = signal<HostingDnsProviderCatalogItem[]>([]);
-  private readonly templates = signal<HostingDnsDomainTemplateItem[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
     this.isMaster() ? 'system/hosting/dns/providers' : HOSTING_DNS_PROVIDER_CONFIG.endpoint,
-  );
-  private readonly templateEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/dns/templates' : 'hosting/dns/templates',
   );
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.catalog().map((item) => ({
@@ -280,30 +260,19 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       searchText: `${item.value} ${item.label}`,
     })),
   );
-  private readonly templateOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.templates().map((item) => ({
-      value: item.HdtUUID,
-      label: item.HdtName,
-      description: item.HdtCode || item.HdtScope || undefined,
-      searchText: `${item.HdtName} ${item.HdtCode ?? ''} ${item.HdtScope ?? ''}`,
-    })),
-  );
 
   constructor() {
     super(HOSTING_DNS_PROVIDER_CONFIG);
     void this.fetchCatalog();
-    void this.fetchTemplates();
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
     if (!this.catalog().length) await this.fetchCatalog();
-    if (!this.templates().length) await this.fetchTemplates();
     return super.fetchItems(filters);
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'provider') return this.providerOptions();
-    if (key === 'templateUUID') return this.templateOptions();
     if (key === 'scope') return SCOPE_OPTIONS;
     return [];
   }
@@ -340,7 +309,6 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       secret: providerUsesField('secret', provider) ? payload['secret'] : null,
       defaultTtl: providerUsesField('defaultTtl', provider) ? payload['defaultTtl'] : null,
       verifyTls: providerUsesField('verifyTls', provider) ? truthyNumber(payload['verifyTls']) : 1,
-      templateUUID: payload['templateUUID'] || null,
       isDefault: truthyNumber(payload['isDefault']),
       status: payload['status'],
       notes: payload['notes'],
@@ -365,17 +333,6 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
-  private async fetchTemplates() {
-    try {
-      const response = await this.api.get<{ data?: { items?: HostingDnsDomainTemplateItem[] } }>(
-        `${this.templateEndpoint()}?status=1&limit=500&offset=0`,
-      );
-      this.templates.set(response?.data?.items ?? []);
-    } catch (error) {
-      this.templates.set([]);
-      this.snack.error(this.errorMessage(error) || 'Failed to load DNS templates.');
-    }
-  }
 
   private async testProvider(provider: ConfigurableCrudRecord) {
     const providerUUID = String(provider['HdpUUID'] ?? '');
