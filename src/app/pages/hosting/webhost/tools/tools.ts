@@ -1,3 +1,5 @@
+import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
+import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -168,6 +170,7 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   selector: 'app-hosting-webhost-tools',
   standalone: true,
   imports: [
+    AsyncOperationStatusComponent,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -192,6 +195,7 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   styleUrls: ['./tools.scss'],
 })
 export class HostingWebhostToolsPage {
+  private readonly operations = inject(AsyncOperationsService);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
@@ -551,8 +555,11 @@ export class HostingWebhostToolsPage {
   async runAction(row: WebhostToolRow, action: 'provision' | 'sync' | 'deprovision', body = {}) {
     this.saving.set(true);
     try {
-      await this.api.post(`${this.config.endpoint}/${this.rowId(row)}/${action}`, body);
-      this.snack.success(`${this.config.primaryLabel} ${action} queued.`);
+      const response = await this.api.post(
+        `${this.config.endpoint}/${this.rowId(row)}/${action}`,
+        body,
+      );
+      this.operations.observe(response, this.destroyRef, () => this.itemsResource.reload());
       this.itemsResource.reload();
     } catch (error) {
       this.notifyError(error, `Failed to run ${action}.`);

@@ -56,7 +56,8 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   searchPlaceholder: 'Search by domain',
   emptyLabel: 'No domains found.',
   deleteTitle: 'Delete domain',
-  deleteMessage: 'Archive this domain registration? The DNS zone remains on the server.',
+  deleteMessage:
+    'Delete this domain and ALL its DNS records from the provider? The application keeps its soft-deleted registration.',
   deleteSelectedTitle: 'Delete selected domains',
   deleteSelectedMessage: 'Delete {count} selected domains?',
   savedMessage: 'Domain saved successfully.',
@@ -267,20 +268,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       ) && row['HddLastProvisionedAt']
         ? [{ key: 'records', label: 'DNS records', icon: 'dns', tooltip: 'Manage DNS records' }]
         : []),
-      ...(['cpanel_dnsonly', 'route53'].includes(
-        String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase(),
-      ) &&
-      row['HddLastProvisionedAt'] &&
-      this.canDelete()
-        ? [
-            {
-              key: 'removeZone',
-              label: 'Delete DNS zone',
-              icon: 'delete_forever',
-              tooltip: 'Delete DNS zone and all its records',
-            },
-          ]
-        : []),
       {
         ...PROVISION_DOMAIN_ACTION,
         icon:
@@ -292,42 +279,9 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
-    if (action.key === 'removeZone') await this.removeZone(row);
     if (action.key === 'records')
       await this.router.navigateByUrl(`${this.domainsPath()}/${this.recordUUID(row)}/records`);
     if (action.key === 'provision') await this.provisionDomain(row);
-  }
-
-  private async removeZone(row: ConfigurableCrudRecord) {
-    if (this.mutating()) return;
-    const uuid = this.recordUUID(row);
-    this.mutating.set(true);
-    try {
-      const snapshot = await this.api.get<{ data: { serial: number | string } }>(
-        `hosting/dns/domains/${uuid}/zone-records`,
-      );
-      const name = String(row['HddName']).toLowerCase();
-      if (
-        !(await this.confirmAction(
-          'Delete DNS zone',
-          this.t(
-            'Delete zone {name} and ALL its records from the DNS server? This also includes records created outside the portal.',
-            { name },
-          ),
-        ))
-      )
-        return;
-      await this.api.delete(`hosting/dns/domains/${uuid}/zone`, {
-        serial: snapshot.data.serial,
-        confirmation: name,
-      });
-      this.snack.success(this.t('DNS zone removed and verified.'));
-      this.refreshList();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error));
-    } finally {
-      this.mutating.set(false);
-    }
   }
 
   private async fetchDomainProviders() {
@@ -364,13 +318,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
         message?: string;
         data?: { provision?: { message?: string; status?: string } };
       }>(`hosting/dns/domains/${domainUUID}/provision`, {});
-      const message =
-        response?.data?.provision?.message || response?.message || 'DNS domain provisioned.';
-      if (response?.status === 'failed' || response?.data?.provision?.status === 'failed') {
-        this.snack.error(this.t(message));
-      } else {
-        this.snack.success(this.t(message));
-      }
+      this.trackOperation(response);
       this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error) || 'Failed to provision DNS domain.');

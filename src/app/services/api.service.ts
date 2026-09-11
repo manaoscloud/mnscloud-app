@@ -49,6 +49,8 @@ export class ApiService {
     if (!this.auth.isLoggedIn()) return false;
 
     const normalized = endpoint.replace(/^\//, '');
+    if (/^user\/operations(?:[/?]|$)/.test(normalized))
+      return new URLSearchParams(normalized.split('?')[1] ?? '').get('scope') !== 'platform';
     const allowPrefixes = ['auth', 'user', 'health', 'openapi.yaml', 'docs', 'system'];
 
     if (this.systemTelemetryContext(endpoint)) return false;
@@ -118,15 +120,58 @@ export class ApiService {
     );
   }
 
-  async post<T>(endpoint: string, body: any): Promise<T> {
+  private readonly pendingMutationKeys = new Map<string, string>();
+
+  private async mutation<T>(
+    method: 'POST' | 'PUT' | 'DELETE',
+    endpoint: string,
+    body?: any,
+    options?: { idempotencyKey?: string },
+  ): Promise<T> {
     this.assertEnvironment(endpoint);
+    const session = this.auth.sessionGeneration();
     const isFormData = body instanceof FormData;
-    return await firstValueFrom(
-      this.http.post<T>(this.url(endpoint), body, {
-        headers: this.getHeaders(endpoint, isFormData),
-        withCredentials: true,
-      }),
-    );
+    const headers = this.getHeaders(endpoint, isFormData);
+    // Keep only a digest in memory. A lost response reuses the key for the same intent.
+    const serialized = JSON.stringify([
+      method,
+      endpoint,
+      headers.get('X-Environment-UUID'),
+      this.auth.user()?.uuid,
+      session,
+      isFormData ? crypto.randomUUID() : (body ?? null),
+    ]);
+    const digest = Array.from(
+      new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(serialized))),
+    )
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+    if (session !== this.auth.sessionGeneration()) throw new Error('Session changed.');
+    const key =
+      options?.idempotencyKey ?? this.pendingMutationKeys.get(digest) ?? crypto.randomUUID();
+    this.pendingMutationKeys.set(digest, key);
+    if (this.pendingMutationKeys.size > 100)
+      this.pendingMutationKeys.delete(this.pendingMutationKeys.keys().next().value!);
+    try {
+      const result = await firstValueFrom(
+        this.http.request<T>(method, this.url(endpoint), {
+          headers: headers.set('Idempotency-Key', key),
+          body,
+          withCredentials: true,
+        }),
+      );
+      this.pendingMutationKeys.delete(digest);
+      return result;
+    } catch (error) {
+      const status = (error as { status?: number })?.status ?? 0;
+      if (status >= 400 && status < 500 && ![408, 429].includes(status))
+        this.pendingMutationKeys.delete(digest);
+      throw error;
+    }
+  }
+
+  async post<T>(endpoint: string, body: any, options?: { idempotencyKey?: string }): Promise<T> {
+    return await this.mutation<T>('POST', endpoint, body, options);
   }
 
   postFormWithProgress<T>(endpoint: string, body: FormData): Observable<FileUploadProgress<T>> {
@@ -219,26 +264,12 @@ export class ApiService {
       );
   }
 
-  async put<T>(endpoint: string, body: any): Promise<T> {
-    this.assertEnvironment(endpoint);
-    const isFormData = body instanceof FormData;
-    return await firstValueFrom(
-      this.http.put<T>(this.url(endpoint), body, {
-        headers: this.getHeaders(endpoint, isFormData),
-        withCredentials: true,
-      }),
-    );
+  async put<T>(endpoint: string, body: any, options?: { idempotencyKey?: string }): Promise<T> {
+    return await this.mutation<T>('PUT', endpoint, body, options);
   }
 
-  async delete<T>(endpoint: string, body?: any): Promise<T> {
-    this.assertEnvironment(endpoint);
-    return await firstValueFrom(
-      this.http.delete<T>(this.url(endpoint), {
-        headers: this.getHeaders(endpoint),
-        body,
-        withCredentials: true,
-      }),
-    );
+  async delete<T>(endpoint: string, body?: any, options?: { idempotencyKey?: string }): Promise<T> {
+    return await this.mutation<T>('DELETE', endpoint, body, options);
   }
 
   async getMe() {

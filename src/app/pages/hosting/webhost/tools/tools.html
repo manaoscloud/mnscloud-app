@@ -15,6 +15,7 @@
       </div>
     </header>
 
+    <mns-async-operation-status />
     <div class="filter-grid">
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Search' | transloco }}</mat-label>
@@ -192,7 +193,9 @@
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Status' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -205,7 +208,9 @@
         </ng-container>
 
         <ng-container matColumnDef="provision">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Provision' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Provision' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -242,7 +247,9 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
         <tr class="mat-row empty-row" *matNoDataRow>
-          <td class="mat-cell" [attr.colspan]="displayedColumns().length">{{ 'No records found.' | transloco }}</td>
+          <td class="mat-cell" [attr.colspan]="displayedColumns().length">
+            {{ 'No records found.' | transloco }}
+          </td>
         </tr>
       </table>
     </div>
@@ -290,9 +297,12 @@
       <div>
         <h2>{{ (editing() ? 'Edit' : 'New') | transloco }} {{ config.primaryLabel }}</h2>
         <p>
-          {{ (editing()
+          {{
+            (editing()
               ? 'Update record metadata and provisioning state.'
-              : 'Create a Webhost tool record.') | transloco }}
+              : 'Create a Webhost tool record.'
+            ) | transloco
+          }}
         </p>
       </div>
       @if (editing()) {
@@ -432,7 +442,9 @@
 
     <mat-dialog-actions class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">{{ 'Cancel' | transloco }}</button>
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Cancel' | transloco }}
+        </button>
       </div>
       <div class="primary-actions save-split-action" [class.is-single-action]="editing()">
         <button
@@ -489,7 +501,9 @@
       />
     </mat-form-field>
     <div class="password-actions">
-      <button mat-stroked-button type="button" (click)="passwordDialogRef?.close()">{{ 'Cancel' | transloco }}</button>
+      <button mat-stroked-button type="button" (click)="passwordDialogRef?.close()">
+        {{ 'Cancel' | transloco }}
+      </button>
       <button
         mat-flat-button
         color="primary"

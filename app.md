@@ -1135,3 +1135,19 @@ the domains list; the list must never show Back or open a form automatically. Do
 breadcrumb URLs redirect to that same list in tenant and System contexts, including older
 bookmarks. Editing a domain requires an explicit Edit action. Record child URLs are built
 from the domains collection path to avoid duplicating the UUID.
+
+## Asynchronous business operations
+
+Queue-backed mutations return an accepted operation, not a completed provider action. Use
+`AsyncOperationsService` and the shared `mns-async-operation-status` component; do not build local
+polling loops or announce success immediately. Keep shared status styles in `styles/_operations.scss`.
+The service follows the owned operation endpoint, stops on page/session/environment changes, bounds
+polling and resumes recent owned status when the shared component opens. Never resubmit a mutation
+because polling failed. `ApiService` retains a request key after an uncertain HTTP response.
+
+The server advertises `canRecheck` for supported readback. The shared action requests verification;
+it does not force a provider retry or invent completion. Backend permissions and immutable intent
+remain authoritative. Render states and safe error labels through PT/EN/ES translations. DNS reads
+use cached observations; disable editing while the observation is pending or blocked, and require a
+fresh revision before submitting another change. Preserve the existing CRUD/dialog templates and
+soft-delete semantics. No recovery/billing interface is introduced.

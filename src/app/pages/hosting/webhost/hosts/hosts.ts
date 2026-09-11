@@ -1,3 +1,5 @@
+import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
+import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -88,6 +90,7 @@ type WebhostHostFormModel = {
   selector: 'app-hosting-webhost-hosts',
   standalone: true,
   imports: [
+    AsyncOperationStatusComponent,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -112,6 +115,7 @@ type WebhostHostFormModel = {
   styleUrls: ['./hosts.scss'],
 })
 export class HostingWebhostHostsPage {
+  private readonly operations = inject(AsyncOperationsService);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
@@ -607,8 +611,8 @@ export class HostingWebhostHostsPage {
   ) {
     this.actionHostUUID.set(item.HwhUUID);
     try {
-      await this.api.post(`${this.hostEndpoint}/${item.HwhUUID}/${action}`, {});
-      this.snack.success(`Webhost host ${action} queued.`);
+      const response = await this.api.post(`${this.hostEndpoint}/${item.HwhUUID}/${action}`, {});
+      this.operations.observe(response, this.destroyRef, () => this.hostsResource.reload());
       this.hostsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, `Failed to ${action} Webhost host.`));
