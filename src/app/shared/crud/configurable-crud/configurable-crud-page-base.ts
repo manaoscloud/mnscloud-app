@@ -355,6 +355,7 @@ export type ConfigurableCrudConfig = {
   canEdit?: boolean;
   canDelete?: boolean;
   /** Optional per-record deletion rule for resources with protected lifecycle states. */
+  canEditRow?: (row: ConfigurableCrudRecord) => boolean;
   canDeleteRow?: (row: ConfigurableCrudRecord) => boolean;
   bulkDelete?: boolean;
   statusFilter?: boolean;
@@ -648,7 +649,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   startEdit(row: T): void {
-    if (!this.canEdit()) return;
+    if (!this.canEditRow(row)) return;
     this.dateDrafts.clear();
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(row);
@@ -872,6 +873,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   isFilterActionDisabled(_action: ConfigurableCrudFilterAction): boolean {
     return false;
+  }
+
+  canEditRow(row: T): boolean {
+    return this.canEdit() && (this.config.canEditRow?.(row) ?? true);
   }
 
   canDeleteRow(row: T): boolean {
