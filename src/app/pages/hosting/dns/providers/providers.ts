@@ -13,7 +13,7 @@ import {
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 type HostingDnsProviderCredentialField =
-  'apiEndpoint' | 'accessKey' | 'secret' | 'region' | 'hostedZoneID' | 'defaultTtl' | 'verifyTls';
+  'apiEndpoint' | 'accessKey' | 'secret' | 'defaultTtl' | 'verifyTls';
 
 type HostingDnsProviderCatalogItem = {
   value: string;
@@ -33,7 +33,6 @@ type HostingDnsProviderTestResult = {
   supported: boolean;
   checkedAt: string;
   endpoint?: string | null;
-  hostedZoneID?: string | null;
   message: string;
   checks: {
     name: string;
@@ -113,8 +112,6 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     apiEndpoint: '',
     accessKey: '',
     secret: '',
-    region: '',
-    hostedZoneID: '',
     defaultTtl: null,
     verifyTls: 1,
     templateUUID: '',
@@ -220,29 +217,6 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       hiddenWhen: ({ values }) => !providerUsesField('secret', values['provider']),
       requiredWhen: ({ editing, values }) =>
         !editing && providerRequiresField('secret', values['provider']),
-    },
-    {
-      key: 'region',
-      source: 'HdpRegion',
-      payloadKey: 'region',
-      label: 'Region',
-      placeholder: 'us-east-1',
-      tab: 'authentication',
-      span: 1,
-      hiddenWhen: ({ values }) => !providerUsesField('region', values['provider']),
-      requiredWhen: ({ values }) => providerRequiresField('region', values['provider']),
-    },
-    {
-      key: 'hostedZoneID',
-      source: 'HdpHostedZoneID',
-      payloadKey: 'hostedZoneID',
-      label: 'Hosted zone ID',
-      labelWhen: ({ values }) => providerFieldLabel('hostedZoneID', values['provider']),
-      placeholder: 'Z1234567890',
-      tab: 'authentication',
-      span: 1,
-      hiddenWhen: ({ values }) => !providerUsesField('hostedZoneID', values['provider']),
-      requiredWhen: ({ values }) => providerRequiresField('hostedZoneID', values['provider']),
     },
     {
       key: 'defaultTtl',
@@ -364,8 +338,6 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       apiEndpoint: providerUsesField('apiEndpoint', provider) ? payload['apiEndpoint'] : null,
       accessKey: providerUsesField('accessKey', provider) ? payload['accessKey'] : null,
       secret: providerUsesField('secret', provider) ? payload['secret'] : null,
-      region: providerUsesField('region', provider) ? payload['region'] : null,
-      hostedZoneID: providerUsesField('hostedZoneID', provider) ? payload['hostedZoneID'] : null,
       defaultTtl: providerUsesField('defaultTtl', provider) ? payload['defaultTtl'] : null,
       verifyTls: providerUsesField('verifyTls', provider) ? truthyNumber(payload['verifyTls']) : 1,
       templateUUID: payload['templateUUID'] || null,
@@ -444,7 +416,6 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
           { label: 'Supported', value: test.supported ? 'Yes' : 'No', translate: true },
           { label: 'Checked at', value: test.checkedAt, kind: 'datetime' },
           { label: 'Endpoint', value: test.endpoint ?? '-' },
-          { label: 'Hosted zone ID', value: test.hostedZoneID ?? '-' },
         ],
         sections: [
           {
@@ -512,7 +483,6 @@ function providerFieldLabel(field: HostingDnsProviderCredentialField, provider: 
     const labels: Partial<Record<HostingDnsProviderCredentialField, string>> = {
       accessKey: 'AWS access key ID',
       secret: 'AWS secret access key',
-      hostedZoneID: 'Hosted zone ID',
     };
     return labels[field] ?? genericProviderFieldLabel(field);
   }
@@ -534,8 +504,6 @@ function genericProviderFieldLabel(field: HostingDnsProviderCredentialField): st
     apiEndpoint: 'API endpoint',
     accessKey: 'Access key',
     secret: 'Secret / API token',
-    region: 'Region',
-    hostedZoneID: 'Hosted zone ID',
     defaultTtl: 'Default TTL',
     verifyTls: 'Verify TLS',
   };
@@ -544,7 +512,7 @@ function genericProviderFieldLabel(field: HostingDnsProviderCredentialField): st
 
 function fallbackCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53': return ['accessKey', 'secret', 'region', 'hostedZoneID', 'defaultTtl'];
+    case 'route53': return ['accessKey', 'secret'];
     case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
     default: return [];
   }
@@ -552,7 +520,7 @@ function fallbackCredentialFields(provider: string): HostingDnsProviderCredentia
 
 function fallbackRequiredCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53': return ['accessKey', 'secret', 'hostedZoneID'];
+    case 'route53': return ['accessKey', 'secret'];
     case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret'];
     default: return [];
   }

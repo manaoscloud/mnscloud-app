@@ -1105,3 +1105,11 @@ claim that a label or private record address makes a public zone private. The di
 removal action uses SlowConfirmDialog and explicitly includes ALL external records. Normal
 registration archival retains the server zone. Provider credentials and arbitrary WHM commands
 never enter the browser contract.
+
+## Route 53 provider credential form
+
+The DNS provider shared CRUD renders only AWS access key ID and secret access key for
+Route 53. No region, hosted zone ID or provider TTL belongs in its credential tab. Keep
+the local fallback aligned with the API catalog. DNSOnly fields keep their provider-specific
+behavior. Empty secrets on edit preserve saved credentials through the API contract.
+The read-only connectivity test can succeed with no hosted zones and does not verify writes.
