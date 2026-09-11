@@ -4133,5 +4133,6 @@
   "New DNS record": "New DNS record",
   "SOA and apex nameservers are managed by the DNS server.": "SOA and apex nameservers are managed by the DNS server.",
   "Search DNS records": "Search DNS records",
-  "This DNS record is managed by the server.": "This DNS record is managed by the server."
+  "This DNS record is managed by the server.": "This DNS record is managed by the server.",
+  "Back": "Back"
 }

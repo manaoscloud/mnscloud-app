@@ -697,6 +697,15 @@ export const routes: Routes = [
                   ),
               },
               {
+                path: 'hosting/dns/domains/:uuid',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/domains/domains').then(
+                    (m) => m.HostingDnsDomainsPage,
+                  ),
+                title: 'DNS Domain | mnscloud',
+                data: { scope: 'tenant', context: 'hosting' },
+              },
+              {
                 path: 'hosting/dns/domains',
                 loadComponent: () =>
                   import('./pages/hosting/dns/domains/domains').then(
@@ -1784,6 +1793,15 @@ export const routes: Routes = [
                   import('./pages/hosting/dns/zone-records/zone-records').then(
                     (m) => m.HostingDnsZoneRecordsPage,
                   ),
+              },
+              {
+                path: 'hosting/dns/domains/:uuid',
+                loadComponent: () =>
+                  import('./pages/hosting/dns/domains/domains').then(
+                    (m) => m.HostingDnsDomainsPage,
+                  ),
+                title: 'DNS Domain | mnscloud',
+                data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'hosting/dns/domains',

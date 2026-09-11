@@ -127,6 +127,10 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
     super(config);
     this.destroyRef.onDestroy(() => this.clearBreadcrumb?.());
   }
+  override backLink(): string {
+    return this.router.url.split(/[?#]/)[0].replace(/\/records$/, '');
+  }
+
   protected override listEndpoint() {
     return `hosting/dns/domains/${encodeURIComponent(this.route.snapshot.paramMap.get('uuid') ?? '')}/zone-records`;
   }

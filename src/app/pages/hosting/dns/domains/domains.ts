@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { BreadcrumbLabelsService } from '../../../../shared/breadcrumb/breadcrumb-labels.service';
+import { afterNextRender, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
@@ -196,6 +197,8 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly breadcrumbLabels = inject(BreadcrumbLabelsService);
+  private clearBreadcrumb: (() => void) | undefined;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customers = signal<CustomerOption[]>([]);
@@ -225,7 +228,39 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   );
   constructor() {
     super(HOSTING_DNS_DOMAIN_CONFIG);
+    this.destroyRef.onDestroy(() => this.clearBreadcrumb?.());
     void Promise.all([this.fetchCustomers(), this.fetchDomainProviders()]);
+    afterNextRender(() => {
+      const uuid = this.route.snapshot.paramMap.get('uuid');
+      if (uuid) void this.openDomain(uuid);
+    });
+  }
+
+  private domainsPath(): string {
+    return this.router.url.split(/[?#]/)[0].replace(/\/domains(?:\/.*)?$/, '/domains');
+  }
+
+  override backLink(): string | null {
+    return this.route.snapshot.paramMap.has('uuid') ? this.domainsPath() : null;
+  }
+
+  private async openDomain(uuid: string): Promise<void> {
+    try {
+      const response = await this.api.get<{ data: { item: ConfigurableCrudRecord } }>(
+        `hosting/dns/domains/${encodeURIComponent(uuid)}`,
+      );
+      if (this.destroyRef.destroyed) return;
+      const item = response.data.item;
+      if (!item) throw new Error('Domain not found.');
+      this.clearBreadcrumb = this.breadcrumbLabels.register(
+        this.router.url.split(/[?#]/)[0],
+        String(item['HddName']),
+      );
+      await Promise.all([this.fetchCustomers(), this.fetchDomainProviders()]);
+      if (!this.destroyRef.destroyed) this.startEdit(item);
+    } catch (error) {
+      if (!this.destroyRef.destroyed) this.snack.error(this.t(this.errorMessage(error)));
+    }
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
@@ -290,7 +325,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key === 'removeZone') await this.removeZone(row);
     if (action.key === 'records')
-      await this.router.navigate([this.recordUUID(row), 'records'], { relativeTo: this.route });
+      await this.router.navigateByUrl(`${this.domainsPath()}/${this.recordUUID(row)}/records`);
     if (action.key === 'provision') await this.provisionDomain(row);
   }
 
