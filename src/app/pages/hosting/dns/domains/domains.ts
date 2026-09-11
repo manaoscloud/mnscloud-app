@@ -258,12 +258,14 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const status = String(row['HddProvisionStatus'] ?? '');
     return [
-      ...(String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase() ===
-        'cpanel_dnsonly' && row['HddLastProvisionedAt']
+      ...(['cpanel_dnsonly', 'route53'].includes(
+        String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase(),
+      ) && row['HddLastProvisionedAt']
         ? [{ key: 'records', label: 'DNS records', icon: 'dns', tooltip: 'Manage DNS records' }]
         : []),
-      ...(String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase() ===
-        'cpanel_dnsonly' &&
+      ...(['cpanel_dnsonly', 'route53'].includes(
+        String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase(),
+      ) &&
       row['HddLastProvisionedAt'] &&
       this.canDelete()
         ? [
@@ -297,7 +299,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     const uuid = this.recordUUID(row);
     this.mutating.set(true);
     try {
-      const snapshot = await this.api.get<{ data: { serial: number } }>(
+      const snapshot = await this.api.get<{ data: { serial: number | string } }>(
         `hosting/dns/domains/${uuid}/zone-records`,
       );
       const name = String(row['HddName']).toLowerCase();

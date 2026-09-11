@@ -1120,3 +1120,9 @@ belong to the domain; provider-generated initial records are read from the provi
 Domain DNS settings expose Zone IP followed by Default TTL. Provider zone IDs are assigned
 by provisioning, never entered in the registration form or its create/update payload.
 Existing provider-zone imports belong to a future dedicated workflow.
+
+Verified DNSOnly and Route 53 domains expose the same Records and Delete DNS zone actions.
+The shared record page preserves the opaque snapshot revision without numeric coercion:
+DNSOnly uses a numeric SOA serial; Route 53 uses a string revision. Advanced Route 53 rows
+remain visible with mutation actions suppressed by `editable`. These controls preserve the
+existing shared table, filter, dialog, paginator and responsive action contracts.
