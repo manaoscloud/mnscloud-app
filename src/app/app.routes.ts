@@ -698,12 +698,8 @@ export const routes: Routes = [
               },
               {
                 path: 'hosting/dns/domains/:uuid',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/domains/domains').then(
-                    (m) => m.HostingDnsDomainsPage,
-                  ),
-                title: 'DNS Domain | mnscloud',
-                data: { scope: 'tenant', context: 'hosting' },
+                pathMatch: 'full',
+                redirectTo: 'hosting/dns/domains',
               },
               {
                 path: 'hosting/dns/domains',
@@ -1796,12 +1792,8 @@ export const routes: Routes = [
               },
               {
                 path: 'hosting/dns/domains/:uuid',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/domains/domains').then(
-                    (m) => m.HostingDnsDomainsPage,
-                  ),
-                title: 'DNS Domain | mnscloud',
-                data: { scope: 'master', context: 'system' },
+                pathMatch: 'full',
+                redirectTo: 'hosting/dns/domains',
               },
               {
                 path: 'hosting/dns/domains',

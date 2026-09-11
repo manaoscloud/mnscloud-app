@@ -1130,7 +1130,8 @@ existing shared table, filter, dialog, paginator and responsive action contracts
 Nested configurable CRUD pages may override `backLink()` with an explicit parent URL. The
 shared header renders the translated Back action using existing button styles. Do not use
 browser history for a parent action: direct links and reloads must work identically.
-DNS domain `:uuid` routes open the existing domain dialog via a scoped single-item API read,
-including domains outside the current list page. The DNS records Back action and domain
-breadcrumb share that route in tenant and System contexts. Never build a child URL relative
-to a selected-domain route by appending its UUID again.
+Only the DNS records management page overrides this parent link. Back returns directly to
+the domains list; the list must never show Back or open a form automatically. Domain UUID
+breadcrumb URLs redirect to that same list in tenant and System contexts, including older
+bookmarks. Editing a domain requires an explicit Edit action. Record child URLs are built
+from the domains collection path to avoid duplicating the UUID.

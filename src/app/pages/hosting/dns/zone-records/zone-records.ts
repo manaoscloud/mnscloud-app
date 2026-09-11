@@ -128,7 +128,7 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
     this.destroyRef.onDestroy(() => this.clearBreadcrumb?.());
   }
   override backLink(): string {
-    return this.router.url.split(/[?#]/)[0].replace(/\/records$/, '');
+    return this.router.url.split(/[?#]/)[0].replace(/\/domains\/[^/]+\/records$/, '/domains');
   }
 
   protected override listEndpoint() {
