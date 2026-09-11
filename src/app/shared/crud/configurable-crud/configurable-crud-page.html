@@ -6,6 +6,12 @@
         <p>{{ config.pageDescription | transloco }}</p>
       </div>
       <div class="header-actions">
+        @if (backLink(); as destination) {
+          <a mat-stroked-button color="primary" [routerLink]="destination">
+            <mat-icon>arrow_back</mat-icon>
+            {{ 'Back' | transloco }}
+          </a>
+        }
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         @if (canCreate()) {
           <button mat-stroked-button color="primary" type="button" (click)="startCreate()">

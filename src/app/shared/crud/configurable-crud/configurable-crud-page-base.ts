@@ -11,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 
 import { firstValueFrom } from 'rxjs';
@@ -58,6 +59,7 @@ import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
+  RouterLink,
   RefreshButtonComponent,
   MatButtonModule,
   MatCardModule,
@@ -584,6 +586,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.status.set('');
     this.listFilterValues.set({});
     this.applySearchFilters();
+  }
+
+  /** Explicit parent destination; never relies on browser history. */
+  backLink(): string | null {
+    return null;
   }
 
   refreshList(): void {

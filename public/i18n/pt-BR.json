@@ -4134,5 +4134,6 @@
   "New DNS record": "Novo registro DNS",
   "SOA and apex nameservers are managed by the DNS server.": "O servidor DNS gerencia o SOA e os nameservers principais da zona.",
   "Search DNS records": "Pesquisar registros DNS",
-  "This DNS record is managed by the server.": "Este registro DNS é gerenciado pelo servidor."
+  "This DNS record is managed by the server.": "Este registro DNS é gerenciado pelo servidor.",
+  "Back": "Voltar"
 }
