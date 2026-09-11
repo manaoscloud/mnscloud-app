@@ -672,11 +672,14 @@
 
 - Any modal that renders generated installation, enrollment, runtime, or provisioning shell commands
   must use `InstallCommandDialogComponent` from `src/app/shared/install-command-dialog`.
-- Install command dialogs must open through `openCrudTemplateDialog` so their viewport size,
+- Install command dialogs must open through `openCrudTemplateDialog` (template content) or
+  `openCrudComponentDialog` (component content), using `crud-form-dialog`, so their viewport size,
   position, resize behavior, footer density, and mobile behavior match CRUD dialogs.
 - Footer actions must follow the CRUD action contract: `Copy command` is the primary action,
   `Close` is secondary, desktop keeps secondary left and primary right, and mobile stacks both
   actions at equal full width with the primary action first.
+- Agents use the component helper; release its responsive binding and clear the generated token
+  when the dialog closes. Close the command dialog when its owning page is destroyed.
 - Install command footers must use the same `.crud-dialog .form-actions` margin, padding, desktop
   alignment, mobile stacking, and button inset as CRUD form dialogs. Do not define install-command
   footer margin or padding values that differ from the CRUD footer contract.
