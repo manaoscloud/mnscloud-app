@@ -4205,5 +4205,21 @@
   "Private key": "Private key",
   "Text": "Text",
   "Certificate validity follows its expiration date.": "Certificate validity follows its expiration date.",
-  "Enter a validity between 1 and 3650 days.": "Enter a validity between 1 and 3650 days."
+  "Enter a validity between 1 and 3650 days.": "Enter a validity between 1 and 3650 days.",
+  "Operation accepted. Processing in the background.": "Operation accepted. Processing in the background.",
+  "Operation completed.": "Operation completed.",
+  "Operation requires attention. Check its status before trying again.": "Operation requires attention. Check its status before trying again.",
+  "Check the operation before submitting it again.": "Check the operation before submitting it again.",
+  "Waiting for retry": "Waiting for retry",
+  "Verifying": "Verifying",
+  "Wait for the DNS zone observation before editing records.": "Wait for the DNS zone observation before editing records.",
+  "The DNS observation changed. Refresh and reopen the record before saving.": "The DNS observation changed. Refresh and reopen the record before saving.",
+  "Live records from the DNS server. Changes are processed and verified in the background.": "Live records from the DNS server. Changes are processed and verified in the background.",
+  "The DNS zone changed. Refresh before trying again.": "The DNS zone changed. Refresh before trying again.",
+  "The DNS record is missing or managed by the provider.": "The DNS record is missing or managed by the provider.",
+  "The requested DNS record conflicts with an existing record.": "The requested DNS record conflicts with an existing record.",
+  "Your DNS permission changed. Check your access.": "Your DNS permission changed. Check your access.",
+  "The DNS provider changed. Review the domain before trying again.": "The DNS provider changed. Review the domain before trying again.",
+  "The DNS domain is no longer available.": "The DNS domain is no longer available.",
+  "Verify again": "Verify again"
 }

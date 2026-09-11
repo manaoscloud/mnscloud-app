@@ -1,3 +1,5 @@
+import { AsyncOperationStatusComponent } from '../../operations/async-operation-status';
+import { AsyncOperationsService } from '../../operations/async-operations.service';
 import {
   Directive,
   DestroyRef,
@@ -61,6 +63,7 @@ import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confi
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
   SecretContentFieldComponent,
+  AsyncOperationStatusComponent,
   RouterLink,
   RefreshButtonComponent,
   MatButtonModule,
@@ -399,6 +402,11 @@ export type ConfigurableCrudListParams = ConfigurableCrudFilters & {
 
 @Directive()
 export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord> {
+  protected readonly operations = inject(AsyncOperationsService);
+  protected trackOperation(response: unknown): boolean {
+    return this.operations.observe(response, this.destroyRef, () => this.refreshList());
+  }
+
   protected readonly api = inject(ApiService);
   protected readonly snack = inject(SnackbarService);
   protected readonly dateTime = inject(DateTimeFormatService);
@@ -694,8 +702,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       } else {
         response = await this.api.post(this.createEndpoint(), payload);
       }
-      this.snack.success(this.t(this.config.savedMessage));
-      if (current) this.reflectSavedRecord(current, payload);
+      const asynchronous = this.trackOperation(response);
+      if (!asynchronous) this.snack.success(this.t(this.config.savedMessage));
+      if (current && !asynchronous) this.reflectSavedRecord(current, payload);
       this.itemsResource.reload();
       if (saveAndNew) {
         this.editingRecord.set(null);
@@ -725,8 +734,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
     this.mutating.set(true);
     try {
-      await this.api.delete(`${this.deleteEndpointFor(row)}/${this.recordUUID(row)}`);
-      this.snack.success(this.t(this.config.deletedMessage));
+      const response = await this.api.delete(
+        `${this.deleteEndpointFor(row)}/${this.recordUUID(row)}`,
+      );
+      if (!this.trackOperation(response)) this.snack.success(this.t(this.config.deletedMessage));
       this.itemsResource.reload();
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error) || this.config.deleteFailedMessage));
@@ -913,11 +924,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
     this.mutating.set(true);
     try {
-      await this.api.delete(this.bulkDeleteEndpoint(), {
-        ids,
-      });
-      this.selectedUUIDs.set(new Set());
-      this.snack.success(this.t(this.config.deletedMessage));
+      const response = await this.api.delete<{ data?: { failed?: ConfigurableCrudRecord[] } }>(
+        this.bulkDeleteEndpoint(),
+        {
+          ids,
+        },
+      );
+      this.selectedUUIDs.set(
+        new Set(
+          (response?.data?.failed ?? [])
+            .map((item) => String(item['uuid'] ?? item[this.config.uuidField] ?? ''))
+            .filter(Boolean),
+        ),
+      );
+      if (!this.trackOperation(response)) this.snack.success(this.t(this.config.deletedMessage));
+      if (response?.data?.failed?.length)
+        this.snack.warning(this.t(this.config.deleteFailedMessage));
       this.itemsResource.reload();
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error) || this.config.deleteFailedMessage));
