@@ -257,7 +257,7 @@
             </th>
             <td mat-cell *matCellDef="let row" class="actions-cell actions-col-cell">
               <div class="actions-col">
-                @if (canEdit()) {
+                @if (canEditRow(row)) {
                   <button
                     mat-icon-button
                     type="button"

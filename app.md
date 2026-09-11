@@ -1084,3 +1084,24 @@ Amazon Route 53 (`route53`). Consume the authorized API catalog; the bounded fal
 catalog contains these same two options. Unsupported values from an older API must not
 reappear in dropdowns. cPanel is the explicit initial form selection; API/DB validate the
 submitted platform. Preserve scope, required credentials, templates and connection tests.
+
+### DNSOnly live zone records
+
+The Domains row action opens the DNS records CRUD using the shared configurable template.
+It uses shared styles only. Static DNS record-type options remain protocol literals; labels,
+confirmations and validation text use the PT/EN/ES dictionaries. Search precedes any filters;
+live DNS records have no active/inactive flag, so this resource has no Status filter.
+Every data column is sortable and the shared paginator applies to the complete bounded snapshot.
+Create/edit use the generic MatDialog and shared desktop/mobile save controls.
+
+The shared configurable CRUD supports `canEditRow` alongside `canDeleteRow`. DNS uses these
+hooks to hide mutation actions on SOA, apex NS and unsupported provider-managed types. This is
+UX only; the API enforces protection. Form submissions retain their original snapshot serial;
+refresh cannot silently change the version being edited. Delete carries the row's serial.
+Do not turn a stale-record failure into an automatic retry with a new version.
+
+A DNS zone is public or private according to its dedicated server network. The UI must never
+claim that a label or private record address makes a public zone private. The distinct zone
+removal action uses SlowConfirmDialog and explicitly includes ALL external records. Normal
+registration archival retains the server zone. Provider credentials and arbitrary WHM commands
+never enter the browser contract.
