@@ -1802,14 +1802,6 @@ export class MainLayout {
               scope: 'both',
             },
             {
-              id: 'hosting/dns/templates',
-              label: 'Templates',
-              icon: 'dynamic_form',
-              route: '/hosting/dns/templates',
-              masterRoute: '/system/hosting/dns/templates',
-              scope: 'both',
-            },
-            {
               id: 'hosting/dns/domains',
               label: 'Domains',
               icon: 'language',
