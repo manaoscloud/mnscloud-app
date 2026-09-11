@@ -1,5 +1,6 @@
+import { firstValueFrom } from 'rxjs';
 import { openAgentTelemetry } from '../telemetry/telemetry';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -15,6 +16,7 @@ import {
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { InstallCommandDialogComponent } from '../../../shared/install-command-dialog/install-command-dialog';
+import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { AuthService } from '../../../services/auth.service';
 
 type MonitoringAgent = ConfigurableCrudRecord & {
@@ -241,6 +243,7 @@ const AGENTS_CONFIG: ConfigurableCrudConfig = {
 })
 export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAgent> {
   private readonly auth = inject(AuthService);
+  private readonly commandDialogDestroyRef = inject(DestroyRef);
 
   readonly generatedToken = signal('');
   readonly runtimeProducts = signal<RuntimeProductFleet[]>([]);
@@ -511,23 +514,31 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   private openTokenDialog() {
     const token = this.generatedToken();
     if (!token) return;
-    this.dialog.open(InstallCommandDialogComponent, {
-      panelClass: 'install-command-dialog-panel',
-      disableClose: true,
-      maxWidth: '92vw',
-      width: '920px',
-      data: {
-        title: 'Agent install command',
-        description: 'Run this command on the server that should be enrolled as an Agent.',
-        warning:
-          'This enrollment token is short-lived and shown only once. The runtime Agent token is issued directly to the server and is never displayed in the browser.',
-        details: [
-          { label: 'API base', value: window.location.origin, monospace: true },
-          { label: 'Resource type', value: 'mnscloud.agent', monospace: true },
-        ],
-        command: this.tokenCommand(token),
+    const binding = openCrudComponentDialog(
+      this.dialog,
+      InstallCommandDialogComponent,
+      'crud-form-dialog',
+      {
+        data: {
+          title: 'Agent install command',
+          description: 'Run this command on the server that should be enrolled as an Agent.',
+          warning:
+            'This enrollment token is short-lived and shown only once. The runtime Agent token is issued directly to the server and is never displayed in the browser.',
+          details: [
+            { label: 'API base', value: window.location.origin, monospace: true },
+            { label: 'Resource type', value: 'mnscloud.agent', monospace: true },
+          ],
+          command: this.tokenCommand(token),
+        },
       },
-    });
+    );
+    const unregisterDestroy = this.commandDialogDestroyRef.onDestroy(() => binding.ref.close());
+    const cleanup = () => {
+      binding.stop();
+      unregisterDestroy();
+      this.generatedToken.set('');
+    };
+    void firstValueFrom(binding.ref.afterClosed()).then(cleanup, cleanup);
   }
 
   private decorateAgent(row: MonitoringAgent): MonitoringAgent {
