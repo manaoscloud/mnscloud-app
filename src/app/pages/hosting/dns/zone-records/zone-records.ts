@@ -121,8 +121,8 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
   private readonly router = inject(Router);
   private readonly breadcrumbLabels = inject(BreadcrumbLabelsService);
   private clearBreadcrumb: (() => void) | undefined;
-  private serial = 0;
-  private formSerial = 0;
+  private serial: number | string = 0;
+  private formSerial: number | string = 0;
   constructor() {
     super(config);
     this.destroyRef.onDestroy(() => this.clearBreadcrumb?.());
@@ -138,7 +138,7 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
   }
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
     const response = await this.api.get<{
-      data: { serial: number; items: ConfigurableCrudRecord[] };
+      data: { serial: number | string; items: ConfigurableCrudRecord[] };
     }>(this.listEndpoint());
     this.serial = response.data.serial;
     const soa = response.data.items.find((row) => row['type'] === 'SOA');
@@ -183,7 +183,7 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
       this.snack.info(this.t('This DNS record is managed by the server.'));
       return;
     }
-    this.formSerial = Number(row['snapshotSerial']);
+    this.formSerial = row['snapshotSerial'] as number | string;
     super.startEdit(row);
   }
   protected override augmentPayload(payload: ConfigurableCrudRecord) {
@@ -209,8 +209,8 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
     return true;
   }
   protected override afterSave(context: { response: unknown; saveAndNew: boolean }) {
-    const response = context.response as { data?: { serial?: number } };
-    if (typeof response.data?.serial === 'number') {
+    const response = context.response as { data?: { serial?: number | string } };
+    if (typeof response.data?.serial === 'number' || typeof response.data?.serial === 'string') {
       this.serial = response.data.serial;
       if (context.saveAndNew) this.formSerial = this.serial;
     }
