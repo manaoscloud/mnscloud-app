@@ -538,7 +538,6 @@
   "Manage DNS provider accounts used by tenant domains.": "Gestione cuentas de proveedores DNS usadas por los dominios de los tenants.",
   "Name or platform": "Nombre o plataforma",
   "Platform": "Plataforma",
-  "Provider zone ID": "ID de zona en el proveedor",
   "Provision DNS domain": "Provisionar dominio DNS",
   "Provisioned": "Provisionado",
   "Provisioning": "Provisionamiento",
