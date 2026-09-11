@@ -1,5 +1,5 @@
 import { BreadcrumbLabelsService } from '../../../../shared/breadcrumb/breadcrumb-labels.service';
-import { AfterViewInit, Component, computed, inject, signal } from '@angular/core';
+import { afterNextRender, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
@@ -196,10 +196,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HostingDnsDomainsPage
-  extends ConfigurableCrudPageBase<ConfigurableCrudRecord>
-  implements AfterViewInit
-{
+export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly breadcrumbLabels = inject(BreadcrumbLabelsService);
   private clearBreadcrumb: (() => void) | undefined;
   private readonly route = inject(ActivatedRoute);
@@ -233,6 +230,10 @@ export class HostingDnsDomainsPage
     super(HOSTING_DNS_DOMAIN_CONFIG);
     this.destroyRef.onDestroy(() => this.clearBreadcrumb?.());
     void Promise.all([this.fetchCustomers(), this.fetchDomainProviders()]);
+    afterNextRender(() => {
+      const uuid = this.route.snapshot.paramMap.get('uuid');
+      if (uuid) void this.openDomain(uuid);
+    });
   }
 
   private domainsPath(): string {
@@ -241,11 +242,6 @@ export class HostingDnsDomainsPage
 
   override backLink(): string | null {
     return this.route.snapshot.paramMap.has('uuid') ? this.domainsPath() : null;
-  }
-
-  ngAfterViewInit(): void {
-    const uuid = this.route.snapshot.paramMap.get('uuid');
-    if (uuid) void this.openDomain(uuid);
   }
 
   private async openDomain(uuid: string): Promise<void> {
