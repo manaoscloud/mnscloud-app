@@ -4135,5 +4135,22 @@
   "SOA and apex nameservers are managed by the DNS server.": "O servidor DNS gerencia o SOA e os nameservers principais da zona.",
   "Search DNS records": "Pesquisar registros DNS",
   "This DNS record is managed by the server.": "Este registro DNS é gerenciado pelo servidor.",
-  "Back": "Voltar"
+  "Back": "Voltar",
+  "Generate TLS": "Gerar TLS",
+  "Rotate TLS": "Renovar TLS",
+  "Test connection": "Testar conexão",
+  "TLS valid until": "TLS válido até",
+  "TLS job status": "Status da operação TLS",
+  "TLS error code": "Código de falha TLS",
+  "Not requested": "Não solicitado",
+  "Received by Agent": "Recebido pelo Agent",
+  "Running": "Em execução",
+  "TLS rotation queued.": "Renovação TLS adicionada à fila.",
+  "TLS generation queued.": "Geração TLS adicionada à fila.",
+  "Failed to queue TLS job.": "Não foi possível colocar a operação TLS na fila.",
+  "Secret server connection failed.": "Falha na conexão com o servidor de segredos.",
+  "Connection reachable{{state}}{{version}}.": "Conexão estabelecida{{state}}{{version}}.",
+  "Raft cluster": "Cluster Raft",
+  "Secret server has no OpenVault agent assigned": "O servidor de segredos não possui um Agent OpenVault atribuído.",
+  "Assigned agent cannot manage OpenVault": "O Agent atribuído não pode gerenciar o OpenVault."
 }

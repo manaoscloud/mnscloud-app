@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, effect } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -16,6 +16,16 @@ const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
 const CLUSTER_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'single', label: 'Single node' },
   { value: 'raft', label: 'Raft cluster' },
+];
+
+const TLS_JOB_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: '', label: 'Not requested' },
+  { value: 'pending', label: 'Queued' },
+  { value: 'leased', label: 'Received by Agent' },
+  { value: 'running', label: 'Running' },
+  { value: 'success', label: 'Completed' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
 const SERVER_CONFIG: ConfigurableCrudConfig = {
@@ -82,6 +92,22 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       kind: 'datetime',
       field: 'CsrTlsNotAfter',
     },
+    {
+      id: 'tlsJobStatus',
+      label: 'TLS job status',
+      field: 'TlsJobStatus',
+      kind: 'status',
+      options: TLS_JOB_OPTIONS,
+      chipClass: (value) =>
+        value === 'success'
+          ? 'chip-success'
+          : value === 'failed'
+            ? 'chip-failed'
+            : ['pending', 'leased', 'running'].includes(String(value))
+              ? 'chip-running'
+              : 'chip-skipped',
+    },
+    { id: 'tlsJobError', label: 'TLS error code', field: 'TlsJobErrorCode' },
     { id: 'status', label: 'Status', kind: 'status', field: 'CsrStatus', className: 'status-col' },
   ],
   fields: [
@@ -172,6 +198,19 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
 export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(SERVER_CONFIG);
+    effect((onCleanup) => {
+      if (
+        !this.rows().some((row) =>
+          ['pending', 'leased', 'running'].includes(String(row['TlsJobStatus'])),
+        )
+      )
+        return;
+      const timer = setInterval(() => {
+        if (document.visibilityState === 'visible' && !this.itemsResource.isLoading())
+          this.refreshList();
+      }, 10000);
+      onCleanup(() => clearInterval(timer));
+    });
   }
 
   override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
@@ -196,7 +235,7 @@ export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<Con
       if (data.reachable) {
         const state = data.state ? ` (${data.state})` : '';
         const version = data.version ? ` - OpenBao ${data.version}` : '';
-        this.snack.success(`Connection reachable${state}${version}.`);
+        this.snack.success('Connection reachable{{state}}{{version}}.', 3000, { state, version });
         return;
       }
       this.snack.error(data.error || 'Secret server connection failed.');
@@ -216,9 +255,9 @@ export class CyberSecuritySecretServersPage extends ConfigurableCrudPageBase<Con
       const endpoint = rotate ? 'rotate-tls' : 'generate-tls';
       await this.api.post(`${SERVER_CONFIG.endpoint}/${uuid}/${endpoint}`, {});
       this.snack.success(rotate ? 'TLS rotation queued.' : 'TLS generation queued.');
+      this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error) || 'Failed to queue TLS job.');
     }
   }
-
 }
