@@ -1116,3 +1116,7 @@ The read-only connectivity test can succeed with no hosted zones and does not ve
 
 DNS providers and domains do not expose blueprint/template selection. DNS record actions
 belong to the domain; provider-generated initial records are read from the provider.
+
+Domain DNS settings expose Zone IP followed by Default TTL. Provider zone IDs are assigned
+by provisioning, never entered in the registration form or its create/update payload.
+Existing provider-zone imports belong to a future dedicated workflow.
