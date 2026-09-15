@@ -82,6 +82,7 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   bulkDelete: true,
   statusFilter: true,
+  showAsyncOperationStatus: false,
   rowActions: [TEST_PROVIDER_ACTION],
   listFilters: [
     {

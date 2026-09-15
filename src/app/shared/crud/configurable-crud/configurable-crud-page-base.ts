@@ -377,6 +377,11 @@ export type ConfigurableCrudConfig = {
   serverSidePagination?: boolean;
   pageSizeOptions?: readonly number[];
   initialPageSize?: number;
+  /**
+   * When false, hides the shared async-operation status strip.
+   * Prefer resource-row sync status for durable workflows (default: true).
+   */
+  showAsyncOperationStatus?: boolean;
 };
 
 export type ConfigurableCrudSaveContext<T extends ConfigurableCrudRecord> = {
@@ -405,6 +410,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly operations = inject(AsyncOperationsService);
   protected trackOperation(response: unknown): boolean {
     return this.operations.observe(response, this.destroyRef, () => this.refreshList());
+  }
+
+  protected showAsyncOperationStatus(): boolean {
+    return this.config.showAsyncOperationStatus !== false;
   }
 
   protected readonly api = inject(ApiService);
