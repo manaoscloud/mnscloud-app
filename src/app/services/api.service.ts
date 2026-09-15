@@ -24,7 +24,7 @@ export class ApiService {
     return envFromStorage ?? envFromUser;
   }
 
-  private getHeaders(endpoint: string, isFormData = false): HttpHeaders {
+  private getHeaders(endpoint: string, isFormData = false, idempotencyKey?: string): HttpHeaders {
     const environmentUUID = this.currentEnvironmentUUID();
 
     const headers: Record<string, string> = {
@@ -36,6 +36,7 @@ export class ApiService {
       headers['X-Environment-UUID'] = environmentUUID;
     }
 
+    if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
     if (!isFormData) headers['Content-Type'] = 'application/json';
 
     return new HttpHeaders(headers);
@@ -118,12 +119,16 @@ export class ApiService {
     );
   }
 
-  async post<T>(endpoint: string, body: any): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    body: any,
+    options: { idempotencyKey?: string } = {},
+  ): Promise<T> {
     this.assertEnvironment(endpoint);
     const isFormData = body instanceof FormData;
     return await firstValueFrom(
       this.http.post<T>(this.url(endpoint), body, {
-        headers: this.getHeaders(endpoint, isFormData),
+        headers: this.getHeaders(endpoint, isFormData, options.idempotencyKey),
         withCredentials: true,
       }),
     );
@@ -230,11 +235,15 @@ export class ApiService {
     );
   }
 
-  async delete<T>(endpoint: string, body?: any): Promise<T> {
+  async delete<T>(
+    endpoint: string,
+    body?: any,
+    options: { idempotencyKey?: string } = {},
+  ): Promise<T> {
     this.assertEnvironment(endpoint);
     return await firstValueFrom(
       this.http.delete<T>(this.url(endpoint), {
-        headers: this.getHeaders(endpoint),
+        headers: this.getHeaders(endpoint, false, options.idempotencyKey),
         body,
         withCredentials: true,
       }),

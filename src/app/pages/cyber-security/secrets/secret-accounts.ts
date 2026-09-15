@@ -45,7 +45,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
   statusFilter: true,
   tabLabels: {
     record: 'Registro',
-    notes: 'Observações',
+    notes: 'Notes',
   },
   listFilters: [
     {
@@ -129,7 +129,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',
-      required: true,
+      required: false,
       span: 1,
       tab: 'record',
     },
@@ -173,7 +173,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       key: 'notes',
       source: 'CxaNotes',
       payloadKey: 'notes',
-      label: 'Observações',
+      label: 'Notes',
       type: 'textarea',
       span: 4,
       rows: 4,
