@@ -12,16 +12,6 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const SECRET_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'generic', label: 'Generic' },
-  { value: 'runtime_env', label: 'Runtime env' },
-  { value: 'api_token', label: 'API token' },
-  { value: 'password', label: 'Password' },
-  { value: 'certificate', label: 'Certificate' },
-  { value: 'ssh_key', label: 'SSH key' },
-  { value: 'database', label: 'Database' },
-];
-
 const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'cyber-security/secret-accounts',
   uuidField: 'CxaUUID',
@@ -30,7 +20,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
   createTitle: 'New secret account',
   editTitle: 'Edit secret account',
   dialogDescription: 'Configure customer ownership and OpenVault server placement.',
-  searchPlaceholder: 'Name, key, customer or server',
+  searchPlaceholder: 'Name, customer or server',
   emptyLabel: 'No secret accounts found.',
   deleteTitle: 'Delete secret account',
   deleteMessage: 'Delete this secret account?',
@@ -72,9 +62,6 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
     serverUUID: '',
     customerUUID: '',
     name: '',
-    key: '',
-    defaultSecretType: 'generic',
-    description: '',
     notes: '',
   },
   columns: [
@@ -92,13 +79,6 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       kind: 'related',
       uuidField: 'CyberSecuritySecretServerCsrUUID',
       lookupKey: 'serverUUID',
-    },
-    { id: 'key', label: 'Key', field: 'CxaKey' },
-    {
-      id: 'type',
-      label: 'Default type',
-      field: 'CxaDefaultSecretType',
-      lookupKey: 'defaultSecretType',
     },
     { id: 'status', label: 'Status', kind: 'status', field: 'CxaStatus', className: 'status-col' },
   ],
@@ -139,33 +119,6 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       label: 'Name',
       required: true,
       span: 1,
-      tab: 'record',
-    },
-    {
-      key: 'key',
-      source: 'CxaKey',
-      payloadKey: 'key',
-      label: 'Key',
-      required: true,
-      span: 1,
-      tab: 'record',
-    },
-    {
-      key: 'defaultSecretType',
-      source: 'CxaDefaultSecretType',
-      payloadKey: 'defaultSecretType',
-      label: 'Default type',
-      type: 'search-select',
-      required: true,
-      span: 1,
-      tab: 'record',
-    },
-    {
-      key: 'description',
-      source: 'CxaDescription',
-      payloadKey: 'description',
-      label: 'Description',
-      span: 2,
       tab: 'record',
     },
     {
@@ -232,7 +185,6 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.serverOptions();
     if (key === 'customerUUID') return this.customerOptions();
-    if (key === 'defaultSecretType') return SECRET_TYPE_OPTIONS.map((item) => ({ ...item, label: this.t(item.label) }));
     return [];
   }
 
@@ -247,11 +199,8 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       name: payload['name'],
-      key: payload['key'],
       serverUUID: payload['serverUUID'],
       customerUUID: payload['customerUUID'],
-      description: payload['description'],
-      defaultSecretType: payload['defaultSecretType'],
       status: payload['status'],
       notes: payload['notes'],
     };

@@ -4148,5 +4148,19 @@
   "Retry this failed secret operation?": "Retry this failed secret operation?",
   "The secret will be visible for 30 seconds. This access is audited.": "The secret will be visible for 30 seconds. This access is audited.",
   "Remove this secret and queue removal of its stored value?": "Remove this secret and queue removal of its stored value?",
-  "Waiting to retry": "Waiting to retry"
+  "Waiting to retry": "Waiting to retry",
+  "Name, customer or server": "Name, customer or server",
+  "Secret Accounts": "Secret Accounts",
+  "New secret account": "New secret account",
+  "Edit secret account": "Edit secret account",
+  "Bind customers to Master OpenVault servers for Secrets Manager.": "Bind customers to Master OpenVault servers for Secrets Manager.",
+  "Configure customer ownership and OpenVault server placement.": "Configure customer ownership and OpenVault server placement.",
+  "No secret accounts found.": "No secret accounts found.",
+  "Delete secret account": "Delete secret account",
+  "Delete this secret account?": "Delete this secret account?",
+  "Delete selected secret accounts": "Delete selected secret accounts",
+  "Delete {count} selected secret accounts?": "Delete {count} selected secret accounts?",
+  "Secret account saved successfully.": "Secret account saved successfully.",
+  "Secret account deleted successfully.": "Secret account deleted successfully.",
+  "Failed to delete secret account.": "Failed to delete secret account."
 }

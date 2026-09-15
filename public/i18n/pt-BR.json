@@ -4149,5 +4149,19 @@
   "Retry this failed secret operation?": "Tentar novamente esta operação do segredo?",
   "The secret will be visible for 30 seconds. This access is audited.": "O segredo ficará visível por 30 segundos. Este acesso será auditado.",
   "Remove this secret and queue removal of its stored value?": "Excluir este segredo e agendar a remoção do valor armazenado?",
-  "Waiting to retry": "Aguardando nova tentativa"
+  "Waiting to retry": "Aguardando nova tentativa",
+  "Name, customer or server": "Nome, cliente ou servidor",
+  "Secret Accounts": "Contas de segredos",
+  "New secret account": "Nova conta de segredos",
+  "Edit secret account": "Editar conta de segredos",
+  "Bind customers to Master OpenVault servers for Secrets Manager.": "Organize as contas de segredos e seus vínculos com clientes e servidores.",
+  "Configure customer ownership and OpenVault server placement.": "Configure o nome, o cliente e o servidor da conta de segredos.",
+  "No secret accounts found.": "Nenhuma conta de segredos encontrada.",
+  "Delete secret account": "Excluir conta de segredos",
+  "Delete this secret account?": "Excluir esta conta de segredos?",
+  "Delete selected secret accounts": "Excluir contas de segredos selecionadas",
+  "Delete {count} selected secret accounts?": "Excluir {count} contas de segredos selecionadas?",
+  "Secret account saved successfully.": "Conta de segredos salva com sucesso.",
+  "Secret account deleted successfully.": "Conta de segredos excluída com sucesso.",
+  "Failed to delete secret account.": "Falha ao excluir a conta de segredos."
 }

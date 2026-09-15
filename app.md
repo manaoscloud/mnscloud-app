@@ -1142,7 +1142,10 @@ from the domains collection path to avoid duplicating the UUID.
 ## Secret value management
 
 Secret Accounts and Secrets inherit the configurable CRUD template. Customer on a Secret Account
-is optional. Storage paths and ownership are server-managed; the UI must not offer these fields.
+is optional. The account Record tab contains Status, Server, Customer and Name (one column each).
+Annotations belong to the Notes tab (full-width textarea, four rows). Account identification uses
+its UUID; secret types belong to individual secrets. Do not offer account key, default type or a
+separate description. Account annotations support 1024 characters. Storage paths and ownership are server-managed; the UI must not offer these fields.
 A stored version of zero represents metadata without a verified secret value.
 
 Secret values use the shared `SecretValueDialogComponent`, opened through `openCrudComponentDialog`

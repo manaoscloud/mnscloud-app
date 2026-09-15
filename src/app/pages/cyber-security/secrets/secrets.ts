@@ -413,7 +413,7 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
     this.lookupsLoading.set(true);
     try {
       const options = await this.fetchPaged(`${this.accountEndpoint()}?status=1`, (row) =>
-        option(row.CxaUUID, row.CxaName, [row.CustomerName, row.SecretServerName, row.CxaKey]),
+        option(row.CxaUUID, row.CxaName, [row.CustomerName, row.SecretServerName]),
       );
       this.accountOptions.set(options);
     } finally {
