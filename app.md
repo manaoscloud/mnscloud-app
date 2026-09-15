@@ -1138,3 +1138,22 @@ the domains list; the list must never show Back or open a form automatically. Do
 breadcrumb URLs redirect to that same list in tenant and System contexts, including older
 bookmarks. Editing a domain requires an explicit Edit action. Record child URLs are built
 from the domains collection path to avoid duplicating the UUID.
+
+## Secret value management
+
+Secret Accounts and Secrets inherit the configurable CRUD template. Customer on a Secret Account
+is optional. Storage paths and ownership are server-managed; the UI must not offer these fields.
+A stored version of zero represents metadata without a verified secret value.
+
+Secret values use the shared `SecretValueDialogComponent`, opened through `openCrudComponentDialog`
+with `crud-form-dialog`, fixed shared header/content/footer and one existing-record Save action.
+The dialog retains its idempotency UUID across a retry of unchanged content and clears sensitive
+state when closed/destroyed. No localStorage/sessionStorage persistence is allowed. Explicit reveal
+uses the shared Data Viewer, no copy/download controls, closes after 30 seconds and clears its data.
+The owning page closes these dialogs on navigation. Tenant reveal is a distinct permission.
+
+Queued writes/deletes use the shared operation status chips. Failed deletions remain visible until
+confirmed remotely and expose retry; they cannot be edited as active secrets. Secrets intentionally
+disable bulk delete: each deletion confirms a separately observed value version and durable intent.
+This exception does not remove bulk delete from ordinary metadata resources. New UI strings must be
+translated in all three runtime dictionaries, with no local overrides of shared layout hooks.
