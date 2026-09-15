@@ -4221,5 +4221,10 @@
   "Your DNS permission changed. Check your access.": "Tu permiso de DNS cambió. Revisa tu acceso.",
   "The DNS provider changed. Review the domain before trying again.": "El proveedor DNS cambió. Revisa el dominio antes de volver a intentarlo.",
   "The DNS domain is no longer available.": "El dominio DNS ya no está disponible.",
-  "Verify again": "Verificar de nuevo"
+  "Verify again": "Verificar de nuevo",
+  "Sync": "Sincronización",
+  "Processing": "Procesando",
+  "On provider": "En el proveedor",
+  "Managed": "Administrado",
+  "Retrying": "Reintentando"
 }

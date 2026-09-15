@@ -10,6 +10,14 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 const TYPES = ['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NS', 'SRV', 'TXT', 'PTR'];
+
+const RECORD_SYNC_OPTIONS = [
+  { value: 'pending', label: 'Processing' },
+  { value: 'synced', label: 'On provider' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'skipped', label: 'Managed' },
+] as const;
+
 const config: ConfigurableCrudConfig = {
   endpoint: '',
   uuidField: 'line',
@@ -33,6 +41,7 @@ const config: ConfigurableCrudConfig = {
   inactiveValue: 0,
   statusFilter: false,
   bulkDelete: false,
+  showAsyncOperationStatus: false,
   canEditRow: (row) => row['editable'] === true,
   canDeleteRow: (row) => row['editable'] === true,
   initialValues: {
@@ -50,6 +59,15 @@ const config: ConfigurableCrudConfig = {
     { id: 'name', label: 'Name', field: 'name' },
     { id: 'type', label: 'Type', field: 'type' },
     { id: 'value', label: 'Value', field: 'displayValue' },
+    {
+      id: 'sync',
+      label: 'Sync',
+      field: 'syncStatus',
+      kind: 'status',
+      options: [...RECORD_SYNC_OPTIONS],
+      className: 'status-col',
+      chipClass: (value) => recordSyncChipClass(value),
+    },
     { id: 'ttl', label: 'TTL', field: 'ttl' },
   ],
   fields: [
@@ -200,6 +218,7 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
           port: row['type'] === 'SRV' ? Number(data[2]) : 0,
           flags: row['type'] === 'CAA' ? Number(data[0]) : 0,
           tag: row['type'] === 'CAA' ? data[1] : 'issue',
+          syncStatus: String(row['syncStatus'] ?? (row['editable'] === true ? 'synced' : 'skipped')),
         };
       });
   }
@@ -302,4 +321,11 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
       this.mutating.set(false);
     }
   }
+}
+
+function recordSyncChipClass(value: unknown): string {
+  const normalized = String(value ?? '').toLowerCase();
+  if (normalized === 'synced') return 'chip-success';
+  if (normalized === 'failed') return 'chip-warning';
+  return 'chip-skipped';
 }

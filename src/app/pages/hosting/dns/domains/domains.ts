@@ -10,9 +10,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-
-type DomainProvisionStatus =
-  'not_configured' | 'pending' | 'running' | 'active' | 'failed' | 'unsupported';
+import { readStoredEnvironmentUUID } from '../../../../core/environment/environment-context';
 
 type DomainProviderOption = {
   HdpUUID: string;
@@ -29,12 +27,23 @@ type CustomerOption = {
   Status?: number | null;
 };
 
-const PROVISION_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+const IN_FLIGHT_OPERATION_STATES = new Set([
+  'queued',
+  'running',
+  'waiting_retry',
+  'verifying',
+]);
+
+const DOMAIN_SYNC_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'not_configured', label: 'Not configured' },
+  { value: 'queued', label: 'Queued' },
   { value: 'pending', label: 'Pending' },
-  { value: 'running', label: 'Provisioning' },
+  { value: 'running', label: 'Processing' },
+  { value: 'waiting_retry', label: 'Retrying' },
+  { value: 'verifying', label: 'Verifying' },
   { value: 'active', label: 'Provisioned' },
   { value: 'failed', label: 'Failed' },
+  { value: 'blocked', label: 'Needs attention' },
   { value: 'unsupported', label: 'Unsupported' },
 ];
 
@@ -68,6 +77,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   bulkDelete: true,
   statusFilter: true,
+  showAsyncOperationStatus: false,
   rowActions: [PROVISION_DOMAIN_ACTION],
   listFilters: [
     {
@@ -114,11 +124,13 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'HostingDnsProviderHdpUUID',
     },
     {
-      id: 'provision',
-      label: 'Provisioning',
-      field: 'HddProvisionStatus',
-      lookupKey: 'provisionStatus',
+      id: 'sync',
+      label: 'Sync',
+      field: 'DomainSyncStatus',
+      kind: 'status',
+      options: DOMAIN_SYNC_OPTIONS,
       className: 'status-col',
+      chipClass: (value) => domainSyncChipClass(value),
     },
     { id: 'status', label: 'Status', kind: 'status', field: 'HddStatus', className: 'status-col' },
   ],
@@ -238,13 +250,38 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       this.customers().length ? Promise.resolve() : this.fetchCustomers(),
       this.providers().length ? Promise.resolve() : this.fetchDomainProviders(),
     ]);
-    return super.fetchItems(filters);
+    const rows = await super.fetchItems(filters);
+    const environment = readStoredEnvironmentUUID();
+    return rows.map((row) => {
+      const enriched = {
+        ...row,
+        DomainSyncStatus: domainSyncStatus(row),
+      };
+      const operationUUID = String(row['MessagingOperationMopUUID'] ?? '');
+      const mopState = String(row['MopState'] ?? '');
+      if (
+        operationUUID &&
+        IN_FLIGHT_OPERATION_STATES.has(mopState) &&
+        environment
+      ) {
+        this.operations.watch(
+          {
+            operationUUID,
+            state: mopState,
+            errorCode: (row['MopErrorCode'] as string | null | undefined) ?? null,
+            environmentUUID: environment,
+          },
+          this.destroyRef,
+          () => this.refreshList(),
+        );
+      }
+      return enriched;
+    });
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'customerUUID') return this.customerOptions();
     if (key === 'providerUUID') return this.providerOptions();
-    if (key === 'provisionStatus') return PROVISION_STATUS_OPTIONS;
     return [];
   }
 
@@ -261,7 +298,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    const status = String(row['HddProvisionStatus'] ?? '');
+    const status = String(row['DomainSyncStatus'] ?? row['HddProvisionStatus'] ?? '');
     return [
       ...(['cpanel_dnsonly', 'route53'].includes(
         String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase(),
@@ -271,7 +308,10 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       {
         ...PROVISION_DOMAIN_ACTION,
         icon:
-          this.provisioningDomainUUIDs().has(this.recordUUID(row)) || status === 'running'
+          this.provisioningDomainUUIDs().has(this.recordUUID(row)) ||
+          IN_FLIGHT_OPERATION_STATES.has(status) ||
+          status === 'pending' ||
+          status === 'running'
             ? 'hourglass_top'
             : 'cloud_sync',
       },
@@ -313,11 +353,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     this.provisioningDomainUUIDs.update((current) => new Set(current).add(domainUUID));
     this.mutating.set(true);
     try {
-      const response = await this.api.post<{
-        status?: string;
-        message?: string;
-        data?: { provision?: { message?: string; status?: string } };
-      }>(`hosting/dns/domains/${domainUUID}/provision`, {});
+      const response = await this.api.post(`hosting/dns/domains/${domainUUID}/provision`, {});
       this.trackOperation(response);
       this.refreshList();
     } catch (error) {
@@ -331,4 +367,27 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       this.mutating.set(false);
     }
   }
+}
+
+function domainSyncStatus(row: ConfigurableCrudRecord): string {
+  const mopState = String(row['MopState'] ?? '').trim().toLowerCase();
+  if (IN_FLIGHT_OPERATION_STATES.has(mopState) || mopState === 'failed' || mopState === 'blocked') {
+    return mopState;
+  }
+  const provision = String(row['HddProvisionStatus'] ?? 'not_configured').trim().toLowerCase();
+  return provision || 'not_configured';
+}
+
+function domainSyncChipClass(value: unknown): string {
+  const normalized = String(value ?? '').toLowerCase();
+  if (normalized === 'active') return 'chip-success';
+  if (['failed', 'blocked', 'unsupported'].includes(normalized)) return 'chip-warning';
+  if (
+    ['queued', 'pending', 'running', 'waiting_retry', 'verifying', 'not_configured'].includes(
+      normalized,
+    )
+  ) {
+    return 'chip-skipped';
+  }
+  return 'chip-skipped';
 }
