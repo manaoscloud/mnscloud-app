@@ -427,6 +427,24 @@
                     </mat-select>
                   </mat-form-field>
                 }
+                @case ('secret-content') {
+                  <mns-secret-content-field
+                    class="span-4"
+                    [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
+                    [value]="formValues()[field.key]"
+                    (valueChange)="setFieldValue(field.key, $event)"
+                  />
+                }
+                @case ('datetime') {
+                  <mat-form-field appearance="outline" [class]="fieldClass(field)"
+                    ><mat-label>{{ translatedFieldLabel(field) }}</mat-label
+                    ><input
+                      matInput
+                      type="datetime-local"
+                      [value]="fieldValueString(field.key)"
+                      (input)="setFieldValue(field.key, $any($event.target).value)"
+                  /></mat-form-field>
+                }
                 @case ('textarea') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
@@ -783,6 +801,24 @@
                         }
                       </mat-select>
                     </mat-form-field>
+                  }
+                  @case ('secret-content') {
+                    <mns-secret-content-field
+                      class="span-4"
+                      [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
+                      [value]="formValues()[field.key]"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
+                  @case ('datetime') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)"
+                      ><mat-label>{{ translatedFieldLabel(field) }}</mat-label
+                      ><input
+                        matInput
+                        type="datetime-local"
+                        [value]="fieldValueString(field.key)"
+                        (input)="setFieldValue(field.key, $any($event.target).value)"
+                    /></mat-form-field>
                   }
                   @case ('textarea') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1354,6 +1390,24 @@
                       </mat-select>
                     </mat-form-field>
                   }
+                  @case ('secret-content') {
+                    <mns-secret-content-field
+                      class="span-4"
+                      [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
+                      [value]="formValues()[field.key]"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
+                  @case ('datetime') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)"
+                      ><mat-label>{{ translatedFieldLabel(field) }}</mat-label
+                      ><input
+                        matInput
+                        type="datetime-local"
+                        [value]="fieldValueString(field.key)"
+                        (input)="setFieldValue(field.key, $any($event.target).value)"
+                    /></mat-form-field>
+                  }
                   @case ('textarea') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
@@ -1403,6 +1457,15 @@
             <div class="tab-content form-grid">
               @for (field of authenticationFields(); track field.key) {
                 @switch (field.type) {
+                  @case ('secret-content') {
+                    <mns-secret-content-field
+                      class="span-4"
+                      [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
+                      [value]="formValues()[field.key]"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
+
                   @case ('search-select') {
                     <mns-search-select-field
                       [fieldClass]="fieldClass(field)"

@@ -1160,3 +1160,18 @@ confirmed remotely and expose retry; they cannot be edited as active secrets. Se
 disable bulk delete: each deletion confirms a separately observed value version and durable intent.
 This exception does not remove bulk delete from ordinary metadata resources. New UI strings must be
 translated in all three runtime dictionaries, with no local overrides of shared layout hooks.
+
+### Structured secret content
+
+Secrets use the generic CRUD dialog with Record, Content and Notes tabs. Record
+holds ownership, name, status and managerial validity. Content holds the type and
+shared `secret-content` field; the type selects its schema. Shared form-grid,
+Material controls, actions and responsive dialog sizing remain authoritative.
+The editor uses `contentTypeKey` to select the discriminator field.
+
+Editing defaults to keeping stored content and never requests a reveal. Explicit
+replacement starts with blank fields. Close/destroy clears sensitive form state.
+Queued resources may override `reflectSavedRecord` to avoid optimistic list updates;
+secret content must never be reflected into list caches. Save accepts a durable
+operation and the list shows its status until confirmation. Validity is managerial,
+not automatic rotation or remote revocation. All labels use PT/EN/ES dictionaries.

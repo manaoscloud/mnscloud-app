@@ -1,7 +1,6 @@
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
-import { SecretValueDialogComponent } from '../../../shared/secret-value-dialog/secret-value-dialog';
 import {
   DataViewerDialogComponent,
   DataViewerDialogData,
@@ -46,7 +45,8 @@ const SECRET_CONFIG: ConfigurableCrudConfig = {
   pageDescription: 'Manage tenant secrets backed by MNSCloud OpenVault.',
   createTitle: 'New secret',
   editTitle: 'Edit secret',
-  dialogDescription: 'Configure secret identity and account. Set its value separately.',
+  dialogDescription:
+    'Configure the secret and its content. Storage is confirmed by the queued operation.',
   searchPlaceholder: 'Name or identifier',
   emptyLabel: 'No secrets found.',
   deleteTitle: 'Delete secret',
@@ -63,7 +63,7 @@ const SECRET_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   statusFilter: true,
   tabLabels: {
-    authentication: 'Vault',
+    authentication: 'Content',
     notes: 'Notes',
   },
   listFilters: [
@@ -81,7 +81,7 @@ const SECRET_CONFIG: ConfigurableCrudConfig = {
       label: 'Type',
       paramKey: 'secretType',
       span: 1,
-      type: 'search-select',
+      type: 'select',
       placeholder: 'Search',
       emptyLabel: 'No records found.',
       options: SECRET_TYPE_OPTIONS,
@@ -91,9 +91,12 @@ const SECRET_CONFIG: ConfigurableCrudConfig = {
     status: 1,
     accountUUID: '',
     name: '',
-    key: '',
     secretType: 'generic',
-    expiresAt: '',
+    validity: 'none',
+    customDays: 30,
+    expiryDate: '',
+    contentMode: 'replace',
+    content: null,
     notes: '',
   },
   columns: [
@@ -123,7 +126,28 @@ const SECRET_CONFIG: ConfigurableCrudConfig = {
                 ? 'chip-queued'
                 : 'chip-skipped',
     },
-    { id: 'key', label: 'Key', field: 'CstKey' },
+    {
+      id: 'validity',
+      label: 'Validity',
+      field: 'ValidityState',
+      kind: 'status',
+      chipClass: (value) =>
+        value === 'expired'
+          ? 'chip-failed'
+          : value === 'valid'
+            ? 'chip-success'
+            : value === 'expiring' || value === 'pending'
+              ? 'chip-queued'
+              : 'chip-skipped',
+      options: [
+        { value: 'none', label: 'No expiration' },
+        { value: 'pending', label: 'Pending storage' },
+        { value: 'valid', label: 'Valid' },
+        { value: 'expiring', label: 'Expiring soon' },
+        { value: 'expired', label: 'Expired' },
+      ],
+    },
+    { id: 'expiry', label: 'Expires at', field: 'CstExpiresAt', kind: 'datetime' },
     { id: 'type', label: 'Type', field: 'CstSecretType', lookupKey: 'secretType' },
     { id: 'server', label: 'Server', field: 'ResolvedServerName' },
     { id: 'operationError', label: 'Error code', field: 'ValueErrorCode' },
@@ -147,33 +171,64 @@ const SECRET_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 1,
     },
+    { key: 'name', source: 'CstName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'validity',
+      label: 'Validity',
+      type: 'select',
+      span: 1,
+      options: [
+        { value: 'keep', label: 'Keep current validity' },
+        { value: 'none', label: 'No expiration' },
+        ...[30, 60, 90, 180, 365].map((days) => ({ value: String(days), label: `${days} days` })),
+        { value: 'custom', label: 'Custom days' },
+        { value: 'date', label: 'Specific date and time' },
+      ],
+    },
+    {
+      key: 'customDays',
+      label: 'Validity in days',
+      type: 'number',
+      span: 1,
+      hiddenWhen: ({ values }) => values['validity'] !== 'custom',
+    },
+    {
+      key: 'expiryDate',
+      label: 'Expires at',
+      type: 'datetime',
+      span: 1,
+      hiddenWhen: ({ values }) => values['validity'] !== 'date',
+    },
+    {
+      key: 'contentMode',
+      label: 'Content update',
+      type: 'select',
+      tab: 'authentication',
+      span: 1,
+      options: [
+        { value: 'keep', label: 'Keep stored content' },
+        { value: 'replace', label: 'Replace content' },
+      ],
+      hiddenWhen: ({ editing }) => !editing,
+    },
     {
       key: 'secretType',
       source: 'CstSecretType',
-      payloadKey: 'secretType',
       label: 'Type',
-      type: 'search-select',
-      required: true,
-      span: 1,
-    },
-    { key: 'name', source: 'CstName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    {
-      key: 'key',
-      source: 'CstKey',
-      payloadKey: 'key',
-      label: 'Key',
+      type: 'select',
       required: true,
       tab: 'authentication',
-      span: 2,
+      span: 1,
+      options: SECRET_TYPE_OPTIONS,
+      hiddenWhen: ({ editing, values }) => editing && values['contentMode'] === 'keep',
     },
     {
-      key: 'expiresAt',
-      source: 'CstExpiresAt',
-      payloadKey: 'expiresAt',
-      label: 'Expires at',
-      type: 'date',
+      key: 'content',
+      label: 'Content',
+      type: 'secret-content',
       tab: 'authentication',
-      span: 1,
+      span: 4,
+      hiddenWhen: ({ editing, values }) => editing && values['contentMode'] === 'keep',
     },
     {
       key: 'notes',
@@ -212,6 +267,7 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
 
   constructor() {
     super(SECRET_CONFIG);
+    this.destroyRef.onDestroy(() => this.formValues.set({}));
     void this.loadAccounts();
   }
 
@@ -259,32 +315,8 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
     const path = `${this.endpoint()}/${this.recordUUID(row)}`;
     if (!this.rowActions(row).some((item) => item.key === action.key)) return;
     if (action.key === 'value') {
-      const binding = openCrudComponentDialog(
-        this.dialog,
-        SecretValueDialogComponent,
-        'crud-form-dialog',
-        {
-          data: {
-            save: async (secretValue: string, idempotencyKey: string) => {
-              await this.rawApi.post(
-                `${path}/value`,
-                { secretValue, expectedVersion: Number(row['CstVaultVersion']) },
-                { idempotencyKey },
-              );
-              this.snack.success('Secret operation queued.');
-              this.itemsResource.reload();
-            },
-          },
-          onEscape: () => (binding.ref.componentInstance as SecretValueDialogComponent).close(),
-        },
-      );
-      const unregister = this.destroyRef.onDestroy(() => binding.ref.close());
-      try {
-        await firstValueFrom(binding.ref.afterClosed());
-      } finally {
-        binding.stop();
-        unregister();
-      }
+      this.startEdit(row);
+      this.setFieldValue('contentMode', 'replace');
       return;
     }
     if (action.key === 'retry') {
@@ -302,17 +334,23 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
       ))
     )
       return;
-    const response = await this.rawApi.post<{ data: { secretValue: string } }>(
-      `${path}/reveal`,
-      {},
-    );
+    const response = await this.rawApi.post<{
+      data: { secretValue: string; contentSchemaVersion: number };
+    }>(`${path}/reveal`, {});
     const data: DataViewerDialogData = {
       title: 'Reveal secret',
       description: 'The secret will be visible for 30 seconds. This access is audited.',
       sections: [
         {
           title: 'Secret value',
-          code: { value: response.data.secretValue, format: 'text', copy: false },
+          code: {
+            value:
+              response.data.contentSchemaVersion === 1
+                ? JSON.stringify(JSON.parse(response.data.secretValue), null, 2)
+                : response.data.secretValue,
+            format: 'text',
+            copy: false,
+          },
         },
       ],
     };
@@ -364,6 +402,13 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
     }
   }
 
+  override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
+    const options = super.fieldOptions(field);
+    return field.key === 'validity' && !this.editingRecord()
+      ? options.filter((option) => option.value !== 'keep')
+      : options;
+  }
+
   override fieldLoading(field: ConfigurableCrudField): boolean {
     return field.key === 'accountUUID' && this.lookupsLoading();
   }
@@ -387,7 +432,8 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'operationState') return OPERATION_STATES;
     if (key === 'accountUUID') return this.accountOptions();
-    if (key === 'secretType') return SECRET_TYPE_OPTIONS.map((item) => ({ ...item, label: this.t(item.label) }));
+    if (key === 'secretType')
+      return SECRET_TYPE_OPTIONS.map((item) => ({ ...item, label: this.t(item.label) }));
     return [];
   }
 
@@ -396,16 +442,92 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
     return super.fetchItems(filters);
   }
 
+  // Queue acceptance is not storage confirmation. Reload only server metadata;
+  // never reflect submitted content into the list resource cache.
+  protected override reflectSavedRecord(
+    _current: ConfigurableCrudRecord,
+    _payload: ConfigurableCrudRecord,
+  ): void {}
+
+  private submissionUUID = crypto.randomUUID();
+
+  override startCreate(): void {
+    this.submissionUUID = crypto.randomUUID();
+    super.startCreate();
+  }
+
+  override startEdit(row: ConfigurableCrudRecord): void {
+    super.startEdit(row);
+    this.submissionUUID = crypto.randomUUID();
+    this.formValues.update((values) => ({
+      ...values,
+      validity: 'keep',
+      contentMode: 'keep',
+      content: null,
+    }));
+  }
+
+  override closeDialog(): void {
+    this.formValues.update((values) => ({ ...values, content: null }));
+    super.closeDialog();
+  }
+
+  protected override onFieldValueChanged(key: string, _value: unknown): void {
+    this.submissionUUID = crypto.randomUUID();
+    if (key === 'secretType' || key === 'contentMode')
+      this.formValues.update((values) => ({ ...values, content: null }));
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    const values = this.formValues();
+    if ((!this.editingRecord() || values['contentMode'] === 'replace') && !values['content']) {
+      this.snack.error(this.t('Enter the secret content.'));
+      return;
+    }
+    if (
+      values['validity'] === 'date' &&
+      !Number.isFinite(new Date(String(values['expiryDate'])).getTime())
+    ) {
+      this.snack.error(this.t('Enter a valid expiration date and time.'));
+      return;
+    }
+    if (
+      values['validity'] === 'custom' &&
+      (!Number.isInteger(Number(values['customDays'])) ||
+        Number(values['customDays']) < 1 ||
+        Number(values['customDays']) > 3650)
+    ) {
+      this.snack.error(this.t('Enter a validity between 1 and 3650 days.'));
+      return;
+    }
+    await super.saveItem(saveAndNew);
+    if (saveAndNew && !this.formValues()['content']) this.submissionUUID = crypto.randomUUID();
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const values = this.formValues();
+    const mode = String(values['validity'] ?? 'keep');
+    const validity =
+      mode === 'date'
+        ? { mode: 'date', expiresAt: new Date(String(values['expiryDate'])).toISOString() }
+        : mode === 'none' || mode === 'keep'
+          ? { mode }
+          : { mode: 'days', days: Number(mode === 'custom' ? values['customDays'] : mode) };
+    const replace = !this.editingRecord() || values['contentMode'] === 'replace';
     return {
       name: payload['name'],
-      key: payload['key'],
       accountUUID: payload['accountUUID'],
-      description: payload['description'],
-      secretType: payload['secretType'],
-      expiresAt: payload['expiresAt'],
+      secretType: replace ? values['secretType'] : this.editingRecord()?.['CstSecretType'],
+      validity,
       status: payload['status'],
       notes: payload['notes'],
+      expectedVersion: Number(this.editingRecord()?.['CstVaultVersion'] ?? 0),
+      ...(replace
+        ? {
+            submissionUUID: this.submissionUUID,
+            content: { schemaVersion: 1, type: values['secretType'], fields: values['content'] },
+          }
+        : {}),
     };
   }
 
