@@ -55,10 +55,12 @@ import {
   MnsSearchSelectFieldOption,
 } from '../../forms/mns-search-select-field/mns-search-select-field';
 import { MnsPermissionTreeFieldComponent } from '../../forms/mns-permission-tree-field/mns-permission-tree-field';
+import { SecretContentFieldComponent } from '../../secret-content/secret-content-field';
 import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
+  SecretContentFieldComponent,
   RouterLink,
   RefreshButtonComponent,
   MatButtonModule,
@@ -113,6 +115,8 @@ export type ConfigurableCrudQuickCreateConfig = {
 };
 
 export type ConfigurableCrudFieldType =
+  | 'secret-content'
+  | 'datetime'
   | 'text'
   | 'email'
   | 'password'
@@ -176,6 +180,8 @@ export type ConfigurableCrudField = {
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
+  /** Discriminator field for a structured secret editor. */
+  contentTypeKey?: string;
   accept?: string;
   /** ISO 4217 code used when the record does not carry its own currency field. */
   currencyCode?: string;
@@ -1753,7 +1759,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return next;
   }
 
-  private reflectSavedRecord(current: T, payload: ConfigurableCrudRecord): void {
+  protected reflectSavedRecord(current: T, payload: ConfigurableCrudRecord): void {
     const uuid = this.recordUUID(current);
     const values: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
