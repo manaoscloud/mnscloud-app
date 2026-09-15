@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -70,7 +70,7 @@ export interface SecretValueDialogData {
     </mat-dialog-actions>
   </div>`,
 })
-export class SecretValueDialogComponent implements OnDestroy {
+export class SecretValueDialogComponent {
   private readonly data = inject<SecretValueDialogData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<SecretValueDialogComponent>);
   readonly value = signal('');
@@ -99,7 +99,7 @@ export class SecretValueDialogComponent implements OnDestroy {
       this.saving.set(false);
     }
   }
-  ngOnDestroy() {
-    this.value.set('');
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.value.set(''));
   }
 }

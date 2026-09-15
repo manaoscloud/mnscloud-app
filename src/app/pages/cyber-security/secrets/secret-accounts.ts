@@ -97,7 +97,6 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
     {
       id: 'type',
       label: 'Default type',
-      kind: 'related',
       field: 'CxaDefaultSecretType',
       lookupKey: 'defaultSecretType',
     },
@@ -233,7 +232,7 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.serverOptions();
     if (key === 'customerUUID') return this.customerOptions();
-    if (key === 'defaultSecretType') return SECRET_TYPE_OPTIONS;
+    if (key === 'defaultSecretType') return SECRET_TYPE_OPTIONS.map((item) => ({ ...item, label: this.t(item.label) }));
     return [];
   }
 

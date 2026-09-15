@@ -1,3 +1,4 @@
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SecretValueDialogComponent } from '../../../shared/secret-value-dialog/secret-value-dialog';
@@ -123,7 +124,7 @@ const SECRET_CONFIG: ConfigurableCrudConfig = {
                 : 'chip-skipped',
     },
     { id: 'key', label: 'Key', field: 'CstKey' },
-    { id: 'type', label: 'Type', kind: 'related', field: 'CstSecretType', lookupKey: 'secretType' },
+    { id: 'type', label: 'Type', field: 'CstSecretType', lookupKey: 'secretType' },
     { id: 'server', label: 'Server', field: 'ResolvedServerName' },
     { id: 'operationError', label: 'Error code', field: 'ValueErrorCode' },
     { id: 'status', label: 'Status', kind: 'status', field: 'CstStatus', className: 'status-col' },
@@ -277,9 +278,13 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
           onEscape: () => (binding.ref.componentInstance as SecretValueDialogComponent).close(),
         },
       );
-      binding.ref.afterClosed().subscribe(() => binding.stop());
       const unregister = this.destroyRef.onDestroy(() => binding.ref.close());
-      binding.ref.afterClosed().subscribe(unregister);
+      try {
+        await firstValueFrom(binding.ref.afterClosed());
+      } finally {
+        binding.stop();
+        unregister();
+      }
       return;
     }
     if (action.key === 'retry') {
@@ -320,13 +325,15 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
     );
     const timer = setTimeout(() => binding.ref.close(), 30_000);
     const unregister = this.destroyRef.onDestroy(() => binding.ref.close());
-    binding.ref.afterClosed().subscribe(() => {
+    try {
+      await firstValueFrom(binding.ref.afterClosed());
+    } finally {
       clearTimeout(timer);
       data.sections![0].code!.value = '';
       data.sections = [];
       binding.stop();
       unregister();
-    });
+    }
   }
   override async deleteItem(row: ConfigurableCrudRecord): Promise<void> {
     if (
@@ -380,7 +387,7 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'operationState') return OPERATION_STATES;
     if (key === 'accountUUID') return this.accountOptions();
-    if (key === 'secretType') return SECRET_TYPE_OPTIONS;
+    if (key === 'secretType') return SECRET_TYPE_OPTIONS.map((item) => ({ ...item, label: this.t(item.label) }));
     return [];
   }
 
