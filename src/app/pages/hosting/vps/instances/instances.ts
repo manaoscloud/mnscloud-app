@@ -1,3 +1,5 @@
+import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
+import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -76,6 +78,7 @@ type VpsInstanceFormModel = {
   selector: 'app-hosting-vps-instances',
   standalone: true,
   imports: [
+    AsyncOperationStatusComponent,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -100,6 +103,7 @@ type VpsInstanceFormModel = {
   styleUrls: ['./instances.scss'],
 })
 export class HostingVpsInstancesPage {
+  private readonly operations = inject(AsyncOperationsService);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
@@ -667,8 +671,8 @@ export class HostingVpsInstancesPage {
         await this.api.put(`${this.instanceEndpoint()}/${editing.HviUUID}`, payload);
         this.snack.success('VPS instance updated.');
       } else {
-        await this.api.post(this.instanceEndpoint(), payload);
-        this.snack.success('VPS instance queued for provisioning.');
+        const response = await this.api.post(this.instanceEndpoint(), payload);
+        this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
       }
       this.instancesResource.reload();
       if (closeAfterSave || editing) {
@@ -751,7 +755,7 @@ export class HostingVpsInstancesPage {
       if ((updated?.HviStatus ?? '').toLowerCase() === 'queue_failed') {
         this.snack.error('VPS provisioning retry could not be queued.');
       } else {
-        this.snack.success('VPS provisioning retry queued.');
+        this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
       }
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to retry VPS provisioning.'));
@@ -843,7 +847,7 @@ export class HostingVpsInstancesPage {
       }
       this.instancesResource.reload();
       this.closeChangePlanDialog();
-      this.snack.success('VPS plan change queued.');
+      this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to change VPS plan.'));
     } finally {

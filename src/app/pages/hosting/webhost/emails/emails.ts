@@ -1,3 +1,5 @@
+import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
+import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -79,6 +81,7 @@ type WebhostEmailPasswordFormModel = {
   selector: 'app-hosting-webhost-emails',
   standalone: true,
   imports: [
+    AsyncOperationStatusComponent,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,
@@ -103,6 +106,7 @@ type WebhostEmailPasswordFormModel = {
   styleUrls: ['./emails.scss'],
 })
 export class HostingWebhostEmailsPage {
+  private readonly operations = inject(AsyncOperationsService);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
@@ -458,8 +462,9 @@ export class HostingWebhostEmailsPage {
         await this.api.put(`${this.emailEndpoint}/${editing.HweUUID}`, payload);
         this.snack.success('Webhost email updated.');
       } else {
-        await this.api.post(this.emailEndpoint, payload);
-        this.snack.success('Webhost email created.');
+        const response = await this.api.post(this.emailEndpoint, payload);
+        if (!this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload()))
+          this.snack.success('Webhost email created.');
       }
       this.emailsResource.reload();
       if (closeAfterSave || editing) {
@@ -510,12 +515,10 @@ export class HostingWebhostEmailsPage {
     const action = this.passwordAction();
     this.actionEmailUUID.set(target.HweUUID);
     try {
-      await this.api.post(`${this.emailEndpoint}/${target.HweUUID}/${action}`, {
+      const response = await this.api.post(`${this.emailEndpoint}/${target.HweUUID}/${action}`, {
         password: this.passwordFormModel().password,
       });
-      this.snack.success(
-        action === 'provision' ? 'Webhost email provisioning queued.' : 'Password reset queued.',
-      );
+      this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload());
       this.closePasswordDialog();
       this.emailsResource.reload();
     } catch (error) {
@@ -528,8 +531,8 @@ export class HostingWebhostEmailsPage {
   async runAction(item: HostingWebhostEmailAccount, action: 'sync' | 'suspend' | 'unsuspend') {
     this.actionEmailUUID.set(item.HweUUID);
     try {
-      await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/${action}`, {});
-      this.snack.success(`Webhost email ${action} queued.`);
+      const response = await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/${action}`, {});
+      this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload());
       this.emailsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, `Failed to ${action} Webhost email.`));
@@ -552,8 +555,8 @@ export class HostingWebhostEmailsPage {
     if (!confirmed) return;
     this.actionEmailUUID.set(item.HweUUID);
     try {
-      await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/deprovision`, {});
-      this.snack.success('Webhost email deprovision queued.');
+      const response = await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/deprovision`, {});
+      this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload());
       this.emailsResource.reload();
     } catch (error) {
       this.snack.error(this.friendlyError(error, 'Failed to deprovision Webhost email.'));

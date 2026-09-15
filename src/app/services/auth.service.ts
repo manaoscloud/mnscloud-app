@@ -67,6 +67,9 @@ export class AuthService {
   private _user = signal<AuthUser | null>(this.getUser());
   readonly user = this._user.asReadonly();
   private bootstrapBearerToken: string | null = null;
+  // Local generation identifies login boundaries without exposing the HttpOnly cookie.
+  private readonly _sessionGeneration = signal(0);
+  readonly sessionGeneration = this._sessionGeneration.asReadonly();
 
   constructor() {}
 
@@ -86,6 +89,7 @@ export class AuthService {
   ) {
     this.bootstrapBearerToken =
       typeof bootstrapToken === 'string' && bootstrapToken.trim() ? bootstrapToken.trim() : null;
+    this._sessionGeneration.update((value) => value + 1);
     writeAuthValue(AUTH_STATE, 'true', rememberMe);
     this._loggedIn.set(true);
 
@@ -134,6 +138,7 @@ export class AuthService {
   // LOGOUT
   // ---------------------------------------------------------
   logout() {
+    this._sessionGeneration.update((value) => value + 1);
     this.sessionUiCleanup.closeSessionUi();
 
     removeAuthValue(LEGACY_JWT_KEY);
