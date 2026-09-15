@@ -34,7 +34,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   statusFilter: true,
   tabLabels: {
-    record: 'Registro',
+    record: 'Record',
     notes: 'Notes',
   },
   listFilters: [
