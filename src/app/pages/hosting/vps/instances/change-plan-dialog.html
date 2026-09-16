@@ -1,7 +1,7 @@
 <div class="change-plan-dialog">
   <div class="dialog-header change-plan-header">
     <div>
-      <h2>{{ 'Change VPS plan' | transloco }}</h2>
+      <h2>{{ 'Upgrade VPS plan' | transloco }}</h2>
       <p>{{ instance.HviName }}</p>
     </div>
   </div>
@@ -22,20 +22,23 @@
           </div>
         }
       </div>
+
+      <p class="change-plan-hint">
+        {{ 'Only plans in the same size category are listed.' | transloco }}
+        {{ currentGrouping().family }} / {{ currentGrouping().category }}
+      </p>
     }
 
     <mat-form-field appearance="outline" class="change-plan-select">
       <mat-label>{{ 'Target plan' | transloco }}</mat-label>
       <mat-select [value]="targetPlanUUID()" (selectionChange)="targetPlanUUID.set($event.value)">
-        @for (option of changePlanOptions(); track option.plan.HvpUUID) {
-          <mat-option [value]="option.plan.HvpUUID" [disabled]="option.blocked">
+        @for (option of upgradePlanOptions(); track option.plan.HvpUUID) {
+          <mat-option [value]="option.plan.HvpUUID">
             <div class="plan-change-option">
               <span>{{ option.plan.HvpName }}</span>
               <small>
                 {{ planSpecLabel(option.plan) }}
-                @if (option.blocked) {
-                  · migration required
-                } @else if (option.diskChange > 0) {
+                @if (option.diskChange > 0) {
                   · disk increase is permanent
                 }
               </small>
@@ -45,9 +48,11 @@
       </mat-select>
     </mat-form-field>
 
-    @if (!changePlanOptions().length) {
+    @if (!upgradePlanOptions().length) {
       <p class="change-plan-warning">
-        {{ 'No compatible plans are available for this instance.' | transloco }}
+        {{
+          'No compatible upgrade plans are available for this instance category.' | transloco
+        }}
       </p>
     }
   </mat-dialog-content>
@@ -66,8 +71,8 @@
         [disabled]="!targetPlanUUID()"
         (click)="confirm()"
       >
-        <mat-icon>swap_vert</mat-icon>
-        {{ 'Change plan' | transloco }}
+        <mat-icon>upgrade</mat-icon>
+        {{ 'Upgrade' | transloco }}
       </button>
     </div>
   </mat-dialog-actions>

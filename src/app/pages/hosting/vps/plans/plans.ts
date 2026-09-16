@@ -248,7 +248,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'notes',
       span: 4,
-      rows: 6,
+      rows: 4,
       placeholder: 'Internal plan notes',
       fromRecord: (value) => String(parsePlanConfig(value)?.notes ?? ''),
     },
@@ -589,6 +589,12 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       normalizeString(this.editingRecord()?.['HvpCurrency'] as string | undefined) ??
       this.defaultCurrency() ??
       'BRL';
+    const sizeOption = (this.catalog()?.sizes ?? []).find((item) => item.id === size);
+    const existingConfig = parsePlanConfig(this.editingRecord()?.['HvpConfig']);
+    const sizeFamily =
+      normalizeString(sizeOption?.family) ?? normalizeString(existingConfig?.sizeFamily);
+    const sizeCategory =
+      normalizeString(sizeOption?.category) ?? normalizeString(existingConfig?.sizeCategory);
 
     return {
       name: String(payload['name'] ?? '').trim(),
@@ -604,6 +610,8 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
         transferGb: Number(payload['transferGb'] ?? 0) || null,
         providerRegionId: region,
         providerSizeId: size,
+        sizeFamily,
+        sizeCategory,
         notes,
       } satisfies HostingVpsPlanConfig,
       isActive: truthyNumber(payload['isActive']) === 1,

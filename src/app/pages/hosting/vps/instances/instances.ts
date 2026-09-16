@@ -42,12 +42,17 @@ const RETRY_PROVISION_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Retry provisioning',
 };
 
-const CHANGE_PLAN_ACTION: ConfigurableCrudRowAction = {
-  key: 'change-plan',
-  label: 'Change plan',
-  icon: 'swap_vert',
-  tooltip: 'Change plan',
+const UPGRADE_ACTION: ConfigurableCrudRowAction = {
+  key: 'upgrade',
+  label: 'Upgrade',
+  icon: 'upgrade',
+  tooltip: 'Upgrade plan',
 };
+
+const AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'ssh_key', label: 'SSH key' },
+  { value: 'password', label: 'Username and password' },
+];
 
 const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/instances',
@@ -76,7 +81,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   showAsyncOperationStatus: true,
   initialPageSize: 10,
   pageSizeOptions: [5, 10, 25, 100],
-  rowActions: [RETRY_PROVISION_ACTION, CHANGE_PLAN_ACTION],
+  rowActions: [RETRY_PROVISION_ACTION, UPGRADE_ACTION],
   listFilters: [
     {
       key: 'customerUUID',
@@ -87,13 +92,16 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
   ],
-  tabLabels: { notes: 'Notes' },
+  tabLabels: { authentication: 'Authentication', notes: 'Notes' },
   initialValues: {
     isActive: 1,
     planUUID: '',
     customerUUID: '',
     image: '',
     name: '',
+    authMethod: 'ssh_key',
+    username: 'root',
+    password: '',
     sshKey: '',
     notes: '',
   },
@@ -185,13 +193,54 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'authMethod',
+      source: 'HviConfig',
+      payloadKey: 'authMethod',
+      label: 'Authentication method',
+      type: 'select',
+      options: AUTH_METHOD_OPTIONS,
+      required: true,
+      span: 1,
+      tab: 'authentication',
+      fromRecord: (value) => configString(value, 'authMethod') || 'ssh_key',
+    },
+    {
+      key: 'username',
+      source: 'HviConfig',
+      payloadKey: 'username',
+      label: 'Username',
+      placeholder: 'root',
+      span: 1,
+      tab: 'authentication',
+      fromRecord: (value) => configString(value, 'username') || 'root',
+      hiddenWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') !== 'password',
+      requiredWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') === 'password',
+    },
+    {
+      key: 'password',
+      source: 'HviConfig',
+      payloadKey: 'password',
+      label: 'Password',
+      type: 'password',
+      autocomplete: 'new-password',
+      span: 1,
+      tab: 'authentication',
+      fromRecord: () => '',
+      hiddenWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') !== 'password',
+      requiredWhen: ({ editing, values }) =>
+        !editing && String(values['authMethod'] ?? 'ssh_key') === 'password',
+    },
+    {
       key: 'sshKey',
       source: 'HviConfig',
       payloadKey: 'sshKey',
       label: 'SSH Key',
       placeholder: 'default-key',
       span: 2,
+      tab: 'authentication',
       fromRecord: (value) => configString(value, 'sshKey'),
+      hiddenWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') !== 'ssh_key',
+      requiredWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') === 'ssh_key',
     },
     {
       key: 'notes',
@@ -201,7 +250,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'notes',
       span: 4,
-      rows: 6,
+      rows: 4,
       placeholder: 'Provisioned for marketing site',
       fromRecord: (value) => configString(value, 'notes'),
     },
@@ -282,14 +331,19 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     })),
   );
   private readonly imageOptions = computed<ConfigurableCrudOption[]>(() => {
-    const images = this.catalog()?.images ?? [];
+    const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
+    const region = normalizeString(plan?.HvpRegion) ?? '';
+    const diskGb = Number(plan?.HvpConfig?.diskGb ?? 0);
+    const images = (this.catalog()?.images ?? []).filter((option) =>
+      isImageCompatibleWithPlan(option, region, diskGb),
+    );
     const current = String(this.formValues()['image'] ?? '').trim();
     const options = images.map((option) => catalogOptionToCrud(option));
     if (current && !options.some((option) => String(option.value) === current)) {
       options.unshift({
         value: current,
         label: `Custom: ${current}`,
-        description: 'Custom',
+        description: this.isProvisionedEdit() ? 'Current image' : 'Custom',
         searchText: current,
       });
     }
@@ -312,7 +366,30 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       customerField.requiredWhen = () => !this.isMaster();
     }
 
+    const provisionedLockKeys = [
+      'isActive',
+      'planUUID',
+      'customerUUID',
+      'image',
+      'authMethod',
+      'username',
+      'password',
+      'sshKey',
+      'notes',
+    ];
+    for (const key of provisionedLockKeys) {
+      const field = HOSTING_VPS_INSTANCE_CONFIG.fields.find((item) => item.key === key);
+      if (!field) continue;
+      const previous = field.disabledWhen;
+      field.disabledWhen = (context) =>
+        this.isProvisionedEdit() || Boolean(previous?.(context));
+    }
+
     void Promise.all([this.fetchProviders(), this.fetchCustomers(), this.fetchPlans()]);
+  }
+
+  private isProvisionedEdit(): boolean {
+    return Boolean(this.editingRecord()?.['HviExternalId']);
   }
 
   protected override listEndpoint(): string {
@@ -379,19 +456,63 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
-    if (key !== 'planUUID') return;
-    void this.applySelectedPlan(String(value ?? ''), true);
+    if (key === 'planUUID') {
+      void this.applySelectedPlan(String(value ?? ''), true);
+      return;
+    }
+    if (key === 'authMethod') {
+      const method = String(value ?? 'ssh_key');
+      if (method === 'password') {
+        this.patchFormValues({
+          sshKey: '',
+          username: String(this.formValues()['username'] ?? '').trim() || 'root',
+        });
+      } else {
+        this.patchFormValues({ password: '' });
+      }
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const editing = this.editingRecord();
+    const authMethod =
+      String(payload['authMethod'] ?? 'ssh_key').trim().toLowerCase() === 'password'
+        ? 'password'
+        : 'ssh_key';
     const sshKey = normalizeString(payload['sshKey']);
+    const username = normalizeString(payload['username']) ?? 'root';
+    const password = normalizeString(payload['password']);
     const providerImageId = normalizeString(payload['image']);
     const notes = normalizeString(payload['notes']);
-    const config: HostingVpsInstanceConfig = {};
-    if (sshKey) config.sshKey = sshKey;
+    const config: HostingVpsInstanceConfig = {
+      authMethod,
+      username,
+    };
+    if (authMethod === 'ssh_key') {
+      if (sshKey) config.sshKey = sshKey;
+      config.password = null;
+    } else if (password) {
+      config.password = password;
+      config.sshKey = undefined;
+    }
     if (providerImageId) config.providerImageId = providerImageId;
     if (notes) config.notes = notes;
+
+    if (editing?.['HviExternalId']) {
+      const current = parseConfig<HostingVpsInstanceConfig>(editing['HviConfig']) ?? {};
+      return {
+        name: String(payload['name'] ?? '').trim(),
+        customerUUID: editing['CustomerCusUUID'] ?? null,
+        planUUID: editing['HostingVpsPlanHvpUUID'],
+        config: {
+          ...current,
+          notes: current.notes ?? null,
+          password: null,
+        },
+        status: normalizeString(editing['HviStatus']),
+        isActive: Number(editing['HviIsActive']) === 1,
+      };
+    }
 
     return {
       name: String(payload['name'] ?? '').trim(),
@@ -405,6 +526,30 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     };
   }
 
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (this.isProvisionedEdit()) {
+      return super.validatePayload(payload);
+    }
+
+    const authMethod =
+      String(payload['authMethod'] ?? 'ssh_key').trim().toLowerCase() === 'password'
+        ? 'password'
+        : 'ssh_key';
+    if (authMethod === 'ssh_key' && !normalizeString(payload['sshKey'])) {
+      this.snack.warning(this.t('SSH key is required for SSH key authentication.'));
+      return false;
+    }
+    if (authMethod === 'password' && !normalizeString(payload['password'])) {
+      this.snack.warning(this.t('Password is required for password authentication.'));
+      return false;
+    }
+    if (!normalizeString(payload['image'])) {
+      this.snack.warning(this.t('Select an image compatible with the selected plan.'));
+      return false;
+    }
+    return super.validatePayload(payload);
+  }
+
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const actions: ConfigurableCrudRowAction[] = [];
     if (this.canRetryProvision(row)) {
@@ -413,7 +558,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         icon: this.retryingInstanceUUIDs().has(this.recordUUID(row)) ? 'hourglass_top' : 'replay',
       });
     }
-    if (this.canChangePlan(row)) actions.push(CHANGE_PLAN_ACTION);
+    if (this.canUpgrade(row)) actions.push(UPGRADE_ACTION);
     return actions;
   }
 
@@ -422,8 +567,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       await this.retryProvision(row);
       return;
     }
-    if (action.key === 'change-plan') {
-      await this.openChangePlanDialog(row);
+    if (action.key === 'upgrade') {
+      await this.openUpgradeDialog(row);
     }
   }
 
@@ -438,14 +583,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     );
   }
 
-  private canChangePlan(row: ConfigurableCrudRecord) {
+  private canUpgrade(row: ConfigurableCrudRecord) {
     const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
     const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
     const resizeStatus = config?.resize?.status ?? '';
+    const grouping = planSizeGrouping(plan);
     return (
       Number(row['HviIsActive']) === 1 &&
       !!row['HviExternalId'] &&
       plan?.HvpProvider === 'digitalocean' &&
+      !isGpuSizeGrouping(grouping) &&
       !['resize_queued', 'resizing', 'powering_on'].includes(String(row['HviStatus'] ?? '')) &&
       !['queued', 'resizing', 'powering_on'].includes(resizeStatus)
     );
@@ -492,8 +639,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
-  private async openChangePlanDialog(row: ConfigurableCrudRecord) {
-    if (!this.canChangePlan(row)) return;
+  private async openUpgradeDialog(row: ConfigurableCrudRecord) {
+    if (!this.canUpgrade(row)) return;
     if (!this.plans().length) await this.fetchPlans();
 
     const instance = this.toInstance(row);
@@ -525,9 +672,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
 
     const confirmed = await this.confirmAction(
-      'Change VPS plan',
-      `Queue plan change for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
-      'Change plan',
+      'Upgrade VPS plan',
+      `Queue upgrade for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
+      'Upgrade',
     );
     if (!confirmed) return;
 
@@ -540,7 +687,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       this.trackOperation(response);
       this.refreshList();
     } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.t('Failed to change VPS plan.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to upgrade VPS plan.'));
     } finally {
       this.mutating.set(false);
     }
@@ -566,12 +713,29 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       this.patchFormValues({ image: '' });
     }
 
+    await this.fetchProviderCatalog(plan);
+
     const selectedImage = normalizeString(this.formValues()['image']);
-    if (!selectedImage && plan.HvpImage) {
-      this.patchFormValues({ image: plan.HvpImage });
+    const region = normalizeString(plan.HvpRegion) ?? '';
+    const diskGb = Number(plan.HvpConfig?.diskGb ?? 0);
+    const compatibleImages = (this.catalog()?.images ?? []).filter((option) =>
+      isImageCompatibleWithPlan(option, region, diskGb),
+    );
+
+    if (selectedImage) {
+      const stillCompatible = compatibleImages.some((option) => option.id === selectedImage);
+      if (!stillCompatible && !this.isProvisionedEdit()) {
+        this.patchFormValues({ image: '' });
+      }
     }
 
-    void this.fetchProviderCatalog(plan);
+    const currentImage = normalizeString(this.formValues()['image']);
+    if (!currentImage && plan.HvpImage) {
+      const planImageCompatible = compatibleImages.some((option) => option.id === plan.HvpImage);
+      if (planImageCompatible || !compatibleImages.length) {
+        this.patchFormValues({ image: plan.HvpImage });
+      }
+    }
   }
 
   private async fetchProviderCatalog(plan: HostingVpsPlan) {
@@ -764,6 +928,88 @@ function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
       .filter(Boolean)
       .join(' '),
   };
+}
+
+function isImageCompatibleWithPlan(
+  option: VpsCatalogOption,
+  region: string,
+  diskGb: number,
+): boolean {
+  if (
+    region &&
+    Array.isArray(option.regions) &&
+    option.regions.length > 0 &&
+    !option.regions.includes(region)
+  ) {
+    return false;
+  }
+  const minDiskGb = Number(option.minDiskGb ?? 0);
+  if (diskGb > 0 && minDiskGb > 0 && minDiskGb > diskGb) {
+    return false;
+  }
+  return true;
+}
+
+function digitalOceanSizeGrouping(slug: string): { family: string; category: string } {
+  const normalized = String(slug ?? '').trim().toLowerCase();
+  if (
+    normalized.startsWith('gpu-') ||
+    normalized.includes('-gpu') ||
+    normalized.includes('-nvidia') ||
+    normalized.includes('-mi300')
+  ) {
+    return { family: 'GPU', category: 'GPU' };
+  }
+  if (normalized.startsWith('s-')) {
+    if (normalized.includes('-amd')) return { family: 'Basic', category: 'Premium AMD' };
+    if (normalized.includes('-intel')) return { family: 'Basic', category: 'Premium Intel' };
+    return { family: 'Basic', category: 'Regular' };
+  }
+  if (normalized.startsWith('g-') || normalized.startsWith('gd-')) {
+    return { family: 'General Purpose', category: 'Dedicated CPU' };
+  }
+  if (
+    normalized.startsWith('c-') ||
+    normalized.startsWith('c2-') ||
+    normalized.startsWith('c-48')
+  ) {
+    return { family: 'CPU-Optimized', category: 'Dedicated CPU' };
+  }
+  if (
+    normalized.startsWith('m-') ||
+    normalized.startsWith('m3-') ||
+    normalized.startsWith('m6-')
+  ) {
+    return { family: 'Memory-Optimized', category: 'Dedicated CPU' };
+  }
+  if (normalized.startsWith('so-') || normalized.startsWith('so1_5-')) {
+    return { family: 'Storage-Optimized', category: 'Dedicated CPU' };
+  }
+  return { family: 'Droplet', category: 'Other' };
+}
+
+function planSizeGrouping(plan: HostingVpsPlan | null | undefined): {
+  family: string;
+  category: string;
+} {
+  if (!plan) return { family: 'Droplet', category: 'Other' };
+  const family = normalizeString(plan.HvpConfig?.sizeFamily);
+  const category = normalizeString(plan.HvpConfig?.sizeCategory);
+  if (family && category) return { family, category };
+  const size = normalizeString(plan.HvpSize) ?? '';
+  if (plan.HvpProvider === 'digitalocean') return digitalOceanSizeGrouping(size);
+  if (plan.HvpProvider === 'lightsail') {
+    const head = size.split('_')[0] || size || 'bundle';
+    return { family: 'Lightsail', category: head };
+  }
+  return { family: plan.HvpProvider || 'VPS', category: size || 'Other' };
+}
+
+function isGpuSizeGrouping(grouping: { family: string; category: string }) {
+  return (
+    grouping.family.toLowerCase().includes('gpu') ||
+    grouping.category.toLowerCase().includes('gpu')
+  );
 }
 
 function parseConfig<T>(value: unknown): T | null {
