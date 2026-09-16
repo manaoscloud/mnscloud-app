@@ -1756,8 +1756,9 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
 .mat-mdc-option.select-subgroup-option {
   opacity: 1 !important;
   pointer-events: none;
-  min-height: 32px;
-  margin-top: 4px;
+  min-height: 28px;
+  margin-top: 2px;
+  margin-bottom: 0;
 }
 
 .mat-mdc-option.select-group-option .select-option-main {
@@ -1768,16 +1769,30 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
 
 .mat-mdc-option.select-subgroup-option .select-option-main {
   font-weight: 600;
-  padding-left: 0.75rem;
-  opacity: 0.9;
+  padding-left: 0.5rem;
+  opacity: 0.92;
+}
+
+.mat-mdc-option.select-plan-option {
+  min-height: 52px;
+  margin: 2px 6px 6px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 70%, transparent);
+  border-radius: 8px;
+  box-sizing: border-box;
 }
 
 .mat-mdc-option.select-plan-option .select-option-main {
-  padding-left: 1.5rem;
+  padding-left: 0.85rem;
+  font-weight: 500;
 }
 
 .mat-mdc-option.select-plan-option .select-option-description {
-  padding-left: 1.5rem;
+  padding-left: 0.85rem;
+  margin-top: 0.2rem;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .select-option-description {

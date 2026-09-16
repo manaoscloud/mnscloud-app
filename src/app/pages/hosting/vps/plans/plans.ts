@@ -187,6 +187,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       tab: 'storage',
       span: 2,
+      lineFillAfter: 1,
     },
     {
       key: 'sizeManual',
@@ -196,6 +197,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       placeholder: 's-1vcpu-1gb',
       tab: 'storage',
       span: 2,
+      lineFillAfter: 1,
     },
     {
       key: 'cpu',
@@ -205,6 +207,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       type: 'number',
       tab: 'storage',
       span: 1,
+      breakBefore: true,
       fromRecord: (value) => Number(parsePlanConfig(value)?.cpu ?? 0),
     },
     {
@@ -329,8 +332,13 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       normalizeString(this.formValues()['size']) ??
       normalizeString(this.formValues()['sizeManual']) ??
       '';
+    const scoped = this.regionScopedSizes();
+    // Never keep a stale size that is unavailable in the selected region.
+    const options = scoped.some((item) => item.id === current)
+      ? withCurrentOption(scoped, current)
+      : scoped;
     return buildGroupedSizeOptions(
-      withCurrentOption(this.regionScopedSizes(), current),
+      options,
       this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null,
     );
   });
@@ -545,25 +553,25 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
 
     if (key === 'region') {
       this.patchFormValues({ regionManual: String(value ?? '') });
-      this.reconcileSizeForRegion();
+      this.clearSizeSelection('Region changed. Select a size available in this region.');
       return;
     }
     if (key === 'regionManual') {
       this.patchFormValues({ region: String(value ?? '') });
-      this.reconcileSizeForRegion();
+      this.clearSizeSelection('Region changed. Select a size available in this region.');
       return;
     }
 
     if (key === 'size') {
       const size = String(value ?? '');
       this.patchFormValues({ sizeManual: size });
-      this.applySelectedSizeSpecs(size);
+      void this.applySelectedSizeSpecs(size);
       return;
     }
     if (key === 'sizeManual') {
       const size = String(value ?? '');
       this.patchFormValues({ size });
-      this.applySelectedSizeSpecs(size);
+      void this.applySelectedSizeSpecs(size);
     }
   }
 
@@ -651,7 +659,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       const size =
         normalizeString(this.formValues()['size']) ??
         normalizeString(this.formValues()['sizeManual']);
-      if (size) this.applySelectedSizeSpecs(size);
+      if (size) void this.applySelectedSizeSpecs(size);
     } catch (error) {
       this.catalog.set(null);
       this.snack.error(this.errorMessage(error) || this.t('Failed to load provider catalog.'));
@@ -660,11 +668,24 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     }
   }
 
-  private applySelectedSizeSpecs(value: string | null | undefined) {
+  private async applySelectedSizeSpecs(value: string | null | undefined) {
     const selected = normalizeString(value);
     if (!selected) return;
     const option = (this.catalog()?.sizes ?? []).find((item) => item.id === selected);
     if (!option) return;
+
+    const region = this.selectedRegion();
+    if (
+      region &&
+      Array.isArray(option.regions) &&
+      option.regions.length > 0 &&
+      !option.regions.includes(region)
+    ) {
+      this.clearSizeSelection(
+        'Selected size is not available in this region. Choose another Droplet plan.',
+      );
+      return;
+    }
 
     const patch: ConfigurableCrudRecord = {};
     const cpu = catalogNumber(option.cpu);
@@ -675,32 +696,30 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (memoryMb !== null) patch['memoryMb'] = memoryMb;
     if (diskGb !== null) patch['diskGb'] = diskGb;
     if (transferGb !== null) patch['transferGb'] = transferGb;
+
+    const provider =
+      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+    if (provider === 'digitalocean' || provider === 'lightsail') {
+      const usdMonthly = catalogNumber(option.priceMonthly);
+      const usdSetup = catalogNumber(option.setupFee) ?? 0;
+      if (usdMonthly !== null) {
+        const targetCurrency = (this.defaultCurrency() || 'BRL').toUpperCase();
+        const convertedMonthly = await convertUsdAmount(usdMonthly, targetCurrency);
+        const convertedSetup = await convertUsdAmount(usdSetup, targetCurrency);
+        patch['price'] = roundMoney(convertedMonthly);
+        patch['setupFee'] = roundMoney(convertedSetup);
+      }
+    }
+
     if (!Object.keys(patch).length) return;
     this.patchFormValues(patch);
   }
 
-  private reconcileSizeForRegion(): void {
-    const region = this.selectedRegion();
-    const currentSize =
+  private clearSizeSelection(message?: string): void {
+    const hadSize = Boolean(
       normalizeString(this.formValues()['size']) ??
-      normalizeString(this.formValues()['sizeManual']);
-    if (!region || !currentSize) {
-      if (!region) {
-        this.patchFormValues({
-          size: '',
-          sizeManual: '',
-          cpu: 0,
-          memoryMb: 0,
-          diskGb: 0,
-          transferGb: 0,
-        });
-      }
-      return;
-    }
-
-    const stillAvailable = this.regionScopedSizes().some((item) => item.id === currentSize);
-    if (stillAvailable) return;
-
+        normalizeString(this.formValues()['sizeManual']),
+    );
     this.patchFormValues({
       size: '',
       sizeManual: '',
@@ -709,6 +728,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       diskGb: 0,
       transferGb: 0,
     });
+    if (hadSize && message) this.snack.info(this.t(message));
   }
 
   private providerById(uuid: string | null | undefined): HostingVpsProvider | null {
@@ -861,10 +881,25 @@ function sizeOptionMeta(option: VpsCatalogOption) {
 }
 
 function sizeOptionPlanLabel(option: VpsCatalogOption) {
-  const price = sizeOptionPrice(option);
   const slug = sizeOptionSlug(option);
-  const meta = sizeOptionMeta(option);
-  return [meta || slug, price, slug !== meta ? slug : ''].filter(Boolean).join(' • ');
+  const memoryMb = catalogNumber(option.memoryMb);
+  const cpu = catalogNumber(option.cpu);
+  const memoryLabel =
+    memoryMb === null
+      ? ''
+      : memoryMb >= 1024 && memoryMb % 1024 === 0
+        ? `${memoryMb / 1024} GB`
+        : `${memoryMb} MB`;
+  const summary = [cpu !== null ? `${cpu} vCPU` : '', memoryLabel].filter(Boolean).join(' · ');
+  return summary ? `${slug} · ${summary}` : slug;
+}
+
+function sizeOptionDescription(option: VpsCatalogOption) {
+  const parts = [
+    sizeOptionMeta(option),
+    sizeOptionPrice(option),
+  ].filter(Boolean);
+  return parts.join(' · ') || undefined;
 }
 
 function sizeOptionRank(option: VpsCatalogOption) {
@@ -968,11 +1003,44 @@ function buildGroupedSizeOptions(
     result.push({
       value: option.id,
       label: sizeOptionPlanLabel(option),
-      description: sizeOptionMeta(option) || undefined,
+      description: sizeOptionDescription(option),
       optionClass: 'select-plan-option',
       searchText: `${option.id} ${option.label} ${family} ${category}`,
     });
   }
 
   return result;
+}
+
+function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+const fxRateCache = new Map<string, { rate: number; expiresAt: number }>();
+
+async function convertUsdAmount(amountUsd: number, targetCurrency: string): Promise<number> {
+  const target = targetCurrency.trim().toUpperCase();
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return 0;
+  if (!target || target === 'USD') return amountUsd;
+
+  const cached = fxRateCache.get(target);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) {
+    return amountUsd * cached.rate;
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.frankfurter.app/latest?from=USD&to=${encodeURIComponent(target)}`,
+    );
+    if (!response.ok) throw new Error(`FX HTTP ${response.status}`);
+    const payload = (await response.json()) as { rates?: Record<string, number> };
+    const rate = Number(payload.rates?.[target] ?? 0);
+    if (!Number.isFinite(rate) || rate <= 0) throw new Error('FX rate missing');
+    fxRateCache.set(target, { rate, expiresAt: now + 60 * 60 * 1000 });
+    return amountUsd * rate;
+  } catch {
+    // Fallback keeps provider USD amount so the operator can adjust manually.
+    return amountUsd;
+  }
 }

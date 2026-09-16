@@ -129,6 +129,8 @@ export type VpsCatalogOption = {
   family?: string | null;
   category?: string | null;
   priceMonthly?: number | null;
+  setupFee?: number | null;
+  priceCurrency?: string | null;
 };
 
 export type VpsProviderCatalog = {
