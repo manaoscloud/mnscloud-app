@@ -23,8 +23,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
 import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
+import { AsyncOperationActivityComponent } from '../../shared/operations/async-operation-activity';
+import { AsyncOperationsService } from '../../shared/operations/async-operations.service';
 
 // Material
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -98,6 +101,8 @@ interface UserAccessResponse {
     RouterOutlet,
     RouterLink,
     BreadcrumbComponent,
+    AsyncOperationActivityComponent,
+    MatBadgeModule,
     MatIconModule,
     MatMenuModule,
     MatSidenavModule,
@@ -126,6 +131,7 @@ export class MainLayout {
   private readonly destroyRef = inject(DestroyRef);
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
+  readonly asyncOperations = inject(AsyncOperationsService);
 
   // =======================================================
   // Signals — Core UI State
@@ -265,6 +271,14 @@ export class MainLayout {
     // Carrega environments (tenants)
     this.initEnvironments();
     void this.runtimeVersion.refresh();
+
+    effect(() => {
+      const loggedIn = this.auth.isLoggedIn();
+      const tenant = this.activeEnvironmentId();
+      const master = this.effectiveContextMode() === 'master';
+      if (!loggedIn || (!tenant && !master)) return;
+      void this.asyncOperations.resume(this.destroyRef);
+    });
   }
 
   // =======================================================

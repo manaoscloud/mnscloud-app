@@ -1,5 +1,4 @@
 import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
-import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -170,7 +169,6 @@ const TOOL_CONFIGS: Record<ToolKind, ToolConfig> = {
   selector: 'app-hosting-webhost-tools',
   standalone: true,
   imports: [
-    AsyncOperationStatusComponent,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,

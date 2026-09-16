@@ -4317,5 +4317,16 @@
   "Disk read": "Disk read",
   "Disk write": "Disk write",
   "Provider status": "Provider status",
-  "Inbound and outbound": "Inbound and outbound"
+  "Inbound and outbound": "Inbound and outbound",
+  "operations.activityTitle": "Background activity",
+  "operations.activityEmpty": "No background activity right now.",
+  "operations.state.queued": "Queued",
+  "operations.state.running": "Running",
+  "operations.state.verifying": "Verifying",
+  "operations.state.waitingRetry": "Waiting retry",
+  "operations.state.succeeded": "Completed",
+  "operations.state.blocked": "Blocked",
+  "operations.state.failed": "Failed",
+  "operations.state.cancelled": "Cancelled",
+  "Recheck": "Recheck"
 }

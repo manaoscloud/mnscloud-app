@@ -13,7 +13,12 @@ export interface AsyncOperation {
   scope?: 'platform' | 'tenant';
   errorCode?: string | null;
   environmentUUID?: string | null;
+  updatedAt?: string | null;
 }
+
+const IN_FLIGHT = new Set(['queued', 'running', 'verifying', 'waiting_retry']);
+const ATTENTION = new Set(['blocked', 'failed']);
+const SUCCESS_RETENTION_MS = 10_000;
 
 export function acceptedOperations(response: unknown): AsyncOperation[] {
   const data = (
@@ -31,6 +36,20 @@ export function acceptedOperations(response: unknown): AsyncOperation[] {
   );
 }
 
+function isInFlight(state: string) {
+  return IN_FLIGHT.has(state);
+}
+
+function needsAttention(state: string) {
+  return ATTENTION.has(state);
+}
+
+function shouldResume(operation: AsyncOperation) {
+  if (isInFlight(operation.state)) return true;
+  if (needsAttention(operation.state) && operation.canRecheck !== false) return true;
+  return false;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AsyncOperationsService {
   private readonly api = inject(ApiService);
@@ -43,8 +62,10 @@ export class AsyncOperationsService {
   private readonly polling = new Set<string>();
   private readonly listeners = new Map<string, Map<DestroyRef, () => void>>();
   private readonly stops = new Map<string, () => void>();
+  private readonly clearTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private activeRequests = 0;
   readonly rechecking = signal<ReadonlySet<string>>(new Set());
+
   async recheck(operation: AsyncOperation, destroy: DestroyRef) {
     if (this.rechecking().has(operation.operationUUID)) return;
     this.rechecking.update((value) => new Set([...value, operation.operationUUID]));
@@ -75,6 +96,8 @@ export class AsyncOperationsService {
       if (current.every((value, index) => value === previous[index])) return;
       previous = current;
       for (const stop of [...this.stops.values()]) stop();
+      for (const timer of this.clearTimers.values()) clearTimeout(timer);
+      this.clearTimers.clear();
       this.states.set({});
     });
   }
@@ -97,6 +120,7 @@ export class AsyncOperationsService {
       )
         return;
       for (const operation of [...response.data.items].reverse()) {
+        if (!shouldResume(operation)) continue;
         this.watch(operation, destroy, () => {});
       }
     } catch {
@@ -104,7 +128,19 @@ export class AsyncOperationsService {
     }
   }
 
+  dismiss(operationUUID: string) {
+    this.clearSuccessTimer(operationUUID);
+    this.stops.get(operationUUID)?.();
+    this.states.update((current) => {
+      if (!(operationUUID in current)) return current;
+      const remaining = { ...current };
+      delete remaining[operationUUID];
+      return remaining;
+    });
+  }
+
   private remember(operation: AsyncOperation, environment: string | null) {
+    this.clearSuccessTimer(operation.operationUUID);
     this.states.update((current) => {
       const next = {
         ...current,
@@ -112,19 +148,29 @@ export class AsyncOperationsService {
       };
       for (const key of Object.keys(next)) {
         if (Object.keys(next).length <= 100) break;
-        if (!this.polling.has(key)) delete next[key];
+        if (!this.polling.has(key) && !needsAttention(next[key].state)) delete next[key];
       }
       return next;
     });
   }
 
-  readonly visible = computed(() => {
+  private scopedOperations() {
     this.tenants.selectedTenant();
     const environment = readStoredEnvironmentUUID();
-    return Object.values(this.states())
-      .filter((item) => item.environmentUUID === environment)
-      .slice(-10);
-  });
+    return Object.values(this.states()).filter((item) => item.environmentUUID === environment);
+  }
+
+  /** Panel list: in-flight, attention, and briefly retained successes. */
+  readonly visible = computed(() => this.scopedOperations().slice(-20));
+
+  readonly badgeCount = computed(
+    () =>
+      this.scopedOperations().filter(
+        (item) => isInFlight(item.state) || needsAttention(item.state),
+      ).length,
+  );
+
+  readonly hasActivity = computed(() => this.visible().length > 0);
 
   observe(response: unknown, destroy: DestroyRef, onSettled: () => void): boolean {
     const operations = acceptedOperations(response);
@@ -153,8 +199,8 @@ export class AsyncOperationsService {
       destroy.onDestroy(() => {
         registeredListeners.delete(destroy);
         watched.delete(id);
-        if (registeredListeners.size === 0 && this.listeners.get(id) === registeredListeners)
-          this.stops.get(id)?.();
+        // Keep root polling alive for the shell Activity Center; session/tenant
+        // changes and terminal retention still call stop() explicitly.
       });
     }
     listeners.set(destroy, onSettled);
@@ -174,23 +220,32 @@ export class AsyncOperationsService {
       this.listeners.delete(id);
       this.stops.delete(id);
       this.polling.delete(id);
-      if (remove)
+      if (remove) {
+        this.clearSuccessTimer(id);
         this.states.update((current) => {
           const remaining = { ...current };
           delete remaining[operation.operationUUID];
           return remaining;
         });
+      }
     };
     this.stops.set(id, stop);
-    const settled = () => {
+    const settled = (state: string) => {
       const callbacks = [...listeners].flatMap(([owner, callbacks]) =>
         owner.destroyed ? [] : [callbacks],
       );
-      stop(false);
+      if (state === 'succeeded') {
+        stop(false);
+        this.scheduleSuccessClear(id);
+      } else if (needsAttention(state)) {
+        stop(false);
+      } else {
+        stop(true);
+      }
       for (const callback of callbacks) callback();
     };
     if (['succeeded', 'failed', 'blocked', 'cancelled'].includes(operation.state)) {
-      settled();
+      settled(operation.state);
       return;
     }
     const poll = async () => {
@@ -230,7 +285,7 @@ export class AsyncOperationsService {
             this.snack.warning(
               'Operation requires attention. Check its status before trying again.',
             );
-          settled();
+          settled(result.state);
           return;
         }
         delay = 3000;
@@ -247,5 +302,29 @@ export class AsyncOperationsService {
       if (!stopped) timer = setTimeout(() => void poll(), delay);
     };
     timer = setTimeout(() => void poll(), delay);
+  }
+
+  private scheduleSuccessClear(operationUUID: string) {
+    this.clearSuccessTimer(operationUUID);
+    this.clearTimers.set(
+      operationUUID,
+      setTimeout(() => {
+        this.clearTimers.delete(operationUUID);
+        this.states.update((current) => {
+          const item = current[operationUUID];
+          if (!item || item.state !== 'succeeded') return current;
+          const remaining = { ...current };
+          delete remaining[operationUUID];
+          return remaining;
+        });
+      }, SUCCESS_RETENTION_MS),
+    );
+  }
+
+  private clearSuccessTimer(operationUUID: string) {
+    const timer = this.clearTimers.get(operationUUID);
+    if (!timer) return;
+    clearTimeout(timer);
+    this.clearTimers.delete(operationUUID);
   }
 }
