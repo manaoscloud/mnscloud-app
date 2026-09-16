@@ -136,29 +136,25 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'HostingVpsPlanHvpUUID',
     },
     {
-      id: 'provider',
-      label: 'Provider',
-      kind: 'related',
-      lookupKey: 'providerUUID',
-      uuidField: 'HostingVpsProviderHvrUUID',
+      id: 'publicIp',
+      label: 'Public IP',
+      kind: 'text',
+      field: 'PublicIpv4',
+      copyable: true,
     },
-    { id: 'publicIp', label: 'Public IP', kind: 'text', field: 'PublicIpv4' },
-    { id: 'region', label: 'Region', kind: 'text', field: 'PlanRegion' },
-    { id: 'size', label: 'Size', kind: 'text', field: 'PlanSize' },
-    { id: 'image', label: 'Image', kind: 'text', field: 'InstanceImage' },
+    {
+      id: 'runtimeStatus',
+      label: 'Provisioning',
+      kind: 'text',
+      field: 'HviStatus',
+      className: 'runtime-status-col',
+    },
     {
       id: 'status',
       label: 'Status',
       kind: 'status',
       field: 'HviIsActive',
       className: 'status-col',
-    },
-    {
-      id: 'runtimeStatus',
-      label: 'RTS',
-      kind: 'text',
-      field: 'HviStatus',
-      className: 'runtime-status-col',
     },
   ],
   fields: [
@@ -594,11 +590,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key === 'monitor') {
-      await this.openRuntimeMonitor(row, true);
+      await this.openInstanceMonitor(row);
       return;
     }
     if (action.key === 'details') {
-      await this.openRuntimeMonitor(row, false);
+      await this.openInstanceDetails(row);
       return;
     }
     if (action.key === 'retry-provision') {
@@ -891,7 +887,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     };
   }
 
-  private async openRuntimeMonitor(row: ConfigurableCrudRecord, refresh: boolean) {
+  private async openInstanceDetails(row: ConfigurableCrudRecord) {
     const uuid = this.recordUUID(row);
     if (!row['HviExternalId']) {
       this.snack.warning(this.t('Provision the VPS before viewing runtime details.'));
@@ -901,27 +897,24 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     let item = this.toInstance(row);
     let runtime: Record<string, unknown> | null = null;
 
-    if (refresh) {
-      this.mutating.set(true);
-      try {
-        const response = await this.api.post<{
-          data?: { item?: HostingVpsInstance; runtime?: Record<string, unknown> };
-        }>(`${this.instanceEndpoint()}/${uuid}/runtime`, {});
-        if (response?.data?.item) {
-          item = {
-            ...response.data.item,
-            HviConfig: parseConfig<HostingVpsInstanceConfig>(response.data.item.HviConfig),
-          };
-        }
-        runtime = response?.data?.runtime ?? null;
-        this.refreshList();
-      } catch (error) {
-        this.snack.error(this.errorMessage(error) || this.t('Failed to refresh VPS runtime.'));
-        this.mutating.set(false);
-        return;
-      } finally {
-        this.mutating.set(false);
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post<{
+        data?: { item?: HostingVpsInstance; runtime?: Record<string, unknown> };
+      }>(`${this.instanceEndpoint()}/${uuid}/runtime`, {});
+      if (response?.data?.item) {
+        item = {
+          ...response.data.item,
+          HviConfig: parseConfig<HostingVpsInstanceConfig>(response.data.item.HviConfig),
+        };
       }
+      runtime = response?.data?.runtime ?? null;
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to refresh VPS runtime.'));
+      return;
+    } finally {
+      this.mutating.set(false);
     }
 
     const config = parseConfig<HostingVpsInstanceConfig>(item.HviConfig) ?? {};
@@ -993,6 +986,102 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         },
       ],
     });
+  }
+
+  private async openInstanceMonitor(row: ConfigurableCrudRecord) {
+    const uuid = this.recordUUID(row);
+    if (!row['HviExternalId']) {
+      this.snack.warning(this.t('Provision the VPS before viewing monitoring metrics.'));
+      return;
+    }
+
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post<{
+        data?: {
+          metrics?: {
+            provider?: string;
+            supported?: boolean;
+            message?: string | null;
+            windowSeconds?: number;
+            collectedAt?: string;
+            items?: Array<{
+              key?: string;
+              label?: string;
+              unit?: string | null;
+              current?: number | string | null;
+              available?: boolean;
+            }>;
+          };
+        };
+      }>(`${this.instanceEndpoint()}/${uuid}/metrics`, {});
+
+      const metrics = response?.data?.metrics;
+      const items = Array.isArray(metrics?.items) ? metrics.items : [];
+      const supported = metrics?.supported !== false;
+      openDataViewerDialog(this.dialog, {
+        title: this.t('VPS instance monitoring'),
+        description: this.t(
+          'Live resource statistics collected from the provider monitoring API.',
+        ),
+        status: {
+          label: 'Provider',
+          value: String(metrics?.provider ?? '-'),
+          tone: supported ? 'success' : 'warning',
+        },
+        details: [
+          { label: 'Instance', value: String(row['HviName'] ?? '') },
+          { label: 'External ID', value: String(row['HviExternalId'] ?? ''), monospace: true },
+          {
+            label: 'Collected at',
+            value: metrics?.collectedAt ?? null,
+            kind: 'datetime',
+          },
+          {
+            label: 'Window',
+            value: metrics?.windowSeconds
+              ? `${metrics.windowSeconds}s`
+              : '-',
+          },
+          {
+            label: 'Availability',
+            value: supported
+              ? this.t('Metrics available')
+              : metrics?.message || this.t('Metrics unavailable for this provider'),
+            wide: true,
+          },
+        ],
+        sections: [
+          {
+            title: this.t('Resource metrics'),
+            table: {
+              columns: [
+                { key: 'label', label: 'Metric', translate: true },
+                { key: 'current', label: 'Current' },
+                { key: 'unit', label: 'Unit', translate: true },
+              ],
+              rows: items.map((item) => ({
+                label: String(item.label ?? item.key ?? '-'),
+                current:
+                  item.current === null || item.current === undefined
+                    ? '-'
+                    : typeof item.current === 'number'
+                    ? Number.isInteger(item.current)
+                      ? String(item.current)
+                      : item.current.toFixed(2)
+                    : String(item.current),
+                unit: String(item.unit ?? '-'),
+              })),
+              emptyLabel: this.t('No metrics returned by the provider.'),
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS monitoring metrics.'));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
   private toInstance(row: ConfigurableCrudRecord): HostingVpsInstance {
