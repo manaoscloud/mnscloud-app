@@ -18,6 +18,7 @@ import {
   ChangePlanDialogResult,
 } from './change-plan-dialog';
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { openVpsInstanceMonitor } from './instance-monitor';
 import type {
   HostingVpsInstance,
   HostingVpsInstanceConfig,
@@ -989,99 +990,15 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private async openInstanceMonitor(row: ConfigurableCrudRecord) {
-    const uuid = this.recordUUID(row);
     if (!row['HviExternalId']) {
       this.snack.warning(this.t('Provision the VPS before viewing monitoring metrics.'));
       return;
     }
-
-    this.mutating.set(true);
-    try {
-      const response = await this.api.post<{
-        data?: {
-          metrics?: {
-            provider?: string;
-            supported?: boolean;
-            message?: string | null;
-            windowSeconds?: number;
-            collectedAt?: string;
-            items?: Array<{
-              key?: string;
-              label?: string;
-              unit?: string | null;
-              current?: number | string | null;
-              available?: boolean;
-            }>;
-          };
-        };
-      }>(`${this.instanceEndpoint()}/${uuid}/metrics`, {});
-
-      const metrics = response?.data?.metrics;
-      const items = Array.isArray(metrics?.items) ? metrics.items : [];
-      const supported = metrics?.supported !== false;
-      openDataViewerDialog(this.dialog, {
-        title: this.t('VPS instance monitoring'),
-        description: this.t(
-          'Live resource statistics collected from the provider monitoring API.',
-        ),
-        status: {
-          label: 'Provider',
-          value: String(metrics?.provider ?? '-'),
-          tone: supported ? 'success' : 'warning',
-        },
-        details: [
-          { label: 'Instance', value: String(row['HviName'] ?? '') },
-          { label: 'External ID', value: String(row['HviExternalId'] ?? ''), monospace: true },
-          {
-            label: 'Collected at',
-            value: metrics?.collectedAt ?? null,
-            kind: 'datetime',
-          },
-          {
-            label: 'Window',
-            value: metrics?.windowSeconds
-              ? `${metrics.windowSeconds}s`
-              : '-',
-          },
-          {
-            label: 'Availability',
-            value: supported
-              ? this.t('Metrics available')
-              : metrics?.message || this.t('Metrics unavailable for this provider'),
-            wide: true,
-          },
-        ],
-        sections: [
-          {
-            title: this.t('Resource metrics'),
-            table: {
-              columns: [
-                { key: 'label', label: 'Metric', translate: true },
-                { key: 'current', label: 'Current' },
-                { key: 'unit', label: 'Unit', translate: true },
-              ],
-              rows: items.map((item) => ({
-                label: String(item.label ?? item.key ?? '-'),
-                current:
-                  item.current === null || item.current === undefined
-                    ? '-'
-                    : typeof item.current === 'number'
-                    ? Number.isInteger(item.current)
-                      ? String(item.current)
-                      : item.current.toFixed(2)
-                    : String(item.current),
-                unit: String(item.unit ?? '-'),
-              })),
-              emptyLabel: this.t('No metrics returned by the provider.'),
-            },
-          },
-        ],
-      });
-    } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS monitoring metrics.'));
-    } finally {
-      this.mutating.set(false);
-    }
+    await openVpsInstanceMonitor(this.dialog, {
+      uuid: this.recordUUID(row),
+      name: String(row['HviName'] ?? ''),
+      scope: this.isMaster() ? 'master' : 'tenant',
+    });
   }
 
   private toInstance(row: ConfigurableCrudRecord): HostingVpsInstance {

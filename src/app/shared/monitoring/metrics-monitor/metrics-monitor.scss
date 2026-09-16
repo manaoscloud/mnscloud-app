@@ -1,0 +1,83 @@
+:host {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.metric-chart h3 {
+  font-size: 0.85rem;
+  margin: 0 0 0.4rem;
+  overflow-wrap: anywhere;
+}
+
+.metric-chart p {
+  font-size: 0.75rem;
+  margin: 0.4rem 0;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.metric-chart .legend {
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.metric-chart svg {
+  width: 100%;
+  height: auto;
+  min-height: 90px;
+  display: block;
+}
+
+.line {
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.axis {
+  stroke: var(--mat-sys-color-outline, #888);
+  fill: none;
+}
+
+.axis-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.65rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.stale {
+  font-weight: 600;
+}
+
+.monitor-message {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+summary {
+  cursor: pointer;
+  padding: 0.6rem 0;
+  font-size: 0.75rem;
+}
+
+.measurements {
+  overflow: auto;
+  max-height: 220px;
+}
+
+.measurements table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+.measurements td,
+.measurements th {
+  padding: 0.4rem;
+  text-align: start;
+  border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+}

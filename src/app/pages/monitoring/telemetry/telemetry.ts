@@ -1,57 +1,49 @@
 import { Component, computed, DestroyRef, effect, inject, resource, signal } from '@angular/core';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogModule,
-  MatDialog,
-} from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { DetailPageComponent } from '../../../shared/pages/detail-page';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
+
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
-import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import { MetricsMonitorComponent } from '../../../shared/monitoring/metrics-monitor/metrics-monitor';
+import {
+  MetricsMonitorPoint,
+  MetricsMonitorResourceOption,
+} from '../../../shared/monitoring/metrics-monitor/metrics-monitor.types';
 import { AppI18nService } from '../../../services/app-i18n.service';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { BreadcrumbLabelsService } from '../../../shared/breadcrumb/breadcrumb-labels.service';
 import { ApiService } from '../../../services/api.service';
 
 type Resource = { uuid: string; kind: string; name: string; observedAt: string | null };
-type Point = {
-  metricKey: string;
-  label: string;
-  unit: string;
-  bucketEpoch: number;
-  average: number;
-  minimum: number;
-  maximum: number;
-  observedAt: string;
-  samples: number;
-};
 type Envelope<T> = { data: { items: T[] } };
-type Snapshot = { resources: Resource[]; points: Point[]; selected: Resource | undefined };
+type Snapshot = {
+  resources: Resource[];
+  points: MetricsMonitorPoint[];
+  selected: Resource | undefined;
+};
 
 @Component({
   selector: 'mns-agent-telemetry',
   standalone: true,
-  imports: [
-    NgTemplateOutlet,
-    MnsDateTimePipe,
-    RefreshButtonComponent,
-    MnsSearchSelectFieldComponent,
-    DetailPageComponent,
-    DecimalPipe,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule,
-    TranslocoPipe,
-  ],
-  templateUrl: './telemetry.html',
-  styleUrl: './telemetry.scss',
+  imports: [MetricsMonitorComponent],
+  template: `
+    <mns-metrics-monitor
+      title="Agent monitoring"
+      [identity]="name()"
+      [recordId]="uuid"
+      [dialogMode]="!!dialog"
+      [showResourceFilter]="true"
+      [resourceOptions]="options()"
+      [(hours)]="hours"
+      [(selectedResource)]="selectedUUID"
+      [points]="view().points"
+      [loading]="snapshot.isLoading()"
+      [error]="!!snapshot.error()"
+      (refresh)="refresh()"
+      (fullPage)="fullPage()"
+      (closeRequest)="dialog?.close()"
+    />
+  `,
 })
 export class AgentTelemetryPage {
   private readonly api = inject(ApiService);
@@ -72,12 +64,6 @@ export class AgentTelemetryPage {
       : 1,
   );
   readonly selectedUUID = signal(this.route.snapshot.queryParamMap.get('resource') ?? '');
-  readonly periods = [
-    { value: 1, label: 'Last hour' },
-    { value: 24, label: 'Last 24 hours' },
-    { value: 168, label: 'Last 7 days' },
-  ];
-  readonly now = signal(Date.now());
   readonly snapshot = resource<Snapshot, { uuid: string; selected: string; hours: number }>({
     defaultValue: { resources: [], points: [], selected: undefined },
     params: () => ({ uuid: this.uuid, selected: this.selectedUUID(), hours: this.hours() }),
@@ -91,7 +77,7 @@ export class AgentTelemetryPage {
         resources.find((r) => r.kind === 'host') ??
         resources[0];
       const history = selected
-        ? await this.api.get<Envelope<Point>>(
+        ? await this.api.get<Envelope<MetricsMonitorPoint>>(
             `monitoring/agents/${params.uuid}/resources?resource=${selected.uuid}&hours=${params.hours}`,
           )
         : undefined;
@@ -111,7 +97,7 @@ export class AgentTelemetryPage {
       ? this.snapshot.value()
       : { resources: [], points: [], selected: undefined },
   );
-  readonly options = computed(() =>
+  readonly options = computed<MetricsMonitorResourceOption[]>(() =>
     this.view().resources.map((r) => ({
       value: r.uuid,
       label: r.name,
@@ -119,67 +105,7 @@ export class AgentTelemetryPage {
       searchText: r.kind + ' ' + r.name,
     })),
   );
-  kindLabel(kind: string) {
-    return kind === 'host.network'
-      ? 'Network interface'
-      : kind === 'host.filesystem'
-        ? 'Filesystem'
-        : 'Host';
-  }
-  readonly series = computed(() => {
-    const groups = new Map<string, Map<string, Point[]>>();
-    for (const point of this.view().points) {
-      const group = point.metricKey.startsWith('host.network.')
-        ? point.metricKey.replace(/\.(rx|tx)_/, '.')
-        : point.metricKey;
-      if (!groups.has(group)) groups.set(group, new Map());
-      const metrics = groups.get(group)!;
-      metrics.set(point.metricKey, [...(metrics.get(point.metricKey) ?? []), point]);
-    }
-    const end = this.now() / 1000;
-    const start = end - this.hours() * 3600;
-    return [...groups].map(([key, metrics]) => {
-      const points = [...metrics.values()].flat().sort((a, b) => a.bucketEpoch - b.bucketEpoch);
-      const last = points.at(-1)!;
-      const max = Math.max(...points.map((p) => p.maximum), last.unit === 'percent' ? 100 : 1);
-      const lines = [...metrics].map(([metricKey, samples], index) => {
-        let previous = -Infinity;
-        const path = samples
-          .map((point) => {
-            const x = 8 + (584 * (point.bucketEpoch - start)) / (end - start);
-            const y = 152 - (136 * point.average) / max;
-            const command =
-              point.bucketEpoch - previous > Math.max(180, this.hours() * 90) ? 'M' : 'L';
-            previous = point.bucketEpoch;
-            return `${command}${Math.max(8, x)},${y}`;
-          })
-          .join(' ');
-        const latest = samples.at(-1)!;
-        return {
-          metricKey,
-          path,
-          latest,
-          color: index === 0 ? '#477ee8' : '#bd6200',
-          x: Math.max(8, 8 + (584 * (latest.bucketEpoch - start)) / (end - start)),
-          y: 152 - (136 * latest.average) / max,
-        };
-      });
-      return {
-        key,
-        points,
-        last,
-        max,
-        lines,
-        start: new Date(start * 1000),
-        end: new Date(end * 1000),
-        stale: points.some(
-          (p) =>
-            p === metrics.get(p.metricKey)?.at(-1) &&
-            this.now() - this.utc(p.observedAt).getTime() > 180000,
-        ),
-      };
-    });
-  });
+
   constructor() {
     effect((onCleanup) => {
       if (this.dialog) return;
@@ -188,56 +114,27 @@ export class AgentTelemetryPage {
       const prefix = this.router.url.startsWith('/system') ? '/system' : '';
       onCleanup(this.breadcrumbLabels.register(`${prefix}/monitoring/agents/${this.uuid}`, name));
     });
-    let failures = 0;
-    let timer: ReturnType<typeof setTimeout>;
-    const refresh = () => {
-      this.now.set(Date.now());
-      if (!document.hidden && !this.snapshot.isLoading()) {
-        failures = this.snapshot.error() ? Math.min(failures + 1, 3) : 0;
-        this.snapshot.reload();
+    effect(() => {
+      const selected = this.view().selected?.uuid;
+      if (selected && this.selectedUUID() !== selected && !this.selectedUUID()) {
+        this.selectedUUID.set(selected);
       }
-      timer = setTimeout(refresh, 30000 * 2 ** failures);
-    };
-    timer = setTimeout(refresh, 30000);
-    inject(DestroyRef).onDestroy(() => clearTimeout(timer));
+    });
+    inject(DestroyRef);
   }
-  display(value: number, unit: string) {
-    const base = unit === 'bytes' ? 1024 : 1000;
-    const labels =
-      unit === 'bytes'
-        ? ['B', 'KiB', 'MiB', 'GiB', 'TiB']
-        : unit === 'bps'
-          ? ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps']
-          : [this.unitLabel(unit)];
-    let index = 0;
-    while (value >= base && index < labels.length - 1) {
-      value /= base;
-      index++;
-    }
-    return (
-      new Intl.NumberFormat(this.i18n.language(), { maximumFractionDigits: 2 }).format(value) +
-      ' ' +
-      labels[index]
-    );
+
+  kindLabel(kind: string) {
+    return kind === 'host.network'
+      ? 'Network interface'
+      : kind === 'host.filesystem'
+        ? 'Filesystem'
+        : 'Host';
   }
-  unitLabel(unit: string) {
-    return unit === 'percent'
-      ? '%'
-      : unit === 'per_second'
-        ? '/s'
-        : unit === 'state'
-          ? this.translate.translate('State')
-          : unit === 'bytes'
-            ? 'B'
-            : unit;
-  }
-  utc(value: string) {
-    return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : value.replace(' ', 'T') + 'Z');
-  }
+
   refresh() {
-    this.now.set(Date.now());
     this.snapshot.reload();
   }
+
   fullPage() {
     const prefix = this.router.url.startsWith('/system') ? '/system' : '';
     this.dialog?.close();

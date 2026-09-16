@@ -4316,5 +4316,6 @@
   "Uptime": "Uptime",
   "Disk read": "Lectura de disco",
   "Disk write": "Escritura de disco",
-  "Provider status": "Estado del proveedor"
+  "Provider status": "Estado del proveedor",
+  "Inbound and outbound": "Entrada y salida"
 }

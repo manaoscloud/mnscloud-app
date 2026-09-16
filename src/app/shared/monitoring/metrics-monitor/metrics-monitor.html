@@ -1,0 +1,149 @@
+@if (dialogMode()) {
+  <div class="crud-dialog">
+    <header class="dialog-header">
+      <div>
+        <h2>{{ title() | transloco }}</h2>
+        <p>{{ identity() }}</p>
+      </div>
+    </header>
+    <div class="dialog-content">
+      <div class="read-panel-scroll"><ng-container [ngTemplateOutlet]="content" /></div>
+    </div>
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="closeDialog()">
+          {{ 'Close' | transloco }}
+        </button>
+      </div>
+      @if (fullPageEnabled()) {
+        <div class="primary-actions">
+          <button mat-stroked-button type="button" (click)="openFullPage()">
+            <mat-icon>open_in_full</mat-icon>{{ 'Open full page' | transloco }}
+          </button>
+        </div>
+      }
+    </mat-dialog-actions>
+  </div>
+} @else {
+  <mns-detail-page
+    [title]="title()"
+    [identity]="identity()"
+    [recordId]="recordId()"
+    [loading]="loading()"
+    (refresh)="emitRefresh()"
+  >
+    <ng-container [ngTemplateOutlet]="content" />
+  </mns-detail-page>
+}
+
+<ng-template #content>
+  <div class="form-grid">
+    @if (showResourceFilter() && resourceOptions().length) {
+      <mns-search-select-field
+        class="span-1"
+        [label]="'Resource' | transloco"
+        [value]="selectedResource()"
+        [options]="resourceOptions()"
+        (valueChange)="selectedResource.set($any($event))"
+      />
+    }
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Period' | transloco"
+      [value]="hours()"
+      [options]="periods()"
+      [translateOptions]="true"
+      (valueChange)="hours.set($any($event))"
+    />
+    @if (dialogMode()) {
+      <div class="span-1">
+        <app-refresh-button [loading]="loading()" (refresh)="emitRefresh()" />
+      </div>
+    }
+  </div>
+
+  @if (statusValue()) {
+    <p class="monitor-message">
+      {{ (statusLabel() || 'Provider') | transloco }}: <strong>{{ statusValue() }}</strong>
+    </p>
+  }
+  @if (message()) {
+    <p class="monitor-message">{{ message()! | transloco }}</p>
+  }
+  @if (error()) {
+    <p role="alert">{{ 'Unable to load monitoring data' | transloco }}</p>
+  }
+  @if (loading() && !points().length) {
+    <p role="status">{{ 'Loading' | transloco }}…</p>
+  } @else {
+    <div class="dashboard-grid">
+      @for (s of series(); track s.key) {
+        <article class="dashboard-metric dashboard-panel metric-chart">
+          <h3>
+            {{ (s.lines.length > 1 ? multiSeriesTitle() : s.last.label) | transloco }} ·
+            {{ unitLabel(s.last.unit) }}
+          </h3>
+          <p>{{ 'Average' | transloco }}</p>
+          @for (line of s.lines; track line.metricKey) {
+            <div class="legend">
+              <span [style.color]="line.color">●</span> {{ line.latest.label | transloco }}:
+              <strong>{{ display(line.latest.average, line.latest.unit) }}</strong>
+            </div>
+          }
+          <p [class.stale]="s.stale">
+            {{ (s.stale ? 'Stale data' : 'Latest observation') | transloco }} ·
+            {{ utc(s.last.observedAt) | mnsDateTime: 'short' : 'short' }}
+          </p>
+          <svg
+            viewBox="0 0 600 170"
+            role="img"
+            [attr.aria-label]="s.key + ' (' + s.last.unit + ')'"
+          >
+            <title>{{ s.last.label | transloco }}</title>
+            <path d="M8,16 L8,152 L592,152" class="axis" />
+            @for (line of s.lines; track line.metricKey) {
+              <path [attr.d]="line.path" class="line" [style.stroke]="line.color" />
+              <circle [attr.cx]="line.x" [attr.cy]="line.y" r="3" [attr.fill]="line.color" />
+            }
+          </svg>
+          <div class="axis-labels">
+            <span>{{ s.start | mnsDateTime: 'short' : 'short' }}</span>
+            <span
+              >{{ s.end | mnsDateTime: 'short' : 'short' }} ·
+              {{ display(s.max, s.last.unit) }}</span
+            >
+          </div>
+          <details>
+            <summary>{{ 'View measurements' | transloco }}</summary>
+            <div class="measurements">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ 'Metric' | transloco }}</th>
+                    <th>{{ 'Time' | transloco }}</th>
+                    <th>{{ 'Average' | transloco }}</th>
+                    <th>{{ 'Minimum' | transloco }}</th>
+                    <th>{{ 'Maximum' | transloco }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of s.points; track p.metricKey + p.bucketEpoch) {
+                    <tr>
+                      <td>{{ p.label | transloco }}</td>
+                      <td>{{ utc(p.observedAt) | mnsDateTime: 'short' : 'short' }}</td>
+                      <td>{{ p.average | number: '1.0-2' }}</td>
+                      <td>{{ p.minimum | number: '1.0-2' }}</td>
+                      <td>{{ p.maximum | number: '1.0-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </article>
+      } @empty {
+        <p>{{ emptyLabel() | transloco }}</p>
+      }
+    </div>
+  }
+</ng-template>
