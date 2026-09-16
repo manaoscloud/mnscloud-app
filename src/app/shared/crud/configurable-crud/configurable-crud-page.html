@@ -383,6 +383,7 @@
                     [loading]="fieldLoading(field)"
                     [disabled]="isFieldDisabled(field)"
                     [multiple]="field.multiple ?? false"
+                    [translateOptions]="field.translateOptions ?? false"
                     [canCreate]="canQuickCreate(field)"
                     [createLabel]="quickCreateLabel(field)"
                     [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"

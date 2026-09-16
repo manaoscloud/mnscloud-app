@@ -1761,21 +1761,38 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
   margin-bottom: 0;
 }
 
+.mat-mdc-option.select-group-option {
+  min-height: 38px;
+  margin-top: 0.65rem;
+  margin-bottom: 0.15rem;
+  background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 88%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 80%, transparent);
+}
+
 .mat-mdc-option.select-group-option .select-option-main {
   font-weight: 700;
-  letter-spacing: 0.01em;
-  text-transform: none;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--mat-sys-color-on-surface);
+}
+
+.mat-mdc-option.select-subgroup-option {
+  min-height: 30px;
+  margin-top: 0.2rem;
+  padding-left: 0.85rem !important;
 }
 
 .mat-mdc-option.select-subgroup-option .select-option-main {
   font-weight: 600;
-  padding-left: 0.5rem;
-  opacity: 0.92;
+  opacity: 0.95;
+  font-size: 0.8rem;
+  color: var(--mat-sys-color-on-surface-variant);
 }
 
 .mat-mdc-option.select-plan-option {
   min-height: 52px;
-  margin: 2px 6px 6px;
+  margin: 2px 8px 8px 1.15rem;
   padding-top: 6px;
   padding-bottom: 6px;
   border: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 70%, transparent);
@@ -1784,12 +1801,12 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
 }
 
 .mat-mdc-option.select-plan-option .select-option-main {
-  padding-left: 0.85rem;
+  padding-left: 0.35rem;
   font-weight: 500;
 }
 
 .mat-mdc-option.select-plan-option .select-option-description {
-  padding-left: 0.85rem;
+  padding-left: 0.35rem;
   margin-top: 0.2rem;
   white-space: normal;
   line-height: 1.25;
