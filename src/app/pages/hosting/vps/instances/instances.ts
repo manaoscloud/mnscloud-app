@@ -356,14 +356,15 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const customerFilter = HOSTING_VPS_INSTANCE_CONFIG.listFilters?.find(
       (filter) => filter.key === 'customerUUID',
     );
-    if (customerFilter) customerFilter.hiddenWhen = () => this.isMaster();
+    if (customerFilter) customerFilter.hiddenWhen = undefined;
 
     const customerField = HOSTING_VPS_INSTANCE_CONFIG.fields.find(
       (field) => field.key === 'customerUUID',
     );
     if (customerField) {
-      customerField.hiddenWhen = () => this.isMaster();
-      customerField.requiredWhen = () => !this.isMaster();
+      customerField.hiddenWhen = undefined;
+      customerField.required = true;
+      customerField.requiredWhen = undefined;
     }
 
     const provisionedLockKeys = [
@@ -416,7 +417,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     await Promise.all([
       this.providers().length ? Promise.resolve() : this.fetchProviders(),
       this.plans().length ? Promise.resolve() : this.fetchPlans(),
-      this.isMaster() || this.customers().length ? Promise.resolve() : this.fetchCustomers(),
+      this.customers().length ? Promise.resolve() : this.fetchCustomers(),
     ]);
     const rows = await super.fetchItems(filters);
     return rows.map((row) => this.enrichInstance(row));
@@ -516,9 +517,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
     return {
       name: String(payload['name'] ?? '').trim(),
-      customerUUID: this.isMaster()
-        ? (normalizeString(payload['customerUUID']) ?? null)
-        : payload['customerUUID'],
+      customerUUID: payload['customerUUID'],
       planUUID: payload['planUUID'],
       config,
       status: editing ? normalizeString(editing['HviStatus']) : null,
@@ -806,16 +805,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private async fetchCustomers() {
-    if (this.isMaster()) {
-      this.customers.set([]);
-      return;
-    }
     try {
       const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
         'erp/customers?status=1&limit=500&offset=0',
       );
       this.customers.set(result?.data?.items ?? []);
     } catch (error) {
+      this.customers.set([]);
       this.snack.error(this.errorMessage(error) || this.t('Failed to load customers.'));
     }
   }
