@@ -4266,5 +4266,18 @@
   "Upgrade VPS plan": "Actualizar plan VPS",
   "Username and password": "Usuario y contraseña",
   "Only plans in the same size category are listed.": "Solo se listan planes de la misma categoría de tamaño.",
-  "No compatible upgrade plans are available for this instance category.": "No hay planes de actualización compatibles para esta categoría de instancia."
+  "No compatible upgrade plans are available for this instance category.": "No hay planes de actualización compatibles para esta categoría de instancia.",
+  "Details": "Detalles",
+  "VPS instance details": "Detalles de la instancia VPS",
+  "Provider runtime, networking and capacity for this instance.": "Runtime del proveedor, red y capacidad de esta instancia.",
+  "Provision the VPS before viewing runtime details.": "Aprovisione la VPS antes de ver los detalles de runtime.",
+  "Failed to refresh VPS runtime.": "Error al actualizar el runtime de la VPS.",
+  "Tag": "Etiqueta",
+  "Public IPv4": "IPv4 pública",
+  "Private IPv4": "IPv4 privada",
+  "Public IPv6": "IPv6 pública",
+  "vCPUs": "vCPUs",
+  "Memory (MB)": "Memoria (MB)",
+  "Disk (GB)": "Disco (GB)",
+  "Synced at": "Sincronizado en"
 }
