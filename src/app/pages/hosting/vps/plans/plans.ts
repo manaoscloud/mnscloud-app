@@ -188,6 +188,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       tab: 'storage',
       span: 2,
       lineFillAfter: 1,
+      translateOptions: false,
     },
     {
       key: 'sizeManual',
@@ -752,16 +753,17 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
 
     const provider =
       this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
-    if (provider === 'digitalocean' || provider === 'lightsail') {
-      const usdMonthly = catalogNumber(option.priceMonthly);
-      const usdSetup = catalogNumber(option.setupFee) ?? 0;
-      if (usdMonthly !== null) {
-        const targetCurrency = (this.defaultCurrency() || 'BRL').toUpperCase();
-        const convertedMonthly = await convertUsdAmount(usdMonthly, targetCurrency);
-        const convertedSetup = await convertUsdAmount(usdSetup, targetCurrency);
-        patch['price'] = roundMoney(convertedMonthly);
-        patch['setupFee'] = roundMoney(convertedSetup);
-      }
+    const usdMonthly = catalogNumber(option.priceMonthly);
+    if (usdMonthly !== null && usdMonthly > 0) {
+      const targetCurrency = (this.defaultCurrency() || 'BRL').toUpperCase();
+      const convertedMonthly = await convertUsdAmount(usdMonthly, targetCurrency);
+      // Mirror provider instance list price into both commercial price and setup.
+      // Providers often charge $0 setup; operators can clear setup later if unused.
+      patch['price'] = roundMoney(convertedMonthly);
+      patch['setupFee'] = roundMoney(convertedMonthly);
+    } else if (provider === 'digitalocean' || provider === 'lightsail') {
+      // Keep previous zeroing behavior when catalog has no list price.
+      patch['setupFee'] = 0;
     }
 
     if (!Object.keys(patch).length) return;
@@ -871,6 +873,8 @@ function sizeOptionParts(option: VpsCatalogOption) {
 
 function sizeOptionFamily(option: VpsCatalogOption) {
   if (option.family) return String(option.family);
+  const derived = deriveLightsailGrouping(option);
+  if (derived) return derived.family;
   const head = sizeOptionParts(option)[0] ?? '';
   const [family] = head.split('/').map((part) => part.trim());
   return family || 'Droplet';
@@ -878,9 +882,41 @@ function sizeOptionFamily(option: VpsCatalogOption) {
 
 function sizeOptionCategory(option: VpsCatalogOption) {
   if (option.category) return String(option.category);
+  const derived = deriveLightsailGrouping(option);
+  if (derived) return derived.category;
   const head = sizeOptionParts(option)[0] ?? '';
   const parts = head.split('/').map((part) => part.trim());
   return parts[1] || '';
+}
+
+/** Client-side fallback when Lightsail catalog omits family/category. */
+function deriveLightsailGrouping(
+  option: VpsCatalogOption,
+): { family: string; category: string } | null {
+  const id = String(option.slug ?? option.id ?? '').trim().toLowerCase();
+  const name = String(option.name ?? option.label ?? '').trim().toLowerCase();
+  const looksLightsail =
+    /^(?:\d+xlarge|xlarge|large|medium|small|micro|nano)(?:_win)?(?:_\d+_\d+)?$/i.test(id) ||
+    /_(?:win_)?\d+_\d+$/i.test(id);
+  if (!looksLightsail && !/linux\/unix|windows/i.test(String(option.family ?? ''))) {
+    // Still try when name is a bare Lightsail tier like "12Xlarge".
+    if (!/^(?:\d+\s*x\s*large|\d+xlarge|xlarge|large|medium|small|micro|nano)\b/i.test(name)) {
+      return null;
+    }
+  }
+  const isWindows = id.includes('_win') || id.includes('-win') || name.includes('windows');
+  const family = isWindows ? 'Windows' : 'Linux/Unix';
+  const tierMatch =
+    id.match(/^(\d+xlarge|xlarge|large|medium|small|micro|nano)/i) ||
+    name.match(/(\d+\s*x\s*large|\d+xlarge|xlarge|large|medium|small|micro|nano)/i);
+  const rawTier = String(tierMatch?.[1] ?? 'other').replace(/\s+/g, '').toLowerCase();
+  let category = 'Other';
+  if (/^\d+xlarge$/.test(rawTier)) {
+    category = rawTier.replace(/xlarge$/, 'Xlarge');
+  } else if (rawTier !== 'other') {
+    category = rawTier.charAt(0).toUpperCase() + rawTier.slice(1);
+  }
+  return { family, category };
 }
 
 function sizeOptionName(option: VpsCatalogOption) {
@@ -934,7 +970,10 @@ function sizeOptionMeta(option: VpsCatalogOption) {
 }
 
 function sizeOptionPlanLabel(option: VpsCatalogOption) {
+  const name = String(option.name ?? '').trim();
+  const category = sizeOptionCategory(option);
   const slug = sizeOptionSlug(option);
+  const title = name || category || slug;
   const memoryMb = catalogNumber(option.memoryMb);
   const cpu = catalogNumber(option.cpu);
   const memoryLabel =
@@ -944,7 +983,7 @@ function sizeOptionPlanLabel(option: VpsCatalogOption) {
         ? `${memoryMb / 1024} GB`
         : `${memoryMb} MB`;
   const summary = [cpu !== null ? `${cpu} vCPU` : '', memoryLabel].filter(Boolean).join(' · ');
-  return summary ? `${slug} · ${summary}` : slug;
+  return summary ? `${title} · ${summary}` : title;
 }
 
 function sizeOptionDescription(option: VpsCatalogOption) {
@@ -1041,8 +1080,26 @@ function buildGroupedSizeOptions(
   options: VpsCatalogOption[],
   provider: VpsProvider | string | null,
 ): ConfigurableCrudOption[] {
-  const sorted = sortSizeOptions(options);
-  if (provider !== 'digitalocean' && provider !== 'lightsail') {
+  const enriched = options.map((option) => {
+    if (option.family && option.category) return option;
+    if (provider === 'lightsail' || deriveLightsailGrouping(option)) {
+      const grouping = deriveLightsailGrouping(option);
+      if (!grouping) return option;
+      return {
+        ...option,
+        family: option.family || grouping.family,
+        category: option.category || grouping.category,
+        slug: option.slug || option.id,
+      };
+    }
+    return option;
+  });
+  const sorted = sortSizeOptions(enriched);
+  const canGroup =
+    provider === 'digitalocean' ||
+    provider === 'lightsail' ||
+    enriched.some((option) => Boolean(option.family || option.category));
+  if (!canGroup) {
     return catalogOptionsToCrud(sorted);
   }
 
@@ -1069,7 +1126,7 @@ function buildGroupedSizeOptions(
     if (category && category !== lastCategory) {
       result.push({
         value: `__category__:${family}:${category}`,
-        label: category,
+        label: `– ${category}`,
         disabled: true,
         optionClass: 'select-subgroup-option',
         searchText: `${family} ${category}`,
@@ -1082,7 +1139,7 @@ function buildGroupedSizeOptions(
       label: sizeOptionPlanLabel(option),
       description: sizeOptionDescription(option),
       optionClass: 'select-plan-option',
-      searchText: `${option.id} ${option.label} ${family} ${category}`,
+      searchText: `${option.id} ${option.label} ${family} ${category} ${option.name ?? ''}`,
     });
   }
 
