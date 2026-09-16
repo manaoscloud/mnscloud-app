@@ -1,9 +1,5 @@
 export type VpsProvider =
-  | 'digitalocean'
-  | 'lightsail'
-  | 'proxmox'
-  | 'vmware_vcenter'
-  | 'sangfor_scp';
+  'digitalocean' | 'lightsail' | 'proxmox' | 'vmware_vcenter' | 'sangfor_scp';
 
 export type VpsProviderConfig = {
   region?: string;
@@ -105,6 +101,20 @@ export type HostingVpsInstanceConfig = {
   provisionError?: string | null;
   provisionRetryCount?: number | null;
   lastProvisionRetryAt?: string | null;
+  publicIpv4?: string | null;
+  privateIpv4?: string | null;
+  publicIpv6?: string | null;
+  runtimeSyncedAt?: string | null;
+  runtime?: {
+    providerStatus?: string | null;
+    region?: string | null;
+    size?: string | null;
+    image?: string | null;
+    vcpus?: number | null;
+    memoryMb?: number | null;
+    diskGb?: number | null;
+    tags?: string[] | null;
+  } | null;
   resize?: {
     sourcePlanUUID?: string | null;
     targetPlanUUID?: string | null;

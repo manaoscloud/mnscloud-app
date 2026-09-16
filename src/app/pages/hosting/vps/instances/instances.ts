@@ -17,6 +17,7 @@ import {
   ChangePlanDialogData,
   ChangePlanDialogResult,
 } from './change-plan-dialog';
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import type {
   HostingVpsInstance,
   HostingVpsInstanceConfig,
@@ -49,6 +50,20 @@ const UPGRADE_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Upgrade plan',
 };
 
+const MONITOR_ACTION: ConfigurableCrudRowAction = {
+  key: 'monitor',
+  label: 'Monitor',
+  icon: 'show_chart',
+  tooltip: 'Monitor',
+};
+
+const DETAILS_ACTION: ConfigurableCrudRowAction = {
+  key: 'details',
+  label: 'Details',
+  icon: 'info',
+  tooltip: 'Details',
+};
+
 const AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'ssh_key', label: 'SSH key' },
   { value: 'password', label: 'Username and password' },
@@ -65,8 +80,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   searchPlaceholder: 'Name, plan, provider, region, image or status',
   emptyLabel: 'No VPS instances found.',
   deleteTitle: 'Delete VPS instance',
-  deleteMessage:
-    'Delete this VPS instance from MNSCloud and destroy the provider VPS when linked?',
+  deleteMessage: 'Delete this VPS instance from MNSCloud and destroy the provider VPS when linked?',
   deleteSelectedTitle: 'Delete selected VPS instances',
   deleteSelectedMessage:
     'Delete {count} selected VPS instance(s) from MNSCloud and destroy linked provider VPS resources?',
@@ -78,10 +92,10 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   bulkDelete: true,
   statusFilter: true,
-  showAsyncOperationStatus: true,
+  showAsyncOperationStatus: false,
   initialPageSize: 10,
   pageSizeOptions: [5, 10, 25, 100],
-  rowActions: [RETRY_PROVISION_ACTION, UPGRADE_ACTION],
+  rowActions: [MONITOR_ACTION, DETAILS_ACTION, RETRY_PROVISION_ACTION, UPGRADE_ACTION],
   listFilters: [
     {
       key: 'customerUUID',
@@ -128,6 +142,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       lookupKey: 'providerUUID',
       uuidField: 'HostingVpsProviderHvrUUID',
     },
+    { id: 'publicIp', label: 'Public IP', kind: 'text', field: 'PublicIpv4' },
     { id: 'region', label: 'Region', kind: 'text', field: 'PlanRegion' },
     { id: 'size', label: 'Size', kind: 'text', field: 'PlanSize' },
     { id: 'image', label: 'Image', kind: 'text', field: 'InstanceImage' },
@@ -156,15 +171,6 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'planUUID',
-      source: 'HostingVpsPlanHvpUUID',
-      payloadKey: 'planUUID',
-      label: 'Plan',
-      type: 'search-select',
-      required: true,
-      span: 1,
-    },
-    {
       key: 'customerUUID',
       source: 'CustomerCusUUID',
       payloadKey: 'customerUUID',
@@ -174,23 +180,32 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'name',
+      source: 'HviName',
+      payloadKey: 'name',
+      label: 'Name',
+      placeholder: 'WEB-APP-01',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'planUUID',
+      source: 'HostingVpsPlanHvpUUID',
+      payloadKey: 'planUUID',
+      label: 'Plan',
+      type: 'search-select',
+      required: true,
+      span: 2,
+    },
+    {
       key: 'image',
       source: 'InstanceImage',
       payloadKey: 'image',
       label: 'Image',
       type: 'search-select',
       placeholder: 'ubuntu-22-04-x64',
-      span: 1,
+      span: 2,
       fromRecord: (_value, row) => instanceImageFromRecord(row),
-    },
-    {
-      key: 'name',
-      source: 'HviName',
-      payloadKey: 'name',
-      label: 'Name',
-      placeholder: 'web-app-01',
-      required: true,
-      span: 1,
     },
     {
       key: 'authMethod',
@@ -369,7 +384,6 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
     const provisionedLockKeys = [
       'isActive',
-      'planUUID',
       'customerUUID',
       'image',
       'authMethod',
@@ -382,8 +396,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       const field = HOSTING_VPS_INSTANCE_CONFIG.fields.find((item) => item.key === key);
       if (!field) continue;
       const previous = field.disabledWhen;
-      field.disabledWhen = (context) =>
-        this.isProvisionedEdit() || Boolean(previous?.(context));
+      field.disabledWhen = (context) => this.isProvisionedEdit() || Boolean(previous?.(context));
+    }
+
+    const planField = HOSTING_VPS_INSTANCE_CONFIG.fields.find((item) => item.key === 'planUUID');
+    if (planField) {
+      const previous = planField.disabledWhen;
+      planField.disabledWhen = (context) => context.editing || Boolean(previous?.(context));
     }
 
     void Promise.all([this.fetchProviders(), this.fetchCustomers(), this.fetchPlans()]);
@@ -477,7 +496,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const editing = this.editingRecord();
     const authMethod =
-      String(payload['authMethod'] ?? 'ssh_key').trim().toLowerCase() === 'password'
+      String(payload['authMethod'] ?? 'ssh_key')
+        .trim()
+        .toLowerCase() === 'password'
         ? 'password'
         : 'ssh_key';
     const sshKey = normalizeString(payload['sshKey']);
@@ -509,6 +530,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
           ...current,
           notes: current.notes ?? null,
           password: null,
+          publicIpv4: current.publicIpv4 ?? null,
+          privateIpv4: current.privateIpv4 ?? null,
+          publicIpv6: current.publicIpv6 ?? null,
+          runtimeSyncedAt: current.runtimeSyncedAt ?? null,
+          runtime: current.runtime ?? null,
         },
         status: normalizeString(editing['HviStatus']),
         isActive: Number(editing['HviIsActive']) === 1,
@@ -531,7 +557,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
 
     const authMethod =
-      String(payload['authMethod'] ?? 'ssh_key').trim().toLowerCase() === 'password'
+      String(payload['authMethod'] ?? 'ssh_key')
+        .trim()
+        .toLowerCase() === 'password'
         ? 'password'
         : 'ssh_key';
     if (authMethod === 'ssh_key' && !normalizeString(payload['sshKey'])) {
@@ -551,6 +579,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const actions: ConfigurableCrudRowAction[] = [];
+    if (row['HviExternalId']) {
+      actions.push(MONITOR_ACTION, DETAILS_ACTION);
+    }
     if (this.canRetryProvision(row)) {
       actions.push({
         ...RETRY_PROVISION_ACTION,
@@ -562,6 +593,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'monitor') {
+      await this.openRuntimeMonitor(row, true);
+      return;
+    }
+    if (action.key === 'details') {
+      await this.openRuntimeMonitor(row, false);
+      return;
+    }
     if (action.key === 'retry-provision') {
       await this.retryProvision(row);
       return;
@@ -616,10 +655,12 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     this.retryingInstanceUUIDs.update((current) => new Set(current).add(uuid));
     this.mutating.set(true);
     try {
-      const response = await this.api.post(`${this.instanceEndpoint()}/${uuid}/retry-provision`, {});
-      const updated = (
-        response as { data?: { item?: HostingVpsInstance } } | null | undefined
-      )?.data?.item;
+      const response = await this.api.post(
+        `${this.instanceEndpoint()}/${uuid}/retry-provision`,
+        {},
+      );
+      const updated = (response as { data?: { item?: HostingVpsInstance } } | null | undefined)
+        ?.data?.item;
       if ((updated?.HviStatus ?? '').toLowerCase() === 'queue_failed') {
         this.snack.error(this.t('VPS provisioning retry could not be queued.'));
       } else {
@@ -846,7 +887,112 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       PlanRegion: plan?.HvpRegion ?? null,
       PlanSize: plan?.HvpSize ?? null,
       InstanceImage: image,
+      PublicIpv4: config?.publicIpv4 ?? null,
     };
+  }
+
+  private async openRuntimeMonitor(row: ConfigurableCrudRecord, refresh: boolean) {
+    const uuid = this.recordUUID(row);
+    if (!row['HviExternalId']) {
+      this.snack.warning(this.t('Provision the VPS before viewing runtime details.'));
+      return;
+    }
+
+    let item = this.toInstance(row);
+    let runtime: Record<string, unknown> | null = null;
+
+    if (refresh) {
+      this.mutating.set(true);
+      try {
+        const response = await this.api.post<{
+          data?: { item?: HostingVpsInstance; runtime?: Record<string, unknown> };
+        }>(`${this.instanceEndpoint()}/${uuid}/runtime`, {});
+        if (response?.data?.item) {
+          item = {
+            ...response.data.item,
+            HviConfig: parseConfig<HostingVpsInstanceConfig>(response.data.item.HviConfig),
+          };
+        }
+        runtime = response?.data?.runtime ?? null;
+        this.refreshList();
+      } catch (error) {
+        this.snack.error(this.errorMessage(error) || this.t('Failed to refresh VPS runtime.'));
+        this.mutating.set(false);
+        return;
+      } finally {
+        this.mutating.set(false);
+      }
+    }
+
+    const config = parseConfig<HostingVpsInstanceConfig>(item.HviConfig) ?? {};
+    const plan = this.planById(item.HostingVpsPlanHvpUUID);
+    const providerName = this.providerNameById(
+      item.HostingVpsProviderHvrUUID || plan?.HostingVpsProviderHvrUUID,
+      plan?.HvpProvider,
+    );
+    const statusValue = String(
+      runtime?.['status'] ?? config.runtime?.providerStatus ?? item.HviStatus ?? '-',
+    );
+
+    openDataViewerDialog(this.dialog, {
+      title: this.t('VPS instance details'),
+      description: this.t('Provider runtime, networking and capacity for this instance.'),
+      status: {
+        label: 'Status',
+        value: statusValue,
+        tone: statusValue.toLowerCase() === 'active' ? 'success' : 'neutral',
+      },
+      details: [
+        { label: 'Name', value: item.HviName },
+        { label: 'Customer', value: item.CustomerName ?? row['CustomerName'] },
+        { label: 'Provider', value: providerName },
+        { label: 'Plan', value: plan?.HvpName ?? item.HostingVpsPlanHvpUUID },
+        { label: 'External ID', value: item.HviExternalId, monospace: true },
+        {
+          label: 'Public IPv4',
+          value: runtime?.['publicIpv4'] ?? config.publicIpv4 ?? '-',
+          monospace: true,
+        },
+        {
+          label: 'Private IPv4',
+          value: runtime?.['privateIpv4'] ?? config.privateIpv4 ?? '-',
+          monospace: true,
+        },
+        {
+          label: 'Public IPv6',
+          value: runtime?.['publicIpv6'] ?? config.publicIpv6 ?? '-',
+          monospace: true,
+        },
+        {
+          label: 'Region',
+          value: runtime?.['region'] ?? config.runtime?.region ?? plan?.HvpRegion,
+        },
+        { label: 'Size', value: runtime?.['size'] ?? config.runtime?.size ?? plan?.HvpSize },
+        {
+          label: 'Image',
+          value: runtime?.['image'] ?? config.runtime?.image ?? config.providerImageId,
+        },
+        { label: 'vCPUs', value: runtime?.['vcpus'] ?? config.runtime?.vcpus },
+        { label: 'Memory (MB)', value: runtime?.['memoryMb'] ?? config.runtime?.memoryMb },
+        { label: 'Disk (GB)', value: runtime?.['diskGb'] ?? config.runtime?.diskGb },
+        {
+          label: 'Synced at',
+          value: runtime?.['syncedAt'] ?? config.runtimeSyncedAt,
+          kind: 'datetime',
+        },
+      ],
+      sections: [
+        {
+          title: this.t('Tags'),
+          table: {
+            columns: [{ key: 'tag', label: 'Tag' }],
+            rows: ((runtime?.['tags'] as string[] | undefined) ?? config.runtime?.tags ?? []).map(
+              (tag) => ({ tag }),
+            ),
+          },
+        },
+      ],
+    });
   }
 
   private toInstance(row: ConfigurableCrudRecord): HostingVpsInstance {
@@ -947,7 +1093,9 @@ function isImageCompatibleWithPlan(
 }
 
 function digitalOceanSizeGrouping(slug: string): { family: string; category: string } {
-  const normalized = String(slug ?? '').trim().toLowerCase();
+  const normalized = String(slug ?? '')
+    .trim()
+    .toLowerCase();
   if (
     normalized.startsWith('gpu-') ||
     normalized.includes('-gpu') ||
@@ -971,11 +1119,7 @@ function digitalOceanSizeGrouping(slug: string): { family: string; category: str
   ) {
     return { family: 'CPU-Optimized', category: 'Dedicated CPU' };
   }
-  if (
-    normalized.startsWith('m-') ||
-    normalized.startsWith('m3-') ||
-    normalized.startsWith('m6-')
-  ) {
+  if (normalized.startsWith('m-') || normalized.startsWith('m3-') || normalized.startsWith('m6-')) {
     return { family: 'Memory-Optimized', category: 'Dedicated CPU' };
   }
   if (normalized.startsWith('so-') || normalized.startsWith('so1_5-')) {
@@ -1003,8 +1147,7 @@ function planSizeGrouping(plan: HostingVpsPlan | null | undefined): {
 
 function isGpuSizeGrouping(grouping: { family: string; category: string }) {
   return (
-    grouping.family.toLowerCase().includes('gpu') ||
-    grouping.category.toLowerCase().includes('gpu')
+    grouping.family.toLowerCase().includes('gpu') || grouping.category.toLowerCase().includes('gpu')
   );
 }
 
@@ -1026,7 +1169,10 @@ function normalizeString(value: unknown): string | null {
   return trimmed.length ? trimmed : null;
 }
 
-function formatMoney(value: number | string | null | undefined, currency: string | null | undefined) {
+function formatMoney(
+  value: number | string | null | undefined,
+  currency: string | null | undefined,
+) {
   const amount = Number(value ?? 0);
   const code = (currency || 'BRL').toUpperCase();
   if (!Number.isFinite(amount)) return `${code} -`;
