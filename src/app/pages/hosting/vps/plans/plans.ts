@@ -53,6 +53,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
   pageSizeOptions: [5, 10, 25, 100],
   tabLabels: {
     storage: 'Config',
+    financial: 'Pricing',
     notes: 'Notes',
   },
   listFilters: [
@@ -148,6 +149,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Price',
       type: 'currency',
       required: true,
+      tab: 'financial',
       span: 1,
     },
     {
@@ -156,6 +158,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'setupFee',
       label: 'Setup fee',
       type: 'currency',
+      tab: 'financial',
       span: 1,
     },
     {
@@ -291,11 +294,33 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       .map((provider) => toProviderOption(provider)),
   );
 
-  private readonly regionOptions = computed<ConfigurableCrudOption[]>(() => {
-    const current =
+  private readonly selectedProvider = computed(() =>
+    this.providerById(normalizeString(this.formValues()['providerUUID'])),
+  );
+
+  private readonly selectedRegion = computed(
+    () =>
       normalizeString(this.formValues()['region']) ??
       normalizeString(this.formValues()['regionManual']) ??
-      '';
+      null,
+  );
+
+  private readonly regionScopedSizes = computed(() => {
+    const sizes = this.catalog()?.sizes ?? [];
+    const region = this.selectedRegion();
+    if (!region) return sizes;
+    const regionAware = sizes.some((size) => Array.isArray(size.regions) && size.regions.length > 0);
+    if (!regionAware) return sizes;
+    return sizes.filter(
+      (size) =>
+        !Array.isArray(size.regions) ||
+        size.regions.length === 0 ||
+        size.regions.includes(region),
+    );
+  });
+
+  private readonly regionOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current = this.selectedRegion() ?? '';
     return catalogOptionsToCrud(withCurrentOption(this.catalog()?.regions ?? [], current));
   });
 
@@ -304,8 +329,27 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       normalizeString(this.formValues()['size']) ??
       normalizeString(this.formValues()['sizeManual']) ??
       '';
-    return catalogOptionsToCrud(
-      sortSizeOptions(withCurrentOption(this.catalog()?.sizes ?? [], current)),
+    return buildGroupedSizeOptions(
+      withCurrentOption(this.regionScopedSizes(), current),
+      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null,
+    );
+  });
+
+  private readonly locksCatalogSpecs = computed(() => {
+    const provider =
+      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+    if (provider === 'digitalocean' || provider === 'lightsail') return true;
+    const size =
+      normalizeString(this.formValues()['size']) ??
+      normalizeString(this.formValues()['sizeManual']);
+    if (!size) return false;
+    const option = (this.catalog()?.sizes ?? []).find((item) => item.id === size);
+    return Boolean(
+      option &&
+        (catalogNumber(option.cpu) !== null ||
+          catalogNumber(option.memoryMb) !== null ||
+          catalogNumber(option.diskGb) !== null ||
+          catalogNumber(option.transferGb) !== null),
     );
   });
 
@@ -323,25 +367,43 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
             ...field,
             loading: () => this.catalogLoading(),
             hiddenWhen: () => !(this.catalog()?.regions?.length),
+            requiredWhen: () => Boolean(this.catalog()?.regions?.length),
           };
         }
         if (field.key === 'regionManual') {
           return {
             ...field,
             hiddenWhen: () => Boolean(this.catalog()?.regions?.length),
+            requiredWhen: () =>
+              Boolean(this.catalog()?.sizes?.length) && !this.catalog()?.regions?.length,
           };
         }
         if (field.key === 'size') {
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.sizes?.length),
+            hiddenWhen: () => {
+              if (!(this.catalog()?.sizes?.length)) return true;
+              if (this.catalog()?.regions?.length && !this.selectedRegion()) return true;
+              return false;
+            },
+            requiredWhen: () => {
+              if (!(this.catalog()?.sizes?.length)) return false;
+              if (this.catalog()?.regions?.length) return Boolean(this.selectedRegion());
+              return true;
+            },
           };
         }
         if (field.key === 'sizeManual') {
           return {
             ...field,
             hiddenWhen: () => Boolean(this.catalog()?.sizes?.length),
+          };
+        }
+        if (['cpu', 'memoryMb', 'diskGb', 'transferGb'].includes(field.key)) {
+          return {
+            ...field,
+            disabledWhen: () => this.locksCatalogSpecs(),
           };
         }
         return field;
@@ -483,10 +545,12 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
 
     if (key === 'region') {
       this.patchFormValues({ regionManual: String(value ?? '') });
+      this.reconcileSizeForRegion();
       return;
     }
     if (key === 'regionManual') {
       this.patchFormValues({ region: String(value ?? '') });
+      this.reconcileSizeForRegion();
       return;
     }
 
@@ -615,6 +679,38 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     this.patchFormValues(patch);
   }
 
+  private reconcileSizeForRegion(): void {
+    const region = this.selectedRegion();
+    const currentSize =
+      normalizeString(this.formValues()['size']) ??
+      normalizeString(this.formValues()['sizeManual']);
+    if (!region || !currentSize) {
+      if (!region) {
+        this.patchFormValues({
+          size: '',
+          sizeManual: '',
+          cpu: 0,
+          memoryMb: 0,
+          diskGb: 0,
+          transferGb: 0,
+        });
+      }
+      return;
+    }
+
+    const stillAvailable = this.regionScopedSizes().some((item) => item.id === currentSize);
+    if (stillAvailable) return;
+
+    this.patchFormValues({
+      size: '',
+      sizeManual: '',
+      cpu: 0,
+      memoryMb: 0,
+      diskGb: 0,
+      transferGb: 0,
+    });
+  }
+
   private providerById(uuid: string | null | undefined): HostingVpsProvider | null {
     const normalized = normalizeString(uuid);
     if (!normalized) return null;
@@ -700,15 +796,33 @@ function sizeOptionParts(option: VpsCatalogOption) {
     .filter(Boolean);
 }
 
+function sizeOptionFamily(option: VpsCatalogOption) {
+  if (option.family) return String(option.family);
+  const head = sizeOptionParts(option)[0] ?? '';
+  const [family] = head.split('/').map((part) => part.trim());
+  return family || 'Droplet';
+}
+
+function sizeOptionCategory(option: VpsCatalogOption) {
+  if (option.category) return String(option.category);
+  const head = sizeOptionParts(option)[0] ?? '';
+  const parts = head.split('/').map((part) => part.trim());
+  return parts[1] || '';
+}
+
 function sizeOptionName(option: VpsCatalogOption) {
   return sizeOptionParts(option)[0] ?? option.label ?? option.id;
 }
 
 function sizeOptionPrice(option: VpsCatalogOption) {
+  if (typeof option.priceMonthly === 'number' && option.priceMonthly > 0) {
+    return `$${option.priceMonthly.toFixed(2)}/mo`;
+  }
   return sizeOptionParts(option).find((part) => /\/mo|\/month|\$\d/i.test(part)) ?? '';
 }
 
 function sizeOptionSlug(option: VpsCatalogOption) {
+  if (option.slug) return String(option.slug);
   const parts = sizeOptionParts(option);
   return parts[parts.length - 1] !== sizeOptionPrice(option)
     ? (parts[parts.length - 1] ?? option.id)
@@ -716,6 +830,29 @@ function sizeOptionSlug(option: VpsCatalogOption) {
 }
 
 function sizeOptionMeta(option: VpsCatalogOption) {
+  const specs: string[] = [];
+  const cpu = catalogNumber(option.cpu);
+  const memoryMb = catalogNumber(option.memoryMb);
+  const diskGb = catalogNumber(option.diskGb);
+  const transferGb = catalogNumber(option.transferGb);
+  if (cpu !== null) specs.push(`${cpu} vCPU`);
+  if (memoryMb !== null) {
+    specs.push(
+      memoryMb >= 1024 && memoryMb % 1024 === 0
+        ? `${memoryMb / 1024} GB RAM`
+        : `${memoryMb} MB RAM`,
+    );
+  }
+  if (diskGb !== null) specs.push(`${diskGb} GB disk`);
+  if (transferGb !== null) {
+    specs.push(
+      transferGb >= 1024 && transferGb % 1024 === 0
+        ? `${transferGb / 1024} TB transfer`
+        : `${transferGb} GB transfer`,
+    );
+  }
+  if (specs.length) return specs.join(' · ');
+
   const slug = sizeOptionSlug(option);
   return sizeOptionParts(option)
     .slice(1)
@@ -723,19 +860,35 @@ function sizeOptionMeta(option: VpsCatalogOption) {
     .join(' · ');
 }
 
+function sizeOptionPlanLabel(option: VpsCatalogOption) {
+  const price = sizeOptionPrice(option);
+  const slug = sizeOptionSlug(option);
+  const meta = sizeOptionMeta(option);
+  return [meta || slug, price, slug !== meta ? slug : ''].filter(Boolean).join(' • ');
+}
+
 function sizeOptionRank(option: VpsCatalogOption) {
-  const name = sizeOptionName(option).toLowerCase();
-  if (name.includes('basic') && !name.includes('premium')) return 10;
-  if (name.includes('basic') && name.includes('premium')) return 15;
-  if (name.includes('general purpose')) return 20;
-  if (name.includes('cpu')) return 30;
-  if (name.includes('memory')) return 40;
-  if (name.includes('storage')) return 50;
-  if (name.includes('custom')) return 90;
+  const family = sizeOptionFamily(option).toLowerCase();
+  const category = sizeOptionCategory(option).toLowerCase();
+  if (family.includes('basic')) {
+    if (category.includes('regular')) return 10;
+    if (category.includes('premium amd')) return 11;
+    if (category.includes('premium intel')) return 12;
+    if (category.includes('gpu')) return 13;
+    return 14;
+  }
+  if (family.includes('general')) return 20;
+  if (family.includes('cpu')) return 30;
+  if (family.includes('memory')) return 40;
+  if (family.includes('storage')) return 50;
+  if (family.includes('custom')) return 90;
   return 80;
 }
 
 function sizeOptionMonthlyPrice(option: VpsCatalogOption) {
+  if (typeof option.priceMonthly === 'number' && Number.isFinite(option.priceMonthly)) {
+    return option.priceMonthly;
+  }
   const price = sizeOptionPrice(option).match(/[\d,.]+/);
   if (!price) return Number.POSITIVE_INFINITY;
   return Number(price[0].replace(/,/g, ''));
@@ -745,6 +898,16 @@ function sortSizeOptions(options: VpsCatalogOption[]) {
   return [...options].sort((a, b) => {
     const rankDiff = sizeOptionRank(a) - sizeOptionRank(b);
     if (rankDiff !== 0) return rankDiff;
+
+    const familyDiff = sizeOptionFamily(a).localeCompare(sizeOptionFamily(b), undefined, {
+      sensitivity: 'base',
+    });
+    if (familyDiff !== 0) return familyDiff;
+
+    const categoryDiff = sizeOptionCategory(a).localeCompare(sizeOptionCategory(b), undefined, {
+      sensitivity: 'base',
+    });
+    if (categoryDiff !== 0) return categoryDiff;
 
     const priceDiff = sizeOptionMonthlyPrice(a) - sizeOptionMonthlyPrice(b);
     if (priceDiff !== 0) return priceDiff;
@@ -760,4 +923,56 @@ function sortSizeOptions(options: VpsCatalogOption[]) {
       sensitivity: 'base',
     });
   });
+}
+
+function buildGroupedSizeOptions(
+  options: VpsCatalogOption[],
+  provider: VpsProvider | string | null,
+): ConfigurableCrudOption[] {
+  const sorted = sortSizeOptions(options);
+  if (provider !== 'digitalocean') {
+    return catalogOptionsToCrud(sorted);
+  }
+
+  const result: ConfigurableCrudOption[] = [];
+  let lastFamily = '';
+  let lastCategory = '';
+
+  for (const option of sorted) {
+    const family = sizeOptionFamily(option);
+    const category = sizeOptionCategory(option);
+
+    if (family !== lastFamily) {
+      result.push({
+        value: `__family__:${family}`,
+        label: family,
+        disabled: true,
+        optionClass: 'select-group-option',
+        searchText: family,
+      });
+      lastFamily = family;
+      lastCategory = '';
+    }
+
+    if (category && category !== lastCategory) {
+      result.push({
+        value: `__category__:${family}:${category}`,
+        label: category,
+        disabled: true,
+        optionClass: 'select-subgroup-option',
+        searchText: `${family} ${category}`,
+      });
+      lastCategory = category;
+    }
+
+    result.push({
+      value: option.id,
+      label: sizeOptionPlanLabel(option),
+      description: sizeOptionMeta(option) || undefined,
+      optionClass: 'select-plan-option',
+      searchText: `${option.id} ${option.label} ${family} ${category}`,
+    });
+  }
+
+  return result;
 }

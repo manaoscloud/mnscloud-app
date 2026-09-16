@@ -16,6 +16,8 @@ export type MnsSearchSelectFieldOption = {
   description?: string;
   searchText?: string;
   disabled?: boolean;
+  /** Extra CSS class for the option row (group/subgroup headers). */
+  optionClass?: string;
 };
 
 type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[];
@@ -80,8 +82,12 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             </mat-option>
           }
 
-          @for (option of filteredOptions(); track option.value) {
-            <mat-option [value]="option.value" [disabled]="option.disabled">
+          @for (option of filteredOptions(); track optionTrack(option)) {
+            <mat-option
+              [value]="option.value"
+              [disabled]="option.disabled"
+              [class]="option.optionClass ?? ''"
+            >
               <span class="select-option-main">
                 @if (translateOptions()) {
                   {{ option.label | transloco }}
@@ -111,6 +117,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
         <mat-select
           [value]="value()"
           [multiple]="multiple()"
+          [disabled]="disabled()"
           [compareWith]="compareOptionValues"
           (selectionChange)="selectValue($event.value)"
           (openedChange)="handleOpenedChange($event)"
@@ -148,8 +155,12 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             </mat-option>
           }
 
-          @for (option of filteredOptions(); track option.value) {
-            <mat-option [value]="option.value" [disabled]="option.disabled">
+          @for (option of filteredOptions(); track optionTrack(option)) {
+            <mat-option
+              [value]="option.value"
+              [disabled]="option.disabled"
+              [class]="option.optionClass ?? ''"
+            >
               <span class="select-option-main">
                 @if (translateOptions()) {
                   {{ option.label | transloco }}
@@ -232,6 +243,7 @@ export class MnsSearchSelectFieldComponent {
   readonly emptyLabel = input('No records found.');
   readonly loadingLabel = input('Loading...');
   readonly loading = input(false);
+  readonly disabled = input(false);
   readonly translateOptions = input(false);
   readonly multiple = input(false);
   readonly canCreate = input(false);
@@ -242,7 +254,9 @@ export class MnsSearchSelectFieldComponent {
   readonly selectedOption = computed(() => {
     const field = this.field();
     const currentValue = field ? field().value() : this.value();
-    return this.options().find((option) => this.areOptionValuesEqual(option.value, currentValue));
+    return this.options().find(
+      (option) => !option.disabled && this.areOptionValuesEqual(option.value, currentValue),
+    );
   });
   readonly selectedOptionLabels = computed(() => {
     const field = this.field();
@@ -259,10 +273,29 @@ export class MnsSearchSelectFieldComponent {
 
   readonly filteredOptions = computed(() => {
     const term = this.normalize(this.search());
-    if (!term) return this.options();
-    return this.options().filter((option) =>
-      this.normalize(this.optionSearchText(option)).includes(term),
-    );
+    const options = this.options();
+    if (!term) return options;
+
+    const matches = new Set<number>();
+    options.forEach((option, index) => {
+      if (option.disabled) return;
+      if (this.normalize(this.optionSearchText(option)).includes(term)) {
+        matches.add(index);
+      }
+    });
+    if (!matches.size) return [];
+
+    const visible = new Set<number>();
+    for (const matchIndex of matches) {
+      visible.add(matchIndex);
+      for (let i = matchIndex - 1; i >= 0; i -= 1) {
+        const option = options[i];
+        if (!option?.disabled) break;
+        visible.add(i);
+        if ((option.optionClass ?? '').includes('select-group-option')) break;
+      }
+    }
+    return options.filter((_, index) => visible.has(index));
   });
 
   handleOpenedChange(opened: boolean): void {
@@ -272,6 +305,10 @@ export class MnsSearchSelectFieldComponent {
 
   readonly compareOptionValues = (left: unknown, right: unknown): boolean =>
     this.areOptionValuesEqual(left, right);
+
+  optionTrack(option: MnsSearchSelectFieldOption): string {
+    return `${String(option.value)}::${option.label}::${option.optionClass ?? ''}`;
+  }
 
   selectValue(value: MnsSearchSelectValue): void {
     const nextValue = this.multiple() ? this.orderMultipleValues(value) : value;

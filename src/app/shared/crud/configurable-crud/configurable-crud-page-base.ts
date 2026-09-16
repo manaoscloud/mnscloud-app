@@ -199,6 +199,7 @@ export type ConfigurableCrudField = {
   loading?: () => boolean;
   hiddenWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   requiredWhen?: (context: ConfigurableCrudFieldContext) => boolean;
+  disabledWhen?: (context: ConfigurableCrudFieldContext) => boolean;
 };
 
 export type ConfigurableCrudFieldContext = {
@@ -1236,6 +1237,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   isFieldDisabled(field: ConfigurableCrudField): boolean {
+    if (
+      field.disabledWhen?.({
+        editing: Boolean(this.editingRecord()),
+        values: this.formValues(),
+      })
+    ) {
+      return true;
+    }
     return this.addressCopyActions().some(
       (action) =>
         this.isCopyActionEnabled(action) &&
