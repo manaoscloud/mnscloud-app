@@ -23,24 +23,6 @@
       }
     </div>
 
-    <nav class="dashboard-navigation" [attr.aria-label]="'VPS resources' | transloco">
-      <a class="dashboard-nav-link" [routerLink]="routeTo('instances')">
-        <mat-icon>dns</mat-icon>
-        <span>{{ 'Instances' | transloco }}</span>
-        <mat-icon class="dashboard-nav-chevron">chevron_right</mat-icon>
-      </a>
-      <a class="dashboard-nav-link" [routerLink]="routeTo('provider')">
-        <mat-icon>hub</mat-icon>
-        <span>{{ 'Provider' | transloco }}</span>
-        <mat-icon class="dashboard-nav-chevron">chevron_right</mat-icon>
-      </a>
-      <a class="dashboard-nav-link" [routerLink]="routeTo('plans')">
-        <mat-icon>view_list</mat-icon>
-        <span>{{ 'Plans' | transloco }}</span>
-        <mat-icon class="dashboard-nav-chevron">chevron_right</mat-icon>
-      </a>
-    </nav>
-
     <div class="dashboard-sections">
       <mns-dashboard-record-list
         [title]="'Instance Status'"
