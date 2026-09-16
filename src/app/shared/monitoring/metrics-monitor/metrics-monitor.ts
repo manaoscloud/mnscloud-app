@@ -1,4 +1,14 @@
-import { Component, DestroyRef, computed, effect, inject, input, model, output } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -68,7 +78,7 @@ export class MetricsMonitorComponent {
   readonly fullPage = output<void>();
   readonly closeRequest = output<void>();
 
-  private readonly clock = model(Date.now());
+  readonly clock = signal(Date.now());
 
   readonly series = computed(() =>
     buildMetricsMonitorSeries(this.points(), Number(this.hours()) || 1, this.clock()),
